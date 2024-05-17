@@ -1,31 +1,46 @@
 <div class="row h-100 align-items-center justify-content-center" style="height: 100%;width: 100%;padding-top: 100px;">
   <div class="col-12 col-sm-8 col-md-6 col-lg-5 col-xl-4" style="max-width: 500px;">
     <div class="bg-white rounded p-4 p-sm-5 my-4 mx-3">
+      <!-- <div style="width: 100%;align-items: center;text-align: center;margin-bottom: 10px;">
+        <img height="80px" src="assets/logo/ih-logo.png" alt="">
+      </div> -->
+
       <div class="d-flex align-items-center justify-content-between mb-3">
-        <a href="index.html" class="">
-          <h3 class="app-text-style">Connexion</h3>
+
+        <a href="#" class="">
+          <h4 class="app-text-style">
+            <i class="fa fa-user-edit me-2"></i>
+            Connexion
+          </h4>
         </a>
-        <h3 class="app-text-style"><i class="fa fa-user-edit me-2"></i></h3>
+        <h3 class="app-text-style">
+        <img height="40px" src="assets/logo/ih-logo.png" alt="">
+
+          </h3>
       </div>
       <form [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
         <h6 style="color: darkred;" *ngIf="message">{{ message }}</h6>
         <div class="form-floating mb-3">
-          <input type="text" class="form-control" id="floatingUsername" placeholder="Username" formControlName="credential">
+          <input style="background-color: whitesmoke;" type="text" class="form-control" id="floatingUsername"
+            placeholder="Username" formControlName="credential">
           <label for="floatingUsername">Nom Utilisateur</label>
         </div>
         <div class="form-floating mb-3">
-          <input type="password" class="form-control" id="floatingPassword" placeholder="Password" formControlName="password">
+          <input style="background-color: whitesmoke;" type="password" class="form-control" id="floatingPassword"
+            placeholder="Password" formControlName="password">
           <label for="floatingPassword">Mot de passe</label>
         </div>
-        <div class="d-flex align-items-center justify-content-between mb-4">
+        <!-- <div class="d-flex align-items-center justify-content-between mb-4">
           <div class="form-check">
             <input type="checkbox" class="form-check-input" id="rememberMe" formControlName="rememberMe">
             <label class="form-check-label" for="rememberMe">Se souvenir</label>
           </div>
           <a href="">Mot de passe oublié</a>
-        </div>
-        <button [disabled]="!loginForm.valid" type="submit" class="btn btn-fifteen py-2 w-100 mb-4">Se connecter</button>
-        <p class="text-center mb-0">Pas encore de compte? <a href="">S'enrégistrer</a></p>
+        </div> -->
+        <br>
+        <button [disabled]="!loginForm.valid" type="submit" class="btn btn-fifteen py-2 w-100 mb-4">Se
+          connecter</button>
+        <!-- <p class="text-center mb-0">Pas encore de compte? <a href="">S'enrégistrer</a></p> -->
       </form>
     </div>
   </div>

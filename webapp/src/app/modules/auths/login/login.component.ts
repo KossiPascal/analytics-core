@@ -33,7 +33,7 @@ export class LoginComponent implements OnInit {
         Validators.minLength(4),
       ]),
 
-      rememberMe: new FormControl(false, []),
+      // rememberMe: new FormControl(false, []),
     });
   }
 
