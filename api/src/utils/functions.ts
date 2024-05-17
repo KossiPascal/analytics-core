@@ -1,15 +1,16 @@
 var JFile = require('jfile');
 import fs from 'fs';
-import * as path from 'path';
-import * as dotenv from 'dotenv';
+import { dirname } from 'path';
+import { config } from 'dotenv';
 import { CouchDbFetchData } from './Interfaces';
 const axios = require('axios');
 
-const srcFolder = path.dirname(__dirname);
-const apiFolder = path.dirname(srcFolder);
-const projectFolder = path.dirname(apiFolder);
+const srcFolder = dirname(__dirname);
+const apiFolder = dirname(srcFolder);
+const projectFolder = dirname(apiFolder);
+const projectParentFolder = dirname(projectFolder);
+config({ path: `${projectParentFolder}/ssl/.env` });
 
-dotenv.config({ path: `${projectFolder}/.env` });
 const { NODE_ENV, CHT_USER, CHT_PASS, CHT_HOST, CHT_PROTOCOL, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
 
 export async function AxioFetchCouchDbData(viewName:string, { username, password, startKey, endKey }: { username?: string, password?: string, startKey?: string, endKey?: string }): Promise<any> {

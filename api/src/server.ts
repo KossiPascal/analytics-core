@@ -28,8 +28,8 @@ import responseTime from 'response-time';
 
 const apiFolder = dirname(__dirname);
 const projectFolder = dirname(apiFolder);
-
-config({ path: `${projectFolder}/.env` });
+const projectParentFolder = dirname(projectFolder);
+config({ path: `${projectParentFolder}/ssl/.env` });
 const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT } = process.env;
 
 const port = normalizePort((NODE_ENV === 'production' ? APP_PROD_PORT : APP_DEV_PORT) || 3000);

@@ -294,6 +294,13 @@
               <td>{{ OrgUnitSyncResult$.Patient.ErrorElements }}</td>
               <td>{{ OrgUnitSyncResult$.Patient.ErrorIds }}</td>
             </tr>
+            <tr *ngIf="OrgUnitSyncResult$.Message">
+              <th>Message</th>
+              <td>{{ OrgUnitSyncResult$.Message.SuccessCount }}</td>
+              <td>{{ OrgUnitSyncResult$.Message.ErrorCount }}</td>
+              <td>{{ OrgUnitSyncResult$.Message.ErrorElements }}</td>
+              <td>{{ OrgUnitSyncResult$.Message.ErrorIds }}</td>
+            </tr>
             <tr *ngIf="OrgUnitSyncResult$.validationError">
               <th>validationError</th>
               <td colspan="4">{{ OrgUnitSyncResult$.validationError }}</td>
@@ -473,6 +480,13 @@
               <td>{{ AllFormsSyncResult$.death.SuccessCount }}</td>
               <td>{{ AllFormsSyncResult$.death.ErrorCount }}</td>
               <td>{{ AllFormsSyncResult$.death.Errors }}</td>
+            </tr>
+            <tr *ngIf="AllFormsSyncResult$.Message">
+              <th>Message</th>
+              <td>{{ AllFormsSyncResult$.Message.SuccessCount }}</td>
+              <td>{{ AllFormsSyncResult$.Message.ErrorCount }}</td>
+              <td>{{ AllFormsSyncResult$.Message.ErrorElements }}</td>
+              <td>{{ AllFormsSyncResult$.Message.ErrorIds }}</td>
             </tr>
           </tbody>
         </table>

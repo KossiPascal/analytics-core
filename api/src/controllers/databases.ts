@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 import { DataSource, EntityMetadata, In } from "typeorm";
 import { AppDataSource } from "../data_source";
-import * as path from 'path';
-import * as dotenv from 'dotenv';
+import { dirname } from 'path';
+import { config } from 'dotenv';
 import request from 'request';
 import { httpHeaders } from "../utils/functions";
 import { Family, Patient, getChwRepository, getFamilyRepository, getPatientRepository, getRecoRepository } from "../entities/Org-units";
@@ -23,9 +23,10 @@ import { ReferalData } from "../entities/_Referal-data";
 import { VaccinationData } from "../entities/_Vaccination-data";
 // const axios = require('axios');
 // const fetch = require('node-fetch')
-const apiFolder = path.dirname(path.dirname(__dirname));
-const projectFolder = path.dirname(apiFolder);
-dotenv.config({ path: `${projectFolder}/.env` });
+const apiFolder = dirname(dirname(__dirname));
+const projectFolder = dirname(apiFolder);
+const projectParentFolder = dirname(projectFolder);
+config({ path: `${projectParentFolder}/ssl/.env` });
 const { NODE_ENV, CHT_HOST, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
 
 const USER_CHT_HOST = `${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}`;

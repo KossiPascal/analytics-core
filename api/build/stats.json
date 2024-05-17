@@ -21549,7 +21549,7 @@
       "format": "esm"
     },
     "src/app/services/constantes.service.ts": {
-      "bytes": 2252,
+      "bytes": 2259,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -22309,7 +22309,7 @@
       "format": "esm"
     },
     "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.ts": {
-      "bytes": 90853,
+      "bytes": 93120,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -25700,18 +25700,6 @@
       ],
       "format": "esm"
     },
-    "src/app/modules/reports/morbidity/morbidity.component.css": {
-      "bytes": 712,
-      "imports": []
-    },
-    "src/app/modules/reports/chw-reco-activity/chw-reco-activity.component.css": {
-      "bytes": 1355,
-      "imports": []
-    },
-    "src/app/modules/reports/pcime/pcime.component.css": {
-      "bytes": 1096,
-      "imports": []
-    },
     "src/app/modules/reports/household-recap/household-recap.component.css": {
       "bytes": 712,
       "imports": []
@@ -25720,35 +25708,59 @@
       "bytes": 712,
       "imports": []
     },
-    "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
-      "bytes": 1458,
+    "src/app/modules/reports/pcime/pcime.component.css": {
+      "bytes": 1096,
       "imports": []
     },
-    "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
-      "bytes": 84,
+    "src/app/modules/reports/morbidity/morbidity.component.css": {
+      "bytes": 712,
       "imports": []
     },
-    "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
-      "bytes": 619,
+    "src/app/modules/reports/chw-reco-activity/chw-reco-activity.component.css": {
+      "bytes": 1355,
+      "imports": []
+    },
+    "src/app/modules/reports/family-planning/family-planning.component.css": {
+      "bytes": 775,
       "imports": []
     },
     "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
       "bytes": 181,
       "imports": []
     },
+    "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
+      "bytes": 1458,
+      "imports": []
+    },
     "src/app/components/spinner/spinner-component.css": {
       "bytes": 915,
+      "imports": []
+    },
+    "src/app/components/modal-layout/modal-layout.component.css": {
+      "bytes": 3552,
+      "imports": []
+    },
+    "src/app/components/snackbar/snackbar.component.css": {
+      "bytes": 1247,
       "imports": []
     },
     "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
       "bytes": 4706,
       "imports": []
     },
-    "src/app/modules/errors/unauthorized/unauthorized.component.css": {
+    "src/app/modules/errors/404/404.component.css": {
       "bytes": 40,
       "imports": []
     },
-    "src/app/modules/errors/404/404.component.css": {
+    "src/app/modules/auths/login/login.component.css": {
+      "bytes": 374,
+      "imports": []
+    },
+    "src/app/components/top-navigation/top-nav.component.css": {
+      "bytes": 212,
+      "imports": []
+    },
+    "src/app/modules/errors/unauthorized/unauthorized.component.css": {
       "bytes": 40,
       "imports": []
     },
@@ -25756,44 +25768,32 @@
       "bytes": 40,
       "imports": []
     },
-    "src/app/components/modal-layout/modal-layout.component.css": {
-      "bytes": 3552,
-      "imports": []
-    },
     "src/app/modules/admin/users/users.component.css": {
       "bytes": 2636,
-      "imports": []
-    },
-    "src/app/components/snackbar/snackbar.component.css": {
-      "bytes": 1247,
       "imports": []
     },
     "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
       "bytes": 943,
       "imports": []
     },
-    "src/app/modules/reports/family-planning/family-planning.component.css": {
-      "bytes": 775,
-      "imports": []
-    },
-    "src/app/modules/admin/roles/roles.component.css": {
-      "bytes": 1209,
-      "imports": []
-    },
-    "src/app/components/top-navigation/top-nav.component.css": {
-      "bytes": 212,
-      "imports": []
-    },
-    "src/app/modules/auths/login/login.component.css": {
-      "bytes": 374,
+    "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
+      "bytes": 619,
       "imports": []
     },
     "src/app/components/loader/loader-component.css": {
       "bytes": 1508,
       "imports": []
     },
+    "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
+      "bytes": 84,
+      "imports": []
+    },
     "src/app/modules/admin/signature/signature.component.css": {
       "bytes": 742,
+      "imports": []
+    },
+    "src/app/modules/admin/roles/roles.component.css": {
+      "bytes": 1209,
       "imports": []
     },
     "node_modules/zone.js/fesm2015/zone.js": {
@@ -25831,58 +25831,58 @@
     }
   },
   "outputs": {
-    "main-H3V3ODBU.js": {
+    "main-Q4OJ7PN4.js": {
       "imports": [
         {
-          "path": "chunk-MJA4J3NR.js",
+          "path": "chunk-GGLOWXLR.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-SCSXSZQ3.js",
+          "path": "chunk-AHA44THY.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-HFOXMMM3.js",
+          "path": "chunk-VL7ZW7KF.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-2SZPLTSS.js",
+          "path": "chunk-CFWBYOQ5.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-NRNGE457.js",
+          "path": "chunk-W6MTFRU7.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         },
         {
-          "path": "reports.module-UZO3QLLB.js",
+          "path": "reports.module-Q7T4WA4J.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "manages.module-WIGDZDM3.js",
+          "path": "manages.module-J3NDSSTW.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "dashbords.module-U3KRDT3H.js",
+          "path": "dashbords.module-LYQTJFWK.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "auths.module-72AX6RD4.js",
+          "path": "auths.module-VELR5ABO.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "admin.module-OBF6QSH5.js",
+          "path": "admin.module-XGTCKF5B.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "errors.module-NSUGT24W.js",
+          "path": "errors.module-UVRRKOML.js",
           "kind": "dynamic-import"
         }
       ],
@@ -26045,26 +26045,26 @@
       },
       "bytes": 375301
     },
-    "reports.module-UZO3QLLB.js": {
+    "reports.module-Q7T4WA4J.js": {
       "imports": [
         {
-          "path": "chunk-MJA4J3NR.js",
+          "path": "chunk-GGLOWXLR.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-7BO7SGVA.js",
+          "path": "chunk-FIBE4WZ3.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-NRNGE457.js",
+          "path": "chunk-W6MTFRU7.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26100,22 +26100,22 @@
       },
       "bytes": 137595
     },
-    "manages.module-WIGDZDM3.js": {
+    "manages.module-J3NDSSTW.js": {
       "imports": [
         {
-          "path": "chunk-7BO7SGVA.js",
+          "path": "chunk-FIBE4WZ3.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-NRNGE457.js",
+          "path": "chunk-W6MTFRU7.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26128,7 +26128,7 @@
           "bytesInOutput": 245
         },
         "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.ts": {
-          "bytesInOutput": 38402
+          "bytesInOutput": 39243
         },
         "src/app/modules/manages/manages-routing.module.ts": {
           "bytesInOutput": 467
@@ -26137,32 +26137,32 @@
           "bytesInOutput": 151
         }
       },
-      "bytes": 39835
+      "bytes": 40676
     },
-    "dashbords.module-U3KRDT3H.js": {
+    "dashbords.module-LYQTJFWK.js": {
       "imports": [
         {
-          "path": "chunk-MJA4J3NR.js",
+          "path": "chunk-GGLOWXLR.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-2SZPLTSS.js",
+          "path": "chunk-CFWBYOQ5.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-7BO7SGVA.js",
+          "path": "chunk-FIBE4WZ3.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-NRNGE457.js",
+          "path": "chunk-W6MTFRU7.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26189,14 +26189,14 @@
       },
       "bytes": 58441
     },
-    "chunk-MJA4J3NR.js": {
+    "chunk-GGLOWXLR.js": {
       "imports": [
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26218,22 +26218,22 @@
       },
       "bytes": 19643
     },
-    "auths.module-72AX6RD4.js": {
+    "auths.module-VELR5ABO.js": {
       "imports": [
         {
-          "path": "chunk-SCSXSZQ3.js",
+          "path": "chunk-AHA44THY.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-NRYWXZYE.js",
+          "path": "chunk-Y4HZH7QO.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26260,14 +26260,14 @@
       },
       "bytes": 10210
     },
-    "chunk-SCSXSZQ3.js": {
+    "chunk-AHA44THY.js": {
       "imports": [
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26281,34 +26281,34 @@
       },
       "bytes": 679
     },
-    "admin.module-OBF6QSH5.js": {
+    "admin.module-XGTCKF5B.js": {
       "imports": [
         {
-          "path": "chunk-HFOXMMM3.js",
+          "path": "chunk-VL7ZW7KF.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-2SZPLTSS.js",
+          "path": "chunk-CFWBYOQ5.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-7BO7SGVA.js",
+          "path": "chunk-FIBE4WZ3.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-NRNGE457.js",
+          "path": "chunk-W6MTFRU7.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-NRYWXZYE.js",
+          "path": "chunk-Y4HZH7QO.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26362,10 +26362,10 @@
       },
       "bytes": 2453253
     },
-    "chunk-HFOXMMM3.js": {
+    "chunk-VL7ZW7KF.js": {
       "imports": [
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26379,10 +26379,10 @@
       },
       "bytes": 2512
     },
-    "chunk-2SZPLTSS.js": {
+    "chunk-CFWBYOQ5.js": {
       "imports": [
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26419,10 +26419,10 @@
       },
       "bytes": 12099
     },
-    "chunk-7BO7SGVA.js": {
+    "chunk-FIBE4WZ3.js": {
       "imports": [
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26436,10 +26436,10 @@
       },
       "bytes": 1208
     },
-    "chunk-NRNGE457.js": {
+    "chunk-W6MTFRU7.js": {
       "imports": [
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26453,14 +26453,14 @@
       },
       "bytes": 1020
     },
-    "chunk-NRYWXZYE.js": {
+    "chunk-Y4HZH7QO.js": {
       "imports": [
         {
-          "path": "chunk-UBJKZR2T.js",
+          "path": "chunk-SFQJWOZW.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26474,10 +26474,10 @@
       },
       "bytes": 17540
     },
-    "chunk-UBJKZR2T.js": {
+    "chunk-SFQJWOZW.js": {
       "imports": [
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26502,10 +26502,10 @@
       },
       "bytes": 11058
     },
-    "errors.module-NSUGT24W.js": {
+    "errors.module-UVRRKOML.js": {
       "imports": [
         {
-          "path": "chunk-UIQDAV7J.js",
+          "path": "chunk-Y4BXPDGL.js",
           "kind": "import-statement"
         }
       ],
@@ -26532,7 +26532,7 @@
       },
       "bytes": 4905
     },
-    "chunk-UIQDAV7J.js": {
+    "chunk-Y4BXPDGL.js": {
       "imports": [],
       "exports": [
         "$",
@@ -27096,43 +27096,13 @@
           "bytesInOutput": 2141
         },
         "src/app/services/constantes.service.ts": {
-          "bytesInOutput": 973
+          "bytesInOutput": 980
         },
         "src/app/services/auth.service.ts": {
           "bytesInOutput": 1244
         }
       },
-      "bytes": 316606
-    },
-    "morbidity.component-BMLF2YBP.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/reports/morbidity/morbidity.component.css": {
-          "bytesInOutput": 531
-        }
-      },
-      "bytes": 532,
-      "ng-component": true
-    },
-    "chw-reco-activity.component-7XYYKBVM.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/reports/chw-reco-activity/chw-reco-activity.component.css": {
-          "bytesInOutput": 729
-        }
-      },
-      "bytes": 730,
-      "ng-component": true
-    },
-    "pcime.component-GN2A6FV7.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/reports/pcime/pcime.component.css": {
-          "bytesInOutput": 788
-        }
-      },
-      "bytes": 789,
-      "ng-component": true
+      "bytes": 316613
     },
     "household-recap.component-XO775QPV.css": {
       "imports": [],
@@ -27154,34 +27124,44 @@
       "bytes": 532,
       "ng-component": true
     },
-    "reco-vaccination.component-V2QNP3JH.css": {
+    "pcime.component-GN2A6FV7.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
-          "bytesInOutput": 1095
+        "src/app/modules/reports/pcime/pcime.component.css": {
+          "bytesInOutput": 788
         }
       },
-      "bytes": 1096,
+      "bytes": 789,
       "ng-component": true
     },
-    "sync-for-offline.component-P2S6EGY5.css": {
+    "morbidity.component-BMLF2YBP.css": {
       "imports": [],
       "inputs": {
-        "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
-          "bytesInOutput": 68
+        "src/app/modules/reports/morbidity/morbidity.component.css": {
+          "bytesInOutput": 531
         }
       },
-      "bytes": 69,
+      "bytes": 532,
       "ng-component": true
     },
-    "reco-performance.component-72ZZMWJL.css": {
+    "chw-reco-activity.component-7XYYKBVM.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
-          "bytesInOutput": 427
+        "src/app/modules/reports/chw-reco-activity/chw-reco-activity.component.css": {
+          "bytesInOutput": 729
         }
       },
-      "bytes": 428,
+      "bytes": 730,
+      "ng-component": true
+    },
+    "family-planning.component-SWSHL72L.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/reports/family-planning/family-planning.component.css": {
+          "bytesInOutput": 584
+        }
+      },
+      "bytes": 585,
       "ng-component": true
     },
     "sync-calculate-all-data.component-YGNRVXP6.css": {
@@ -27194,6 +27174,16 @@
       "bytes": 87,
       "ng-component": true
     },
+    "reco-vaccination.component-V2QNP3JH.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
+          "bytesInOutput": 1095
+        }
+      },
+      "bytes": 1096,
+      "ng-component": true
+    },
     "spinner-component-SCUXJOBC.css": {
       "imports": [],
       "inputs": {
@@ -27202,6 +27192,26 @@
         }
       },
       "bytes": 211,
+      "ng-component": true
+    },
+    "modal-layout.component-X2WXRHWY.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/modal-layout/modal-layout.component.css": {
+          "bytesInOutput": 2793
+        }
+      },
+      "bytes": 2794,
+      "ng-component": true
+    },
+    "snackbar.component-UQOAOZOE.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/snackbar/snackbar.component.css": {
+          "bytesInOutput": 878
+        }
+      },
+      "bytes": 879,
       "ng-component": true
     },
     "fix-modal-layout.component-TQGMGOR4.css": {
@@ -27214,20 +27224,40 @@
       "bytes": 3610,
       "ng-component": true
     },
-    "unauthorized.component-RRUPYQ5M.css": {
+    "404.component-TSJYNTB5.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/errors/unauthorized/unauthorized.component.css": {
+        "src/app/modules/errors/404/404.component.css": {
           "bytesInOutput": 33
         }
       },
       "bytes": 34,
       "ng-component": true
     },
-    "404.component-TSJYNTB5.css": {
+    "login.component-LVEUBGCH.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/errors/404/404.component.css": {
+        "src/app/modules/auths/login/login.component.css": {
+          "bytesInOutput": 317
+        }
+      },
+      "bytes": 318,
+      "ng-component": true
+    },
+    "top-nav.component-5F5UI4LK.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/top-navigation/top-nav.component.css": {
+          "bytesInOutput": 160
+        }
+      },
+      "bytes": 161,
+      "ng-component": true
+    },
+    "unauthorized.component-RRUPYQ5M.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/errors/unauthorized/unauthorized.component.css": {
           "bytesInOutput": 33
         }
       },
@@ -27244,16 +27274,6 @@
       "bytes": 34,
       "ng-component": true
     },
-    "modal-layout.component-X2WXRHWY.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/components/modal-layout/modal-layout.component.css": {
-          "bytesInOutput": 2793
-        }
-      },
-      "bytes": 2794,
-      "ng-component": true
-    },
     "users.component-4Q6XM2O5.css": {
       "imports": [],
       "inputs": {
@@ -27262,16 +27282,6 @@
         }
       },
       "bytes": 1853,
-      "ng-component": true
-    },
-    "snackbar.component-UQOAOZOE.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/components/snackbar/snackbar.component.css": {
-          "bytesInOutput": 878
-        }
-      },
-      "bytes": 879,
       "ng-component": true
     },
     "reco-meg-stock.component-JOKFVNJY.css": {
@@ -27284,44 +27294,14 @@
       "bytes": 634,
       "ng-component": true
     },
-    "family-planning.component-SWSHL72L.css": {
+    "reco-performance.component-72ZZMWJL.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/reports/family-planning/family-planning.component.css": {
-          "bytesInOutput": 584
+        "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
+          "bytesInOutput": 427
         }
       },
-      "bytes": 585,
-      "ng-component": true
-    },
-    "roles.component-NEJPCUJ5.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/admin/roles/roles.component.css": {
-          "bytesInOutput": 871
-        }
-      },
-      "bytes": 872,
-      "ng-component": true
-    },
-    "top-nav.component-5F5UI4LK.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/components/top-navigation/top-nav.component.css": {
-          "bytesInOutput": 160
-        }
-      },
-      "bytes": 161,
-      "ng-component": true
-    },
-    "login.component-LVEUBGCH.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/auths/login/login.component.css": {
-          "bytesInOutput": 317
-        }
-      },
-      "bytes": 318,
+      "bytes": 428,
       "ng-component": true
     },
     "loader-component-SAI73YCN.css": {
@@ -27334,6 +27314,16 @@
       "bytes": 1252,
       "ng-component": true
     },
+    "sync-for-offline.component-P2S6EGY5.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
+          "bytesInOutput": 68
+        }
+      },
+      "bytes": 69,
+      "ng-component": true
+    },
     "signature.component-GAZ2OLJX.css": {
       "imports": [],
       "inputs": {
@@ -27342,6 +27332,16 @@
         }
       },
       "bytes": 588,
+      "ng-component": true
+    },
+    "roles.component-NEJPCUJ5.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/admin/roles/roles.component.css": {
+          "bytesInOutput": 871
+        }
+      },
+      "bytes": 872,
       "ng-component": true
     },
     "polyfills-S3BTP7ME.js": {

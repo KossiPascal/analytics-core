@@ -1,3 +1,4 @@
+
 <ng-container *ngIf="isAuthenticated() && !hideMainPage()">
   <div class="container-fluid position-relative d-flex p-0">
     <!-- Spinner Start -->
@@ -8,9 +9,10 @@
         <span class="sr-only" style="color: black;">...</span>
       </div>
     </div>
-
     <!-- Spinner End -->
+
     <app-side-navigation></app-side-navigation>
+
     <!-- Content Start -->
     <div class="content">
       <app-top-navigation></app-top-navigation>
@@ -24,6 +26,7 @@
       <!-- Widgets End -->
     </div>
     <!-- Content End -->
+
     <!-- Back to Top -->
     <a href="#" class="btn btn-lg btn-fifteen btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
 
@@ -32,12 +35,12 @@
       style="position: absolute!important;bottom: 0!important; left: 0!important; right: 0!important; padding: 0px!important;">
       <div style="padding: 2px!important;" class="bg-white">
         <div style="text-align: center!important;" class="text-center text-sm-start">
-          &copy; Kossi Labs | <a  target="_blank" href="https://integratehealth.org/">Integrate Health</a><br>All Right Reserved<img style="margin-left: 10px;" height="35" src="assets/logo/ih-logo.png" alt="">
+          &copy; Kossi Labs | <a target="_blank" href="https://integratehealth.org/">Integrate Health</a><br>All Right Reserved<img style="margin-left: 10px;" height="35" src="assets/logo/ih-logo.png" alt="">
         </div>
-
       </div>
     </div>
     <!-- Footer End -->
+    
   </div>
 </ng-container>
 

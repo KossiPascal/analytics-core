@@ -76,6 +76,7 @@ export interface AllFormsSyncResult {
   promotionalActivity?: SyncOutputUtils
   death?: SyncOutputUtils
   catchErrors?: string
+  Message?: SyncOutputUtils
 }
 
 export interface SyncOutputUtils {

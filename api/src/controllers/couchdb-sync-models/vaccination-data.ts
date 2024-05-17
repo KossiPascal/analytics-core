@@ -49,7 +49,6 @@ export async function SyncVaccinationData(report: any, _repoVaccine: Repository<
         _vaccine.is_vaccine_referal = dataTransform(fields.is_vaccine_referal, 'null_false')
         _vaccine.has_all_vaccine_done = dataTransform(fields.has_all_vaccine_done, 'null_false')
 
-
         _vaccine.country = fields.country_id;
         _vaccine.region = fields.region_id;
         _vaccine.prefecture = fields.prefecture_id;
@@ -62,10 +61,10 @@ export async function SyncVaccinationData(report: any, _repoVaccine: Repository<
         _vaccine.patient = fields.patient_id;
         _vaccine.reported_date_timestamp = report.reported_date;
         _vaccine.reported_date = reported_date;
+
         _vaccine.reported_full_date = milisecond_to_date(report.reported_date, 'fulldate');
         _vaccine.geolocation = report.geolocation;
 
-        
         await _repoVaccine.save(_vaccine);
         return true;
     } catch (err: any) {
