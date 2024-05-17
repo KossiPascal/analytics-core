@@ -12,18 +12,18 @@
       </button>
     </div>
 
-    <p class="fix-modal-info" *ngIf="message">{{ message | translate }}</p>
+    <p class="fix-modal-info" *ngIf="message">{{ message }}</p>
 
     <div class="fix-modal-body" [innerHTML]="modalContent | safeHtml"></div>
 
-    <p class="fix-modal-error" *ngIf="error || errorMsg">{{ error ?? errorMsg ?? '' | translate }}</p>
+    <p class="fix-modal-error" *ngIf="error || errorMsg">{{ error ?? errorMsg ?? '' }}</p>
 
     <div *ngIf="showBottomElements == true" class="fix-modal-footer">
       <button *ngIf="showCancelButton == true" class="btn grey-back" [class.disabled]="processing == true"
-        (click)="cancel()">{{ (cancelBtnName || 'Cancel') | translate }}</button>
+        (click)="cancel()">{{ (cancelBtnName || 'Cancel') }}</button>
       <button class="flat-button btn {{ isFlatButton == true ? 'mat-flat-button' :modalActionColor }}"
         [class.disabled]="processing == true" (click)="submit()" color="primary">
-        {{ (submitBtnName || 'Confirm') | translate}}
+        {{ (submitBtnName || 'Confirm')}}
         <app-spinner style="margin-left: 10px;" [isLoading]="processing == true"></app-spinner>
       </button>
     </div>

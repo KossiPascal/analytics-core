@@ -2,9 +2,9 @@
   [id]="'update-available'"
   [modalActionColor]="'warning-back'"
   [showCloseButton]="true"
-  [modalTitle]="'version.update.title' | translate"
+  [modalTitle]="'version.update.title'"
   [cancelBtnName]="'Annuler'"
-  [submitBtnName]="'reload.app.title' | translate"
+  [submitBtnName]="'reload.app.title'"
   [showBottomElements]="true"
   [showCancelButton]="true"
   [reloadApp]="false"
@@ -12,5 +12,5 @@
   (onCancel)="close()"
   (onSubmit)="submit()"
 >
-  <p>{{ 'version.update.description' | translate }}</p>
+  <p>{{ 'version.update.description' }}</p>
 </kossi-modal-layout>

@@ -23842,39 +23842,8 @@
       ],
       "format": "esm"
     },
-    "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs": {
-      "bytes": 37730,
-      "imports": [
-        {
-          "path": "node_modules/@angular/core/fesm2022/core.mjs",
-          "kind": "import-statement",
-          "original": "@angular/core"
-        },
-        {
-          "path": "node_modules/@angular/core/fesm2022/core.mjs",
-          "kind": "import-statement",
-          "original": "@angular/core"
-        },
-        {
-          "path": "node_modules/rxjs/dist/esm/index.js",
-          "kind": "import-statement",
-          "original": "rxjs"
-        },
-        {
-          "path": "node_modules/rxjs/dist/esm/operators/index.js",
-          "kind": "import-statement",
-          "original": "rxjs/operators"
-        },
-        {
-          "path": "<runtime>",
-          "kind": "import-statement",
-          "external": true
-        }
-      ],
-      "format": "esm"
-    },
     "src/app/components/modal-layout/modal-layout.component.ts": {
-      "bytes": 11529,
+      "bytes": 11295,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -23900,11 +23869,6 @@
           "path": "src/app/components/spinner/spinner-component.ts",
           "kind": "import-statement",
           "original": "@kossi-components/spinner/spinner-component"
-        },
-        {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
         },
         {
           "path": "<runtime>",
@@ -24035,7 +23999,7 @@
       "format": "esm"
     },
     "src/app/modals/reloading/reloading.component.ts": {
-      "bytes": 2577,
+      "bytes": 2318,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -24056,11 +24020,6 @@
           "path": "src/app/components/modal-layout/modal-layout.component.ts",
           "kind": "import-statement",
           "original": "../../components/modal-layout/modal-layout.component"
-        },
-        {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
         }
       ],
       "format": "esm"
@@ -24184,7 +24143,7 @@
       "format": "esm"
     },
     "src/app/modals/logout/logout-confirm.component.ts": {
-      "bytes": 2576,
+      "bytes": 2449,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -24205,11 +24164,6 @@
           "path": "src/app/components/modal-layout/modal-layout.component.ts",
           "kind": "import-statement",
           "original": "../../components/modal-layout/modal-layout.component"
-        },
-        {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
         }
       ],
       "format": "esm"
@@ -24256,7 +24210,7 @@
       "format": "esm"
     },
     "src/app/modals/sync-for-offline/sync-for-offline.component.ts": {
-      "bytes": 29534,
+      "bytes": 29400,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -24327,11 +24281,6 @@
           "path": "src/app/components/modal-layout/modal-layout.component.ts",
           "kind": "import-statement",
           "original": "../../components/modal-layout/modal-layout.component"
-        },
-        {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
         },
         {
           "path": "<runtime>",
@@ -25414,6 +25363,37 @@
       ],
       "format": "esm"
     },
+    "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs": {
+      "bytes": 37730,
+      "imports": [
+        {
+          "path": "node_modules/@angular/core/fesm2022/core.mjs",
+          "kind": "import-statement",
+          "original": "@angular/core"
+        },
+        {
+          "path": "node_modules/@angular/core/fesm2022/core.mjs",
+          "kind": "import-statement",
+          "original": "@angular/core"
+        },
+        {
+          "path": "node_modules/rxjs/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "rxjs"
+        },
+        {
+          "path": "node_modules/rxjs/dist/esm/operators/index.js",
+          "kind": "import-statement",
+          "original": "rxjs/operators"
+        },
+        {
+          "path": "<runtime>",
+          "kind": "import-statement",
+          "external": true
+        }
+      ],
+      "format": "esm"
+    },
     "node_modules/@messageformat/core/messageformat.js": {
       "bytes": 183176,
       "imports": [],
@@ -25436,7 +25416,7 @@
       "format": "esm"
     },
     "src/app/components/fix-modal-layout/fix-modal-layout.component.ts": {
-      "bytes": 15222,
+      "bytes": 14931,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -25469,11 +25449,6 @@
           "original": "src/app/pipes/safe-html.pipe"
         },
         {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
-        },
-        {
           "path": "<runtime>",
           "kind": "import-statement",
           "external": true
@@ -25482,7 +25457,7 @@
       "format": "esm"
     },
     "src/app/modals/roles-crud/roles-crud.component.ts": {
-      "bytes": 2536,
+      "bytes": 2409,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -25503,17 +25478,12 @@
           "path": "src/app/components/modal-layout/modal-layout.component.ts",
           "kind": "import-statement",
           "original": "../../components/modal-layout/modal-layout.component"
-        },
-        {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
         }
       ],
       "format": "esm"
     },
     "src/app/modals/delete-remove/delete-remove-confirm.component.ts": {
-      "bytes": 2653,
+      "bytes": 2526,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -25534,11 +25504,6 @@
           "path": "src/app/components/modal-layout/modal-layout.component.ts",
           "kind": "import-statement",
           "original": "../../components/modal-layout/modal-layout.component"
-        },
-        {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
         }
       ],
       "format": "esm"
@@ -25743,92 +25708,92 @@
       "bytes": 1355,
       "imports": []
     },
-    "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
-      "bytes": 181,
-      "imports": []
-    },
-    "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
-      "bytes": 619,
-      "imports": []
-    },
-    "src/app/modules/reports/family-planning/family-planning.component.css": {
-      "bytes": 775,
-      "imports": []
-    },
-    "src/app/modules/reports/promotion/promotion.component.css": {
-      "bytes": 712,
-      "imports": []
-    },
-    "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
-      "bytes": 4706,
-      "imports": []
-    },
-    "src/app/components/top-navigation/top-nav.component.css": {
-      "bytes": 212,
-      "imports": []
-    },
-    "src/app/modules/errors/unauthorized/unauthorized.component.css": {
-      "bytes": 40,
-      "imports": []
-    },
-    "src/app/components/spinner/spinner-component.css": {
-      "bytes": 915,
-      "imports": []
-    },
     "src/app/modules/reports/pcime/pcime.component.css": {
       "bytes": 1096,
-      "imports": []
-    },
-    "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
-      "bytes": 84,
-      "imports": []
-    },
-    "src/app/modules/errors/500/500.component.css": {
-      "bytes": 40,
-      "imports": []
-    },
-    "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
-      "bytes": 943,
-      "imports": []
-    },
-    "src/app/modules/admin/users/users.component.css": {
-      "bytes": 2636,
-      "imports": []
-    },
-    "src/app/components/loader/loader-component.css": {
-      "bytes": 1508,
-      "imports": []
-    },
-    "src/app/modules/admin/roles/roles.component.css": {
-      "bytes": 1209,
-      "imports": []
-    },
-    "src/app/modules/admin/signature/signature.component.css": {
-      "bytes": 742,
       "imports": []
     },
     "src/app/modules/reports/household-recap/household-recap.component.css": {
       "bytes": 712,
       "imports": []
     },
-    "src/app/modules/auths/login/login.component.css": {
-      "bytes": 374,
+    "src/app/modules/reports/promotion/promotion.component.css": {
+      "bytes": 712,
       "imports": []
     },
-    "src/app/components/snackbar/snackbar.component.css": {
-      "bytes": 1247,
+    "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
+      "bytes": 1458,
       "imports": []
     },
-    "src/app/components/modal-layout/modal-layout.component.css": {
-      "bytes": 3552,
+    "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
+      "bytes": 84,
+      "imports": []
+    },
+    "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
+      "bytes": 619,
+      "imports": []
+    },
+    "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
+      "bytes": 181,
+      "imports": []
+    },
+    "src/app/components/spinner/spinner-component.css": {
+      "bytes": 915,
+      "imports": []
+    },
+    "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
+      "bytes": 4706,
+      "imports": []
+    },
+    "src/app/modules/errors/unauthorized/unauthorized.component.css": {
+      "bytes": 40,
       "imports": []
     },
     "src/app/modules/errors/404/404.component.css": {
       "bytes": 40,
       "imports": []
     },
-    "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
-      "bytes": 1458,
+    "src/app/modules/errors/500/500.component.css": {
+      "bytes": 40,
+      "imports": []
+    },
+    "src/app/components/modal-layout/modal-layout.component.css": {
+      "bytes": 3552,
+      "imports": []
+    },
+    "src/app/modules/admin/users/users.component.css": {
+      "bytes": 2636,
+      "imports": []
+    },
+    "src/app/components/snackbar/snackbar.component.css": {
+      "bytes": 1247,
+      "imports": []
+    },
+    "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
+      "bytes": 943,
+      "imports": []
+    },
+    "src/app/modules/reports/family-planning/family-planning.component.css": {
+      "bytes": 775,
+      "imports": []
+    },
+    "src/app/modules/admin/roles/roles.component.css": {
+      "bytes": 1209,
+      "imports": []
+    },
+    "src/app/components/top-navigation/top-nav.component.css": {
+      "bytes": 212,
+      "imports": []
+    },
+    "src/app/modules/auths/login/login.component.css": {
+      "bytes": 374,
+      "imports": []
+    },
+    "src/app/components/loader/loader-component.css": {
+      "bytes": 1508,
+      "imports": []
+    },
+    "src/app/modules/admin/signature/signature.component.css": {
+      "bytes": 742,
       "imports": []
     },
     "node_modules/zone.js/fesm2015/zone.js": {
@@ -25866,7 +25831,7 @@
     }
   },
   "outputs": {
-    "main-ZXDBQN5E.js": {
+    "main-H3V3ODBU.js": {
       "imports": [
         {
           "path": "chunk-MJA4J3NR.js",
@@ -25951,11 +25916,8 @@
         "src/app/components/spinner/spinner-component.ts": {
           "bytesInOutput": 655
         },
-        "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs": {
-          "bytesInOutput": 11138
-        },
         "src/app/components/modal-layout/modal-layout.component.ts": {
-          "bytesInOutput": 6744
+          "bytesInOutput": 6661
         },
         "src/app/modals/session-expired/session-expired.component.ts": {
           "bytesInOutput": 1061
@@ -25973,7 +25935,7 @@
           "bytesInOutput": 964
         },
         "src/app/modals/reloading/reloading.component.ts": {
-          "bytesInOutput": 1076
+          "bytesInOutput": 992
         },
         "node_modules/@angular/service-worker/fesm2022/service-worker.mjs": {
           "bytesInOutput": 5023
@@ -25985,13 +25947,13 @@
           "bytesInOutput": 3386
         },
         "src/app/modals/logout/logout-confirm.component.ts": {
-          "bytesInOutput": 1110
+          "bytesInOutput": 1080
         },
         "src/app/services/db-sync.service.ts": {
           "bytesInOutput": 9047
         },
         "src/app/modals/sync-for-offline/sync-for-offline.component.ts": {
-          "bytesInOutput": 14295
+          "bytesInOutput": 14264
         },
         "src/app/components/top-navigation/top-nav.component.ts": {
           "bytesInOutput": 4108
@@ -26068,6 +26030,9 @@
         "node_modules/@ngrx/store/fesm2022/ngrx-store.mjs": {
           "bytesInOutput": 11413
         },
+        "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs": {
+          "bytesInOutput": 8689
+        },
         "src/app/providers/translate-messageformat-compiler.provider.ts": {
           "bytesInOutput": 531
         },
@@ -26078,7 +26043,7 @@
           "bytesInOutput": 52
         }
       },
-      "bytes": 377986
+      "bytes": 375301
     },
     "reports.module-UZO3QLLB.js": {
       "imports": [
@@ -27159,86 +27124,6 @@
       "bytes": 730,
       "ng-component": true
     },
-    "sync-calculate-all-data.component-YGNRVXP6.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
-          "bytesInOutput": 86
-        }
-      },
-      "bytes": 87,
-      "ng-component": true
-    },
-    "reco-performance.component-72ZZMWJL.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
-          "bytesInOutput": 427
-        }
-      },
-      "bytes": 428,
-      "ng-component": true
-    },
-    "family-planning.component-SWSHL72L.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/reports/family-planning/family-planning.component.css": {
-          "bytesInOutput": 584
-        }
-      },
-      "bytes": 585,
-      "ng-component": true
-    },
-    "promotion.component-GSSNZC4C.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/reports/promotion/promotion.component.css": {
-          "bytesInOutput": 531
-        }
-      },
-      "bytes": 532,
-      "ng-component": true
-    },
-    "fix-modal-layout.component-TQGMGOR4.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
-          "bytesInOutput": 3609
-        }
-      },
-      "bytes": 3610,
-      "ng-component": true
-    },
-    "top-nav.component-5F5UI4LK.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/components/top-navigation/top-nav.component.css": {
-          "bytesInOutput": 160
-        }
-      },
-      "bytes": 161,
-      "ng-component": true
-    },
-    "unauthorized.component-RRUPYQ5M.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/errors/unauthorized/unauthorized.component.css": {
-          "bytesInOutput": 33
-        }
-      },
-      "bytes": 34,
-      "ng-component": true
-    },
-    "spinner-component-SCUXJOBC.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/components/spinner/spinner-component.css": {
-          "bytesInOutput": 210
-        }
-      },
-      "bytes": 211,
-      "ng-component": true
-    },
     "pcime.component-GN2A6FV7.css": {
       "imports": [],
       "inputs": {
@@ -27247,76 +27132,6 @@
         }
       },
       "bytes": 789,
-      "ng-component": true
-    },
-    "sync-for-offline.component-P2S6EGY5.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
-          "bytesInOutput": 68
-        }
-      },
-      "bytes": 69,
-      "ng-component": true
-    },
-    "500.component-ZTLJ7MIW.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/errors/500/500.component.css": {
-          "bytesInOutput": 33
-        }
-      },
-      "bytes": 34,
-      "ng-component": true
-    },
-    "reco-meg-stock.component-JOKFVNJY.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
-          "bytesInOutput": 633
-        }
-      },
-      "bytes": 634,
-      "ng-component": true
-    },
-    "users.component-4Q6XM2O5.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/admin/users/users.component.css": {
-          "bytesInOutput": 1852
-        }
-      },
-      "bytes": 1853,
-      "ng-component": true
-    },
-    "loader-component-SAI73YCN.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/components/loader/loader-component.css": {
-          "bytesInOutput": 1251
-        }
-      },
-      "bytes": 1252,
-      "ng-component": true
-    },
-    "roles.component-NEJPCUJ5.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/admin/roles/roles.component.css": {
-          "bytesInOutput": 871
-        }
-      },
-      "bytes": 872,
-      "ng-component": true
-    },
-    "signature.component-GAZ2OLJX.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/admin/signature/signature.component.css": {
-          "bytesInOutput": 587
-        }
-      },
-      "bytes": 588,
       "ng-component": true
     },
     "household-recap.component-XO775QPV.css": {
@@ -27329,34 +27144,84 @@
       "bytes": 532,
       "ng-component": true
     },
-    "login.component-LVEUBGCH.css": {
+    "promotion.component-GSSNZC4C.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/auths/login/login.component.css": {
-          "bytesInOutput": 317
+        "src/app/modules/reports/promotion/promotion.component.css": {
+          "bytesInOutput": 531
         }
       },
-      "bytes": 318,
+      "bytes": 532,
       "ng-component": true
     },
-    "snackbar.component-UQOAOZOE.css": {
+    "reco-vaccination.component-V2QNP3JH.css": {
       "imports": [],
       "inputs": {
-        "src/app/components/snackbar/snackbar.component.css": {
-          "bytesInOutput": 878
+        "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
+          "bytesInOutput": 1095
         }
       },
-      "bytes": 879,
+      "bytes": 1096,
       "ng-component": true
     },
-    "modal-layout.component-X2WXRHWY.css": {
+    "sync-for-offline.component-P2S6EGY5.css": {
       "imports": [],
       "inputs": {
-        "src/app/components/modal-layout/modal-layout.component.css": {
-          "bytesInOutput": 2793
+        "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
+          "bytesInOutput": 68
         }
       },
-      "bytes": 2794,
+      "bytes": 69,
+      "ng-component": true
+    },
+    "reco-performance.component-72ZZMWJL.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
+          "bytesInOutput": 427
+        }
+      },
+      "bytes": 428,
+      "ng-component": true
+    },
+    "sync-calculate-all-data.component-YGNRVXP6.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
+          "bytesInOutput": 86
+        }
+      },
+      "bytes": 87,
+      "ng-component": true
+    },
+    "spinner-component-SCUXJOBC.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/spinner/spinner-component.css": {
+          "bytesInOutput": 210
+        }
+      },
+      "bytes": 211,
+      "ng-component": true
+    },
+    "fix-modal-layout.component-TQGMGOR4.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
+          "bytesInOutput": 3609
+        }
+      },
+      "bytes": 3610,
+      "ng-component": true
+    },
+    "unauthorized.component-RRUPYQ5M.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/errors/unauthorized/unauthorized.component.css": {
+          "bytesInOutput": 33
+        }
+      },
+      "bytes": 34,
       "ng-component": true
     },
     "404.component-TSJYNTB5.css": {
@@ -27369,14 +27234,114 @@
       "bytes": 34,
       "ng-component": true
     },
-    "reco-vaccination.component-V2QNP3JH.css": {
+    "500.component-ZTLJ7MIW.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
-          "bytesInOutput": 1095
+        "src/app/modules/errors/500/500.component.css": {
+          "bytesInOutput": 33
         }
       },
-      "bytes": 1096,
+      "bytes": 34,
+      "ng-component": true
+    },
+    "modal-layout.component-X2WXRHWY.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/modal-layout/modal-layout.component.css": {
+          "bytesInOutput": 2793
+        }
+      },
+      "bytes": 2794,
+      "ng-component": true
+    },
+    "users.component-4Q6XM2O5.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/admin/users/users.component.css": {
+          "bytesInOutput": 1852
+        }
+      },
+      "bytes": 1853,
+      "ng-component": true
+    },
+    "snackbar.component-UQOAOZOE.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/snackbar/snackbar.component.css": {
+          "bytesInOutput": 878
+        }
+      },
+      "bytes": 879,
+      "ng-component": true
+    },
+    "reco-meg-stock.component-JOKFVNJY.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
+          "bytesInOutput": 633
+        }
+      },
+      "bytes": 634,
+      "ng-component": true
+    },
+    "family-planning.component-SWSHL72L.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/reports/family-planning/family-planning.component.css": {
+          "bytesInOutput": 584
+        }
+      },
+      "bytes": 585,
+      "ng-component": true
+    },
+    "roles.component-NEJPCUJ5.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/admin/roles/roles.component.css": {
+          "bytesInOutput": 871
+        }
+      },
+      "bytes": 872,
+      "ng-component": true
+    },
+    "top-nav.component-5F5UI4LK.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/top-navigation/top-nav.component.css": {
+          "bytesInOutput": 160
+        }
+      },
+      "bytes": 161,
+      "ng-component": true
+    },
+    "login.component-LVEUBGCH.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/auths/login/login.component.css": {
+          "bytesInOutput": 317
+        }
+      },
+      "bytes": 318,
+      "ng-component": true
+    },
+    "loader-component-SAI73YCN.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/loader/loader-component.css": {
+          "bytesInOutput": 1251
+        }
+      },
+      "bytes": 1252,
+      "ng-component": true
+    },
+    "signature.component-GAZ2OLJX.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/admin/signature/signature.component.css": {
+          "bytesInOutput": 587
+        }
+      },
+      "bytes": 588,
       "ng-component": true
     },
     "polyfills-S3BTP7ME.js": {

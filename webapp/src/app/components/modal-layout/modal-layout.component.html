@@ -9,12 +9,12 @@
   <div class="modal-body"><ng-content></ng-content></div>
 
   <div *ngIf="showBottomElements == true" class="modal-footer">
-    <p class="modal-error" *ngIf="error || errorMsg">{{ error||errorMsg | translate }}</p>
+    <p class="modal-error" *ngIf="error || errorMsg">{{ error||errorMsg }}</p>
     <button *ngIf="showCancelButton == true" class="btn grey-back" mat-button [class.disabled]="processing == true"
-      (click)="cancel()" test-id="cancel">{{ (cancelBtnName || 'Cancel') | translate }}</button>
+      (click)="cancel()" test-id="cancel">{{ (cancelBtnName || 'Cancel') }}</button>
     <button class="flat-button btn {{ isFlatButton == true ? 'mat-flat-button' : modalActionColor }}"
       [class.disabled]="processing == true" (click)="submit()" color="primary">
-      {{ (submitBtnName || 'Confirm') | translate}}
+      {{ (submitBtnName || 'Confirm')}}
       <app-spinner style="margin-left: 10px;" [isLoading]="processing == true"></app-spinner>
     </button>
   </div>

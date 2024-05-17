@@ -14,7 +14,7 @@
 //  * };
 //  *
 //  * // In template : (yields 'Go visit Estelle')
-//  * {{task.instructionsLabel | translateFrom:task}}
+//  * {{task.instructionsLabelFrom:task}}
 //  */
 // @Pipe({
 //   name: 'translateFrom'

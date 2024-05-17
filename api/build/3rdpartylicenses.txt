@@ -80,11 +80,6 @@ SOFTWARE.
 
 
 --------------------------------------------------------------------------------
-Package: @ngx-translate/core
-License: "SEE LICENSE IN LICENSE"
-
-
---------------------------------------------------------------------------------
 Package: @angular/service-worker
 License: "MIT"
 
@@ -211,6 +206,11 @@ SOFTWARE.
 This repository includes a file "debounceSync.ts" originially copied from
 https://github.com/cartant/rxjs-etc by Nicholas Jamieson, MIT licensed. See the
 file header for details.
+
+--------------------------------------------------------------------------------
+Package: @ngx-translate/core
+License: "SEE LICENSE IN LICENSE"
+
 
 --------------------------------------------------------------------------------
 Package: pdfmake
