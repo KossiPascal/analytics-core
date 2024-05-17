@@ -1,0 +1,67 @@
+#wrapper {
+  position: absolute!important;
+  left: 0!important;
+  width: 600px!important;
+  text-align: center!important;
+  top: 35%!important;
+  left: 50%!important;
+  margin-left: -300px!important;
+  margin-top: -160px!important;
+  -webkit-user-select: none!important;
+  -moz-user-select: none!important;
+  user-select: none!important;
+}
+h1 {
+  font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif!important;
+  color:#03178a!important;
+  font-weight: 700!important;
+  font-size: 30px!important;
+  letter-spacing: 5px!important;
+  text-transform: uppercase!important;
+  margin: 12px 0!important;
+  left: 4px!important;
+}
+h2 {
+  color: #0026ff!important;
+  font-weight: normal!important;
+  font-size: 22px!important;
+  letter-spacing: 12px!important;
+  margin-bottom: 30px!important;
+  left: 3px!important;
+}
+
+h3 {
+  color: #999!important;
+  font-weight: normal!important;
+  font-size: 18px!important;
+  letter-spacing: 6px!important;
+  margin-bottom: 30px!important;
+  left: 3px!important;
+}
+
+h1, h2, h3 {
+  position: relative!important;
+}
+p {
+  font-size: 14px!important;
+  line-height: 2em!important;
+  margin: 0!important;
+  letter-spacing: 2px!important;
+}
+canvas {
+  position: absolute!important;
+  top: 0!important;
+  left: 0!important;
+  z-index: 0!important;
+  width: 100%!important;
+  height: 100%!important;
+  pointer-events: none!important;
+}
+a {
+  color: #999!important;
+  text-decoration: none!important;
+  transition: color .2s ease!important;
+}
+a:hover {
+  color: #f33!important;
+}

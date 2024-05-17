@@ -1,0 +1,206 @@
+var JFile = require('jfile');
+import fs from 'fs';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+import { CouchDbFetchData } from './Interfaces';
+const axios = require('axios');
+
+const srcFolder = path.dirname(__dirname);
+const apiFolder = path.dirname(srcFolder);
+const projectFolder = path.dirname(apiFolder);
+
+dotenv.config({ path: `${projectFolder}/.env` });
+const { NODE_ENV, CHT_USER, CHT_PASS, CHT_HOST, CHT_PROTOCOL, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
+
+export async function AxioFetchCouchDbData(viewName:string, { username, password, startKey, endKey }: { username?: string, password?: string, startKey?: string, endKey?: string }): Promise<any> {
+    const dbName = 'medic';
+    const couchDbUrl = `${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}`;
+    username = username ?? CHT_USER;
+    password = password ?? CHT_PASS;
+    const couchArg = ['include_docs=true', 'returnDocs=true', 'attachments=false', 'binary=false', 'reduce=false', 'descending=false'];
+    if (startKey) couchArg.push('key=[' + startKey + ']');
+    if (endKey) couchArg.push('endkey=[' + endKey + ']');
+    return await axios.get(`${CHT_PROTOCOL}://${couchDbUrl}/${dbName}/_design/medic-client/_view/${viewName}?${couchArg.join('&')}`, {
+        auth: {
+            username,
+            password
+        }
+    })
+}
+
+
+function CouchDbFetchDataOptions(params: CouchDbFetchData,) {
+    var dbCibleUrl = `/medic/_design/medic-client/_view/${params.viewName}`;
+    if (dbCibleUrl[0] != '/') dbCibleUrl = `/${dbCibleUrl}`;
+    if (dbCibleUrl[dbCibleUrl.length - 1] == '/') dbCibleUrl.slice(0, -1);
+
+    var couchArg = ['include_docs=true', 'returnDocs=true', 'attachments=false', 'binary=false', 'reduce=false'];
+    couchArg.push(`descending=${params.descending == true}`);
+    if (notEmpty(params.startKey)) couchArg.push(`key=[${params.startKey}]`);
+    if (notEmpty(params.endKey)) couchArg.push(`endkey=[${params.endKey}]`);
+    const port = parseInt((NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT) ?? '443');
+    var options = {
+        host: CHT_HOST ?? '',
+        port: port,
+        path: `${dbCibleUrl}?${couchArg.join('&')}`,
+        url: `${CHT_HOST}:${port}${dbCibleUrl}?${couchArg.join('&')}`,
+        use_SSL_verification: true,
+        user: CHT_USER ?? '',
+        pass: CHT_PASS ?? '',
+    };
+    return getHttpsOptions(options);
+}
+
+
+export function getHttpsOptions(data: any): Object {
+    var options: Object = {
+        host: data.host,
+        port: data.port,
+        path: data.path,
+        url: data.url,
+        rejectUnauthorized: data.use_SSL_verification === true,
+        requestCert: data.use_SSL_verification === true,
+        strictSSL: data.use_SSL_verification === true,
+        agent: false,
+        headers: httpHeaders('Basic ' + Buffer.from(data.user + ':' + data.pass).toString('base64')),
+        ca: []
+        // ca: data.use_SSL_verification === true ? rootCas.addFile(`${sslFolder('server.pem')}`) : []
+    }
+    return options;
+}
+
+export function logNginx(message: any) {
+    console.log(message);
+    try {
+        let nxFile = new JFile('/var/log/nginx/access.log');
+        nxFile.text += `\n${message}`;
+    } catch (error) {
+
+    }
+}
+
+export function isTrue(data: any) {
+    return notEmpty(data) && (data === true || data === `true` || data === `yes`);
+}
+
+export function dataTransform(data: any, returnType: 'string' | 'boolean' | 'null_false' | 'number' | 'double' | ''): any {
+    if (notEmpty(data)) {
+        if (returnType === 'string') return `${data}`;
+        if (returnType === 'boolean') return isTrue(data);
+        if (returnType === 'null_false') return isTrue(data) ? true : null;
+        if (returnType === 'number') return parseInt(`${data}`);
+        if (returnType === 'double') return parseFloat(`${data}`);
+        return `${data}`;
+    }
+    return null;
+}
+
+export function getSexe(sex: string) {
+    if (sex === 'male' || sex === 'Male' || sex === 'homme' || sex === 'Homme') return 'M';
+    if (sex === 'female' || sex === 'Female' || sex === 'femme' || sex === 'Femme') return 'F';
+    return null;
+}
+
+export function hasCommunElement(elem1: string[], elem2: string[]): boolean {
+    if (elem1.length > 0 && elem2.length > 0) {
+        for (const elm of elem1) {
+            if (elem2.includes(elm)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+export function normalizePort(val: any) {
+    var port = parseInt(val, 10);
+    if (isNaN(port)) return val;
+    if (port >= 0) return port;
+    return false;
+}
+
+export function appVersion(): { service_worker_version: number | null, app_version: string | null } {
+    var service_worker_version = null;
+    var app_version = null;
+    try {
+        service_worker_version = require('../../build/browser/ngsw.json')?.timestamp;
+        app_version = require('../../package.json')?.version;
+    } catch (error) { }
+
+    return {
+        service_worker_version: service_worker_version,
+        app_version: app_version
+    };
+}
+
+export function versionAsInt(version: string): number {
+    const v = version.split('.');
+    var res = '';
+    for (let i = 0; i < v.length; i++) {
+        const e = v[i];
+        res += e
+    }
+    return parseInt(res);
+}
+
+export function notEmpty(data: any): boolean {
+    return data != '' && data != ' ' && data != null && data != undefined && data.length != 0 && JSON.stringify(data) != JSON.stringify({}) && `${data}` != `{}`;
+}
+
+export function createDirectories(path: string, cb: (err: NodeJS.ErrnoException | null) => void) {
+    try {
+        if (!fs.existsSync(path)) {
+            fs.mkdirSync(path, { recursive: true });
+            cb(null);
+        } else {
+            cb(null);
+        }
+    } catch (error: any) {
+        cb(error)
+    }
+}
+
+export function httpHeaders(Username?: string, Password?: string, WithParams: boolean = true) {
+    // NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    var p: any = {
+        'Authorization': 'Basic ' + Buffer.from(notEmpty(Username) && notEmpty(Password) ? `${Username}:${Password}` : `${CHT_USER}:${CHT_PASS}`).toString('base64'),
+        "Accept": "application/json",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "DELETE, POST, GET, PUT, OPTIONS",
+        "Access-Control-Allow-Headers": "X-API-KEY, Origin, X-Requested-With, Content-Type, Accept,Access-Control-Request-Method, Authorization,Access-Control-Allow-Headers",
+    }
+    if (WithParams) {
+        p["Content-Type"] = "application/json";
+        // 'Accept-Charset': 'UTF-8',
+        // "Access-Control-Allow-Origin": "*",
+        // "Access-Control-Max-Age": "86400",
+        // 'ca': [fs.readFileSync(path.dirname(__dirname)+'/ssl/server.pem', {encoding: 'utf-8'})]
+        // 'Accept-Encoding': '*',
+    }
+    return p;
+}
+
+
+export function getColors(numberOfColors: number) {
+    const backgroundColor = [];
+    const colors = [];
+    for (let i = 0; i < (numberOfColors * 2); i++) {
+      const color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+      if (backgroundColor.length !== numberOfColors) {
+        backgroundColor.push(color);
+      } else {
+        colors.push(color);
+      }
+    }
+    return { backgroundColors: backgroundColor, colors: colors };
+  }
+
+
+export function getFirstAndLastDayOfMonth(year: number, month: string, withHours: boolean = false): { start_date: string, end_date: string } {
+    const monthNumber = parseInt(month, 10);
+    const startDate = (new Date(year, monthNumber - 1, 1)).toISOString().split('T')[0];
+    const endDate = (new Date(year, monthNumber, 0)).toISOString().split('T')[0];
+    return {
+        start_date: withHours ? startDate : startDate.split(' ')[0],
+        end_date: withHours ? endDate : endDate.split(' ')[0]
+    };
+}

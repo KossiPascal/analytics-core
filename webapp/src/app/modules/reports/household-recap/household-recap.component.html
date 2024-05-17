@@ -1,0 +1,172 @@
+<div style="margin: 0px 5px 0px 5px;" class="row g-4">
+  <div class="col-12">
+    <div class="bg-white rounded h-100 p-0">
+      <!-- <h6 class="mb-4">TITRE</h6> -->
+
+      <div class="load-data">
+        <div class="rounded p-6">
+          <form [formGroup]="_formGroup" (ngSubmit)="SHOW_DATA($event)" novalidate>
+
+            <div class="row">
+
+              <div class="col-6">
+                <!-- <select (change)="regionsGenerate()" *ngIf="Countries$.length > 0" class="orgunit-style form-select mb-2" formControlName="country">
+                    <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
+                      {{ c.name }}
+                    </option>
+                </select> -->
+                <select (change)="prefecturesGenerate()" *ngIf="Regions$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="region">
+                  <option *ngFor="let r of regions" [value]="r.id" [selected]="isSelected(r.id, 'region')">
+                    {{ r.name }}
+                  </option>
+                </select>
+                <select (change)="communesGenerate()" *ngIf="Prefectures$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="prefecture">
+                  <option *ngFor="let p of prefectures" [value]="p.id" [selected]="isSelected(p.id, 'prefecture')">
+                    {{ p.name }}
+                  </option>
+                </select>
+                <select (change)="hospitalsGenerate()" *ngIf="Communes$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="commune">
+                  <option *ngFor="let c of communes" [value]="c.id" [selected]="isSelected(c.id, 'commune')">
+                    {{ c.name }}
+                  </option>
+                </select>
+                <select (change)="districtsGenerate()" *ngIf="Hospitals$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="hospital">
+                  <option *ngFor="let h of hospitals" [value]="h.id" [selected]="isSelected(h.id, 'hospital')">
+                    {{ h.name }}
+                  </option>
+                </select>
+                <select (change)="recosGenerate()" *ngIf="DistrictQuartiers$.length > 1"
+                  class="orgunit-style form-select mb-2"
+                  formControlName="district_quartier">
+                  <option *ngFor="let d of districtQuartiers" [value]="d.id"
+                    [selected]="isSelected(d.id, 'district_quartier')">
+                    {{ d.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-6">
+
+                <select *ngIf="Recos$.length > 1" class="orgunit-style form-select mb-2" multiple formControlName="recos">
+                  <option *ngFor="let r of recos" [value]="r.id" [selected]="isSelected(r.id, 'recos')">
+                    {{ r.name }}
+                  </option>
+                </select>
+
+                <select class="orgunit-style form-select mb-2" formControlName="year">
+                  <ng-container *ngIf="Years$.length > 0">
+                    <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
+                      {{ y }}
+                    </option>
+                  </ng-container>
+                </select>
+
+                <select class="orgunit-style form-select mb-2"
+                  formControlName="months">
+                  <ng-container *ngIf="Months$.length > 0">
+                    <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$"
+                      [value]="m.id" [selected]="isSelected(m.id, 'month')">
+                      {{ m.labelFR }}
+                    </option>
+                  </ng-container>
+                </select>
+
+                <button style="width: 100%;" [disabled]="data_syncing" class="btn btn-info">
+                  Charger
+                  <span *ngIf="data_syncing" class="fas fa-1x fa-sync-alt fa-spin"></span>
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <!-- <table class="table table-bordered table-dark table-hover table-striped"> -->
+        <table class="table table-bordered table-hover">
+          <thead class="no-border">
+            <tr>
+              <td style="height: 30px!important;" colspan="9">
+                <h4 style="color: black!important;text-align: center!important;">
+                  TABLEAU RECAPITULATIF DES MENAGES
+                </h4>
+              </td>
+            </tr>
+          </thead>
+
+          <tr class="no-border">
+            <td class="separation" colspan="9"></td>
+          </tr>
+
+          <thead class="no-border org-units">
+            <tr>
+              <td colspan="4">REGION: DRS DE <b>{{ REGION_NAME }}</b></td>
+              <td colspan="5">NOM DU {{ RECO_ASC_TYPE }}: <b>{{ RECO_ASC_NAME }}</b></td>
+            </tr>
+            <tr>
+              <td colspan="4">PREFECTURE: DPS/DCS <b>{{ PREFECTURE_NAME }}</b></td>
+              <td colspan="3">SIGNATURE DE {{ RECO_ASC_TYPE }}: <b>_________</b></td>
+            </tr>
+            <tr>
+              <td colspan="4">COMMUNE/SOUS PREFECTURE/CS DE: <b>{{ COMMUNE_NAME }}</b></td>
+              <td colspan="3">DISTRICT/QUARTIER: <b>{{ DISTRICT_QUARTIER_NAME }}</b></td>
+            </tr>
+            <tr>
+              <td colspan="4">VILLAGE/SECTEUR :: <b>{{ VILLAGE_SECTEUR_NAME }}</b></td>
+              <td colspan="3">MOIS / ANNEE: <b>{{ MONTH }}</b> / <b>{{ YEAR }}</b></td>
+            </tr>
+          </thead>
+
+          <tr class="no-border">
+            <td class="separation" colspan="9"></td>
+          </tr>
+
+          <thead>
+            <tr class="table-head">
+              <th style="width: 2%;" scope="col">N°</th>
+              <th style="width: 2.5%;" scope="col">N° ménage</th>
+              <th scope="col">Nom Ménage</th>
+              <th style="width: 9%;" scope="col">Total membres ménages</th>
+              <th style="width: 9%;" scope="col">Total femmes 15-49 ans</th>
+              <th style="width: 9%;" scope="col">Total enfants moins de 5 ans</th>
+              <th style="width: 9%;" scope="col">Total enfants de 0-11 mois</th>
+              <th style="width: 9%;" scope="col">Total enfants de 12-59 mois</th>
+              <th style="width: 9%;" scope="col">Latrine fonctionnelle</th>
+              <th style="width: 9%;" scope="col">Accès à l'eau potable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let hr of HOUSE_HOLD_RECAP$">
+              <th scope="row">{{ hr.index }}</th>
+              <td>{{ hr.household_code }}</td>
+              <td>{{ hr.household_name }}</td>
+              <td>{{ hr.total_household_members }}</td>
+              <td>{{ hr.total_women_15_50_years }}</td>
+              <td>{{ hr.total_children_under_5_years }}</td>
+              <td>{{ hr.total_children_0_12_months }}</td>
+              <td>{{ hr.total_children_12_60_months }}</td>
+              <td>{{ hr.has_functional_latrine === true ? 'OUI' : '' }}</td>
+              <td>{{ hr.has_drinking_water_access === true ? 'OUI' : '' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr *ngIf="HOUSE_HOLD_RECAP_TOTAL$ as t" style="color: rgb(94, 94, 94);">
+              <th colspan="3" scope="row">TOTAL</th>
+              <th>{{ t.total_household_members }}</th>
+              <th>{{ t.total_women_15_50_years }}</th>
+              <th>{{ t.total_children_under_5_years }}</th>
+              <th>{{ t.total_children_0_12_months }}</th>
+              <th>{{ t.total_children_12_60_months }}</th>
+              <th>{{ t.has_functional_latrine }}</th>
+              <th>{{ t.has_drinking_water_access }}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

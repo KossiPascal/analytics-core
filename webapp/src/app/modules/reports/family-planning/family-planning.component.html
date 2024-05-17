@@ -1,0 +1,253 @@
+<div style="margin: 0px 5px 0px 5px;" class="row g-4">
+  <div class="col-12">
+    <div class="bg-white rounded h-100 p-0">
+      <!-- <h6 class="mb-4">TITRE</h6> -->
+
+      <div class="load-data">
+        <div class="rounded p-6">
+          <form [formGroup]="_formGroup" (ngSubmit)="SHOW_DATA($event)" novalidate>
+
+            <div class="row">
+
+              <div class="col-6">
+                <!-- <select (change)="regionsGenerate()" *ngIf="Countries$.length > 0" class="orgunit-style form-select mb-2" formControlName="country">
+                    <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
+                      {{ c.name }}
+                    </option>
+                </select> -->
+                <select (change)="prefecturesGenerate()" *ngIf="Regions$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="region">
+                  <option *ngFor="let r of regions" [value]="r.id" [selected]="isSelected(r.id, 'region')">
+                    {{ r.name }}
+                  </option>
+                </select>
+                <select (change)="communesGenerate()" *ngIf="Prefectures$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="prefecture">
+                  <option *ngFor="let p of prefectures" [value]="p.id" [selected]="isSelected(p.id, 'prefecture')">
+                    {{ p.name }}
+                  </option>
+                </select>
+                <select (change)="hospitalsGenerate()" *ngIf="Communes$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="commune">
+                  <option *ngFor="let c of communes" [value]="c.id" [selected]="isSelected(c.id, 'commune')">
+                    {{ c.name }}
+                  </option>
+                </select>
+                <select (change)="districtsGenerate()" *ngIf="Hospitals$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="hospital">
+                  <option *ngFor="let h of hospitals" [value]="h.id" [selected]="isSelected(h.id, 'hospital')">
+                    {{ h.name }}
+                  </option>
+                </select>
+                <select (change)="recosGenerate()" *ngIf="DistrictQuartiers$.length > 1"
+                  class="orgunit-style form-select mb-2"
+                  formControlName="district_quartier">
+                  <option *ngFor="let d of districtQuartiers" [value]="d.id"
+                    [selected]="isSelected(d.id, 'district_quartier')">
+                    {{ d.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-6">
+
+                <select *ngIf="Recos$.length > 1" class="orgunit-style form-select mb-2" multiple formControlName="recos">
+                  <option *ngFor="let r of recos" [value]="r.id" [selected]="isSelected(r.id, 'recos')">
+                    {{ r.name }}
+                  </option>
+                </select>
+
+                <select class="orgunit-style form-select mb-2" formControlName="year">
+                  <ng-container *ngIf="Years$.length > 0">
+                    <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
+                      {{ y }}
+                    </option>
+                  </ng-container>
+                </select>
+
+                <select class="orgunit-style form-select mb-2"
+                  formControlName="months">
+                  <ng-container *ngIf="Months$.length > 0">
+                    <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$"
+                      [value]="m.id" [selected]="isSelected(m.id, 'month')">
+                      {{ m.labelFR }}
+                    </option>
+                  </ng-container>
+                </select>
+
+                <button style="width: 100%;" [disabled]="data_syncing" class="btn btn-info">
+                  Charger
+                  <span *ngIf="data_syncing" class="fas fa-1x fa-sync-alt fa-spin"></span>
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <!-- <table class="table table-bordered table-dark table-hover table-striped"> -->
+        <table class="table table-bordered table-hover">
+          <thead class="no-border">
+            <tr>
+              <td style="height: 30px!important;" colspan="9">
+                <h5 style="color: black!important;text-align: left!important;">
+                  RAPPORT MENSUEL DE PLANIFICATION FAMILIALE DANS LA COMMUNAUTE DU RECO/ASC
+                </h5>
+              </td>
+            </tr>
+          </thead>
+
+          <tr class="no-border">
+            <td class="separation" colspan="9"></td>
+          </tr>
+
+          <thead class="no-border org-units">
+            <tr>
+              <td colspan="3">REGION: DRS DE <b>{{ REGION_NAME }}</b></td>
+              <td colspan="3">PREFECTURE: DPS DE <b>{{ PREFECTURE_NAME }}</b></td>
+            </tr>
+            <tr>
+              <td colspan="3">COMMUNE/SOUS PREFECTURE/CS DE: <b>{{ COMMUNE_NAME }}</b></td>
+              <td colspan="3">MOIS / ANNEE: <b>{{ MONTH }}</b> / <b>{{ YEAR }}</b></td>
+            </tr>
+            <tr>
+              <td colspan="3">VILLAGE/QUARTIER: <b>{{ VILLAGE_QUARTIER_NAME }}</b></td>
+              <td colspan="3">NOM DU CHEF DE VILLAGE: <b>{{ VILLAGE_CHIEF_NAME }}</b></td>
+            </tr>
+            <tr>
+              <td colspan="3">CONTACT DU CHEF DE VILLAGE: <b>{{ VILLAGE_CHIEF_CONTACT }}</b></td>
+              <td colspan="3">NOM DU {{ RECO_ASC_TYPE }}: <b>{{ RECO_ASC_NAME }}</b></td>
+            </tr>
+          </thead>
+
+          <tr class="no-border">
+            <td class="separation" colspan="9"></td>
+          </tr>
+
+          <thead>
+            <tr class="table-head fp-header-1">
+              <th rowspan="2" scope="col">METHODES</th>
+              <th rowspan="2" scope="col">Nouveaux utilisateurs</th>
+              <th rowspan="2" scope="col">Utilisateurs reguliers</th>
+              <th rowspan="2" scope="col">Total Utilisateurs</th>
+              <th rowspan="2" scope="col">Quantités de produits délivrés</th>
+              <th rowspan="2" scope="col">Quantité de produits en stocks</th>
+              <td colspan="3" scope="col"><b>Nombre référé</b></td>
+            </tr>
+            <tr class="table-head fp-header-2">
+              <th scope="col">Méthode PF (autre)</th>
+              <th scope="col">Effets Secondaires</th>
+            </tr>
+          </thead>
+          <tbody *ngIf="FAMILY_PLANNING$ as fp">
+            <tr>
+              <th scope="row">Pilule - COC</th>
+              <th>{{ fp.pill_coc.nbr_new_user }}</th>
+              <th>{{ fp.pill_coc.nbr_regular_user }}</th>
+              <th>{{ fp.pill_coc.nbr_total_user }}</th>
+              <th>{{ fp.pill_coc.nbr_delivered }}</th>
+              <th>{{ fp.pill_coc.nbr_in_stock }}</th>
+              <th>{{ fp.pill_coc.nbr_referred }}</th>
+              <th>{{ fp.pill_coc.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">Pilule - COP</th>
+              <th>{{ fp.pill_cop.nbr_new_user }}</th>
+              <th>{{ fp.pill_cop.nbr_regular_user }}</th>
+              <th>{{ fp.pill_cop.nbr_total_user }}</th>
+              <th>{{ fp.pill_cop.nbr_delivered }}</th>
+              <th>{{ fp.pill_cop.nbr_in_stock }}</th>
+              <th>{{ fp.pill_cop.nbr_referred }}</th>
+              <th>{{ fp.pill_cop.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">Condoms/Preservatif</th>
+              <th>{{ fp.condoms.nbr_new_user }}</th>
+              <th>{{ fp.condoms.nbr_regular_user }}</th>
+              <th>{{ fp.condoms.nbr_total_user }}</th>
+              <th>{{ fp.condoms.nbr_delivered }}</th>
+              <th>{{ fp.condoms.nbr_in_stock }}</th>
+              <th>{{ fp.condoms.nbr_referred }}</th>
+              <th>{{ fp.condoms.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">Dépo provera -IM</th>
+              <th>{{ fp.depo_provera_im.nbr_new_user }}</th>
+              <th>{{ fp.depo_provera_im.nbr_regular_user }}</th>
+              <th>{{ fp.depo_provera_im.nbr_total_user }}</th>
+              <th>{{ fp.depo_provera_im.nbr_delivered }}</th>
+              <th>{{ fp.depo_provera_im.nbr_in_stock }}</th>
+              <th>{{ fp.depo_provera_im.nbr_referred }}</th>
+              <th>{{ fp.depo_provera_im.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">DMPA-SC</th>
+              <th>{{ fp.dmpa_sc.nbr_new_user }}</th>
+              <th>{{ fp.dmpa_sc.nbr_regular_user }}</th>
+              <th>{{ fp.dmpa_sc.nbr_total_user }}</th>
+              <th>{{ fp.dmpa_sc.nbr_delivered }}</th>
+              <th>{{ fp.dmpa_sc.nbr_in_stock }}</th>
+              <th>{{ fp.dmpa_sc.nbr_referred }}</th>
+              <th>{{ fp.dmpa_sc.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">Collier du cycle</th>
+              <th>{{ fp.cycle_necklace.nbr_new_user }}</th>
+              <th>{{ fp.cycle_necklace.nbr_regular_user }}</th>
+              <th>{{ fp.cycle_necklace.nbr_total_user }}</th>
+              <th>{{ fp.cycle_necklace.nbr_delivered }}</th>
+              <th>{{ fp.cycle_necklace.nbr_in_stock }}</th>
+              <th>{{ fp.cycle_necklace.nbr_referred }}</th>
+              <th>{{ fp.cycle_necklace.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">DIU</th>
+              <th>{{ fp.diu.nbr_new_user }}</th>
+              <th>{{ fp.diu.nbr_regular_user }}</th>
+              <th>{{ fp.diu.nbr_total_user }}</th>
+              <th>{{ fp.diu.nbr_delivered }}</th>
+              <th>{{ fp.diu.nbr_in_stock }}</th>
+              <th>{{ fp.diu.nbr_referred }}</th>
+              <th>{{ fp.diu.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">Implant</th>
+              <th>{{ fp.implant.nbr_new_user }}</th>
+              <th>{{ fp.implant.nbr_regular_user }}</th>
+              <th>{{ fp.implant.nbr_total_user }}</th>
+              <th>{{ fp.implant.nbr_delivered }}</th>
+              <th>{{ fp.implant.nbr_in_stock }}</th>
+              <th>{{ fp.implant.nbr_referred }}</th>
+              <th>{{ fp.implant.nbr_side_effect }}</th>
+            </tr>
+            <tr>
+              <th scope="row">Ligature des trompes</th>
+              <th>{{ fp.tubal_ligation.nbr_new_user }}</th>
+              <th>{{ fp.tubal_ligation.nbr_regular_user }}</th>
+              <th>{{ fp.tubal_ligation.nbr_total_user }}</th>
+              <th>{{ fp.tubal_ligation.nbr_delivered }}</th>
+              <th>{{ fp.tubal_ligation.nbr_in_stock }}</th>
+              <th>{{ fp.tubal_ligation.nbr_referred }}</th>
+              <th>{{ fp.tubal_ligation.nbr_side_effect }}</th>
+            </tr>
+          </tbody>
+
+          <tr class="no-border">
+            <td class="separation" colspan="9"></td>
+          </tr>
+
+          <tfoot class="no-border">
+            <tr>
+              <th colspan="2" scope="row">Observations</th>
+              <td colspan="7">
+                <textarea style="width: 100%;" name="" id="" cols="5" rows="2"></textarea>
+              </td>
+            </tr>
+          </tfoot>
+
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

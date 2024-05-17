@@ -1,0 +1,297 @@
+<div style="padding: -0px 5px 2px 5px!important;" class="row g-4">
+  <div class="col-sm-12">
+    <div class="bg-white rounded h-100 p-0">
+      <!-- <h6 class="mb-4">TITRE</h6> -->
+
+      <div class="load-data">
+        <div class="rounded p-6">
+          <form [formGroup]="_formGroup" (ngSubmit)="SHOW_DATA($event)" novalidate>
+            <div class="row">
+
+              <div class="col-6">
+                <!-- <select (change)="regionsGenerate()" *ngIf="Countries$.length > 0" class="orgunit-style form-select mb-2" formControlName="country">
+                    <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
+                      {{ c.name }}
+                    </option>
+                </select> -->
+                <select (change)="prefecturesGenerate()" *ngIf="Regions$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="region">
+                  <option *ngFor="let r of regions" [value]="r.id" [selected]="isSelected(r.id, 'region')">
+                    {{ r.name }}
+                  </option>
+                </select>
+                <select (change)="communesGenerate()" *ngIf="Prefectures$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="prefecture">
+                  <option *ngFor="let p of prefectures" [value]="p.id" [selected]="isSelected(p.id, 'prefecture')">
+                    {{ p.name }}
+                  </option>
+                </select>
+                <select (change)="hospitalsGenerate()" *ngIf="Communes$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="commune">
+                  <option *ngFor="let c of communes" [value]="c.id" [selected]="isSelected(c.id, 'commune')">
+                    {{ c.name }}
+                  </option>
+                </select>
+                <select (change)="districtsGenerate()" *ngIf="Hospitals$.length > 1"
+                  class="orgunit-style form-select mb-2" formControlName="hospital">
+                  <option *ngFor="let h of hospitals" [value]="h.id" [selected]="isSelected(h.id, 'hospital')">
+                    {{ h.name }}
+                  </option>
+                </select>
+                <select (change)="recosGenerate()" *ngIf="DistrictQuartiers$.length > 1"
+                  class="orgunit-style form-select mb-2"
+                  formControlName="district_quartier">
+                  <option *ngFor="let d of districtQuartiers" [value]="d.id"
+                    [selected]="isSelected(d.id, 'district_quartier')">
+                    {{ d.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-6">
+
+                <select *ngIf="Recos$.length > 1" class="orgunit-style form-select mb-2" multiple formControlName="recos">
+                  <option *ngFor="let r of recos" [value]="r.id" [selected]="isSelected(r.id, 'recos')">
+                    {{ r.name }}
+                  </option>
+                </select>
+
+                <select class="orgunit-style form-select mb-2" formControlName="year">
+                  <ng-container *ngIf="Years$.length > 0">
+                    <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
+                      {{ y }}
+                    </option>
+                  </ng-container>
+                </select>
+
+                <select class="orgunit-style form-select mb-2"
+                  formControlName="months">
+                  <ng-container *ngIf="Months$.length > 0">
+                    <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$"
+                      [value]="m.id" [selected]="isSelected(m.id, 'month')">
+                      {{ m.labelFR }}
+                    </option>
+                  </ng-container>
+                </select>
+
+                <button style="width: 100%;" [disabled]="data_syncing" class="btn btn-info">
+                  Charger
+                  <span *ngIf="data_syncing" class="fas fa-1x fa-sync-alt fa-spin"></span>
+                </button>
+              </div>
+
+            </div>
+
+          </form>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <!-- <table class="table table-bordered table-dark table-hover table-striped"> -->
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr class="no-border org-units center">
+              <td class="no-border org-units center" colspan="4">
+                <p><img width="160px" src="assets/logo/guinee.png" alt=""> <br> <strong>République de Guinée</strong>
+                </p>
+                <p><strong>MINISTERE DE LA SANTE ET DE L’HYGIENE PUBLIQUE</strong></p>
+                <p><strong>DIRECTION NATIONALE DE LA SANTE COMMUNAUTAIRE ET DE LA MEDECINE TRADITIONNELLE</strong></p>
+                <p *ngIf="MONTHLY_ACTIVITY$">RAPPORT D'ACTIVITES MENSUEL <b>{{ ASC_RECO_TYPE }}</b> : &nbsp;&nbsp;<b>{{
+                    MONTH }}</b> / <b>{{ YEAR }}</b></p>
+                <p *ngIf="MONTHLY_ACTIVITY$">IRS/DSVCO DE: <b>{{ IRS_DSVCO_DE_NAME
+                    }}</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DPS/DCS DE: <b>{{ DPS_DCS_DE_NAME }}</b></p>
+                <p *ngIf="MONTHLY_ACTIVITY$">COMMUNE DE: <b>{{ COMMUNE_NAME
+                    }}</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CENTRE DE SANTE: <b>{{ HEALTH_CENTER_NAME
+                    }}</b></p>
+                <p *ngIf="MONTHLY_ACTIVITY$">PRENOMS ET NOM DU <b>{{ ASC_RECO_TYPE }}</b>: <b>{{ ASC_RECO_NAME
+                    }}</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEL: <b>{{ ASC_RECO_PHONE }}</b></p>
+              </td>
+            </tr>
+
+            <tr *ngIf="MONTHLY_ACTIVITY$" class="table-head">
+              <!-- <th [style.width.px]="COLUMN_WIDTH" scope="col">Section</th> -->
+              <th style="width: 15%;" scope="col">Section</th>
+              <th style="width: 60%;" scope="col">Éléments de données</th>
+              <th style="width: 13%;" scope="col">Nombre</th>
+              <th style="width: 12%;" scope="col">Observation</th>
+            </tr>
+          </thead>
+          <tbody *ngIf="MONTHLY_ACTIVITY$ as ma">
+            <tr class="row-group">
+              <th>{{ ma.reco_monitoring.position }}</th>
+              <th colspan="3">{{ ma.reco_monitoring.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.reco_monitoring.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.reco_monitoring.data.length" scope="row">
+                {{ ma.reco_monitoring.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+
+            <tr class="row-group">
+              <th>{{ ma.demography.position }}</th>
+              <th colspan="3">{{ ma.demography.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.demography.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.demography.data.length" scope="row">
+                {{ ma.demography.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.child_health_0_59_months.position }}</th>
+              <th colspan="3">{{ ma.child_health_0_59_months.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.child_health_0_59_months.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.child_health_0_59_months.data.length" scope="row">
+                {{ ma.child_health_0_59_months.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.mother_health.position }}</th>
+              <th colspan="3">{{ ma.mother_health.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.mother_health.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.mother_health.data.length" scope="row">
+                {{ ma.mother_health.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.pcimne_activity.position }}</th>
+              <th colspan="3">{{ ma.pcimne_activity.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.pcimne_activity.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.pcimne_activity.data.length" scope="row">
+                {{ ma.pcimne_activity.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.morbidity_activities.position }}</th>
+              <th colspan="3">{{ ma.morbidity_activities.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.morbidity_activities.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.morbidity_activities.data.length" scope="row">
+                {{ ma.morbidity_activities.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.malaria_more_5_years.position }}</th>
+              <th colspan="3">{{ ma.malaria_more_5_years.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.malaria_more_5_years.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.malaria_more_5_years.data.length" scope="row">
+                {{ ma.malaria_more_5_years.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.home_visit.position }}</th>
+              <th colspan="3">{{ ma.home_visit.bigGroup }}</th>
+            </tr>
+            <tr>
+              <th class="row-first-column" [rowSpan]="ma.home_visit.data.length+1" scope="row">{{ ma.home_visit.group }}
+              </th>
+              <th class="row-first-column" colspan="3">
+                {{ ma.home_visit.group }}
+              </th>
+            </tr>
+            <tr *ngFor="let rm of ma.home_visit.data; let i=index">
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+
+            <tr>
+              <th class="row-first-column" [rowSpan]="ma.educational_chat.data.length+1" scope="row">{{
+                ma.educational_chat.group }}</th>
+              <th class="row-first-column" colspan="3">{{ ma.educational_chat.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.educational_chat.data; let i=index">
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.developed_areas.position }}</th>
+              <th colspan="3">{{ ma.developed_areas.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.developed_areas.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.developed_areas.data.length" scope="row">
+                {{ ma.developed_areas.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr class="row-group">
+              <th>{{ ma.diseases_alerts.position }}</th>
+              <th colspan="3">{{ ma.diseases_alerts.group }}</th>
+            </tr>
+            <tr *ngFor="let rm of ma.diseases_alerts.data; let i=index">
+              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.diseases_alerts.data.length" scope="row">
+                {{ ma.diseases_alerts.group }}
+              </th>
+              <td>{{ rm.indicator }}</td>
+              <td>{{ rm.de_number }}</td>
+              <td>{{ rm.observation }}</td>
+            </tr>
+            <tr>
+          </tbody>
+
+          <tfoot *ngIf="MONTHLY_ACTIVITY$" class="no-border">
+            <tr class="no-border">
+              <td class="separation" colspan="4"></td>
+            </tr>
+
+            <tr class="no-border">
+              <td class="separation" colspan="4"></td>
+            </tr>
+            <tr>
+              <th colspan="3" scope="row">Signature de l'agent de santé communautaire (ASC):</th>
+              <th>Date:..............</th>
+            </tr>
+
+            <tr class="no-border">
+              <td class="separation" colspan="4"></td>
+            </tr>
+            <tr>
+              <th colspan="4" scope="row"></th>
+            </tr>
+            <tr>
+              <th colspan="3" scope="row">Signature et cachet du chef de centre de santé (CCS):</th>
+              <th>Date:..............</th>
+            </tr>
+
+            <tr class="no-border">
+              <td class="separation" colspan="4"></td>
+            </tr>
+            <tr>
+              <th colspan="1" scope="row">Observations</th>
+              <td colspan="3">
+                <textarea style="width: 100%;" name="" id="" cols="5" rows="2"></textarea>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

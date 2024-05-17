@@ -1,0 +1,53 @@
+<h1 style="color:red;"> {{ responseMsg }} </h1>
+
+<section class="content-header">
+  <div class="container-fluid">
+    <h2>Truncate Database</h2>
+    <div class="card card-info">
+      <div class="overlay-wrapper">
+        <div *ngIf="isEntityLoading" class="overlay"> <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+          <div class="text-bold pt-2"> {{initMsg}}</div>
+        </div>
+        <div class="card-header">
+          <form [formGroup]="EntitiesForm" (ngSubmit)="TruncateBd()" novalidate>
+            <div class="row">
+              <div class="col-sm-4 col-6">
+                <div class="form-group">
+                  <label>Entities</label>
+                  <select class="form-control" formControlName="entities" multiple="multiple">
+                    <option value=""></option>
+                    <option *ngFor="let entity of EntitiesList$" value="{{entity.name}}">
+                      {{ entity.table.toLocaleUpperCase().replaceAll('_', ' ') }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-sm-4 col-6">
+                <div class="form-group">
+                  <label>Action</label>
+                  <select class="form-control" formControlName="action">
+                    <option *ngFor="let ac of Actions$" value="{{ac}}">
+                      {{ ac }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col-sm-4 col-6">
+                <div class="form-group">
+                  <label>.</label>
+                  <button [disabled]="!EntitiesForm.valid && this.initEntity.length <= 0" type="submit"
+                    class="btn btn-danger form-control">
+                    {{ EntitiesForm.value.action != '' ? EntitiesForm.value.action : 'TRUNCATE' }} POSTGRES DATABASE <span class="fa fa-floppy-o fa-right"></span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,190 @@
+/*
+Handles service worker updates
+*/
+import { Injectable, NgZone } from '@angular/core';
+import { SwUpdate } from '@angular/service-worker';
+import { CacheStorageService } from './cache-storage.service';
+import { ReloadingComponent } from '@kossi-modals/reloading/reloading.component';
+import { ConfigService } from './config.service';
+import { AppStorageService } from './local-storage.service';
+import { ModalService } from './modal.service';
+import { UserContextService } from './user-context.service';
+import { DEFAULT_LOCAL_DB } from '../utils/const';
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class UpdateServiceWorkerService {
+  private readonly retryFailedUpdateAfterSec = 5 * 60;
+  private existingUpdateLoop: any;
+  private appNewVersion: any;
+  private isUpdating: boolean = false;
+
+  public updateServiceWorker: boolean = true;
+  public UPDATE_INTERVAL?: number;
+  public readonly TEN_SECOND: number = 10 * 1000;
+  public readonly TWO_HOURS: number = 2 * 60 * 60 * 1000;
+
+  constructor(
+    private swUpdate: SwUpdate,
+    private cache: CacheStorageService,
+    private ngZone: NgZone,
+    private conf: ConfigService,
+    private store: AppStorageService,
+    private modalService: ModalService,
+    private userCtx: UserContextService
+
+  ) {
+  }
+
+  update(onSuccess?: () => any) {
+    // This avoids multiple updates retrying in parallel
+    if (this.existingUpdateLoop) {
+      clearTimeout(this.existingUpdateLoop);
+      this.existingUpdateLoop = undefined;
+    }
+    window.navigator.serviceWorker.getRegistrations()
+      .then((registrations) => {
+        const registration = registrations && registrations.length && registrations[0];
+        if (!registration) {
+          console.warn('Cannot update service worker - no active workers found');
+          return;
+        }
+        registration.onupdatefound = () => {
+          console.warn('update found');
+          const installingWorker = registration.installing!;
+          installingWorker.onstatechange = () => {
+            switch (installingWorker.state) {
+              case 'activated':
+                registration.onupdatefound = null;
+                if (onSuccess) {
+                  onSuccess();
+                }
+                break;
+              case 'redundant':
+                console.warn(
+                  'Service worker failed to install or marked as redundant. ' +
+                  `Retrying install in ${this.retryFailedUpdateAfterSec}secs.`
+                );
+                this.existingUpdateLoop = setTimeout(() => this.update(onSuccess), this.retryFailedUpdateAfterSec * 1000);
+                registration.onupdatefound = null;
+                break;
+              default:
+                console.debug(`Service worker state changed to ${installingWorker.state}!`);
+            }
+          };
+        };
+        registration.update();
+      });
+  }
+
+  registerServiceWorker(onInstalling?: () => void) {
+    if (!window.navigator.serviceWorker && !('serviceWorker' in navigator)) {
+      return Promise.reject(new Error('Service worker not supported'));
+    }
+    return new Promise((resolve, reject) => {
+      navigator.serviceWorker.register('/ngsw-worker.js')
+        .then((registration) => {
+          // Do nothing if service worker is already up to date
+          if (!registration.installing) {
+            return resolve(registration.scope);
+          }
+          if (onInstalling) {
+            onInstalling();
+          }
+          const installingWorker = registration.installing;
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'activated') {
+              installingWorker.onstatechange = null;
+              return resolve(installingWorker);
+            }
+            if (installingWorker.state === 'redundant') {
+              installingWorker.onstatechange = null;
+              return reject(new Error('Service worker labeled redundant'));
+            }
+
+            console.debug(`Service worker state changed to ${installingWorker.state}`);
+          };
+        })
+        .catch(reject);
+    });
+  }
+
+  checkForUpdates(): void {
+    this.swUpdate.checkForUpdate().then((can_upadte: boolean) => {
+      if (can_upadte && this.swUpdate.isEnabled) {
+        this.swUpdate.versionUpdates.subscribe((event) => {
+          if (event.type === "VERSION_READY") {
+            if (confirm('A new version is available. Reload to update?')) {
+              window.location.reload();
+            }
+          }
+        });
+      }
+    }).catch((err: any) => {
+      console.log('Service workers are disabled or not supported by this browser');
+    })
+  }
+
+  async unregisterServiceWorker(): Promise<void> {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      })
+    }
+  }
+
+  async cleanToUpdateWebApp(): Promise<void> {
+    if (this.isUpdating) return; // Vérifie si une mise à jour est déjà en cours
+    this.isUpdating = true; // Marque l'état de la mise à jour comme en cours
+    try {
+      await this.unregisterServiceWorker();
+      if (this.appNewVersion) {
+        this.store.set({ db: DEFAULT_LOCAL_DB, name: '_versions', value: JSON.stringify(this.appNewVersion) });
+      }
+      // Nettoyer le cache du navigateur
+      const cacheKeys = await caches.keys();
+      for (const cacheKey of cacheKeys) {
+        if (!this.cache.excludeOnCacheReload.includes(cacheKey)) {
+          await caches.delete(cacheKey);
+        }
+      }
+      window.location.reload();
+      // // Reload the page after 3 seconds
+      //   setTimeout(() => {
+      //     window.location.reload();
+      //   }, 2000);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour :', error);
+    } finally {
+      this.isUpdating = false; // Marque l'état de la mise à jour comme terminée
+    }
+  }
+
+  watchForChanges() {
+    const user = this.userCtx.currentUserCtx?.id;
+    if (user) {
+      this.conf.appVersion().subscribe((newVersion: { service_worker_version: number | null, app_version: string | null }) => {
+        if (newVersion) {
+          const oldVersionsStr = this.store.get({ db: DEFAULT_LOCAL_DB, name: '_versions' });
+          if (oldVersionsStr) {
+            const oldVersions = JSON.parse(oldVersionsStr) as { service_worker_version: number | null, app_version: string | null };
+            if (newVersion.service_worker_version && `${oldVersions.service_worker_version}` != `${newVersion.service_worker_version}`) {
+              this.appNewVersion = newVersion;
+              this.modalService.open({ component: ReloadingComponent });
+            }
+          } else {
+            return this.store.set({ db: DEFAULT_LOCAL_DB, name: '_versions', value: JSON.stringify(newVersion) });
+          }
+        }
+        setTimeout(() => this.ngZone.run(() => this.watchForChanges()), this.UPDATE_INTERVAL ?? this.TEN_SECOND);
+      }, (err: any) => {
+        console.log(err.toString());
+        setTimeout(() => this.ngZone.run(() => this.watchForChanges()), this.UPDATE_INTERVAL ?? this.TEN_SECOND);
+      });
+    }
+  }
+}

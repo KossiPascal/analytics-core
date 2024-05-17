@@ -1,0 +1,16 @@
+<kossi-modal-layout
+  [id]="'update-available'"
+  [modalActionColor]="'warning-back'"
+  [showCloseButton]="true"
+  [modalTitle]="'version.update.title' | translate"
+  [cancelBtnName]="'Annuler'"
+  [submitBtnName]="'reload.app.title' | translate"
+  [showBottomElements]="true"
+  [showCancelButton]="true"
+  [reloadApp]="false"
+  [hideOnConfirm]="false"
+  (onCancel)="close()"
+  (onSubmit)="submit()"
+>
+  <p>{{ 'version.update.description' | translate }}</p>
+</kossi-modal-layout>

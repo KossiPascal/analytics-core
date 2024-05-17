@@ -1,0 +1,4 @@
+<div *ngIf="visible" class="snackbar {{ backgroundColor }} {{ position === 'TOP' ? 'snackbar-top-position' : 'snackbar-bottom-position' }}">
+  <span [innerHTML]="message"></span>
+  <button (click)="close()">&times;</button>
+</div>

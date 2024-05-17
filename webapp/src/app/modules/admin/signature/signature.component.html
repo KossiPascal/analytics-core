@@ -1,0 +1,54 @@
+<h1>
+  Draw over image
+</h1>
+<div class="wrapper">
+  <img src="https://preview.ibb.co/jnW4Qz/Grumpy_Cat_920x584.jpg" width=400 height=200 />
+  <canvas id="signature-pad" class="signature-pad" width=400 height=200></canvas>
+</div>
+<div id="actionBtn">
+  <button id="saveAsPNG">saveAsPNG</button>
+  <button id="saveAsJPEG">saveAsJPEG</button>
+  <button id="saveAsJPEG_05">saveAsJPEG_05</button>
+  <button id="saveAsSVG">saveAsSVG</button>
+  <button id="clear">Clear</button>
+</div>
+
+<br>
+<br>
+<div>
+  <img *ngIf="signatureImage" [src]="signatureImage" alt="Signature">
+</div>
+<div class="options-container">
+  <div class="option">
+    <label>Min Width:</label>
+    <input type="number" (change)="updateMinWidth($event)" [value]="defaultMinWidth">
+  </div>
+  <div class="option">
+    <label>Max Width:</label>
+    <input type="number" (change)="updateMaxWidth($event)" [value]="defaultMaxWidth">
+  </div>
+  <div class="option">
+    <label>Background Color:</label>
+    <input type="color" (change)="updateBackgroundColor($event)" [value]="defaultBackgroundColor">
+  </div>
+  <div class="option">
+    <label>Pen Color:</label>
+    <input type="color" (change)="updatePenColor($event)" [value]="defaultPenColor">
+  </div>
+  <div class="option">
+    <label>Velocity Filter Weight:</label>
+    <input type="number" (change)="updateVelocityFilterWeight($event)" [value]="defaultVelocityFilterWeight">
+  </div>
+  <div class="option">
+    <label>Throttle:</label>
+    <input type="number" (change)="updateThrottle($event)" [value]="defaultThrottle">
+  </div>
+  <div class="option">
+    <label>Min Distance:</label>
+    <input type="number" (change)="updateMinDistance($event)" [value]="defaultMinDistance">
+  </div>
+  <div class="option">
+    <label>Dot Size:</label>
+    <input type="number" (change)="updateDotSize($event)" [value]="defaultDotSize">
+  </div>
+</div>

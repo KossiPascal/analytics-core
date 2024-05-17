@@ -1,0 +1,12 @@
+.card-header h3 {
+  color: black !important;
+}
+
+.active{
+  /* margin-top: 30px!important;
+  margin-bottom: -25px!important; */
+  border: 1px solid aqua;
+}
+.hide{
+  display: none;
+}

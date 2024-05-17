@@ -1,0 +1,52 @@
+{
+  "name": "app-core",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "repository": "https://github.com/KossiPascal/analytics-core",
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.2.4"
+  },
+  "workspaces": [
+    "./shared-libs/*"
+  ],
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/KossiPascal/analytics-core"
+  },
+  "scripts": {
+    "build-watch": "cd webapp && npm run build -- --watch=true & node ./scripts/watch.js",
+    "dev-api": "nodemon --ignore 'api/build/static' --ignore 'api/build/public' --watch api --watch 'shared-libs/**/*.ts' api/src/server.ts -- --allow-cors",
+    "dev-sentinel": "nodemon --watch sentinel --watch 'shared-libs/**/*.ts' sentinel/src/server.ts",
+
+    "send-git": "git status && git add . && git status && git commit -m \"Initial Two Commit\" && git status && git push -u origin main && git status",
+
+    "clean": "npm cache clean --force",
+    
+    "install-app": "npm install",
+    "install-api": "cd api && npm install",
+    "install-webapp": "cd webapp && npm install",
+    "install-sentinel": "cd sentinel && npm install",
+
+    "install-all": "npm run install-app & npm run install-api & npm run install-webapp & npm run install-sentinel",
+    
+    "start": "npm run clean & npm run dev-api & npm run dev-sentinel",
+    "update-service-worker": "node scripts/cli updateServiceWorker",
+    "copy-ngsw": "./scripts/copy-ngsw.sh",
+    "reload": "cp test.ts sentinel/src"
+  },
+  "author": "Kossi TSOLEGNAGBO",
+  "license": "ISC",
+  "dependencies": {
+    "gaze": "^1.1.3",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.4.5"
+  }
+}

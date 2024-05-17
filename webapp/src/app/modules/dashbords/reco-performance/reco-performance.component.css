@@ -1,0 +1,37 @@
+.org-units b {
+  color: rgb(94, 94, 94) !important;
+  text-decoration: none;
+  border-bottom: 2px dashed !important;
+}
+
+.selected {
+  background-color: rgb(186, 229, 255) !important;
+}
+
+.bg-chart {
+  /* background-color: rgb(209, 243, 255) !important; */
+  background-color: azure;
+  border: 1px solid rgb(209, 243, 255) !important;
+}
+
+.dark-color {
+  color: darkblue !important;
+}
+
+.black-color {
+  color: rgb(121, 121, 121) !important;
+}
+
+.show {
+  visibility: visible;
+}
+
+.hide {
+  visibility: hidden;
+  background-color: white;
+}
+
+.orgunit-style {
+  background-color: white !important;
+  color: black !important;
+}

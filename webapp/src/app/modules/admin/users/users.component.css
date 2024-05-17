@@ -1,0 +1,137 @@
+.checkbox-group {
+  position: relative;
+}
+
+.parent-checkbox {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-list {
+  display: none;
+  background-color: #fff;
+  border: none;
+  padding: 5px;
+}
+
+.checkbox-list.show {
+  display: block;
+}
+
+.list-unlist {
+  background: transparent !important;
+  border: none !important;
+  color: rgb(2, 2, 74) !important;
+  cursor: pointer !important;
+  font-size: 1.6rem !important;
+  padding: 0px;
+  margin-top: -8px;
+  margin-left: 2px;
+  font-weight: bolder;
+  transition: color 0.3s ease-in-out !important;
+  width: 15px;
+  height: 15px;
+}
+
+.list-unlist:hover {
+  color: darkblue !important;
+}
+
+
+/* ############################################################################## */
+
+
+
+
+ .org-units-label {
+  margin-left: 5px!important;
+  cursor: pointer!important;
+}
+
+.org-units-checkbox-parent {
+  margin-left: 25px!important;
+  /* margin-bottom: 20px!important; */
+  border-left: gray 1px dashed!important;
+  padding: 0px!important;
+}
+
+.input-checkbox-group {
+  /* margin-bottom: 10px!important; */
+  padding: 0px!important;
+  margin-bottom: 10px!important;
+}
+
+.org-units-check-input {
+  margin-left: 5px!important;
+  cursor: pointer!important;
+}
+
+
+.absolute-fix-modal-parent {
+  position: absolute !important;
+  z-index: 99999999999 !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  /* background-color: black !important;
+  opacity: 0.5 !important; */
+  background-color: rgba(0, 0, 0, 0.6);
+  align-items: center !important;
+  justify-content: center !important;
+  display: flex;
+}
+
+.absolute-fix-modal {
+  position: absolute !important;
+  z-index: 9999999999999999999 !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: rgba(255, 255, 255, 1);
+  opacity: 1 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  display: flex;
+}
+
+.absolute-fix-modal-chid {
+  position: absolute;
+  top: 10;
+  /* height: 100% !important; */
+  background-color: rgb(255, 255, 255) !important;
+}
+
+.close {
+  background: transparent !important;
+  border: none !important;
+  color: #000000 !important;
+  cursor: pointer !important;
+  font-size: 1.5rem !important;
+  transition: color 0.3s ease-in-out !important;
+}
+
+.close:hover {
+  color: #ff5c5c !important;
+}
+
+.undeleted-user{
+  background-color: white;
+}
+
+.deleted-user{
+  background-color: rgb(241, 241, 241);
+}
+
+.action-checked {
+  color:black;
+  /* font-weight: bold; */
+}
+
+.action-unchecked {
+  color:rgb(214, 213, 213);
+}

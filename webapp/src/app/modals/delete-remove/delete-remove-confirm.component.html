@@ -1,0 +1,27 @@
+<kossi-modal-layout
+  [id]="'delete-remove-confirm-modal'"
+  [modalActionColor]="'danger-back'"
+  [showCloseButton]="true"
+  [modalTitle]="'confirm.delete.remove' | translate"
+  [cancelBtnName]="'Annuler'"
+  [submitBtnName]="'Oui supprimer'"
+  [showBottomElements]="true"
+  [showCancelButton]="true"
+  [reloadApp]="false"
+  [hideOnConfirm]="false"
+  (onCancel)="close()"
+  (onSubmit)="DeleteRemove()"
+>
+  <h5 style="color:black!important;">Êtes-vous sûr de vouloir vous déconnecter?</h5>
+  <h6 style="color:black!important;">Appuyez sur Annuler si vous souhaitez continuer à travailler.</h6>
+</kossi-modal-layout>
+
+
+<!-- danger="true"
+[titleKey]="'Log Out'"
+[submitKey]="'Log Out'"
+[cancelKey]="'Cancel'" -->
+
+
+
+

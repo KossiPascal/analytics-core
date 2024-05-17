@@ -1,0 +1,53 @@
+.wrapper {
+  position: relative;
+  width: 400px;
+  height: 200px;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.wrapper img {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.signature-pad {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width:400px;
+  height:200px;
+}
+
+#actionBtn button {
+  margin-right: 5px;
+}
+
+
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.option {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.option label {
+  margin-right: 10px;
+}
+
+.option input[type="number"],
+.option input[type="color"] {
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  width: 100px;
+}
