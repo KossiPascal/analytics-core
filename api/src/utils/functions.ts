@@ -11,7 +11,7 @@ const srcFolder = dirname(__dirname);
 const apiFolder = dirname(srcFolder);
 const projectFolder = dirname(apiFolder);
 const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/.env` });
+config({ path: `${projectParentFolder}/ssl/analytics/.env` });
 
 const { NODE_ENV, CHT_USER, CHT_PASS, CHT_HOST, CHT_PROTOCOL, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
 
@@ -253,7 +253,7 @@ export function httpHeaders(Username?: string, Password?: string, WithParams: bo
         // 'Accept-Charset': 'UTF-8',
         // "Access-Control-Allow-Origin": "*",
         // "Access-Control-Max-Age": "86400",
-        // 'ca': [fs.readFileSync(path.dirname(__dirname)+'/ssl/server.pem', {encoding: 'utf-8'})]
+        // 'ca': [fs.readFileSync(path.dirname(__dirname)+'/ssl/analytics/server.pem', {encoding: 'utf-8'})]
         // 'Accept-Encoding': '*',
     }
     return p;

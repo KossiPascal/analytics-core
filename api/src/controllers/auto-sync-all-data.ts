@@ -20,7 +20,7 @@ import { RECO_VACCINATION_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashb
 const apiFolder = dirname(dirname(__dirname));
 const projectFolder = dirname(apiFolder);
 const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/.env` });
+config({ path: `${projectParentFolder}/ssl/analytics/.env` });
 
 const { NODE_ENV, APP_HOST, APP_PROTOCOL, APP_PROD_PORT, APP_DEV_PORT } = process.env;
 

@@ -26,7 +26,7 @@ import { VaccinationData } from "../entities/_Vaccination-data";
 const apiFolder = dirname(dirname(__dirname));
 const projectFolder = dirname(apiFolder);
 const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/.env` });
+config({ path: `${projectParentFolder}/ssl/analytics/.env` });
 const { NODE_ENV, CHT_HOST, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
 
 const USER_CHT_HOST = `${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}`;

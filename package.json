@@ -17,7 +17,7 @@
   },
   "scripts": {
     "build-watch": "cd webapp && npm run build -- --watch=true & node ./scripts/watch.js",
-    "dev-api": "nodemon --ignore 'api/build/static' --ignore 'api/build/public' --watch api --watch 'shared-libs/**/*.ts' api/src/server.ts -- --allow-cors",
+    "dev-api": "nodemon --watch api --watch views --watch 'shared-libs/**/*.ts' api/src/server.ts -- --allow-cors",
     "dev-sentinel": "nodemon --watch sentinel --watch 'shared-libs/**/*.ts' sentinel/src/server.ts",
 
     "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status && git push -u origin main && git status",
@@ -29,6 +29,7 @@
     "install-webapp": "cd webapp && npm install",
     "install-sentinel": "cd sentinel && npm install",
 
+    "server-install": "npm run install-api & npm run install-sentinel",
     "install-all": "npm run install-app & npm run install-api & npm run install-webapp & npm run install-sentinel",
     
     "start": "npm run clean & npm run dev-api & npm run dev-sentinel",

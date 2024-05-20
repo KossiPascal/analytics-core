@@ -20,7 +20,7 @@ export class ConstanteService {
 
   constructor(private http: HttpClient, private userCtx: UserContextService) { }
 
-  private readonly envPath: string = '../../../../../ssl/.env';
+  private readonly envPath: string = '../../../../../ssl/analytics/.env';
 
   loadEnv(): Observable<any> {
     return this.http.get<any>(this.envPath).pipe(
