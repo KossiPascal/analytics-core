@@ -12,15 +12,15 @@ export class ConstanteService {
   private env: any;
   APP_LOGO: string = '';
 
-  isProduction:boolean = true;
+  isProduction: boolean = true;
 
   get defaultTitle(): string {
     return 'ANALYTICS APP';
   }
 
-  constructor(private http: HttpClient, private userCtx: UserContextService) {}
+  constructor(private http: HttpClient, private userCtx: UserContextService) { }
 
-  private readonly envPath:string = '../../../../../ssl/.env';
+  private readonly envPath: string = '../../../../../ssl/.env';
 
   loadEnv(): Observable<any> {
     return this.http.get<any>(this.envPath).pipe(
@@ -29,7 +29,7 @@ export class ConstanteService {
       })
     );
   }
-  
+
   async loadEnv2(): Promise<any> {
     try {
       const env = this.http.get<any>(this.envPath);
@@ -71,7 +71,10 @@ export class ConstanteService {
   // }
 
   backenUrl(cible: string = 'api'): string {
-    const port = this.isProduction ?  9292 : 7272 ;
+    if (location.port == '4200') {
+      const port = this.isProduction ? 9292 : 7272;
       return `${location.protocol}//${location.hostname}:${port}/${cible}`;
+    }
+    return `${location.origin}/${cible}`;
   }
 }
