@@ -1,6 +1,5 @@
 import { Component, Input, HostListener, Output, EventEmitter, Attribute } from '@angular/core';
 import { FixeModalService, ModalColor } from '@kossi-services/fix-modal.service';
-import { BsModalRef } from 'ngx-bootstrap/modal';
 
 @Component({
   selector: 'kossi-fix-modal-layout',

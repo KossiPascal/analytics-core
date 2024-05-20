@@ -1,11 +1,17 @@
 {
-  "name": "Analytics App",
-  "short_name": "Analytics App",
+  "name": "Reco Analytics",
+  "short_name": "Reco Analytics",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
   "scope": "./",
   "start_url": "./",
+  "dir": "ltr",
+  "lang": "en",
+  "description": "Analytics PWA",
+  "orientation": "any",
+  "related_applications": [],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "assets/icons/icon-72x72.png",

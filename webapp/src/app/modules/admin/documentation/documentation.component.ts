@@ -1,6 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AuthService } from '@kossi-app/services/auth.service';
 // declare var $:any;
 
 
@@ -9,7 +7,7 @@ import { AuthService } from '@kossi-app/services/auth.service';
 })
 export class DocumentationComponent implements OnInit {
 
-  constructor(private route: ActivatedRoute, private router:Router, private auth:AuthService) { }
+  constructor() { }
 
   ngOnInit() {
   }

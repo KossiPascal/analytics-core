@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import express, { Request, Response, NextFunction } from 'express';
 import { json, urlencoded } from 'body-parser';
-import { logNginx, normalizePort } from './utils/functions';
+import { ServerStart, getIPAddress, logNginx, normalizePort } from './utils/functions';
 import { AppDataSource } from './data_source';
 
 import authRouter from "./routes/auth-user";
@@ -17,7 +17,7 @@ import { ADMIN_USER_ID, AuthUserController } from "./controllers/auth-user";
 import cors from "cors";
 import bearerToken from "express-bearer-token";
 import bodyParser from 'body-parser';
-import { dirname, join } from 'path';
+import { dirname, join, extname } from 'path';
 import { config } from 'dotenv';
 import { AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA } from "./controllers/auto-sync-all-data";
 
@@ -26,13 +26,16 @@ import cron from "node-cron";
 import compression from "compression";
 import responseTime from 'response-time';
 
+import http from 'http';
+import fs from 'fs';
+
 const apiFolder = dirname(__dirname);
 const projectFolder = dirname(apiFolder);
 const projectParentFolder = dirname(projectFolder);
 config({ path: `${projectParentFolder}/ssl/.env` });
 const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT } = process.env;
 
-const port = normalizePort((NODE_ENV === 'production' ? APP_PROD_PORT : APP_DEV_PORT) || 3000);
+
 // var session = require('express-session');
 
 function app() {
@@ -85,8 +88,27 @@ function app() {
     .use('/api/database', databaseRouter)
 
     .use('/api/assets', express.static(__dirname + '/assets'))
-    .use(express.static(join(apiFolder, "build", "browser")))
-    .use("/", (req: Request, res: Response, next: NextFunction) => {
+    // .get('/ngsw-worker.js', (req: Request, res: Response, next: NextFunction) => {
+    //   const indexPath = join(apiFolder, "build", "browser", "ngsw-worker.js");
+    //   res.sendFile(indexPath, (err: any) => {
+    //     if (err) {
+    //       err['noStaticFiles'] = true;
+    //       next(err);
+    //     }
+    //   });
+    // })
+
+    .use(express.static(join(apiFolder, "build", "browser"), {
+      setHeaders: (res, path) => {
+        // if (path.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        // }
+      }
+    }))
+
+    .get("*", (req: Request, res: Response, next: NextFunction) => {
       const indexPath = join(apiFolder, "build", "browser", "index.html");
       res.sendFile(indexPath, (err: any) => {
         if (err) {
@@ -124,6 +146,10 @@ AppDataSource
     logNginx("initialize success !\nApp Version: ${appVersion()}");
     await AuthUserController.DefaultAdminCreation()
     const server = app();
+    const port = normalizePort((NODE_ENV === 'production' ? APP_PROD_PORT : APP_DEV_PORT) || 3000);
+    const hostnames = getIPAddress(true);
+
+
 
     //  ┌────────────── second (0 - 59) (optional)
     //  │ ┌──────────── minute (0 - 59) 
@@ -140,9 +166,9 @@ AppDataSource
     });
 
     // Start the server
-    server.listen(port, () => {
-      console.log(`Server is running at http://localhost:${port}`);
-    });
+    // server.listen(port, () => console.log(`Server is running at http://localhost:${port}`));
+    ServerStart({ isSecure: false, app: server, access_ports: true, port: port, hostnames: hostnames })
+
   })
   .catch(error => { logNginx(`${error}`) });
 

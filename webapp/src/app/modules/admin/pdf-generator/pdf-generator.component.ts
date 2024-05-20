@@ -1,9 +1,4 @@
-import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { PdfGeneratorService } from '@kossi-src/app/services/pdf-generator.service';
-
-
 
 @Component({
   selector: 'app-pdf-generator',
@@ -12,28 +7,28 @@ import { PdfGeneratorService } from '@kossi-src/app/services/pdf-generator.servi
 })
 
 export class PdfGeneratorComponent implements OnInit {
-  constructor(private router: Router, private pdf: PdfGeneratorService,private http: HttpClient) { }
+  constructor(
+    // private router: Router, private pdf: PdfGeneratorService,private http: HttpClient
+  ) { }
 
   ngOnInit(): void {
-
-
 
   }
 
   OpenPdfFile() {
-    const pdfGen = this.pdf.generatePDF(this.generatePdfCOntentData());
-    pdfGen.getBlob((blob: Blob) => {
-      const fileURL = URL.createObjectURL(blob);
-      window.open(fileURL, '_blank');
-    });
+    // const pdfGen = this.pdf.generatePDF(this.generatePdfCOntentData());
+    // pdfGen.getBlob((blob: Blob) => {
+    //   const fileURL = URL.createObjectURL(blob);
+    //   window.open(fileURL, '_blank');
+    // });
   }
 
   async downloadPdf() {
-    const pdfGen = this.pdf.generatePDF(this.generatePdfCOntentData());
-    pdfGen.getBlob((blob: Blob) => {
-      const fileURL = URL.createObjectURL(blob);
-      this.download(fileURL);
-    });
+    // const pdfGen = this.pdf.generatePDF(this.generatePdfCOntentData());
+    // pdfGen.getBlob((blob: Blob) => {
+    //   const fileURL = URL.createObjectURL(blob);
+    //   this.download(fileURL);
+    // });
   }
 
   download(url: string) {
@@ -241,17 +236,18 @@ export class PdfGeneratorComponent implements OnInit {
 
 
   private async getImageData(url: string): Promise<string> {
-    try {
-      const response:any = await this.http.get(url, { responseType: 'blob' }).toPromise();
-      const reader = new FileReader();
-      return new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(response);
-      });
-    } catch (error) {
-      console.error('Error fetching image data:', error);
-      return '';
-    }
+    // try {
+    //   const response:any = await this.http.get(url, { responseType: 'blob' }).toPromise();
+    //   const reader = new FileReader();
+    //   return new Promise<string>((resolve, reject) => {
+    //     reader.onloadend = () => resolve(reader.result as string);
+    //     reader.onerror = reject;
+    //     reader.readAsDataURL(response);
+    //   });
+    // } catch (error) {
+    //   console.error('Error fetching image data:', error);
+    //   return '';
+    // }
+    return '';
   }
 }

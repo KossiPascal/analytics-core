@@ -18,10 +18,10 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION(req: Request, res: 
     var { month, year } = req.body;
     const outPutData = await RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year });
 
-    if (outPutData.SuccessCount === outPutData.recos_length || outPutData.ErrorsCount === outPutData.recos_length || (outPutData.ErrorsCount + outPutData.SuccessCount) === outPutData.recos_length) {
+    // if (outPutData.SuccessCount === outPutData.recos_length || outPutData.ErrorsCount === outPutData.recos_length || (outPutData.ErrorsCount + outPutData.SuccessCount) === outPutData.recos_length) {
         outPutData.status = 200;
         return res.status(200).json(outPutData);
-    }
+    // }
 }
 
 function isValidNum(data: any): boolean {

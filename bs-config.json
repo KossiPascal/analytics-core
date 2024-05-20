@@ -1,0 +1,23 @@
+{
+    "port": 8080,
+    "server": {
+      "baseDir": "api/build/browser",
+      "middleware": {
+        "1": null
+      }
+    },
+    "files": ["./api/build/**/*.{html,htm,css,js}"],
+    "proxy": {
+      "rules": [
+        {
+          "proxy": {
+            "target": "http://localhost:4200",
+            "pathRewrite": {
+              "^/api": ""
+            }
+          }
+        }
+      ]
+    }
+  }
+  

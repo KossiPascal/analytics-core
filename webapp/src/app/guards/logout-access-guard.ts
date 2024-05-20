@@ -13,7 +13,7 @@ import { ConstanteService } from '@kossi-services/constantes.service';
 })
 export class LogoutAccessGuard implements CanActivate, OnDestroy {
 
-    private destroy$ = new Subject<void>();
+  private destroy$ = new Subject<void>();
 
     constructor(private userCtx: UserContextService, private cst: ConstanteService, private titleService: Title, private activatedRoute: ActivatedRoute, private router: Router, private auth: AuthService) { }
 

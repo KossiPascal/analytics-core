@@ -30,10 +30,10 @@ export async function RECO_PERFORMANCE_DASHBOARD_CALCULATION(req: Request, res: 
     var { month, year } = req.body;
     const outPutData = await RECO_PERFORMANCE_DASHBOARD_CALCULATION_DATA({ month, year });
 
-    if (outPutData.SuccessCount === outPutData.recos_length || outPutData.ErrorsCount === outPutData.recos_length || (outPutData.ErrorsCount + outPutData.SuccessCount) === outPutData.recos_length) {
+    // if (outPutData.SuccessCount === outPutData.recos_length || outPutData.ErrorsCount === outPutData.recos_length || (outPutData.ErrorsCount + outPutData.SuccessCount) === outPutData.recos_length) {
         outPutData.status = 200;
         return res.status(200).json(outPutData);
-    }
+    // }
 }
 
 export async function RECO_PERFORMANCE_DASHBOARD_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {

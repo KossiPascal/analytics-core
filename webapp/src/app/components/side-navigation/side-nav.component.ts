@@ -3,8 +3,6 @@ import { Router } from '@angular/router';
 import { AuthService } from '@kossi-services/auth.service';
 import { UserContextService } from '@kossi-services/user-context.service';
 
-
-
 @Component({
   selector: 'app-side-navigation',
   templateUrl: `./side-nav.component.html`,

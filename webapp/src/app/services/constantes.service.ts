@@ -54,19 +54,24 @@ export class ConstanteService {
     return this.env[key];
   }
 
-  getPort(): { port: number; isLocal: boolean; } {
-    if (location.port == '4200') {
-      return { isLocal: true, port: this.isProduction ?  9292 : 7272 };
-    }
-    return { isLocal: false, port: parseInt(location.port) };
-  }
+  // getPort(): { port: number; isLocal: boolean; } {
+  //   if (location.port == '4200') {
+  //     return { isLocal: true, port: this.isProduction ?  9292 : 7272 };
+  //   }
+  //   return { isLocal: false, port: parseInt(location.port) };
+  // }
+
+  // backenUrl(cible: string = 'api'): string {
+  //   const portInfo = this.getPort();
+  //   if (portInfo.isLocal == true) {
+  //     return `${location.protocol}//${location.hostname}:${portInfo.port}/${cible}`;
+  //   }
+  //   return `${location.origin}/${cible}`;
+  //   // return 'https://portal-integratehealth.org:9292/api'
+  // }
 
   backenUrl(cible: string = 'api'): string {
-    const portInfo = this.getPort();
-    if (portInfo.isLocal == true) {
-      return `${location.protocol}//${location.hostname}:${portInfo.port}/${cible}`;
-    }
-    return `${location.origin}/${cible}`;
-    // return 'https://portal-integratehealth.org:9292/api'
+    const port = this.isProduction ?  9292 : 7272 ;
+      return `${location.protocol}//${location.hostname}:${port}/${cible}`;
   }
 }

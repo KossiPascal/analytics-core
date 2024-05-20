@@ -19,7 +19,11 @@
       <!-- Widgets Start -->
       <div style="overflow: hidden;padding-bottom: 70px!important;" class="body-container container-fluid pt-2 px-2">
         <div class="body-container bg-white rounded align-items-center justify-content-center mx-0">
-          <!-- <button (click)="showMessage()">Show Snackbar</button> -->
+          <button (click)="showMessage()">Show Snackbar</button>
+          <!-- <div *ngIf="!isOnline" class="offline-warning">Vous n'êtes pas connecté à internet!</div> -->
+
+          <div *ngIf="isOnline; else offline">Device is online</div>
+          <ng-template #offline><div>Device is offline</div></ng-template>
           <router-outlet class="body-container"></router-outlet>
         </div>
       </div>

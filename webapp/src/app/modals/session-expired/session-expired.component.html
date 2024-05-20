@@ -2,15 +2,15 @@
   id="session-expired"
   [modalActionColor]="'danger-back'"
   [showCloseButton]="true"
-  [modalTitle]="'SESSION_EXPIRED_TITLE' | bootstrapTranslate"
+  [modalTitle]="'SESSION_EXPIRED_TITLE'"
   [showBottomElements]="false"
   [showCancelButton]="true"
   [reloadApp]="false"
   [hideOnConfirm]="false"
   [cancelBtnName]="'Annuler'"
-  [submitBtnName]="'LOGIN' | bootstrapTranslate"
+  [submitBtnName]="'LOGIN'"
   (onCancel)="close()"
   (onSubmit)="submit()"
 >
-  <p>{{'SESSION_EXPIRED_DESCRIPTION' | bootstrapTranslate}}</p>
+  <p>{{'SESSION_EXPIRED_DESCRIPTION'}}</p>
 </kossi-modal-layout>

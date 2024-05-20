@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { AuthService } from '@kossi-services/auth.service';
 import { HttpClient } from "@angular/common/http";
 import { ConfigService } from '@kossi-app/services/config.service';
-import { Consts } from '@kossi-app/shared/constantes';
 
 
 @Component({
@@ -19,7 +18,7 @@ export class ForgotPasswordComponent implements OnInit {
   LoadingMsg: string = "Loading...";
   showRegisterPage:boolean = false;
 
-  APP_LOGO: string = Consts.APP_LOGO;
+  APP_LOGO: string = 'Consts.APP_LOGO';
 
   constructor(private auth: AuthService, private router: Router, private http: HttpClient, private conf:ConfigService) { }
 

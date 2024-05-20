@@ -3,8 +3,10 @@ import fs from 'fs';
 import { dirname } from 'path';
 import { config } from 'dotenv';
 import { CouchDbFetchData } from './Interfaces';
-const axios = require('axios');
 
+import https from "https";
+import http from "http";
+import axios from 'axios';
 const srcFolder = dirname(__dirname);
 const apiFolder = dirname(srcFolder);
 const projectFolder = dirname(apiFolder);
@@ -16,8 +18,8 @@ const { NODE_ENV, CHT_USER, CHT_PASS, CHT_HOST, CHT_PROTOCOL, CHT_PROD_PORT, CHT
 export async function AxioFetchCouchDbData(viewName:string, { username, password, startKey, endKey }: { username?: string, password?: string, startKey?: string, endKey?: string }): Promise<any> {
     const dbName = 'medic';
     const couchDbUrl = `${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}`;
-    username = username ?? CHT_USER;
-    password = password ?? CHT_PASS;
+    username = username ?? CHT_USER ?? '';
+    password = password ?? CHT_PASS ?? '';
     const couchArg = ['include_docs=true', 'returnDocs=true', 'attachments=false', 'binary=false', 'reduce=false', 'descending=false'];
     if (startKey) couchArg.push('key=[' + startKey + ']');
     if (endKey) couchArg.push('endkey=[' + endKey + ']');
@@ -117,6 +119,80 @@ export function normalizePort(val: any) {
     if (isNaN(port)) return val;
     if (port >= 0) return port;
     return false;
+}
+
+
+export function onError(error: any, port: any) {
+    if (error.syscall !== 'listen') throw error;
+    var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case 'EACCES':
+            console.error(bind + ' requires elevated privileges');
+            process.exit(1);
+            break;
+        case 'EADDRINUSE':
+            console.error(bind + ' is already in use');
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
+}
+
+export function onListening(server: https.Server | http.Server, hostnames: any[], protocole: string = 'http') {
+    var addr = server.address();
+    var bind = typeof addr === 'string' ? addr : addr!.port;
+    for (let i = 0; i < hostnames.length; i++) {
+        logNginx(`\n🚀 ${protocole.toLocaleUpperCase()} Server is available at ${protocole}://${hostnames[i]}:${bind}`);
+    }
+    logNginx('\n');
+}
+
+export function onProcess() {
+    process.on('unhandledRejection', (error, promise) => {
+        logNginx(`Alert! ERROR : ${error}`);
+    });
+    process.on('uncaughtException', err => {
+        logNginx(`${err && err.stack}`)
+    });
+    process.on('ERR_HTTP_HEADERS_SENT', err => {
+        logNginx(`${err && err.stack}`)
+    });
+}
+
+export function ServerStart(data: {
+    isSecure: boolean, credential?: {
+        key: string;
+        ca: string;
+        cert: string;
+    }, app: any, access_ports: boolean, port: any, hostnames: any[]
+}) {
+    const server = data.isSecure == true ? https.createServer(data.credential!, data.app) : http.createServer(data.app);
+    // var io = require('socket.io')(server, {});
+    // server.listen(data.port, '0.0.0.0', () => onProcess)
+    if (data.access_ports) server.listen(data.port, '0.0.0.0', () => onProcess);
+    if (!data.access_ports) server.listen(data.port, data.hostnames[0], () => onProcess);
+    server.on('error', (err) => onError(err, data.port));
+    server.on('listening', () => onListening(server, data.hostnames, 'https'));
+    server.on('connection', (stream) => console.log('someone connected!'));
+    return server;
+}
+
+export function getIPAddress(accessAllAvailablePort: boolean = true): string[] {
+    var ips: any[] = [];
+    //   return require("ip").address();
+    var interfaces = require('os').networkInterfaces();
+    for (var devName in interfaces) {
+        var iface = interfaces[devName];
+        for (var i = 0; i < iface.length; i++) {
+            var alias = iface[i];
+            if (alias.family === 'IPv4') ips.push(alias.address);
+            if (!accessAllAvailablePort && alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) return [alias.address];
+            // if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) return alias.address;
+        }
+    }
+    return ips.length > 0 ? ips : ['0.0.0.0'];
 }
 
 export function appVersion(): { service_worker_version: number | null, app_version: string | null } {

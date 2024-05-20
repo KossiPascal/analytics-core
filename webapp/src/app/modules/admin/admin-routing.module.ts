@@ -25,7 +25,7 @@ const routes: Routes = [
   {
     path: 'documentations',
     component: DocumentationComponent,
-    canActivate: [LoginAccessGuard],
+    canActivate: [],
     data: {
       href: 'admin/documentations',
       title: 'Documentation'

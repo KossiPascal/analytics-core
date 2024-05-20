@@ -25,7 +25,6 @@ import {
   MissingTranslationHandlerParams,
   TranslateCompiler,
 } from '@ngx-translate/core';
-import { TranslateMessageFormatCompilerProvider } from './providers/translate-messageformat-compiler.provider';
 import { ConstanteService } from './services/constantes.service';
 import { LogoutConfirmComponent } from './modals/logout/logout-confirm.component';
 import { ReloadingComponent } from './modals/reloading/reloading.component';
@@ -108,11 +107,17 @@ export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) 
         provide: MissingTranslationHandler,
         useClass: MissingTranslationHandlerLog
       },
-      compiler: {
-        provide: TranslateCompiler,
-        useClass: TranslateMessageFormatCompilerProvider,
-      },
+      // compiler: {
+      //   provide: TranslateCompiler,
+      //   useClass: TranslateMessageFormatCompilerProvider,
+      // },
     }),
+      ServiceWorkerModule.register('ngsw-worker.js', {
+        enabled: !isDevMode(),
+        // Register the ServiceWorker as soon as the application is stable
+        // or after 30 seconds (whichever comes first).
+        registrationStrategy: 'registerWhenStable:30000'
+      }),
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [

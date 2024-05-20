@@ -1,0 +1,11 @@
+.offline-warning {
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* background-color: red; */
+  color: brown;
+  text-align: center;
+  padding: 5px;
+  font-size: 20px;
+}

@@ -6001,80 +6001,6 @@
       ],
       "format": "esm"
     },
-    "node_modules/eurodigit/src/to_euro.js": {
-      "bytes": 321,
-      "imports": [],
-      "format": "cjs"
-    },
-    "node_modules/eurodigit/src/to_int.js": {
-      "bytes": 105,
-      "imports": [
-        {
-          "path": "node_modules/eurodigit/src/to_euro.js",
-          "kind": "require-call",
-          "original": "./to_euro"
-        }
-      ],
-      "format": "cjs"
-    },
-    "node_modules/eurodigit/src/to_non_euro.js": {
-      "bytes": 330,
-      "imports": [],
-      "format": "cjs"
-    },
-    "node_modules/eurodigit/src/index.js": {
-      "bytes": 140,
-      "imports": [
-        {
-          "path": "node_modules/eurodigit/src/to_euro.js",
-          "kind": "require-call",
-          "original": "./to_euro"
-        },
-        {
-          "path": "node_modules/eurodigit/src/to_int.js",
-          "kind": "require-call",
-          "original": "./to_int"
-        },
-        {
-          "path": "node_modules/eurodigit/src/to_non_euro.js",
-          "kind": "require-call",
-          "original": "./to_non_euro"
-        }
-      ],
-      "format": "cjs"
-    },
-    "src/assets/js/translator.js": {
-      "bytes": 9619,
-      "imports": [
-        {
-          "path": "node_modules/eurodigit/src/index.js",
-          "kind": "import-statement",
-          "original": "eurodigit"
-        }
-      ],
-      "format": "cjs"
-    },
-    "src/app/pipes/bootstrap-translate.pipe.ts": {
-      "bytes": 916,
-      "imports": [
-        {
-          "path": "node_modules/@angular/core/fesm2022/core.mjs",
-          "kind": "import-statement",
-          "original": "@angular/core"
-        },
-        {
-          "path": "node_modules/@angular/core/fesm2022/core.mjs",
-          "kind": "import-statement",
-          "original": "@angular/core"
-        },
-        {
-          "path": "src/assets/js/translator.js",
-          "kind": "require-call",
-          "original": "../../assets/js/translator"
-        }
-      ],
-      "format": "esm"
-    },
     "node_modules/lodash-es/_freeGlobal.js": {
       "bytes": 169,
       "imports": [],
@@ -21353,7 +21279,7 @@
       "format": "esm"
     },
     "src/app/w_shared/shared.module.ts": {
-      "bytes": 828,
+      "bytes": 752,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -21369,11 +21295,6 @@
           "path": "src/app/pipes/safe-html.pipe.ts",
           "kind": "import-statement",
           "original": "src/app/pipes/safe-html.pipe"
-        },
-        {
-          "path": "src/app/pipes/bootstrap-translate.pipe.ts",
-          "kind": "import-statement",
-          "original": "../pipes/bootstrap-translate.pipe"
         },
         {
           "path": "src/app/pipes/number.pipe.ts",
@@ -21549,7 +21470,7 @@
       "format": "esm"
     },
     "src/app/services/constantes.service.ts": {
-      "bytes": 2259,
+      "bytes": 2470,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -22513,7 +22434,7 @@
       "format": "esm"
     },
     "src/app/modules/dashbords/reco-performance/reco-performance.component.ts": {
-      "bytes": 43687,
+      "bytes": 43694,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -23253,44 +23174,8 @@
       ],
       "format": "esm"
     },
-    "node_modules/pdfmake/build/pdfmake.js": {
-      "bytes": 3340198,
-      "imports": [],
-      "format": "cjs"
-    },
-    "node_modules/pdfmake/build/vfs_fonts.js": {
-      "bytes": 783504,
-      "imports": [],
-      "format": "cjs"
-    },
-    "src/app/services/pdf-generator.service.ts": {
-      "bytes": 3603,
-      "imports": [
-        {
-          "path": "node_modules/@angular/core/fesm2022/core.mjs",
-          "kind": "import-statement",
-          "original": "@angular/core"
-        },
-        {
-          "path": "node_modules/pdfmake/build/pdfmake.js",
-          "kind": "import-statement",
-          "original": "pdfmake/build/pdfmake"
-        },
-        {
-          "path": "node_modules/pdfmake/build/vfs_fonts.js",
-          "kind": "import-statement",
-          "original": "pdfmake/build/vfs_fonts"
-        },
-        {
-          "path": "node_modules/@angular/core/fesm2022/core.mjs",
-          "kind": "import-statement",
-          "original": "@angular/core"
-        }
-      ],
-      "format": "esm"
-    },
     "src/app/modules/admin/pdf-generator/pdf-generator.component.ts": {
-      "bytes": 20570,
+      "bytes": 20305,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -23301,21 +23186,6 @@
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
           "kind": "import-statement",
           "original": "@angular/core"
-        },
-        {
-          "path": "node_modules/@angular/router/fesm2022/router.mjs",
-          "kind": "import-statement",
-          "original": "@angular/router"
-        },
-        {
-          "path": "src/app/services/pdf-generator.service.ts",
-          "kind": "import-statement",
-          "original": "@kossi-src/app/services/pdf-generator.service"
-        },
-        {
-          "path": "node_modules/@angular/common/fesm2022/http.mjs",
-          "kind": "import-statement",
-          "original": "@angular/common/http"
         },
         {
           "path": "<runtime>",
@@ -23372,7 +23242,7 @@
       "format": "esm"
     },
     "src/app/modules/admin/documentation/documentation.component.ts": {
-      "bytes": 5015,
+      "bytes": 4702,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -23383,16 +23253,6 @@
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
           "kind": "import-statement",
           "original": "@angular/core"
-        },
-        {
-          "path": "node_modules/@angular/router/fesm2022/router.mjs",
-          "kind": "import-statement",
-          "original": "@angular/router"
-        },
-        {
-          "path": "src/app/services/auth.service.ts",
-          "kind": "import-statement",
-          "original": "@kossi-app/services/auth.service"
         }
       ],
       "format": "esm"
@@ -23444,7 +23304,7 @@
       "format": "esm"
     },
     "src/app/modules/admin/admin-routing.module.ts": {
-      "bytes": 2974,
+      "bytes": 2958,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -23879,7 +23739,7 @@
       "format": "esm"
     },
     "src/app/modals/session-expired/session-expired.component.ts": {
-      "bytes": 2620,
+      "bytes": 2308,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -23900,11 +23760,6 @@
           "path": "src/app/components/modal-layout/modal-layout.component.ts",
           "kind": "import-statement",
           "original": "../../components/modal-layout/modal-layout.component"
-        },
-        {
-          "path": "src/app/pipes/bootstrap-translate.pipe.ts",
-          "kind": "import-statement",
-          "original": "../../pipes/bootstrap-translate.pipe"
         }
       ],
       "format": "esm"
@@ -24138,6 +23993,27 @@
           "path": "<runtime>",
           "kind": "import-statement",
           "external": true
+        }
+      ],
+      "format": "esm"
+    },
+    "src/app/services/connectivity.service.ts": {
+      "bytes": 951,
+      "imports": [
+        {
+          "path": "node_modules/@angular/core/fesm2022/core.mjs",
+          "kind": "import-statement",
+          "original": "@angular/core"
+        },
+        {
+          "path": "node_modules/rxjs/dist/esm/index.js",
+          "kind": "import-statement",
+          "original": "rxjs"
+        },
+        {
+          "path": "node_modules/@angular/core/fesm2022/core.mjs",
+          "kind": "import-statement",
+          "original": "@angular/core"
         }
       ],
       "format": "esm"
@@ -25081,7 +24957,7 @@
       "format": "esm"
     },
     "src/app/app.component.ts": {
-      "bytes": 9381,
+      "bytes": 11178,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -25144,6 +25020,11 @@
           "original": "@kossi-services/responsive.service"
         },
         {
+          "path": "src/app/services/connectivity.service.ts",
+          "kind": "import-statement",
+          "original": "@kossi-services/connectivity.service"
+        },
+        {
           "path": "node_modules/@angular/common/fesm2022/common.mjs",
           "kind": "import-statement",
           "original": "@angular/common"
@@ -25182,7 +25063,7 @@
       "format": "esm"
     },
     "src/app/interceptors/error.interceptor.ts": {
-      "bytes": 996,
+      "bytes": 1197,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -25394,27 +25275,6 @@
       ],
       "format": "esm"
     },
-    "node_modules/@messageformat/core/messageformat.js": {
-      "bytes": 183176,
-      "imports": [],
-      "format": "cjs"
-    },
-    "src/app/providers/translate-messageformat-compiler.provider.ts": {
-      "bytes": 1484,
-      "imports": [
-        {
-          "path": "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs",
-          "kind": "import-statement",
-          "original": "@ngx-translate/core"
-        },
-        {
-          "path": "node_modules/@messageformat/core/messageformat.js",
-          "kind": "import-statement",
-          "original": "@messageformat/core"
-        }
-      ],
-      "format": "esm"
-    },
     "src/app/components/fix-modal-layout/fix-modal-layout.component.ts": {
       "bytes": 14931,
       "imports": [
@@ -25509,7 +25369,7 @@
       "format": "esm"
     },
     "src/app/app.module.ts": {
-      "bytes": 5299,
+      "bytes": 5469,
       "imports": [
         {
           "path": "node_modules/@angular/core/fesm2022/core.mjs",
@@ -25617,11 +25477,6 @@
           "original": "@ngx-translate/core"
         },
         {
-          "path": "src/app/providers/translate-messageformat-compiler.provider.ts",
-          "kind": "import-statement",
-          "original": "./providers/translate-messageformat-compiler.provider"
-        },
-        {
           "path": "src/app/modals/logout/logout-confirm.component.ts",
           "kind": "import-statement",
           "original": "./modals/logout/logout-confirm.component"
@@ -25685,7 +25540,7 @@
       "format": "esm"
     },
     "src/main.ts": {
-      "bytes": 210,
+      "bytes": 663,
       "imports": [
         {
           "path": "node_modules/@angular/platform-browser/fesm2022/platform-browser.mjs",
@@ -25696,104 +25551,113 @@
           "path": "src/app/app.module.ts",
           "kind": "import-statement",
           "original": "./app/app.module"
+        },
+        {
+          "path": "node_modules/@angular/core/fesm2022/core.mjs",
+          "kind": "import-statement",
+          "original": "@angular/core"
         }
       ],
       "format": "esm"
     },
-    "src/app/modules/reports/chw-reco-activity/chw-reco-activity.component.css": {
-      "bytes": 1355,
-      "imports": []
-    },
-    "src/app/modules/admin/users/users.component.css": {
-      "bytes": 2636,
-      "imports": []
-    },
-    "src/app/modules/errors/unauthorized/unauthorized.component.css": {
-      "bytes": 40,
-      "imports": []
-    },
-    "src/app/modules/errors/404/404.component.css": {
-      "bytes": 40,
-      "imports": []
-    },
-    "src/app/modules/reports/morbidity/morbidity.component.css": {
+    "src/app/modules/reports/promotion/promotion.component.css": {
       "bytes": 712,
       "imports": []
     },
-    "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
-      "bytes": 943,
+    "src/app/modules/reports/chw-reco-activity/chw-reco-activity.component.css": {
+      "bytes": 1355,
       "imports": []
     },
     "src/app/modules/reports/family-planning/family-planning.component.css": {
       "bytes": 775,
       "imports": []
     },
-    "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
-      "bytes": 84,
-      "imports": []
-    },
-    "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
-      "bytes": 619,
-      "imports": []
-    },
-    "src/app/modules/auths/login/login.component.css": {
-      "bytes": 374,
+    "src/app/modules/reports/morbidity/morbidity.component.css": {
+      "bytes": 712,
       "imports": []
     },
     "src/app/modules/reports/household-recap/household-recap.component.css": {
       "bytes": 712,
       "imports": []
     },
-    "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
-      "bytes": 181,
+    "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
+      "bytes": 619,
       "imports": []
     },
     "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.css": {
       "bytes": 1458,
       "imports": []
     },
-    "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
-      "bytes": 4706,
+    "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
+      "bytes": 84,
       "imports": []
     },
-    "src/app/components/snackbar/snackbar.component.css": {
-      "bytes": 1247,
+    "src/app/app.component.css": {
+      "bytes": 179,
       "imports": []
     },
-    "src/app/components/modal-layout/modal-layout.component.css": {
-      "bytes": 3552,
+    "src/app/modules/errors/unauthorized/unauthorized.component.css": {
+      "bytes": 40,
       "imports": []
     },
-    "src/app/components/loader/loader-component.css": {
-      "bytes": 1508,
-      "imports": []
-    },
-    "src/app/modules/admin/signature/signature.component.css": {
-      "bytes": 742,
-      "imports": []
-    },
-    "src/app/modules/reports/pcime/pcime.component.css": {
-      "bytes": 1096,
+    "src/app/modules/errors/500/500.component.css": {
+      "bytes": 40,
       "imports": []
     },
     "src/app/modules/admin/roles/roles.component.css": {
       "bytes": 1209,
       "imports": []
     },
-    "src/app/components/spinner/spinner-component.css": {
-      "bytes": 915,
+    "src/app/modules/errors/404/404.component.css": {
+      "bytes": 40,
       "imports": []
     },
     "src/app/components/top-navigation/top-nav.component.css": {
       "bytes": 212,
       "imports": []
     },
-    "src/app/modules/reports/promotion/promotion.component.css": {
-      "bytes": 712,
+    "src/app/components/spinner/spinner-component.css": {
+      "bytes": 915,
       "imports": []
     },
-    "src/app/modules/errors/500/500.component.css": {
-      "bytes": 40,
+    "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
+      "bytes": 943,
+      "imports": []
+    },
+    "src/app/modules/auths/login/login.component.css": {
+      "bytes": 374,
+      "imports": []
+    },
+    "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
+      "bytes": 181,
+      "imports": []
+    },
+    "src/app/modules/admin/users/users.component.css": {
+      "bytes": 2636,
+      "imports": []
+    },
+    "src/app/modules/reports/pcime/pcime.component.css": {
+      "bytes": 1096,
+      "imports": []
+    },
+    "src/app/modules/admin/signature/signature.component.css": {
+      "bytes": 742,
+      "imports": []
+    },
+    "src/app/components/loader/loader-component.css": {
+      "bytes": 1508,
+      "imports": []
+    },
+    "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
+      "bytes": 4706,
+      "imports": []
+    },
+    "src/app/components/modal-layout/modal-layout.component.css": {
+      "bytes": 3552,
+      "imports": []
+    },
+    "src/app/components/snackbar/snackbar.component.css": {
+      "bytes": 1247,
       "imports": []
     },
     "node_modules/zone.js/fesm2015/zone.js": {
@@ -25815,13 +25679,132 @@
       "bytes": 80,
       "imports": []
     },
+    "src/assets/css/bootstrap.min.css": {
+      "bytes": 202102,
+      "imports": [
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280,0,0,0.25%29'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23f58b8b'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280,0,0,0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255,255,255,0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23d41414'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%236C7293'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        }
+      ]
+    },
+    "src/assets/css/style.css": {
+      "bytes": 8813,
+      "imports": []
+    },
     "angular:styles/global:styles": {
-      "bytes": 25,
+      "bytes": 105,
       "imports": [
         {
           "path": "src/styles.css",
           "kind": "import-rule",
           "original": "src/styles.css"
+        },
+        {
+          "path": "src/assets/css/bootstrap.min.css",
+          "kind": "import-rule",
+          "original": "src/assets/css/bootstrap.min.css"
+        },
+        {
+          "path": "src/assets/css/style.css",
+          "kind": "import-rule",
+          "original": "src/assets/css/style.css"
         }
       ]
     },
@@ -25831,58 +25814,58 @@
     }
   },
   "outputs": {
-    "main-AQGTLSU3.js": {
+    "main-T4JXSYJ6.js": {
       "imports": [
         {
-          "path": "chunk-GGLOWXLR.js",
+          "path": "chunk-QEUG4LKB.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-AHA44THY.js",
+          "path": "chunk-PT3E7WQU.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-VL7ZW7KF.js",
+          "path": "chunk-F5PNBA7E.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-CFWBYOQ5.js",
+          "path": "chunk-WBK6YZ2R.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-W6MTFRU7.js",
+          "path": "chunk-52TJXHHN.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         },
         {
-          "path": "reports.module-Q7T4WA4J.js",
+          "path": "reports.module-WJ3LLSYG.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "manages.module-J3NDSSTW.js",
+          "path": "manages.module-EAVERRDA.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "dashbords.module-LYQTJFWK.js",
+          "path": "dashbords.module-MUPFJCJT.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "auths.module-C5SM4QKN.js",
+          "path": "auths.module-4VK42DYL.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "admin.module-XGTCKF5B.js",
+          "path": "admin.module-ISJM22WF.js",
           "kind": "dynamic-import"
         },
         {
-          "path": "errors.module-UVRRKOML.js",
+          "path": "errors.module-ZGDTOJVN.js",
           "kind": "dynamic-import"
         }
       ],
@@ -25890,37 +25873,34 @@
       "entryPoint": "src/main.ts",
       "inputs": {
         "node_modules/moment/moment.js": {
-          "bytesInOutput": 61382
-        },
-        "node_modules/@messageformat/core/messageformat.js": {
-          "bytesInOutput": 74572
+          "bytesInOutput": 61241
         },
         "node_modules/ngx-bootstrap/utils/fesm2022/ngx-bootstrap-utils.mjs": {
-          "bytesInOutput": 2812
+          "bytesInOutput": 2810
         },
         "node_modules/ngx-bootstrap/focus-trap/fesm2022/ngx-bootstrap-focus-trap.mjs": {
-          "bytesInOutput": 9406
+          "bytesInOutput": 9403
         },
         "node_modules/ngx-bootstrap/positioning/fesm2022/ngx-bootstrap-positioning.mjs": {
-          "bytesInOutput": 14565
+          "bytesInOutput": 14517
         },
         "node_modules/ngx-bootstrap/component-loader/fesm2022/ngx-bootstrap-component-loader.mjs": {
-          "bytesInOutput": 6241
+          "bytesInOutput": 6240
         },
         "node_modules/ngx-bootstrap/modal/fesm2022/ngx-bootstrap-modal.mjs": {
-          "bytesInOutput": 8702
+          "bytesInOutput": 8697
         },
         "src/app/app-routing.module.ts": {
-          "bytesInOutput": 854
+          "bytesInOutput": 852
         },
         "src/app/components/spinner/spinner-component.ts": {
-          "bytesInOutput": 655
+          "bytesInOutput": 652
         },
         "src/app/components/modal-layout/modal-layout.component.ts": {
-          "bytesInOutput": 6661
+          "bytesInOutput": 6646
         },
         "src/app/modals/session-expired/session-expired.component.ts": {
-          "bytesInOutput": 1061
+          "bytesInOutput": 948
         },
         "src/app/services/responsive.service.ts": {
           "bytesInOutput": 221
@@ -25935,31 +25915,34 @@
           "bytesInOutput": 964
         },
         "src/app/modals/reloading/reloading.component.ts": {
-          "bytesInOutput": 992
+          "bytesInOutput": 990
         },
         "node_modules/@angular/service-worker/fesm2022/service-worker.mjs": {
-          "bytesInOutput": 5023
+          "bytesInOutput": 5016
         },
         "src/app/services/cache-storage.service.ts": {
-          "bytesInOutput": 1657
+          "bytesInOutput": 1655
         },
         "src/app/services/update-service-worker.service.ts": {
-          "bytesInOutput": 3386
+          "bytesInOutput": 3385
+        },
+        "src/app/services/connectivity.service.ts": {
+          "bytesInOutput": 417
         },
         "src/app/modals/logout/logout-confirm.component.ts": {
-          "bytesInOutput": 1080
+          "bytesInOutput": 1078
         },
         "src/app/services/db-sync.service.ts": {
-          "bytesInOutput": 9047
+          "bytesInOutput": 9031
         },
         "src/app/modals/sync-for-offline/sync-for-offline.component.ts": {
-          "bytesInOutput": 14264
+          "bytesInOutput": 14219
         },
         "src/app/components/top-navigation/top-nav.component.ts": {
-          "bytesInOutput": 4108
+          "bytesInOutput": 4093
         },
         "src/app/components/side-navigation/side-nav.component.ts": {
-          "bytesInOutput": 3065
+          "bytesInOutput": 3045
         },
         "node_modules/@angular/cdk/fesm2022/platform.mjs": {
           "bytesInOutput": 2015
@@ -25968,49 +25951,49 @@
           "bytesInOutput": 164
         },
         "node_modules/@angular/cdk/fesm2022/layout.mjs": {
-          "bytesInOutput": 2960
+          "bytesInOutput": 2959
         },
         "node_modules/@angular/cdk/fesm2022/a11y.mjs": {
-          "bytesInOutput": 10310
+          "bytesInOutput": 10304
         },
         "node_modules/@angular/cdk/fesm2022/bidi.mjs": {
-          "bytesInOutput": 875
+          "bytesInOutput": 873
         },
         "node_modules/@angular/material/fesm2022/core.mjs": {
-          "bytesInOutput": 10942
+          "bytesInOutput": 10912
         },
         "node_modules/@angular/material/fesm2022/button.mjs": {
-          "bytesInOutput": 24325
+          "bytesInOutput": 24319
         },
         "node_modules/@angular/animations/fesm2022/animations.mjs": {
           "bytesInOutput": 724
         },
         "node_modules/@angular/cdk/fesm2022/portal.mjs": {
-          "bytesInOutput": 5069
+          "bytesInOutput": 5067
         },
         "node_modules/@angular/cdk/fesm2022/scrolling.mjs": {
-          "bytesInOutput": 3744
+          "bytesInOutput": 3737
         },
         "node_modules/@angular/cdk/fesm2022/overlay.mjs": {
-          "bytesInOutput": 31420
+          "bytesInOutput": 31372
         },
         "node_modules/@angular/material/fesm2022/snack-bar.mjs": {
-          "bytesInOutput": 14415
+          "bytesInOutput": 14399
         },
         "src/app/components/snackbar/snackbar.component.ts": {
-          "bytesInOutput": 2349
+          "bytesInOutput": 2343
         },
         "src/app/components/loader/loader-component.ts": {
-          "bytesInOutput": 2082
+          "bytesInOutput": 2078
         },
         "src/app/components/mobile-detection/mobile-detection.component.ts": {
-          "bytesInOutput": 679
+          "bytesInOutput": 676
         },
         "src/app/app.component.ts": {
-          "bytesInOutput": 4112
+          "bytesInOutput": 4843
         },
         "src/app/interceptors/error.interceptor.ts": {
-          "bytesInOutput": 318
+          "bytesInOutput": 393
         },
         "src/app/interceptors/jwt.interceptor.ts": {
           "bytesInOutput": 352
@@ -26028,43 +26011,40 @@
           "bytesInOutput": 524
         },
         "node_modules/@ngrx/store/fesm2022/ngrx-store.mjs": {
-          "bytesInOutput": 11413
+          "bytesInOutput": 11393
         },
         "node_modules/@ngx-translate/core/dist/fesm2022/ngx-translate-core.mjs": {
-          "bytesInOutput": 8689
-        },
-        "src/app/providers/translate-messageformat-compiler.provider.ts": {
-          "bytesInOutput": 531
+          "bytesInOutput": 8675
         },
         "src/app/app.module.ts": {
-          "bytesInOutput": 913
+          "bytesInOutput": 971
         },
         "src/main.ts": {
-          "bytesInOutput": 52
+          "bytesInOutput": 331
         }
       },
-      "bytes": 375301
+      "bytes": 301123
     },
-    "reports.module-Q7T4WA4J.js": {
+    "reports.module-WJ3LLSYG.js": {
       "imports": [
         {
-          "path": "chunk-GGLOWXLR.js",
+          "path": "chunk-QEUG4LKB.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-FIBE4WZ3.js",
+          "path": "chunk-44HVY5PJ.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-W6MTFRU7.js",
+          "path": "chunk-52TJXHHN.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26100,22 +26080,22 @@
       },
       "bytes": 137595
     },
-    "manages.module-J3NDSSTW.js": {
+    "manages.module-EAVERRDA.js": {
       "imports": [
         {
-          "path": "chunk-FIBE4WZ3.js",
+          "path": "chunk-44HVY5PJ.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-W6MTFRU7.js",
+          "path": "chunk-52TJXHHN.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26139,30 +26119,30 @@
       },
       "bytes": 40676
     },
-    "dashbords.module-LYQTJFWK.js": {
+    "dashbords.module-MUPFJCJT.js": {
       "imports": [
         {
-          "path": "chunk-GGLOWXLR.js",
+          "path": "chunk-QEUG4LKB.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-CFWBYOQ5.js",
+          "path": "chunk-WBK6YZ2R.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-FIBE4WZ3.js",
+          "path": "chunk-44HVY5PJ.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-W6MTFRU7.js",
+          "path": "chunk-52TJXHHN.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26175,7 +26155,7 @@
           "bytesInOutput": 16134
         },
         "src/app/modules/dashbords/reco-performance/reco-performance.component.ts": {
-          "bytesInOutput": 19883
+          "bytesInOutput": 19890
         },
         "src/app/modules/dashbords/reco-vaccination/reco-vaccination.component.ts": {
           "bytesInOutput": 20895
@@ -26187,16 +26167,16 @@
           "bytesInOutput": 157
         }
       },
-      "bytes": 58441
+      "bytes": 58448
     },
-    "chunk-GGLOWXLR.js": {
+    "chunk-QEUG4LKB.js": {
       "imports": [
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26218,22 +26198,22 @@
       },
       "bytes": 19643
     },
-    "auths.module-C5SM4QKN.js": {
+    "auths.module-4VK42DYL.js": {
       "imports": [
         {
-          "path": "chunk-AHA44THY.js",
+          "path": "chunk-PT3E7WQU.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4HZH7QO.js",
+          "path": "chunk-D34N3ZSO.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26260,14 +26240,14 @@
       },
       "bytes": 9858
     },
-    "chunk-AHA44THY.js": {
+    "chunk-PT3E7WQU.js": {
       "imports": [
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26281,34 +26261,34 @@
       },
       "bytes": 679
     },
-    "admin.module-XGTCKF5B.js": {
+    "admin.module-ISJM22WF.js": {
       "imports": [
         {
-          "path": "chunk-VL7ZW7KF.js",
+          "path": "chunk-F5PNBA7E.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-CFWBYOQ5.js",
+          "path": "chunk-WBK6YZ2R.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-FIBE4WZ3.js",
+          "path": "chunk-44HVY5PJ.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-W6MTFRU7.js",
+          "path": "chunk-52TJXHHN.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4HZH7QO.js",
+          "path": "chunk-D34N3ZSO.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26317,55 +26297,46 @@
       ],
       "entryPoint": "src/app/modules/admin/admin.module.ts",
       "inputs": {
-        "node_modules/pdfmake/build/pdfmake.js": {
-          "bytesInOutput": 1569786
-        },
-        "node_modules/pdfmake/build/vfs_fonts.js": {
-          "bytesInOutput": 783504
-        },
         "src/app/modules/admin/users/users.component.ts": {
-          "bytesInOutput": 35947
+          "bytesInOutput": 35142
         },
         "src/app/modules/admin/roles/roles.component.ts": {
-          "bytesInOutput": 14692
+          "bytesInOutput": 14313
         },
         "src/app/modules/admin/databases/databases.component.ts": {
-          "bytesInOutput": 246
+          "bytesInOutput": 234
         },
         "node_modules/signature_pad/dist/signature_pad.js": {
-          "bytesInOutput": 11314
+          "bytesInOutput": 11076
         },
         "src/app/modules/admin/signature/signature.component.ts": {
-          "bytesInOutput": 6243
-        },
-        "src/app/services/pdf-generator.service.ts": {
-          "bytesInOutput": 1447
+          "bytesInOutput": 6130
         },
         "src/app/modules/admin/pdf-generator/pdf-generator.component.ts": {
-          "bytesInOutput": 14340
+          "bytesInOutput": 13799
         },
         "src/app/modules/admin/api-list/api-list.component.ts": {
-          "bytesInOutput": 6736
+          "bytesInOutput": 6554
         },
         "src/app/modules/admin/documentation/documentation.component.ts": {
-          "bytesInOutput": 3282
+          "bytesInOutput": 3180
         },
         "src/app/modules/admin/truncate_database/truncate_database.component.ts": {
-          "bytesInOutput": 3546
+          "bytesInOutput": 3433
         },
         "src/app/modules/admin/admin-routing.module.ts": {
-          "bytesInOutput": 1148
+          "bytesInOutput": 1128
         },
         "src/app/modules/admin/admin.module.ts": {
-          "bytesInOutput": 173
+          "bytesInOutput": 163
         }
       },
-      "bytes": 2453253
+      "bytes": 95930
     },
-    "chunk-VL7ZW7KF.js": {
+    "chunk-F5PNBA7E.js": {
       "imports": [
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26379,50 +26350,31 @@
       },
       "bytes": 2512
     },
-    "chunk-CFWBYOQ5.js": {
+    "chunk-WBK6YZ2R.js": {
       "imports": [
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
       "exports": [
         "a",
-        "b",
-        "c"
+        "b"
       ],
       "inputs": {
-        "node_modules/eurodigit/src/to_euro.js": {
-          "bytesInOutput": 185
-        },
-        "node_modules/eurodigit/src/to_int.js": {
-          "bytesInOutput": 89
-        },
-        "node_modules/eurodigit/src/to_non_euro.js": {
-          "bytesInOutput": 237
-        },
-        "node_modules/eurodigit/src/index.js": {
-          "bytesInOutput": 82
-        },
-        "src/assets/js/translator.js": {
-          "bytesInOutput": 10311
-        },
         "src/app/pipes/safe-html.pipe.ts": {
           "bytesInOutput": 646
         },
-        "src/app/pipes/bootstrap-translate.pipe.ts": {
-          "bytesInOutput": 274
-        },
         "src/app/w_shared/shared.module.ts": {
-          "bytesInOutput": 145
+          "bytesInOutput": 144
         }
       },
-      "bytes": 12099
+      "bytes": 898
     },
-    "chunk-FIBE4WZ3.js": {
+    "chunk-44HVY5PJ.js": {
       "imports": [
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26436,10 +26388,10 @@
       },
       "bytes": 1208
     },
-    "chunk-W6MTFRU7.js": {
+    "chunk-52TJXHHN.js": {
       "imports": [
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26453,14 +26405,14 @@
       },
       "bytes": 1020
     },
-    "chunk-Y4HZH7QO.js": {
+    "chunk-D34N3ZSO.js": {
       "imports": [
         {
-          "path": "chunk-SFQJWOZW.js",
+          "path": "chunk-TMLCBAWV.js",
           "kind": "import-statement"
         },
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26474,10 +26426,10 @@
       },
       "bytes": 17540
     },
-    "chunk-SFQJWOZW.js": {
+    "chunk-TMLCBAWV.js": {
       "imports": [
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26502,10 +26454,10 @@
       },
       "bytes": 11058
     },
-    "errors.module-UVRRKOML.js": {
+    "errors.module-ZGDTOJVN.js": {
       "imports": [
         {
-          "path": "chunk-Y4BXPDGL.js",
+          "path": "chunk-GHHBFCRH.js",
           "kind": "import-statement"
         }
       ],
@@ -26532,7 +26484,7 @@
       },
       "bytes": 4905
     },
-    "chunk-Y4BXPDGL.js": {
+    "chunk-GHHBFCRH.js": {
       "imports": [],
       "exports": [
         "$",
@@ -26646,6 +26598,7 @@
         "g",
         "ga",
         "gb",
+        "gc",
         "h",
         "ha",
         "hb",
@@ -27063,7 +27016,7 @@
           "bytesInOutput": 0
         },
         "node_modules/@angular/core/fesm2022/core.mjs": {
-          "bytesInOutput": 122228
+          "bytesInOutput": 122315
         },
         "node_modules/@angular/common/fesm2022/common.mjs": {
           "bytesInOutput": 13401
@@ -27096,13 +27049,23 @@
           "bytesInOutput": 2141
         },
         "src/app/services/constantes.service.ts": {
-          "bytesInOutput": 980
+          "bytesInOutput": 820
         },
         "src/app/services/auth.service.ts": {
           "bytesInOutput": 1244
         }
       },
-      "bytes": 316613
+      "bytes": 316549
+    },
+    "promotion.component-GSSNZC4C.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/reports/promotion/promotion.component.css": {
+          "bytesInOutput": 531
+        }
+      },
+      "bytes": 532,
+      "ng-component": true
     },
     "chw-reco-activity.component-7XYYKBVM.css": {
       "imports": [],
@@ -27112,56 +27075,6 @@
         }
       },
       "bytes": 730,
-      "ng-component": true
-    },
-    "users.component-4Q6XM2O5.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/admin/users/users.component.css": {
-          "bytesInOutput": 1852
-        }
-      },
-      "bytes": 1853,
-      "ng-component": true
-    },
-    "unauthorized.component-RRUPYQ5M.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/errors/unauthorized/unauthorized.component.css": {
-          "bytesInOutput": 33
-        }
-      },
-      "bytes": 34,
-      "ng-component": true
-    },
-    "404.component-TSJYNTB5.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/errors/404/404.component.css": {
-          "bytesInOutput": 33
-        }
-      },
-      "bytes": 34,
-      "ng-component": true
-    },
-    "morbidity.component-BMLF2YBP.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/reports/morbidity/morbidity.component.css": {
-          "bytesInOutput": 531
-        }
-      },
-      "bytes": 532,
-      "ng-component": true
-    },
-    "reco-meg-stock.component-JOKFVNJY.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
-          "bytesInOutput": 633
-        }
-      },
-      "bytes": 634,
       "ng-component": true
     },
     "family-planning.component-SWSHL72L.css": {
@@ -27174,34 +27087,14 @@
       "bytes": 585,
       "ng-component": true
     },
-    "sync-for-offline.component-P2S6EGY5.css": {
+    "morbidity.component-BMLF2YBP.css": {
       "imports": [],
       "inputs": {
-        "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
-          "bytesInOutput": 68
+        "src/app/modules/reports/morbidity/morbidity.component.css": {
+          "bytesInOutput": 531
         }
       },
-      "bytes": 69,
-      "ng-component": true
-    },
-    "reco-performance.component-72ZZMWJL.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
-          "bytesInOutput": 427
-        }
-      },
-      "bytes": 428,
-      "ng-component": true
-    },
-    "login.component-LVEUBGCH.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/auths/login/login.component.css": {
-          "bytesInOutput": 317
-        }
-      },
-      "bytes": 318,
+      "bytes": 532,
       "ng-component": true
     },
     "household-recap.component-XO775QPV.css": {
@@ -27214,14 +27107,14 @@
       "bytes": 532,
       "ng-component": true
     },
-    "sync-calculate-all-data.component-YGNRVXP6.css": {
+    "reco-performance.component-72ZZMWJL.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
-          "bytesInOutput": 86
+        "src/app/modules/dashbords/reco-performance/reco-performance.component.css": {
+          "bytesInOutput": 427
         }
       },
-      "bytes": 87,
+      "bytes": 428,
       "ng-component": true
     },
     "reco-vaccination.component-V2QNP3JH.css": {
@@ -27234,64 +27127,44 @@
       "bytes": 1096,
       "ng-component": true
     },
-    "fix-modal-layout.component-TQGMGOR4.css": {
+    "sync-for-offline.component-P2S6EGY5.css": {
       "imports": [],
       "inputs": {
-        "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
-          "bytesInOutput": 3609
+        "src/app/modals/sync-for-offline/sync-for-offline.component.css": {
+          "bytesInOutput": 68
         }
       },
-      "bytes": 3610,
+      "bytes": 69,
       "ng-component": true
     },
-    "snackbar.component-UQOAOZOE.css": {
+    "app.component-CTUONDOR.css": {
       "imports": [],
       "inputs": {
-        "src/app/components/snackbar/snackbar.component.css": {
-          "bytesInOutput": 878
+        "src/app/app.component.css": {
+          "bytesInOutput": 113
         }
       },
-      "bytes": 879,
+      "bytes": 114,
       "ng-component": true
     },
-    "modal-layout.component-X2WXRHWY.css": {
+    "unauthorized.component-RRUPYQ5M.css": {
       "imports": [],
       "inputs": {
-        "src/app/components/modal-layout/modal-layout.component.css": {
-          "bytesInOutput": 2793
+        "src/app/modules/errors/unauthorized/unauthorized.component.css": {
+          "bytesInOutput": 33
         }
       },
-      "bytes": 2794,
+      "bytes": 34,
       "ng-component": true
     },
-    "loader-component-SAI73YCN.css": {
+    "500.component-ZTLJ7MIW.css": {
       "imports": [],
       "inputs": {
-        "src/app/components/loader/loader-component.css": {
-          "bytesInOutput": 1251
+        "src/app/modules/errors/500/500.component.css": {
+          "bytesInOutput": 33
         }
       },
-      "bytes": 1252,
-      "ng-component": true
-    },
-    "signature.component-GAZ2OLJX.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/admin/signature/signature.component.css": {
-          "bytesInOutput": 587
-        }
-      },
-      "bytes": 588,
-      "ng-component": true
-    },
-    "pcime.component-GN2A6FV7.css": {
-      "imports": [],
-      "inputs": {
-        "src/app/modules/reports/pcime/pcime.component.css": {
-          "bytesInOutput": 788
-        }
-      },
-      "bytes": 789,
+      "bytes": 34,
       "ng-component": true
     },
     "roles.component-NEJPCUJ5.css": {
@@ -27304,14 +27177,14 @@
       "bytes": 872,
       "ng-component": true
     },
-    "spinner-component-SCUXJOBC.css": {
+    "404.component-TSJYNTB5.css": {
       "imports": [],
       "inputs": {
-        "src/app/components/spinner/spinner-component.css": {
-          "bytesInOutput": 210
+        "src/app/modules/errors/404/404.component.css": {
+          "bytesInOutput": 33
         }
       },
-      "bytes": 211,
+      "bytes": 34,
       "ng-component": true
     },
     "top-nav.component-5F5UI4LK.css": {
@@ -27324,24 +27197,114 @@
       "bytes": 161,
       "ng-component": true
     },
-    "promotion.component-GSSNZC4C.css": {
+    "spinner-component-SCUXJOBC.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/reports/promotion/promotion.component.css": {
-          "bytesInOutput": 531
+        "src/app/components/spinner/spinner-component.css": {
+          "bytesInOutput": 210
         }
       },
-      "bytes": 532,
+      "bytes": 211,
       "ng-component": true
     },
-    "500.component-ZTLJ7MIW.css": {
+    "reco-meg-stock.component-JOKFVNJY.css": {
       "imports": [],
       "inputs": {
-        "src/app/modules/errors/500/500.component.css": {
-          "bytesInOutput": 33
+        "src/app/modules/dashbords/reco-meg-stock/reco-meg-stock.component.css": {
+          "bytesInOutput": 633
         }
       },
-      "bytes": 34,
+      "bytes": 634,
+      "ng-component": true
+    },
+    "login.component-LVEUBGCH.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/auths/login/login.component.css": {
+          "bytesInOutput": 317
+        }
+      },
+      "bytes": 318,
+      "ng-component": true
+    },
+    "sync-calculate-all-data.component-YGNRVXP6.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/manages/sync-calculate-all-data/sync-calculate-all-data.component.css": {
+          "bytesInOutput": 86
+        }
+      },
+      "bytes": 87,
+      "ng-component": true
+    },
+    "users.component-4Q6XM2O5.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/admin/users/users.component.css": {
+          "bytesInOutput": 1852
+        }
+      },
+      "bytes": 1853,
+      "ng-component": true
+    },
+    "pcime.component-GN2A6FV7.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/reports/pcime/pcime.component.css": {
+          "bytesInOutput": 788
+        }
+      },
+      "bytes": 789,
+      "ng-component": true
+    },
+    "signature.component-GAZ2OLJX.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/modules/admin/signature/signature.component.css": {
+          "bytesInOutput": 587
+        }
+      },
+      "bytes": 588,
+      "ng-component": true
+    },
+    "loader-component-SAI73YCN.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/loader/loader-component.css": {
+          "bytesInOutput": 1251
+        }
+      },
+      "bytes": 1252,
+      "ng-component": true
+    },
+    "fix-modal-layout.component-TQGMGOR4.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/fix-modal-layout/fix-modal-layout.component.css": {
+          "bytesInOutput": 3609
+        }
+      },
+      "bytes": 3610,
+      "ng-component": true
+    },
+    "modal-layout.component-X2WXRHWY.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/modal-layout/modal-layout.component.css": {
+          "bytesInOutput": 2793
+        }
+      },
+      "bytes": 2794,
+      "ng-component": true
+    },
+    "snackbar.component-UQOAOZOE.css": {
+      "imports": [],
+      "inputs": {
+        "src/app/components/snackbar/snackbar.component.css": {
+          "bytesInOutput": 878
+        }
+      },
+      "bytes": 879,
       "ng-component": true
     },
     "polyfills-S3BTP7ME.js": {
@@ -27358,18 +27321,125 @@
       },
       "bytes": 34037
     },
-    "styles-5INURTSO.css": {
-      "imports": [],
+    "styles-XBR4KJ56.css": {
+      "imports": [
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280,0,0,0.25%29'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23f58b8b'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280,0,0,0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255,255,255,0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23d41414'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%236C7293'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        },
+        {
+          "path": "data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e",
+          "kind": "url-token",
+          "external": true
+        }
+      ],
       "entryPoint": "angular:styles/global:styles",
       "inputs": {
         "src/styles.css": {
           "bytesInOutput": 0
         },
+        "src/assets/css/bootstrap.min.css": {
+          "bytesInOutput": 160651
+        },
+        "src/assets/css/style.css": {
+          "bytesInOutput": 6689
+        },
         "angular:styles/global:styles": {
           "bytesInOutput": 0
         }
       },
-      "bytes": 0
+      "bytes": 167341
     },
     "scripts-JKZX7CDW.js": {
       "imports": [],

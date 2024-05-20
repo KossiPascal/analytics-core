@@ -53,7 +53,9 @@
               "src/manifest.webmanifest"
             ],
             "styles": [
-              "src/styles.css"
+              "src/styles.css",
+              "src/assets/css/bootstrap.min.css",
+              "src/assets/css/style.css"
             ],
             "scripts": [
               "src/assets/js/jquery-3.4.1.min.js",
@@ -65,7 +67,6 @@
               "src/assets/lib/tempusdominus/js/moment.min.js",
               "src/assets/lib/tempusdominus/js/moment-timezone.min.js",
               "src/assets/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js",
-
               "src/assets/js/main.js",
               "src/assets/js/style.js"
             ],
@@ -111,6 +112,7 @@
               "deleteOutputPath": false,
               "outputHashing": "none",
               "namedChunks": true,
+              "aot": true,
               "serviceWorker": "ngsw-config.json",
               "fileReplacements": [
                 {
@@ -124,6 +126,12 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "buildTarget": "app:build",
+            "ssl": false,
+            "sslKey": "../../ssl/server.key",
+            "sslCert": "../../ssl/server.crt"
+          },
           "configurations": {
             "production": {
               "buildTarget": "webapp:build:production"
@@ -151,6 +159,8 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
+              "src/manifest.webmanifest",
+              "src/manifest.webmanifest",
               "src/manifest.webmanifest"
             ],
             "styles": [
