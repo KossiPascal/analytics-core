@@ -20,7 +20,7 @@
     "start": "ng serve",
     "clean": "npm cache clean --force",
     "serve": "npm run clean && ng serve --configuration production",
-    "build": "npm run clean && ng build --service-worker --optimization --configuration production --aot --output-hashing=all --named-chunks --stats-json",
+    "build": "rm -rf ./.angular && rm -rf ../views && npm run clean && ng build --service-worker --optimization --configuration production --aot --output-hashing=all --named-chunks --stats-json",
     "compile": "ngc",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

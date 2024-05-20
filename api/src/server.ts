@@ -42,21 +42,31 @@ var session = require('express-session');
 
 function app() {
   const server = express()
+    .use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method === 'OPTIONS') return res.status(200).end();
+      if (isSecure) {
+        if (req.secure) next();
+        if (!req.secure) res.redirect(`https://${req.headers.host}${req.url}`);
+      } else {
+        next();
+      }
+    })
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))
     .use(helmet({ contentSecurityPolicy: false }))
-    .use(cors({
-      origin: true,//['http://127.0.0.1:5501', 'http://127.0.0.1:5502'],
-      credentials: true
-    }))
+    .use(cors())
+    // .use(cors({
+    //   origin: true,//['http://127.0.0.1:5501', 'http://127.0.0.1:5502'],
+    //   credentials: true
+    // }))
     .use(json())
     .use(responseTime())
     .use(compression())
     .use(urlencoded({ extended: false }))
     .enable('trust proxy')
     .set('strict routing', true)
-    // .set('trust proxy', true)
-    .set('trust proxy', 1)
+    .set('trust proxy', true)
+    // .set('trust proxy', 1)
     .set("view engine", "ejs")
     .set('json spaces', 0)
     .set('content-type', 'application/json; charset=utf-8')
@@ -70,18 +80,6 @@ function app() {
       resave: true
     }))
     .use(bearerToken())
-    .get('/favicon.ico', (req, res) => {
-      res.status(204).end(); // No content response
-    })
-    .use((req: Request, res: Response, next: NextFunction) => {
-      if (req.method === 'OPTIONS') return res.status(200).end();
-      if (isSecure) {
-        if (req.secure) next();
-        if (!req.secure) res.redirect(`https://${req.headers.host}${req.url}`);
-      } else {
-        next();
-      }
-    })
     .use('/api/auth-user', authRouter)
     .use('/api/configs', configsRouter)
     .use('/api/reports', reportsRouter)
@@ -91,26 +89,17 @@ function app() {
     .use('/api/sync', syncRouter)
     .use('/api/database', databaseRouter)
     .use('/api/assets', express.static(__dirname + '/assets'))
-    // .get('/ngsw-worker.js', (req: Request, res: Response, next: NextFunction) => {
-    //   const indexPath = join(projectFolder, "views", "ngsw-worker.js");
-    //   res.sendFile(indexPath, (err: any) => {
-    //     if (err) {
-    //       err['noStaticFiles'] = true;
-    //       next(err);
-    //     }
-    //   });
-    // })
-    .use(express.static(join(projectFolder, "views"), {
-      setHeaders: (res, path) => {
-        // if (path.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        // }
-      }
-    }))
-
-    .get("*", (req: Request, res: Response, next: NextFunction) => {
+    // .use(express.static(join(projectFolder, "views"), {
+    //   setHeaders: (res, path) => {
+    //     // if (path.endsWith('.html')) {
+    //     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    //     res.setHeader('Pragma', 'no-cache');
+    //     res.setHeader('Expires', '0');
+    //     // }
+    //   }
+    // }))
+    .use(express.static(join(projectFolder, "views")))
+    .use("/", (req: Request, res: Response, next: NextFunction) => {
       const indexPath = join(projectFolder, "views", "index.html");
       res.sendFile(indexPath, (err: any) => {
         if (err) {
@@ -119,9 +108,8 @@ function app() {
         }
       });
     })
-    .use((req: Request, res: Response) => {
-      res.status(404).send('Not found.');
-    })
+    .all('*', (req: Request, res: Response, next: NextFunction) => res.status(200).redirect("/"))
+    .use((req: Request, res: Response) => res.status(404).send('Not found.'))
     .use((error: any, req: Request, res: Response, next: NextFunction) => {
       console.error(error.stack);
       if (error.noStaticFiles == true) {
@@ -134,9 +122,6 @@ function app() {
           },
         });
       }
-    })
-    .all('*', (req: Request, res: Response, next: NextFunction) => {
-      res.status(200).redirect("/");
     });
 
   return server;
@@ -172,14 +157,14 @@ AppDataSource
       credential['cert'] = fs.readFileSync(`${sslFolder}/analytics/server.crt`, 'utf8');
     }
 
-    ServerStart({ 
-      credential: credential, 
-      isSecure: isSecure, 
-      server: server, 
-      access_all_host: ACCESS_ALL_AVAILABE_PORT === 'true', 
-      port: port, 
-      hostnames: hostnames, 
-      useLocalhost: USE_LOCALHOST === 'true' 
+    ServerStart({
+      credential: credential,
+      isSecure: isSecure,
+      server: server,
+      access_all_host: ACCESS_ALL_AVAILABE_PORT === 'true',
+      port: port,
+      hostnames: hostnames,
+      useLocalhost: USE_LOCALHOST === 'true'
     });
 
   })
