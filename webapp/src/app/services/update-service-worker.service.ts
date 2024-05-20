@@ -80,35 +80,16 @@ export class UpdateServiceWorkerService {
   }
 
   registerServiceWorker(onInstalling?: () => void) {
-    if (!window.navigator.serviceWorker && !('serviceWorker' in navigator)) {
-      return Promise.reject(new Error('Service worker not supported'));
-    }
-    return new Promise((resolve, reject) => {
       navigator.serviceWorker.register('/ngsw-worker.js')
         .then((registration) => {
-          // Do nothing if service worker is already up to date
-          if (!registration.installing) {
-            return resolve(registration.scope);
-          }
           if (onInstalling) {
             onInstalling();
           }
-          const installingWorker = registration.installing;
-          installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'activated') {
-              installingWorker.onstatechange = null;
-              return resolve(installingWorker);
-            }
-            if (installingWorker.state === 'redundant') {
-              installingWorker.onstatechange = null;
-              return reject(new Error('Service worker labeled redundant'));
-            }
-
-            console.debug(`Service worker state changed to ${installingWorker.state}`);
-          };
+          // console.log('Service Worker registered with scope:', registration.scope);
         })
-        .catch(reject);
-    });
+        .catch(error => {
+          // console.error('Service Worker registration failed:', error);
+        });
   }
 
   checkForUpdates(): void {

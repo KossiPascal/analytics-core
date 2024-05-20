@@ -37,6 +37,7 @@ import { SyncForOfflineConfirmComponent } from '@kossi-modals/sync-for-offline/s
 import { FixModalLayoutComponent } from '@kossi-components/fix-modal-layout/fix-modal-layout.component';
 import { RolesCrudComponent } from '@kossi-modals/roles-crud/roles-crud.component';
 import { DeleteRemoveConfirmComponent } from '@kossi-modals/delete-remove/delete-remove-confirm.component';
+import { environment } from '@kossi-environments/environment';
 
 MAT_MOMENT_DATE_FORMATS.parse = {
   dateInput: { month: 'short', year: 'numeric', day: 'numeric', date: 'long' },
@@ -48,15 +49,10 @@ MAT_MOMENT_DATE_FORMATS.display.monthYearA11yLabel = 'long';
 
 export const APP_DATE_FORMATS: MatDateFormats = MAT_MOMENT_DATE_FORMATS;
 
-export class MissingTranslationHandlerLog implements MissingTranslationHandler {
-  handle(params: MissingTranslationHandlerParams) {
-    return params.key;
-  }
-}
 export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) {
   return new TranslateHttpLoader(
     httpClient,
-    // constante.backenUrl()+'/assets/i18n/',
+    cst.backenUrl()+'/assets/i18n/',
     '-lang.json'
   );
 }
@@ -103,20 +99,20 @@ export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) 
         useFactory: HttpLoaderFactory,
         deps: [HttpClient]
       },
-      missingTranslationHandler: {
-        provide: MissingTranslationHandler,
-        useClass: MissingTranslationHandlerLog
-      },
+      // missingTranslationHandler: {
+      //   provide: MissingTranslationHandler,
+      //   useClass: MissingTranslationHandlerLog
+      // },
       // compiler: {
       //   provide: TranslateCompiler,
       //   useClass: TranslateMessageFormatCompilerProvider,
       // },
     }),
-      ServiceWorkerModule.register('ngsw-worker.js', {
-        enabled: !isDevMode(),
+      ServiceWorkerModule.register('/ngsw-worker.js', {
+        enabled: environment.production,
         // Register the ServiceWorker as soon as the application is stable
         // or after 30 seconds (whichever comes first).
-        registrationStrategy: 'registerWhenStable:30000'
+        // registrationStrategy: 'registerWhenStable:30000'
       }),
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

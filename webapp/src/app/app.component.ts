@@ -48,7 +48,7 @@ export class AppComponent implements OnInit {
   private setupPromise: any;
 
   public showCustom:boolean = false;
-  isOnline: boolean = false;
+  isOnline: boolean = true;
 
 
   constructor(
@@ -67,16 +67,13 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    
+
     window.addEventListener("load", () => {
-      console.log('load')
-    
       window.addEventListener("online", () => {
-        console.log(true)
+        this.isOnline = true;
       });
-    
       window.addEventListener("offline", () => {
-        console.log(false)
+        this.isOnline = false;
       });
     });
 
@@ -92,8 +89,8 @@ export class AppComponent implements OnInit {
       });
     }, 500);
 
-    if (!['4200'].includes(location.port)) {
-      // this.usw.registerServiceWorker();
+    if (![4200, '4200'].includes(location.port)) {
+      this.usw.registerServiceWorker();
       this.setupDb();
       this.setupPromise = Promise.resolve()
         .then(() => this.checkPrivacyPolicy())

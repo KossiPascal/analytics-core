@@ -20,10 +20,11 @@
     "start": "ng serve",
     "clean": "npm cache clean --force",
     "serve": "npm run clean && ng serve --configuration production",
-    "build": "npm run clean && ng build --service-worker --optimization=true --configuration=production --aot --output-hashing=all --named-chunks --stats-json",
+    "build": "npm run clean && ng build --service-worker --optimization --configuration production --aot --output-hashing=all --named-chunks --stats-json",
     "compile": "ngc",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "precache": "sw-precache --verbose --config=sw-precache-config.js"
   },
   "private": true,
   "prettier": {

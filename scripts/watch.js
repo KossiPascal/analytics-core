@@ -15,10 +15,11 @@ const configs = [
   // instead of watching the source files which are watched separately, watch the build folder and upload on rebuild
   {
     files: [
-      'api/build/browser/**/*',
-      '!api/build/browser/service-worker.*',
-      '!api/build/browser/manifest.webmanifest',
-      '!api/build/browser/workbox-*'
+      'views/*',
+      'views/**/*',
+      '!views/service-worker.*',
+      '!views/manifest.json',
+      '!views/workbox-*'
     ],
     cmd: 'npm',
     args: [ 'run', 'update-service-worker' ]

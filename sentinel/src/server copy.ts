@@ -109,7 +109,7 @@
 //       `!ngsw.json`, // exclude service worker path
 
 //       // webapp
-//       'manifest.webmanifest',
+//       'manifest.json',
 //       './*',
 //     ],
 //     templatedURLs: {

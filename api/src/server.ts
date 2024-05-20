@@ -17,7 +17,7 @@ import { ADMIN_USER_ID, AuthUserController } from "./controllers/auth-user";
 import cors from "cors";
 import bearerToken from "express-bearer-token";
 import bodyParser from 'body-parser';
-import { dirname, join, extname } from 'path';
+import { dirname, join } from 'path';
 import { config } from 'dotenv';
 import { AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA } from "./controllers/auto-sync-all-data";
 
@@ -26,17 +26,19 @@ import cron from "node-cron";
 import compression from "compression";
 import responseTime from 'response-time';
 
-import http from 'http';
+// import http from 'http';
 import fs from 'fs';
 
 const apiFolder = dirname(__dirname);
 const projectFolder = dirname(apiFolder);
 const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/.env` });
-const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT } = process.env;
+const sslFolder = `${projectParentFolder}/ssl`;
+config({ path: `${sslFolder}/.env` });
+const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT, ACTIVE_SECURE_MODE, ACCESS_ALL_AVAILABE_PORT, USE_LOCALHOST } = process.env;
 
+const isSecure = ACTIVE_SECURE_MODE === 'true';
 
-// var session = require('express-session');
+var session = require('express-session');
 
 function app() {
   const server = express()
@@ -53,31 +55,33 @@ function app() {
     .use(urlencoded({ extended: false }))
     .enable('trust proxy')
     .set('strict routing', true)
-    .set('trust proxy', true)
-    // .set('trust proxy', 1)
+    // .set('trust proxy', true)
+    .set('trust proxy', 1)
     .set("view engine", "ejs")
     .set('json spaces', 0)
     .set('content-type', 'application/json; charset=utf-8')
-    // .use(session({
-    //   secret: 'session',
-    //   cookie: {
-    //     secure: true,
-    //     maxAge: 60000
-    //   },
-    //   saveUninitialized: true,
-    //   resave: true
-    // }))
+    .use(session({
+      secret: 'session',
+      cookie: {
+        secure: true,
+        maxAge: 60000
+      },
+      saveUninitialized: true,
+      resave: true
+    }))
     .use(bearerToken())
     .get('/favicon.ico', (req, res) => {
       res.status(204).end(); // No content response
     })
     .use((req: Request, res: Response, next: NextFunction) => {
       if (req.method === 'OPTIONS') return res.status(200).end();
-      // if (req.secure) next();
-      // if (!req.secure) res.redirect(`https://${req.headers.host}${req.url}`);
-      next();
+      if (isSecure) {
+        if (req.secure) next();
+        if (!req.secure) res.redirect(`https://${req.headers.host}${req.url}`);
+      } else {
+        next();
+      }
     })
-
     .use('/api/auth-user', authRouter)
     .use('/api/configs', configsRouter)
     .use('/api/reports', reportsRouter)
@@ -86,10 +90,9 @@ function app() {
     .use('/api/api-token', apisRouter)
     .use('/api/sync', syncRouter)
     .use('/api/database', databaseRouter)
-
     .use('/api/assets', express.static(__dirname + '/assets'))
     // .get('/ngsw-worker.js', (req: Request, res: Response, next: NextFunction) => {
-    //   const indexPath = join(apiFolder, "build", "browser", "ngsw-worker.js");
+    //   const indexPath = join(projectFolder, "views", "ngsw-worker.js");
     //   res.sendFile(indexPath, (err: any) => {
     //     if (err) {
     //       err['noStaticFiles'] = true;
@@ -97,19 +100,18 @@ function app() {
     //     }
     //   });
     // })
-
-    .use(express.static(join(apiFolder, "build", "browser"), {
+    .use(express.static(join(projectFolder, "views"), {
       setHeaders: (res, path) => {
         // if (path.endsWith('.html')) {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-          res.setHeader('Pragma', 'no-cache');
-          res.setHeader('Expires', '0');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
         // }
       }
     }))
 
     .get("*", (req: Request, res: Response, next: NextFunction) => {
-      const indexPath = join(apiFolder, "build", "browser", "index.html");
+      const indexPath = join(projectFolder, "views", "index.html");
       res.sendFile(indexPath, (err: any) => {
         if (err) {
           err['noStaticFiles'] = true;
@@ -147,27 +149,38 @@ AppDataSource
     await AuthUserController.DefaultAdminCreation()
     const server = app();
     const port = normalizePort((NODE_ENV === 'production' ? APP_PROD_PORT : APP_DEV_PORT) || 3000);
-    const hostnames = getIPAddress(true);
-
-
+    const hostnames = getIPAddress(ACCESS_ALL_AVAILABE_PORT === 'true');
 
     //  ┌────────────── second (0 - 59) (optional)
-    //  │ ┌──────────── minute (0 - 59) 
-    //  │ │ ┌────────── hour (0 - 23)
-    //  │ │ │ ┌──────── day of the month (1 - 31)
-    //  │ │ │ │ ┌────── month (1 - 12)
-    //  │ │ │ │ │ ┌──── day of the week (0 - 6) (0 and 7 both represent Sunday)
-    //  │ │ │ │ │ │
-    //  │ │ │ │ │ │
-    //  * * * * * * 
+    //  │  ┌──────────── minute (0 - 59) 
+    //  │  │  ┌────────── hour (0 - 23)
+    //  │  │  │ ┌──────── day of the month (1 - 31)
+    //  │  │  │ │ ┌────── month (1 - 12)
+    //  │  │  │ │ │ ┌──── day of the week (0 - 6) (0 and 7 both represent Sunday)
+    //  │  │  │ │ │ │
+    //  │  │  │ │ │ │
+    //  *  *  * * * * 
     cron.schedule("00 59 23 * * *", function () {
       logNginx(`running this task everyday at 23h 59 min 0 seconds.`);
       AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA({ userId: ADMIN_USER_ID });
     });
 
-    // Start the server
-    // server.listen(port, () => console.log(`Server is running at http://localhost:${port}`));
-    ServerStart({ isSecure: false, app: server, access_ports: true, port: port, hostnames: hostnames })
+    const credential: any = {};
+    if (isSecure) {
+      credential['key'] = fs.readFileSync(`${sslFolder}/analytics/server.key`, 'utf8');
+      credential['ca'] = fs.readFileSync(`${sslFolder}/analytics/server-ca.crt`, 'utf8');
+      credential['cert'] = fs.readFileSync(`${sslFolder}/analytics/server.crt`, 'utf8');
+    }
+
+    ServerStart({ 
+      credential: credential, 
+      isSecure: isSecure, 
+      server: server, 
+      access_all_host: ACCESS_ALL_AVAILABE_PORT === 'true', 
+      port: port, 
+      hostnames: hostnames, 
+      useLocalhost: USE_LOCALHOST === 'true' 
+    });
 
   })
   .catch(error => { logNginx(`${error}`) });

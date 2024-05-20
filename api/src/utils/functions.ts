@@ -15,7 +15,7 @@ config({ path: `${projectParentFolder}/ssl/.env` });
 
 const { NODE_ENV, CHT_USER, CHT_PASS, CHT_HOST, CHT_PROTOCOL, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
 
-export async function AxioFetchCouchDbData(viewName:string, { username, password, startKey, endKey }: { username?: string, password?: string, startKey?: string, endKey?: string }): Promise<any> {
+export async function AxioFetchCouchDbData(viewName: string, { username, password, startKey, endKey }: { username?: string, password?: string, startKey?: string, endKey?: string }): Promise<any> {
     const dbName = 'medic';
     const couchDbUrl = `${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}`;
     username = username ?? CHT_USER ?? '';
@@ -166,15 +166,18 @@ export function ServerStart(data: {
         key: string;
         ca: string;
         cert: string;
-    }, app: any, access_ports: boolean, port: any, hostnames: any[]
+    }, server: any, access_all_host: boolean, port: any, hostnames: string[], useLocalhost: boolean
 }) {
-    const server = data.isSecure == true ? https.createServer(data.credential!, data.app) : http.createServer(data.app);
+    const server = data.isSecure == true ? https.createServer(data.credential ?? {}, data.server) : http.createServer(data.server);
     // var io = require('socket.io')(server, {});
     // server.listen(data.port, '0.0.0.0', () => onProcess)
-    if (data.access_ports) server.listen(data.port, '0.0.0.0', () => onProcess);
-    if (!data.access_ports) server.listen(data.port, data.hostnames[0], () => onProcess);
+    if (data.access_all_host) server.listen(data.port, '0.0.0.0', () => onProcess);
+    if (!data.access_all_host) {
+        if (data.useLocalhost) server.listen(data.port, '127.0.0.1', () => onProcess);
+        if (!data.useLocalhost) server.listen(data.port, data.hostnames[0], () => onProcess);
+    }
     server.on('error', (err) => onError(err, data.port));
-    server.on('listening', () => onListening(server, data.hostnames, 'https'));
+    server.on('listening', () => onListening(server, data.useLocalhost ? ['localhost'] : data.hostnames, data.isSecure == true ? 'https' : 'http'));
     server.on('connection', (stream) => console.log('someone connected!'));
     return server;
 }
@@ -199,7 +202,7 @@ export function appVersion(): { service_worker_version: number | null, app_versi
     var service_worker_version = null;
     var app_version = null;
     try {
-        service_worker_version = require('../../build/browser/ngsw.json')?.timestamp;
+        service_worker_version = require('../../../views/ngsw.json')?.timestamp;
         app_version = require('../../package.json')?.version;
     } catch (error) { }
 
@@ -261,15 +264,15 @@ export function getColors(numberOfColors: number) {
     const backgroundColor = [];
     const colors = [];
     for (let i = 0; i < (numberOfColors * 2); i++) {
-      const color = '#' + Math.floor(Math.random() * 16777215).toString(16);
-      if (backgroundColor.length !== numberOfColors) {
-        backgroundColor.push(color);
-      } else {
-        colors.push(color);
-      }
+        const color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+        if (backgroundColor.length !== numberOfColors) {
+            backgroundColor.push(color);
+        } else {
+            colors.push(color);
+        }
     }
     return { backgroundColors: backgroundColor, colors: colors };
-  }
+}
 
 
 export function getFirstAndLastDayOfMonth(year: number, month: string, withHours: boolean = false): { start_date: string, end_date: string } {

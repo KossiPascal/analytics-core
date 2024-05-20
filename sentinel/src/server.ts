@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 
 const projectDir = path.dirname(path.dirname(__dirname));
-const buildDir = path.join(projectDir, 'api', 'build', 'browser');
+const buildDir = path.join(projectDir, 'views');
 const serviceWorkerFile = path.join(buildDir, 'ngsw.json');
 
 var change:number = 0;

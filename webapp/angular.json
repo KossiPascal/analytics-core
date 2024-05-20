@@ -38,19 +38,17 @@
       "prefix": "",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "../api/build",
+            "outputPath": "../views",
             "index": "src/index.html",
-            "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js"
-            ],
+            "main": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
+            "polyfills": "src/polyfills.ts",
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              "src/manifest.webmanifest"
+              "src/manifest.json"
             ],
             "styles": [
               "src/styles.css",
@@ -74,15 +72,36 @@
               "moment",
               "lodash"
             ],
-            "serviceWorker": "ngsw-config.json"
+            "serviceWorker": true,
+            "ngswConfigPath": "ngsw-config.json"
           },
           "configurations": {
+            "development": {
+              "optimization": false,
+              "outputHashing": "none",
+              "buildOptimizer": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "deleteOutputPath": false,
+              "namedChunks": true,
+              "aot": true,
+              "serviceWorker": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dev.ts"
+                }
+              ]
+            },
             "production": {
               "deleteOutputPath": false,
               "optimization": true,
+              "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
               "aot": true,
               "budgets": [
                 {
@@ -96,28 +115,10 @@
                   "maximumError": "15kb"
                 }
               ],
-              "outputHashing": "all",
-              "serviceWorker": "ngsw-config.json",
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
-                }
-              ]
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true,
-              "deleteOutputPath": false,
-              "outputHashing": "none",
-              "namedChunks": true,
-              "aot": true,
-              "serviceWorker": "ngsw-config.json",
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.dev.ts"
                 }
               ]
             }
@@ -128,9 +129,9 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "buildTarget": "app:build",
-            "ssl": false,
-            "sslKey": "../../ssl/server.key",
-            "sslCert": "../../ssl/server.crt"
+            "ssl": true,
+            "sslKey": "../../ssl/analytics/server.key",
+            "sslCert": "../../ssl/analytics/server.crt"
           },
           "configurations": {
             "production": {
@@ -159,9 +160,7 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              "src/manifest.webmanifest",
-              "src/manifest.webmanifest",
-              "src/manifest.webmanifest"
+              "src/manifest.json"
             ],
             "styles": [
               "src/styles.css"
@@ -173,6 +172,6 @@
     }
   },
   "cli": {
-    "analytics": false
+    "analytics": "6255aa98-b597-4ba9-97e1-758550709b80"
   }
 }

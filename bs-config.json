@@ -1,12 +1,12 @@
 {
     "port": 8080,
     "server": {
-      "baseDir": "api/build/browser",
+      "baseDir": "views",
       "middleware": {
         "1": null
       }
     },
-    "files": ["./api/build/**/*.{html,htm,css,js}"],
+    "files": ["./views/*.{html,htm,css,js}"],
     "proxy": {
       "rules": [
         {

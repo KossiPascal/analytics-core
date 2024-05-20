@@ -19,6 +19,9 @@
     "target": "ES2022",
     "module": "ES2022",
     "useDefineForClassFields": false,
+    "skipDefaultLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "downlevelIteration": true,
     "lib": [
       "ES2022",
       "dom"
@@ -58,7 +61,6 @@
       "rxjs/*": ["node_modules/rxjs/*"]
     }
   },
-  "include": ["src/**/*.ts"],
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
