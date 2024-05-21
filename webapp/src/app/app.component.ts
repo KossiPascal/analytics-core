@@ -9,7 +9,6 @@ import { SessionExpiredComponent } from '@kossi-modals/session-expired/session-e
 import { SnackbarService } from '@kossi-services/snackbar.service';
 import { UserContextService } from '@kossi-services/user-context.service';
 import { ResponsiveService } from '@kossi-services/responsive.service';
-import { ConnectivityService } from '@kossi-services/connectivity.service';
 
 declare var $: any;
 
@@ -48,7 +47,6 @@ export class AppComponent implements OnInit {
   private setupPromise: any;
 
   public showCustom:boolean = false;
-  isOnline: boolean = true;
 
 
   constructor(
@@ -61,21 +59,11 @@ export class AppComponent implements OnInit {
     private snackbar: SnackbarService,
     private userCtx: UserContextService,
     private responsiveService:ResponsiveService,
-    private conn: ConnectivityService
   ) {
 
   }
 
   ngOnInit(): void {
-
-    window.addEventListener("load", () => {
-      window.addEventListener("online", () => {
-        this.isOnline = true;
-      });
-      window.addEventListener("offline", () => {
-        this.isOnline = false;
-      });
-    });
 
     setTimeout(() => {
       const self = this;

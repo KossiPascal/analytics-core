@@ -114,7 +114,19 @@ export async function userToken(user: Users, param: { hashToken?: boolean, check
     var default_routes: Routes[] = [];
     var autorizations: string[] = [];
     var isAdmin: boolean = false;
-    var isOnlyOnlineUser: boolean = true;
+    var can_use_offline_mode: boolean = false;
+    var can_view_reports: boolean = false;
+    var can_view_dashboards: boolean = false;
+    var can_manage_data: boolean = false;
+    var can_create_user: boolean = false;
+    var can_update_user: boolean = false;
+    var can_delete_user: boolean = false;
+    var can_create_role: boolean = false;
+    var can_update_role: boolean = false;
+    var can_delete_role: boolean = false;
+    var can_logout: boolean = false;
+
+    
 
     const data = await GetRolesAndNamesPagesAutorizations(user.roles);
 
@@ -123,7 +135,18 @@ export async function userToken(user: Users, param: { hashToken?: boolean, check
         roles = data.rolesObj;
         autorizations = data.autorizations;
         isAdmin = data.autorizations.includes('_admin');
-        isOnlyOnlineUser = isAdmin ? true : !data.autorizations.includes('can_use_offline_mode');
+        can_use_offline_mode = isAdmin ? false : data.autorizations.includes('can_use_offline_mode');
+        can_view_reports = isAdmin ? true : data.autorizations.includes('can_view_reports');
+        can_view_dashboards = isAdmin ? true : data.autorizations.includes('can_view_dashboards');
+        can_manage_data = isAdmin ? true : data.autorizations.includes('can_manage_data');
+        can_create_user = isAdmin ? true : data.autorizations.includes('can_create_user');
+        can_update_user = isAdmin ? true : data.autorizations.includes('can_update_user');
+        can_delete_user = isAdmin ? true : data.autorizations.includes('can_delete_user');
+        can_create_role = isAdmin ? true : data.autorizations.includes('can_create_role');
+        can_update_role = isAdmin ? true : data.autorizations.includes('can_update_role');
+        can_delete_role = isAdmin ? true : data.autorizations.includes('can_delete_role');
+        can_logout = isAdmin ? true : data.autorizations.includes('can_logout');
+
         routes = data.routes;
         default_routes = data.default_routes;
     }
@@ -140,7 +163,17 @@ export async function userToken(user: Users, param: { hashToken?: boolean, check
         fullname: user.fullname,
         email: user.email,
         isAdmin: isAdmin,
-        isOnlyOnlineUser: isOnlyOnlineUser,
+        can_use_offline_mode: can_use_offline_mode,
+        can_view_reports: can_view_reports,
+        can_view_dashboards: can_view_dashboards,
+        can_manage_data: can_manage_data,
+        can_create_user: can_create_user,
+        can_update_user: can_update_user,
+        can_delete_user: can_delete_user,
+        can_create_role: can_create_role,
+        can_update_role: can_update_role,
+        can_delete_role: can_delete_role,
+        can_logout: can_logout,
         routes: isAdmin ? ROUTES_LIST : routes,
         default_route: isAdmin ? routes[0] : default_routes[0],
         autorizations: isAdmin ? AUTORISATIONS_LIST : autorizations,

@@ -53,7 +53,7 @@ export class UsersComponent implements OnInit {
   // chws: ChwCoustomQuery[] = [];
   // recos: RecoCoustomQuery[] = [];
 
-  currentUser:User|null;
+  USER:User|null;
 
 
   OrgUnitsIsEmpty(): boolean {
@@ -83,7 +83,7 @@ export class UsersComponent implements OnInit {
 
   constructor(private userCtx: UserContextService, private api: ApiService, private snackbar: SnackbarService, private store: AppStorageService, private cst: ConstanteService) {
     this.APP_LOGO = this.cst.APP_LOGO;
-    this.currentUser = this.userCtx.currentUserCtx;
+    this.USER = this.userCtx.currentUserCtx;
   }
 
   ngOnInit(): void {
@@ -450,7 +450,9 @@ export class UsersComponent implements OnInit {
       passwordConfirm: new FormControl('', [Validators.minLength(8)]),
       isActive: new FormControl(user?.isActive == true),
     };
-    formControls.username.disable();
+    if(this.USER?.isAdmin !== true) {
+      formControls.username.disable();
+    }
     return new FormGroup(formControls);
   }
   updatePasswordFormGroup(user: AdminUser | null): FormGroup {
@@ -460,7 +462,9 @@ export class UsersComponent implements OnInit {
       passwordConfirm: new FormControl('', [Validators.required, Validators.minLength(8)]),
     };
     const validators = [this.MatchValidator('password', 'passwordConfirm', true)];
-    formControls.username.disable();
+    if(this.USER?.isAdmin !== true) {
+      formControls.username.disable();
+    }
     return new FormGroup(formControls, validators);
   }
 

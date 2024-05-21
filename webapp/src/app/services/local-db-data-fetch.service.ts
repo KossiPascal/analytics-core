@@ -28,7 +28,7 @@ export class LocalDbDataFetchService {
   async GetPromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<PromotionReport> | undefined> {
     var promotionReport: PromotionReport[] = [];
 
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       promotionReport = (await (this.api.GetPromotionReports({ months, year, recos }).
         pipe(map((res$: { status: number, data: PromotionReport[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -121,7 +121,7 @@ export class LocalDbDataFetchService {
 
   async GetFamilyPlanningReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<FamilyPlanningReport> | undefined> {
     var familyPlanningReport: FamilyPlanningReport[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       familyPlanningReport = (await (this.api.GetFamilyPlanningReports({ months, year, recos }).
         pipe(map((res$: { status: number, data: FamilyPlanningReport[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -180,7 +180,7 @@ export class LocalDbDataFetchService {
 
   async GetMorbidityReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<MorbidityReport> | undefined> {
     var morbidityReport: MorbidityReport[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       morbidityReport = (await (this.api.GetMorbidityReports({ months, year, recos }).
         pipe(map((res$: { status: number, data: MorbidityReport[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -258,7 +258,7 @@ export class LocalDbDataFetchService {
 
   async GetHouseholdRecapReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<{ total: HouseholdRecapReport, out: IndicatorsDataOutput<HouseholdRecapReport[]> } | undefined> {
     var householdRecapReport: HouseholdRecapReport[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       householdRecapReport = (await (this.api.GetHouseholdRecapReports({ months, year, recos }).
         pipe(map((res$: { status: number, data: HouseholdRecapReport[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -362,7 +362,7 @@ export class LocalDbDataFetchService {
 
   async GetPcimneNewbornReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<PcimneNewbornReport | undefined> {
     var pcimneNewbornReport: PcimneNewbornReport[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       pcimneNewbornReport = (await (this.api.GetPcimneNewbornReports({ months, year, recos }).
         pipe(map((res$: { status: number, data: PcimneNewbornReport[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -458,7 +458,7 @@ export class LocalDbDataFetchService {
 
   async GetChwsRecoReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<ChwsRecoReport> | undefined> {
     var chwsRecoReports: ChwsRecoReport[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       chwsRecoReports = (await (this.api.GetChwsRecoReports({ months, year, recos }).
         pipe(map((res$: { status: number, data: ChwsRecoReport[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -554,7 +554,7 @@ export class LocalDbDataFetchService {
 
   async GetRecoMegDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoMegDashboardUtils[]> | undefined> {
     var recoMegDashboard: RecoMegDashboard[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       recoMegDashboard = (await (this.api.GetRecoMegDashboards({ months, year, recos }).
         pipe(map((res$: { status: number, data: RecoMegDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -608,7 +608,7 @@ export class LocalDbDataFetchService {
 
   async GetRecoVaccinationDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoVaccinationDashboard[]> | undefined> {
     var recoVaccineDashboard: RecoVaccinationDashboard[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       recoVaccineDashboard = (await (this.api.GetRecoVaccinationDashboards({ months, year, recos }).
         pipe(map((res$: { status: number, data: RecoVaccinationDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -644,7 +644,7 @@ export class LocalDbDataFetchService {
 
   async GetRecoPerformanceDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoPerformanceDashboard> | undefined> {
     var recoPerfDashboard: RecoPerformanceDashboard[] = [];
-    if (this.USER?.isOnlyOnlineUser === true) {
+    if (this.USER?.can_use_offline_mode !== true) {
       recoPerfDashboard = (await (this.api.GetRecoPerformanceDashboards({ months, year, recos }).
         pipe(map((res$: { status: number, data: RecoPerformanceDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
@@ -687,7 +687,7 @@ export class LocalDbDataFetchService {
     var recoChartPerfDashboard: RecoChartPerformanceDashboard[] = [];
     if (recos.length === 1) {
 
-      if (this.USER?.isOnlyOnlineUser === true) {
+      if (this.USER?.can_use_offline_mode !== true) {
         recoChartPerfDashboard = (await (this.api.GetRecoChartPerformanceDashboards({ year, recos }).
           pipe(map((res$: { status: number, data: RecoChartPerformanceDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
             catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];

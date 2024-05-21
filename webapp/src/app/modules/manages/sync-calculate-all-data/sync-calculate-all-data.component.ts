@@ -231,7 +231,6 @@ export class SyncCalculateAllDataComponent implements OnInit {
   SYNC_ALL_USERS() {
     this.data_syncing = true;
     this.api.SYNC_APP_USERS_FROM_COUCHDB().subscribe((_res$: { status: number, data: any }) => {
-      console.log(_res$);
       if (_res$.status == 200) {
       }
       this.data_syncing = false;
@@ -262,7 +261,6 @@ export class SyncCalculateAllDataComponent implements OnInit {
     };
 
     this.api.FULL_SYNC_AND_CALCULATE_COUCHDB_DATA(params).subscribe((_res$: { status: number, data: { orgunit: OrgUnitSyncResult | null, data: AllFormsSyncResult | null, dhis2: OrgUnitSyncResult[], globalError: any, successDetails: any, reports:{cible:string, data: SyncOutputUtils}[], dashboards:{cible:string, data: SyncOutputUtils}[] } }) => {
-      console.log(_res$.data)
       if (_res$.status === 200) {
         this.FullSyncResult$ = _res$.data;
       }

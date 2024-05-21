@@ -144,7 +144,7 @@ export class AuthUserController {
             user.password = hashedPassword;
             user.salt = salt;
             user.roles = roles;
-            user.isActive = isActive;
+            user.isActive = isActive === true;
             user.countries = countries;
             user.regions = regions;
             user.prefectures = prefectures;
@@ -208,14 +208,23 @@ export class AuthUserController {
         try {
             const { userId } = req.body;
             const userRepo = await getUsersRepository();
+            var currentUser: Users | null = await userRepo.findOneBy({id:userId});
+            if (!currentUser) return res.status(201).json({ status: 200, data: 'You must logout and re-login' });
+            const currentUserToken = await userToken(currentUser, { hashToken: false, checkValidation: false, outPutInitialRoles: true, outPutOrgUnits: true });
+            if (!currentUserToken) return res.status(201).json({ status: 200, data: 'You must logout and re-login' });
+                
             var users: Users[] = await userRepo.find();
-            const finalUsers = await Promise.all(users.map(async user => {
+            var finalUsers = await Promise.all(users.map(async user => {
                 // const formatedRoles = await GetRolesAndNamesPagesAutorizations(user.roles);
                 const tokenUser = await userToken(user, { hashToken: false, checkValidation: false, outPutInitialRoles: true, outPutOrgUnits: true });
                 // const finalRoles = formatedRoles && notEmpty(formatedRoles) ? formatedRoles.rolesObj : [];
                 const newUser: any = { ...(tokenUser as TokenUser), isDeleted: user.isDeleted, isActive: user.isActive };
                 return newUser;
             }));
+
+            if ((currentUserToken as TokenUser).isAdmin !== true) {
+                finalUsers = finalUsers.filter(u => u.isAdmin !== true)
+            }
             return res.status(200).json({ status: 200, data: finalUsers });
         } catch (err: any) {
             return res.status(500).json({ status: 500, data: `${err}` });

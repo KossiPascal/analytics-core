@@ -3,6 +3,7 @@ import { LogoutConfirmComponent } from '@kossi-modals/logout/logout-confirm.comp
 import { SyncForOfflineConfirmComponent } from '@kossi-modals/sync-for-offline/sync-for-offline.component';
 import { User } from '@kossi-models/user';
 import { AuthService } from '@kossi-services/auth.service';
+import { ConnectivityService } from '@kossi-services/connectivity.service';
 import { DbSyncService } from '@kossi-services/db-sync.service';
 import { FixeModalService } from '@kossi-services/fix-modal.service';
 import { SnackbarService } from '@kossi-services/snackbar.service';
@@ -19,9 +20,12 @@ export class TopNavigationComponent {
 
   APP_NAME: string;
   USER: User | null;
-  constructor(private mService: ModalService, private snackbar: SnackbarService, private auth: AuthService, private userCtx: UserContextService, private fix: FixeModalService) {
+  isOnline:boolean;
+  constructor(private conn: ConnectivityService, private mService: ModalService, private snackbar: SnackbarService, private auth: AuthService, private userCtx: UserContextService, private fix: FixeModalService) {
     this.APP_NAME = this.auth.APP_NAME;
     this.USER = this.userCtx.currentUserCtx;
+    this.isOnline = window.navigator.onLine;
+    this.conn.getOnlineStatus().subscribe(isOnline => this.isOnline = isOnline);
   }
 
   async syncForOffline(event: Event) {

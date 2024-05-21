@@ -2,15 +2,9 @@ import { Routes } from "./Interfaces";
 
 export const AUTORISATIONS_LIST:string[] = [
     'can_use_offline_mode',
-
     'can_view_reports',
-    
     'can_view_dashboards',
-
     'can_manage_data',
-    'can_create_all',
-    'can_update_all',
-    'can_delete_all',
 
     'can_create_user',
     'can_update_user',
@@ -24,8 +18,8 @@ export const AUTORISATIONS_LIST:string[] = [
 ];
 
 export const ROUTES_LIST: Routes[] = [
-    { path: "admin/users", label: 'Users', group: "ADMINISTRATION", autorisations: ["_admin", "can_create_all", "can_update_all", "can_delete_all", "can_create_user", "can_update_user", "can_delete_user"] },
-    { path: "admin/roles", label: 'Roles', group: "ADMINISTRATION", autorisations: ["_admin", "can_create_all", "can_update_all", "can_delete_all", "can_create_role", "can_update_role", "can_delete_role"] },
+    { path: "admin/users", label: 'Users', group: "ADMINISTRATION", autorisations: ["_admin", "can_create_user", "can_update_user", "can_delete_user"] },
+    { path: "admin/roles", label: 'Roles', group: "ADMINISTRATION", autorisations: ["_admin", "can_create_role", "can_update_role", "can_delete_role"] },
     { path: "admin/api-access", label: 'API ACCESS', group: "ADMINISTRATION", autorisations: ["_admin"] },
     { path: "admin/delete-couchdb-data", label: 'Delete Couchdb Data', group: "ADMINISTRATION", autorisations: ["_admin"] },
     { path: "admin/truncate-database", label: 'Truncate Database', group: "ADMINISTRATION", autorisations: ["_admin"] },

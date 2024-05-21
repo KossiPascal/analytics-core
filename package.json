@@ -29,7 +29,7 @@
     "install-webapp": "cd webapp && npm install",
     "install-sentinel": "cd sentinel && npm install",
 
-    "server-install": "npm run install-api & npm run install-sentinel",
+    "server-install": "npm run install-app & npm run install-api & npm run install-sentinel",
     "install-all": "npm run install-app & npm run install-api & npm run install-webapp & npm run install-sentinel",
     
     "start": "npm run clean & npm run dev-api & npm run dev-sentinel",

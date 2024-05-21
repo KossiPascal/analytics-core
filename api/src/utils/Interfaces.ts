@@ -6,7 +6,17 @@ export interface TokenUser {
     fullname: string
     email: string
     isAdmin: boolean
-    isOnlyOnlineUser: boolean
+    can_use_offline_mode: boolean
+    can_view_reports: boolean
+    can_view_dashboards: boolean
+    can_manage_data: boolean
+    can_create_user: boolean
+    can_update_user: boolean
+    can_delete_user: boolean
+    can_create_role: boolean
+    can_update_role: boolean
+    can_delete_role: boolean
+    can_logout: boolean
     roleIds?: string[]
     roles?: Roles[]
     routes: Routes[]

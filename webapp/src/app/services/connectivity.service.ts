@@ -9,13 +9,14 @@ export class ConnectivityService {
 
   constructor() {
     this.onlineStatus$ = new BehaviorSubject<boolean>(window.navigator.onLine);
+    window.addEventListener("load", () => {
+      window.addEventListener('online', () => {
+        this.onlineStatus$.next(true);
+      });
 
-    window.addEventListener('online', () => {
-      this.onlineStatus$.next(true);
-    });
-
-    window.addEventListener('offline', () => {
-      this.onlineStatus$.next(false);
+      window.addEventListener('offline', () => {
+        this.onlineStatus$.next(false);
+      });
     });
   }
 

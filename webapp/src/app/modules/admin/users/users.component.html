@@ -23,7 +23,7 @@
             </tr>
           </thead>
           <tbody *ngFor="let user of users$; let index = index; let isFirst = first; let isOdd = odd;">
-            <tr *ngIf="!isAdmin(user) || currentUser?.isAdmin"
+            <tr *ngIf="!isAdmin(user) || USER?.isAdmin"
               [class]="user.isDeleted == true ? 'deleted-user' : 'undeleted-user'">
               <td scope="row">{{ index+1 }}</td>
               <td>{{ user.username }}</td>
@@ -40,7 +40,7 @@
               <td><span style="font-size: 20px; font-weight: bold;">{{user.isActive ? '' : '&#10003;'}}</span></td>
               <td><span style="font-size: 20px; font-weight: bold;">{{isAdmin(user) ? '&#10003;' : ''}}</span></td>
               <td>
-                <span *ngIf="!isAdmin(user) || currentUser?.isAdmin"
+                <span *ngIf="!isAdmin(user) || USER?.isAdmin"
                   style="cursor: pointer; font-size: 15px; padding: 0px 4px 0px 6px;" class="btn btn-warning"
                   (click)="EditUser(user)">
                   <i class="fas fa-edit"></i>
