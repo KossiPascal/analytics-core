@@ -224,7 +224,10 @@ export class AdultData {
     mebendazole_500mg!: number
 
     @Column({ type: 'float', nullable: true })
-    ors_zinc!: number
+    ors!: number
+
+    @Column({ type: 'float', nullable: true })
+    zinc!: number
 
     //---------------------------------------------------------
 

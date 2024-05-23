@@ -174,13 +174,24 @@ export class RolesComponent implements OnInit {
   }
 
   AddOrRemoveAutorization(autorization: string) {
-    const index = this.selectedAutorization.indexOf(autorization);
+    const [found, index] = (() => {
+      let foundIndex = -1;
+      const foundObject = this.selectedAutorization.find((dt, idx) => {
+        if (dt === autorization) {
+          foundIndex = idx;
+          return true;
+        }
+        return false;
+      });
+      return [foundObject, foundIndex];
+    })();
     if (index !== -1) {
       this.selectedAutorization.splice(index, 1);
     } else {
       this.selectedAutorization.push(autorization);
     }
   }
+  
   createFormGroup(role?: Roles): FormGroup {
     const formControls = {
       name: new FormControl(role?.name ?? '', [Validators.required, Validators.minLength(4)]),

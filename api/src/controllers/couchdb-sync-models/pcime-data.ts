@@ -76,7 +76,8 @@ export async function SyncPcimneData(report: any, _repoPcimne: Repository<Pcimne
             _pcimne.paracetamol_500mg = dataTransform(fields.paracetamol_500mg_quantity, 'number');
             _pcimne.mebendazol_250mg = dataTransform(fields.mebendazole_250mg_quantity, 'number');
             _pcimne.mebendazol_500mg = dataTransform(fields.mebendazole_500mg_quantity, 'number');
-            _pcimne.ors_zinc = dataTransform(fields.ors_zinc_quantity, 'number');
+            _pcimne.ors = dataTransform(fields.ors_quantity, 'number');
+            _pcimne.zinc = dataTransform(fields.zinc_quantity, 'number');
             _pcimne.vitamin_a = dataTransform(fields.vitamin_a_quantity, 'number');
             _pcimne.tetracycline_ointment = dataTransform(fields.tetracycline_ointment_quantity, 'number');
         }

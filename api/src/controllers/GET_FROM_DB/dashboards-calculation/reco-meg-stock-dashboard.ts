@@ -144,18 +144,30 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                 },
                 {
                     index: 7,
-                    label: 'Ors / Zinc',
-                    available_stock: monthStockAll.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
-                                     megsOutAll.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
-                    month_stock: stockMonth.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
-                    consumption: consumptionMonth.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
-                    loss: lossMonth.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
-                    damaged: damagedMonth.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
-                    broken: brokenMonth.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
-                    obselete: obseleteMonth.filter(d => isValidNum(d.ors_zinc)).map(c => parseInt(`${c.ors_zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    label: 'Ors',
+                    available_stock: monthStockAll.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
+                                     megsOutAll.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    month_stock: stockMonth.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    consumption: consumptionMonth.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    loss: lossMonth.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    damaged: damagedMonth.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    broken: brokenMonth.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    obselete: obseleteMonth.filter(d => isValidNum(d.ors)).map(c => parseInt(`${c.ors}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
                 },
                 {
                     index: 8,
+                    label: 'Zinc',
+                    available_stock: monthStockAll.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
+                                     megsOutAll.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    month_stock: stockMonth.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    consumption: consumptionMonth.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    loss: lossMonth.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    damaged: damagedMonth.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    broken: brokenMonth.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                    obselete: obseleteMonth.filter(d => isValidNum(d.zinc)).map(c => parseInt(`${c.zinc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
+                },
+                {
+                    index: 9,
                     label: 'CTA',
                     available_stock: monthStockAll.filter(d => isValidNum(d.cta)).map(c => parseInt(`${c.cta}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.cta)).map(c => parseInt(`${c.cta}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
@@ -167,7 +179,7 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                     obselete: obseleteMonth.filter(d => isValidNum(d.cta)).map(c => parseInt(`${c.cta}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
                 },
                 {
-                    index: 9,
+                    index: 10,
                     label: 'TDR',
                     available_stock: monthStockAll.filter(d => isValidNum(d.tdr)).map(c => parseInt(`${c.tdr}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.tdr)).map(c => parseInt(`${c.tdr}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
@@ -179,7 +191,7 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                     obselete: obseleteMonth.filter(d => isValidNum(d.tdr)).map(c => parseInt(`${c.tdr}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
                 },
                 {
-                    index: 10,
+                    index: 11,
                     label: 'Vitamin A',
                     available_stock: monthStockAll.filter(d => isValidNum(d.vitamin_a)).map(c => parseInt(`${c.vitamin_a}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.vitamin_a)).map(c => parseInt(`${c.vitamin_a}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
@@ -193,7 +205,7 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                 // meg_type!: 'stock' | 'consumption' | 'loss' | 'damaged' | 'broken' | 'obselete'
                 // fp_method!: 'pill_coc' | 'pill_cop' | 'condoms' | 'dmpa_sc' | 'depo_provera_im' | 'cycle_necklace' | 'diu' | 'implant' | 'tubal_ligation' | null
                 {
-                    index: 11,
+                    index: 12,
                     label: 'Pillule COC',
                     available_stock: monthStockAll.filter(d => isValidNum(d.pill_coc)).map(c => parseInt(`${c.pill_coc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.pill_coc)).map(c => parseInt(`${c.pill_coc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
@@ -205,7 +217,7 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                     obselete: obseleteMonth.filter(d => isValidNum(d.pill_coc)).map(c => parseInt(`${c.pill_coc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
                 },
                 {
-                    index: 12,
+                    index: 13,
                     label: 'Pillule COP',
                     available_stock: monthStockAll.filter(d => isValidNum(d.pill_cop)).map(c => parseInt(`${c.pill_cop}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.pill_cop)).map(c => parseInt(`${c.pill_cop}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
@@ -217,7 +229,7 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                     obselete: obseleteMonth.filter(d => isValidNum(d.pill_cop)).map(c => parseInt(`${c.pill_cop}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
                 },
                 {
-                    index: 13,
+                    index: 14,
                     label: 'Condoms',
                     available_stock: monthStockAll.filter(d => isValidNum(d.condoms)).map(c => parseInt(`${c.condoms}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.condoms)).map(c => parseInt(`${c.condoms}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
@@ -229,7 +241,7 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                     obselete: obseleteMonth.filter(d => isValidNum(d.condoms)).map(c => parseInt(`${c.condoms}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
                 },
                 {
-                    index: 14,
+                    index: 15,
                     label: 'Dmpa SC (Sayana-press)',
                     available_stock: monthStockAll.filter(d => isValidNum(d.dmpa_sc)).map(c => parseInt(`${c.dmpa_sc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.dmpa_sc)).map(c => parseInt(`${c.dmpa_sc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
@@ -241,7 +253,7 @@ export async function RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ month, year }:
                     obselete: obseleteMonth.filter(d => isValidNum(d.dmpa_sc)).map(c => parseInt(`${c.dmpa_sc}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),
                 },
                 {
-                    index: 15,
+                    index: 16,
                     label: 'Implant',
                     available_stock: monthStockAll.filter(d => isValidNum(d.implant)).map(c => parseInt(`${c.implant}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0) - 
                                      megsOutAll.filter(d => isValidNum(d.implant)).map(c => parseInt(`${c.implant}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0),

@@ -94,7 +94,7 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                             if (['adult_consulation', 'adult_followup'].includes(r.form)) {
                                 const _adult = await SyncAdultData(r, _repoAdult);
                                 if (!('adult' in outPutInfo)) outPutInfo["adult"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_adult) outPutInfo["adult"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_adult) outPutInfo["adult"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_adult) outPutInfo["adult"]["ErrorCount"] += 1;
                                 if (_adult) outPutInfo["adult"]["SuccessCount"] += 1;
                             }
@@ -102,14 +102,14 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                             if (['fp_danger_sign_check', 'fp_renewal'].includes(r.form)) {
                                 const _fp = await SyncFamilyPlanningData(r, _repoFP);
                                 if (!('familyPlanning' in outPutInfo)) outPutInfo["familyPlanning"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_fp) outPutInfo["familyPlanning"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_fp) outPutInfo["familyPlanning"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_fp) outPutInfo["familyPlanning"]["ErrorCount"] += 1;
                                 if (_fp) outPutInfo["familyPlanning"]["SuccessCount"] += 1;
                             }
                             if (r.form === 'pregnancy_family_planning' && !isTrue(r.fields.is_pregnant)) {
                                 const _fp = await SyncFamilyPlanningData(r, _repoFP);
                                 if (!('familyPlanning' in outPutInfo)) outPutInfo["familyPlanning"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_fp) outPutInfo["familyPlanning"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_fp) outPutInfo["familyPlanning"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_fp) outPutInfo["familyPlanning"]["ErrorCount"] += 1;
                                 if (_fp) outPutInfo["familyPlanning"]["SuccessCount"] += 1;
                             }
@@ -117,28 +117,28 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                             if (r.form === 'prenatal_followup' || r.form === 'pregnancy_family_planning' && isTrue(r.fields.is_pregnant)) {
                                 const _pregnant = await SyncPregnantData(r, _repoPregnant);
                                 if (!('pregnant' in outPutInfo)) outPutInfo["pregnant"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_pregnant) outPutInfo["pregnant"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_pregnant) outPutInfo["pregnant"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_pregnant) outPutInfo["pregnant"]["ErrorCount"] += 1;
                                 if (_pregnant) outPutInfo["pregnant"]["SuccessCount"] += 1;
                             }
                             if (['newborn_register', 'newborn_followup'].includes(r.form)) {
                                 const _newborn = await SyncNewbornData(r, _repoNewborn);
                                 if (!('newborn' in outPutInfo)) outPutInfo["newborn"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_newborn) outPutInfo["newborn"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_newborn) outPutInfo["newborn"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_newborn) outPutInfo["newborn"]["ErrorCount"] += 1;
                                 if (_newborn) outPutInfo["newborn"]["SuccessCount"] += 1;
                             }
                             if (['pcimne_followup', 'pcimne_register'].includes(r.form)) {
                                 const _pcimne = await SyncPcimneData(r, _repoPcime);
                                 if (!('pcimne' in outPutInfo)) outPutInfo["pcimne"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_pcimne) outPutInfo["pcimne"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_pcimne) outPutInfo["pcimne"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_pcimne) outPutInfo["pcimne"]["ErrorCount"] += 1;
                                 if (_pcimne) outPutInfo["pcimne"]["SuccessCount"] += 1;
                             }
                             if (['delivery'].includes(r.form)) {
                                 const _delivery = await SyncDeliveryData(r, _repoDelivery);
                                 if (!('delivery' in outPutInfo)) outPutInfo["delivery"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_delivery) outPutInfo["delivery"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_delivery) outPutInfo["delivery"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_delivery) outPutInfo["delivery"]["ErrorCount"] += 1;
                                 if (_delivery) outPutInfo["delivery"]["SuccessCount"] += 1;
                             }
@@ -146,14 +146,14 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                             if (['stock_entry', 'stock_movement', 'pcimne_register', 'adult_consulation'].includes(r.form)) {
                                 const _recoMeg = await SyncRecoMegData(r, _repoRecoMeg);
                                 if (!('recoMeg' in outPutInfo)) outPutInfo["recoMeg"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_recoMeg) outPutInfo["recoMeg"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_recoMeg) outPutInfo["recoMeg"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_recoMeg) outPutInfo["recoMeg"]["ErrorCount"] += 1;
                                 if (_recoMeg) outPutInfo["recoMeg"]["SuccessCount"] += 1;
                             }
                             if ((r.form === 'pregnancy_family_planning' && !isTrue(r.fields.is_pregnant) || r.form === 'fp_renewal') && notEmpty(r.fields.fp_method) || r.form === 'fp_danger_sign_check') {
                                 const _recoMeg = await SyncRecoMegData(r, _repoRecoMeg);
                                 if (!('recoMeg' in outPutInfo)) outPutInfo["recoMeg"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_recoMeg) outPutInfo["recoMeg"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_recoMeg) outPutInfo["recoMeg"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_recoMeg) outPutInfo["recoMeg"]["ErrorCount"] += 1;
                                 if (_recoMeg) outPutInfo["recoMeg"]["SuccessCount"] += 1;
                             }
@@ -161,14 +161,14 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                             if (['referral_followup'].includes(r.form)) {
                                 const _referal = await SyncReferalData(r, _repoReferal);
                                 if (!('referal' in outPutInfo)) outPutInfo["referal"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_referal) outPutInfo["referal"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_referal) outPutInfo["referal"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_referal) outPutInfo["referal"]["ErrorCount"] += 1;
                                 if (_referal) outPutInfo["referal"]["SuccessCount"] += 1;
                             }
                             if (['vaccination_followup'].includes(r.form)) { //vaccination_referal_followup
                                 const _vaccination = await SyncVaccinationData(r, _repoVaccination);
                                 if (!('vaccination' in outPutInfo)) outPutInfo["vaccination"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_vaccination) outPutInfo["vaccination"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_vaccination) outPutInfo["vaccination"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_vaccination) outPutInfo["vaccination"]["ErrorCount"] += 1;
                                 if (_vaccination) outPutInfo["vaccination"]["SuccessCount"] += 1;
                             }
@@ -176,21 +176,21 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                             if (['event_register'].includes(r.form)) {
                                 const _event = await SyncEventsData(r, _repoEvent);
                                 if (!('event' in outPutInfo)) outPutInfo["event"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_event) outPutInfo["event"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_event) outPutInfo["event"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_event) outPutInfo["event"]["ErrorCount"] += 1;
                                 if (_event) outPutInfo["event"]["SuccessCount"] += 1;
                             }
                             if (['fs_meg_situation'].includes(r.form)) {
                                 const _fsMeg = await SyncFsMegData(r, _repoFsMeg);
                                 if (!('fsMeg' in outPutInfo)) outPutInfo["fsMeg"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_fsMeg) outPutInfo["fsMeg"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_fsMeg) outPutInfo["fsMeg"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_fsMeg) outPutInfo["fsMeg"]["ErrorCount"] += 1;
                                 if (_fsMeg) outPutInfo["fsMeg"]["SuccessCount"] += 1;
                             }
                             if (['promotional_activity'].includes(r.form)) {
                                 const _promoAct = await SyncPromotionalData(r, _repoPromotional);
                                 if (!('promotionalActivity' in outPutInfo)) outPutInfo["promotionalActivity"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_promoAct) outPutInfo["promotionalActivity"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_promoAct) outPutInfo["promotionalActivity"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_promoAct) outPutInfo["promotionalActivity"]["ErrorCount"] += 1;
                                 if (_promoAct) outPutInfo["promotionalActivity"]["SuccessCount"] += 1;
                             }
@@ -198,7 +198,7 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                             if (['death_report', 'undo_death_report'].includes(r.form)) {
                                 const _death = await SyncDeathData(r, _repoDeath);
                                 if (!('death' in outPutInfo)) outPutInfo["death"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
-                                if (!_death) outPutInfo["death"]["Errors"] += `\n | \n ${r._id}`;
+                                if (!_death) outPutInfo["death"]["Errors"] += `${r._id}\n | \n `;
                                 if (!_death) outPutInfo["death"]["ErrorCount"] += 1;
                                 if (_death) outPutInfo["death"]["SuccessCount"] += 1;
                             }

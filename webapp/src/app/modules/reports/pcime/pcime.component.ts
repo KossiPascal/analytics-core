@@ -2,6 +2,7 @@ import { AfterViewInit, Component, HostListener, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
 import { PcimneNewbornReport } from '@kossi-models/reports';
+import { ApiService } from '@kossi-services/api.service';
 import { AuthService } from '@kossi-services/auth.service';
 import { LocalDbDataFetchService } from '@kossi-services/local-db-data-fetch.service';
 import { SnackbarService } from '@kossi-services/snackbar.service';
@@ -27,6 +28,9 @@ export class PcimeComponent implements OnInit, AfterViewInit {
   MONTH!: string;
   YEAR!: number
 
+  data_validation!:boolean
+
+  IS_VALIDATE!:boolean
 
   PCIMNE_NEWBORN$!: PcimneNewbornReport|undefined;
 
@@ -61,7 +65,7 @@ export class PcimeComponent implements OnInit, AfterViewInit {
   chws: ChwCoustomQuery[] = [];
   recos: RecoCoustomQuery[] = [];
 
-  constructor(private urlT: UrlTrackerService, private ldbfetch: LocalDbDataFetchService, private userCtx: UserContextService, private auth: AuthService, private snackbar: SnackbarService) {
+  constructor(private api: ApiService, private ldbfetch: LocalDbDataFetchService, private userCtx: UserContextService, private auth: AuthService, private snackbar: SnackbarService) {
     this.screenWidth = window.innerWidth;
     this.COLUMN_WIDTH = (window.innerWidth - 600) / 4;
     this.getCurrentUserCtx();
@@ -133,27 +137,26 @@ export class PcimeComponent implements OnInit, AfterViewInit {
     if (type === 'commune') return this._formGroup.value.commune === data;
     if (type === 'hospital') return this._formGroup.value.hospital === data;
     if (type === 'district_quartier') return this._formGroup.value.district_quartier === data;
-    if (type === 'recos') return this._formGroup.value.recos.includes(`${data}`);
+    if (type === 'recos') return toArray(this._formGroup.value.recos).includes(`${data}`);
     return false;
   }
 
-  // generate(cible:'region' | 'prefecture' | 'commune' | 'hospital' | 'district_quartier' | 'recos'): boolean {
-  //   if (cible === 'region') return this._formGroup.value.region === data;
-  //   if (cible === 'prefecture') return this._formGroup.value.prefecture === data;
-  //   if (cible === 'commune') return this._formGroup.value.commune === data;
-  //   if (cible === 'hospital') return this._formGroup.value.hospital === data;
-  //   if (cible === 'district_quartier') return this._formGroup.value.district_quartier === data;
-  //   if (cible === 'recos') return this._formGroup.value.recos.includes(`${data}`);
-  //   return false;
-  // }
 
   countriesGenerate() {
     this.countries = this.Countries$;
-    if (this.Countries$.length === 1) {
+    if (this.Countries$.length === 1 || this.countries.length === 1) {
       this._formGroup.value['country'] = this.Countries$[0].id;
     }
+    this.regionsGenerate();
   }
   regionsGenerate() {
+    this.prefectures = [];
+    this.communes = [];
+    this.hospitals = [];
+    this.districtQuartiers = [];
+    this.chws = [];
+    this.villageSecteurs = [];
+    this.recos = [];
     if (this.Countries$.length > 0) {
       if (this.Regions$.length > 1 && notNull(this._formGroup.value.country)) {
         this.regions = this.Regions$.filter(d => d.country_id === this._formGroup.value.country);
@@ -172,8 +175,18 @@ export class PcimeComponent implements OnInit, AfterViewInit {
       this.regions = [];
     }
 
+    if (this.regions.length === 1) {
+      this._formGroup.value['region'] = this.regions[0].id;
+    }
+    this.prefecturesGenerate();
   }
   prefecturesGenerate() {
+    this.communes = [];
+    this.hospitals = [];
+    this.districtQuartiers = [];
+    this.chws = [];
+    this.villageSecteurs = [];
+    this.recos = [];
     if (this.Regions$.length > 0) {
       if (this.Prefectures$.length > 1 && notNull(this._formGroup.value.region)) {
         this.prefectures = this.Prefectures$.filter(d => d.region_id === this._formGroup.value.region);
@@ -191,8 +204,17 @@ export class PcimeComponent implements OnInit, AfterViewInit {
     } else {
       this.prefectures = [];
     }
+    if (this.prefectures.length === 1) {
+      this._formGroup.value['prefecture'] = this.prefectures[0].id;
+    }
+    this.communesGenerate();
   }
   communesGenerate() {
+    this.hospitals = [];
+    this.districtQuartiers = [];
+    this.chws = [];
+    this.villageSecteurs = [];
+    this.recos = [];
     if (this.Prefectures$.length > 0) {
       if (this.Communes$.length > 1 && notNull(this._formGroup.value.prefecture)) {
         this.communes = this.Communes$.filter(d => d.prefecture_id === this._formGroup.value.prefecture);
@@ -210,8 +232,16 @@ export class PcimeComponent implements OnInit, AfterViewInit {
     } else {
       this.communes = [];
     }
+    if (this.communes.length === 1) {
+      this._formGroup.value['commune'] = this.communes[0].id;
+    }
+    this.hospitalsGenerate();
   }
   hospitalsGenerate() {
+    this.districtQuartiers = [];
+    this.chws = [];
+    this.villageSecteurs = [];
+    this.recos = [];
     if (this.Communes$.length > 0) {
       if (this.Hospitals$.length > 1 && notNull(this._formGroup.value.commune)) {
         this.hospitals = this.Hospitals$.filter(d => d.commune_id === this._formGroup.value.commune);
@@ -229,8 +259,15 @@ export class PcimeComponent implements OnInit, AfterViewInit {
     } else {
       this.hospitals = [];
     }
+    if (this.hospitals.length === 1) {
+      this._formGroup.value['hospital'] = this.hospitals[0].id;
+    }
+    this.districtsGenerate();
   }
   districtsGenerate() {
+    this.chws = [];
+    this.villageSecteurs = [];
+    this.recos = [];
     if (this.Hospitals$.length > 0) {
       if (this.DistrictQuartiers$.length > 1 && notNull(this._formGroup.value.hospital)) {
         this.districtQuartiers = this.DistrictQuartiers$.filter(d => d.hospital_id === this._formGroup.value.hospital);
@@ -248,64 +285,125 @@ export class PcimeComponent implements OnInit, AfterViewInit {
     } else {
       this.districtQuartiers = [];
     }
-  }
-  chwsGenerate() {
-    if (this.DistrictQuartiers$.length > 0) {
-      if (this.Chws$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
-        this.chws = this.Chws$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
-      } else if (this.Chws$.length === 1) {
-        this.chws = this.Chws$;
-        this._formGroup.value['chw'] = this.Chws$[0].id;
-      } else {
-        this.chws = [];
-      }
-    } else if (this.Chws$.length >= 1) {
-      this.chws = this.Chws$;
-      if (this.Chws$.length === 1) {
-        this._formGroup.value['chw'] = this.Chws$[0].id;
-      }
-    } else {
-      this.chws = [];
+    if (this.districtQuartiers.length === 1) {
+      this._formGroup.value['district_quartier'] = this.districtQuartiers[0].id;
     }
+    // this.chwsGenerate();
+    this.recosGenerate();
   }
-  villagesGenerate() {
-    if (this.DistrictQuartiers$.length > 0) {
-      if (this.VillageSecteurs$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
-        this.villageSecteurs = this.VillageSecteurs$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
-      } else if (this.VillageSecteurs$.length === 1) {
-        this.villageSecteurs = this.VillageSecteurs$;
-        this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;
-      } else {
-        this.villageSecteurs = [];
-      }
-      this.villageSecteurs = [];
-    } else if (this.VillageSecteurs$.length >= 1) {
-      this.villageSecteurs = this.VillageSecteurs$;
-      if (this.VillageSecteurs$.length === 1) {
-        this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;
-      }
-    } else {
-      this.villageSecteurs = [];
-    }
-  }
+  // chwsGenerate() {
+  //   this.villageSecteurs = [];
+  //   this.recos = [];
+  //   if (this.DistrictQuartiers$.length > 0) {
+  //     if (this.Chws$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
+  //       this.chws = this.Chws$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
+  //     } else if (this.Chws$.length === 1) {
+  //       this.chws = this.Chws$;
+  //       this._formGroup.value['chw'] = this.Chws$[0].id;
+  //     } else {
+  //       this.chws = [];
+  //     }
+  //   } else if (this.Chws$.length >= 1) {
+  //     this.chws = this.Chws$;
+  //     if (this.Chws$.length === 1) {
+  //       this._formGroup.value['chw'] = this.Chws$[0].id;
+  //     }
+  //   } else {
+  //     this.chws = [];
+  //   }
+  //   if (this.chws.length === 1) {
+  //     this._formGroup.value['chw'] = this.chws[0].id;
+  //   }
+  //   this.villagesGenerate();
+  // }
+
+  // villagesGenerate() {
+  //   this.recos = [];
+  //   if (this.DistrictQuartiers$.length > 0) {
+  //     if (this.VillageSecteurs$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
+  //       this.villageSecteurs = this.VillageSecteurs$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
+  //     } else if (this.VillageSecteurs$.length === 1) {
+  //       this.villageSecteurs = this.VillageSecteurs$;
+  //       this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;
+  //     } else {
+  //       this.villageSecteurs = [];
+  //     }
+  //     this.villageSecteurs = [];
+  //   } else if (this.VillageSecteurs$.length >= 1) {
+  //     this.villageSecteurs = this.VillageSecteurs$;
+  //     if (this.VillageSecteurs$.length === 1) {
+  //       this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;
+  //     }
+  //   } else {
+  //     this.villageSecteurs = [];
+  //   }
+  //   if (this.villageSecteurs.length === 1) {
+  //     this._formGroup.value['village_secteur'] = this.villageSecteurs[0].id;
+  //   }
+  //   this.recosGenerate();
+  // }
+
   recosGenerate() {
     if (this.DistrictQuartiers$.length > 0) {
       if (this.Recos$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
         this.recos = this.Recos$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
       } else if (this.Recos$.length === 1) {
         this.recos = this.Recos$;
-        this._formGroup.value['recos'] = this.Recos$[0].id;
       } else {
         this.recos = [];
       }
     } else if (this.Recos$.length >= 1) {
       this.recos = this.Recos$;
-      if (this.Recos$.length === 1) {
-        this._formGroup.value['recos'] = this.Recos$[0].id;
-      }
     } else {
       this.recos = [];
     }
+    if (this.recos.length > 0) {
+      this._formGroup.value['recos'] = this.recos.map(r => r.id);
+    }
+  }
+
+  onCheckboxChange(id: string, event: Event) {
+    // const checkbox = event.target as HTMLInputElement;
+    const recos = toArray(this._formGroup.value['recos'] ?? []);
+
+    const [found, index] = (() => {
+      let foundIndex = -1;
+      const foundObject = recos.find((dt, idx) => {
+        if (dt === id) {
+          foundIndex = idx;
+          return true;
+        }
+        return false;
+      });
+      return [foundObject, foundIndex];
+    })();
+    if (index !== -1) {
+      recos.splice(index, 1);
+    } else {
+      recos.push(id);
+    }
+    this._formGroup.value['recos'] = recos;
+  }
+
+  selectAllRecos() {
+    if (this._formGroup.value.recos.length === this.recos.length) {
+      this._formGroup.value['recos'] = [];
+    } else {
+      this._formGroup.value['recos'] = this.recos.map(r => r.id);
+    }
+  }
+
+  validateData(event: Event) {
+    event.preventDefault();
+    this.data_validation = true;
+    this.api.ValidatePcimneNewbornReports(this._formGroup.value).subscribe(async (_c$: { status: number, data: string }) => {
+      if (_c$.status == 200) {
+        this.snackbar.show('Validate successfuly', { backgroundColor: 'success', position: 'TOP' });
+      }
+      this.data_validation = false;
+    }, (err: any) => {
+      this.data_validation = false;
+    });
   }
 
   SHOW_DATA(event: Event) {
@@ -337,6 +435,7 @@ export class PcimeComponent implements OnInit, AfterViewInit {
         this.VILLAGE_CHIEF_CONTACT = '_____';
         this.MONTH = toArray(this._formGroup.value.months).map(m => monthByArg(m).labelFR).join(',') ;
         this.YEAR = this._formGroup.value.year;
+        this.IS_VALIDATE = _res$?.is_validate === true,
         this.PCIMNE_NEWBORN$ = _res$;
         if (!_res$) {
           this.snackbar.show('No data found for this RECO with informations you provide!\nYou can sync data from cloud and retry!', { backgroundColor: 'info', position: 'TOP', duration: 5000 });

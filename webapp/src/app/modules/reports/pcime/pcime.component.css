@@ -57,6 +57,14 @@ thead .pcimne-count .indicator-sex {
   margin-right: 20px;
 }
 
+.validate-data {
+  position: absolute;
+  top:20;
+  left: 50;
+  width: 200px;
+  margin-left: 20px;
+}
+
 .selected{
   background-color: rgb(186, 229, 255)!important;
 }

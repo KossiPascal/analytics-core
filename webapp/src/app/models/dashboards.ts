@@ -12,6 +12,8 @@ export interface RecoMegDashboard {
   chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 
 export interface RecoMegDashboardUtils {
@@ -53,6 +55,8 @@ export interface RecoPerformanceDashboard {
   chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 
 }
 
@@ -71,6 +75,8 @@ export interface RecoChartPerformanceDashboard {
   chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 
 }
 
@@ -100,6 +106,7 @@ export interface RecoVaccinationDashboard {
     family_id: string,
     family_name: string,
     family_code: string,
+    family_fullname: string,
     data: RecoVaccinationDashboardUtils[]
   }[]
   country: { id: string, name: string }
@@ -111,6 +118,8 @@ export interface RecoVaccinationDashboard {
   chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 export interface RecoVaccinationDashboardUtils {
   child_name: string

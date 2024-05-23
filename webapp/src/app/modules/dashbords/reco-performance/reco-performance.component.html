@@ -8,69 +8,94 @@
           <form [formGroup]="_formGroup" (ngSubmit)="SHOW_DATA($event)" novalidate>
 
             <div class="row">
-              <!-- <div class="col-sm-2 col-xl-2">
-                  <select (change)="regionsGenerate()" *ngIf="Countries$.length > 0" class="orgunit-style form-select mb-2" formControlName="country">
-                    <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
-                      {{ c.name }}
-                    </option>
+              <div *ngIf="Countries$.length > 1 && countries.length === 0 || countries.length > 1"
+                class="col-sm-2 col-xl-2">
+                <select (change)="regionsGenerate()" class="orgunit-style form-select mb-2" formControlName="country">
+                  <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
+                    {{ c.name }}
+                  </option>
                 </select>
-              </div>-->
-              <div *ngIf="Regions$.length > 1" class="col-sm-2 col-xl-2">
-                <select (change)="prefecturesGenerate()" class="orgunit-style form-select mb-2" formControlName="region">
+              </div>
+              <div *ngIf="Regions$.length > 1 && regions.length === 0 || regions.length > 1" class="col-sm-2 col-xl-2">
+                <select (change)="prefecturesGenerate()" class="orgunit-style form-select mb-2"
+                  formControlName="region">
                   <option *ngFor="let r of regions" [value]="r.id" [selected]="isSelected(r.id, 'region')">
                     {{ r.name }}
                   </option>
                 </select>
               </div>
-              <div *ngIf="Prefectures$.length > 1" class="col-sm-2 col-xl-2">
-                <select (change)="communesGenerate()" class="orgunit-style form-select mb-2" formControlName="prefecture">
+              <div *ngIf="Prefectures$.length > 1 && prefectures.length === 0 || prefectures.length > 1"
+                class="col-sm-2 col-xl-2">
+                <select (change)="communesGenerate()" class="orgunit-style form-select mb-2"
+                  formControlName="prefecture">
                   <option *ngFor="let p of prefectures" [value]="p.id" [selected]="isSelected(p.id, 'prefecture')">
                     {{ p.name }}
                   </option>
                 </select>
               </div>
-              <div *ngIf="Communes$.length > 1" class="col-sm-2 col-xl-2">
+              <div *ngIf="Communes$.length > 1 && communes.length === 0 || communes.length > 1"
+                class="col-sm-2 col-xl-2">
                 <select (change)="hospitalsGenerate()" class="orgunit-style form-select mb-2" formControlName="commune">
                   <option *ngFor="let c of communes" [value]="c.id" [selected]="isSelected(c.id, 'commune')">
                     {{ c.name }}
                   </option>
                 </select>
               </div>
-              <div *ngIf="Hospitals$.length > 1" class="col-sm-2 col-xl-2">
-                <select (change)="districtsGenerate()" class="orgunit-style form-select mb-2" formControlName="hospital">
+              <div *ngIf="Hospitals$.length > 1 && hospitals.length === 0 || hospitals.length > 1"
+                class="col-sm-2 col-xl-2">
+                <select (change)="districtsGenerate()" class="orgunit-style form-select mb-2"
+                  formControlName="hospital">
                   <option *ngFor="let h of hospitals" [value]="h.id" [selected]="isSelected(h.id, 'hospital')">
                     {{ h.name }}
                   </option>
                 </select>
               </div>
-              <div *ngIf="DistrictQuartiers$.length > 1" class="col-sm-2 col-xl-2">
-                <select (change)="recosGenerate()" class="orgunit-style form-select mb-2" formControlName="district_quartier">
+              <div
+                *ngIf="DistrictQuartiers$.length > 1 && districtQuartiers.length === 0 || districtQuartiers.length > 1"
+                class="col-sm-2 col-xl-2">
+                <select (change)="recosGenerate()" class="orgunit-style form-select mb-2"
+                  formControlName="district_quartier">
                   <option *ngFor="let d of districtQuartiers" [value]="d.id"
                     [selected]="isSelected(d.id, 'district_quartier')">
                     {{ d.name }}
                   </option>
                 </select>
               </div>
-              <div *ngIf="Recos$.length > 1" class="col-sm-2 col-xl-2">
-                <select class="orgunit-style form-select mb-2" multiple
-                  formControlName="recos">
-                  <option *ngFor="let r of recos" [value]="r.id" [selected]="isSelected(r.id, 'recos')">
+              <!-- <div *ngIf="Recos$.length > 1" class="col-sm-2 col-xl-2">
+              <select class="orgunit-style form-select mb-2" multiple
+                formControlName="recos">
+                <option *ngFor="let r of recos" [value]="r.id" [selected]="isSelected(r.id, 'recos')">
+                  {{ r.name }}
+                </option>
+              </select>
+            </div> -->
+
+              <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="col-sm-2 col-xl-2">
+                <div class="reco-list-container orgunit-style form-selec mb-2">
+                  <div *ngIf="recos.length > 0" style="color:darkblue; width: 200%; font-weight: bold;">
+                    <input type="checkbox" [checked]="_formGroup.value.recos.length === recos.length"
+                      (change)="selectAllRecos()" id="reco-list-all"> <label for="reco-list-all"> Tout
+                      sélectionner</label>
+                  </div>
+                  <div *ngFor="let r of recos" class="reco-list {{ isSelected(r.id, 'recos') ? 'reco-selected' : '' }}"
+                    (click)="onCheckboxChange(r.id, $event)">
                     {{ r.name }}
-                  </option>
-                </select>
+                  </div>
+                </div>
               </div>
               <div *ngIf="Years$.length > 0" class="col-sm-2 col-xl-2">
                 <select class="orgunit-style form-select mb-2" formControlName="year">
-                    <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
-                      {{ y }}
-                    </option>
+                  <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
+                    {{ y }}
+                  </option>
                 </select>
               </div>
               <div *ngIf="Months$.length > 0" class="col-sm-2 col-xl-2">
                 <select class="orgunit-style form-select mb-2" formControlName="months">
-                    <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$" [value]="m.id" [selected]="isSelected(m.id, 'month')">
-                      {{ m.labelFR }}
-                    </option>
+                  <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$"
+                    [value]="m.id" [selected]="isSelected(m.id, 'month')">
+                    {{ m.labelFR }}
+                  </option>
                 </select>
               </div>
               <div class="col-sm-3 col-xl-2">
@@ -188,7 +213,8 @@
                 </div>
 
                 <div class="col-sm-12 col-xl-12">
-                  <div class="{{ YEAR_LINE_TITLE && YEAR_LINE_TITLE!== '' ? 'bg-chart' : 'bg-white' }} rounded h-100 p-4">
+                  <div
+                    class="{{ YEAR_LINE_TITLE && YEAR_LINE_TITLE!== '' ? 'bg-chart' : 'bg-white' }} rounded h-100 p-4">
                     <h6 class="mb-4 dark-color">{{ YEAR_LINE_TITLE }}</h6>
                     <canvas id="year-line-chart"></canvas>
                   </div>

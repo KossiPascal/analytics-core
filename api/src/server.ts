@@ -42,15 +42,6 @@ var session = require('express-session');
 
 function app() {
   const server = express()
-    .use((req: Request, res: Response, next: NextFunction) => {
-      if (req.method === 'OPTIONS') return res.status(200).end();
-      if (isSecure) {
-        if (req.secure) next();
-        if (!req.secure) res.redirect(`https://${req.headers.host}${req.url}`);
-      } else {
-        next();
-      }
-    })
     .use(bodyParser.json())
     .use(bodyParser.urlencoded({ extended: true }))
     .use(helmet({ contentSecurityPolicy: false }))
@@ -80,6 +71,15 @@ function app() {
       resave: true
     }))
     .use(bearerToken())
+    .use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method === 'OPTIONS') return res.status(200).end();
+      if (isSecure) {
+        if (req.secure) next();
+        if (!req.secure) res.redirect(`https://${req.headers.host}${req.url}`);
+      } else {
+        next();
+      }
+    })
     .use('/api/auth-user', authRouter)
     .use('/api/configs', configsRouter)
     .use('/api/reports', reportsRouter)

@@ -162,8 +162,18 @@ a:hover {
   display: none;
 }
 
+.tablette-detection {
+  display: none;
+}
+
 @media (max-width: 765px) {
   .mobile-detection {
+    display: inline;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .tablette-detection {
     display: inline;
   }
 }
@@ -300,6 +310,27 @@ a:hover {
 
 .sidebar .navbar .app-title .navbar-brand {
   display: block;
+}
+
+/* @media (max-width: 575.98px) {
+
+} */
+
+/* @media (min-width: 992px) {
+  .sidebar .navbar .app-title {
+    background-color: red !important;;
+  }
+} */
+
+@media (max-width: 991.98px) {
+  .sidebar .navbar .app-title {
+    background-color: green !important;
+    display: none;
+  }
+
+  .sidebar .navbar .app-logo {
+    margin-top: 50px;
+  }
 }
 
 .sidebar .navbar .navbar-nav .nav-link:hover,

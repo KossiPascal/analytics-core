@@ -213,6 +213,41 @@ export class ApiService {
 
 
 
+  //START VALIDATE REPPORTS
+
+  ValidatePromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/promotion-reports-validation`, fparams, this.customHeaders);
+  }
+
+  ValidateFamilyPlanningReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/family-planning-reports-validation`, fparams, this.customHeaders);
+  }
+
+  ValidateMorbidityReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/morbidity-reports-validation`, fparams, this.customHeaders);
+  }
+
+  ValidateHouseholdRecapReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/household-recaps-reports-validation`, fparams, this.customHeaders);
+  }
+
+  ValidatePcimneNewbornReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/pcime-newborn-reports-validation`, fparams, this.customHeaders);
+  }
+
+  ValidateChwsRecoReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/chws-reco-reports-validation`, fparams, this.customHeaders);
+  }
+  //END VALIDATE REPPORTS
+
+
+
   //START DASHBOARD
   GetRecoMegDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });

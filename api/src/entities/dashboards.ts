@@ -195,7 +195,7 @@ export class RecoVaccinationDashboard {
     month!: string
 
     @Column({ type: 'jsonb', nullable: false })
-    children_vaccines!: { family_id: string, family_name: string, family_code: string, data: RecoVaccinationDashboardUtils[] }[]
+    children_vaccines!: { family_id: string, family_name: string, family_code: string, family_fullname: string, data: RecoVaccinationDashboardUtils[] }[]
     
     @Column({ type: 'jsonb', nullable: false })
     country!: { id: string, name: string }

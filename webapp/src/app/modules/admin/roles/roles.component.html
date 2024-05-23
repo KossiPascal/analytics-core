@@ -118,14 +118,15 @@
                 <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
                   data-bs-parent="#accordionExample">
                   <div class="accordion-body">
-                    <div style="margin-left: 10px;" class="form-check">
+                    <!-- <div style="margin-left: 10px;" class="form-check">
                       <input style="zoom: 1.5;" class="form-check-input" id="all-pages-checked" type="checkbox"
                         [checked]="selectedRoute.length == routes$.length" (click)="SelectAllRoutes()">
                       <label class="form-check-label" for="all-pages-checked">
                         Select All Pages
                       </label>
                     </div>
-                    <br>
+                    <br> -->
+                    
                     <div
                       style="max-height: 300px; overflow-y: scroll; overflow-x: hidden; border: 1px darkblue dashed; padding: 10px;">
                       <div class="row">
@@ -163,7 +164,7 @@
                 <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
                   data-bs-parent="#accordionExample">
                   <div class="accordion-body">
-                    <div style="margin-left: 10px;" class="form-check">
+                    <!-- <div style="margin-left: 10px;" class="form-check">
                       <input style="zoom: 1.5;" class="form-check-input" id="all-autorizations-checked" type="checkbox"
                         [checked]="selectedAutorization.length == autorizations$.length"
                         (click)="SelectAllAutorizations()">
@@ -171,19 +172,19 @@
                         Select all Autorizations
                       </label>
                     </div>
-                    <br>
+                    <br> -->
                     <div
                       style="max-height: 200px; overflow-y: scroll; overflow-x: hidden; border: 1px darkblue dashed; padding: 10px;">
                       <div class="row">
-                        <ng-container *ngFor="let autorization of autorizations$; let index = index;">
+                        <ng-container *ngFor="let auton of autorizations$; let index = index;">
                           <div class="col-md-6" [ngClass]="{'custom-class': index <= autorizations$.length / 2}">
                             <p>
                               <input class="form-check-input" type="checkbox"
-                                [checked]="containsAutorization(autorization)"
-                                (click)="AddOrRemoveAutorization(autorization)">
-                              <span style="margin-left: 5px; cursor:pointer;"
-                                (click)="AddOrRemoveAutorization(autorization)">{{
-                                autorization }}</span>
+                                [checked]="containsAutorization(auton)" id="add-remove-autorization"
+                                (click)="AddOrRemoveAutorization(auton)">
+                              <label style="margin-left: 5px; cursor:pointer;" for="add-remove-autorization">
+                                {{ auton }}
+                              </label>
                             </p>
                           </div>
                         </ng-container>

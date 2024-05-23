@@ -94,7 +94,7 @@ export class PcimneData {
     @Column({ type: 'boolean', nullable: true })
     is_referred!: boolean | null
 
-    @Column({ type: 'bigint', nullable: true })
+    @Column({ type: 'float', nullable: true })
     temperature!: number | null
 
     @Column({ type: 'boolean', nullable: true })
@@ -183,7 +183,10 @@ export class PcimneData {
     paracetamol_500mg!: number | null
 
     @Column({ type: 'bigint', nullable: true })
-    ors_zinc!: number | null
+    ors!: number | null
+
+    @Column({ type: 'bigint', nullable: true })
+    zinc!: number | null
 
     @Column({ type: 'bigint', nullable: true })
     vitamin_a!: number | null

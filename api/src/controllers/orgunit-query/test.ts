@@ -109,7 +109,7 @@
                     //     AND (p.year = $3)
                     //     AND (p.age_in_months IS NOT NULL AND p.age_in_months < 60)
                     //     AND (p.has_diarrhea = $4)
-                    //     AND (p.ors_zinc IS NOT NULL AND p.ors_zinc > 0)
+                    //     AND ((p.ors IS NOT NULL AND p.ors > 0) OR (p.zinc IS NOT NULL AND p.zinc > 0))
                     //     GROUP BY p.patient_id
                     // `, [reco.id, month, year, true]))[0]?.count || 0,
 

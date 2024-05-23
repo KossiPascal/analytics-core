@@ -68,7 +68,7 @@ export class AppComponent implements OnInit {
     setTimeout(() => {
       const self = this;
       $(".body-container").click(function () {
-        if (self.responsiveService.isMobile) {
+        if (self.responsiveService.isMobile || self.responsiveService.isTablette) {
           const elm = $(".sidebar, .content");
           if (elm.hasClass("open")) {
             elm.removeClass("open");

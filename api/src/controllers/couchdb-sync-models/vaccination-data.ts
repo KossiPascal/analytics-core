@@ -68,7 +68,6 @@ export async function SyncVaccinationData(report: any, _repoVaccine: Repository<
         await _repoVaccine.save(_vaccine);
         return true;
     } catch (err: any) {
-        console.log(err)
         return false;
     }
 }

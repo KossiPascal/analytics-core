@@ -78,7 +78,10 @@ export class RecoMegData {
     paracetamol_500mg!: number | null
 
     @Column({ type: 'bigint', nullable: true })
-    ors_zinc!: number | null
+    ors!: number | null
+
+    @Column({ type: 'bigint', nullable: true })
+    zinc!: number | null
 
     @Column({ type: 'bigint', nullable: true })
     vitamin_a!: number | null

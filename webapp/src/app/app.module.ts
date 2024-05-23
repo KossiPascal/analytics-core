@@ -32,7 +32,7 @@ import { SessionExpiredComponent } from '@kossi-modals/session-expired/session-e
 import { SnackbarComponent } from '@kossi-components/snackbar/snackbar.component';
 import { SpinnerComponent } from '@kossi-components/spinner/spinner-component';
 import { LoaderComponent } from '@kossi-components/loader/loader-component';
-import { MobileDetectionComponent } from '@kossi-components/mobile-detection/mobile-detection.component';
+import { DeviceDetectionComponent } from '@kossi-components/device-detection/device-detection.component';
 import { SyncForOfflineConfirmComponent } from '@kossi-modals/sync-for-offline/sync-for-offline.component';
 import { FixModalLayoutComponent } from '@kossi-components/fix-modal-layout/fix-modal-layout.component';
 import { RolesCrudComponent } from '@kossi-modals/roles-crud/roles-crud.component';
@@ -70,7 +70,7 @@ export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) 
     SnackbarComponent,
     SpinnerComponent,
     LoaderComponent,
-    MobileDetectionComponent,
+    DeviceDetectionComponent,
     SyncForOfflineConfirmComponent,
     RolesCrudComponent,
     DeleteRemoveConfirmComponent,

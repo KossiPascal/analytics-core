@@ -101,6 +101,8 @@ export class LocalDbDataFetchService {
         return unique;
       }, []);
 
+      promotionReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0)
+
       const outPutReport: IndicatorsDataOutput<PromotionReport> = {
         country: promotionReport[0].country,
         region: promotionReport[0].region,
@@ -112,6 +114,7 @@ export class LocalDbDataFetchService {
         village_secteur: promotionReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: promotionReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedReport
       };
       return outPutReport;
@@ -171,6 +174,7 @@ export class LocalDbDataFetchService {
         village_secteur: familyPlanningReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: familyPlanningReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedReport
       };
       return outPutReport;
@@ -249,6 +253,7 @@ export class LocalDbDataFetchService {
         village_secteur: morbidityReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: morbidityReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedReport
       };
       return outPutReport;
@@ -353,6 +358,7 @@ export class LocalDbDataFetchService {
         village_secteur: householdRecapReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: householdRecapReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: outPutData
       };
       return { total: totalData, out: outPutReport };
@@ -449,6 +455,7 @@ export class LocalDbDataFetchService {
         village_secteur: pcimneNewbornReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: pcimneNewbornReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         pcimne_newborn: dataToOut.sort((a, b) => a.index - b.index),
       }
       return outPutReport;
@@ -534,6 +541,7 @@ export class LocalDbDataFetchService {
         village_secteur: chwsRecoReports[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: chwsRecoReports.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedChwsRecoReport,
       }
       return outPutReport;
@@ -599,6 +607,7 @@ export class LocalDbDataFetchService {
         village_secteur: recoMegDashboard[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: recoMegDashboard.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: Object.values(smDash).sort((a, b) => a.index - b.index)
       };
       return outPutReport;
@@ -635,6 +644,7 @@ export class LocalDbDataFetchService {
         village_secteur: recoVaccineDashboard[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: recoVaccineDashboard.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: recoVaccineDashboard
       };
       return outPutReport;
@@ -739,6 +749,7 @@ export class LocalDbDataFetchService {
         village_secteur: recoPerfDashboard[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
+        is_validate: recoPerfDashboard.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: smDash
       };
       return outPutReport;

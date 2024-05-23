@@ -37,7 +37,8 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
             _meg.amoxicillin_500mg = dataTransform(fields.meg_quantity.amoxicillin500_mg, 'number');
             _meg.paracetamol_250mg = dataTransform(fields.meg_quantity.paracetamol250_mg, 'number');
             _meg.paracetamol_500mg = dataTransform(fields.meg_quantity.paracetamol500_mg, 'number');
-            _meg.ors_zinc = dataTransform(fields.meg_quantity.ors_zinc, 'number');
+            _meg.ors = dataTransform(fields.meg_quantity.ors, 'number');
+            _meg.zinc = dataTransform(fields.meg_quantity.zinc, 'number');
             _meg.vitamin_a = dataTransform(fields.meg_quantity.vitamin_a, 'number');
             _meg.mebendazol_250mg = dataTransform(fields.meg_quantity.mebendazol_250mg, 'number');
             _meg.mebendazol_500mg = dataTransform(fields.meg_quantity.mebendazol_500mg, 'number');
@@ -53,7 +54,8 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
             _meg.paracetamol_500mg = dataTransform(fields.paracetamol_500mg_quantity, 'number');
             _meg.mebendazol_250mg = dataTransform(fields.mebendazole_250mg_quantity, 'number');
             _meg.mebendazol_500mg = dataTransform(fields.mebendazole_500mg_quantity, 'number');
-            _meg.ors_zinc = dataTransform(fields.ors_zinc_quantity, 'number');
+            _meg.ors = dataTransform(fields.ors_quantity, 'number');
+            _meg.zinc = dataTransform(fields.zinc_quantity, 'number');
             _meg.vitamin_a = dataTransform(fields.vitamin_a_quantity, 'number');
             _meg.tetracycline_ointment = dataTransform(fields.tetracycline_ointment_quantity, 'number');
             if (isTrue(fields.rdt_given)) _meg.tdr = 1;
@@ -68,7 +70,8 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
             _meg.paracetamol_500mg = dataTransform(fields.paracetamol_500mg_quantity, 'number')
             _meg.mebendazol_250mg = dataTransform(fields.mebendazole_250mg_quantity, 'number')
             _meg.mebendazol_500mg = dataTransform(fields.mebendazole_500mg_quantity, 'number')
-            _meg.ors_zinc = dataTransform(fields.ors_zinc_quantity, 'number')
+            _meg.ors = dataTransform(fields.ors_quantity, 'number')
+            _meg.zinc = dataTransform(fields.zinc_quantity, 'number')
             if (isTrue(fields.rdt_given)) _meg.tdr = 1;
         }
 

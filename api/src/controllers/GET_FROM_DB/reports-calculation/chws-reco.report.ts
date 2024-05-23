@@ -311,7 +311,7 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
                         index: 19,
                         indicator: 'Nombre d\'enfants 0-59 mois avec diarrhées ayant recu SRO + Zinc',
                         de_number: pcimnes.reduce((unique: PcimneData[], r: PcimneData) => {
-                            if (r.has_diarrhea === true && r.ors_zinc !== null && r.ors_zinc > 0 && r.age_in_months >= 6 && r.age_in_months < 60 && !(unique.find(i => notEmpty(i.patient) && notEmpty(r.patient) && i.patient?.id === r.patient?.id))) {
+                            if (r.has_diarrhea === true && (r.ors !== null && r.ors > 0 || r.zinc !== null && r.zinc > 0) && r.age_in_months >= 6 && r.age_in_months < 60 && !(unique.find(i => notEmpty(i.patient) && notEmpty(r.patient) && i.patient?.id === r.patient?.id))) {
                                 unique.push(r);
                             }
                             return unique;
@@ -452,7 +452,7 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
                     {
                         index: 9,
                         indicator: 'Nombre de cas de diarrhée traités par les RECO avec SRO et ZINC',
-                        de_number: pcimnes.filter(p => p.has_diarrhea === true && p.ors_zinc !== null && p.ors_zinc > 0).length,
+                        de_number: pcimnes.filter(p => p.has_diarrhea === true && (p.ors !== null && p.ors > 0 || p.zinc !== null && p.zinc > 0)).length,
                         observation: null
                     },
                     {

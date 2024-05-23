@@ -59,7 +59,7 @@ export async function GET_FAMILY_PLANNING_REPORTS(req: Request, res: Response, n
     }
 };
 
-export async function MORBIDITY_REPORTS(req: Request, res: Response, next: NextFunction) {
+export async function GET_MORBIDITY_REPORTS(req: Request, res: Response, next: NextFunction) {
     try {
         if (1 == 1) {
             var { months, year, recos } = req.body;

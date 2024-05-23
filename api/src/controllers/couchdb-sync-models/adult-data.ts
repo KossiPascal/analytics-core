@@ -28,6 +28,7 @@ export async function SyncAdultData(report: any, _repoAdult: Repository<AdultDat
         _adult.age_in_months = parseFloat(`${fields.patient_age_in_months}`);
         _adult.age_in_days = parseFloat(`${fields.patient_age_in_days}`);
 
+
         if (report.form === 'adult_consulation') {
             _adult.consultation_followup = 'consultation';
             _adult.promptitude = dataTransform(fields.promptitude, 'number');
@@ -48,7 +49,8 @@ export async function SyncAdultData(report: any, _repoAdult: Repository<AdultDat
             _adult.paracetamol_500mg = dataTransform(fields.paracetamol_500mg_quantity, 'number');
             _adult.mebendazole_250mg = dataTransform(fields.mebendazole_250mg_quantity, 'number');
             _adult.mebendazole_500mg = dataTransform(fields.mebendazole_500mg_quantity, 'number');
-            _adult.ors_zinc = dataTransform(fields.ors_zinc_quantity, 'number');
+            _adult.ors = dataTransform(fields.ors_quantity, 'number');
+            _adult.zinc = dataTransform(fields.zinc_quantity, 'number');
 
             _adult.malaria = dataTransform(visitMotif.includes(`malaria`), 'null_false');
             _adult.fever = dataTransform(visitMotif.includes(`fever`), 'null_false');

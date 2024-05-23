@@ -298,7 +298,7 @@ export async function QUERY_RECO_MEG_DATA_STOCKS({ reco_id, month, year }: { rec
     return await Connection.query(query, [...params]);
 }
 
-export function RECO_MEG_STOCKS(megStock: RecoMegData[], cible: 'pill_coc' | 'pill_cop' | 'diu' | 'condoms' | 'depo_provera_im' | 'implant' | 'dmpa_sc' | 'cycle_necklace' | 'tubal_ligation' | 'cta' | 'tdr' | 'amoxicillin_250mg' | 'amoxicillin_500mg' | 'paracetamol_250mg' | 'paracetamol_500mg' | 'ors_zinc' | 'vitamin_a' | 'mebendazol_250mg' | 'mebendazol_500mg' | 'tetracycline_ointment') {
+export function RECO_MEG_STOCKS(megStock: RecoMegData[], cible: 'pill_coc' | 'pill_cop' | 'diu' | 'condoms' | 'depo_provera_im' | 'implant' | 'dmpa_sc' | 'cycle_necklace' | 'tubal_ligation' | 'cta' | 'tdr' | 'amoxicillin_250mg' | 'amoxicillin_500mg' | 'paracetamol_250mg' | 'paracetamol_500mg' | 'ors' | 'zinc' | 'vitamin_a' | 'mebendazol_250mg' | 'mebendazol_500mg' | 'tetracycline_ointment') {
     const total_stock: number = megStock.filter(m => m.meg_type === 'stock' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
     const consumption: number = megStock.filter(m => m.meg_type === 'consumption' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
     const loss: number = megStock.filter(m => m.meg_type === 'loss' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
@@ -338,7 +338,8 @@ export function RECO_MEG_FULL_STOCKS(megStock: RecoMegData[]) {
         amoxicillin_500mg: RECO_MEG_STOCKS(megStock, 'amoxicillin_500mg'),
         paracetamol_250mg: RECO_MEG_STOCKS(megStock, 'paracetamol_250mg'),
         paracetamol_500mg: RECO_MEG_STOCKS(megStock, 'paracetamol_500mg'),
-        ors_zinc: RECO_MEG_STOCKS(megStock, 'ors_zinc'),
+        ors: RECO_MEG_STOCKS(megStock, 'ors'),
+        zinc: RECO_MEG_STOCKS(megStock, 'zinc'),
         vitamin_a: RECO_MEG_STOCKS(megStock, 'vitamin_a'),
         mebendazol_250mg: RECO_MEG_STOCKS(megStock, 'mebendazol_250mg'),
         mebendazol_500mg: RECO_MEG_STOCKS(megStock, 'mebendazol_500mg'),

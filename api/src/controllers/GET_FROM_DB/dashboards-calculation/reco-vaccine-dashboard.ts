@@ -92,6 +92,7 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year 
                             SELECT 
                                 f.id AS family_id, 
                                 f.given_name AS family_name, 
+                                f.name AS family_fullname, 
                                 f.external_id AS family_code, 
                                 p.name AS child_name, 
                                 p.external_id AS child_code, 
@@ -123,7 +124,6 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year 
 
         const __ChildrenVaccines: any[] = await Conn.query(query, [filterDate.end_date]);
 
-
         for (const reco of recos) {
             try {
                 const ChildrenVaccines: any[] = __ChildrenVaccines.filter(v => {
@@ -143,7 +143,7 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year 
 
                     for (const cvd of ChildrenVaccines) {
                         if (!(cvd.family_id in ALL_DATA)) {
-                            ALL_DATA[cvd.family_id] = { family_id: cvd.family_id, family_name: cvd.family_name, family_code: cvd.family_code, data: [] };
+                            ALL_DATA[cvd.family_id] = { family_id: cvd.family_id, family_name: cvd.family_name, family_fullname: cvd.family_fullname, family_code: cvd.family_code, data: [] };
                         }
                         const age = calculateAge(cvd.birth_date);
                         const child_age_str = AgeInYearsMonthsDays(parseFloat(`${age.in_days}`));

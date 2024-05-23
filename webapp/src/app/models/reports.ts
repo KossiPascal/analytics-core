@@ -31,6 +31,8 @@ export interface IndicatorsDataOutput<T> {
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   reco_asc_type: string
+  is_validate?:boolean
+  validate_user_id?:string
   data: T
 }
 
@@ -97,6 +99,8 @@ export interface PromotionReport {
   chw: { id: string, name: string, phone:string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone:string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 
 export interface FamilyPlanningReport {
@@ -121,6 +125,8 @@ export interface FamilyPlanningReport {
   chw: { id: string, name: string, phone:string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone:string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 
 export interface MorbidityReport {
@@ -158,6 +164,8 @@ export interface MorbidityReport {
   chw: { id: string, name: string, phone:string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone:string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 
 export interface HouseholdRecapReport {
@@ -183,6 +191,8 @@ export interface HouseholdRecapReport {
   chw: { id: string, name: string, phone:string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone:string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 
 export interface PcimneNewbornReport {
@@ -199,6 +209,8 @@ export interface PcimneNewbornReport {
   chw: { id: string, name: string, phone:string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone:string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 
 
@@ -236,30 +248,32 @@ export interface PcimneNewbornReportUtils {
 }
 
 export interface ChwsRecoReport {
-  id: string,
-  month: string,
-  year: number,
-  reco_monitoring: ChwsRecoReportElements,
-  demography: ChwsRecoReportElements,
-  child_health_0_59_months: ChwsRecoReportElements,
-  mother_health: ChwsRecoReportElements,
-  pcimne_activity: ChwsRecoReportElements,
-  morbidity_activities: ChwsRecoReportElements,
-  malaria_more_5_years: ChwsRecoReportElements,
-  home_visit: ChwsRecoReportElements,
-  educational_chat: ChwsRecoReportElements,
-  developed_areas: ChwsRecoReportElements,
+  id: string
+  month: string
+  year: number
+  reco_monitoring: ChwsRecoReportElements
+  demography: ChwsRecoReportElements
+  child_health_0_59_months: ChwsRecoReportElements
+  mother_health: ChwsRecoReportElements
+  pcimne_activity: ChwsRecoReportElements
+  morbidity_activities: ChwsRecoReportElements
+  malaria_more_5_years: ChwsRecoReportElements
+  home_visit: ChwsRecoReportElements
+  educational_chat: ChwsRecoReportElements
+  developed_areas: ChwsRecoReportElements
   diseases_alerts: ChwsRecoReportElements,
 
   country: { id: string, name: string }
-  region: { id: string, name: string },
-  prefecture: { id: string, name: string },
-  commune: { id: string, name: string },
-  hospital: { id: string, name: string },
+  region: { id: string, name: string }
+  prefecture: { id: string, name: string }
+  commune: { id: string, name: string }
+  hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
   chw: { id: string, name: string, phone:string }
   village_secteur: { id: string, name: string }
-  reco: { id: string, name: string, phone:string } | null,
+  reco: { id: string, name: string, phone:string } | null
+  is_validate?:boolean
+  validate_user_id?:string
 }
 
 export interface ChwsRecoReportElements {
