@@ -24,10 +24,6 @@ export class PromotionalActivityData {
     @Column({ type: 'varchar', nullable: false })
     month!: string
 
-
-    @Column({ type: 'varchar', nullable: true })
-    activity_date!: string | null
-
     @Column({ type: 'varchar', nullable: true })
     activity_method!: string | null
 
@@ -183,6 +179,14 @@ export class PromotionalActivityData {
     @ManyToOne(() => VillageSecteur, (village_secteur) => village_secteur.id, { eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'village_secteur_id', referencedColumnName: 'id' })
     village_secteur!: VillageSecteur
+
+    @ManyToOne(() => Family, (family) => family.id, { eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'family_id', referencedColumnName: 'id' })
+    family!: Family|null
+
+    @ManyToOne(() => Patient, (patient) => patient.id, { eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'patient_id', referencedColumnName: 'id' })
+    patient!: Patient|null
 
     @ManyToOne(() => Reco, (reco) => reco.id, { eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'reco_id', referencedColumnName: 'id' })

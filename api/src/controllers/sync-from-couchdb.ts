@@ -106,7 +106,7 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                                 if (!_fp) outPutInfo["familyPlanning"]["ErrorCount"] += 1;
                                 if (_fp) outPutInfo["familyPlanning"]["SuccessCount"] += 1;
                             }
-                            if (r.form === 'pregnancy_family_planning' && !isTrue(r.fields.is_pregnant)) {
+                            if (['pregnancy_family_planning', 'family_planning'].includes(r.form) && !isTrue(r.fields.is_pregnant)) {
                                 const _fp = await SyncFamilyPlanningData(r, _repoFP);
                                 if (!('familyPlanning' in outPutInfo)) outPutInfo["familyPlanning"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
                                 if (!_fp) outPutInfo["familyPlanning"]["Errors"] += `${r._id}\n | \n `;
@@ -114,7 +114,7 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                                 if (_fp) outPutInfo["familyPlanning"]["SuccessCount"] += 1;
                             }
                             //---------------
-                            if (r.form === 'prenatal_followup' || r.form === 'pregnancy_family_planning' && isTrue(r.fields.is_pregnant)) {
+                            if (r.form === 'prenatal_followup' || ['pregnancy_family_planning', 'pregnancy_register'].includes(r.form) && isTrue(r.fields.is_pregnant)) {
                                 const _pregnant = await SyncPregnantData(r, _repoPregnant);
                                 if (!('pregnant' in outPutInfo)) outPutInfo["pregnant"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
                                 if (!_pregnant) outPutInfo["pregnant"]["Errors"] += `${r._id}\n | \n `;
@@ -150,7 +150,7 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                                 if (!_recoMeg) outPutInfo["recoMeg"]["ErrorCount"] += 1;
                                 if (_recoMeg) outPutInfo["recoMeg"]["SuccessCount"] += 1;
                             }
-                            if ((r.form === 'pregnancy_family_planning' && !isTrue(r.fields.is_pregnant) || r.form === 'fp_renewal') && notEmpty(r.fields.fp_method) || r.form === 'fp_danger_sign_check') {
+                            if ((['pregnancy_family_planning', 'family_planning'].includes(r.form) && !isTrue(r.fields.is_pregnant) || r.form === 'fp_renewal') && notEmpty(r.fields.fp_method) || r.form === 'fp_danger_sign_check') {
                                 const _recoMeg = await SyncRecoMegData(r, _repoRecoMeg);
                                 if (!('recoMeg' in outPutInfo)) outPutInfo["recoMeg"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
                                 if (!_recoMeg) outPutInfo["recoMeg"]["Errors"] += `${r._id}\n | \n `;
@@ -187,7 +187,8 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                                 if (!_fsMeg) outPutInfo["fsMeg"]["ErrorCount"] += 1;
                                 if (_fsMeg) outPutInfo["fsMeg"]["SuccessCount"] += 1;
                             }
-                            if (['promotional_activity'].includes(r.form)) {
+                            
+                            if (['promotional_activity', 'pa_educational_talk', 'pa_home_visit', 'pa_individual_talk'].includes(r.form)) {
                                 const _promoAct = await SyncPromotionalData(r, _repoPromotional);
                                 if (!('promotionalActivity' in outPutInfo)) outPutInfo["promotionalActivity"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
                                 if (!_promoAct) outPutInfo["promotionalActivity"]["Errors"] += `${r._id}\n | \n `;
@@ -195,7 +196,8 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
                                 if (_promoAct) outPutInfo["promotionalActivity"]["SuccessCount"] += 1;
                             }
 
-                            if (['death_report', 'undo_death_report'].includes(r.form)) {
+                            // if (['death_report', 'undo_death_report'].includes(r.form)) {
+                            if (['death_report'].includes(r.form)) {
                                 const _death = await SyncDeathData(r, _repoDeath);
                                 if (!('death' in outPutInfo)) outPutInfo["death"] = { Errors: '', ErrorCount: 0, SuccessCount: 0 };
                                 if (!_death) outPutInfo["death"]["Errors"] += `${r._id}\n | \n `;

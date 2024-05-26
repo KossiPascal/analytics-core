@@ -25,19 +25,19 @@ export class VaccinationData {
     month!: string
 
     @Column({ type: 'varchar', nullable: false })
-    sex!:'M'|'F'|null
+    sex!: 'M' | 'F' | null
 
     @Column({ type: 'varchar', nullable: false })
     date_of_birth!: string
 
     @Column({ type: 'float', nullable: false })
-    age_in_years!:number
+    age_in_years!: number
 
     @Column({ type: 'float', nullable: false })
-    age_in_months!:number
+    age_in_months!: number
 
     @Column({ type: 'float', nullable: false })
-    age_in_days!:number
+    age_in_days!: number
 
 
     @Column({ type: 'boolean', nullable: true })
@@ -81,6 +81,49 @@ export class VaccinationData {
 
     @Column({ type: 'boolean', nullable: true })
     vaccine_VAR_2!: boolean | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_BCG_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VPO_0_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_PENTA_1_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VPO_1_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_PENTA_2_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VPO_2_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_PENTA_3_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VPO_3_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VPI_1_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VAR_1_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VAA_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VPI_2_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_MEN_A_reason!: 'shortage' | 'no_appointment_respect' | null
+
+    @Column({ type: 'varchar', nullable: true })
+    no_VAR_2_reason!: 'shortage' | 'no_appointment_respect' | null
+    
 
     @Column({ type: 'boolean', nullable: true })
     is_birth_vaccine_ok!: boolean | null
@@ -150,7 +193,7 @@ export class VaccinationData {
 
     @Column({ type: 'bigint', nullable: false })
     reported_date_timestamp!: number
-    
+
 
     @Column({ type: 'varchar', nullable: false })
     reported_date!: string

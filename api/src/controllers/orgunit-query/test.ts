@@ -10,7 +10,7 @@
             // const adults = await _repoAdult.findBy({ reco: { id: reco.id }, month: month, year: year });
             // const promotionalsA = await _repoPA.findBy({ reco: { id: reco.id }, month: month, year: year });
             // const events = await _repoEvent.findBy({ reco: { id: reco.id }, month: month, year: year });
-            // const pregnants = await _repoPregnant.findBy({ form: 'pregnancy_family_planning', month: month, year: year });
+            // const pregnants = await _repoPregnant.findBy({ form: IN('pregnancy_family_planning', 'pregnancy_register'), month: month, year: year });
             // const deliveries = await _repoDelivery.findBy({ month: month, year: year });
             // const familyPlannings = await _repoFP.findBy({ month: month, year: year });
             

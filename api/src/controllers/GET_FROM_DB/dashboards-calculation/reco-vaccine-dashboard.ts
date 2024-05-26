@@ -171,6 +171,21 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year 
                             vaccine_VPI_2: cvd.vaccine_VPI_2 === true,
                             vaccine_MEN_A: cvd.vaccine_MEN_A === true,
                             vaccine_VAR_2: cvd.vaccine_VAR_2 === true,
+
+                            no_BCG_reason: cvd.no_BCG_reason,
+                            no_VPO_0_reason: cvd.no_VPO_0_reason,
+                            no_PENTA_1_reason: cvd.no_PENTA_1_reason,
+                            no_VPO_1_reason: cvd.no_VPO_1_reason,
+                            no_PENTA_2_reason: cvd.no_PENTA_2_reason,
+                            no_VPO_2_reason: cvd.no_VPO_2_reason,
+                            no_PENTA_3_reason: cvd.no_PENTA_3_reason,
+                            no_VPO_3_reason: cvd.no_VPO_3_reason,
+                            no_VPI_1_reason: cvd.no_VPI_1_reason,
+                            no_VAR_1_reason: cvd.no_VAR_1_reason,
+                            no_VAA_reason: cvd.no_VAA_reason,
+                            no_VPI_2_reason: cvd.no_VPI_2_reason,
+                            no_MEN_A_reason: cvd.no_MEN_A_reason,
+                            no_VAR_2_reason: cvd.no_VAR_2_reason,
                         });
                     }
 

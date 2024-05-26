@@ -26,7 +26,7 @@ export async function SyncPregnantData(report: any, _repoPregnant: Repository<Pr
         _pregnant.age_in_months = parseFloat(`${fields.patient_age_in_months}`);
         _pregnant.age_in_days = parseFloat(`${fields.patient_age_in_days}`);
 
-        if (report.form === 'pregnancy_family_planning') {
+        if (['pregnancy_family_planning', 'pregnancy_register'].includes(report.form)) {
             _pregnant.consultation_followup = 'consultation';
             _pregnant.is_pregnant = dataTransform(fields.is_pregnant, 'null_false');
             _pregnant.next_cpn_visit_date = dataTransform(fields.next_cpn_visit_date, 'string');

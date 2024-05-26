@@ -27,7 +27,7 @@ export async function SyncFamilyPlanningData(report: any, _repoFP: Repository<Fa
         _fp.age_in_days = parseFloat(`${fields.patient_age_in_days}`);
         
 
-        if (report.form === 'pregnancy_family_planning') {
+        if (['pregnancy_family_planning', 'family_planning'].includes(report.form)) {
             _fp.consultation_followup = 'consultation';
             _fp.has_counseling = dataTransform(fields.has_counseling, 'null_false');
             _fp.no_counseling_reasons = dataTransform(fields.no_counseling_reasons, 'string');

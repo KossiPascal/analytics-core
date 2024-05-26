@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import { milisecond_to_date } from "../../utils/date-utils";
+import { date_to_milisecond, milisecond_to_date } from "../../utils/date-utils";
 import { PromotionalActivityData, getPromotionalActivityDataRepository } from "../../entities/_Promotional-data";
 import { dataTransform } from "../../utils/functions";
 
@@ -7,10 +7,10 @@ import { dataTransform } from "../../utils/functions";
 export async function SyncPromotionalData(report: any, _repoPA: Repository<PromotionalActivityData> | null = null): Promise<boolean> {
     try {
         _repoPA = _repoPA ?? await getPromotionalActivityDataRepository();
-
-        const reported_date = milisecond_to_date(report.reported_date, 'dateOnly');
-        const month = (new Date(reported_date)).getMonth() + 1;
         const fields = report.fields;
+        const activityDate = fields.promotional_activity.activity_date;
+        // const reported_date = milisecond_to_date(report.reported_date, 'dateOnly');
+        const month = (new Date(activityDate)).getMonth() + 1;
 
         const activityDomain: string[] = fields.promotional_activity.activity_domain.split(' ');
 
@@ -19,10 +19,9 @@ export async function SyncPromotionalData(report: any, _repoPA: Repository<Promo
         _pac.id = report._id;
         _pac.rev = report._rev;
         _pac.form = report.form;
-        _pac.year = (new Date(reported_date)).getFullYear();
+        _pac.year = (new Date(activityDate)).getFullYear();
         _pac.month = month < 10 ? `0${month}` : `${month}`;
 
-        _pac.activity_date = dataTransform(fields.promotional_activity.activity_date, 'string');
         _pac.activity_method = dataTransform(fields.promotional_activity.activity_method, 'string');
         _pac.is_vad_method = dataTransform(fields.is_vad_method, 'null_false');
         _pac.is_talk_method = dataTransform(fields.is_talk_method, 'null_false');
@@ -75,10 +74,27 @@ export async function SyncPromotionalData(report: any, _repoPA: Repository<Promo
         _pac.hospital = fields.hospital_id;
         _pac.district_quartier = fields.district_quartier_id;
         _pac.village_secteur = fields.village_secteur_id;
+
+
+
+        // 'promotional_activity', 'pa_educational_talk', 
+
+        if (['pa_home_visit', 'pa_individual_talk'].includes(report.form)) {
+            _pac.family = fields.household_id;
+        }
+        if (['pa_individual_talk'].includes(report.form)) {
+            _pac.patient = fields.patient_id;
+        }
         _pac.reco = fields.user_id;
-        _pac.reported_date_timestamp = report.reported_date;
-        _pac.reported_date = reported_date;
-        _pac.reported_full_date = milisecond_to_date(report.reported_date, 'fulldate');
+
+        _pac.reported_date_timestamp = parseInt(date_to_milisecond(activityDate));
+        _pac.reported_date = activityDate;
+        _pac.reported_full_date = milisecond_to_date(activityDate, 'fulldate');
+
+        // _pac.reported_date_timestamp = report.reported_date;
+        // _pac.reported_date = reported_date;
+        // _pac.reported_full_date = milisecond_to_date(report.reported_date, 'fulldate');
+
         _pac.geolocation = report.geolocation;
 
         await _repoPA.save(_pac);

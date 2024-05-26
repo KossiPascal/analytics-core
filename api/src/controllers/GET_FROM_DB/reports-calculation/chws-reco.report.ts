@@ -56,7 +56,7 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
     const __adults: any[] = await Connection.query(`SELECT * FROM adult_data WHERE month = $1 AND year = $2`, [month, year]);
     const __promotionalsA: any[] = await Connection.query(`SELECT * FROM promotional_activity_data WHERE month = $1 AND year = $2`, [month, year]);
     const __events: any[] = await Connection.query(`SELECT * FROM events_data WHERE month = $1 AND year = $2`, [month, year]);
-    const __pregnants: any[] = await Connection.query(`SELECT * FROM pregnant_data WHERE month = $1 AND year = $2 AND form = $3`, [month, year, 'pregnancy_family_planning']);
+    const __pregnants: any[] = await Connection.query(`SELECT * FROM pregnant_data WHERE month = $1 AND year = $2 AND form IN ($3, $4)`, [month, year, 'pregnancy_family_planning', 'pregnancy_register']);
     const __deliveries: any[] = await Connection.query(`SELECT * FROM delivery_data WHERE month = $1 AND year = $2`, [month, year]);
     const __familyPlannings: any[] = await Connection.query(`SELECT * FROM family_planning_data WHERE month = $1 AND year = $2`, [month, year]);
 
@@ -385,7 +385,7 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
                     {
                         index: 8,
                         indicator: 'Nombre de femmes nouvelles utilisatrices des methodes contraceptives dans la communauté',
-                        de_number: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true).length,
+                        de_number: familyPlannings.filter(f =>  ['pregnancy_family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true).length,
                         observation: null
                     },
                     {

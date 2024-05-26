@@ -45,9 +45,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
             const megAllStock: RecoMegData[] = __megAllStock.filter(fp => fp.reco_id === reco.id);
             const megStockNumber = RECO_MEG_FULL_STOCKS(megAllStock);
             const pill_coc: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'pill_coc').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'pill_coc').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'pill_coc') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'pill_coc') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -68,9 +68,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.pill_coc.side_effect,
             };
             const pill_cop: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'pill_cop').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'pill_cop').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'pill_cop') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'pill_cop') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -91,9 +91,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.pill_cop.side_effect,
             };
             const condoms: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'condoms').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'condoms').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'condoms') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'condoms') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -114,9 +114,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.condoms.side_effect,
             };
             const depo_provera_im: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'depo_provera_im').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'depo_provera_im').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'depo_provera_im') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'depo_provera_im') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -137,9 +137,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.depo_provera_im.side_effect,
             };
             const dmpa_sc: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'dmpa_sc').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'dmpa_sc').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'dmpa_sc') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'dmpa_sc') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -160,9 +160,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.dmpa_sc.side_effect,
             };
             const cycle_necklace: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'cycle_necklace').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'cycle_necklace').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'cycle_necklace') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'cycle_necklace') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -183,9 +183,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.cycle_necklace.side_effect,
             };
             const diu: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'diu').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'diu').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'diu') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'diu') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -206,9 +206,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.diu.side_effect,
             };
             const implant: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'implant').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'implant').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'implant') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'implant') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }
@@ -229,9 +229,9 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
                 nbr_side_effect: megStockNumber.implant.side_effect,
             };
             const tubal_ligation: FP_Utils = {
-                nbr_new_user: familyPlannings.filter(f => f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'tubal_ligation').length,
+                nbr_new_user: familyPlannings.filter(f => ['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true && f.method_was_given === true && f.fp_method === 'tubal_ligation').length,
                 nbr_regular_user: familyPlannings.reduce((unique: FamilyPlanningData[], f: FamilyPlanningData) => {
-                    if (!(f.form === 'pregnancy_family_planning' && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'tubal_ligation') {
+                    if (!(['pregnancy_family_planning', 'family_planning'].includes(f.form) && f.has_counseling === true && f.already_use_method !== true && f.is_method_avaible_reco === true) && f.method_was_given === true && f.fp_method === 'tubal_ligation') {
                         if (!(unique.find(i => i.patient.id === f.patient.id))) {
                             unique.push(f);
                         }

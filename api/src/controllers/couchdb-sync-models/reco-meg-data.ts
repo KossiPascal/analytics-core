@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import { milisecond_to_date } from "../../utils/date-utils";
+import { date_to_milisecond, milisecond_to_date } from "../../utils/date-utils";
 import { RecoMegData, getRecoMegDataRepository } from "../../entities/_Meg-Reco-data";
 import { dataTransform, isTrue, notEmpty } from "../../utils/functions";
 
@@ -8,8 +8,7 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
     try {
         _repoMeg = _repoMeg ?? await getRecoMegDataRepository();
 
-        const reported_date = milisecond_to_date(report.reported_date, 'dateOnly');
-        const month = (new Date(reported_date)).getMonth() + 1;
+        let reported_date = milisecond_to_date(report.reported_date, 'dateOnly');
         const fields = report.fields;
 
         const _meg = new RecoMegData();
@@ -17,13 +16,24 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
         _meg.id = report._id;
         _meg.rev = report._rev;
         _meg.form = report.form;
-        _meg.year = (new Date(reported_date)).getFullYear();
-        _meg.month = month < 10 ? `0${month}` : `${month}`;
 
 
-        if (['stock_entry', 'stock_movement'].includes(report.form)) {
-            if (report.form === 'stock_entry') _meg.meg_type = 'stock';
-            if (report.form === 'stock_movement') _meg.meg_type = fields.med_movement_reason.movement_reason;
+        if (['stock_entry', 'stock_movement', 'drugs_management'].includes(report.form)) {
+            if (report.form === 'stock_entry') {
+                _meg.meg_type = 'stock';
+                reported_date = fields.meg_stock.meg_stock_date;
+            }
+
+            if (report.form === 'stock_movement') {
+                _meg.meg_type = fields.meg_movement.meg_movement_reason;
+                reported_date = fields.meg_movement.meg_movement_date;
+            }
+
+            if (report.form === 'drugs_management') {
+                _meg.meg_type = fields.meg_management.meg_management_reason;
+                reported_date = fields.meg_management.meg_management_date;
+            }
+
             _meg.pill_coc = dataTransform(fields.meg_quantity.pilule_coc, 'number');
             _meg.pill_cop = dataTransform(fields.meg_quantity.pilule_cop, 'number');
             _meg.condoms = dataTransform(fields.meg_quantity.condoms, 'number');
@@ -75,10 +85,10 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
             if (isTrue(fields.rdt_given)) _meg.tdr = 1;
         }
 
-        if (['pregnancy_family_planning', 'fp_renewal', 'fp_danger_sign_check'].includes(report.form)) {
+        if (['pregnancy_family_planning', 'family_planning', 'fp_renewal', 'fp_danger_sign_check'].includes(report.form)) {
             _meg.meg_type = 'consumption';
             _meg.fp_method = fields.fp_method;
-            if (['pregnancy_family_planning', 'fp_renewal'].includes(report.form) && isTrue(fields.method_was_given)) {
+            if (['pregnancy_family_planning', 'family_planning', 'fp_renewal'].includes(report.form) && isTrue(fields.method_was_given)) {
                 if (fields.fp_method === 'dmpa_sc') {
                     _meg.dmpa_sc = 1;
                 }
@@ -97,7 +107,7 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
                 }
             }
 
-            if (report.form === 'pregnancy_family_planning') {
+            if (['pregnancy_family_planning', 'family_planning'].includes(report.form)) {
                 if (isTrue(fields.is_fp_referred)) {
                     _meg.is_fp_referred = true;
                 }
@@ -125,6 +135,10 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
             }
         }
 
+        const month = (new Date(reported_date)).getMonth() + 1;
+        _meg.year = (new Date(reported_date)).getFullYear();
+        _meg.month = month < 10 ? `0${month}` : `${month}`;
+
         _meg.country = fields.country_id;
         _meg.region = fields.region_id;
         _meg.prefecture = fields.prefecture_id;
@@ -133,10 +147,11 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
         _meg.district_quartier = fields.district_quartier_id;
         _meg.village_secteur = fields.village_secteur_id;
         _meg.reco = fields.user_id;
-        _meg.reported_date_timestamp = report.reported_date;
-        _meg.reported_date = reported_date;
-        _meg.reported_full_date = milisecond_to_date(report.reported_date, 'fulldate');
         _meg.geolocation = report.geolocation;
+
+        _meg.reported_date_timestamp = parseInt(date_to_milisecond(reported_date));
+        _meg.reported_date = reported_date;
+        _meg.reported_full_date = milisecond_to_date(reported_date, 'fulldate');
 
         await _repoMeg.save(_meg);
         return true;

@@ -175,6 +175,21 @@ export interface RecoVaccinationDashboardUtils {
     vaccine_VPI_2: boolean
     vaccine_MEN_A: boolean
     vaccine_VAR_2: boolean
+
+    no_BCG_reason: string | null | ''
+    no_VPO_0_reason: string | null | ''
+    no_PENTA_1_reason: string | null | ''
+    no_VPO_1_reason: string | null | ''
+    no_PENTA_2_reason: string | null | ''
+    no_VPO_2_reason: string | null | ''
+    no_PENTA_3_reason: string | null | ''
+    no_VPO_3_reason: string | null | ''
+    no_VPI_1_reason: string | null | ''
+    no_VAR_1_reason: string | null | ''
+    no_VAA_reason: string | null | ''
+    no_VPI_2_reason: string | null | ''
+    no_MEN_A_reason: string | null | ''
+    no_VAR_2_reason: string | null | ''
 }
 
 // ###########################################################
