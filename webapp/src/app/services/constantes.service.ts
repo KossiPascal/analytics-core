@@ -56,7 +56,7 @@ export class ConstanteService {
 
   // getPort(): { port: number; isLocal: boolean; } {
   //   if (location.port == '4200') {
-  //     return { isLocal: true, port: this.isProduction ?  9292 : 7272 };
+  //     return { isLocal: true, port: this.isProduction ?  4437 : 8837 };
   //   }
   //   return { isLocal: false, port: parseInt(location.port) };
   // }
@@ -67,12 +67,12 @@ export class ConstanteService {
   //     return `${location.protocol}//${location.hostname}:${portInfo.port}/${cible}`;
   //   }
   //   return `${location.origin}/${cible}`;
-  //   // return 'https://portal-integratehealth.org:9292/api'
+  //   // return 'https://portal-integratehealth.org:4437/api'
   // }
 
   backenUrl(cible: string = 'api'): string {
     if (location.port == '4200') {
-      const port = this.isProduction ? 9292 : 7272;
+      const port = this.isProduction ? 4437 : 8837;
       return `${location.protocol}//${location.hostname}:${port}/${cible}`;
     }
     return `${location.origin}/${cible}`;

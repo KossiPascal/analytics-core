@@ -2,7 +2,7 @@
 // const rpn = require('request-promise-native');
 
 const getApiUrl = (pathname = '') => {
-  return 'http://localhost:9292/';
+  return 'http://localhost:4437/';
 };
 
 const updateServiceWorker = () => {
