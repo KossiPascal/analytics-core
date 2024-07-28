@@ -12,6 +12,7 @@ import dashboardsRouter from "./routes/dashboards";
 import apisRouter from "./routes/api-token";
 import syncRouter from "./routes/sync-data";
 import databaseRouter from "./routes/database";
+import dhis2Router from "./routes/dhis2";
 
 import { ADMIN_USER_ID, AuthUserController } from "./controllers/auth-user";
 import cors from "cors";
@@ -88,6 +89,8 @@ function app() {
     .use('/api/api-token', apisRouter)
     .use('/api/sync', syncRouter)
     .use('/api/database', databaseRouter)
+    .use('/api/dhis2', dhis2Router)
+    
     .use('/api/assets', express.static(__dirname + '/assets'))
     // .use(express.static(join(projectFolder, "views"), {
     //   setHeaders: (res, path) => {

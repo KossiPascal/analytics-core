@@ -1,52 +1,51 @@
-<div style="margin: 0px 5px 0px 5px;" class="row g-4">
+<div style="margin: 0px 5px 0px 5px; font-size: 13px!important;" class="row g-4">
   <div class="col-12">
     <div class="bg-white rounded h-100 p-0">
       <!-- <h6 class="mb-4">TITRE</h6> -->
-
-      <div *ngIf="PROMOTION$ && _formGroup.value.recos.length > 0" class="validate-data">
-        <button [disabled]="IS_VALIDATE === true" (click)="validateData($event)" style="width: 100%;" class="btn btn-{{ IS_VALIDATE === true ? 'success' : 'warning' }}">
-          {{ IS_VALIDATE === true ? 'Rapport deja validé' : 'Valider ce rapport' }}
-          <span *ngIf="data_validation" class="fas fa-1x fa-sync-alt fa-spin"></span>
-        </button>
-      </div>
 
       <div class="load-data">
         <div class="rounded p-6">
           <form [formGroup]="_formGroup" (ngSubmit)="SHOW_DATA($event)" novalidate>
             <div class="row">
               <div class="col-6">
-                <select (change)="regionsGenerate()" *ngIf="Countries$.length > 1 && countries.length === 0 || countries.length > 1" class="orgunit-style form-select mb-2" formControlName="country">
-                    <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
-                      {{ c.name }}
-                    </option>
+                <select (change)="regionsGenerate()"
+                  *ngIf="Countries$.length > 1 && countries.length === 0 || countries.length > 1"
+                  class="orgunit-style mb-1" formControlName="country">
+                  <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
+                    {{ c.name }}
+                  </option>
                 </select>
-                <select (change)="prefecturesGenerate()" *ngIf="Regions$.length > 1 && regions.length === 0 || regions.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="region">
+                <select (change)="prefecturesGenerate()"
+                  *ngIf="Regions$.length > 1 && regions.length === 0 || regions.length > 1" class="orgunit-style mb-1"
+                  formControlName="region">
                   <option *ngFor="let r of regions" [value]="r.id" [selected]="isSelected(r.id, 'region')">
                     {{ r.name }}
                   </option>
                 </select>
-                <select (change)="communesGenerate()" *ngIf="Prefectures$.length > 1 && prefectures.length === 0 || prefectures.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="prefecture">
+                <select (change)="communesGenerate()"
+                  *ngIf="Prefectures$.length > 1 && prefectures.length === 0 || prefectures.length > 1"
+                  class="orgunit-style mb-1" formControlName="prefecture">
                   <option *ngFor="let p of prefectures" [value]="p.id" [selected]="isSelected(p.id, 'prefecture')">
                     {{ p.name }}
                   </option>
                 </select>
-                <select (change)="hospitalsGenerate()" *ngIf="Communes$.length > 1 && communes.length === 0 || communes.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="commune">
+                <select (change)="hospitalsGenerate()"
+                  *ngIf="Communes$.length > 1 && communes.length === 0 || communes.length > 1"
+                  class="orgunit-style mb-1" formControlName="commune">
                   <option *ngFor="let c of communes" [value]="c.id" [selected]="isSelected(c.id, 'commune')">
                     {{ c.name }}
                   </option>
                 </select>
-                <select (change)="districtsGenerate()" *ngIf="Hospitals$.length > 1 && hospitals.length === 0 || hospitals.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="hospital">
+                <select (change)="districtsGenerate()"
+                  *ngIf="Hospitals$.length > 1 && hospitals.length === 0 || hospitals.length > 1"
+                  class="orgunit-style mb-1" formControlName="hospital">
                   <option *ngFor="let h of hospitals" [value]="h.id" [selected]="isSelected(h.id, 'hospital')">
                     {{ h.name }}
                   </option>
                 </select>
-                <select (change)="recosGenerate()" *ngIf="DistrictQuartiers$.length > 1 && districtQuartiers.length === 0 || districtQuartiers.length > 1"
-                  class="orgunit-style form-select mb-2"
-                  formControlName="district_quartier">
+                <select (change)="recosGenerate()"
+                  *ngIf="DistrictQuartiers$.length > 1 && districtQuartiers.length === 0 || districtQuartiers.length > 1"
+                  class="orgunit-style mb-1" formControlName="district_quartier">
                   <option *ngFor="let d of districtQuartiers" [value]="d.id"
                     [selected]="isSelected(d.id, 'district_quartier')">
                     {{ d.name }}
@@ -55,17 +54,24 @@
               </div>
 
               <div class="col-6">
+                <select (change)="recosGenerate()" *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1"
+                  class="orgunit-style mb-1" multiple="{{ recos.length > 1 ? 'multiple' : '' }}"
+                  formControlName="recos">
+                  <option *ngFor="let r of recos" [value]="r.id" [selected]="isSelected(r.id, 'recos')">
+                    {{ r.name }}
+                  </option>
+                </select>
 
-                <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="reco-list-container orgunit-style form-selec mb-2">
+                <!-- <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="reco-list-container orgunit-style form-selec mb-1">
                   <div *ngIf="recos.length > 0" style="color:darkblue; width: 200%; font-weight: bold;">
                     <input type="checkbox" [checked]="_formGroup.value.recos.length === recos.length" (change)="selectAllRecos()" id="reco-list-all"> <label for="reco-list-all"> Tout sélectionner</label>
                   </div>
                   <div *ngFor="let r of recos" class="reco-list {{ isSelected(r.id, 'recos') ? 'reco-selected' : '' }}" (click)="onCheckboxChange(r.id, $event)">
                     {{ r.name }}
                   </div>
-                </div>
+                </div> -->
 
-                <select class="orgunit-style form-select mb-2" formControlName="year">
+                <select class="orgunit-style mb-1" formControlName="year">
                   <ng-container *ngIf="Years$.length > 0">
                     <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
                       {{ y }}
@@ -73,8 +79,7 @@
                   </ng-container>
                 </select>
 
-                <select class="orgunit-style form-select mb-2"
-                  formControlName="months">
+                <select class="orgunit-style mb-1" formControlName="months">
                   <ng-container *ngIf="Months$.length > 0">
                     <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$"
                       [value]="m.id" [selected]="isSelected(m.id, 'month')">
@@ -83,7 +88,7 @@
                   </ng-container>
                 </select>
 
-                <button style="width: 100%;" [disabled]="data_syncing" class="btn btn-info">
+                <button style="width: 100%;" [disabled]="data_syncing" class="submitBtn btn btn-info">
                   Charger
                   <span *ngIf="data_syncing" class="fas fa-1x fa-sync-alt fa-spin"></span>
                 </button>
@@ -99,9 +104,9 @@
           <thead class="no-border">
             <tr>
               <td style="height: 30px!important;" colspan="5">
-                <h4 style="color: black!important;text-align: left!important;">
-                  RAPPORT MENSUEL DES ACTIVITÉS  PROMOTIONNELLES
-                </h4>
+                <h5 style="color: black!important;text-align: left!important;">
+                  RAPPORT MENSUEL DES ACTIVITÉS PROMOTIONNELLES
+                </h5>
               </td>
             </tr>
           </thead>
@@ -133,9 +138,28 @@
             </tr>
           </thead>
 
-          <tr class="no-border">
+          <thead class="no-border">
+            <tr>
+              <td colspan="5">
+                <!-- <div *ngIf="PROMOTION$ && _formGroup.value.recos.length > 0" class="validate-data"> -->
+                <div class="validate-data">
+                  <button [disabled]="IS_VALIDATE === true" (click)="validateData($event)" style="width: 100%;"
+                    class="submitBtn btn btn-{{ IS_VALIDATE === true ? 'success' : 'warning' }}">
+                    {{ IS_VALIDATE === true ? 'Rapport deja validé' : 'Valider ce rapport' }}
+                    <span *ngIf="data_validation" class="fas fa-1x fa-sync-alt fa-spin"></span>
+                  </button>
+
+                  <button (click)="openSendToDhis2ModalVisible()" style="width: 100%;" class="submitBtn btn btn-info">
+                    Envoyer au DHIS2
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </thead>
+
+          <!-- <tr class="no-border">
             <td class="separation" colspan="5"></td>
-          </tr>
+          </tr> -->
 
           <thead>
             <tr class="table-head">
@@ -254,5 +278,51 @@
         </table>
       </div>
     </div>
+  </div>
+</div>
+
+
+<div *ngIf="sendToDhis2ModalVisible" class="absolute-fix-modal-parent">
+  <div style="width: 600px; position: absolute; top: 0; margin-top: 20px;" class="modal-content animated fadeIn">
+    <div class="modal-header bg-info">
+      <h4 class="modal-title">Envoi de données au DHIS2</h4>
+      <button (click)="closeSendToDhis2ModalVisible()" id="close-delete-modal" type="button" class="close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="rounded p-4">
+        <!-- <div *ngIf="errorMessage" style="color: red; text-align: center; margin: -10px 0px 10px 0px;"><b>{{ errorMessage }}</b></div> -->
+        <form [formGroup]="_dhis2FormGroup" (ngSubmit)="SendPromotionActivitiesToDhis2($event)" novalidate>
+
+          <select class="orgunit-style mb-1" formControlName="year">
+            <ng-container *ngIf="Years$.length > 0">
+              <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
+                {{ y }}
+              </option>
+            </ng-container>
+          </select>
+
+          <select class="orgunit-style mb-1" formControlName="month">
+            <ng-container *ngIf="Months$.length > 0">
+              <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$" [value]="m.id"
+                [selected]="isSelected(m.id, 'month')">
+                {{ m.labelFR }}
+              </option>
+            </ng-container>
+          </select>
+          <button [disabled]="!_dhis2FormGroup.valid || dhis2_validation" class="btn btn-info swalDefaultSuccess">
+            Démmarer l'envoi au DHIS2
+            <span *ngIf="dhis2_validation" class="fas fa-1x fa-sync-alt fa-spin"></span>
+          </button>
+        </form>
+      </div>
+      <!-- <p class="login-box-msg"><strong>{{ message }}</strong></p> -->
+    </div>
+    <!-- <div class="modal-footer justify-content-between">
+      <button (click)="closeSendToDhis2ModalVisible()" type="button" class="btn btn-info">Annuler</button>
+      <button (click)="" type="button" class="btn btn-danger ">
+        Démmarer l'envoi au DHIS2</button>
+    </div> -->
   </div>
 </div>

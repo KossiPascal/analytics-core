@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, HostListener, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { DataValue } from '@kossi-models/dhis2';
 import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
 import { IndicatorsDataOutput, PromotionReport } from '@kossi-models/reports';
 import { ApiService } from '@kossi-services/api.service';
@@ -31,13 +32,14 @@ export class PromotionComponent implements OnInit, AfterViewInit {
   MONTH!: string;
   YEAR!: number
 
-  data_validation!:boolean
+  data_validation!: boolean
 
-  IS_VALIDATE!:boolean
+  IS_VALIDATE!: boolean
 
   PROMOTION$!: PromotionReport | undefined;
 
   _formGroup!: FormGroup;
+  _dhis2FormGroup!: FormGroup;
 
   Months$: { labelEN: string; labelFR: string; id: string; uid: number }[] = [];
   Years$: number[] = [];
@@ -46,6 +48,9 @@ export class PromotionComponent implements OnInit, AfterViewInit {
   year$!: number;
 
   data_syncing: boolean = false;
+  dhis2_validation: boolean = false;
+
+  sendToDhis2ModalVisible: boolean = false;
 
 
   Countries$: CountryCoustomQuery[] = [];
@@ -100,6 +105,22 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     this.Months$ = getMonthsList().filter(m => this.month$ && m.uid <= this.month$.uid);
     this.Years$ = getYearsList().filter(y => this.year$ && y <= this.year$);
     this._formGroup = this.CreateFormGroup();
+    this._dhis2FormGroup = this.CreateDhis2FormGroup();
+  }
+
+  closeSendToDhis2ModalVisible() {
+    this.sendToDhis2ModalVisible = false;
+  }
+
+  openSendToDhis2ModalVisible() {
+    this.sendToDhis2ModalVisible = true;
+  }
+
+  CreateDhis2FormGroup(): FormGroup {
+    return new FormGroup({
+      year: new FormControl(this.year$, [Validators.required]),
+      month: new FormControl(this.month$.id, [Validators.required]),
+    });
   }
 
   getCurrentUserCtx() {
@@ -147,6 +168,23 @@ export class PromotionComponent implements OnInit, AfterViewInit {
 
 
   countriesGenerate() {
+    this.regions = [];
+    this.prefectures = [];
+    this.communes = [];
+    this.hospitals = [];
+    this.districtQuartiers = [];
+    this.chws = [];
+    this.villageSecteurs = [];
+    this.recos = [];
+    this._formGroup.value['region'] = [];
+    this._formGroup.value['prefecture'] = [];
+    this._formGroup.value['commune'] = [];
+    this._formGroup.value['hospital'] = [];
+    this._formGroup.value['district_quartier'] = [];
+    this._formGroup.value['chw'] = [];
+    this._formGroup.value['village_secteur'] = [];
+    this._formGroup.value['recos'] = [];
+
     this.countries = this.Countries$;
     if (this.Countries$.length === 1 || this.countries.length === 1) {
       this._formGroup.value['country'] = this.Countries$[0].id;
@@ -161,6 +199,13 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     this.chws = [];
     this.villageSecteurs = [];
     this.recos = [];
+    this._formGroup.value['prefecture'] = [];
+    this._formGroup.value['commune'] = [];
+    this._formGroup.value['hospital'] = [];
+    this._formGroup.value['district_quartier'] = [];
+    this._formGroup.value['chw'] = [];
+    this._formGroup.value['village_secteur'] = [];
+    this._formGroup.value['recos'] = [];
     if (this.Countries$.length > 0) {
       if (this.Regions$.length > 1 && notNull(this._formGroup.value.country)) {
         this.regions = this.Regions$.filter(d => d.country_id === this._formGroup.value.country);
@@ -191,6 +236,12 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     this.chws = [];
     this.villageSecteurs = [];
     this.recos = [];
+    this._formGroup.value['commune'] = [];
+    this._formGroup.value['hospital'] = [];
+    this._formGroup.value['district_quartier'] = [];
+    this._formGroup.value['chw'] = [];
+    this._formGroup.value['village_secteur'] = [];
+    this._formGroup.value['recos'] = [];
     if (this.Regions$.length > 0) {
       if (this.Prefectures$.length > 1 && notNull(this._formGroup.value.region)) {
         this.prefectures = this.Prefectures$.filter(d => d.region_id === this._formGroup.value.region);
@@ -219,6 +270,11 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     this.chws = [];
     this.villageSecteurs = [];
     this.recos = [];
+    this._formGroup.value['hospital'] = [];
+    this._formGroup.value['district_quartier'] = [];
+    this._formGroup.value['chw'] = [];
+    this._formGroup.value['village_secteur'] = [];
+    this._formGroup.value['recos'] = [];
     if (this.Prefectures$.length > 0) {
       if (this.Communes$.length > 1 && notNull(this._formGroup.value.prefecture)) {
         this.communes = this.Communes$.filter(d => d.prefecture_id === this._formGroup.value.prefecture);
@@ -246,6 +302,10 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     this.chws = [];
     this.villageSecteurs = [];
     this.recos = [];
+    this._formGroup.value['district_quartier'] = [];
+    this._formGroup.value['chw'] = [];
+    this._formGroup.value['village_secteur'] = [];
+    this._formGroup.value['recos'] = [];
     if (this.Communes$.length > 0) {
       if (this.Hospitals$.length > 1 && notNull(this._formGroup.value.commune)) {
         this.hospitals = this.Hospitals$.filter(d => d.commune_id === this._formGroup.value.commune);
@@ -272,6 +332,9 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     this.chws = [];
     this.villageSecteurs = [];
     this.recos = [];
+    this._formGroup.value['chw'] = [];
+    this._formGroup.value['village_secteur'] = [];
+    this._formGroup.value['recos'] = [];
     if (this.Hospitals$.length > 0) {
       if (this.DistrictQuartiers$.length > 1 && notNull(this._formGroup.value.hospital)) {
         this.districtQuartiers = this.DistrictQuartiers$.filter(d => d.hospital_id === this._formGroup.value.hospital);
@@ -298,6 +361,8 @@ export class PromotionComponent implements OnInit, AfterViewInit {
   // chwsGenerate() {
   //   this.villageSecteurs = [];
   //   this.recos = [];
+  //   this._formGroup.value['village_secteur'] = [];
+  //   this._formGroup.value['recos'] = [];
   //   if (this.DistrictQuartiers$.length > 0) {
   //     if (this.Chws$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
   //       this.chws = this.Chws$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
@@ -323,6 +388,7 @@ export class PromotionComponent implements OnInit, AfterViewInit {
 
   // villagesGenerate() {
   //   this.recos = [];
+  //   this._formGroup.value['recos'] = [];
   //   if (this.DistrictQuartiers$.length > 0) {
   //     if (this.VillageSecteurs$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
   //       this.villageSecteurs = this.VillageSecteurs$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
@@ -346,7 +412,6 @@ export class PromotionComponent implements OnInit, AfterViewInit {
   //   }
   //   this.recosGenerate();
   // }
-
   recosGenerate() {
     if (this.DistrictQuartiers$.length > 0) {
       if (this.Recos$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
@@ -361,33 +426,32 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     } else {
       this.recos = [];
     }
-    if (this.recos.length > 0) {
-      this._formGroup.value['recos'] = this.recos.map(r => r.id);
-    }
+
+    this._formGroup.value['recos'] = this.recos.map(r => r.id);
   }
 
-  onCheckboxChange(id: string, event: Event) {
-    // const checkbox = event.target as HTMLInputElement;
-    const recos = toArray(this._formGroup.value['recos'] ?? []);
+  // onCheckboxChange(id: string, event: Event) {
+  //   // const checkbox = event.target as HTMLInputElement;
+  //   const recos = toArray(this._formGroup.value['recos'] ?? []);
 
-    const [found, index] = (() => {
-      let foundIndex = -1;
-      const foundObject = recos.find((dt, idx) => {
-        if (dt === id) {
-          foundIndex = idx;
-          return true;
-        }
-        return false;
-      });
-      return [foundObject, foundIndex];
-    })();
-    if (index !== -1) {
-      recos.splice(index, 1);
-    } else {
-      recos.push(id);
-    }
-    this._formGroup.value['recos'] = recos;
-  }
+  //   const [found, index] = (() => {
+  //     let foundIndex = -1;
+  //     const foundObject = recos.find((dt, idx) => {
+  //       if (dt === id) {
+  //         foundIndex = idx;
+  //         return true;
+  //       }
+  //       return false;
+  //     });
+  //     return [foundObject, foundIndex];
+  //   })();
+  //   if (index !== -1) {
+  //     recos.splice(index, 1);
+  //   } else {
+  //     recos.push(id);
+  //   }
+  //   this._formGroup.value['recos'] = recos;
+  // }
 
   selectAllRecos() {
     if (this._formGroup.value.recos.length === this.recos.length) {
@@ -440,7 +504,7 @@ export class PromotionComponent implements OnInit, AfterViewInit {
       this.MONTH = toArray(this._formGroup.value.months).map(m => monthByArg(m).labelFR).join(',');
       this.YEAR = this._formGroup.value.year;
       this.IS_VALIDATE = _res$?.is_validate === true,
-      this.PROMOTION$ = _res$?.data;
+        this.PROMOTION$ = _res$?.data;
       if (!_res$) {
         this.snackbar.show('No data found for this RECO with informations you provide!\nYou can sync data from cloud and retry!', { backgroundColor: 'info', position: 'TOP', duration: 5000 });
       }
@@ -448,6 +512,332 @@ export class PromotionComponent implements OnInit, AfterViewInit {
     }, (err: any) => {
       this.data_syncing = false;
     });
+  }
+
+  SendPromotionActivitiesToDhis2(event: Event) {
+    event.preventDefault();
+    this.dhis2_validation = true;
+    if (this.PROMOTION$) {
+      const dataToSend = this.dataTransformToDhis2(this.PROMOTION$, { ...this._dhis2FormGroup.value });
+      this.api.SendPromotionActivitiesToDhis2(dataToSend).subscribe(async (_c$: { status: number, data: string }) => {
+        if (_c$.status == 200) {
+          this.closeSendToDhis2ModalVisible();
+          this.snackbar.show('Validate successfuly', { backgroundColor: 'success', position: 'TOP' });
+        } else {
+          this.snackbar.show('Error when sending data, retry!', { backgroundColor: 'warning', position: 'TOP' });
+        }
+        this.dhis2_validation = false;
+      }, (err: any) => {
+        this.snackbar.show('Error when sending data, retry!', { backgroundColor: 'warning', position: 'TOP' });
+        this.dhis2_validation = false;
+      });
+    } else {
+      this.snackbar.show('Invalid Data', { backgroundColor: 'warning', position: 'TOP' });
+    }
+
+  }
+
+  dataTransformToDhis2(data: PromotionReport, dataPeriod?: { year: number, month: string }): { dataValues: DataValue[] } {
+    const orgUnit = data.orgUnit ?? 'erdjSX8MtGO';
+    const period = dataPeriod ? `${dataPeriod.year}${dataPeriod.month}` : `${data.year}${data.month}`;
+    return {
+      dataValues: [
+        {
+          dataElement: 'reLr94WLodi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'mkALVXEOmPV', //Paludisme VAD, Féminin
+          value: data.malaria_nbr_touched_by_VAD_F
+        },
+        {
+          dataElement: 'reLr94WLodi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'nNLrVZLxiPp', //Paludisme CE, Féminin
+          value: data.malaria_nbr_touched_by_CE_F
+        },
+        {
+          dataElement: 'reLr94WLodi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'TSV3DpdA7w9', //Paludisme Total, Féminin
+          value: data.malaria_nbr_total_F
+        },
+        {
+          dataElement: 'reLr94WLodi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'eNSkQa5sZHi', //Paludisme VAD, Masculin
+          value: data.malaria_nbr_touched_by_VAD_M
+        },
+        {
+          dataElement: 'reLr94WLodi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'f3r3iJeHc6u', //Paludisme CE, Masculin
+          value: data.malaria_nbr_touched_by_CE_M
+        },
+        {
+          dataElement: 'reLr94WLodi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'PzLTFGsCfaD', //Paludisme Total, Masculin
+          value: data.malaria_nbr_total_M
+        },
+        {
+          dataElement: 'ZbwvBYb5QIF',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'QJ6Zh1w9Ixo', //Vaccination VAD, Féminin
+          value: data.vaccination_nbr_touched_by_VAD_F
+        },
+        {
+          dataElement: 'ZbwvBYb5QIF',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'FE24CbxVovJ', //Vaccination CE, Féminin
+          value: data.vaccination_nbr_touched_by_CE_F
+        },
+        {
+          dataElement: 'ZbwvBYb5QIF',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'Lcca81MKeqs', //Vaccination Total, Féminin
+          value: data.vaccination_nbr_total_F
+        },
+        {
+          dataElement: 'ZbwvBYb5QIF',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'usCbYR0Wy5X', //Vaccination VAD, Masculin
+          value: data.vaccination_nbr_touched_by_VAD_M
+        },
+        {
+          dataElement: 'ZbwvBYb5QIF',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'I6G9oRI644m', //Vaccination CE, Masculin
+          value: data.vaccination_nbr_touched_by_CE_M
+        },
+        {
+          dataElement: 'ZbwvBYb5QIF',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'kbqK0cKDJmZ', //Vaccination Total, Masculin
+          value: data.vaccination_nbr_total_M
+        },
+        {
+          dataElement: 'HHtuWuObqJi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'n7ULwnhPmAr', //Santé Enfant VAD, Féminin
+          value: data.child_health_nbr_touched_by_VAD_F
+        },
+        {
+          dataElement: 'HHtuWuObqJi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'aiwbLdNLhzg', //Santé Enfant CE, Féminin
+          value: data.child_health_nbr_touched_by_CE_F
+        },
+        {
+          dataElement: 'HHtuWuObqJi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'pYRwaQnYl5u', //Santé Enfant Total, Féminin
+          value: data.child_health_nbr_total_F
+        },
+        {
+          dataElement: 'HHtuWuObqJi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'vW8kmzUHqwp', //Santé Enfant VAD, Masculin
+          value: data.child_health_nbr_touched_by_VAD_M
+        },
+        {
+          dataElement: 'HHtuWuObqJi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'AhtXoBVIobA', //Santé Enfant CE, Masculin
+          value: data.child_health_nbr_touched_by_CE_M
+        },
+        {
+          dataElement: 'HHtuWuObqJi',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'T9gCslKL4Ls', //Santé Enfant Total, Masculin
+          value: data.child_health_nbr_total_M
+        },
+        {
+          dataElement: 'ChfBVpGkz5M',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'NK69VuTWywA', //CPN/CPoN VAD, Féminin
+          value: data.cpn_cpon_nbr_touched_by_VAD_F
+        },
+        {
+          dataElement: 'ChfBVpGkz5M',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'liQvAH9VUVE', //CPN/CPoN CE, Féminin
+          value: data.cpn_cpon_nbr_touched_by_CE_F
+        },
+        {
+          dataElement: 'ChfBVpGkz5M',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'nDEFyvuYzdu', //CPN/CPoN Total, Féminin
+          value: data.cpn_cpon_nbr_total_F
+        },
+        {
+          dataElement: 'ChfBVpGkz5M',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'tILcB42WBVn', //CPN/CPoN VAD, Masculin
+          value: data.cpn_cpon_nbr_touched_by_VAD_M
+        },
+        {
+          dataElement: 'ChfBVpGkz5M',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'iHavRI7a5xI', //CPN/CPoN CE, Masculin
+          value: data.cpn_cpon_nbr_touched_by_CE_M
+        },
+        {
+          dataElement: 'ChfBVpGkz5M',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'GcCVmDklPK3', //CPN/CPoN Total, Masculin
+          value: data.cpn_cpon_nbr_total_M
+        },
+        {
+          dataElement: 'OjpoCrL4Tjj',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'G8TURgyVL6d', //PF VAD, Féminin
+          value: data.family_planning_nbr_touched_by_VAD_F
+        },
+        {
+          dataElement: 'OjpoCrL4Tjj',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'vxaeoYOCtoY', //PF CE, Féminin
+          value: data.family_planning_nbr_touched_by_CE_F
+        },
+        {
+          dataElement: 'OjpoCrL4Tjj',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'ubU9w7O79Lx', //PF Total, Féminin
+          value: data.family_planning_nbr_total_F
+        },
+        {
+          dataElement: 'OjpoCrL4Tjj',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'Y66GlWSiI1T', //PF VAD, Masculin
+          value: data.family_planning_nbr_touched_by_VAD_M
+        },
+        {
+          dataElement: 'OjpoCrL4Tjj',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'MxvzA5aZkHC', //PF CE, Masculin
+          value: data.family_planning_nbr_touched_by_CE_M
+        },
+        {
+          dataElement: 'OjpoCrL4Tjj',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'QDWqiGTesvJ', //PF Total, Masculin
+          value: data.family_planning_nbr_total_M
+        },
+        {
+          dataElement: 'KkmPdIa7V2o',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'vzMCrPXneax', //Eau Hygienne Assainissement VAD, Féminin
+          value: data.hygienic_water_sanitation_nbr_touched_by_VAD_F
+        },
+        {
+          dataElement: 'KkmPdIa7V2o',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'oVx6d4kyTEu', //Eau Hygienne Assainissement CE, Féminin
+          value: data.hygienic_water_sanitation_nbr_touched_by_CE_F
+        },
+        {
+          dataElement: 'KkmPdIa7V2o',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'eaS6K9KtyE1', //Eau Hygienne Assainissement Total, Féminin
+          value: data.hygienic_water_sanitation_nbr_total_F
+        },
+        {
+          dataElement: 'KkmPdIa7V2o',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'OOe0cGjJYsh', //Eau Hygienne Assainissement VAD, Masculin
+          value: data.hygienic_water_sanitation_nbr_touched_by_VAD_M
+        },
+        {
+          dataElement: 'KkmPdIa7V2o',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'DKS0Gy0wi9k', //Eau Hygienne Assainissement CE, Masculin
+          value: data.hygienic_water_sanitation_nbr_touched_by_CE_M
+        },
+        {
+          dataElement: 'KkmPdIa7V2o',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'B10GhHIJiz0', //Eau Hygienne Assainissement Total, Masculin
+          value: data.hygienic_water_sanitation_nbr_total_M
+        },
+        {
+          dataElement: 'OTn9Yv0V4Hf',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'NoM9m3ccl8q', //Autres Maladies VAD, Féminin
+          value: data.other_diseases_nbr_touched_by_VAD_F
+        },
+        {
+          dataElement: 'OTn9Yv0V4Hf',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'dGYCxhCzseB', //Autres Maladies CE, Féminin
+          value: data.other_diseases_nbr_touched_by_CE_F
+        },
+        {
+          dataElement: 'OTn9Yv0V4Hf',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'PqerZpQPbap', //Autres Maladies Total, Féminin
+          value: data.other_diseases_nbr_total_F
+        },
+        {
+          dataElement: 'OTn9Yv0V4Hf',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'IGv6dWZUJPp', //Autres Maladies VAD, Masculin
+          value: data.other_diseases_nbr_touched_by_VAD_M
+        },
+        {
+          dataElement: 'OTn9Yv0V4Hf',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'Uotr3YNyRpr', //Autres Maladies CE, Masculin
+          value: data.other_diseases_nbr_touched_by_CE_M
+        },
+        {
+          dataElement: 'OTn9Yv0V4Hf',
+          period: period,
+          orgUnit: orgUnit,
+          categoryOptionCombo: 'OGAnbwef45x', //Autres Maladies Total, Masculin
+          value: data.other_diseases_nbr_total_M
+        }
+      ]
+    };
   }
 
 }

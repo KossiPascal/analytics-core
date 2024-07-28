@@ -41,6 +41,8 @@ export interface PromotionReport {
   month: string
   year: number
 
+  orgUnit?:string
+
   malaria_nbr_touched_by_VAD_F: number
   malaria_nbr_touched_by_VAD_M: number
   malaria_nbr_touched_by_CE_F: number

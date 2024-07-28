@@ -8,6 +8,7 @@ import { AdminUser } from '@kossi-models/user';
 import { notNull } from '../utils/functions';
 import { UserContextService } from './user-context.service';
 import { SyncOrgUnit, getOrgUnitFromDbFilter } from '@kossi-models/org-units';
+import { DataValue } from '@kossi-models/dhis2';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -345,7 +346,16 @@ export class ApiService {
     const fparams = this.ApiParams(params);
     return this.http.post(`${this.backendUrl}/database/postgres/truncate`, fparams, this.customHeaders);
   }
-  //START DATABASES UTILS
+  //END DATABASES UTILS
+
+
+  //START DHIS2
+  SendPromotionActivitiesToDhis2(data: { dataValues: DataValue[] }): any {
+    const fparams = this.ApiParams({ dataToSend: data });
+    return this.http.post(`${this.backendUrl}/dhis2/send/promotional-activity`, fparams, this.customHeaders);
+  }
+
+  //END DHIS2
 
 
 
