@@ -1,110 +1,22 @@
-<div style="margin: 0px 5px 0px 5px;" class="row g-4">
+<div class="report-style row g-4">
   <div class="col-12">
     <div class="bg-white rounded h-100 p-0">
       <!-- <h6 class="mb-4">TITRE</h6> -->
 
-        <div class="rounded p-6">
-          <form [formGroup]="_formGroup" (ngSubmit)="SHOW_DATA($event)" novalidate>
 
-            <div class="row">
-              <div *ngIf="Countries$.length > 1 && countries.length === 0 || countries.length > 1" class="col-sm-2 col-xl-2">
-                <select (change)="regionsGenerate()" class="orgunit-style form-select mb-2" formControlName="country">
-                  <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
-                    {{ c.name }}
-                  </option>
-              </select>
-            </div>
-            <div *ngIf="Regions$.length > 1 && regions.length === 0 || regions.length > 1" class="col-sm-2 col-xl-2">
-              <select (change)="prefecturesGenerate()" class="orgunit-style form-select mb-2" formControlName="region">
-                <option *ngFor="let r of regions" [value]="r.id" [selected]="isSelected(r.id, 'region')">
-                  {{ r.name }}
-                </option>
-              </select>
-            </div>
-            <div *ngIf="Prefectures$.length > 1 && prefectures.length === 0 || prefectures.length > 1" class="col-sm-2 col-xl-2">
-              <select (change)="communesGenerate()" class="orgunit-style form-select mb-2" formControlName="prefecture">
-                <option *ngFor="let p of prefectures" [value]="p.id" [selected]="isSelected(p.id, 'prefecture')">
-                  {{ p.name }}
-                </option>
-              </select>
-            </div>
-            <div *ngIf="Communes$.length > 1 && communes.length === 0 || communes.length > 1" class="col-sm-2 col-xl-2">
-              <select (change)="hospitalsGenerate()" class="orgunit-style form-select mb-2" formControlName="commune">
-                <option *ngFor="let c of communes" [value]="c.id" [selected]="isSelected(c.id, 'commune')">
-                  {{ c.name }}
-                </option>
-              </select>
-            </div>
-            <div *ngIf="Hospitals$.length > 1 && hospitals.length === 0 || hospitals.length > 1" class="col-sm-2 col-xl-2">
-              <select (change)="districtsGenerate()" class="orgunit-style form-select mb-2" formControlName="hospital">
-                <option *ngFor="let h of hospitals" [value]="h.id" [selected]="isSelected(h.id, 'hospital')">
-                  {{ h.name }}
-                </option>
-              </select>
-            </div>
-            <div *ngIf="DistrictQuartiers$.length > 1 && districtQuartiers.length === 0 || districtQuartiers.length > 1" class="col-sm-2 col-xl-2">
-              <select (change)="recosGenerate()" class="orgunit-style form-select mb-2" formControlName="district_quartier">
-                <option *ngFor="let d of districtQuartiers" [value]="d.id"
-                  [selected]="isSelected(d.id, 'district_quartier')">
-                  {{ d.name }}
-                </option>
-              </select>
-            </div>
+      <dashbords-orgunit-selector
+        [id]="'vc-repports-orgunit'"
+        [ON_FETCHING]="ON_FETCHING === true"
+        (ON_SHOW_DATA)="SHOW_DATA($event)">
+      </dashbords-orgunit-selector>
 
-            <!-- <div *ngIf="Recos$.length > 1" class="col-sm-2 col-xl-2">
-              <select class="orgunit-style form-select mb-2" multiple
-                formControlName="recos">
-                <option *ngFor="let r of recos" [value]="r.id" [selected]="isSelected(r.id, 'recos')">
-                  {{ r.name }}
-                </option>
-              </select>
-            </div> -->
-
-            <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="col-sm-2 col-xl-2">
-              <div class="reco-list-container orgunit-style form-selec mb-2">
-                <div *ngIf="recos.length > 0" style="color:darkblue; width: 200%; font-weight: bold;">
-                  <input type="checkbox" [checked]="_formGroup.value.recos.length === recos.length" (change)="selectAllRecos()" id="reco-list-all"> <label for="reco-list-all"> Tout sélectionner</label>
-                </div>
-                <div *ngFor="let r of recos" class="reco-list {{ isSelected(r.id, 'recos') ? 'reco-selected' : '' }}" (click)="onCheckboxChange(r.id, $event)">
-                  {{ r.name }}
-                </div>
-              </div>
-            </div>
-              <div *ngIf="Years$.length > 0" class="col-sm-2 col-xl-2">
-                <select class="orgunit-style form-select mb-2" formControlName="year">
-                    <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
-                      {{ y }}
-                    </option>
-                </select>
-              </div>
-              <div *ngIf="Months$.length > 0" class="col-sm-2 col-xl-2">
-                <select class="orgunit-style form-select mb-2" formControlName="months">
-                    <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$" [value]="m.id" [selected]="isSelected(m.id, 'month')">
-                      {{ m.labelFR }}
-                    </option>
-                </select>
-              </div>
-              <div class="col-sm-3 col-xl-2">
-                <button style="width: 100%;" [disabled]="data_syncing" class="btn btn-info">
-                  Charger
-                  <span *ngIf="data_syncing" class="fas fa-1x fa-sync-alt fa-spin"></span>
-                </button>
-              </div>
-
-            </div>
-
-          </form>
-        </div>
-
-      <div style="padding-top: 20px;" class="table-responsive">
+      <div style="padding-top: 110px;" class="table-responsive">
         <!-- <table class="table table-bordered table-dark table-hover table-striped"> -->
         <table class="table table-bordered table-hover">
           <thead class="no-border">
             <tr>
-              <td style="height: 30px!important;" colspan="21">
-                <h5 style="color: black!important;text-align: left!important;">
-                  LIST DES MOINS DE 5 ANS AVEC VACCINS NON A JOUR
-                </h5>
+              <td class="repport-title" colspan="21">
+                LIST DES MOINS DE 5 ANS AVEC VACCINS NON A JOUR
               </td>
             </tr>
           </thead>
@@ -147,64 +59,132 @@
               <th class="vaccine-head" scope="col">VAR_2</th>
             </tr>
           </thead>
+          <tbody style="font-size: 14px!important;" *ngFor="let vacs of (RECO_VACCINES$ ?? [])">
+            <ng-container *ngFor="let cv of vacs.children_vaccines">
+              <tr>
+                <th style="padding: 2px;" [attr.rowspan]="cv.data.length" scope="row">{{ cv.family_code }}</th>
+                <th style="padding: 2px;" [attr.rowspan]="cv.data.length">{{ cv.family_fullname.replace(cv.family_code
+                  +' - ', '') }}</th>
 
-          <tbody style="font-size: 14px!important;" *ngFor="let vacs of (RECO_VACCINES$??[])">
-            <tr *ngFor="let cv of vacs.children_vaccines">
-              <th style="padding: 2px;" [rowSpan]="cv.data.length" scope="row">{{ cv.family_code }}</th>
-              <th style="padding: 2px;" [rowSpan]="cv.data.length">{{ cv.family_fullname.replaceAll(cv.family_code+' - ', '') }}</th>
-              <ng-container *ngFor="let v of cv.data">
-                <th style="padding: 2px;">{{ v.child_name }}</th>
-                <th style="padding: 2px;">{{ v.child_sex }}</th>
-                <th style="padding: 2px;">{{ v.child_age_str }}</th>
-                <th style="padding: 2px;">{{ v.child_code }}</th>
-                <th style="padding: 2px;">{{ v.child_phone }}</th>
-                <th *ngIf="vaccineUtils(v.vaccine_BCG, v.child_age_in_days, 0) as BCG" class="{{ BCG.class }}">
-                  <span [innerHTML]="BCG.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VPO_0, v.child_age_in_days, 0) as VPO0" class="{{ VPO0.class }}">
-                  <span [innerHTML]="VPO0.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_PENTA_1, v.child_age_in_days, 42) as PENTA1"
-                  class="{{ PENTA1.class }}">
-                  <span [innerHTML]="PENTA1.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VPO_1, v.child_age_in_days, 42) as VPO1" class="{{ VPO1.class }}">
-                  <span [innerHTML]="VPO1.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_PENTA_2, v.child_age_in_days, 70) as PENTA2"
-                  class="{{ PENTA2.class }}">
-                  <span [innerHTML]="PENTA2.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VPO_2, v.child_age_in_days, 70) as VPO2" class="{{ VPO2.class }}">
-                  <span [innerHTML]="VPO2.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_PENTA_3, v.child_age_in_days, 98) as PENTA3"
-                  class="{{ PENTA3.class }}">
-                  <span [innerHTML]="PENTA3.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VPO_3, v.child_age_in_days, 98) as VPO3" class="{{ VPO3.class }}">
-                  <span [innerHTML]="VPO3.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VPI_1, v.child_age_in_days, 98) as VPI1" class="{{ VPI1.class }}">
-                  <span [innerHTML]="VPI1.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VAR_1, v.child_age_in_months, 9) as VAR1" class="{{ VAR1.class }}">
-                  <span [innerHTML]="VAR1.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VAA, v.child_age_in_months, 9) as VAA" class="{{ VAA.class }}">
-                  <span [innerHTML]="VAA.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VPI_2, v.child_age_in_months, 9) as VPI2" class="{{ VPI2.class }}">
-                  <span [innerHTML]="VPI2.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_MEN_A, v.child_age_in_months, 15) as MENA" class="{{ MENA.class }}">
-                  <span [innerHTML]="MENA.action | safeHtml"></span>
-                </th>
-                <th *ngIf="vaccineUtils(v.vaccine_VAR_2, v.child_age_in_months, 15) as VAR2" class="{{ VAR2.class }}">
-                  <span [innerHTML]="VAR2.action | safeHtml"></span>
-                </th>
+                <!-- First row of data -->
+                <ng-container *ngIf="cv.data.length > 0">
+                  <ng-container *ngFor="let v of cv.data; let i = index">
+                    <ng-container *ngIf="i === 0">
+                      <th style="padding: 2px;">{{ v.child_name }}</th>
+                      <th style="padding: 2px;">{{ v.child_sex }}</th>
+                      <th style="padding: 2px;">{{ v.child_age_str }}</th>
+                      <th style="padding: 2px;">{{ v.child_code }}</th>
+                      <th style="padding: 2px;">{{ v.child_phone }}</th>
+                      <th *ngIf="vaccineUtils(v.vaccine_BCG, v.child_age_in_days, 0) as BCG" [ngClass]="BCG.class">
+                        <span [innerHTML]="BCG.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VPO_0, v.child_age_in_days, 0) as VPO0" [ngClass]="VPO0.class">
+                        <span [innerHTML]="VPO0.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_PENTA_1, v.child_age_in_days, 42) as PENTA1"
+                        [ngClass]="PENTA1.class">
+                        <span [innerHTML]="PENTA1.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VPO_1, v.child_age_in_days, 42) as VPO1" [ngClass]="VPO1.class">
+                        <span [innerHTML]="VPO1.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_PENTA_2, v.child_age_in_days, 70) as PENTA2"
+                        [ngClass]="PENTA2.class">
+                        <span [innerHTML]="PENTA2.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VPO_2, v.child_age_in_days, 70) as VPO2" [ngClass]="VPO2.class">
+                        <span [innerHTML]="VPO2.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_PENTA_3, v.child_age_in_days, 98) as PENTA3"
+                        [ngClass]="PENTA3.class">
+                        <span [innerHTML]="PENTA3.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VPO_3, v.child_age_in_days, 98) as VPO3" [ngClass]="VPO3.class">
+                        <span [innerHTML]="VPO3.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VPI_1, v.child_age_in_days, 98) as VPI1" [ngClass]="VPI1.class">
+                        <span [innerHTML]="VPI1.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VAR_1, v.child_age_in_months, 9) as VAR1"
+                        [ngClass]="VAR1.class">
+                        <span [innerHTML]="VAR1.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VAA, v.child_age_in_months, 9) as VAA" [ngClass]="VAA.class">
+                        <span [innerHTML]="VAA.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VPI_2, v.child_age_in_months, 9) as VPI2"
+                        [ngClass]="VPI2.class">
+                        <span [innerHTML]="VPI2.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_MEN_A, v.child_age_in_months, 15) as MENA"
+                        [ngClass]="MENA.class">
+                        <span [innerHTML]="MENA.action | safeHtml"></span>
+                      </th>
+                      <th *ngIf="vaccineUtils(v.vaccine_VAR_2, v.child_age_in_months, 15) as VAR2"
+                        [ngClass]="VAR2.class">
+                        <span [innerHTML]="VAR2.action | safeHtml"></span>
+                      </th>
+                    </ng-container>
+                  </ng-container>
+                </ng-container>
+              </tr>
+
+              <!-- Remaining rows for the same cv -->
+              <ng-container *ngFor="let v of cv.data; let i = index">
+                <tr *ngIf="i !== 0">
+                  <th style="padding: 2px;">{{ v.child_name }}</th>
+                  <th style="padding: 2px;">{{ v.child_sex }}</th>
+                  <th style="padding: 2px;">{{ v.child_age_str }}</th>
+                  <th style="padding: 2px;">{{ v.child_code }}</th>
+                  <th style="padding: 2px;">{{ v.child_phone }}</th>
+                  <th *ngIf="vaccineUtils(v.vaccine_BCG, v.child_age_in_days, 0) as BCG" [ngClass]="BCG.class">
+                    <span [innerHTML]="BCG.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VPO_0, v.child_age_in_days, 0) as VPO0" [ngClass]="VPO0.class">
+                    <span [innerHTML]="VPO0.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_PENTA_1, v.child_age_in_days, 42) as PENTA1"
+                    [ngClass]="PENTA1.class">
+                    <span [innerHTML]="PENTA1.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VPO_1, v.child_age_in_days, 42) as VPO1" [ngClass]="VPO1.class">
+                    <span [innerHTML]="VPO1.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_PENTA_2, v.child_age_in_days, 70) as PENTA2"
+                    [ngClass]="PENTA2.class">
+                    <span [innerHTML]="PENTA2.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VPO_2, v.child_age_in_days, 70) as VPO2" [ngClass]="VPO2.class">
+                    <span [innerHTML]="VPO2.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_PENTA_3, v.child_age_in_days, 98) as PENTA3"
+                    [ngClass]="PENTA3.class">
+                    <span [innerHTML]="PENTA3.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VPO_3, v.child_age_in_days, 98) as VPO3" [ngClass]="VPO3.class">
+                    <span [innerHTML]="VPO3.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VPI_1, v.child_age_in_days, 98) as VPI1" [ngClass]="VPI1.class">
+                    <span [innerHTML]="VPI1.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VAR_1, v.child_age_in_months, 9) as VAR1" [ngClass]="VAR1.class">
+                    <span [innerHTML]="VAR1.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VAA, v.child_age_in_months, 9) as VAA" [ngClass]="VAA.class">
+                    <span [innerHTML]="VAA.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VPI_2, v.child_age_in_months, 9) as VPI2" [ngClass]="VPI2.class">
+                    <span [innerHTML]="VPI2.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_MEN_A, v.child_age_in_months, 15) as MENA" [ngClass]="MENA.class">
+                    <span [innerHTML]="MENA.action | safeHtml"></span>
+                  </th>
+                  <th *ngIf="vaccineUtils(v.vaccine_VAR_2, v.child_age_in_months, 15) as VAR2" [ngClass]="VAR2.class">
+                    <span [innerHTML]="VAR2.action | safeHtml"></span>
+                  </th>
+                </tr>
               </ng-container>
-            </tr>
+            </ng-container>
           </tbody>
         </table>
       </div>

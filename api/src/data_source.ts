@@ -1,12 +1,7 @@
 import { DataSource } from "typeorm"
-import { dirname } from "path";
-import { config } from 'dotenv';
+import { APP_ENV } from "./utils/constantes";
 
-const projectFolder = dirname(dirname(__dirname));
-const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/analytics/.env` });
-
-const { NODE_ENV, PG_HOST, PG_PORT, PG_PROD_DB_NAME, PG_DEV_DB_NAME, PG_DB_USER, PG_DB_PASS } = process.env;
+const { NODE_ENV, PG_HOST, PG_PORT, PG_PROD_DB_NAME, PG_DEV_DB_NAME, PG_DB_USER, PG_DB_PASS } = APP_ENV;
 
 export const AppDataSource = new DataSource({
     type: 'postgres',

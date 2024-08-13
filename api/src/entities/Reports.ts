@@ -182,6 +182,12 @@ export class PromotionReport {
 
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    already_on_dhis2!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_user_id!:string
 }
 export async function getPromotionReportRepository(): Promise<Repository<PromotionReport>> {
     return Connection.getRepository(PromotionReport);
@@ -257,6 +263,12 @@ export class FamilyPlanningReport {
 
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    already_on_dhis2!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_user_id!:string
 }
 export async function getFamilyPlanningReportRepository(): Promise<Repository<FamilyPlanningReport>> {
     return Connection.getRepository(FamilyPlanningReport);
@@ -369,6 +381,12 @@ export class MorbidityReport {
 
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    already_on_dhis2!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_user_id!:string
 }
 export async function getMorbidityReportRepository(): Promise<Repository<MorbidityReport>> {
     return Connection.getRepository(MorbidityReport);
@@ -448,6 +466,12 @@ export class HouseholdRecapReport {
 
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    already_on_dhis2!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_user_id!:string
 }
 export async function getHouseholdRecapReportRepository(): Promise<Repository<HouseholdRecapReport>> {
     return Connection.getRepository(HouseholdRecapReport);
@@ -500,6 +524,12 @@ export class PcimneNewbornReport {
 
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    already_on_dhis2!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_user_id!:string
 }
 export async function getPcimneNewbornReportRepository(): Promise<Repository<PcimneNewbornReport>> {
     return Connection.getRepository(PcimneNewbornReport);
@@ -582,6 +612,12 @@ export class ChwsRecoReport {
 
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    already_on_dhis2!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_user_id!:string
 
 }
 export async function getChwsRecoReportRepository(): Promise<Repository<ChwsRecoReport>> {

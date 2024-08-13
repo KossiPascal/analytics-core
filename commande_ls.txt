@@ -12,10 +12,14 @@ nvm use 20 && npm run dev-sentinel
 tonoudayo.portal-integratehealth.org 4430
 tonoudayodev.portal-integratehealth.org 4431
 tonoudayoanalyse.portal-integratehealth.org 4432
+tonoudayoanalysedev.portal-integratehealth.org 4433
+tonoudayoapi.portal-integratehealth.org 4434
 
 kendeya.portal-integratehealth.org 4435
 kendeyadev.portal-integratehealth.org 4436
 kendeyaanalyse.portal-integratehealth.org 4437
+kendeyaanalysedev.portal-integratehealth.org 4438
+kendeyaapi.portal-integratehealth.org 4439
 
 lidawwe.portal-integratehealth.org 4440
 lidawwedev.portal-integratehealth.org 4441
@@ -34,6 +38,7 @@ nano /lib/systemd/system/analytics-core.service
 nano /lib/systemd/system/ih_gas_online.service
 
 sudo systemctl enable analytics-core
+sudo systemctl restart ih-portal
 systemctl daemon-reload
 
 sudo systemctl stop ih_gas_online

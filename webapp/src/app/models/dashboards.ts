@@ -14,6 +14,8 @@ export interface RecoMegDashboard {
   reco: { id: string, name: string, phone: string } | null
   is_validate?:boolean
   validate_user_id?:string
+  already_on_dhis2?:boolean
+  already_on_dhis2_user_id?:string
 }
 
 export interface RecoMegDashboardUtils {
@@ -57,6 +59,8 @@ export interface RecoPerformanceDashboard {
   reco: { id: string, name: string, phone: string } | null
   is_validate?:boolean
   validate_user_id?:string
+  already_on_dhis2?:boolean
+  already_on_dhis2_user_id?:string
 
 }
 
@@ -77,7 +81,8 @@ export interface RecoChartPerformanceDashboard {
   reco: { id: string, name: string, phone: string } | null
   is_validate?:boolean
   validate_user_id?:string
-
+  already_on_dhis2?:boolean
+  already_on_dhis2_user_id?:string
 }
 
 
@@ -120,6 +125,8 @@ export interface RecoVaccinationDashboard {
   reco: { id: string, name: string, phone: string } | null
   is_validate?:boolean
   validate_user_id?:string
+  already_on_dhis2?:boolean
+  already_on_dhis2_user_id?:string
 }
 export interface RecoVaccinationDashboardUtils {
   child_name: string

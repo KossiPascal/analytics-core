@@ -231,8 +231,8 @@ export class ApiService {
     return this.http.post(`${this.backendUrl}/reports/morbidity-reports-validation`, fparams, this.customHeaders);
   }
 
-  ValidateHouseholdRecapReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
-    const fparams = this.ApiParams({ months, year, recos });
+  ValidateHouseholdRecapReports({ months, year, recos, dataIds }: { months: string[], year: number, recos: string[], dataIds: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos, dataIds });
     return this.http.post(`${this.backendUrl}/reports/household-recaps-reports-validation`, fparams, this.customHeaders);
   }
 
@@ -350,8 +350,8 @@ export class ApiService {
 
 
   //START DHIS2
-  SendPromotionActivitiesToDhis2(data: { dataValues: DataValue[] }): any {
-    const fparams = this.ApiParams({ dataToSend: data });
+  SendPromotionActivitiesToDhis2({ dataValues, months, year, recos }: { dataValues: DataValue[], months: string[], year: number, recos: string[] }): any {
+    const fparams = this.ApiParams({ dataValues, months, year, recos });
     return this.http.post(`${this.backendUrl}/dhis2/send/promotional-activity`, fparams, this.customHeaders);
   }
 

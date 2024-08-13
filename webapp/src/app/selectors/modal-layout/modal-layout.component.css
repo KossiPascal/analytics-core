@@ -15,19 +15,6 @@
   font-size: 1.5rem !important;
 }
 
-.close {
-  background: transparent !important;
-  border: none !important;
-  color: #fff !important;
-  cursor: pointer !important;
-  font-size: 1.5rem !important;
-  transition: color 0.3s ease-in-out !important;
-}
-
-.close:hover {
-  color: #ff5c5c !important;
-}
-
 .grey {
   color: #6c757d !important;
 }

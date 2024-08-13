@@ -1,19 +1,13 @@
 const JSONFileStorage = require('node-json-file-storage');
-import {dirname} from 'path';
-import {config} from 'dotenv';
+import { APP_ENV, JSON_DB_PATH } from './utils/constantes';
 import { createDirectories } from './utils/functions';
 
-
-const apiFolder = dirname(__dirname);
-const projectFolder = dirname(apiFolder);
-const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/analytics/.env` });
-const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT } = process.env;
+const { NODE_ENV } = APP_ENV;
 
 function JsonDbFile(file_Name_without_extension: string): string {
     const fileName: string = file_Name_without_extension.trim().replace(' ', '-').split('.')[0];
     const folder = NODE_ENV === 'production' ? 'prod' : 'dev';
-    const dir = `${projectFolder}/json-db-folder/${folder}`;
+    const dir = `${JSON_DB_PATH}/${folder}`;
     createDirectories(dir, (e: any) => { });
     return `${dir}/${fileName}.json`
 }

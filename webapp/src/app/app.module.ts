@@ -1,4 +1,4 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule, isDevMode } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { ModalModule } from 'ngx-bootstrap/modal';
 import { AppRoutingModule } from './app-routing.module';
@@ -14,7 +14,7 @@ import { JwtInterceptor } from './interceptors/jwt.interceptor';
 import { TokenInterceptor } from './interceptors/token.interceptor';
 import { MAT_MOMENT_DATE_FORMATS, MomentDateAdapter } from '@angular/material-moment-adapter';
 import { DateAdapter, MatDateFormats, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
-import { ModalLayoutComponent } from './components/modal-layout/modal-layout.component';
+import { ModalLayoutComponent } from './selectors/modal-layout/modal-layout.component';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { StoreModule } from '@ngrx/store';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
@@ -32,7 +32,7 @@ import { SessionExpiredComponent } from '@kossi-modals/session-expired/session-e
 import { SnackbarComponent } from '@kossi-components/snackbar/snackbar.component';
 import { SpinnerComponent } from '@kossi-components/spinner/spinner-component';
 import { LoaderComponent } from '@kossi-components/loader/loader-component';
-import { DeviceDetectionComponent } from '@kossi-components/device-detection/device-detection.component';
+import { DeviceDetectionComponent } from '@kossi-selectors/device-detection/device-detection.component';
 import { SyncForOfflineConfirmComponent } from '@kossi-modals/sync-for-offline/sync-for-offline.component';
 import { FixModalLayoutComponent } from '@kossi-components/fix-modal-layout/fix-modal-layout.component';
 import { RolesCrudComponent } from '@kossi-modals/roles-crud/roles-crud.component';
@@ -115,7 +115,7 @@ export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) 
         // registrationStrategy: 'registerWhenStable:30000'
       }),
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

@@ -7,8 +7,8 @@ let Conn: DataSource = AppDataSource.manager.connection;
 
 export async function VALIDATE_PROMOTION_REPORTS(req: Request, res: Response, next: NextFunction) {
     try {
+        var { userId, months, year, recos } = req.body;
         if (1 == 1) {
-            var { userId, months, year, recos } = req.body;
             if (userId && months && year && recos) {
                 const vmonths: string[] = Array.isArray(months) ? months : [months];
                 const vrecos: string[] = Array.isArray(recos) ? recos : [recos];
@@ -28,7 +28,7 @@ export async function VALIDATE_PROMOTION_REPORTS(req: Request, res: Response, ne
                     await Promise.all(updatePromises); // Wait for all updates in the current month
                 }
                 if (errorsCount > 0) {
-                    return res.status(201).json({ status: 200, data: 'error found' });
+                    return res.status(201).json({ status: 201, data: 'error found' });
                 }
                 return res.status(200).json({ status: 200, data: 'success' });
 
@@ -43,8 +43,8 @@ export async function VALIDATE_PROMOTION_REPORTS(req: Request, res: Response, ne
 
 export async function VALIDATE_FAMILY_PLANNING_REPORTS(req: Request, res: Response, next: NextFunction) {
     try {
+        var { userId, months, year, recos } = req.body;
         if (1 == 1) {
-            var { userId, months, year, recos } = req.body;
             if (months && year && recos) {
                 const vmonths: string[] = Array.isArray(months) ? months : [months];
                 const vrecos: string[] = Array.isArray(recos) ? recos : [recos];
@@ -64,7 +64,7 @@ export async function VALIDATE_FAMILY_PLANNING_REPORTS(req: Request, res: Respon
                     await Promise.all(updatePromises); // Wait for all updates in the current month
                 }
                 if (errorsCount > 0) {
-                    return res.status(201).json({ status: 200, data: 'error found' });
+                    return res.status(201).json({ status: 201, data: 'error found' });
                 }
                 return res.status(200).json({ status: 200, data: 'success' });
             }
@@ -78,8 +78,8 @@ export async function VALIDATE_FAMILY_PLANNING_REPORTS(req: Request, res: Respon
 
 export async function VALIDATE_MORBIDITY_REPORTS(req: Request, res: Response, next: NextFunction) {
     try {
+        var { userId, months, year, recos } = req.body;
         if (1 == 1) {
-            var { userId, months, year, recos } = req.body;
             if (months && year && recos) {
                 const vmonths: string[] = Array.isArray(months) ? months : [months];
                 const vrecos: string[] = Array.isArray(recos) ? recos : [recos];
@@ -99,7 +99,7 @@ export async function VALIDATE_MORBIDITY_REPORTS(req: Request, res: Response, ne
                     await Promise.all(updatePromises); // Wait for all updates in the current month
                 }
                 if (errorsCount > 0) {
-                    return res.status(201).json({ status: 200, data: 'error found' });
+                    return res.status(201).json({ status: 201, data: 'error found' });
                 }
                 return res.status(200).json({ status: 200, data: 'success' });
             }
@@ -113,16 +113,18 @@ export async function VALIDATE_MORBIDITY_REPORTS(req: Request, res: Response, ne
 
 export async function VALIDATE_HOUSEHOLD_RECAP_REPORTS(req: Request, res: Response, next: NextFunction) {
     try {
+        var { userId, months, year, recos, dataIds } = req.body;
+
         if (1 == 1) {
-            var { userId, months, year, recos } = req.body;
-            if (months && year && recos) {
-                const vmonths: string[] = Array.isArray(months) ? months : [months];
-                const vrecos: string[] = Array.isArray(recos) ? recos : [recos];
+            if (months && year && recos && dataIds) {
+                // const vMonths: string[] = Array.isArray(months) ? months : [months];
+                // const vRecos: string[] = Array.isArray(recos) ? recos : [recos];
+                const vDataIds: string[] = Array.isArray(dataIds) ? dataIds : [dataIds];
                 const _repo = await getHouseholdRecapReportRepository();
                 var errorsCount = 0;
-                for (const month of vmonths) {
-                    const updatePromises = vrecos.map(async reco => {
-                        const dataId = `${month}-${year}-${reco}`;
+                // for (const month of vMonths) {
+                    const updatePromises = vDataIds.map(async dataId => {
+                        // const dataId = `${month}-${year}-${reco}`;
                         try {
                             await _repo.update({ id: dataId }, { is_validate: true, validate_user_id: userId });
                         } catch (err) {
@@ -132,9 +134,9 @@ export async function VALIDATE_HOUSEHOLD_RECAP_REPORTS(req: Request, res: Respon
                         }
                     });
                     await Promise.all(updatePromises); // Wait for all updates in the current month
-                }
+                // }
                 if (errorsCount > 0) {
-                    return res.status(201).json({ status: 200, data: 'error found' });
+                    return res.status(201).json({ status: 201, data: 'error found' });
                 }
                 return res.status(200).json({ status: 200, data: 'success' });
             }
@@ -148,8 +150,8 @@ export async function VALIDATE_HOUSEHOLD_RECAP_REPORTS(req: Request, res: Respon
 
 export async function VALIDATE_PCIME_REPORTS(req: Request, res: Response, next: NextFunction) {
     try {
+        var { userId, months, year, recos } = req.body;
         if (1 == 1) {
-            var { userId, months, year, recos } = req.body;
             if (months && year && recos) {
                 const vmonths: string[] = Array.isArray(months) ? months : [months];
                 const vrecos: string[] = Array.isArray(recos) ? recos : [recos];
@@ -169,7 +171,7 @@ export async function VALIDATE_PCIME_REPORTS(req: Request, res: Response, next: 
                     await Promise.all(updatePromises); // Wait for all updates in the current month
                 }
                 if (errorsCount > 0) {
-                    return res.status(201).json({ status: 200, data: 'error found' });
+                    return res.status(201).json({ status: 201, data: 'error found' });
                 }
                 return res.status(200).json({ status: 200, data: 'success' });
             }
@@ -183,8 +185,8 @@ export async function VALIDATE_PCIME_REPORTS(req: Request, res: Response, next: 
 
 export async function VALIDATE_CHWS_RECO_REPORTS(req: Request, res: Response, next: NextFunction) {
     try {
+        var { userId, months, year, recos } = req.body;
         if (1 == 1) {
-            var { userId, months, year, recos } = req.body;
             if (months && year && recos) {
                 const vmonths: string[] = Array.isArray(months) ? months : [months];
                 const vrecos: string[] = Array.isArray(recos) ? recos : [recos];
@@ -204,7 +206,7 @@ export async function VALIDATE_CHWS_RECO_REPORTS(req: Request, res: Response, ne
                     await Promise.all(updatePromises); // Wait for all updates in the current month
                 }
                 if (errorsCount > 0) {
-                    return res.status(201).json({ status: 200, data: 'error found' });
+                    return res.status(201).json({ status: 201, data: 'error found' });
                 }
                 return res.status(200).json({ status: 200, data: 'success' });
             }

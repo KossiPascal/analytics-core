@@ -30,17 +30,11 @@ import { SyncPromotionalData } from "./couchdb-sync-models/promotional-data";
 import { getCountryRepository, getRegionRepository, getPrefectureRepository, getCommuneRepository, getHospitalRepository, getDistrictQuartierRepository, getVillageSecteurRepository, getFamilyRepository, getChwRepository, getRecoRepository, getPatientRepository, Country, Region, Prefecture, Commune, Hospital, DistrictQuartier, VillageSecteur, Family, Patient, Reco, Chw, getMentorRepository, Mentor } from "../entities/Org-units";
 import { SyncDeathData } from "./couchdb-sync-models/death-data";
 import { getDeathDataRepository } from "../entities/_Death-data";
+import { APP_ENV } from "../utils/constantes";
 // const fetch = require('node-fetch');
 const request = require('request');
-import { dirname } from 'path';
-import { config } from 'dotenv';
 
-const apiFolder = dirname(dirname(__dirname));
-const projectFolder = dirname(apiFolder);
-const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/analytics/.env` });
-
-const { NODE_ENV, CHT_USER, CHT_PASS, CHT_HOST, CHT_PROTOCOL, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
+const { NODE_ENV, CHT_PROD_HOST, CHT_DEV_HOST, CHT_PROTOCOL, CHT_PORT } = APP_ENV;
 
 const _sepation = `\n\n\n\n__________\n\n\n\n`;
 
@@ -241,7 +235,7 @@ export async function SYNC_ALL_FORMS_FROM_COUCHDB(req: Request, resp: Response, 
 
 export async function SYNC_APP_USERS_FROM_COUCHDB(req: Request, res: Response, next: NextFunction) {
     request({
-        url: `${CHT_PROTOCOL}://${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}/api/v1/users`,
+        url: `${CHT_PROTOCOL}://${NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST}:${CHT_PORT}/api/v1/users`,
         method: 'GET',
         headers: httpHeaders()
     }, async function (error: any, response: any, body: any) {
@@ -282,7 +276,6 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
         outPutInfo["validationError"] = "Your request provides was rejected !";
         return resp.status(500).json(outPutInfo);
     }
-    
     
     const { userId, start_date, end_date, year, month, country, region, prefecture, commune, hospital, district_quartier, mentor, village_secteur, chw, reco, family, patient } = req.body;
     var filterDate = {start_date: '', end_date: ''};

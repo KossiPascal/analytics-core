@@ -1,118 +1,27 @@
-<div style="padding: 0px 5px 2px 5px!important; margin-top: 0px;" class="row g-4">
+<div class="report-style row g-4">
   <div class="col-sm-12">
     <div class="bg-white rounded h-100 p-0">
       <!-- <h6 class="mb-4">TITRE</h6> -->
 
-      <div *ngIf="MONTHLY_ACTIVITY$ && _formGroup.value.recos.length > 0" class="validate-data">
-        <button [disabled]="IS_VALIDATE === true" (click)="validateData($event)" style="width: 100%;" class="btn btn-{{ IS_VALIDATE === true ? 'success' : 'warning' }}">
-          {{ IS_VALIDATE === true ? 'Rapport deja validé' : 'Valider ce rapport' }}
-          <span *ngIf="data_validation" class="fas fa-1x fa-sync-alt fa-spin"></span>
-        </button>
-      </div>
-
-      <div class="load-data">
-        <div class="rounded p-6">
-          <form [formGroup]="_formGroup" (ngSubmit)="SHOW_DATA($event)" novalidate>
-            <div class="row">
-              <div class="col-6">
-                <select (change)="regionsGenerate()" *ngIf="Countries$.length > 1 && countries.length === 0 || countries.length > 1" class="orgunit-style form-select mb-2" formControlName="country">
-                    <option *ngFor="let c of countries" [value]="c.id" [selected]="isSelected(c.id, 'country')">
-                      {{ c.name }}
-                    </option>
-                </select>
-                <select (change)="prefecturesGenerate()" *ngIf="Regions$.length > 1 && regions.length === 0 || regions.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="region">
-                  <option *ngFor="let r of regions" [value]="r.id" [selected]="isSelected(r.id, 'region')">
-                    {{ r.name }}
-                  </option>
-                </select>
-                <select (change)="communesGenerate()" *ngIf="Prefectures$.length > 1 && prefectures.length === 0 || prefectures.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="prefecture">
-                  <option *ngFor="let p of prefectures" [value]="p.id" [selected]="isSelected(p.id, 'prefecture')">
-                    {{ p.name }}
-                  </option>
-                </select>
-                <select (change)="hospitalsGenerate()" *ngIf="Communes$.length > 1 && communes.length === 0 || communes.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="commune">
-                  <option *ngFor="let c of communes" [value]="c.id" [selected]="isSelected(c.id, 'commune')">
-                    {{ c.name }}
-                  </option>
-                </select>
-                <select (change)="districtsGenerate()" *ngIf="Hospitals$.length > 1 && hospitals.length === 0 || hospitals.length > 1"
-                  class="orgunit-style form-select mb-2" formControlName="hospital">
-                  <option *ngFor="let h of hospitals" [value]="h.id" [selected]="isSelected(h.id, 'hospital')">
-                    {{ h.name }}
-                  </option>
-                </select>
-                <select (change)="recosGenerate()" *ngIf="DistrictQuartiers$.length > 1 && districtQuartiers.length === 0 || districtQuartiers.length > 1"
-                  class="orgunit-style form-select mb-2"
-                  formControlName="district_quartier">
-                  <option *ngFor="let d of districtQuartiers" [value]="d.id"
-                    [selected]="isSelected(d.id, 'district_quartier')">
-                    {{ d.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="col-6">
-                <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="reco-list-container orgunit-style form-selec mb-2">
-                  <div *ngIf="recos.length > 0" style="color:darkblue; width: 200%; font-weight: bold;">
-                    <input type="checkbox" [checked]="_formGroup.value.recos.length === recos.length" (change)="selectAllRecos()" id="reco-list-all"> <label for="reco-list-all"> Tout sélectionner</label>
-                  </div>
-                  <div *ngFor="let r of recos" class="reco-list {{ isSelected(r.id, 'recos') ? 'reco-selected' : '' }}" (click)="onCheckboxChange(r.id, $event)">
-                    {{ r.name }}
-                  </div>
-                </div>
-
-                <select class="orgunit-style form-select mb-2" formControlName="year">
-                  <ng-container *ngIf="Years$.length > 0">
-                    <option *ngFor="let y of Years$" [value]="y" [selected]="isSelected(y, 'year')">
-                      {{ y }}
-                    </option>
-                  </ng-container>
-                </select>
-
-                <select class="orgunit-style form-select mb-2"
-                  formControlName="months">
-                  <ng-container *ngIf="Months$.length > 0">
-                    <option class="{{ isSelected(m.id, 'month') ? 'selected' : ''}}" *ngFor="let m of Months$"
-                      [value]="m.id" [selected]="isSelected(m.id, 'month')">
-                      {{ m.labelFR }}
-                    </option>
-                  </ng-container>
-                </select>
-
-                <button style="width: 100%;" [disabled]="data_syncing" class="btn btn-info">
-                  Charger
-                  <span *ngIf="data_syncing" class="fas fa-1x fa-sync-alt fa-spin"></span>
-                </button>
-              </div>
-
-            </div>
-
-          </form>
-        </div>
-      </div>
+      <repports-orgunit-selector
+      [id]="'chws-repports-orgunit'"
+      [_formGroup]="_formGroup"
+      [ON_FETCHING]="REPPORTS_HEADER.ON_FETCHING === true"
+      (ON_SHOW_DATA)="SHOW_DATA($event)"
+    ></repports-orgunit-selector>
 
       <div class="table-responsive">
         <!-- <table class="table table-bordered table-dark table-hover table-striped"> -->
         <table class="table table-bordered table-hover">
-          <thead>
+          <thead class="no-border center">
             <tr class="no-border org-units center">
-              <td class="no-border org-units center" colspan="4">
-                <p><img width="160px" src="assets/logo/guinee.png" alt=""> <br> <strong>République de Guinée</strong>
-                </p>
-                <p><strong>MINISTERE DE LA SANTE ET DE L’HYGIENE PUBLIQUE</strong></p>
-                <p><strong>DIRECTION NATIONALE DE LA SANTE COMMUNAUTAIRE ET DE LA MEDECINE TRADITIONNELLE</strong></p>
-                <p *ngIf="MONTHLY_ACTIVITY$">RAPPORT D'ACTIVITES MENSUEL <b>{{ ASC_RECO_TYPE }}</b> : &nbsp;&nbsp;<b>{{
-                    MONTH }}</b> / <b>{{ YEAR }}</b></p>
-                <p *ngIf="MONTHLY_ACTIVITY$">IRS/DSVCO DE: <b>{{ IRS_DSVCO_DE_NAME
-                    }}</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DPS/DCS DE: <b>{{ DPS_DCS_DE_NAME }}</b></p>
-                <p *ngIf="MONTHLY_ACTIVITY$">COMMUNE DE: <b>{{ COMMUNE_NAME
-                    }}</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CENTRE DE SANTE: <b>{{ HEALTH_CENTER_NAME
-                    }}</b></p>
-                <p *ngIf="MONTHLY_ACTIVITY$">PRENOMS ET NOM DU <b>{{ ASC_RECO_TYPE }}</b>: <b>{{ ASC_RECO_NAME
-                    }}</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TEL: <b>{{ ASC_RECO_PHONE }}</b></p>
+              <td class="no-border org-units center"colspan="4">
+                <repports-header-selector
+                  [id]="'chws-repports-header'"
+                  [REPPORTS_HEADER]="REPPORTS_HEADER"
+                  (onValidateData)="validateData()"
+                  (onSendToDhis2)="sendDataToDhis2()">
+                </repports-header-selector>
               </td>
             </tr>
 
@@ -121,7 +30,7 @@
               <th style="width: 15%;" scope="col">Section</th>
               <th style="width: 60%;" scope="col">Éléments de données</th>
               <th style="width: 13%;" scope="col">Nombre</th>
-              <th style="width: 12%;" scope="col">Observation</th>
+              <!-- <th style="width: 12%;" scope="col">Observation</th> -->
             </tr>
           </thead>
           <tbody *ngIf="MONTHLY_ACTIVITY$ as ma">
@@ -135,7 +44,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
 
             <tr class="row-group">
@@ -148,7 +57,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.child_health_0_59_months.position }}</th>
@@ -160,7 +69,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.mother_health.position }}</th>
@@ -172,7 +81,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.pcimne_activity.position }}</th>
@@ -184,7 +93,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.morbidity_activities.position }}</th>
@@ -196,7 +105,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.malaria_more_5_years.position }}</th>
@@ -208,7 +117,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.home_visit.position }}</th>
@@ -224,7 +133,7 @@
             <tr *ngFor="let rm of ma.home_visit.data; let i=index">
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
 
             <tr>
@@ -235,7 +144,7 @@
             <tr *ngFor="let rm of ma.educational_chat.data; let i=index">
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.developed_areas.position }}</th>
@@ -247,7 +156,7 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr class="row-group">
               <th>{{ ma.diseases_alerts.position }}</th>
@@ -259,12 +168,12 @@
               </th>
               <td>{{ rm.indicator }}</td>
               <td>{{ rm.de_number }}</td>
-              <td>{{ rm.observation }}</td>
+              <!-- <td>{{ rm.observation }}</td> -->
             </tr>
             <tr>
           </tbody>
 
-          <tfoot *ngIf="MONTHLY_ACTIVITY$" class="no-border">
+          <!-- <tfoot *ngIf="MONTHLY_ACTIVITY$" class="no-border">
             <tr class="no-border">
               <td class="separation" colspan="4"></td>
             </tr>
@@ -297,7 +206,7 @@
                 <textarea style="width: 100%;" name="" id="" cols="5" rows="2"></textarea>
               </td>
             </tr>
-          </tfoot>
+          </tfoot> -->
         </table>
       </div>
     </div>

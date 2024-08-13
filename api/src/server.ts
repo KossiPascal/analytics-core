@@ -1,9 +1,12 @@
-import "reflect-metadata"
+import "reflect-metadata";
+import { ServerStart, getIPAddress, logNginx, normalizePort } from './utils/functions';
+import { APP_ENV, ENV_FOLDER, PROJECT_FOLDER } from "./utils/constantes";
+import { ADMIN_USER_ID, AuthUserController } from "./controllers/auth-user";
+import { AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA } from "./controllers/auto-sync-all-data";
 import express, { Request, Response, NextFunction } from 'express';
 import { json, urlencoded } from 'body-parser';
-import { ServerStart, getIPAddress, logNginx, normalizePort } from './utils/functions';
 import { AppDataSource } from './data_source';
-
+import { join } from 'path';
 import authRouter from "./routes/auth-user";
 import configsRouter from "./routes/config";
 import orgUnitsRouter from "./routes/org-units";
@@ -13,34 +16,19 @@ import apisRouter from "./routes/api-token";
 import syncRouter from "./routes/sync-data";
 import databaseRouter from "./routes/database";
 import dhis2Router from "./routes/dhis2";
-
-import { ADMIN_USER_ID, AuthUserController } from "./controllers/auth-user";
 import cors from "cors";
 import bearerToken from "express-bearer-token";
 import bodyParser from 'body-parser';
-import { dirname, join } from 'path';
-import { config } from 'dotenv';
-import { AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA } from "./controllers/auto-sync-all-data";
-
 import helmet from 'helmet';
 import cron from "node-cron";
 import compression from "compression";
 import responseTime from 'response-time';
-
-// import http from 'http';
 import fs from 'fs';
 
-const apiFolder = dirname(__dirname);
-const projectFolder = dirname(apiFolder);
-const projectParentFolder = dirname(projectFolder);
-const sslFolder = `${projectParentFolder}/ssl`;
-config({ path: `${sslFolder}/.env` });
-const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT, ACTIVE_SECURE_MODE, ACCESS_ALL_AVAILABE_PORT, USE_LOCALHOST } = process.env;
-
+const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT, ACCESS_ALL_AVAILABE_PORT, USE_LOCALHOST, ACTIVE_SECURE_MODE } = APP_ENV;
 const isSecure = ACTIVE_SECURE_MODE === 'true';
-
-var session = require('express-session');
-
+const session = require('express-session');
+ 
 function app() {
   const server = express()
     .use(bodyParser.json())
@@ -74,12 +62,9 @@ function app() {
     .use(bearerToken())
     .use((req: Request, res: Response, next: NextFunction) => {
       if (req.method === 'OPTIONS') return res.status(200).end();
-      if (isSecure) {
-        if (req.secure) next();
-        if (!req.secure) res.redirect(`https://${req.headers.host}${req.url}`);
-      } else {
-        next();
-      }
+      if (isSecure && req.secure) return next();
+      if (isSecure && !req.secure) return res.redirect(`https://${req.headers.host}${req.url}`);
+      if (!isSecure) return next();
     })
     .use('/api/auth-user', authRouter)
     .use('/api/configs', configsRouter)
@@ -90,7 +75,6 @@ function app() {
     .use('/api/sync', syncRouter)
     .use('/api/database', databaseRouter)
     .use('/api/dhis2', dhis2Router)
-    
     .use('/api/assets', express.static(__dirname + '/assets'))
     // .use(express.static(join(projectFolder, "views"), {
     //   setHeaders: (res, path) => {
@@ -101,9 +85,9 @@ function app() {
     //     // }
     //   }
     // }))
-    .use(express.static(join(projectFolder, "views")))
+    .use(express.static(join(PROJECT_FOLDER, "views")))
     .use("/", (req: Request, res: Response, next: NextFunction) => {
-      const indexPath = join(projectFolder, "views", "index.html");
+      const indexPath = join(PROJECT_FOLDER, "views", "index.html");
       res.sendFile(indexPath, (err: any) => {
         if (err) {
           err['noStaticFiles'] = true;
@@ -138,28 +122,25 @@ AppDataSource
     const server = app();
     const port = normalizePort((NODE_ENV === 'production' ? APP_PROD_PORT : APP_DEV_PORT) || 3000);
     const hostnames = getIPAddress(ACCESS_ALL_AVAILABE_PORT === 'true');
-
-    //  ┌────────────── second (0 - 59) (optional)
-    //  │  ┌──────────── minute (0 - 59) 
-    //  │  │  ┌────────── hour (0 - 23)
-    //  │  │  │ ┌──────── day of the month (1 - 31)
-    //  │  │  │ │ ┌────── month (1 - 12)
-    //  │  │  │ │ │ ┌──── day of the week (0 - 6) (0 and 7 both represent Sunday)
-    //  │  │  │ │ │ │
-    //  │  │  │ │ │ │
-    //  *  *  * * * * 
+                //  ┌────────────── second (0 - 59) (optional)
+                //  │  ┌──────────── minute (0 - 59) 
+                //  │  │  ┌────────── hour (0 - 23)
+                //  │  │  │ ┌──────── day of the month (1 - 31)
+                //  │  │  │ │ ┌────── month (1 - 12)
+                //  │  │  │ │ │ ┌──── day of the week (0 - 6) (0 and 7 both represent Sunday)
+                //  │  │  │ │ │ │
+                //  │  │  │ │ │ │
+                //  *  *  * * * * 
     cron.schedule("00 59 23 * * *", function () {
       logNginx(`running this task everyday at 23h 59 min 0 seconds.`);
       AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA({ userId: ADMIN_USER_ID });
     });
-
     const credential: any = {};
     if (isSecure) {
-      credential['key'] = fs.readFileSync(`${sslFolder}/analytics/server.key`, 'utf8');
-      credential['ca'] = fs.readFileSync(`${sslFolder}/analytics/server-ca.crt`, 'utf8');
-      credential['cert'] = fs.readFileSync(`${sslFolder}/analytics/server.crt`, 'utf8');
+      credential['key'] = fs.readFileSync(`${ENV_FOLDER}/server.key`, 'utf8');
+      credential['ca'] = fs.readFileSync(`${ENV_FOLDER}/server-ca.crt`, 'utf8');
+      credential['cert'] = fs.readFileSync(`${ENV_FOLDER}/server.crt`, 'utf8');
     }
-
     ServerStart({
       credential: credential,
       isSecure: isSecure,
@@ -169,7 +150,6 @@ AppDataSource
       hostnames: hostnames,
       useLocalhost: USE_LOCALHOST === 'true'
     });
-
   })
   .catch(error => { logNginx(`${error}`) });
 

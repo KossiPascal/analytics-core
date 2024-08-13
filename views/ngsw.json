@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1722132969059,
+  "timestamp": 1723496437295,
   "appData": [
     "/index.html",
     "/*.bundle.css",
@@ -20,18 +20,18 @@
         "/common.1201d9b0c210057b.js",
         "/favicon.ico",
         "/index.html",
-        "/main.3765e6efcd6900f6.js",
+        "/main.f0b14af1e09403ff.js",
         "/manifest.json",
         "/polyfills.fba3e52d40e7defe.js",
-        "/runtime.13ad27456af6dc15.js",
+        "/runtime.86a5b0927c70ce88.js",
         "/scripts.951b38afd4ddffea.js",
-        "/src_app_modules_admin_admin_module_ts.91b76a0b8a3363cf.js",
-        "/src_app_modules_auths_auths_module_ts.a9e3be345922a572.js",
-        "/src_app_modules_dashbords_dashbords_module_ts.64fdb7d83eae9786.js",
+        "/src_app_modules_admin_admin_module_ts.826569166ccbd0da.js",
+        "/src_app_modules_auths_auths_module_ts.05e5cc119479f4c3.js",
+        "/src_app_modules_dashbords_dashbords_module_ts.1362589b73fe324b.js",
         "/src_app_modules_errors_errors_module_ts.5d086f9b77f24542.js",
         "/src_app_modules_manages_manages_module_ts.820eb25ce882b2b5.js",
-        "/src_app_modules_reports_reports_module_ts.3a44f102e9daab15.js",
-        "/styles.874b49433083f5cb.css"
+        "/src_app_modules_reports_reports_module_ts.0bc232b6078793da.js",
+        "/styles.8041de195995a7a4.css"
       ],
       "patterns": []
     },
@@ -45,6 +45,7 @@
       "urls": [
         "/assets/css/bootstrap.min.css",
         "/assets/css/forms-style.css",
+        "/assets/css/main-app.css",
         "/assets/css/style.css",
         "/assets/icons/icon-128x128.png",
         "/assets/icons/icon-144x144.png",
@@ -97,6 +98,7 @@
   "hashTable": {
     "/assets/css/bootstrap.min.css": "f6caf2055f44fe64863217866085d4223e5e8443",
     "/assets/css/forms-style.css": "5473d98d7dd1ae0a788083bddef2405c97922197",
+    "/assets/css/main-app.css": "581bc5a4895440e66d6182b6e8d39466c8b75503",
     "/assets/css/style.css": "bec640113bb16392ce70f1d310761c694eaf5a93",
     "/assets/icons/icon-128x128.png": "b9285d55964bf7d8284a511b38dd8f08ad024b9f",
     "/assets/icons/icon-144x144.png": "340f77288775b4b8f90332406ada2ee6c8056188",
@@ -143,19 +145,19 @@
     "/assets/logo/ih-logo1.png": "3d55ceaacfb4a26fcb4f3cf39fa7110323bd63ed",
     "/common.1201d9b0c210057b.js": "496b690d09ade914f577041c10417948d8bb75d7",
     "/favicon.ico": "b3ad0e1c2a97826d3acc2bf019f78cf73576cc11",
-    "/index.html": "da2d48daa4d9995bb2f6e8b4f397230c2e8152f2",
-    "/main.3765e6efcd6900f6.js": "e57dda568446d4ae68e93f7fffe15dc18ec789ed",
+    "/index.html": "d09c67c35b10010ea94d95c5ef4c08ce9a4cee80",
+    "/main.f0b14af1e09403ff.js": "6e8d34fbaccc4e129e2fdd82d8f4c94f0063098b",
     "/manifest.json": "b4e9a5b96150246d84bcd45f9c10299934a3cb51",
     "/polyfills.fba3e52d40e7defe.js": "81e837d1b9e746b5c8aad24acbf1141d7027ee8a",
-    "/runtime.13ad27456af6dc15.js": "0f13c74305de47a0ea09c0d6a78d57575b6ff089",
+    "/runtime.86a5b0927c70ce88.js": "fdf3177f8484628f0620e80ec9c8f6b868b0f489",
     "/scripts.951b38afd4ddffea.js": "101691fc4c668beb43153b6aa8f121e4ade0e78b",
-    "/src_app_modules_admin_admin_module_ts.91b76a0b8a3363cf.js": "affdf4add5acec65e27a0fbb877a0568b3c5ebda",
-    "/src_app_modules_auths_auths_module_ts.a9e3be345922a572.js": "faf3f4e75c2645014c332f343038a3827eac7f77",
-    "/src_app_modules_dashbords_dashbords_module_ts.64fdb7d83eae9786.js": "6b6f7343ab93a756504ddb378750dae19cae9abf",
+    "/src_app_modules_admin_admin_module_ts.826569166ccbd0da.js": "0b1743ed30ddd809972cba50938d2ee86c61db4d",
+    "/src_app_modules_auths_auths_module_ts.05e5cc119479f4c3.js": "901af98f333fd076c3cee1ce0469281e61b549da",
+    "/src_app_modules_dashbords_dashbords_module_ts.1362589b73fe324b.js": "dff372c95d331f2aa7472a3489119a5f630947e3",
     "/src_app_modules_errors_errors_module_ts.5d086f9b77f24542.js": "bf6c71b00f0264f763dceab53baf6c266381475c",
     "/src_app_modules_manages_manages_module_ts.820eb25ce882b2b5.js": "aa29116f574f8786b75fc1b3e74e3e6bd65afe3f",
-    "/src_app_modules_reports_reports_module_ts.3a44f102e9daab15.js": "b85b5a579d299e30f8ba6a9f8a214c54012bcdf6",
-    "/styles.874b49433083f5cb.css": "1526d68cf6851bf348daf487267e0e7defb40f07"
+    "/src_app_modules_reports_reports_module_ts.0bc232b6078793da.js": "bb4d7bba0fea14fd6563be62ce79af5e6234b343",
+    "/styles.8041de195995a7a4.css": "af9110c269ecab4c53b088ade9d80cd53c63daea"
   },
   "navigationUrls": [
     {

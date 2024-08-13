@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
-import { DataSource, EntityMetadata, In } from "typeorm";
+import { DataSource, EntityMetadata } from "typeorm";
 import { AppDataSource } from "../data_source";
-import { dirname } from 'path';
-import { config } from 'dotenv';
 import request from 'request';
-import { httpHeaders } from "../utils/functions";
-import { Family, Patient, getChwRepository, getFamilyRepository, getPatientRepository, getRecoRepository } from "../entities/Org-units";
+import { Family, Patient, getChwRepository, getRecoRepository } from "../entities/Org-units";
 import { getCouchdbUsersRepository } from "../entities/Couchdb-users";
 import { AdultData } from "../entities/_Adult-data";
 import { DeathData } from "../entities/_Death-data";
@@ -21,15 +18,14 @@ import { PregnantData } from "../entities/_Pregnant-data";
 import { PromotionalActivityData } from "../entities/_Promotional-data";
 import { ReferalData } from "../entities/_Referal-data";
 import { VaccinationData } from "../entities/_Vaccination-data";
+import { httpHeaders } from "../utils/functions";
+import { APP_ENV } from "../utils/constantes";
 // const axios = require('axios');
 // const fetch = require('node-fetch')
-const apiFolder = dirname(dirname(__dirname));
-const projectFolder = dirname(apiFolder);
-const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/analytics/.env` });
-const { NODE_ENV, CHT_HOST, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
 
-const USER_CHT_HOST = `${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}`;
+const { NODE_ENV, CHT_PROD_HOST, CHT_DEV_HOST, CHT_PORT } = APP_ENV;
+
+const USER_CHT_HOST = `${NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST}:${CHT_PORT}`;
 
 
 let Connection: DataSource = AppDataSource.manager.connection;

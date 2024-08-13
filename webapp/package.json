@@ -2,7 +2,7 @@
   "name": "webapp",
   "version": "0.0.0",
   "author": "TSOLEGNAGBO Kossi <kossi.tsolegnagbo@gmail.com>",
-  "description": "Integratehealth analytics app for chws followup",
+  "description": "Kendeya Dashboard for chws followup",
   "homepage": "https://guinee-analytics.portal-integratehealth.org",
   "repository": "https://github.com/KossiPascal/analytics-core",
   "contributors": [
@@ -17,7 +17,8 @@
   },
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --ssl=true",
+    "start": "ng serve",
+    "start-ssl": "ng serve --ssl=true",
     "clean": "npm cache clean --force",
     "serve": "npm run clean && ng serve --configuration production",
     "build": "rm -rf ./.angular && rm -rf ../views && npm run clean && ng build --service-worker --optimization --configuration production --aot --output-hashing=all --named-chunks --stats-json",

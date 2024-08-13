@@ -1,11 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { JsonDatabase } from "../json-data-source";
 import request from 'request';
-import { dirname } from 'path';
-import { config } from 'dotenv';
 import { getUsersRepository } from "../entities/User";
 import { getDateInFormat } from "../utils/date-utils";
-import { normalizePort, logNginx, notEmpty } from "../utils/functions";
 import { ADULT_MORBIDITY_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports-calculation/adult-morbidity-report";
 import { CHW_RECO_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports-calculation/chws-reco.report";
 import { FAMILY_PLANNNING_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports-calculation/family-planning-report";
@@ -16,13 +13,10 @@ import { RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboa
 import { RECO_PERFORMANCE_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboards-calculation/reco-performance-dashboard";
 import { RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboards-calculation/reco-chart-performance-dashboard";
 import { RECO_VACCINATION_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboards-calculation/reco-vaccine-dashboard";
+import { normalizePort, logNginx, notEmpty } from "../utils/functions";
+import { APP_ENV } from "../utils/constantes";
 
-const apiFolder = dirname(dirname(__dirname));
-const projectFolder = dirname(apiFolder);
-const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/analytics/.env` });
-
-const { NODE_ENV, APP_HOST, APP_PROTOCOL, APP_PROD_PORT, APP_DEV_PORT } = process.env;
+const { NODE_ENV, APP_HOST, ACTIVE_SECURE_MODE, APP_PROD_PORT, APP_DEV_PORT } = APP_ENV;
 
 
 export async function SYNC_ALL_DB_DATA(req: Request, res: Response, next: NextFunction) {
@@ -128,7 +122,7 @@ export async function AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA(params: { wait?: bool
           END_DATE = `${year}-${month}-${lastDate}`;
         }
 
-        const APP_API_HOST = `${APP_PROTOCOL}://${APP_HOST}:${port}/api`;
+        const APP_API_HOST = `${ACTIVE_SECURE_MODE === 'true' ? 'https' : 'http'}://${APP_HOST}:${port}/api`;
         const headers = { "Content-Type": "application/json" };
         logNginx('\n\nstart fetching orgunits\n');
         request({
@@ -169,18 +163,6 @@ export async function AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA(params: { wait?: bool
           }, async function (error2: any, response2: any, body2: any) {
             if (!error2 && notEmpty(body2)) output.data = JSON.parse(`${body2}`);
             logNginx('\n\nstart data calculation\n');
-            request({
-              url: `${APP_API_HOST}/sync/couchdb-forms-data`,
-              method: 'POST',
-              body: JSON.stringify({
-                start_date: START_DATE,
-                end_date: END_DATE,
-                userId: user.id,
-                privileges: true
-              }),
-              headers: headers
-            }, async function (error2: any, response2: any, body2: any) {
-            });
 
             for (const year of YEARS) {
               for (const month of MONTHS) {
@@ -191,25 +173,25 @@ export async function AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA(params: { wait?: bool
                 const d4 = await HOUSEHOLD_RECAPS_REPORTS_CALCULATION_DATA({ year, month });
                 const d5 = await PCIMNE_NEWBORN_REPORTS_CALCULATION_DATA({ year, month });
                 const d6 = await PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION_DATA({ year, month });
-                output.reports.push({ cible: 'CHW RECO REPORTS', data: d1 });
-                output.reports.push({ cible: 'FAMILY PLANNNING REPORTS', data: d2 });
-                output.reports.push({ cible: 'ADULT MORBIDITY REPORTS', data: d3 });
-                output.reports.push({ cible: 'HOUSEHOLD RECAPS REPORTS', data: d4 });
-                output.reports.push({ cible: 'PCIMNE NEWBORN REPORTS', data: d5 });
-                output.reports.push({ cible: 'PROMOTONAL ACTIVITIES REPORTS', data: d6 });
+                output.reports.push({ cible: `CHW RECO REPORTS ( ${month}-${year} )`, data: d1 });
+                output.reports.push({ cible: `FAMILY PLANNNING REPORTS ( ${month}-${year} )`, data: d2 });
+                output.reports.push({ cible: `ADULT MORBIDITY REPORTS ( ${month}-${year} )`, data: d3 });
+                output.reports.push({ cible: `HOUSEHOLD RECAPS REPORTS ( ${month}-${year} )`, data: d4 });
+                output.reports.push({ cible: `PCIMNE NEWBORN REPORTS ( ${month}-${year} )`, data: d5 });
+                output.reports.push({ cible: `PROMOTONAL ACTIVITIES REPORTS ( ${month}-${year} )`, data: d6 });
 
                 //DASHBOARDS
                 const d7 = await RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ year, month });
                 const d8 = await RECO_PERFORMANCE_DASHBOARD_CALCULATION_DATA({ year, month });
                 const d9 = await RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ year, month });
                 
-                output.dashboards.push({ cible: 'RECO MEG STOCK DASHBOARD', data: d7 });
-                output.dashboards.push({ cible: 'RECO PERFORMANCE DASHBOARD', data: d8 });
-                output.dashboards.push({ cible: 'RECO VACCINATION DASHBOARD', data: d9 });
+                output.dashboards.push({ cible: `RECO MEG STOCK DASHBOARD ( ${month}-${year} )`, data: d7 });
+                output.dashboards.push({ cible: `RECO PERFORMANCE DASHBOARD ( ${month}-${year} )`, data: d8 });
+                output.dashboards.push({ cible: `RECO VACCINATION DASHBOARD ( ${month}-${year} )`, data: d9 });
 
               }
               const d99 = await RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION_DATA(year);
-              output.dashboards.push({ cible: 'RECO PERFORMANCE DASHBOARD CHART', data: d99 });
+              output.dashboards.push({ cible: `RECO PERFORMANCE DASHBOARD CHART ( ${year} )`, data: d99 });
             }
 
             const now = new Date();

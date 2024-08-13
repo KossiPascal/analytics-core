@@ -1,29 +1,25 @@
 var JFile = require('jfile');
 import fs from 'fs';
-import { dirname } from 'path';
-import { config } from 'dotenv';
 import { CouchDbFetchData } from './Interfaces';
-
 import https from "https";
 import http from "http";
 import axios from 'axios';
-const srcFolder = dirname(__dirname);
-const apiFolder = dirname(srcFolder);
-const projectFolder = dirname(apiFolder);
-const projectParentFolder = dirname(projectFolder);
-config({ path: `${projectParentFolder}/ssl/analytics/.env` });
+import { APP_ENV } from './constantes';
 
-const { NODE_ENV, CHT_USER, CHT_PASS, CHT_HOST, CHT_PROTOCOL, CHT_PROD_PORT, CHT_DEV_PORT } = process.env;
+const { NODE_ENV, CHT_USER, CHT_PASS, CHT_PROD_HOST, CHT_DEV_HOST, CHT_PROTOCOL, CHT_PORT } = APP_ENV;
+
+const USER_CHT_HOST = NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST;
 
 export async function AxioFetchCouchDbData(viewName: string, { username, password, startKey, endKey }: { username?: string, password?: string, startKey?: string, endKey?: string }): Promise<any> {
     const dbName = 'medic';
-    const couchDbUrl = `${CHT_HOST}:${NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT}`;
+    const couchDbUrl = `${USER_CHT_HOST}:${CHT_PORT}`;
     username = username ?? CHT_USER ?? '';
     password = password ?? CHT_PASS ?? '';
     const couchArg = ['include_docs=true', 'returnDocs=true', 'attachments=false', 'binary=false', 'reduce=false', 'descending=false'];
     if (startKey) couchArg.push('key=[' + startKey + ']');
     if (endKey) couchArg.push('endkey=[' + endKey + ']');
-    return await axios.get(`${CHT_PROTOCOL}://${couchDbUrl}/${dbName}/_design/medic-client/_view/${viewName}?${couchArg.join('&')}`, {
+    const finalUrl = `${CHT_PROTOCOL}://${couchDbUrl}/${dbName}/_design/medic-client/_view/${viewName}?${couchArg.join('&')}`;
+    return await axios.get(finalUrl, {
         auth: {
             username,
             password
@@ -41,12 +37,12 @@ function CouchDbFetchDataOptions(params: CouchDbFetchData,) {
     couchArg.push(`descending=${params.descending == true}`);
     if (notEmpty(params.startKey)) couchArg.push(`key=[${params.startKey}]`);
     if (notEmpty(params.endKey)) couchArg.push(`endkey=[${params.endKey}]`);
-    const port = parseInt((NODE_ENV === 'production' ? CHT_PROD_PORT : CHT_DEV_PORT) ?? '443');
+    const port = parseInt((CHT_PORT) ?? '443');
     var options = {
-        host: CHT_HOST ?? '',
+        host: USER_CHT_HOST ?? '',
         port: port,
         path: `${dbCibleUrl}?${couchArg.join('&')}`,
-        url: `${CHT_HOST}:${port}${dbCibleUrl}?${couchArg.join('&')}`,
+        url: `${USER_CHT_HOST}:${port}${dbCibleUrl}?${couchArg.join('&')}`,
         use_SSL_verification: true,
         user: CHT_USER ?? '',
         pass: CHT_PASS ?? '',

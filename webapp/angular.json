@@ -54,7 +54,8 @@
               "src/styles.css",
               "src/assets/css/bootstrap.min.css",
               "src/assets/css/style.css",
-              "src/assets/css/forms-style.css"
+              "src/assets/css/forms-style.css",
+              "src/assets/css/main-app.css"
             ],
             "scripts": [
               "src/assets/js/jquery-3.4.1.min.js",
@@ -129,10 +130,7 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "buildTarget": "app:build",
-            "ssl": true,
-            "sslKey": "../../ssl/analytics/server.key",
-            "sslCert": "../../ssl/analytics/server.crt"
+            "buildTarget": "app:build"
           },
           "configurations": {
             "production": {

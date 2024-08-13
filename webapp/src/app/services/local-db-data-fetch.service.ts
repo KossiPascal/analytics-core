@@ -28,14 +28,14 @@ export class LocalDbDataFetchService {
   async GetPromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<PromotionReport> | undefined> {
     var promotionReport: PromotionReport[] = [];
 
-    if (this.USER?.can_use_offline_mode !== true) {
-      promotionReport = (await (this.api.GetPromotionReports({ months, year, recos }).
-        pipe(map((res$: { status: number, data: PromotionReport[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       promotionReport = await this.indexdb.getAllData<PromotionReport>('promotion_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      promotionReport = (await (this.api.GetPromotionReports({ months, year, recos }).
+        pipe(map((res$: { status: number, data: PromotionReport[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
 
     if (promotionReport.length > 0) {
@@ -101,7 +101,8 @@ export class LocalDbDataFetchService {
         return unique;
       }, []);
 
-      promotionReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0)
+      // promotionReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0);
+      // promotionReport.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0);
 
       const outPutReport: IndicatorsDataOutput<PromotionReport> = {
         country: promotionReport[0].country,
@@ -115,6 +116,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: promotionReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: promotionReport.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedReport
       };
       return outPutReport;
@@ -124,14 +126,14 @@ export class LocalDbDataFetchService {
 
   async GetFamilyPlanningReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<FamilyPlanningReport> | undefined> {
     var familyPlanningReport: FamilyPlanningReport[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      familyPlanningReport = (await (this.api.GetFamilyPlanningReports({ months, year, recos }).
-        pipe(map((res$: { status: number, data: FamilyPlanningReport[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       familyPlanningReport = await this.indexdb.getAllData<FamilyPlanningReport>('family_planning_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      familyPlanningReport = (await (this.api.GetFamilyPlanningReports({ months, year, recos }).
+        pipe(map((res$: { status: number, data: FamilyPlanningReport[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
 
     if (familyPlanningReport.length > 0) {
@@ -175,6 +177,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: familyPlanningReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: familyPlanningReport.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedReport
       };
       return outPutReport;
@@ -184,14 +187,14 @@ export class LocalDbDataFetchService {
 
   async GetMorbidityReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<MorbidityReport> | undefined> {
     var morbidityReport: MorbidityReport[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      morbidityReport = (await (this.api.GetMorbidityReports({ months, year, recos }).
-        pipe(map((res$: { status: number, data: MorbidityReport[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       morbidityReport = await this.indexdb.getAllData<MorbidityReport>('morbidity_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      morbidityReport = (await (this.api.GetMorbidityReports({ months, year, recos }).
+        pipe(map((res$: { status: number, data: MorbidityReport[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
 
     if (morbidityReport.length > 0) {
@@ -254,6 +257,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: morbidityReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: morbidityReport.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedReport
       };
       return outPutReport;
@@ -263,15 +267,16 @@ export class LocalDbDataFetchService {
 
   async GetHouseholdRecapReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<{ total: HouseholdRecapReport, out: IndicatorsDataOutput<HouseholdRecapReport[]> } | undefined> {
     var householdRecapReport: HouseholdRecapReport[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      householdRecapReport = (await (this.api.GetHouseholdRecapReports({ months, year, recos }).
-        pipe(map((res$: { status: number, data: HouseholdRecapReport[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       householdRecapReport = await this.indexdb.getAllData<HouseholdRecapReport>('household_recaps_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      householdRecapReport = (await (this.api.GetHouseholdRecapReports({ months, year, recos }).
+        pipe(map((res$: { status: number, data: HouseholdRecapReport[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
+
     if (householdRecapReport.length > 0) {
       // const summedReport: any = {
       //   household_code: '',
@@ -325,6 +330,7 @@ export class LocalDbDataFetchService {
 
       const outPutData: any[] = (householdRecapReport.map(r => {
         return {
+          id: r.id,
           index: parseInt(r.household_code),
           household_code: r.household_code,
           household_name: r.household_name.replace(`${r.household_code} - `, ''),
@@ -359,6 +365,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: householdRecapReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: householdRecapReport.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: outPutData
       };
       return { total: totalData, out: outPutReport };
@@ -368,14 +375,14 @@ export class LocalDbDataFetchService {
 
   async GetPcimneNewbornReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<PcimneNewbornReport | undefined> {
     var pcimneNewbornReport: PcimneNewbornReport[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      pcimneNewbornReport = (await (this.api.GetPcimneNewbornReports({ months, year, recos }).
-        pipe(map((res$: { status: number, data: PcimneNewbornReport[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       pcimneNewbornReport = await this.indexdb.getAllData<PcimneNewbornReport>('pcime_newborn_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      pcimneNewbornReport = (await (this.api.GetPcimneNewbornReports({ months, year, recos }).
+        pipe(map((res$: { status: number, data: PcimneNewbornReport[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
     if (pcimneNewbornReport.length > 0) {
       const summedReport: any = {
@@ -456,6 +463,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: pcimneNewbornReport.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: pcimneNewbornReport.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         pcimne_newborn: dataToOut.sort((a, b) => a.index - b.index),
       }
       return outPutReport;
@@ -465,14 +473,14 @@ export class LocalDbDataFetchService {
 
   async GetChwsRecoReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<ChwsRecoReport> | undefined> {
     var chwsRecoReports: ChwsRecoReport[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      chwsRecoReports = (await (this.api.GetChwsRecoReports({ months, year, recos }).
-        pipe(map((res$: { status: number, data: ChwsRecoReport[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       chwsRecoReports = await this.indexdb.getAllData<ChwsRecoReport>('chws_reco_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      chwsRecoReports = (await (this.api.GetChwsRecoReports({ months, year, recos }).
+        pipe(map((res$: { status: number, data: ChwsRecoReport[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
     if (chwsRecoReports.length > 0) {
       const summedReport: any = {
@@ -542,6 +550,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: chwsRecoReports.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: chwsRecoReports.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: summedChwsRecoReport,
       }
       return outPutReport;
@@ -562,14 +571,14 @@ export class LocalDbDataFetchService {
 
   async GetRecoMegDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoMegDashboardUtils[]> | undefined> {
     var recoMegDashboard: RecoMegDashboard[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      recoMegDashboard = (await (this.api.GetRecoMegDashboards({ months, year, recos }).
-        pipe(map((res$: { status: number, data: RecoMegDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       recoMegDashboard = await this.indexdb.getAllData<RecoMegDashboard>('reco_meg_dashboard', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      recoMegDashboard = (await (this.api.GetRecoMegDashboards({ months, year, recos }).
+        pipe(map((res$: { status: number, data: RecoMegDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
     if (recoMegDashboard.length > 0) {
       const smDash: { [key: number]: RecoMegDashboardUtils } = {}
@@ -608,6 +617,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: recoMegDashboard.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: recoMegDashboard.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: Object.values(smDash).sort((a, b) => a.index - b.index)
       };
       return outPutReport;
@@ -617,14 +627,14 @@ export class LocalDbDataFetchService {
 
   async GetRecoVaccinationDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoVaccinationDashboard[]> | undefined> {
     var recoVaccineDashboard: RecoVaccinationDashboard[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      recoVaccineDashboard = (await (this.api.GetRecoVaccinationDashboards({ months, year, recos }).
-        pipe(map((res$: { status: number, data: RecoVaccinationDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       recoVaccineDashboard = await this.indexdb.getAllData<RecoVaccinationDashboard>('reco_vaccination_dashboard', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      recoVaccineDashboard = (await (this.api.GetRecoVaccinationDashboards({ months, year, recos }).
+        pipe(map((res$: { status: number, data: RecoVaccinationDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
     if (recoVaccineDashboard.length > 0) {
       const reco_names = recoVaccineDashboard.map(r => r.reco).reduce((unique: { id: string, name: string, phone: string }[], r: { id: string, name: string, phone: string } | null) => {
@@ -645,6 +655,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: recoVaccineDashboard.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: recoVaccineDashboard.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: recoVaccineDashboard
       };
       return outPutReport;
@@ -654,14 +665,14 @@ export class LocalDbDataFetchService {
 
   async GetRecoPerformanceDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoPerformanceDashboard> | undefined> {
     var recoPerfDashboard: RecoPerformanceDashboard[] = [];
-    if (this.USER?.can_use_offline_mode !== true) {
-      recoPerfDashboard = (await (this.api.GetRecoPerformanceDashboards({ months, year, recos }).
-        pipe(map((res$: { status: number, data: RecoPerformanceDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
-          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-    } else {
+    if (this.USER?.can_use_offline_mode === true) {
       recoPerfDashboard = await this.indexdb.getAllData<RecoPerformanceDashboard>('reco_performance_dashboard', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
+    } else {
+      recoPerfDashboard = (await (this.api.GetRecoPerformanceDashboards({ months, year, recos }).
+        pipe(map((res$: { status: number, data: RecoPerformanceDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
+          catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
     const smDash: any = {
       householdCount: 0,
@@ -697,14 +708,14 @@ export class LocalDbDataFetchService {
     var recoChartPerfDashboard: RecoChartPerformanceDashboard[] = [];
     if (recos.length === 1) {
 
-      if (this.USER?.can_use_offline_mode !== true) {
-        recoChartPerfDashboard = (await (this.api.GetRecoChartPerformanceDashboards({ year, recos }).
-          pipe(map((res$: { status: number, data: RecoChartPerformanceDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
-            catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
-      } else {
+      if (this.USER?.can_use_offline_mode === true) {
         recoChartPerfDashboard = await this.indexdb.getAllData<RecoChartPerformanceDashboard>('reco_chart_performance_dashboard', this.keyPath, (item) => {
           return year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
         });
+      } else {
+        recoChartPerfDashboard = (await (this.api.GetRecoChartPerformanceDashboards({ year, recos }).
+          pipe(map((res$: { status: number, data: RecoChartPerformanceDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
+            catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
       }
 
       const ry = recoChartPerfDashboard[0];
@@ -750,6 +761,7 @@ export class LocalDbDataFetchService {
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
         is_validate: recoPerfDashboard.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: recoPerfDashboard.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: smDash
       };
       return outPutReport;

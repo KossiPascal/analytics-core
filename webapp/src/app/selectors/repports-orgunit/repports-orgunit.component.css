@@ -1,0 +1,10 @@
+
+.validate-data {
+  width: 350px !important;
+  margin: 0px !important;
+  display: inline-flex !important;
+}
+
+.validate-data button {
+  margin: 0px 3px 0px 3px !important;
+}
