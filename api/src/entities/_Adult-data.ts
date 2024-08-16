@@ -201,9 +201,21 @@ export class AdultData {
     @Column({ type: 'varchar', nullable: true })
     other_problems!: string | null
 
+    // @Column({ type: 'float', nullable: true })
+    // cta_total!: number
 
     @Column({ type: 'float', nullable: true })
-    cta!: number
+    cta_nn!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_pe!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_ge!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_ad!: number
+
 
     @Column({ type: 'float', nullable: true })
     amoxicillin_250mg!: number

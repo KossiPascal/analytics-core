@@ -48,6 +48,8 @@ export class AppComponent implements OnInit {
 
   public showCustom:boolean = false;
 
+  YEAR:number = new Date().getFullYear();
+
 
   constructor(
     private webSocketService: WebSocketService,

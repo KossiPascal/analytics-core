@@ -69,7 +69,12 @@ export async function SyncPcimneData(report: any, _repoPcimne: Repository<Pcimne
             _pcimne.has_serious_malaria = dataTransform(fields.has_serious_malaria, 'null_false');
             _pcimne.has_pre_reference_treatments = dataTransform(fields.has_pre_reference_treatments, 'null_false');
 
-            _pcimne.cta = dataTransform(fields.cta_quantity, 'number');
+            // _pcimne.cta_total = dataTransform(fields.cta_quantity, 'number');
+            _pcimne.cta_nn = dataTransform(fields.cta_nn_quantity, 'number');
+            _pcimne.cta_pe = dataTransform(fields.cta_pe_quantity, 'number');
+            _pcimne.cta_ge = dataTransform(fields.cta_ge_quantity, 'number');
+            _pcimne.cta_ad = dataTransform(fields.cta_ad_quantity, 'number');
+
             _pcimne.amoxicillin_250mg = dataTransform(fields.amoxicillin_250mg_quantity, 'number');
             _pcimne.amoxicillin_500mg = dataTransform(fields.amoxicillin_500mg_quantity, 'number');
             _pcimne.paracetamol_250mg = dataTransform(fields.paracetamol_250mg_quantity, 'number');

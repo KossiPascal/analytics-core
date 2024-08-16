@@ -131,30 +131,30 @@
 @media (max-width: 765px) {
   /* mobile-detection */
   .report-style {
-    font-size: 10px!important;
+    font-size: 12px!important;
   }
   .repport-title {
     height: 15px!important;
-    font-size: 14px;
+    font-size: 18px;
   }
   .submitBtn {
     padding: 2px 2px 2px 2px !important;
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 
 @media (max-width: 991.98px) {
   /* tablette-detection */
   .report-style {
-    font-size: 10px!important;
+    font-size: 12px!important;
   }
   .repport-title {
     height: 15px!important;
-    font-size: 14px;
+    font-size: 18px;
   }
   .submitBtn {
     padding: 2px 2px 2px 2px !important;
-    font-size: 10px;
+    font-size: 12px;
   }
 }
 

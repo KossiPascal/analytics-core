@@ -8,10 +8,10 @@ import { ADULT_MORBIDITY_REPORTS_CALCULATION } from '../controllers/GET_FROM_DB/
 import { HOUSEHOLD_RECAPS_REPORTS_CALCULATION } from '../controllers/GET_FROM_DB/reports-calculation/household-recaps-report';
 import { PCIMNE_NEWBORN_REPORTS_CALCULATION } from '../controllers/GET_FROM_DB/reports-calculation/pcime-newborn-report';
 import { SYNC_ALL_DB_DATA } from '../controllers/auto-sync-all-data';
-import { RECO_MEG_STOCK_DASHBOARD_CALCULATION } from '../controllers/GET_FROM_DB/dashboards-calculation/reco-meg-stock-dashboard';
 import { RECO_PERFORMANCE_DASHBOARD_CALCULATION } from '../controllers/GET_FROM_DB/dashboards-calculation/reco-performance-dashboard';
 import { RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION } from '../controllers/GET_FROM_DB/dashboards-calculation/reco-chart-performance-dashboard';
 import { RECO_VACCINATION_DASHBOARD_CALCULATION } from '../controllers/GET_FROM_DB/dashboards-calculation/reco-vaccine-dashboard';
+import { RECO_MEG_SITUATION_REPORTS_CALCULATION } from '../controllers/GET_FROM_DB/reports-calculation/reco-meg-situation-report';
 
 const SyncRouter = Router();
 
@@ -22,10 +22,9 @@ SyncRouter.post('/db-adult-morbidity-report-calculation', Middelware.authMiddlew
 SyncRouter.post('/db-household-recaps-report-calculation', Middelware.authMiddleware, HOUSEHOLD_RECAPS_REPORTS_CALCULATION);
 SyncRouter.post('/db-pcimne-newborn-report-calculation', Middelware.authMiddleware, PCIMNE_NEWBORN_REPORTS_CALCULATION);
 SyncRouter.post('/db-promotional-activity-report-calculation', Middelware.authMiddleware, PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION);
-
+SyncRouter.post('/db-reco-meg-situation-report-calculation', Middelware.authMiddleware, RECO_MEG_SITUATION_REPORTS_CALCULATION);
 
 //dashboards
-SyncRouter.post('/db-reco-meg-stock-dashboard-calculation', Middelware.authMiddleware, RECO_MEG_STOCK_DASHBOARD_CALCULATION);
 SyncRouter.post('/db-reco-performance-dashboard-calculation', Middelware.authMiddleware, RECO_PERFORMANCE_DASHBOARD_CALCULATION);
 SyncRouter.post('/db-reco-chart-performance-dashboard-calculation', Middelware.authMiddleware, RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION);
 SyncRouter.post('/db-reco-vaccination-dashboard-calculation', Middelware.authMiddleware, RECO_VACCINATION_DASHBOARD_CALCULATION);

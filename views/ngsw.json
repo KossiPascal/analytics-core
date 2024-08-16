@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1723496437295,
+  "timestamp": 1723775462367,
   "appData": [
     "/index.html",
     "/*.bundle.css",
@@ -20,18 +20,18 @@
         "/common.1201d9b0c210057b.js",
         "/favicon.ico",
         "/index.html",
-        "/main.f0b14af1e09403ff.js",
+        "/main.942cfdb95e1a0092.js",
         "/manifest.json",
         "/polyfills.fba3e52d40e7defe.js",
-        "/runtime.86a5b0927c70ce88.js",
+        "/runtime.faa5f016d650130f.js",
         "/scripts.951b38afd4ddffea.js",
         "/src_app_modules_admin_admin_module_ts.826569166ccbd0da.js",
         "/src_app_modules_auths_auths_module_ts.05e5cc119479f4c3.js",
-        "/src_app_modules_dashbords_dashbords_module_ts.1362589b73fe324b.js",
+        "/src_app_modules_dashbords_dashbords_module_ts.f5d80c0f76804408.js",
         "/src_app_modules_errors_errors_module_ts.5d086f9b77f24542.js",
-        "/src_app_modules_manages_manages_module_ts.820eb25ce882b2b5.js",
-        "/src_app_modules_reports_reports_module_ts.0bc232b6078793da.js",
-        "/styles.8041de195995a7a4.css"
+        "/src_app_modules_manages_manages_module_ts.bc9371eb8ac30c17.js",
+        "/src_app_modules_reports_reports_module_ts.5acb5e2e51c96dea.js",
+        "/styles.0a151a6381f32d4c.css"
       ],
       "patterns": []
     },
@@ -87,6 +87,7 @@
         "/assets/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js",
         "/assets/lib/waypoints/links.php",
         "/assets/lib/waypoints/waypoints.min.js",
+        "/assets/logo/guinea-flag.png",
         "/assets/logo/guinee.png",
         "/assets/logo/ih-logo.png",
         "/assets/logo/ih-logo1.png"
@@ -98,7 +99,7 @@
   "hashTable": {
     "/assets/css/bootstrap.min.css": "f6caf2055f44fe64863217866085d4223e5e8443",
     "/assets/css/forms-style.css": "5473d98d7dd1ae0a788083bddef2405c97922197",
-    "/assets/css/main-app.css": "581bc5a4895440e66d6182b6e8d39466c8b75503",
+    "/assets/css/main-app.css": "5afd5a55ef637dea1ee8a530247800f1bd6a6698",
     "/assets/css/style.css": "bec640113bb16392ce70f1d310761c694eaf5a93",
     "/assets/icons/icon-128x128.png": "b9285d55964bf7d8284a511b38dd8f08ad024b9f",
     "/assets/icons/icon-144x144.png": "340f77288775b4b8f90332406ada2ee6c8056188",
@@ -140,24 +141,25 @@
     "/assets/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js": "e6ce53ab1858b532c037334b512e010f0f093943",
     "/assets/lib/waypoints/links.php": "6dbcd195444223ae4232280328343d4e2f8ffc02",
     "/assets/lib/waypoints/waypoints.min.js": "56bdb149d9baf64474a4c24ae66445769a28254e",
+    "/assets/logo/guinea-flag.png": "484086504c420d38b17fcd4b05ad38c9c1173ce5",
     "/assets/logo/guinee.png": "f4d6a61dda34080f363442251e0c3ff80a90cf78",
     "/assets/logo/ih-logo.png": "b3ad0e1c2a97826d3acc2bf019f78cf73576cc11",
     "/assets/logo/ih-logo1.png": "3d55ceaacfb4a26fcb4f3cf39fa7110323bd63ed",
     "/common.1201d9b0c210057b.js": "496b690d09ade914f577041c10417948d8bb75d7",
     "/favicon.ico": "b3ad0e1c2a97826d3acc2bf019f78cf73576cc11",
-    "/index.html": "d09c67c35b10010ea94d95c5ef4c08ce9a4cee80",
-    "/main.f0b14af1e09403ff.js": "6e8d34fbaccc4e129e2fdd82d8f4c94f0063098b",
+    "/index.html": "017ecc25afff63f2d790c07aba29df183c8de220",
+    "/main.942cfdb95e1a0092.js": "1f0983a89d07876375a14cee0b279c81f0615bd0",
     "/manifest.json": "b4e9a5b96150246d84bcd45f9c10299934a3cb51",
     "/polyfills.fba3e52d40e7defe.js": "81e837d1b9e746b5c8aad24acbf1141d7027ee8a",
-    "/runtime.86a5b0927c70ce88.js": "fdf3177f8484628f0620e80ec9c8f6b868b0f489",
+    "/runtime.faa5f016d650130f.js": "6b6a115903fd6989bae09066759c751ab2338ffb",
     "/scripts.951b38afd4ddffea.js": "101691fc4c668beb43153b6aa8f121e4ade0e78b",
     "/src_app_modules_admin_admin_module_ts.826569166ccbd0da.js": "0b1743ed30ddd809972cba50938d2ee86c61db4d",
     "/src_app_modules_auths_auths_module_ts.05e5cc119479f4c3.js": "901af98f333fd076c3cee1ce0469281e61b549da",
-    "/src_app_modules_dashbords_dashbords_module_ts.1362589b73fe324b.js": "dff372c95d331f2aa7472a3489119a5f630947e3",
+    "/src_app_modules_dashbords_dashbords_module_ts.f5d80c0f76804408.js": "8d2b1931cba252b129e7757a6068879e63bbfca0",
     "/src_app_modules_errors_errors_module_ts.5d086f9b77f24542.js": "bf6c71b00f0264f763dceab53baf6c266381475c",
-    "/src_app_modules_manages_manages_module_ts.820eb25ce882b2b5.js": "aa29116f574f8786b75fc1b3e74e3e6bd65afe3f",
-    "/src_app_modules_reports_reports_module_ts.0bc232b6078793da.js": "bb4d7bba0fea14fd6563be62ce79af5e6234b343",
-    "/styles.8041de195995a7a4.css": "af9110c269ecab4c53b088ade9d80cd53c63daea"
+    "/src_app_modules_manages_manages_module_ts.bc9371eb8ac30c17.js": "eee3f0f8cb522594381b24bcd33480f264d4033b",
+    "/src_app_modules_reports_reports_module_ts.5acb5e2e51c96dea.js": "9717d3d69666a8af5d640a30c047a40605cef4a8",
+    "/styles.0a151a6381f32d4c.css": "aa2fb792e66f68901e09cc1b5bc654c2099f061c"
   },
   "navigationUrls": [
     {

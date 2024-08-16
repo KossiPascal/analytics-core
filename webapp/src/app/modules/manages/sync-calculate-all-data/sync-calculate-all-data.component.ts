@@ -4,11 +4,11 @@ import { AuthService } from '@kossi-services/auth.service';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '@kossi-services/api.service';
 import { TODAY_YEAR_MONTH_DAY, getYearsList, getMonthsList, currentMonth } from '@kossi-src/app/utils/functions';
-import { ChwsRecoReport, FamilyPlanningReport, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PromotionReport } from '@kossi-models/reports';
+import { ChwsRecoReport, FamilyPlanningReport, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PromotionReport, RecoMegSituationReport } from '@kossi-models/reports';
 import { AllFormsSyncResult, OrgUnitSyncResult, SyncOutputUtils } from '@kossi-models/org-units';
 import { Observable, catchError, map, of } from 'rxjs';
 import { SnackbarService } from '@kossi-services/snackbar.service';
-import { RecoMegDashboard, RecoPerformanceDashboard, RecoVaccinationDashboard } from '@kossi-models/dashboards';
+import { RecoPerformanceDashboard, RecoVaccinationDashboard } from '@kossi-models/dashboards';
 
 
 @Component({
@@ -52,6 +52,8 @@ export class SyncCalculateAllDataComponent implements OnInit {
     'HOUSEHOLD_RECAPS_REPORTS_CALCULATION',
     'PCIMNE_NEWBORN_REPORTS_CALCULATION',
     'PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION',
+    'RECO_MEG_SITUATION_REPORTS_CALCULATION',
+
     'RECO_MEG_STOCK_DASHBOARD_CALCULATION',
     'RECO_PERFORMANCE_DASHBOARD_CALCULATION',
     'RECO_VACCINATION_DASHBOARD_CALCULATION',
@@ -180,9 +182,9 @@ export class SyncCalculateAllDataComponent implements OnInit {
       const c4 = await this.HOUSEHOLD_RECAPS_REPORTS_CALCULATION().toPromise();
       const c5 = await this.PCIMNE_NEWBORN_REPORTS_CALCULATION().toPromise();
       const c6 = await this.PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION().toPromise();
+      const c7 = await this.RECO_MEG_SITUATION_REPORTS_CALCULATION().toPromise();
 
       // DASHBOARDS
-      const c7 = await this.RECO_MEG_STOCK_DASHBOARD_CALCULATION().toPromise();
       const c8 = await this.RECO_PERFORMANCE_DASHBOARD_CALCULATION().toPromise();
       const c9 = await this.RECO_VACCINATION_DASHBOARD_CALCULATION().toPromise();
       const c10 = await this.RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION().toPromise();
@@ -200,14 +202,14 @@ export class SyncCalculateAllDataComponent implements OnInit {
       calcul = await this.PCIMNE_NEWBORN_REPORTS_CALCULATION().toPromise();
     } else if (cible === 'PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION') {
       calcul = await this.PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION().toPromise();
-    } else if (cible === 'RECO_MEG_STOCK_DASHBOARD_CALCULATION') {
-      calcul = await this.RECO_MEG_STOCK_DASHBOARD_CALCULATION().toPromise();
     }  else if (cible === 'RECO_VACCINATION_DASHBOARD_CALCULATION') {
       calcul = await this.RECO_VACCINATION_DASHBOARD_CALCULATION().toPromise();
     } else if (cible === 'RECO_PERFORMANCE_DASHBOARD_CALCULATION') {
       calcul = await this.RECO_PERFORMANCE_DASHBOARD_CALCULATION().toPromise();
     } else if (cible === 'RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION') {
       calcul = await this.RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION().toPromise();
+    } else if (cible === 'RECO_MEG_SITUATION_REPORTS_CALCULATION') {
+      calcul = await this.RECO_MEG_SITUATION_REPORTS_CALCULATION().toPromise();
     }
 
     this.calculation_syncing = false;
@@ -356,11 +358,9 @@ export class SyncCalculateAllDataComponent implements OnInit {
     );
   }
 
-  // DASHBOARD CALCULATION
-
-  RECO_MEG_STOCK_DASHBOARD_CALCULATION(): Observable<boolean> {
-    return this.api.RECO_MEG_STOCK_DASHBOARD_CALCULATION(this._calculFormGroup.value).pipe(
-      map((_res$: { status: number, ErrorsCount: number, SuccessCount: number, data: RecoMegDashboard }) => {
+  RECO_MEG_SITUATION_REPORTS_CALCULATION(): Observable<boolean> {
+    return this.api.RECO_MEG_SITUATION_REPORTS_CALCULATION(this._calculFormGroup.value).pipe(
+      map((_res$: { status: number, ErrorsCount: number, SuccessCount: number, data: RecoMegSituationReport }) => {
         if (_res$.status !== 200) {
           return false;
         }
@@ -371,6 +371,8 @@ export class SyncCalculateAllDataComponent implements OnInit {
       })
     );
   }
+
+  // DASHBOARD CALCULATION
 
   RECO_VACCINATION_DASHBOARD_CALCULATION(): Observable<boolean> {
     return this.api.RECO_VACCINATION_DASHBOARD_CALCULATION(this._calculFormGroup.value).pipe(

@@ -124,19 +124,6 @@ export interface PcimneNewbornReportUtils {
 
 
 // ######################### DASHBOARDS #########################
-
-export interface RecoMegDashboardUtils {
-    index: number,
-    label: string
-    month_stock: number,
-    available_stock: number,
-    consumption: number,
-    loss: number,
-    damaged: number,
-    broken: number,
-    obselete: number
-}
-
 export interface RecoPerformanceDashboardUtils {
     title: string
     type: 'line' | 'bar',
@@ -445,3 +432,17 @@ export interface PatientCoustomQuery {
 }
 
 
+export interface RecoMegQuantityUtils {
+    index: number,
+    label: string
+    month_beginning: number
+    month_received: number
+    month_total_start: number
+    month_consumption: number
+    month_theoreticaly: number
+    month_inventory: number
+    month_loss: number
+    month_damaged: number
+    month_broken: number
+    month_expired: number
+  }

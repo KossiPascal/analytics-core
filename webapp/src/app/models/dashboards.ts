@@ -1,36 +1,3 @@
-export interface RecoMegDashboard {
-  id: string
-  month: string
-  year: number
-  meg_data: RecoMegDashboardUtils[]
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-  commune: { id: string, name: string }
-  hospital: { id: string, name: string }
-  district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
-  village_secteur: { id: string, name: string }
-  reco: { id: string, name: string, phone: string } | null
-  is_validate?:boolean
-  validate_user_id?:string
-  already_on_dhis2?:boolean
-  already_on_dhis2_user_id?:string
-}
-
-export interface RecoMegDashboardUtils {
-  index: number,
-  label: string
-  month_stock: number,
-  available_stock: number,
-  consumption: number,
-  loss: number,
-  damaged: number,
-  broken: number,
-  obselete: number
-}
-
-
 export interface RecoPerformanceDashboard {
   id: string
   year: number

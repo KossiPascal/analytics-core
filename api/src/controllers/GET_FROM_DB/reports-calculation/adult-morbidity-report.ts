@@ -6,6 +6,7 @@ import { MorbidityReport, getMorbidityReportRepository } from "../../../entities
 import { MorbidityUtils, RecoCoustomQuery } from "../../../utils/Interfaces";
 import { AdultData } from "../../../entities/_Adult-data";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { isvalidCta } from "../../../utils/functions";
 
 
 let Connection: DataSource = AppDataSource.manager.connection;
@@ -25,6 +26,20 @@ export async function ADULT_MORBIDITY_REPORTS_CALCULATION(req: Request, res: Res
     }
 }
 
+
+function getMorbidityUtils<T>(data: T[] | any[], name:string, field: string) : MorbidityUtils {
+    return {
+        indicator: name,
+        nbr_5_14_years: data.filter(a => a[field] === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
+        nbr_14_25_years: data.filter(a => a[field] === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
+        nbr_25_60_years: data.filter(a => a[field] === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
+        nbr_60_more_years: data.filter(a => a[field] === true && a.age_in_years >= 60).length,
+        nbr_pregnant_woman: data.filter(a => a[field] === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
+        nbr_total: data.filter(a => a[field] === true && a.age_in_years >= 5).length,
+        nbr_referred: data.filter(a => a[field] === true && a.age_in_years >= 5 && a.is_referred === true).length,
+    };
+}
+
 export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getMorbidityReportRepository();
     const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
@@ -35,218 +50,76 @@ export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: 
         try {
             const adults: AdultData[] = __adults.filter(a => a.reco_id === reco.id);
 
-            const hp_circulation_accident: MorbidityUtils = {
-                indicator: 'Accident de circulation',
-                nbr_5_14_years: adults.filter(a => a.traffic_accident === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.traffic_accident === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.traffic_accident === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.traffic_accident === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.traffic_accident === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.traffic_accident === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.traffic_accident === true && a.age_in_years >= 5 && a.is_referred === true).length,
-            };
-            const hp_burn: MorbidityUtils = {
-                indicator: 'Brûlure',
-                nbr_5_14_years: adults.filter(a => a.burns === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.burns === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.burns === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.burns === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.burns === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.burns === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.burns === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_suspected_tb_cases: MorbidityUtils = {
-                indicator: 'Cas suspects de TB',
-                nbr_5_14_years: adults.filter(a => a.suspected_tb === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.suspected_tb === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.suspected_tb === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.suspected_tb === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.suspected_tb === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.suspected_tb === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.suspected_tb === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_dermatosis: MorbidityUtils = {
-                indicator: 'Dermatose',
-                nbr_5_14_years: adults.filter(a => a.dermatosis === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.dermatosis === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.dermatosis === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.dermatosis === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.dermatosis === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.dermatosis === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.dermatosis === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_diarrhea: MorbidityUtils = {
-                indicator: 'Diarrhées',
-                nbr_5_14_years: adults.filter(a => (a.diarrhea === true || a.has_diarrhea === true) && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => (a.diarrhea === true || a.has_diarrhea === true) && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => (a.diarrhea === true || a.has_diarrhea === true) && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => (a.diarrhea === true || a.has_diarrhea === true) && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => (a.diarrhea === true || a.has_diarrhea === true) && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => (a.diarrhea === true || a.has_diarrhea === true) && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => (a.diarrhea === true || a.has_diarrhea === true) && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_urethral_discharge: MorbidityUtils = {
-                indicator: 'Ecoulement uretrale',
-                nbr_5_14_years: adults.filter(a => a.urethral_discharge === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.urethral_discharge === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.urethral_discharge === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.urethral_discharge === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.urethral_discharge === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.urethral_discharge === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.urethral_discharge === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_vaginal_discharge: MorbidityUtils = {
-                indicator: 'Ecoulement vaginal',
-                nbr_5_14_years: adults.filter(a => a.vaginal_discharge === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.vaginal_discharge === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.vaginal_discharge === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.vaginal_discharge === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.vaginal_discharge === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.vaginal_discharge === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.vaginal_discharge === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_urinary_loss: MorbidityUtils = {
-                indicator: 'Perte urinaire',
-                nbr_5_14_years: adults.filter(a => a.loss_of_urine === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.loss_of_urine === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.loss_of_urine === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.loss_of_urine === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.loss_of_urine === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.loss_of_urine === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.loss_of_urine === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_accidental_caustic_products_ingestion: MorbidityUtils = {
-                indicator: 'Ingestion accidentelle des produits caustiques',
-                nbr_5_14_years: adults.filter(a => a.accidental_ingestion_caustic_products === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.accidental_ingestion_caustic_products === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.accidental_ingestion_caustic_products === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.accidental_ingestion_caustic_products === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.accidental_ingestion_caustic_products === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.accidental_ingestion_caustic_products === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.accidental_ingestion_caustic_products === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_food_poisoning: MorbidityUtils = {
-                indicator: 'Intoxication alimentaire',
-                nbr_5_14_years: adults.filter(a => a.food_poisoning === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.food_poisoning === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.food_poisoning === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.food_poisoning === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.food_poisoning === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.food_poisoning === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.food_poisoning === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_oral_diseases: MorbidityUtils = {
-                indicator: 'Maladies bucco-dentaires',
-                nbr_5_14_years: adults.filter(a => a.oral_and_dental_diseases === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.oral_and_dental_diseases === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.oral_and_dental_diseases === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.oral_and_dental_diseases === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.oral_and_dental_diseases === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.oral_and_dental_diseases === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.oral_and_dental_diseases === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_dog_bite: MorbidityUtils = {
-                indicator: 'Morsure de chien',
-                nbr_5_14_years: adults.filter(a => a.dog_bites === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.dog_bites === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.dog_bites === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.dog_bites === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.dog_bites === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.dog_bites === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.dog_bites === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_snake_bite: MorbidityUtils = {
-                indicator: 'Morsure de serpent',
-                nbr_5_14_years: adults.filter(a => a.snake_bite === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.snake_bite === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.snake_bite === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.snake_bite === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.snake_bite === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.snake_bite === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.snake_bite === true).length,
-            };
-            const hp_parasitosis: MorbidityUtils = {
-                indicator: 'Parasitose',
-                nbr_5_14_years: adults.filter(a => a.parasitosis === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.parasitosis === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.parasitosis === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.parasitosis === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.parasitosis === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.parasitosis === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.parasitosis === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_measles: MorbidityUtils = {
-                indicator: 'Rougeole',
-                nbr_5_14_years: adults.filter(a => a.measles === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.measles === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.measles === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.measles === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.measles === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.measles === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.measles === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_trauma: MorbidityUtils = {
-                indicator: 'Traumatisme',
-                nbr_5_14_years: adults.filter(a => a.trauma === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.trauma === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.trauma === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.trauma === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.trauma === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.trauma === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.trauma === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
-            const hp_gender_based_violence: MorbidityUtils = {
-                indicator: 'Violence basées sur le genre (VBG)',
-                nbr_5_14_years: adults.filter(a => a.gender_based_violence === true && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.gender_based_violence === true && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.gender_based_violence === true && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.gender_based_violence === true && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.gender_based_violence === true && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.gender_based_violence === true && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.gender_based_violence === true && a.age_in_years >= 5 && a.is_referred === true).length
-            };
+            const hp_circulation_accident = getMorbidityUtils(adults, 'Accident de circulation', 'traffic_accident');
+            const hp_burn = getMorbidityUtils(adults, 'Brûlure', 'burns');
+            const hp_suspected_tb_cases = getMorbidityUtils(adults, 'Cas suspects de TB', 'suspected_tb');
+
+            const hp_dermatosis = getMorbidityUtils(adults, 'Dermatose', 'dermatosis');
+            const hp_diarrhea = getMorbidityUtils(adults, 'Diarrhées', 'diarrhea');
+            const hp_urethral_discharge = getMorbidityUtils(adults, 'Ecoulement uretrale', 'urethral_discharge');
+            const hp_vaginal_discharge = getMorbidityUtils(adults, 'Ecoulement vaginal', 'vaginal_discharge');
+            const hp_urinary_loss = getMorbidityUtils(adults, 'Perte urinaire', 'loss_of_urine');
+            const hp_accidental_caustic_products_ingestion = getMorbidityUtils(adults, 'Ingestion accidentelle des produits caustiques', 'accidental_ingestion_caustic_products');
+            const hp_food_poisoning = getMorbidityUtils(adults, 'Intoxication alimentaire', 'food_poisoning');
+            const hp_oral_diseases = getMorbidityUtils(adults, 'Maladies bucco-dentaires', 'oral_and_dental_diseases');
+            const hp_dog_bite = getMorbidityUtils(adults, 'Morsure de chien', 'dog_bites');
+            const hp_snake_bite = getMorbidityUtils(adults, 'Morsure de serpent', 'snake_bite');
+            const hp_parasitosis = getMorbidityUtils(adults, 'Parasitose', 'parasitosis');
+            const hp_measles = getMorbidityUtils(adults, 'Rougeole', 'measles');
+            const hp_trauma = getMorbidityUtils(adults, 'Traumatisme', 'trauma');
+            const hp_gender_based_violence = getMorbidityUtils(adults, 'Violence basées sur le genre (VBG)', 'gender_based_violence');
+            
+            // ##################################################
+            const malaria_5_14_years = adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5 && a.age_in_years < 14);
+            const malaria_14_25_years = adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 14 && a.age_in_years < 25);
+            const malaria_25_60_years = adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 25 && a.age_in_years < 60);
+            const malaria_60_more_years = adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 60);
+            const malaria_pregnant_woman = adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5 && a.is_pregnant === true);
+            const malaria_total = adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5);
+            const malaria_referred = adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5 && a.is_referred === true);
+
 
             const malaria_total_cases: MorbidityUtils = {
                 indicator: 'Nombre total de cas',
-                nbr_5_14_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.age_in_years >= 5 && a.is_referred === true).length
+                nbr_5_14_years: malaria_5_14_years.length,
+                nbr_14_25_years: malaria_14_25_years.length,
+                nbr_25_60_years: malaria_25_60_years.length,
+                nbr_60_more_years: malaria_60_more_years.length,
+                nbr_pregnant_woman: malaria_pregnant_woman.length,
+                nbr_total: malaria_total.length,
+                nbr_referred: malaria_referred.length
             };
             const malaria_rdt_performed: MorbidityUtils = {
                 indicator: 'Nombre de TDR effectués',
-                nbr_5_14_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.age_in_years >= 5 && a.is_referred === true).length
+                nbr_5_14_years: malaria_5_14_years.filter(a => a.rdt_given).length,
+                nbr_14_25_years: malaria_14_25_years.filter(a => a.rdt_given).length,
+                nbr_25_60_years: malaria_25_60_years.filter(a => a.rdt_given).length,
+                nbr_60_more_years: malaria_60_more_years.filter(a => a.rdt_given).length,
+                nbr_pregnant_woman: malaria_pregnant_woman.filter(a => a.rdt_given).length,
+                nbr_total: malaria_total.filter(a => a.rdt_given).length,
+                nbr_referred: malaria_referred.filter(a => a.rdt_given).length
             };
             const malaria_positive_rdts: MorbidityUtils = {
                 indicator: 'Nombre de TDR positifs',
-                nbr_5_14_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.rdt_result === 'positive' && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.rdt_result === 'positive' && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.rdt_result === 'positive' && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.rdt_result === 'positive' && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.rdt_result === 'positive' && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.rdt_result === 'positive' && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => (a.malaria === true || a.has_malaria === true) && a.rdt_given && a.rdt_result === 'positive' && a.age_in_years >= 5 && a.is_referred === true).length
+                nbr_5_14_years: malaria_5_14_years.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
+                nbr_14_25_years: malaria_14_25_years.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
+                nbr_25_60_years: malaria_25_60_years.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
+                nbr_60_more_years: malaria_60_more_years.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
+                nbr_pregnant_woman: malaria_pregnant_woman.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
+                nbr_total: malaria_total.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
+                nbr_referred: malaria_referred.filter(a => a.rdt_given && a.rdt_result === 'positive').length
             };
+            // ##################################################
             const malaria_cases_treated_with_cta: MorbidityUtils = {
                 indicator: 'Nombre de cas traités avec CTA',
-                nbr_5_14_years: adults.filter(a => a.cta !== null && a.cta > 0 && a.age_in_years >= 5 && a.age_in_years < 14).length,
-                nbr_14_25_years: adults.filter(a => a.cta !== null && a.cta > 0 && a.age_in_years >= 14 && a.age_in_years < 25).length,
-                nbr_25_60_years: adults.filter(a => a.cta !== null && a.cta > 0 && a.age_in_years >= 25 && a.age_in_years < 60).length,
-                nbr_60_more_years: adults.filter(a => a.cta !== null && a.cta > 0 && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => a.cta !== null && a.cta > 0 && a.age_in_years >= 5 && a.is_pregnant === true).length,
-                nbr_total: adults.filter(a => a.cta !== null && a.cta > 0 && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => a.cta !== null && a.cta > 0 && a.age_in_years >= 5 && a.is_referred === true).length
+                nbr_5_14_years: adults.filter(a => isvalidCta(a) && a.age_in_years >= 5 && a.age_in_years < 14).length,
+                nbr_14_25_years: adults.filter(a => isvalidCta(a) && a.age_in_years >= 14 && a.age_in_years < 25).length,
+                nbr_25_60_years: adults.filter(a => isvalidCta(a) && a.age_in_years >= 25 && a.age_in_years < 60).length,
+                nbr_60_more_years: adults.filter(a => isvalidCta(a) && a.age_in_years >= 60).length,
+                nbr_pregnant_woman: adults.filter(a => isvalidCta(a) && a.age_in_years >= 5 && a.is_pregnant === true).length,
+                nbr_total: adults.filter(a => isvalidCta(a) && a.age_in_years >= 5).length,
+                nbr_referred: adults.filter(a => isvalidCta(a) && a.age_in_years >= 5 && a.is_referred === true).length
             };
-
 
             const _morbidity = new MorbidityReport();
 

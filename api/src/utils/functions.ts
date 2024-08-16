@@ -50,6 +50,45 @@ function CouchDbFetchDataOptions(params: CouchDbFetchData,) {
     return getHttpsOptions(options);
 }
 
+export function isvalidCta<T>(data:T|any):boolean{
+    try {
+        const ok1 = data?.cta_nn !== undefined && data?.cta_nn !== null && parseInt(`${data?.cta_nn}`) > 0;
+        const ok2 = data?.cta_pe !== undefined && data?.cta_pe !== null && parseInt(`${data?.cta_pe}`) > 0;
+        const ok3 = data?.cta_ge !== undefined && data?.cta_ge !== null && parseInt(`${data?.cta_ge}`) > 0;
+        const ok4 = data?.cta_ad !== undefined && data?.cta_ad !== null && parseInt(`${data?.cta_ad}`) > 0;
+        return (ok1 || ok2 || ok3 || ok4) === true;
+    } catch (error) {
+        return false;
+    }
+}
+
+export function sumAllCta<T>(data:T|any): number {
+    try {
+        const ok1 = data?.cta_nn !== undefined && data?.cta_nn !== null && parseInt(`${data?.cta_nn}`) > 0;
+        const ok2 = data?.cta_pe !== undefined && data?.cta_pe !== null && parseInt(`${data?.cta_pe}`) > 0;
+        const ok3 = data?.cta_ge !== undefined && data?.cta_ge !== null && parseInt(`${data?.cta_ge}`) > 0;
+        const ok4 = data?.cta_ad !== undefined && data?.cta_ad !== null && parseInt(`${data?.cta_ad}`) > 0;
+        return (
+            (ok1 ? parseInt(`${data?.cta_nn}`) : 0) + 
+            (ok2 ? parseInt(`${data?.cta_pe}`) : 0) + 
+            (ok3 ? parseInt(`${data?.cta_ge}`) : 0) + 
+            (ok4 ? parseInt(`${data?.cta_ad}`) : 0)
+        );
+    } catch (error) {
+        return 0;
+    }
+}
+
+export function getPreviousMonthYear(month:string, year:number) {
+    const m = parseInt(month);
+    const previousMonth = m === 1 ? 12 : m - 1;
+    const previousYear = m === 1 ? (year - 1) : year;
+
+    return {
+        month: previousMonth.toString().padStart(2, '0'),
+        year: previousYear.toString()
+    };
+}
 
 export function getHttpsOptions(data: any): Object {
     var options: Object = {

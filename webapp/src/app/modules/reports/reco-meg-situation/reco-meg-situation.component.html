@@ -1,0 +1,75 @@
+<div class="report-style row g-4">
+  <div class="col-12">
+    <div class="bg-white rounded h-100 p-0">
+      <!-- <h6 class="mb-4">TITRE</h6> -->
+      <repports-orgunit-selector
+        [id]="'pr-repports-orgunit'"
+        [ON_FETCHING]="REPPORTS_HEADER.ON_FETCHING === true"
+        (ON_SHOW_DATA)="SHOW_DATA($event)"></repports-orgunit-selector>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead class="no-border center">
+            <tr class="no-border org-units center">
+              <td class="no-border org-units center" colspan="13">
+                <repports-header-selector [id]="'fp-repports-header'" [REPPORTS_HEADER]="REPPORTS_HEADER"
+                  (onValidateData)="validateData()" (onSendToDhis2)="sendDataToDhis2()">
+                </repports-header-selector>
+              </td>
+            </tr>
+          </thead>
+
+          <thead *ngIf="RECO_MEG_QUANTITIES$">
+            <tr class="table-head fp-header-1">
+              <th style="width: 2.5%; text-align: center;" rowspan="2" scope="col">N°</th>
+              <th style="text-align: center;" rowspan="2">MEG / INTRANTS</th>
+              <th style="width: 7%; text-align: center;" scope="col" rowspan="2">Quantité début du mois (A)</th>
+              <th style="width: 7%; text-align: center;" scope="col" rowspan="2">Quantité reçue au cours du mois (B)</th>
+              <th style="width: 7%; text-align: center;" scope="col" rowspan="2">Quantité totale du mois (C=A+B)</th>
+              <th style="width: 7%; text-align: center;" scope="col" rowspan="2">Consommation mensuelle du mois (D)</th>
+              <th style="width: 7%; text-align: center;" scope="col" rowspan="2">Quantité théorique à l'inventaire (E=C-D)</th>
+              <th style="width: 7%; text-align: center;" scope="col" rowspan="2">Quantité comptée à l'inventaire (F)</th>
+              <th style="width: 7%; text-align: center;" scope="col" rowspan="1" colspan="2">Ecart d'inventaire (J=F-E)</th>
+              <th style="width: 14%; text-align: center;" colspan="4">Autres Sorties</th>
+            </tr>
+
+            <tr class="table-head fp-header-1">
+              <th style="width: 7%; text-align: center;" >En valeur</th>
+              <th style="width: 7%; text-align: center;" >En %</th>
+              <th style="width: 7%; text-align: center;" scope="col">Perte</th>
+              <th style="width: 7%; text-align: center;" scope="col">Avarié</th>
+              <th style="width: 7%; text-align: center;" scope="col">Cassé</th>
+              <th style="width: 7%; text-align: center;" scope="col">Périmé</th>
+            </tr>
+          </thead>
+
+          <tbody *ngIf="RECO_MEG_QUANTITIES$">
+            <tr *ngFor="let rm of RECO_MEG_QUANTITIES$">
+              <th scope="row">{{ rm.index }}</th>
+              <th>{{ rm.label }}</th>
+              <th class="{{ quantityStyle(rm.month_beginning) }}">{{ rm.month_beginning }}</th>
+              <th class="{{ quantityStyle(rm.month_received) }}">{{ rm.month_received }}</th>
+              <th class="{{ quantityStyle(rm.month_total_start) }}">{{ rm.month_total_start }}</th>
+              <th class="{{ quantityStyle(rm.month_consumption) }}">{{ rm.month_consumption }}</th>
+              <th class="{{ quantityStyle(rm.month_theoreticaly) }}">{{ rm.month_theoreticaly }}</th>
+              <th class="{{ quantityStyle(rm.month_inventory) }}">{{ rm.month_inventory }}</th>
+
+              <td class="ajust-cells">
+                <span *ngIf="EcartColor(rm) as e" [ngStyle]="{ 'color': e.color, 'font-weight': 'bold' }">{{ e.value }}</span>
+              </td>
+
+              <td class="ajust-cells">
+                <span *ngIf="EcartColor(rm) as e" [ngStyle]="{ 'color': e.color }">{{ e.ecart }}</span>
+              </td>
+
+              <th class="{{ quantityStyle(rm.month_loss) }}">{{ rm.month_loss }}</th>
+              <th class="{{ quantityStyle(rm.month_damaged) }}">{{ rm.month_damaged }}</th>
+              <th class="{{ quantityStyle(rm.month_broken) }}">{{ rm.month_broken }}</th>
+              <th class="{{ quantityStyle(rm.month_expired) }}">{{ rm.month_expired }}</th>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

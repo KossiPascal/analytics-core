@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 // import axios from 'axios';
 import { RETRY_MILLIS } from '../utils/functions';
-import { FamilyPlanningReport, HouseholdRecapReport, ChwsRecoReport, MorbidityReport, PromotionReport, PcimneNewbornReport } from '@kossi-models/reports';
+import { FamilyPlanningReport, HouseholdRecapReport, ChwsRecoReport, MorbidityReport, PromotionReport, PcimneNewbornReport, RecoMegSituationReport } from '@kossi-models/reports';
 import { IndexedDbService } from './indexed-db.service';
 import { ApiService } from './api.service';
 import { DBUtils } from '@kossi-models/db';
 import { Observable, catchError, map, of } from 'rxjs';
-import { RecoChartPerformanceDashboard, RecoMegDashboard, RecoPerformanceDashboard, RecoVaccinationDashboard } from '@kossi-models/dashboards';
+import { RecoChartPerformanceDashboard, RecoPerformanceDashboard, RecoVaccinationDashboard } from '@kossi-models/dashboards';
 
 @Injectable({
   providedIn: 'root'
@@ -26,10 +26,11 @@ export class DbSyncService {
       const d4 = await this.SyncMorbidityReports({ months, year, recos }).toPromise();
       const d5 = await this.SyncHouseholdRecapReports({ months, year, recos }).toPromise();
       const d6 = await this.SyncPcimneNewbornReports({ months, year, recos }).toPromise();
-      const d7 = await this.SyncRecoMegDashboards({ months, year, recos }).toPromise();
-      const d8 = await this.SyncRecoVaccinationDashboards({ months, year, recos }).toPromise();
-      const d9 = await this.SyncRecoPerformanceDashboards({ months, year, recos }).toPromise();
-      const d10 = await this.SyncRecoChartPerformanceDashboards({ year, recos }).toPromise();
+      const d7 = await this.SyncRecoVaccinationDashboards({ months, year, recos }).toPromise();
+      const d8 = await this.SyncRecoPerformanceDashboards({ months, year, recos }).toPromise();
+      const d9 = await this.SyncRecoChartPerformanceDashboards({ year, recos }).toPromise();
+      const d10 = await this.SyncRecoMegSituationReports({ months, year, recos }).toPromise();
+
       return d1 === true && d2 === true && d3 === true && d4 === true && d5 === true && d6 === true && d7 === true && d8 === true && d9 === true && d10 === true;
     } catch (err) {
       console.error('Error initialising watching for db changes (changes.service.ts: 108)', err);
@@ -183,30 +184,31 @@ export class DbSyncService {
     );
   }
 
-
-  // ##################### DASHBOARDS #####################
-
-  SyncRecoMegDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
-    return this.api.GetRecoMegDashboards({ months, year, recos }).pipe(
-      map((res$: { status: number, data: RecoMegDashboard[] }) => {
+  SyncRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
+    return this.api.GetRecoMegSituationReports({ months, year, recos }).pipe(
+      map((res$: { status: number, data: RecoMegSituationReport[] }) => {
         if (res$.status !== 200) {
-          console.error('Error while syncing RecoMegDashboard:');
+          console.error('Error while syncing RecoMegSituationReports:');
           console.log('Attempting changes initialization in ' + (RETRY_MILLIS / 1000) + ' seconds');
-          setTimeout(() => this.SyncRecoMegDashboards({ months, year, recos }), RETRY_MILLIS);
+          setTimeout(() => this.SyncRecoMegSituationReports({ months, year, recos }), RETRY_MILLIS);
           return false;
         }
-        this.saveToLocalStorage<RecoMegDashboard>({ dbName: 'reco_meg_dashboard', data: res$.data, callback: () => this.SyncRecoMegDashboards({ months, year, recos }) });
+        this.saveToLocalStorage<RecoMegSituationReport>({ dbName: 'reco_meg_situation_reports', data: res$.data, callback: () => this.SyncRecoMegSituationReports({ months, year, recos }) });
         return true;
       }),
       catchError((err: any) => {
-        console.error('Error while syncing RecoMegDashboard:', err);
+        console.error('Error while syncing RecoMegSituationReports:', err);
         console.log('Attempting changes initialization in ' + (RETRY_MILLIS / 1000) + ' seconds');
-        setTimeout(() => this.SyncRecoMegDashboards({ months, year, recos }), RETRY_MILLIS);
+        setTimeout(() => this.SyncRecoMegSituationReports({ months, year, recos }), RETRY_MILLIS);
         return of(false);
       })
     );
   }
 
+
+
+
+  // ##################### DASHBOARDS #####################
   SyncRecoVaccinationDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
     return this.api.GetRecoVaccinationDashboards({ months, year, recos }).pipe(
       map((res$: { status: number, data: RecoVaccinationDashboard[] }) => {

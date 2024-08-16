@@ -38,11 +38,51 @@ export interface IndicatorsDataOutput<T> {
   data: T
 }
 
-export interface PromotionReport {
+
+export interface RecoMegSituationReport {
+  orgUnit: string
   id: string
   month: string
   year: number
 
+  meg_data: RecoMegQuantityUtils[]
+
+  country: { id: string, name: string }
+  region: { id: string, name: string }
+  prefecture: { id: string, name: string }
+  commune: { id: string, name: string }
+  hospital: { id: string, name: string }
+  district_quartier: { id: string, name: string }
+  chw: { id: string, name: string, phone: string }
+  village_secteur: { id: string, name: string }
+  reco: { id: string, name: string, phone: string } | null
+  is_validate?: boolean
+  validate_user_id?: string
+  already_on_dhis2?: boolean
+  already_on_dhis2_user_id?: string
+}
+
+export interface RecoMegQuantityUtils {
+  index: number,
+  label: string
+  month_beginning: number
+  month_received: number
+  month_total_start: number
+  month_consumption: number
+  month_theoreticaly: number
+  month_inventory: number
+  month_loss: number
+  month_damaged: number
+  month_broken: number
+  month_expired: number
+}
+
+
+
+export interface PromotionReport {
+  id: string
+  month: string
+  year: number
   orgUnit?: string
 
   malaria_nbr_touched_by_VAD_F: number

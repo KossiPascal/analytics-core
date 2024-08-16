@@ -26,8 +26,8 @@ export class RecoMegData {
 
 
     @Column({ type: 'varchar', nullable: false })
-    meg_type!: 'stock' | 'consumption' | 'loss' | 'damaged' | 'broken' | 'obselete'
-
+    meg_type!: 'stock' | 'inventory' | 'consumption' | 'loss' | 'damaged' | 'broken' | 'expired'
+ 
     @Column({ type: 'varchar', nullable: true })
     fp_method!: 'pill_coc' | 'pill_cop' | 'condoms' | 'dmpa_sc' | 'depo_provera_im' | 'cycle_necklace' | 'diu' | 'implant' | 'tubal_ligation' | null
 
@@ -59,8 +59,21 @@ export class RecoMegData {
     @Column({ type: 'bigint', nullable: true })
     tubal_ligation!: number | null
 
-    @Column({ type: 'bigint', nullable: true })
-    cta!: number | null
+    // @Column({ type: 'float', nullable: true })
+    // cta_total!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_nn!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_pe!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_ge!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_ad!: number
+
 
     @Column({ type: 'bigint', nullable: true })
     tdr!: number | null

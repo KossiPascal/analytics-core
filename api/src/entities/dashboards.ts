@@ -1,59 +1,10 @@
 import { Entity, Column, Repository, DataSource, PrimaryColumn } from "typeorm"
 import { AppDataSource } from "../data_source"
-import { RecoMegDashboardUtils, RecoPerformanceDashboardUtils, RecoVaccinationDashboardUtils } from "../utils/Interfaces";
+import { RecoPerformanceDashboardUtils, RecoVaccinationDashboardUtils } from "../utils/Interfaces";
 
 // export enum FlightType { DOMESTIC = "domestic", INTERNATIONAL = "international" }
 let Connection: DataSource = AppDataSource.manager.connection;
 
-
-@Entity()
-export class RecoMegDashboard {
-
-    @PrimaryColumn({ type: 'text', nullable: false })
-    id!: string
-
-    @Column({ type: 'bigint', nullable: false })
-    year!: number
-
-    @Column({ type: 'varchar', nullable: false })
-    month!: string
-
-
-    @Column({ type: 'jsonb', nullable: false })
-    meg_data!: RecoMegDashboardUtils[]
-
-
-    @Column({ type: 'jsonb', nullable: false })
-    country!: { id: string, name: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    region!: { id: string, name: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    prefecture!: { id: string, name: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    commune!: { id: string, name: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    hospital!: { id: string, name: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    district_quartier!: { id: string, name: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    village_secteur!: { id: string, name: string }
-
-    @Column({ type: 'jsonb', nullable: false })
-    reco!: { id: string, name: string, phone: string }
-
-}
-export async function getRecoMegDashboardRepository(): Promise<Repository<RecoMegDashboard>> {
-    return Connection.getRepository(RecoMegDashboard);
-}
 
 @Entity()
 export class RecoPerformanceDashboard {

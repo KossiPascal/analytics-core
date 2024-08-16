@@ -41,7 +41,13 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
             _meg.dmpa_sc = dataTransform(fields.meg_quantity.dmpa_sc, 'number');
             _meg.cycle_necklace = dataTransform(fields.meg_quantity.cycle_necklace, 'number');
             _meg.tubal_ligation = dataTransform(fields.meg_quantity.tubal_ligation, 'number');
-            _meg.cta = dataTransform(fields.meg_quantity.cta, 'number');
+
+            // _meg.cta_total = dataTransform(fields.meg_quantity.cta, 'number');
+            _meg.cta_nn = dataTransform(fields.cta_nn_quantity, 'number');
+            _meg.cta_pe = dataTransform(fields.cta_pe_quantity, 'number');
+            _meg.cta_ge = dataTransform(fields.cta_ge_quantity, 'number');
+            _meg.cta_ad = dataTransform(fields.cta_ad_quantity, 'number');
+
             _meg.tdr = dataTransform(fields.meg_quantity.tdr, 'number');
             _meg.amoxicillin_250mg = dataTransform(fields.meg_quantity.amoxicillin250_mg, 'number');
             _meg.amoxicillin_500mg = dataTransform(fields.meg_quantity.amoxicillin500_mg, 'number');
@@ -57,7 +63,13 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
 
         if (report.form === 'pcimne_register') {
             _meg.meg_type = 'consumption';
-            _meg.cta = dataTransform(fields.cta_quantity, 'number');
+
+            // _meg.cta_total = dataTransform(fields.cta_quantity, 'number');
+            _meg.cta_nn = dataTransform(fields.cta_nn_quantity, 'number');
+            _meg.cta_pe = dataTransform(fields.cta_pe_quantity, 'number');
+            _meg.cta_ge = dataTransform(fields.cta_ge_quantity, 'number');
+            _meg.cta_ad = dataTransform(fields.cta_ad_quantity, 'number');
+
             _meg.amoxicillin_250mg = dataTransform(fields.amoxicillin_250mg_quantity, 'number');
             _meg.amoxicillin_500mg = dataTransform(fields.amoxicillin_500mg_quantity, 'number');
             _meg.paracetamol_250mg = dataTransform(fields.paracetamol_250mg_quantity, 'number');
@@ -73,15 +85,21 @@ export async function SyncRecoMegData(report: any, _repoMeg: Repository<RecoMegD
 
         if (report.form === 'adult_consulation') {
             _meg.meg_type = 'consumption';
-            _meg.cta = dataTransform(fields.cta_quantity, 'number')
-            _meg.amoxicillin_250mg = dataTransform(fields.amoxicillin_250mg_quantity, 'number')
-            _meg.amoxicillin_500mg = dataTransform(fields.amoxicillin_500mg_quantity, 'number')
-            _meg.paracetamol_250mg = dataTransform(fields.paracetamol_250mg_quantity, 'number')
-            _meg.paracetamol_500mg = dataTransform(fields.paracetamol_500mg_quantity, 'number')
-            _meg.mebendazol_250mg = dataTransform(fields.mebendazole_250mg_quantity, 'number')
-            _meg.mebendazol_500mg = dataTransform(fields.mebendazole_500mg_quantity, 'number')
-            _meg.ors = dataTransform(fields.ors_quantity, 'number')
-            _meg.zinc = dataTransform(fields.zinc_quantity, 'number')
+
+            // _meg.cta_total = dataTransform(fields.cta_quantity, 'number')
+            _meg.cta_nn = dataTransform(fields.cta_nn_quantity, 'number');
+            _meg.cta_pe = dataTransform(fields.cta_pe_quantity, 'number');
+            _meg.cta_ge = dataTransform(fields.cta_ge_quantity, 'number');
+            _meg.cta_ad = dataTransform(fields.cta_ad_quantity, 'number');
+            
+            _meg.amoxicillin_250mg = dataTransform(fields.amoxicillin_250mg_quantity, 'number');
+            _meg.amoxicillin_500mg = dataTransform(fields.amoxicillin_500mg_quantity, 'number');
+            _meg.paracetamol_250mg = dataTransform(fields.paracetamol_250mg_quantity, 'number');
+            _meg.paracetamol_500mg = dataTransform(fields.paracetamol_500mg_quantity, 'number');
+            _meg.mebendazol_250mg = dataTransform(fields.mebendazole_250mg_quantity, 'number');
+            _meg.mebendazol_500mg = dataTransform(fields.mebendazole_500mg_quantity, 'number');
+            _meg.ors = dataTransform(fields.ors_quantity, 'number');
+            _meg.zinc = dataTransform(fields.zinc_quantity, 'number');
             if (isTrue(fields.rdt_given)) _meg.tdr = 1;
         }
 

@@ -165,10 +165,22 @@ export class PcimneData {
 
     @Column({ type: 'boolean', nullable: true })
     has_pre_reference_treatments!: boolean | null
-    
 
-    @Column({ type: 'bigint', nullable: true })
-    cta!: number | null
+    // @Column({ type: 'float', nullable: true })
+    // cta_total!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_nn!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_pe!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_ge!: number
+
+    @Column({ type: 'float', nullable: true })
+    cta_ad!: number
+
 
     @Column({ type: 'bigint', nullable: true })
     amoxicillin_250mg!: number | null

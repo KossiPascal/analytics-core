@@ -6,7 +6,7 @@ import { PcimneNewbornReport, getPcimneNewbornReportRepository } from "../../../
 import { PcimneData } from "../../../entities/_Pcimne-data";
 import { NewbornData } from "../../../entities/_Newborn-data";
 import { PcimneNewbornReportUtils, RecoCoustomQuery } from "../../../utils/Interfaces";
-import { isTrue } from "../../../utils/functions";
+import { isTrue, isvalidCta } from "../../../utils/functions";
 import { DeathData } from "../../../entities/_Death-data";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 
@@ -167,29 +167,29 @@ export async function PCIMNE_NEWBORN_REPORTS_CALCULATION_DATA({ month, year }: {
                     indicator: 'Nombre de cas traités avec CTA',
                     nbr_malaria_0_2_months_F: 0,
                     nbr_malaria_0_2_months_M: 0,
-                    nbr_malaria_2_12_months_F: nbr_malaria_2_12_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_malaria_2_12_months_M: nbr_malaria_2_12_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_malaria_12_60_months_F: nbr_malaria_12_60_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_malaria_12_60_months_M: nbr_malaria_12_60_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
+                    nbr_malaria_2_12_months_F: nbr_malaria_2_12_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_malaria_2_12_months_M: nbr_malaria_2_12_months_M.filter(d => isvalidCta(d)).length,
+                    nbr_malaria_12_60_months_F: nbr_malaria_12_60_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_malaria_12_60_months_M: nbr_malaria_12_60_months_M.filter(d => isvalidCta(d)).length,
                     nbr_cough_pneumonia_0_2_months_F: 0,
                     nbr_cough_pneumonia_0_2_months_M: 0,
-                    nbr_cough_pneumonia_2_12_months_F: nbr_cough_pneumonia_2_12_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_cough_pneumonia_2_12_months_M: nbr_cough_pneumonia_2_12_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_cough_pneumonia_12_60_months_F: nbr_cough_pneumonia_12_60_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_cough_pneumonia_12_60_months_M: nbr_cough_pneumonia_12_60_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
+                    nbr_cough_pneumonia_2_12_months_F: nbr_cough_pneumonia_2_12_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_cough_pneumonia_2_12_months_M: nbr_cough_pneumonia_2_12_months_M.filter(d => isvalidCta(d)).length,
+                    nbr_cough_pneumonia_12_60_months_F: nbr_cough_pneumonia_12_60_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_cough_pneumonia_12_60_months_M: nbr_cough_pneumonia_12_60_months_M.filter(d => isvalidCta(d)).length,
                     nbr_diarrhea_0_2_months_F: 0,
                     nbr_diarrhea_0_2_months_M: 0,
-                    nbr_diarrhea_2_12_months_F: nbr_diarrhea_2_12_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_diarrhea_2_12_months_M: nbr_diarrhea_2_12_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_diarrhea_12_60_months_F: nbr_diarrhea_12_60_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_diarrhea_12_60_months_M: nbr_diarrhea_12_60_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
+                    nbr_diarrhea_2_12_months_F: nbr_diarrhea_2_12_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_diarrhea_2_12_months_M: nbr_diarrhea_2_12_months_M.filter(d => isvalidCta(d)).length,
+                    nbr_diarrhea_12_60_months_F: nbr_diarrhea_12_60_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_diarrhea_12_60_months_M: nbr_diarrhea_12_60_months_M.filter(d => isvalidCta(d)).length,
                     nbr_malnutrition_0_2_months_F: 0,
                     nbr_malnutrition_0_2_months_M: 0,
-                    nbr_malnutrition_2_12_months_F: nbr_malnutrition_2_12_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_malnutrition_2_12_months_M: nbr_malnutrition_2_12_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_malnutrition_12_60_months_F: nbr_malnutrition_12_60_months_F.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_malnutrition_12_60_months_M: nbr_malnutrition_12_60_months_M.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length,
-                    nbr_total: nbr_total_pecime.filter(d => d.cta !== null && parseInt(`${d.cta}`) > 0).length + 0,
+                    nbr_malnutrition_2_12_months_F: nbr_malnutrition_2_12_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_malnutrition_2_12_months_M: nbr_malnutrition_2_12_months_M.filter(d => isvalidCta(d)).length,
+                    nbr_malnutrition_12_60_months_F: nbr_malnutrition_12_60_months_F.filter(d => isvalidCta(d)).length,
+                    nbr_malnutrition_12_60_months_M: nbr_malnutrition_12_60_months_M.filter(d => isvalidCta(d)).length,
+                    nbr_total: nbr_total_pecime.filter(d => isvalidCta(d)).length + 0,
                 },
                 {
                     index: 5,

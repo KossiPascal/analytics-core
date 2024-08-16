@@ -42,7 +42,12 @@ export async function SyncAdultData(report: any, _repoAdult: Repository<AdultDat
             
             _adult.is_referred = dataTransform(fields.is_referred, 'null_false');
 
-            _adult.cta = dataTransform(fields.cta_quantity, 'number');
+            // _adult.cta_total = dataTransform(fields.cta_quantity, 'number');
+            _adult.cta_nn = dataTransform(fields.cta_nn_quantity, 'number');
+            _adult.cta_pe = dataTransform(fields.cta_pe_quantity, 'number');
+            _adult.cta_ge = dataTransform(fields.cta_ge_quantity, 'number');
+            _adult.cta_ad = dataTransform(fields.cta_ad_quantity, 'number');
+
             _adult.amoxicillin_250mg = dataTransform(fields.amoxicillin_250mg_quantity, 'number');
             _adult.amoxicillin_500mg = dataTransform(fields.amoxicillin_500mg_quantity, 'number');
             _adult.paracetamol_250mg = dataTransform(fields.paracetamol_250mg_quantity, 'number');

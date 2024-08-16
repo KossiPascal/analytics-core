@@ -131,20 +131,18 @@ export class ApiService {
     const fparams = this.ApiParams({ year, month });
     return this.http.post(`${this.backendUrl}/sync/db-promotional-activity-report-calculation`, fparams, this.customHeaders);
   }
+  RECO_MEG_SITUATION_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
+    const fparams = this.ApiParams({ year, month });
+    return this.http.post(`${this.backendUrl}/sync/db-reco-meg-situation-report-calculation`, fparams, this.customHeaders);
+  }
   //END REPORTS CALCULATION FROM DB
 
 
   //END DASHBOARD CALCULATION FROM DB
-  RECO_MEG_STOCK_DASHBOARD_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const fparams = this.ApiParams({ year, month });
-    return this.http.post(`${this.backendUrl}/sync/db-reco-meg-stock-dashboard-calculation`, fparams, this.customHeaders);
-  }
-
   RECO_VACCINATION_DASHBOARD_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
     const fparams = this.ApiParams({ year, month });
     return this.http.post(`${this.backendUrl}/sync/db-reco-vaccination-dashboard-calculation`, fparams, this.customHeaders);
   }
-
 
   RECO_PERFORMANCE_DASHBOARD_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
     const fparams = this.ApiParams({ year, month });
@@ -210,6 +208,11 @@ export class ApiService {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/chws-reco-reports`, fparams, this.customHeaders);
   }
+
+  GetRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/reco-meg-situation-reports`, fparams, this.customHeaders);
+  }
   //END REPPORTS
 
 
@@ -245,16 +248,17 @@ export class ApiService {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/chws-reco-reports-validation`, fparams, this.customHeaders);
   }
+
+  ValidateRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/reco-meg-situation-reports-validation`, fparams, this.customHeaders);
+  }
+
   //END VALIDATE REPPORTS
 
 
 
   //START DASHBOARD
-  GetRecoMegDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
-    const fparams = this.ApiParams({ months, year, recos });
-    return this.http.post(`${this.backendUrl}/dashboards/reco-meg-stock-dashboards`, fparams, this.customHeaders);
-  }
-
   GetRecoVaccinationDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/dashboards/reco-vaccination-dashboards`, fparams, this.customHeaders);
@@ -353,6 +357,11 @@ export class ApiService {
   SendPromotionActivitiesToDhis2({ dataValues, months, year, recos }: { dataValues: DataValue[], months: string[], year: number, recos: string[] }): any {
     const fparams = this.ApiParams({ dataValues, months, year, recos });
     return this.http.post(`${this.backendUrl}/dhis2/send/promotional-activity`, fparams, this.customHeaders);
+  }
+
+  SendRecoMegSituationActivitiesToDhis2({ dataValues, months, year, recos }: { dataValues: DataValue[], months: string[], year: number, recos: string[] }): any {
+    const fparams = this.ApiParams({ dataValues, months, year, recos });
+    return this.http.post(`${this.backendUrl}/dhis2/send/reco-meg-situation-activity`, fparams, this.customHeaders);
   }
 
   //END DHIS2

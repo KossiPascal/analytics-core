@@ -1,5 +1,5 @@
 import { Entity, PrimaryColumn, Column, Repository, DataSource, ManyToOne, JoinColumn } from "typeorm"
-import { FP_Utils, ChwsRecoReportElements, MorbidityUtils, PcimneNewbornReportUtils } from "../utils/Interfaces"
+import { FP_Utils, ChwsRecoReportElements, MorbidityUtils, PcimneNewbornReportUtils, RecoMegQuantityUtils } from "../utils/Interfaces"
 import { AppDataSource } from "../data_source";
 
 // export enum FlightType { DOMESTIC = "domestic", INTERNATIONAL = "international" }
@@ -618,8 +618,68 @@ export class ChwsRecoReport {
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
-
 }
 export async function getChwsRecoReportRepository(): Promise<Repository<ChwsRecoReport>> {
     return Connection.getRepository(ChwsRecoReport);
+}
+
+
+
+@Entity()
+export class RecoMegSituationReport {
+
+    @PrimaryColumn({ type: 'text', nullable: false })
+    id!: string
+
+    @Column({ type: 'bigint', nullable: false })
+    year!: number
+
+    @Column({ type: 'varchar', nullable: false })
+    month!: string
+
+    @Column({ type: 'jsonb', nullable: false })
+    meg_data!: RecoMegQuantityUtils[]
+
+    @Column({ type: 'jsonb', nullable: false })
+    country!: { id: string, name: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    region!: { id: string, name: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    prefecture!: { id: string, name: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    commune!: { id: string, name: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    hospital!: { id: string, name: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    district_quartier!: { id: string, name: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    chw!: { id: string, name: string, phone: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    village_secteur!: { id: string, name: string }
+
+    @Column({ type: 'jsonb', nullable: false })
+    reco!: { id: string, name: string, phone: string }
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    is_validate!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    validate_user_id!:string
+
+    @Column({ type: 'boolean', nullable: false, default:false })
+    already_on_dhis2!:boolean
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_user_id!:string
+
+}
+export async function getRecoMegSituationReportRepository(): Promise<Repository<RecoMegSituationReport>> {
+    return Connection.getRepository(RecoMegSituationReport);
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 // import axios from 'axios';
-import { ChwsRecoReport, ChwsRecoReportElements, FamilyPlanningReport, HouseholdRecapReport, IndicatorsDataOutput, MorbidityReport, PcimneNewbornReport, PcimneNewbornReportUtils, PromotionReport } from '@kossi-models/reports';
+import { ChwsRecoReport, ChwsRecoReportElements, FamilyPlanningReport, HouseholdRecapReport, IndicatorsDataOutput, MorbidityReport, PcimneNewbornReport, PcimneNewbornReportUtils, PromotionReport, RecoMegQuantityUtils, RecoMegSituationReport } from '@kossi-models/reports';
 import { IndexedDbService } from './indexed-db.service';
 import { ApiService } from './api.service';
-import { RecoChartPerformanceDashboard, RecoMegDashboard, RecoMegDashboardUtils, RecoPerformanceDashboard, RecoPerformanceDashboardUtils, RecoVaccinationDashboard, RecoVaccinationDashboardUtils } from '@kossi-models/dashboards';
+import { RecoChartPerformanceDashboard, RecoPerformanceDashboard, RecoPerformanceDashboardUtils, RecoVaccinationDashboard, RecoVaccinationDashboardUtils } from '@kossi-models/dashboards';
 import { monthByArg, notNull } from '../utils/functions';
 import { UserContextService } from './user-context.service';
 import { User } from '@kossi-models/user';
@@ -557,6 +557,7 @@ export class LocalDbDataFetchService {
     }
     return;
   }
+
   GetChwsRecoReportElementsUtils(elem: ChwsRecoReportElements): ChwsRecoReportElements {
     return {
       index: elem.index,
@@ -567,63 +568,69 @@ export class LocalDbDataFetchService {
     }
   }
 
-  // ############################## DASHBOARDS ################################
 
-  async GetRecoMegDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoMegDashboardUtils[]> | undefined> {
-    var recoMegDashboard: RecoMegDashboard[] = [];
+
+  async GetRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoMegQuantityUtils[]> | undefined> {
+    var recoMegReports: RecoMegSituationReport[] = [];
     if (this.USER?.can_use_offline_mode === true) {
-      recoMegDashboard = await this.indexdb.getAllData<RecoMegDashboard>('reco_meg_dashboard', this.keyPath, (item) => {
+      recoMegReports = await this.indexdb.getAllData<RecoMegSituationReport>('reco_meg_situation_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
     } else {
-      recoMegDashboard = (await (this.api.GetRecoMegDashboards({ months, year, recos }).
-        pipe(map((res$: { status: number, data: RecoMegDashboard[] }) => { return res$.status === 200 ? res$.data : []; }),
+      recoMegReports = (await (this.api.GetRecoMegSituationReports({ months, year, recos }).
+        pipe(map((res$: { status: number, data: RecoMegSituationReport[] }) => { return res$.status === 200 ? res$.data : []; }),
           catchError((err: any) => { return of(undefined); }))).toPromise()) ?? [];
     }
-    if (recoMegDashboard.length > 0) {
-      const smDash: { [key: number]: RecoMegDashboardUtils } = {}
-      for (const r of recoMegDashboard) {
+
+    if (recoMegReports.length > 0) {
+      const smDash: { [key: number]: RecoMegQuantityUtils } = {}
+      for (const r of recoMegReports) {
         for (const m of r.meg_data) {
           if (!(m.index in smDash)) {
             smDash[m.index] = m;
           } else {
-            smDash[m.index].month_stock = parseInt(`${smDash[m.index].month_stock}`) + parseInt(`${m.month_stock}`);
-            smDash[m.index].available_stock = parseInt(`${smDash[m.index].available_stock}`) + parseInt(`${m.available_stock}`);
-            smDash[m.index].consumption = parseInt(`${smDash[m.index].consumption}`) + parseInt(`${m.consumption}`);
-            smDash[m.index].loss = parseInt(`${smDash[m.index].loss}`) + parseInt(`${m.loss}`);
-            smDash[m.index].damaged = parseInt(`${smDash[m.index].damaged}`) + parseInt(`${m.damaged}`);
-            smDash[m.index].broken = parseInt(`${smDash[m.index].broken}`) + parseInt(`${m.broken}`);
-            smDash[m.index].obselete = parseInt(`${smDash[m.index].obselete}`) + parseInt(`${m.obselete}`);
+            smDash[m.index].month_beginning = parseInt(`${smDash[m.index].month_beginning}`) + parseInt(`${m.month_beginning}`);
+            smDash[m.index].month_received = parseInt(`${smDash[m.index].month_received}`) + parseInt(`${m.month_received}`);
+            smDash[m.index].month_total_start = parseInt(`${smDash[m.index].month_total_start}`) + parseInt(`${m.month_total_start}`);
+            smDash[m.index].month_consumption = parseInt(`${smDash[m.index].month_consumption}`) + parseInt(`${m.month_consumption}`);
+            smDash[m.index].month_theoreticaly = parseInt(`${smDash[m.index].month_theoreticaly}`) + parseInt(`${m.month_theoreticaly}`);
+            smDash[m.index].month_inventory = parseInt(`${smDash[m.index].month_inventory}`) + parseInt(`${m.month_inventory}`);
+            smDash[m.index].month_loss = parseInt(`${smDash[m.index].month_loss}`) + parseInt(`${m.month_loss}`);
+            smDash[m.index].month_damaged = parseInt(`${smDash[m.index].month_damaged}`) + parseInt(`${m.month_damaged}`);
+            smDash[m.index].month_broken = parseInt(`${smDash[m.index].month_broken}`) + parseInt(`${m.month_broken}`);
+            smDash[m.index].month_expired = parseInt(`${smDash[m.index].month_expired}`) + parseInt(`${m.month_expired}`);
           }
         }
       }
 
-      const reco_names = recoMegDashboard.map(r => r.reco).reduce((unique: { id: string, name: string, phone: string }[], r: { id: string, name: string, phone: string } | null) => {
+      const reco_names = recoMegReports.map(r => r.reco).reduce((unique: { id: string, name: string, phone: string }[], r: { id: string, name: string, phone: string } | null) => {
         if (r && !(unique.find(i => i.id === r.id))) {
           unique.push(r);
         }
         return unique;
       }, []);
 
-      const outPutReport: IndicatorsDataOutput<RecoMegDashboardUtils[]> = {
-        country: recoMegDashboard[0].country,
-        region: recoMegDashboard[0].region,
-        prefecture: recoMegDashboard[0].prefecture,
-        commune: recoMegDashboard[0].commune,
-        hospital: recoMegDashboard[0].hospital,
-        district_quartier: recoMegDashboard[0].district_quartier,
-        chw: recoMegDashboard[0].chw,
-        village_secteur: recoMegDashboard[0].village_secteur,
+      const outPutReport: IndicatorsDataOutput<RecoMegQuantityUtils[]> = {
+        country: recoMegReports[0].country,
+        region: recoMegReports[0].region,
+        prefecture: recoMegReports[0].prefecture,
+        commune: recoMegReports[0].commune,
+        hospital: recoMegReports[0].hospital,
+        district_quartier: recoMegReports[0].district_quartier,
+        chw: recoMegReports[0].chw,
+        village_secteur: recoMegReports[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
-        is_validate: recoMegDashboard.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
-        already_on_dhis2: recoMegDashboard.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        is_validate: recoMegReports.map(d => d.is_validate).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
+        already_on_dhis2: recoMegReports.map(d => d.already_on_dhis2).reduce((acc, val) => val !== true ? acc + 1 : acc, 0) === 0,
         data: Object.values(smDash).sort((a, b) => a.index - b.index)
       };
       return outPutReport;
     }
     return;
   }
+
+  // ############################## DASHBOARDS ################################
 
   async GetRecoVaccinationDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoVaccinationDashboard[]> | undefined> {
     var recoVaccineDashboard: RecoVaccinationDashboard[] = [];

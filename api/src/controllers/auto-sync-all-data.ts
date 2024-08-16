@@ -9,12 +9,12 @@ import { FAMILY_PLANNNING_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports
 import { HOUSEHOLD_RECAPS_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports-calculation/household-recaps-report";
 import { PCIMNE_NEWBORN_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports-calculation/pcime-newborn-report";
 import { PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports-calculation/promotion-activity-report";
-import { RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboards-calculation/reco-meg-stock-dashboard";
 import { RECO_PERFORMANCE_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboards-calculation/reco-performance-dashboard";
 import { RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboards-calculation/reco-chart-performance-dashboard";
 import { RECO_VACCINATION_DASHBOARD_CALCULATION_DATA } from "./GET_FROM_DB/dashboards-calculation/reco-vaccine-dashboard";
 import { normalizePort, logNginx, notEmpty } from "../utils/functions";
 import { APP_ENV } from "../utils/constantes";
+import { RECO_MEG_SITUATION_REPORTS_CALCULATION_DATA } from "./GET_FROM_DB/reports-calculation/reco-meg-situation-report";
 
 const { NODE_ENV, APP_HOST, ACTIVE_SECURE_MODE, APP_PROD_PORT, APP_DEV_PORT } = APP_ENV;
 
@@ -173,19 +173,19 @@ export async function AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA(params: { wait?: bool
                 const d4 = await HOUSEHOLD_RECAPS_REPORTS_CALCULATION_DATA({ year, month });
                 const d5 = await PCIMNE_NEWBORN_REPORTS_CALCULATION_DATA({ year, month });
                 const d6 = await PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION_DATA({ year, month });
+                const d7 = await RECO_MEG_SITUATION_REPORTS_CALCULATION_DATA({ year, month });
                 output.reports.push({ cible: `CHW RECO REPORTS ( ${month}-${year} )`, data: d1 });
                 output.reports.push({ cible: `FAMILY PLANNNING REPORTS ( ${month}-${year} )`, data: d2 });
                 output.reports.push({ cible: `ADULT MORBIDITY REPORTS ( ${month}-${year} )`, data: d3 });
                 output.reports.push({ cible: `HOUSEHOLD RECAPS REPORTS ( ${month}-${year} )`, data: d4 });
                 output.reports.push({ cible: `PCIMNE NEWBORN REPORTS ( ${month}-${year} )`, data: d5 });
                 output.reports.push({ cible: `PROMOTONAL ACTIVITIES REPORTS ( ${month}-${year} )`, data: d6 });
+                output.reports.push({ cible: `RECO MEG SITUATION ( ${month}-${year} )`, data: d7 });
 
                 //DASHBOARDS
-                const d7 = await RECO_MEG_STOCK_DASHBOARD_CALCULATION_DATA({ year, month });
                 const d8 = await RECO_PERFORMANCE_DASHBOARD_CALCULATION_DATA({ year, month });
                 const d9 = await RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ year, month });
-                
-                output.dashboards.push({ cible: `RECO MEG STOCK DASHBOARD ( ${month}-${year} )`, data: d7 });
+
                 output.dashboards.push({ cible: `RECO PERFORMANCE DASHBOARD ( ${month}-${year} )`, data: d8 });
                 output.dashboards.push({ cible: `RECO VACCINATION DASHBOARD ( ${month}-${year} )`, data: d9 });
 

@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { RecoMegDashboardComponent } from './reco-meg-stock/reco-meg-stock.component';
 import { LoginAccessGuard } from '@kossi-src/app/guards/login-access-guard';
 import { RecoPerformanceDashboardComponent } from './reco-performance/reco-performance.component';
 import { RecoVaccinationDashboardComponent } from './reco-vaccination/reco-vaccination.component';
@@ -23,15 +22,6 @@ const routes: Routes = [
     data: {
       href: 'dashboards/reco-vaccination-dashboard',
       title: 'Vaccination des enfants',
-    },
-  },
-  {
-    path: 'reco-meg-dashboard',
-    component: RecoMegDashboardComponent,
-    canActivate: [LoginAccessGuard],
-    data: {
-      href: 'dashboards/reco-meg-dashboard',
-      title: 'Reco Meg Dashboard',
     },
   },
 ];

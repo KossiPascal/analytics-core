@@ -11,6 +11,7 @@ import { HouseholdRecapComponent } from './household-recap/household-recap.compo
 import { SharedModule } from '@kossi-src/app/w_shared/shared.module';
 import { RepportsOrgunitSelectorComponent } from '@kossi-selectors/repports-orgunit/repports-orgunit.component';
 import { RepportsHeaderSelectorComponent } from '@kossi-selectors/repports-header/repports-header.component';
+import { RecoMegSituationComponent } from './reco-meg-situation/reco-meg-situationcomponent';
 
 @NgModule({
   declarations: [
@@ -22,6 +23,7 @@ import { RepportsHeaderSelectorComponent } from '@kossi-selectors/repports-heade
     PromotionComponent,
     RepportsOrgunitSelectorComponent,
     RepportsHeaderSelectorComponent,
+    RecoMegSituationComponent
   ],
   imports: [
     CommonModule,

@@ -298,14 +298,14 @@ export async function QUERY_RECO_MEG_DATA_STOCKS({ reco_id, month, year }: { rec
     return await Connection.query(query, [...params]);
 }
 
-export function RECO_MEG_STOCKS(megStock: RecoMegData[], cible: 'pill_coc' | 'pill_cop' | 'diu' | 'condoms' | 'depo_provera_im' | 'implant' | 'dmpa_sc' | 'cycle_necklace' | 'tubal_ligation' | 'cta' | 'tdr' | 'amoxicillin_250mg' | 'amoxicillin_500mg' | 'paracetamol_250mg' | 'paracetamol_500mg' | 'ors' | 'zinc' | 'vitamin_a' | 'mebendazol_250mg' | 'mebendazol_500mg' | 'tetracycline_ointment') {
+export function RECO_MEG_STOCKS(megStock: RecoMegData[], cible: 'pill_coc' | 'pill_cop' | 'diu' | 'condoms' | 'depo_provera_im' | 'implant' | 'dmpa_sc' | 'cycle_necklace' | 'tubal_ligation' | 'cta_nn' | 'cta_pe' | 'cta_ge' | 'cta_ad' | 'tdr' | 'amoxicillin_250mg' | 'amoxicillin_500mg' | 'paracetamol_250mg' | 'paracetamol_500mg' | 'ors' | 'zinc' | 'vitamin_a' | 'mebendazol_250mg' | 'mebendazol_500mg' | 'tetracycline_ointment') {
     const total_stock: number = megStock.filter(m => m.meg_type === 'stock' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
     const consumption: number = megStock.filter(m => m.meg_type === 'consumption' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
     const loss: number = megStock.filter(m => m.meg_type === 'loss' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
     const damaged: number = megStock.filter(m => m.meg_type === 'damaged' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
     const broken: number = megStock.filter(m => m.meg_type === 'broken' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
-    const obselete: number = megStock.filter(m => m.meg_type === 'obselete' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
-    const stock_available: number = total_stock - consumption - loss - damaged - broken - obselete;
+    const expired: number = megStock.filter(m => m.meg_type === 'expired' && m[cible] !== null && (m as any)[cible] >= 0).map(c => parseInt(`${c[cible]}`)).reduce((total, num) => parseInt(`${total}`) + parseInt(`${num}`), 0);
+    const stock_available: number = total_stock - consumption - loss - damaged - broken - expired;
     const referred: number = megStock.filter(m => m.fp_method === cible && m.is_fp_referred === true).length;
     const side_effect: number = megStock.filter(m => m.fp_method === cible && m.has_fp_side_effect === true).length;
     return {
@@ -314,7 +314,7 @@ export function RECO_MEG_STOCKS(megStock: RecoMegData[], cible: 'pill_coc' | 'pi
         loss: loss,
         damaged: damaged,
         broken: broken,
-        obselete: obselete,
+        expired: expired,
         stock_available: stock_available,
         referred: referred,
         side_effect: side_effect,
@@ -332,7 +332,10 @@ export function RECO_MEG_FULL_STOCKS(megStock: RecoMegData[]) {
         diu: RECO_MEG_STOCKS(megStock, 'diu'),
         implant: RECO_MEG_STOCKS(megStock, 'implant'),
         tubal_ligation: RECO_MEG_STOCKS(megStock, 'tubal_ligation'),
-        cta: RECO_MEG_STOCKS(megStock, 'cta'),
+        cta_nn: RECO_MEG_STOCKS(megStock, 'cta_nn'),
+        cta_pe: RECO_MEG_STOCKS(megStock, 'cta_pe'),
+        cta_ge: RECO_MEG_STOCKS(megStock, 'cta_ge'),
+        cta_ad: RECO_MEG_STOCKS(megStock, 'cta_ad'),
         tdr: RECO_MEG_STOCKS(megStock, 'tdr'),
         amoxicillin_250mg: RECO_MEG_STOCKS(megStock, 'amoxicillin_250mg'),
         amoxicillin_500mg: RECO_MEG_STOCKS(megStock, 'amoxicillin_500mg'),

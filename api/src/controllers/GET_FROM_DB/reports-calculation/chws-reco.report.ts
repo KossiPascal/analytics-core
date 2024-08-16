@@ -16,7 +16,7 @@ import { DataSource } from "typeorm";
 import { AppDataSource } from "../../../data_source";
 import { DeathData } from "../../../entities/_Death-data";
 import { date_to_milisecond, isChildUnder5 } from "../../../utils/date-utils";
-import { getFirstAndLastDayOfMonth, notEmpty } from "../../../utils/functions";
+import { getFirstAndLastDayOfMonth, isvalidCta, notEmpty } from "../../../utils/functions";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 
 let Connection: DataSource = AppDataSource.manager.connection;
@@ -416,7 +416,7 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
                     {
                         index: 3,
                         indicator: 'Nombre de cas traités avec CTA par les RECO',
-                        de_number: pcimnes.filter(p => p.rdt_given === true && p.has_malaria === true && p.cta !== null && p.cta > 0).length,
+                        de_number: pcimnes.filter(p => p.rdt_given === true && p.has_malaria === true && isvalidCta(p)).length,
                         observation: null
                     },
                     {
@@ -615,7 +615,7 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
                     {
                         index: 3,
                         indicator: 'Nombre de cas de palu traités avec CTA par les RECO',
-                        de_number: adults.filter(a => a.has_malaria === true && a.cta !== null && a.cta > 0).length,
+                        de_number: adults.filter(a => a.has_malaria === true && isvalidCta(a)).length,
                         observation: null
                     },
                     {

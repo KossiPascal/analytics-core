@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { DataSource } from 'typeorm';
 import { AppDataSource } from '../../data_source';
-import { ChwsRecoReport, FamilyPlanningReport, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PromotionReport } from '../../entities/Reports';
+import { ChwsRecoReport, FamilyPlanningReport, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PromotionReport, RecoMegSituationReport } from '../../entities/Reports';
 let Connection: DataSource = AppDataSource.manager.connection;
 
 
@@ -162,6 +162,34 @@ export async function GET_CHWS_RECO_REPORTS(req: Request, res: Response, next: N
         return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
     }
 };
+
+export async function GET_RECO_MEG_REPORTS(req: Request, res: Response, next: NextFunction){
+    try {
+        if (1 == 1) {
+            var { months, year, recos } = req.body;
+            if (months && year && recos) {
+                months = Array.isArray(months) ? months : [months];
+                recos = Array.isArray(recos) ? recos : [recos];
+                const monthsPlaceholders = months.map((_: any, i: number) => `$${i + 1}`).join(',');
+                const yearPlaceholders = `$${months.length + 1}`;
+                const recosPlaceholders = recos.map((_: any, i: number) => `$${months.length + 2 + i}`).join(',');
+                const data: RecoMegSituationReport = await Connection.query(`
+                    SELECT * FROM reco_meg_situation_report c
+                    WHERE c.month IN (${monthsPlaceholders})
+                    AND c.year = ${yearPlaceholders}
+                    AND (c.reco->>'id')::text IN (${recosPlaceholders})
+                `, [...months, year, ...recos]);
+                return res.status(200).json({ status: 200, data: data });
+            }
+            return res.status(201).json({ status: 201, data: 'You provide empty filters' });
+        }
+        return res.status(201).json({ status: 201, data: 'not autorized' });
+    } catch (err: any) {
+        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+    }
+}
+
+
 
 
 

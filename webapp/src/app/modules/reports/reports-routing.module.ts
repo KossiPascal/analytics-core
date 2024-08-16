@@ -7,6 +7,7 @@ import { PcimeComponent } from './pcime/pcime.component';
 import { PromotionComponent } from './promotion/promotion.component';
 import { HouseholdRecapComponent } from './household-recap/household-recap.component';
 import { LoginAccessGuard } from '@kossi-src/app/guards/login-access-guard';
+import { RecoMegSituationComponent } from './reco-meg-situation/reco-meg-situationcomponent';
 
 
 const routes: Routes = [
@@ -63,6 +64,15 @@ const routes: Routes = [
     data: {
       href: 'reports/household-recap',
       title: 'TABLEAU RECAPITULATIF DES MENAGES',
+    },
+  },
+  {
+    path: 'reco-meg-situation',
+    component: RecoMegSituationComponent,
+    canActivate: [LoginAccessGuard],
+    data: {
+      href: 'reports/reco-meg-situation',
+      title: 'GESTION MEDICAMENTS RECO',
     },
   },
 ];

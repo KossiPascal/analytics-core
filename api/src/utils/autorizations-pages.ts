@@ -28,7 +28,6 @@ export const ROUTES_LIST: Routes[] = [
     { path: "manages/sync-calculate-all-data", label: 'Sync Calculate All Data', group: "MANAGEMENT", autorisations: ["_admin", 'can_manage_data'] },
     { path: "manages/sync-to-dhis2", label: 'Sync To Dhis2', group: "MANAGEMENT", autorisations: ["_admin"] },
 
-    { path: "dashboards/reco-meg-dashboard", label: 'Reco Meg Dashboard', group: "DASHBOARDS", autorisations: ["_admin", "can_view_dashboards", "can_use_offline_mode"] },
     { path: "dashboards/reco-vaccination-dashboard", label: 'Vaccination des enfants', group: "DASHBOARDS", autorisations: ["_admin", "can_view_dashboards", "can_use_offline_mode"] },
     { path: "dashboards/reco-performance-dashboard", label: 'Performance des Reco', group: "DASHBOARDS", autorisations: ["_admin", "can_view_dashboards", "can_use_offline_mode"] },
 
@@ -37,5 +36,6 @@ export const ROUTES_LIST: Routes[] = [
     { path: "reports/morbidity", label: "MORBIDITÉ", group: 'RAPPORTS', autorisations: ["_admin", "can_view_reports", "can_use_offline_mode"] }, // "MALARIA MORBIDITY REPORTS"
     { path: "reports/pcimne", label: "RAPPORT PCIMNE", group: 'RAPPORTS', autorisations: ["_admin", "can_view_reports", "can_use_offline_mode"] }, // "PCIME REPORTS"
     { path: "reports/chw-reco-activity", label: "RAPPORT MENSUEL D'ACTIVITÉ", group: 'RAPPORTS', autorisations: ["_admin", "can_view_reports", "can_use_offline_mode"] }, // "CHWS_RECO REPORTS"
-    { path: "reports/household-recap", label: "RÉCAP DES MÉNAGES", group: 'RAPPORTS', autorisations: ["_admin", "can_view_reports", "can_use_offline_mode"] }, // "CHWS_RECO REPORTS"
+    { path: "reports/household-recap", label: "RÉCAP DES MÉNAGES", group: 'RAPPORTS', autorisations: ["_admin", "can_view_reports", "can_use_offline_mode"] }, // "RÉCAP DES MÉNAGES"
+    { path: "reports/reco-meg-situation", label: "GESTION MEDICAMENTS RECO", group: 'RAPPORTS', autorisations: ["_admin", "can_view_reports", "can_use_offline_mode"] }, // "GESTION MEDICAMENTS RECO"
 ];
