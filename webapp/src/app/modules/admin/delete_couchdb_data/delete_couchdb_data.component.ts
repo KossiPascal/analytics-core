@@ -465,7 +465,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
     if (['reco-data', 'patients', 'families'].includes(this._FormGroup.value.type)) {
       const district_quartiers: string[] = toArray(this._FormGroup.value.district_quartiers);
-      this.cibles$ = this.Recos$.filter(reco => district_quartiers.includes(reco.village_secteur_id));
+      this.cibles$ = this.Recos$.filter(reco => district_quartiers.includes(reco.district_quartier_id));
     } else if (this._FormGroup.value.type === 'chws-data') {
       const district_quartiers: string[] = toArray(this._FormGroup.value.district_quartiers);
       this.cibles$ = this.Chws$.filter(chw => district_quartiers.includes(chw.district_quartier_id));
