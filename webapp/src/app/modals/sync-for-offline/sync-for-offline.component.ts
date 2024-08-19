@@ -5,10 +5,10 @@ import { BsModalRef } from 'ngx-bootstrap/modal';
 import { SnackbarService } from '@kossi-services/snackbar.service';
 import { AuthService } from '@kossi-src/app/services/auth.service';
 import { currentYear, currentMonth, getMonthsList, getYearsList, notNull, toArray } from '@kossi-src/app/utils/functions';
-import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
 import { LocalDbDataFetchService } from '@kossi-services/local-db-data-fetch.service';
 import { UrlTrackerService } from '@kossi-services/url-tracker.service';
 import { UserContextService } from '@kossi-services/user-context.service';
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap } from '@kossi-models/org-unit-interface';
 
 @Component({
   selector: 'sync-for-offline-confirm-modal',
@@ -27,26 +27,26 @@ export class SyncForOfflineConfirmComponent implements OnInit, AfterViewInit{
   screenWidth: number;
   COLUMN_WIDTH: number;
 
-  Countries$: CountryCoustomQuery[] = [];
-  Regions$: RegionCoustomQuery[] = [];
-  Prefectures$: PrefectureCoustomQuery[] = [];
-  Communes$: CommuneCoustomQuery[] = [];
-  Hospitals$: HospitalCoustomQuery[] = [];
-  DistrictQuartiers$: DistrictQuartierCoustomQuery[] = [];
-  VillageSecteurs$: VillageSecteurCoustomQuery[] = [];
-  Chws$: ChwCoustomQuery[] = [];
-  Recos$: RecoCoustomQuery[] = [];
+  Countries$: CountryMap[] = [];
+  Regions$: RegionsMap[] = [];
+  Prefectures$: PrefecturesMap[] = [];
+  Communes$: CommunesMap[] = [];
+  Hospitals$: HospitalsMap[] = [];
+  DistrictQuartiers$: DistrictQuartiersMap[] = [];
+  VillageSecteurs$: VillageSecteursMap[] = [];
+  Chws$: ChwsMap[] = [];
+  Recos$: RecosMap[] = [];
 
 
-  countries: CountryCoustomQuery[] = [];
-  regions: RegionCoustomQuery[] = [];
-  prefectures: PrefectureCoustomQuery[] = [];
-  communes: CommuneCoustomQuery[] = [];
-  hospitals: HospitalCoustomQuery[] = [];
-  districtQuartiers: DistrictQuartierCoustomQuery[] = [];
-  villageSecteurs: VillageSecteurCoustomQuery[] = [];
-  chws: ChwCoustomQuery[] = [];
-  recos: RecoCoustomQuery[] = [];
+  countries: CountryMap[] = [];
+  regions: RegionsMap[] = [];
+  prefectures: PrefecturesMap[] = [];
+  communes: CommunesMap[] = [];
+  hospitals: HospitalsMap[] = [];
+  districtQuartiers: DistrictQuartiersMap[] = [];
+  villageSecteurs: VillageSecteursMap[] = [];
+  chws: ChwsMap[] = [];
+  recos: RecosMap[] = [];
 
   // private auth: AuthService,   private snackbar: SnackbarService
 

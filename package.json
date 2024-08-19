@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "private": true,
-  "repository": "https://github.com/KossiPascal/kendeya-analytics-core",
+  "repository": "https://github.com/KossiPascal/analytics-core",
   "engines": {
     "node": ">=20.11.0",
     "npm": ">=10.2.4"
@@ -13,7 +13,7 @@
   ],
   "funding": {
     "type": "github",
-    "url": "https://github.com/KossiPascal/kendeya-analytics-core"
+    "url": "https://github.com/KossiPascal/analytics-core"
   },
   "scripts": {
     "build-watch": "cd webapp && npm run simple-build -- --watch=true & node ./scripts/watch.js",

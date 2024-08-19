@@ -14,12 +14,12 @@
 
     <div class="navbar-nav w-100">
       <ng-container *ngIf="ROUTES_GROUPED.length == 1">
-        <span><i class="fa fa-tachometer-alt me-2"></i> {{ ROUTES_GROUPED[0].group }}</span>
+        <span><i class="fa fa-tachometer-alt me-2"></i><small> {{ ROUTES_GROUPED[0].group }}</small></span>
         <br>
         <a *ngFor="let route of ROUTES_GROUPED[0].routes" routerLink="{{ route.path }}"
           class="nav-item nav-link {{ activePage([route.path]) }}">
-          <i class="fa fa-keyboard me-2"></i>
-          {{ route.label }}
+          <i class="fa fa-keyboard me-1"></i>
+          <small>{{ route.label }}</small>
         </a>
       </ng-container>
 
@@ -28,7 +28,7 @@
           <div *ngIf="routesGp.routes.length == 1" class="nav-item dropdown">
             <a routerLink="{{ routesGp.routes[0].path }}" class="nav-item nav-link {{ activePage([routesGp.routes[0].path]) }}">
               <i class="fa fa-keyboard me-2"></i>
-              {{ routesGp.routes[0].label }}
+              <small>{{ routesGp.routes[0].label }}</small>
             </a>
           </div>
 
@@ -38,7 +38,7 @@
             </a>
             <div class="dropdown-menu sidebar-dropdown bg-transparent border-0 {{ showDropdown(getPaths(routesGp.routes)) }}">
               <a *ngFor="let route of routesGp.routes" routerLink="{{ route.path }}"
-                class="dropdown-item {{ activePage([route.path]) }}">{{ route.label }}
+                class="dropdown-item {{ activePage([route.path]) }}"><small>{{ route.label }}</small>
               </a>
             </div>
           </div>

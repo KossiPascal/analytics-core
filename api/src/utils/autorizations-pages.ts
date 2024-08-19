@@ -5,6 +5,10 @@ export const AUTORISATIONS_LIST:string[] = [
     'can_view_reports',
     'can_view_dashboards',
     'can_manage_data',
+    'can_logout',
+
+    'can_validate_data',
+    'can_send_data_to_dhis2',
 
     'can_create_user',
     'can_update_user',
@@ -13,8 +17,6 @@ export const AUTORISATIONS_LIST:string[] = [
     'can_create_role',
     'can_update_role',
     'can_delete_role',
-
-    'can_logout',
 ];
 
 export const ROUTES_LIST: Routes[] = [

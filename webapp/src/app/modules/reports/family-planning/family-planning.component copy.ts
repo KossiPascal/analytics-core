@@ -1,6 +1,5 @@
 // import { AfterViewInit, Component, HostListener, OnInit } from '@angular/core';
 // import { FormGroup, FormControl, Validators } from '@angular/forms';
-// import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
 // import { FamilyPlanningReport, IndicatorsDataOutput } from '@kossi-models/reports';
 // import { ApiService } from '@kossi-services/api.service';
 // import { AuthService } from '@kossi-services/auth.service';
@@ -47,26 +46,26 @@
 // sendToDhis2ModalVisible: boolean = false;
 
 
-// Countries$: CountryCoustomQuery[] = [];
-// Regions$: RegionCoustomQuery[] = [];
-// Prefectures$: PrefectureCoustomQuery[] = [];
-// Communes$: CommuneCoustomQuery[] = [];
-// Hospitals$: HospitalCoustomQuery[] = [];
-// DistrictQuartiers$: DistrictQuartierCoustomQuery[] = [];
-// VillageSecteurs$: VillageSecteurCoustomQuery[] = [];
-// Chws$: ChwCoustomQuery[] = [];
-// Recos$: RecoCoustomQuery[] = [];
+// Countries$: CountryMap] = [];
+// Regions$: RegionsMap[] = [];
+// Prefectures$: PrefecturesMap[] = [];
+// Communes$: CommunesMap[] = [];
+// Hospitals$: HospitalsMap[] = [];
+// DistrictQuartiers$: DistrictQuartiersMap[] = [];
+// VillageSecteurs$: VillageSecteursMap[] = [];
+// Chws$: ChwsMap[] = [];
+// Recos$: RecosMap[] = [];
 
 
-// countries: CountryCoustomQuery[] = [];
-// regions: RegionCoustomQuery[] = [];
-// prefectures: PrefectureCoustomQuery[] = [];
-// communes: CommuneCoustomQuery[] = [];
-// hospitals: HospitalCoustomQuery[] = [];
-// districtQuartiers: DistrictQuartierCoustomQuery[] = [];
-// villageSecteurs: VillageSecteurCoustomQuery[] = [];
-// chws: ChwCoustomQuery[] = [];
-// recos: RecoCoustomQuery[] = [];
+// countries: CountryMap[] = [];
+// regions: RegionsMap[] = [];
+// prefectures: PrefecturesMap[] = [];
+// communes: CommunesMap[] = [];
+// hospitals: HospitalsMap[] = [];
+// districtQuartiers: DistrictQuartiersMap[] = [];
+// villageSecteurs: VillageSecteursMap[] = [];
+// chws: ChwsMap[] = [];
+// recos: RecosMap[] = [];
 
 // WHITE_SPACE: string = '&nbsp;'.repeat(5);
 

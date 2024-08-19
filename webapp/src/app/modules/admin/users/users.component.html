@@ -66,8 +66,10 @@
 </div>
 
 
-<div *ngIf="addOrUpdateModalVisible" class="absolute-fix-modal-parent animated fadeIn">
-  <form style="width: 600px" [formGroup]="isEditMode? updateForm :registerForm"
+<div *ngIf="addOrUpdateModalVisible" class="absolute-fix-modal animated fadeIn">
+  <div style="width: 100%!important; height: 100%!important; background: rgba(0, 0, 0, 0.5); align-items: center!important; justify-content: center!important;display: flex;">
+
+  <form autocomplete="off" style="width: 600px" [formGroup]="isEditMode? updateForm :registerForm"
     (ngSubmit)="isEditMode? update() :register()" novalidate class="form-horizontal">
     <div class="modal-content">
       <div class="modal-header">
@@ -103,21 +105,21 @@
 
                       <div class="input-group mb-3 col-6">
                         <span class="input-group-text"><span class="fas fa-user"></span></span>
-                        <input style="background-color: white;" id="username" type="text" class="form-control"
+                        <input autocomplete="off" style="background-color: white;" id="username" type="text" class="form-control"
                           placeholder="Username" formControlName="username" aria-label="Username"
                           aria-describedby="basic-addon1">
                       </div>
 
                       <div class="input-group mb-3 col-6">
                         <span class="input-group-text"><span class="fas fa-user"></span></span>
-                        <input style="background-color: white;" id="fullname" type="text" class="form-control"
+                        <input autocomplete="off" style="background-color: white;" id="fullname" type="text" class="form-control"
                           placeholder="Full Name" formControlName="fullname" aria-label="Full Name"
                           aria-describedby="basic-addon1">
                       </div>
 
                       <div class="input-group mb-3 col-6">
-                        <span class="input-group-text"><span class="fas fa-lock"></span></span>
-                        <input style="background-color: white;" id="password" type="password" class="form-control"
+                        <span (click)="showHidePasswordUtils()" class="input-group-text"><span class="fas fa-lock"></span></span>
+                        <input autocomplete="off" style="background-color: white;" id="password" type="{{ showPassword ? 'text' : 'password' }}" class="form-control"
                           placeholder="Password" formControlName="password" aria-label="Password"
                           aria-describedby="basic-addon1">
                       </div>
@@ -127,14 +129,14 @@
 
                       <div class="input-group mb-3 col-6">
                         <span class="input-group-text"><span class="fas fa-envelope"></span></span>
-                        <input style="background-color: white;" id="email" type="email" class="form-control"
+                        <input autocomplete="off" style="background-color: white;" id="email" type="email" class="form-control"
                           placeholder="Email" formControlName="email" aria-label="Email"
                           aria-describedby="basic-addon1">
                       </div>
 
                       <div class="input-group mb-3 col-6">
                         <div style="margin-left: 10px;" class="form-check">
-                          <input style="zoom: 1.5;" class="form-check-input" id="isActive" type="checkbox"
+                          <input autocomplete="off" style="zoom: 1.5;" class="form-check-input" id="isActive" type="checkbox"
                             formControlName="isActive">
                           <label style="margin-top: 10px;" class="form-check-label" for="isActive">
                             Activer
@@ -143,8 +145,8 @@
                       </div>
 
                       <div class="input-group mb-3 col-6">
-                        <span class="input-group-text"><span class="fas fa-lock"></span></span>
-                        <input style="background-color: white;" id="passwordConfirm" type="password"
+                        <span (click)="showHidePasswordUtils()" class="input-group-text"><span class="fas fa-lock"></span></span>
+                        <input autocomplete="off" style="background-color: white;" id="passwordConfirm" type="{{ showPassword ? 'text' : 'password' }}"
                           class="form-control" placeholder="Retype password" formControlName="passwordConfirm"
                           aria-label="Password Confirm" aria-describedby="basic-addon1">
                       </div>
@@ -328,7 +330,7 @@
       </div>
       <div class="modal-footer justify-content-between">
         <button (click)="closeAddOrUpdateModalVisible()" id="close-modal" type="button" class="btn btn-default"
-          data-dismiss="modal">Close</button>
+          data-dismiss="modal">Fermer</button>
         <button
           [disabled]="(isEditMode? (!updateForm.valid) :(!registerForm.valid)) || OrgUnitsIsEmpty() || RolesIsEmpty()"
           type="submit" class="btn btn-{{isEditMode ? 'warning': 'success'}}">{{isEditMode ? 'Modifier':
@@ -338,6 +340,7 @@
   </form>
 </div>
 
+</div>
 
 <div class="modal fade" id="modal-primary">
   <div class="modal-dialog">
@@ -371,9 +374,6 @@
   </div>
 </div>
 
-
-
-
 <div class="modal fade" id="modal-danger">
   <div class="modal-dialog">
     <div class="modal-content bg-danger">
@@ -399,3 +399,4 @@
   </div>
   <!-- /.modal-dialog -->
 </div>
+

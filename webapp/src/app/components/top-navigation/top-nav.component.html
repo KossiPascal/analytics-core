@@ -1,7 +1,7 @@
 <!-- Navbar Start -->
 <nav class="navbar navbar-expand bg-white navbar-white sticky-top px-4 py-0">
   <a href="index.html" class="navbar-brand d-flex d-lg-none me-4">
-    <h5 class="app-text-style mb-0">{{ APP_NAME }}</h5>
+    <h6 class="app-text-style mb-0">{{ APP_NAME }}</h6>
   </a>
 
   <a href="#" class="sidebar-toggler flex-shrink-0">
@@ -87,7 +87,7 @@
 
     <div *ngIf="USER?.can_use_offline_mode === true && isOnline === true" (click)="syncForOffline($event)"
       class="sync-for-offline">
-      SYNCHRONISER EN LOCAL
+      <b style="font-size: 10px;">SYNCHRONISER EN LOCAL</b>
     </div>
 
     <!-- ######################################################################################## -->
@@ -102,13 +102,15 @@
 
       <div class="dropdown-menu topbar-dropdown dropdown-menu-end bg-white border-0 rounded-0 rounded-bottom m-0">
         <a *ngIf="USER?.can_use_offline_mode === true && isOnline === true" (click)="syncForOffline($event)" href="#"
-          class="dropdown-item offline-sync">SYNCHRONISER EN LOCAL</a>
+          class="dropdown-item offline-sync"><b style="font-size: 10px;">SYNCHRONISER EN LOCAL</b></a>
 
-        <a (click)="noAvailableImplementation($event)" href="#" class="dropdown-item">My Profile</a>
+        <a (click)="noAvailableImplementation($event)" href="#" class="dropdown-item">Profile</a>
         <a *ngIf="USER?.isAdmin === true" href="#" (click)="TestMyModal($event)" class="dropdown-item">TEST MY MODAL</a>
 
+        <app-public-utils  style="margin: 5px 0px 5px 0px!important;"></app-public-utils>
+
         <a *ngIf="USER?.isAdmin === true" href="#" class="dropdown-item">Settings</a>
-        <a href="#" (click)="logout($event)" class="dropdown-item"><span class="fa fa-sign-out"></span> Log Out</a>
+        <a href="#" (click)="logout($event)" class="dropdown-item"><span class="fa fa-sign-out"></span> Déconnection</a>
       </div>
     </div>
   </div>

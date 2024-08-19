@@ -4,8 +4,11 @@ import { notEmpty } from '../utils/functions';
 import { GetRolesAndNamesPagesAutorizations, Roles, getRolesRepository } from '../entities/Roles';
 import crypto from 'crypto';
 import { ROUTES_LIST, AUTORISATIONS_LIST } from '../utils/autorizations-pages';
-import { ChwCoustomQuery, CommuneCoustomQuery, CountryCoustomQuery, DistrictQuartierCoustomQuery, HospitalCoustomQuery, PrefectureCoustomQuery, RecoCoustomQuery, RegionCoustomQuery, TokenUser, VillageSecteurCoustomQuery } from '../utils/Interfaces';
+import { TokenUser } from '../utils/Interfaces';
 import { COUNTRIES_COUSTOM_QUERY, REGIONS_COUSTOM_QUERY, PREFECTURES_COUSTOM_QUERY, COMMUNES_COUSTOM_QUERY, HOSPITALS_COUSTOM_QUERY, DISTRICTS_QUARTIERS_COUSTOM_QUERY, VILLAGES_SECTEURS_COUSTOM_QUERY, CHWS_COUSTOM_QUERY, RECOS_COUSTOM_QUERY } from './orgunit-query/org-units-coustom';
+import { ChwsMap, CommunesMap, CountryMap, DistrictQuartiersMap, GetChwsMap, GetCommunesMap, GetCountryMap, GetDistrictQuartiersMap, GetHospitalsMap, GetPrefecturesMap, GetRecosMap, GetRegionsMap, GetVillageSecteursMap, HospitalsMap, PrefecturesMap, RecosMap, RegionsMap, VillageSecteursMap } from '../utils/org-unit-interface';
+import { join } from 'path';
+import { SRC_FOLDER } from '../utils/constantes';
 
 // import uuidv4 from 'uuid';
 
@@ -101,15 +104,15 @@ export class AuthUserController {
                 const data = await GetRolesAndNamesPagesAutorizations(user.roles);
                 const isAdmin = (data?.autorizations ?? []).includes('_admin');
 
-                var countries: CountryCoustomQuery[] = isAdmin !== true ? user.countries : await COUNTRIES_COUSTOM_QUERY();
-                var regions: RegionCoustomQuery[] = isAdmin !== true ? user.regions : await REGIONS_COUSTOM_QUERY();
-                var prefectures: PrefectureCoustomQuery[] = isAdmin !== true ? user.prefectures : await PREFECTURES_COUSTOM_QUERY();
-                var communes: CommuneCoustomQuery[] = isAdmin !== true ? user.communes : await COMMUNES_COUSTOM_QUERY();
-                var hospitals: HospitalCoustomQuery[] = isAdmin !== true ? user.hospitals : await HOSPITALS_COUSTOM_QUERY();
-                var districtQuartiers: DistrictQuartierCoustomQuery[] = isAdmin !== true ? user.districtQuartiers : await DISTRICTS_QUARTIERS_COUSTOM_QUERY();
-                var villageSecteurs: VillageSecteurCoustomQuery[] = isAdmin !== true ? user.villageSecteurs : await VILLAGES_SECTEURS_COUSTOM_QUERY();
-                var chws: ChwCoustomQuery[] = isAdmin !== true ? user.chws : await CHWS_COUSTOM_QUERY();
-                var recos: RecoCoustomQuery[] = isAdmin !== true ? user.recos : await RECOS_COUSTOM_QUERY();
+                var countries: CountryMap[] = isAdmin !== true ? user.countries : (await COUNTRIES_COUSTOM_QUERY()).map(d => GetCountryMap(d));
+                var regions: RegionsMap[] = isAdmin !== true ? user.regions : (await REGIONS_COUSTOM_QUERY()).map(d => GetRegionsMap(d));
+                var prefectures: PrefecturesMap[] = isAdmin !== true ? user.prefectures : (await PREFECTURES_COUSTOM_QUERY()).map(d => GetPrefecturesMap(d));
+                var communes: CommunesMap[] = isAdmin !== true ? user.communes : (await COMMUNES_COUSTOM_QUERY()).map(d => GetCommunesMap(d));
+                var hospitals: HospitalsMap[] = isAdmin !== true ? user.hospitals : (await HOSPITALS_COUSTOM_QUERY()).map(d => GetHospitalsMap(d));
+                var districtQuartiers: DistrictQuartiersMap[] = isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_COUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d));
+                var villageSecteurs: VillageSecteursMap[] = isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_COUSTOM_QUERY()).map(d => GetVillageSecteursMap(d));
+                var chws: ChwsMap[] = isAdmin !== true ? user.chws : (await CHWS_COUSTOM_QUERY()).map(d => GetChwsMap(d));
+                var recos: RecosMap[] = isAdmin !== true ? user.recos : (await RECOS_COUSTOM_QUERY()).map(d => GetRecosMap(d));
                 // FAMILIES_COUSTOM_QUERY();
                 // PATIENTS_COUSTOM_QUERY();
 
@@ -124,7 +127,7 @@ export class AuthUserController {
     };
 
     static register = async (req: Request, res: Response, next: NextFunction) => {
-        try {
+        // try {
             const { userId, username, email, password, fullname, roles, isActive, countries, regions, prefectures, communes, hospitals, districtQuartiers, villageSecteurs, chws, recos } = req.body;
             if (!username || !password) return res.status(201).json({ status: 201, data: 'Invalid credentials' });
 
@@ -159,9 +162,9 @@ export class AuthUserController {
             await userRepo.save(user);
 
             return res.status(200).json({ status: 200, data: 'User registered successfully' });
-        } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
-        }
+        // } catch (err: any) {
+        //     return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+        // }
     };
 
     static newToken = async (req: Request, res: Response, next: NextFunction) => {
@@ -208,11 +211,11 @@ export class AuthUserController {
         try {
             const { userId } = req.body;
             const userRepo = await getUsersRepository();
-            var currentUser: Users | null = await userRepo.findOneBy({id:userId});
+            var currentUser: Users | null = await userRepo.findOneBy({ id: userId });
             if (!currentUser) return res.status(201).json({ status: 200, data: 'You must logout and re-login' });
             const currentUserToken = await userToken(currentUser, { hashToken: false, checkValidation: false, outPutInitialRoles: true, outPutOrgUnits: true });
             if (!currentUserToken) return res.status(201).json({ status: 200, data: 'You must logout and re-login' });
-                
+
             var users: Users[] = await userRepo.find();
             var finalUsers = await Promise.all(users.map(async user => {
                 // const formatedRoles = await GetRolesAndNamesPagesAutorizations(user.roles);

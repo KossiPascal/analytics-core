@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
-import { RecoCoustomQuery, RecoPerformanceDashboardUtils } from "../../../utils/Interfaces";
+import { RecoPerformanceDashboardUtils } from "../../../utils/Interfaces";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 import { RecoChartPerformanceDashboard, getRecoChartPerformanceDashboardRepository } from "../../../entities/dashboards";
 import { getColors } from "../../../utils/functions";
@@ -26,7 +26,7 @@ export async function RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION(req: Request,
 
 export async function RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION_DATA(year: number): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoDashboard = await getRecoChartPerformanceDashboardRepository();
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const __adultData: any[] = await Conn.query(`SELECT * FROM adult_data WHERE year = $1`, [year]);

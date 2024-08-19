@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
-import { RecoCoustomQuery } from "../../../utils/Interfaces";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
 import { RecoVaccinationDashboard, getRecoVaccinationDashboardRepository } from "../../../entities/dashboards";
@@ -84,7 +83,7 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year 
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: 0 };
     try {
         const _repoDashboard = await getRecoVaccinationDashboardRepository();
-        const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+        const recos = await RECOS_COUSTOM_QUERY();
         outPutData.recos_length = recos.length;
         const filterDate = getFirstAndLastDayOfMonth(year, month);
 

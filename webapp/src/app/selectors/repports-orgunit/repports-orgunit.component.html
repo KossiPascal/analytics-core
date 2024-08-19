@@ -5,15 +5,15 @@
       <div class="row">
         <div class="col-6">
           <select (change)="regionsGenerate()"
-            *ngIf="Countries$.length > 1 && countries.length === 0 || countries.length > 1" class="orgunit-style mb-1"
-            formControlName="country">
+            *ngIf="Countries$.length > 1 && countries.length === 0 || countries.length > 1"
+            class="orgunit-style mb-1" formControlName="country">
             <option *ngFor="let c of countries" [value]="c.id">
               {{ c.name }}
             </option>
           </select>
           <select (change)="prefecturesGenerate()"
-            *ngIf="Regions$.length > 1 && regions.length === 0 || regions.length > 1" class="orgunit-style mb-1"
-            formControlName="region">
+            *ngIf="Regions$.length > 1 && regions.length === 0 || regions.length > 1"
+            class="orgunit-style mb-1" formControlName="region">
             <option *ngFor="let r of regions" [value]="r.id">
               {{ r.name }}
             </option>
@@ -26,15 +26,15 @@
             </option>
           </select>
           <select (change)="hospitalsGenerate()"
-            *ngIf="Communes$.length > 1 && communes.length === 0 || communes.length > 1" class="orgunit-style mb-1"
-            formControlName="commune">
+            *ngIf="Communes$.length > 1 && communes.length === 0 || communes.length > 1"
+            class="orgunit-style mb-1" formControlName="commune">
             <option *ngFor="let c of communes" [value]="c.id">
               {{ c.name }}
             </option>
           </select>
           <select (change)="districtsGenerate()"
-            *ngIf="Hospitals$.length > 1 && hospitals.length === 0 || hospitals.length > 1" class="orgunit-style mb-1"
-            formControlName="hospital">
+            *ngIf="Hospitals$.length > 1 && hospitals.length === 0 || hospitals.length > 1"
+            class="orgunit-style mb-1" formControlName="hospital">
             <option *ngFor="let h of hospitals" [value]="h.id">
               {{ h.name }}
             </option>
@@ -49,7 +49,8 @@
         </div>
 
         <div class="col-6">
-          <select *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1"
+          <select
+          *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1"
             class="orgunit-style mb-1" multiple="{{ recos.length > 1 ? 'multiple' : '' }}" formControlName="recos">
             <option *ngFor="let r of recos" [value]="r.id">
               {{ r.name }}

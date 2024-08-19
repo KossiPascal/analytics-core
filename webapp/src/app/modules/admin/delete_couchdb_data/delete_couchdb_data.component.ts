@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
-import { ChwCoustomQuery, CommuneCoustomQuery, CountryCoustomQuery, DistrictQuartierCoustomQuery, FamilyCoustomQuery, FilterParams, HospitalCoustomQuery, PatientCoustomQuery, PrefectureCoustomQuery, RecoCoustomQuery, RegionCoustomQuery, VillageSecteurCoustomQuery } from '@kossi-models/org-units';
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap } from '@kossi-models/org-unit-interface';
+import { FamilyCoustomQuery, FilterParams, PatientCoustomQuery } from '@kossi-models/org-units';
 import { ApiService } from '@kossi-services/api.service';
 import { toArray } from '@kossi-src/app/utils/functions';
 
@@ -16,30 +17,30 @@ export class DeleteCouchdbDataComponent implements OnInit {
   foundedDataToDelete: { id: string, rev: string, name?: string, form?: string, user: string, table: string }[] = []
   selectedListToBeDelete: { _deleted: boolean, _id: string, _rev: string, _table: string }[] = [];
 
-  Countries$: CountryCoustomQuery[] = [];
-  Regions$: RegionCoustomQuery[] = [];
-  Prefectures$: PrefectureCoustomQuery[] = [];
-  Communes$: CommuneCoustomQuery[] = [];
-  Hospitals$: HospitalCoustomQuery[] = [];
-  DistrictQuartiers$: DistrictQuartierCoustomQuery[] = [];
-  VillageSecteurs$: VillageSecteurCoustomQuery[] = [];
+  Countries$: CountryMap[] = [];
+  Regions$: RegionsMap[] = [];
+  Prefectures$: PrefecturesMap[] = [];
+  Communes$: CommunesMap[] = [];
+  Hospitals$: HospitalsMap[] = [];
+  DistrictQuartiers$: DistrictQuartiersMap[] = [];
+  VillageSecteurs$: VillageSecteursMap[] = [];
   Families$: FamilyCoustomQuery[] = [];
-  Chws$: ChwCoustomQuery[] = [];
-  Recos$: RecoCoustomQuery[] = [];
+  Chws$: ChwsMap[] = [];
+  Recos$: RecosMap[] = [];
   Patients$: PatientCoustomQuery[] = [];
 
-  regions$: RegionCoustomQuery[] = [];
-  prefectures$: PrefectureCoustomQuery[] = [];
-  communes$: CommuneCoustomQuery[] = [];
-  hospitals$: HospitalCoustomQuery[] = [];
-  districtQuartiers$: DistrictQuartierCoustomQuery[] = [];
-  villageSecteurs$: VillageSecteurCoustomQuery[] = [];
+  regions$: RegionsMap[] = [];
+  prefectures$: PrefecturesMap[] = [];
+  communes$: CommunesMap[] = [];
+  hospitals$: HospitalsMap[] = [];
+  districtQuartiers$: DistrictQuartiersMap[] = [];
+  villageSecteurs$: VillageSecteursMap[] = [];
   families$: FamilyCoustomQuery[] = [];
-  chws$: ChwCoustomQuery[] = [];
-  recos$: RecoCoustomQuery[] = [];
+  chws$: ChwsMap[] = [];
+  recos$: RecosMap[] = [];
   patients$: PatientCoustomQuery[] = [];
 
-  cibles$: RecoCoustomQuery[] | ChwCoustomQuery[] = [];
+  cibles$: { id:string, name:string, district_quartier_id:string, village_secteur_id:string }[] | { id:string, name:string, district_quartier_id:string }[] = [];
 
   types$: string[] = ['reco-data', 'patients', 'families', 'chws-data', 'mentors-data'];
 
@@ -74,34 +75,34 @@ export class DeleteCouchdbDataComponent implements OnInit {
   async initAllData() {
     this.isLoading = true;
     this.initMsg = 'Chargement des Pays ...';
-    this.api.GetCountries().subscribe(async (_ct$: { status: number, data: CountryCoustomQuery[] }) => {
+    this.api.GetCountries().subscribe(async (_ct$: { status: number, data: CountryMap[] }) => {
       if (_ct$.status == 200) this.Countries$ = _ct$.data;
       this.initMsg = 'Chargement des Regions ...';
-      this.api.GetRegions().subscribe(async (_d$: { status: number, data: RegionCoustomQuery[] }) => {
+      this.api.GetRegions().subscribe(async (_d$: { status: number, data: RegionsMap[] }) => {
         if (_d$.status == 200) this.Regions$ = _d$.data;
         this.initMsg = 'Chargement des Prefectures ...';
-        this.api.GetPrefectures().subscribe(async (_p$: { status: number, data: PrefectureCoustomQuery[] }) => {
+        this.api.GetPrefectures().subscribe(async (_p$: { status: number, data: PrefecturesMap[] }) => {
           if (_p$.status == 200) this.Prefectures$ = _p$.data;
           this.initMsg = 'Chargement des Communes ...';
-          this.api.GetCommunes().subscribe(async (_c$: { status: number, data: CommuneCoustomQuery[] }) => {
+          this.api.GetCommunes().subscribe(async (_c$: { status: number, data: CommunesMap[] }) => {
             if (_c$.status == 200) this.Communes$ = _c$.data;
             this.initMsg = 'Chargement des Hospitaux ...';
-            this.api.GetHospitals().subscribe(async (_h$: { status: number, data: HospitalCoustomQuery[] }) => {
+            this.api.GetHospitals().subscribe(async (_h$: { status: number, data: HospitalsMap[] }) => {
               if (_h$.status == 200) this.Hospitals$ = _h$.data;
               this.initMsg = 'Chargement des Districts/Quartiers ...';
-              this.api.GetDistrictQuartiers().subscribe(async (_q$: { status: number, data: DistrictQuartierCoustomQuery[] }) => {
+              this.api.GetDistrictQuartiers().subscribe(async (_q$: { status: number, data: DistrictQuartiersMap[] }) => {
                 if (_q$.status == 200) this.DistrictQuartiers$ = _q$.data;
                 this.initMsg = 'Chargement des Villages/Secteurs ...';
-                this.api.GetVillageSecteurs().subscribe(async (_v$: { status: number, data: VillageSecteurCoustomQuery[] }) => {
+                this.api.GetVillageSecteurs().subscribe(async (_v$: { status: number, data: VillageSecteursMap[] }) => {
                   if (_v$.status == 200) this.VillageSecteurs$ = _v$.data;
                   this.initMsg = 'Chargement des Familles ...';
                   this.api.GetFamilys().subscribe(async (_f$: { status: number, data: FamilyCoustomQuery[] }) => {
                     if (_f$.status == 200) this.Families$ = _f$.data;
                     this.initMsg = 'Chargement des ASC ...';
-                    this.api.GetChws().subscribe(async (_w$: { status: number, data: ChwCoustomQuery[] }) => {
+                    this.api.GetChws().subscribe(async (_w$: { status: number, data: ChwsMap[] }) => {
                       if (_w$.status == 200) this.Chws$ = _w$.data;
                       this.initMsg = 'Chargement des Reco ...';
-                      this.api.GetRecos().subscribe(async (_o$: { status: number, data: RecoCoustomQuery[] }) => {
+                      this.api.GetRecos().subscribe(async (_o$: { status: number, data: RecosMap[] }) => {
                         if (_o$.status == 200) this.Recos$ = _o$.data;
                         // this.initDataFilted();
                         this.isLoading = false;
@@ -191,7 +192,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     var recoVillageSecteur: string[] = [];
 
     if (['reco-data', 'patients', 'families'].includes(this._FormGroup.value.type)) {
-      recoVillageSecteur = (this.VillageSecteurs$.filter(v => cibles.includes(v.reco_id))).map(v => v.id);
+      recoVillageSecteur = (this.VillageSecteurs$.filter(v => cibles.includes(v.district_quartier_id))).map(v => v.id);
     }
 
     const param = {
@@ -315,7 +316,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.recos = "";
     this._FormGroup.value.patients = "";
     const regions: string[] = toArray(this._FormGroup.value.regions);
-    this.prefectures$ = this.Prefectures$.filter(prefecture => regions.includes(prefecture.region.id));
+    this.prefectures$ = this.Prefectures$.filter(prefecture => regions.includes(prefecture.region_id));
   }
 
   genarateCommunes() {
@@ -337,7 +338,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
 
     const prefectures: string[] = toArray(this._FormGroup.value.prefectures);
-    this.communes$ = this.Communes$.filter(commune => prefectures.includes(commune.prefecture.id));
+    this.communes$ = this.Communes$.filter(commune => prefectures.includes(commune.prefecture_id));
   }
 
   genarateHospitals() {
@@ -357,7 +358,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
 
     const communes: string[] = toArray(this._FormGroup.value.communes);
-    this.hospitals$ = this.Hospitals$.filter(hospital => communes.includes(hospital.commune.id));
+    this.hospitals$ = this.Hospitals$.filter(hospital => communes.includes(hospital.commune_id));
   }
 
   genarateDistrictQuartiers() {
@@ -375,7 +376,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
 
     const hospitals: string[] = toArray(this._FormGroup.value.hospitals);
-    this.districtQuartiers$ = this.DistrictQuartiers$.filter(districtQuartier => hospitals.includes(districtQuartier.hospital.id));
+    this.districtQuartiers$ = this.DistrictQuartiers$.filter(districtQuartier => hospitals.includes(districtQuartier.hospital_id));
   }
 
   genarateChws() {
@@ -391,7 +392,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
 
     const district_quartiers: string[] = toArray(this._FormGroup.value.district_quartiers);
-    this.chws$ = this.Chws$.filter(chw => district_quartiers.includes(chw.district_quartier.id));
+    this.chws$ = this.Chws$.filter(chw => district_quartiers.includes(chw.district_quartier_id));
   }
 
   genarateVillageSecteurs() {
@@ -407,7 +408,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
 
     const district_quartiers: string[] = toArray(this._FormGroup.value.district_quartiers);
-    this.villageSecteurs$ = this.VillageSecteurs$.filter(villageSecteurs => district_quartiers.includes(villageSecteurs.district_quartier.id));
+    this.villageSecteurs$ = this.VillageSecteurs$.filter(villageSecteurs => district_quartiers.includes(villageSecteurs.district_quartier_id));
   }
 
   genarateRecos() {
@@ -421,7 +422,7 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
 
     const village_secteurs: string[] = toArray(this._FormGroup.value.village_secteurs);
-    this.recos$ = this.Recos$.filter(reco => village_secteurs.includes(reco.village_secteur.id));
+    this.recos$ = this.Recos$.filter(reco => village_secteurs.includes(reco.village_secteur_id));
   }
 
   genarateFamilies() {
@@ -464,10 +465,10 @@ export class DeleteCouchdbDataComponent implements OnInit {
     this._FormGroup.value.patients = "";
     if (['reco-data', 'patients', 'families'].includes(this._FormGroup.value.type)) {
       const district_quartiers: string[] = toArray(this._FormGroup.value.district_quartiers);
-      this.cibles$ = this.Recos$.filter(reco => district_quartiers.includes(reco.district_quartier.id));
+      this.cibles$ = this.Recos$.filter(reco => district_quartiers.includes(reco.village_secteur_id));
     } else if (this._FormGroup.value.type === 'chws-data') {
       const district_quartiers: string[] = toArray(this._FormGroup.value.district_quartiers);
-      this.cibles$ = this.Chws$.filter(chw => district_quartiers.includes(chw.district_quartier.id));
+      this.cibles$ = this.Chws$.filter(chw => district_quartiers.includes(chw.district_quartier_id));
     } else if (this._FormGroup.value.type === 'mentors-data') {
       // this.genarateMentor();
     }

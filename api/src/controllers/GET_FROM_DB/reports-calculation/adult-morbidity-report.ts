@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
 import { MorbidityReport, getMorbidityReportRepository } from "../../../entities/Reports";
-import { MorbidityUtils, RecoCoustomQuery } from "../../../utils/Interfaces";
+import { MorbidityUtils } from "../../../utils/Interfaces";
 import { AdultData } from "../../../entities/_Adult-data";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 import { isvalidCta } from "../../../utils/functions";
@@ -42,7 +42,7 @@ function getMorbidityUtils<T>(data: T[] | any[], name:string, field: string) : M
 
 export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getMorbidityReportRepository();
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
     const __adults: any[] = await Connection.query(`SELECT * FROM adult_data WHERE month = $1 AND year = $2`, [month, year]);
 

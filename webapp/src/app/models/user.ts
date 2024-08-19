@@ -1,4 +1,4 @@
-import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, RecoCoustomQuery, ChwCoustomQuery } from "./org-units"
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap } from "./org-unit-interface"
 import { Roles } from "./roles"
 
 export interface User {
@@ -26,15 +26,15 @@ export interface User {
   roleIds: string[]
   roles: Roles[]
 
-  countries: CountryCoustomQuery[]
-  regions: RegionCoustomQuery[]
-  prefectures: PrefectureCoustomQuery[]
-  communes: CommuneCoustomQuery[]
-  hospitals: HospitalCoustomQuery[]
-  districtQuartiers: DistrictQuartierCoustomQuery[]
-  villageSecteurs: VillageSecteurCoustomQuery[]
-  chws: ChwCoustomQuery[]
-  recos: RecoCoustomQuery[]
+  countries: CountryMap[]
+  regions: RegionsMap[]
+  prefectures: PrefecturesMap[]
+  communes: CommunesMap[]
+  hospitals: HospitalsMap[]
+  districtQuartiers: DistrictQuartiersMap[]
+  villageSecteurs: VillageSecteursMap[]
+  chws: ChwsMap[]
+  recos: RecosMap[]
 }
 
 export interface AdminUser {
@@ -64,15 +64,15 @@ export interface AdminUser {
   roleIds: string[]
   roles: Roles[]
 
-  countries: CountryCoustomQuery[]
-  regions: RegionCoustomQuery[]
-  prefectures: PrefectureCoustomQuery[]
-  communes: CommuneCoustomQuery[]
-  hospitals: HospitalCoustomQuery[]
-  districtQuartiers: DistrictQuartierCoustomQuery[]
-  villageSecteurs: VillageSecteurCoustomQuery[]
-  chws: ChwCoustomQuery[]
-  recos: RecoCoustomQuery[]
+  countries: CountryMap[]
+  regions: RegionsMap[]
+  prefectures: PrefecturesMap[]
+  communes: CommunesMap[]
+  hospitals: HospitalsMap[]
+  districtQuartiers: DistrictQuartiersMap[]
+  villageSecteurs: VillageSecteursMap[]
+  chws: ChwsMap[]
+  recos: RecosMap[]
 
   isDeleted: boolean
   deletedAt: Date

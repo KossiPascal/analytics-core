@@ -1,6 +1,145 @@
 import { DataSource } from "typeorm";
-import { ChwCoustomQuery, CommuneCoustomQuery, CountryCoustomQuery, DistrictQuartierCoustomQuery, FamilyCoustomQuery, HospitalCoustomQuery, PatientCoustomQuery, PrefectureCoustomQuery, RecoCoustomQuery, RegionCoustomQuery, VillageSecteurCoustomQuery } from "../../utils/Interfaces";
 import { AppDataSource } from "../../data_source";
+
+
+
+// ###################### ORG UNITS ##########################
+
+export interface CountryCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+}
+
+export interface RegionCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+
+    country: { id: string, name: string }
+}
+
+export interface PrefectureCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+}
+
+export interface CommuneCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+}
+export interface HospitalCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+    commune: { id: string, name: string }
+}
+export interface DistrictQuartierCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+    commune: { id: string, name: string }
+    hospital: { id: string, name: string }
+    chw: { id: string, name: string, phone: string }
+}
+export interface VillageSecteurCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+    commune: { id: string, name: string }
+    hospital: { id: string, name: string }
+    district_quartier: { id: string, name: string }
+    reco: { id: string, name: string, phone: string }
+}
+export interface FamilyCoustomQuery {
+    id: string
+    name: string
+    external_id: string
+    household_has_working_latrine: boolean
+    household_has_good_water_access: boolean
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+    commune: { id: string, name: string }
+    hospital: { id: string, name: string }
+    district_quartier: { id: string, name: string }
+    village_secteur: { id: string, name: string }
+    chw: { id: string, name: string, phone: string }
+    reco: { id: string, name: string, phone: string }
+}
+
+export interface ChwCoustomQuery {
+    id: string
+    name: string
+    phone: string
+    external_id: string
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+    commune: { id: string, name: string }
+    hospital: { id: string, name: string }
+    district_quartier: { id: string, name: string }
+}
+export interface RecoCoustomQuery {
+    id: string
+    name: string
+    phone: string
+    external_id: string
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+    commune: { id: string, name: string }
+    hospital: { id: string, name: string }
+    district_quartier: { id: string, name: string }
+    chw: { id: string, name: string, phone: string }
+    village_secteur: { id: string, name: string }
+}
+export interface PatientCoustomQuery {
+    id: string
+    name: string
+    phone: string
+    external_id: string
+    sex: string
+    date_of_birth: string
+    has_birth_certificate: boolean
+
+    country: { id: string, name: string }
+    region: { id: string, name: string }
+    prefecture: { id: string, name: string }
+    commune: { id: string, name: string }
+    hospital: { id: string, name: string }
+    district_quartier: { id: string, name: string }
+    village_secteur: { id: string, name: string }
+    family: { id: string, name: string, phone: string }
+    chw: { id: string, name: string, phone: string }
+    reco: { id: string, name: string, phone: string }
+}
+
+
 
 let Connection: DataSource = AppDataSource.manager.connection;
 

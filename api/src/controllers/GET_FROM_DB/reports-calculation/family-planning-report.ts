@@ -4,7 +4,7 @@ import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
 import { FamilyPlanningReport, getFamilyPlanningReportRepository } from "../../../entities/Reports";
 import { FamilyPlanningData } from "../../../entities/_FamilyPlannig-data";
-import { FP_Utils, RecoCoustomQuery } from "../../../utils/Interfaces";
+import { FP_Utils } from "../../../utils/Interfaces";
 import { RecoMegData } from "../../../entities/_Meg-Reco-data";
 import { date_to_milisecond } from "../../../utils/date-utils";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
@@ -33,7 +33,7 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION(req: Request, res: Re
 export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getFamilyPlanningReportRepository();
 
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const __familyPlannings: any[] = await Connection.query(`SELECT * FROM family_planning_data WHERE month = $1 AND year = $2`, [month, year]);

@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from 'express-validator';
 import { ChwsRecoReport, getChwsRecoReportRepository } from "../../../entities/Reports";
-import { ChwsRecoReportElements, RecoCoustomQuery } from "../../../utils/Interfaces";
-import { Family, Patient, Reco } from "../../../entities/Org-units";
+import { ChwsRecoReportElements } from "../../../utils/Interfaces";
+import { Family, Patient } from "../../../entities/Org-units";
 import { PregnantData } from "../../../entities/_Pregnant-data";
 import { AdultData } from "../../../entities/_Adult-data";
 import { DeliveryData } from "../../../entities/_Delivery-data";
@@ -40,7 +40,7 @@ export async function CHW_RECO_REPORTS_CALCULATION(req: Request, res: Response, 
 
 export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getChwsRecoReportRepository();
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
     const filterDate = getFirstAndLastDayOfMonth(year, month);
     const timestamp = parseInt(date_to_milisecond(filterDate.end_date, false));
@@ -929,12 +929,6 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
                     },
                     {
                         index: 10,
-                        indicator: 'Décès groupés d\'animaux',
-                        de_number: events.filter(e => e.is_cluster_animal_deaths === true).length,
-                        observation: null
-                    },
-                    {
-                        index: 11,
                         indicator: 'Fievre grippale',
                         de_number: events.filter(e => e.is_influenza_fever === true).length,
                         observation: null

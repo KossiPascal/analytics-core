@@ -34,7 +34,6 @@ const SYNC_STATUS = {
   }
 };
 
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -103,6 +102,11 @@ export class AppComponent implements OnInit {
   hideMainPage(): boolean {
     const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
     return s.includes('errors') || s.includes('auths/login');
+  }
+
+  isPublicPage(): boolean {
+    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    return s.includes('public') || s.includes('publics');
   }
 
   isAuthenticated(): boolean {

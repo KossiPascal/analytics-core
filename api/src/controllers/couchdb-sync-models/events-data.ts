@@ -21,7 +21,7 @@ export async function SyncEventsData(report: any, _repoEvent: Repository<EventsD
         _event.form = report.form;
         _event.year = (new Date(reported_date)).getFullYear();
         _event.month = month < 10 ? `0${month}` : `${month}`;
-
+        
         _event.events = events;
         _event.other_event = dataTransform(fields.event_desease.other_event, 'string');
         _event.event_name = dataTransform(fields.event_desease.event_name, 'string');
@@ -30,8 +30,7 @@ export async function SyncEventsData(report: any, _repoEvent: Repository<EventsD
         _event.name_person_in_charge = dataTransform(fields.event_desease.name_person_in_charge, 'string');
         _event.phone_person_in_charge = dataTransform(fields.event_desease.phone_person_in_charge, 'string');
         _event.health_center_feedback_date = dataTransform(fields.event_desease.health_center_feedback_date, 'string');
-        _event.health_center_feedback_location = dataTransform(fields.event_desease.health_center_feedback_location, 'string');
-        _event.health_center_feedback_name = dataTransform(fields.event_desease.health_center_feedback_name, 'string');
+        _event.feedback_manager = dataTransform(fields.event_desease.health_center_feedback_location, 'string');
 
         _event.is_flood = dataTransform(events.includes(`flood`), `null_false`);
         _event.is_fire = dataTransform(events.includes(`fire`), `null_false`);
@@ -47,7 +46,6 @@ export async function SyncEventsData(report: any, _repoEvent: Repository<EventsD
         _event.is_meningitis = dataTransform(events.includes(`meningitis`), `null_false`);
         _event.is_maternal_deaths = dataTransform(events.includes(`maternal_deaths`), `null_false`);
         _event.is_community_deaths = dataTransform(events.includes(`community_deaths`), `null_false`);
-        _event.is_cluster_animal_deaths = dataTransform(events.includes(`cluster_animal_deaths`), `null_false`);
         _event.is_influenza_fever = dataTransform(events.includes(`influenza_fever`), `null_false`);
 
         _event.country = fields.country_id;

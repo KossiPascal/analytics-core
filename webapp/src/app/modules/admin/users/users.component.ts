@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
-import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap } from '@kossi-models/org-unit-interface';
 import { ApiService } from '@kossi-services/api.service';
 import { SnackbarService } from '@kossi-services/snackbar.service';
 import { UserContextService } from '@kossi-services/user-context.service';
@@ -32,28 +32,30 @@ export class UsersComponent implements OnInit {
   message: string = '';
   APP_LOGO: string = '';
 
-  countriesList: CountryCoustomQuery[] = [];
-  private regionsList: RegionCoustomQuery[] = [];
-  private prefecturesList: PrefectureCoustomQuery[] = [];
-  private communesList: CommuneCoustomQuery[] = [];
-  private hospitalsList: HospitalCoustomQuery[] = [];
-  private districtQuartiersList: DistrictQuartierCoustomQuery[] = [];
-  private villageSecteursList: VillageSecteurCoustomQuery[] = [];
-  private chwsList: ChwCoustomQuery[] = [];
-  private recosList: RecoCoustomQuery[] = [];
+  countriesList: CountryMap[] = [];
+  private regionsList: RegionsMap[] = [];
+  private prefecturesList: PrefecturesMap[] = [];
+  private communesList: CommunesMap[] = [];
+  private hospitalsList: HospitalsMap[] = [];
+  private districtQuartiersList: DistrictQuartiersMap[] = [];
+  private villageSecteursList: VillageSecteursMap[] = [];
+  private chwsList: ChwsMap[] = [];
+  private recosList: RecosMap[] = [];
 
 
-  countries: CountryCoustomQuery[] = [];
-  regions: RegionCoustomQuery[] = [];
-  prefectures: PrefectureCoustomQuery[] = [];
-  communes: CommuneCoustomQuery[] = [];
-  hospitals: HospitalCoustomQuery[] = [];
-  districtQuartiers: DistrictQuartierCoustomQuery[] = [];
-  villageSecteurs: VillageSecteurCoustomQuery[] = [];
-  // chws: ChwCoustomQuery[] = [];
-  // recos: RecoCoustomQuery[] = [];
+  countries: CountryMap[] = [];
+  regions: RegionsMap[] = [];
+  prefectures: PrefecturesMap[] = [];
+  communes: CommunesMap[] = [];
+  hospitals: HospitalsMap[] = [];
+  districtQuartiers: DistrictQuartiersMap[] = [];
+  villageSecteurs: VillageSecteursMap[] = [];
+  // chws: ChwsMap[] = [];
+  // recos: RecosMap[] = [];
 
-  USER:User|null;
+  USER: User | null;
+
+  showPassword:boolean = false;
 
 
   OrgUnitsIsEmpty(): boolean {
@@ -64,6 +66,11 @@ export class UsersComponent implements OnInit {
   RolesIsEmpty(): boolean {
     return (this.selectedRole ?? []).length === 0;
   }
+
+  showHidePasswordUtils(): void {
+    this.showPassword = !this.showPassword;
+  }
+
 
   // {id:'families', name:'families'},
   // {id:'chws', name:'chws'},
@@ -122,43 +129,43 @@ export class UsersComponent implements OnInit {
   }
 
   GetCountries() {
-    this.api.GetCountries().subscribe((res: { status: number, data: CountryCoustomQuery[] }) => {
+    this.api.GetCountries().subscribe((res: { status: number, data: CountryMap[] }) => {
       if (res.status === 200) this.countriesList = res.data;
     }, (err: any) => { console.log(err) });
   }
 
   GetRegions() {
-    this.api.GetRegions().subscribe((res: { status: number, data: RegionCoustomQuery[] }) => {
+    this.api.GetRegions().subscribe((res: { status: number, data: RegionsMap[] }) => {
       if (res.status === 200) this.regionsList = res.data;
     }, (err: any) => { console.log(err) });
   }
 
   GetPrefectures() {
-    this.api.GetPrefectures().subscribe((res: { status: number, data: PrefectureCoustomQuery[] }) => {
+    this.api.GetPrefectures().subscribe((res: { status: number, data: PrefecturesMap[] }) => {
       if (res.status === 200) this.prefecturesList = res.data;
     }, (err: any) => { console.log(err) });
   }
 
   GetCommunes() {
-    this.api.GetCommunes().subscribe((res: { status: number, data: CommuneCoustomQuery[] }) => {
+    this.api.GetCommunes().subscribe((res: { status: number, data: CommunesMap[] }) => {
       if (res.status === 200) this.communesList = res.data;
     }, (err: any) => { console.log(err) });
   }
 
   GetHospitals() {
-    this.api.GetHospitals().subscribe((res: { status: number, data: HospitalCoustomQuery[] }) => {
+    this.api.GetHospitals().subscribe((res: { status: number, data: HospitalsMap[] }) => {
       if (res.status === 200) this.hospitalsList = res.data;
     }, (err: any) => { console.log(err) });
   }
 
   GetDistrictQuartiers() {
-    this.api.GetDistrictQuartiers().subscribe((res: { status: number, data: DistrictQuartierCoustomQuery[] }) => {
+    this.api.GetDistrictQuartiers().subscribe((res: { status: number, data: DistrictQuartiersMap[] }) => {
       if (res.status === 200) this.districtQuartiersList = res.data;
     }, (err: any) => { console.log(err) });
   }
 
   GetVillageSecteurs() {
-    this.api.GetVillageSecteurs().subscribe((res: { status: number, data: VillageSecteurCoustomQuery[] }) => {
+    this.api.GetVillageSecteurs().subscribe((res: { status: number, data: VillageSecteursMap[] }) => {
       if (res.status === 200) this.villageSecteursList = res.data;
     }, (err: any) => { console.log(err) });
   }
@@ -170,13 +177,13 @@ export class UsersComponent implements OnInit {
   }
 
   GetChws() {
-    this.api.GetChws().subscribe((res: { status: number, data: ChwCoustomQuery[] }) => {
+    this.api.GetChws().subscribe((res: { status: number, data: ChwsMap[] }) => {
       if (res.status === 200) this.chwsList = res.data;
     }, (err: any) => { console.log(err) });
   }
 
   GetRecos() {
-    this.api.GetRecos().subscribe((res: { status: number, data: RecoCoustomQuery[] }) => {
+    this.api.GetRecos().subscribe((res: { status: number, data: RecosMap[] }) => {
       if (res.status === 200) this.recosList = res.data;
     }, (err: any) => { console.log(err) });
   }
@@ -267,14 +274,16 @@ export class UsersComponent implements OnInit {
     this.addOrUpdateModalVisible = true;
   }
 
+  // { id:string, name:string, district_quartier_id:string }
+  // { id:string, name:string, district_quartier_id:string, village_secteur_id:string }
 
-  selectCountries(country: CountryCoustomQuery) {
+  selectCountries(country: CountryMap) {
     const index = this.findObj(this.countries, country).index;
     if (index !== -1) {
       this.countries.splice(index, 1);
       this.regions = this.regions.filter(r => r.country_id !== country.id);
       this.prefectures = this.prefectures.filter(r => r.country_id !== country.id),
-        this.communes = this.communes.filter(r => r.country_id !== country.id);
+      this.communes = this.communes.filter(r => r.country_id !== country.id);
       this.hospitals = this.hospitals.filter(r => r.country_id !== country.id);
       this.districtQuartiers = this.districtQuartiers.filter(r => r.country_id !== country.id);
       this.villageSecteurs = this.villageSecteurs.filter(r => r.country_id !== country.id);
@@ -289,7 +298,7 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  selectRegions(region: RegionCoustomQuery) {
+  selectRegions(region: RegionsMap) {
     const index = this.findObj(this.regions, region).index;
     if (index !== -1) {
       this.regions.splice(index, 1);
@@ -308,7 +317,7 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  selectPrefectures(prefecture: PrefectureCoustomQuery) {
+  selectPrefectures(prefecture: PrefecturesMap) {
     const index = this.findObj(this.prefectures, prefecture).index;
     if (index !== -1) {
       this.prefectures.splice(index, 1);
@@ -325,7 +334,7 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  selectCommunes(commune: CommuneCoustomQuery) {
+  selectCommunes(commune: CommunesMap) {
     const index = this.findObj(this.communes, commune).index;
     if (index !== -1) {
       this.communes.splice(index, 1);
@@ -340,7 +349,7 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  selectHospitals(hospital: HospitalCoustomQuery) {
+  selectHospitals(hospital: HospitalsMap) {
     const index = this.findObj(this.hospitals, hospital).index;
     if (index !== -1) {
       this.hospitals.splice(index, 1);
@@ -353,7 +362,7 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  selectDistrictQuartiers(districtQuartier: DistrictQuartierCoustomQuery) {
+  selectDistrictQuartiers(districtQuartier: DistrictQuartiersMap) {
     const index = this.findObj(this.districtQuartiers, districtQuartier).index;
     if (index !== -1) {
       this.districtQuartiers.splice(index, 1);
@@ -364,7 +373,7 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  selectVillageSecteurs(villageSecteur: VillageSecteurCoustomQuery) {
+  selectVillageSecteurs(villageSecteur: VillageSecteursMap) {
     const index = this.findObj(this.villageSecteurs, villageSecteur).index;
     if (index !== -1) {
       this.villageSecteurs.splice(index, 1);
@@ -372,7 +381,6 @@ export class UsersComponent implements OnInit {
       this.villageSecteurs.push(villageSecteur);
     }
   }
-
 
   findObj<T>(objs: T[], obj: T): { found: T | undefined, index: number } {
     const [found, index] = (() => {
@@ -435,7 +443,7 @@ export class UsersComponent implements OnInit {
       email: new FormControl(''),
       password: new FormControl('', [Validators.required, Validators.minLength(8)]),
       passwordConfirm: new FormControl('', [Validators.required, Validators.minLength(8)]),
-      isActive: new FormControl(false),
+      isActive: new FormControl(true),
     };
     const validators = [this.MatchValidator('password', 'passwordConfirm', false)];
     return new FormGroup(formControls, validators);
@@ -450,7 +458,7 @@ export class UsersComponent implements OnInit {
       passwordConfirm: new FormControl('', [Validators.minLength(8)]),
       isActive: new FormControl(user?.isActive == true),
     };
-    if(this.USER?.isAdmin !== true) {
+    if (this.USER?.isAdmin !== true) {
       formControls.username.disable();
     }
     return new FormGroup(formControls);
@@ -462,7 +470,7 @@ export class UsersComponent implements OnInit {
       passwordConfirm: new FormControl('', [Validators.required, Validators.minLength(8)]),
     };
     const validators = [this.MatchValidator('password', 'passwordConfirm', true)];
-    if(this.USER?.isAdmin !== true) {
+    if (this.USER?.isAdmin !== true) {
       formControls.username.disable();
     }
     return new FormGroup(formControls, validators);

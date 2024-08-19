@@ -6,7 +6,6 @@ import { DataSource } from "typeorm";
 import { HouseholdRecapReport, getHouseholdRecapReportRepository } from "../../../entities/Reports";
 import { getAgeIn } from "../../../utils/date-utils";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
-import { RecoCoustomQuery } from "../../../utils/Interfaces";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 
 
@@ -32,7 +31,7 @@ export async function HOUSEHOLD_RECAPS_REPORTS_CALCULATION(req: Request, res: Re
 export async function HOUSEHOLD_RECAPS_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getHouseholdRecapReportRepository();
 
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const filterDate = getFirstAndLastDayOfMonth(year, month);

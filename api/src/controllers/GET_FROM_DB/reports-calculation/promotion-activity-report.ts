@@ -4,7 +4,6 @@ import { PromotionReport, getPromotionReportRepository } from "../../../entities
 import { PromotionalActivityData } from "../../../entities/_Promotional-data";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
-import { RecoCoustomQuery } from "../../../utils/Interfaces";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 
 
@@ -29,7 +28,7 @@ export async function PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION(req: Request, re
 export async function PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getPromotionReportRepository();
 
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const __promotionalsA: any[] = await Connection.query(`SELECT * FROM promotional_activity_data WHERE month = $1 AND year = $2`, [month, year]);

@@ -102,143 +102,115 @@ export interface getOrgUnitFromDbFilter {
 }
 
 
-
-
-// #############################################
-
 // ###################### ORG UNITS ##########################
 
-export interface CountryCoustomQuery {
-  id: string
-  name: string
-  external_id: string
-  code: string
-  geolocation: string
-}
+// export interface CountryCoustomQuery {
+//   id: string
+//   name: string
+//   external_id: string
+// }
 
-export interface RegionCoustomQuery {
-  id: string
-  name: string
-  external_id: string
-  code: string
-  geolocation: string
-  country_id: string
-  country: { id: string, name: string }
-}
+// export interface RegionCoustomQuery {
+//   id: string
+//   name: string
+//   external_id: string
 
-export interface PrefectureCoustomQuery {
-  id: string
-  name: string
-  external_id: string
-  code: string
-  geolocation: string
+//   country: { id: string, name: string }
+// }
 
-  country_id: string
-  region_id: string
+// export interface PrefectureCoustomQuery {
+//   id: string
+//   name: string
+//   external_id: string
 
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-}
+//   country: { id: string, name: string }
+//   region: { id: string, name: string }
+// }
 
-export interface CommuneCoustomQuery {
-  id: string
-  name: string
-  external_id: string
-  code: string
-  geolocation: string
+// export interface CommuneCoustomQuery {
+//   id: string
+//   name: string
+//   external_id: string
 
-  country_id: string
-  region_id: string
-  prefecture_id: string
+//   country: { id: string, name: string }
+//   region: { id: string, name: string }
+//   prefecture: { id: string, name: string }
+// }
 
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-}
+// export interface HospitalCoustomQuery {
+//   id: string
+//   name: string
+//   external_id: string
 
-export interface HospitalCoustomQuery {
-  id: string
-  name: string
-  external_id: string
-  code: string
-  geolocation: string
+//   country: { id: string, name: string }
+//   region: { id: string, name: string }
+//   prefecture: { id: string, name: string }
+//   commune: { id: string, name: string }
+// }
 
-  country_id: string
-  region_id: string
-  prefecture_id: string
-  commune_id: string
+// export interface DistrictQuartierCoustomQuery {
+//   id: string
+//   name: string
+//   external_id: string
 
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-  commune: { id: string, name: string }
-}
+//   country: { id: string, name: string }
+//   region: { id: string, name: string }
+//   prefecture: { id: string, name: string }
+//   commune: { id: string, name: string }
+//   hospital: { id: string, name: string }
+//   chw: { id: string, name: string, phone: string }
+// }
 
-export interface DistrictQuartierCoustomQuery {
-  id: string
-  name: string
-  external_id: string
-  code: string
-  geolocation: string
+// export interface VillageSecteurCoustomQuery {
+//   id: string
+//   name: string
+//   external_id: string
 
-  country_id: string
-  region_id: string
-  prefecture_id: string
-  commune_id: string
-  hospital_id: string
-  chw_id: string
+//   country: { id: string, name: string }
+//   region: { id: string, name: string }
+//   prefecture: { id: string, name: string }
+//   commune: { id: string, name: string }
+//   hospital: { id: string, name: string }
+//   district_quartier: { id: string, name: string }
+//   reco: { id: string, name: string, phone: string }
+// }
 
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-  commune: { id: string, name: string }
-  hospital: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
-}
+// export interface ChwCoustomQuery {
+//   id: string
+//   name: string
+//   phone: string
+//   external_id: string
 
-export interface VillageSecteurCoustomQuery {
-  id: string
-  name: string
-  external_id: string
-  code: string
-  geolocation: string
+//   country: { id: string, name: string }
+//   region: { id: string, name: string }
+//   prefecture: { id: string, name: string }
+//   commune: { id: string, name: string }
+//   hospital: { id: string, name: string }
+//   district_quartier: { id: string, name: string }
+// }
 
-  country_id: string
-  region_id: string
-  prefecture_id: string
-  commune_id: string
-  hospital_id: string
-  district_quartier_id: string
-  reco_id: string
+// export interface RecoCoustomQuery {
+//   id: string
+//   name: string
+//   phone: string
+//   external_id: string
 
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-  commune: { id: string, name: string }
-  hospital: { id: string, name: string }
-  district_quartier: { id: string, name: string }
-  reco: { id: string, name: string, phone: string }
-}
+//   country: { id: string, name: string }
+//   region: { id: string, name: string }
+//   prefecture: { id: string, name: string }
+//   commune: { id: string, name: string }
+//   hospital: { id: string, name: string }
+//   district_quartier: { id: string, name: string }
+//   chw: { id: string, name: string, phone: string }
+//   village_secteur: { id: string, name: string }
+// }
 
 export interface FamilyCoustomQuery {
   id: string
   name: string
-  given_name: string
   external_id: string
-  code: string
   household_has_working_latrine: boolean
   household_has_good_water_access: boolean
-  geolocation: string
-
-  country_id: string
-  region_id: string
-  prefecture_id: string
-  commune_id: string
-  hospital_id: string
-  district_quartier_id: string
-  village_secteur_id: string
-  chw_id: string
-  reco_id: string
 
   country: { id: string, name: string }
   region: { id: string, name: string }
@@ -249,92 +221,16 @@ export interface FamilyCoustomQuery {
   village_secteur: { id: string, name: string }
   chw: { id: string, name: string, phone: string }
   reco: { id: string, name: string, phone: string }
-}
-
-export interface ChwCoustomQuery {
-  id: string
-  name: string
-  phone: string
-  code: string
-  external_id: string
-  role: string
-  sex: string
-  date_of_birth: string
-  email: string
-  profession: string
-  geolocation: string
-
-  country_id: string
-  region_id: string
-  prefecture_id: string
-  commune_id: string
-  hospital_id: string
-  district_quartier_id: string
-
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-  commune: { id: string, name: string }
-  hospital: { id: string, name: string }
-  district_quartier: { id: string, name: string }
-}
-
-export interface RecoCoustomQuery {
-  id: string
-  name: string
-  phone: string
-  code: string
-  external_id: string
-  role: string
-  sex: string
-  date_of_birth: string
-  email: string
-  profession: string
-  geolocation: string
-
-  country_id: string
-  region_id: string
-  prefecture_id: string
-  commune_id: string
-  hospital_id: string
-  district_quartier_id: string
-  chw_id: string
-  village_secteur_id: string
-
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-  commune: { id: string, name: string }
-  hospital: { id: string, name: string }
-  district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
-  village_secteur: { id: string, name: string }
 }
 
 export interface PatientCoustomQuery {
   id: string
   name: string
   phone: string
-  code: string
   external_id: string
-  role: string
   sex: string
   date_of_birth: string
-  profession: string
-  relationship_with_household_head: string
   has_birth_certificate: boolean
-  geolocation: string
-
-  country_id: string
-  region_id: string
-  prefecture_id: string
-  commune_id: string
-  hospital_id: string
-  district_quartier_id: string
-  village_secteur_id: string
-  family_id: string
-  chw_id: string
-  reco_id: string
 
   country: { id: string, name: string }
   region: { id: string, name: string }

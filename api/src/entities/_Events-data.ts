@@ -50,10 +50,7 @@ export class EventsData {
     health_center_feedback_date!: string | null
 
     @Column({ type: 'varchar', nullable: true })
-    health_center_feedback_location!: string | null
-
-    @Column({ type: 'varchar', nullable: true })
-    health_center_feedback_name!: string | null
+    feedback_manager!: string | null
 
 
     @Column({ type: 'boolean', nullable: true })
@@ -93,9 +90,6 @@ export class EventsData {
 
     @Column({ type: 'boolean', nullable: true })
     is_community_deaths!: boolean | null
-
-    @Column({ type: 'boolean', nullable: true })
-    is_cluster_animal_deaths!: boolean | null
 
     @Column({ type: 'boolean', nullable: true })
     is_influenza_fever!: boolean | null

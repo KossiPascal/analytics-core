@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, Attribute, AfterViewInit, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
-import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap } from '@kossi-models/org-unit-interface';
 import { UserContextService } from '@kossi-services/user-context.service';
 import { currentYear, currentMonth, getMonthsList, getYearsList, toArray, notNull } from '@kossi-src/app/utils/functions';
 
@@ -22,26 +22,26 @@ export class DashbordsOrgunitSelectorComponent implements OnInit, AfterViewInit 
   month$!: { labelEN: string; labelFR: string; id: string; uid: number };
   year$!: number;
 
-  Countries$: CountryCoustomQuery[] = [];
-  Regions$: RegionCoustomQuery[] = [];
-  Prefectures$: PrefectureCoustomQuery[] = [];
-  Communes$: CommuneCoustomQuery[] = [];
-  Hospitals$: HospitalCoustomQuery[] = [];
-  DistrictQuartiers$: DistrictQuartierCoustomQuery[] = [];
-  VillageSecteurs$: VillageSecteurCoustomQuery[] = [];
-  Chws$: ChwCoustomQuery[] = [];
-  Recos$: RecoCoustomQuery[] = [];
+  Countries$: CountryMap[] = [];
+  Regions$: RegionsMap[] = [];
+  Prefectures$: PrefecturesMap[] = [];
+  Communes$:CommunesMap[] = [];
+  Hospitals$: HospitalsMap[] = [];
+  DistrictQuartiers$: DistrictQuartiersMap[] = [];
+  VillageSecteurs$: VillageSecteursMap[] = [];
+  Chws$: ChwsMap[] = [];
+  Recos$: RecosMap[] = [];
 
 
-  countries: CountryCoustomQuery[] = [];
-  regions: RegionCoustomQuery[] = [];
-  prefectures: PrefectureCoustomQuery[] = [];
-  communes: CommuneCoustomQuery[] = [];
-  hospitals: HospitalCoustomQuery[] = [];
-  districtQuartiers: DistrictQuartierCoustomQuery[] = [];
-  villageSecteurs: VillageSecteurCoustomQuery[] = [];
-  chws: ChwCoustomQuery[] = [];
-  recos: RecoCoustomQuery[] = [];
+  countries: CountryMap[] = [];
+  regions: RegionsMap[] = [];
+  prefectures: PrefecturesMap[] = [];
+  communes: CommunesMap[] = [];
+  hospitals: HospitalsMap[] = [];
+  districtQuartiers: DistrictQuartiersMap[] = [];
+  villageSecteurs: VillageSecteursMap[] = [];
+  chws: ChwsMap[] = [];
+  recos: RecosMap[] = [];
 
   constructor(private userCtx: UserContextService) {
     this.getCurrentUserCtx();
@@ -196,7 +196,7 @@ export class DashbordsOrgunitSelectorComponent implements OnInit, AfterViewInit 
   //   this._formGroup.value['recos'] = [];
   //   if (this.DistrictQuartiers$.length > 0) {
   //     if (this.Chws$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
-  //       this.chws = this.Chws$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
+  //       this.chws = this.Chws$.filter(d => d.district_quartier.id === this._formGroup.value.district_quartier);
   //     } else if (this.Chws$.length === 1) {
   //       this.chws = this.Chws$;
   //       this._formGroup.value['chw'] = this.Chws$[0].id;
@@ -222,7 +222,7 @@ export class DashbordsOrgunitSelectorComponent implements OnInit, AfterViewInit 
   //   this._formGroup.value['recos'] = [];
   //   if (this.DistrictQuartiers$.length > 0) {
   //     if (this.VillageSecteurs$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
-  //       this.villageSecteurs = this.VillageSecteurs$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
+  //       this.villageSecteurs = this.VillageSecteurs$.filter(d => d.district_quartier.id === this._formGroup.value.district_quartier);
   //     } else if (this.VillageSecteurs$.length === 1) {
   //       this.villageSecteurs = this.VillageSecteurs$;
   //       this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;

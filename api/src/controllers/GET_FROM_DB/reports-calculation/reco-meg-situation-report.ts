@@ -2,10 +2,10 @@ import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
-import { RecoCoustomQuery, RecoMegQuantityUtils } from "../../../utils/Interfaces";
+import { RecoMegQuantityUtils } from "../../../utils/Interfaces";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
 import { RecoMegData } from "../../../entities/_Meg-Reco-data";
-import { getFirstAndLastDayOfMonth, getPreviousMonthYear } from "../../../utils/functions";
+import { getPreviousMonthYear } from "../../../utils/functions";
 import { getRecoMegSituationReportRepository, RecoMegSituationReport } from "../../../entities/Reports";
 
 
@@ -40,7 +40,7 @@ function getSumTotal<T>(data: T[] | any[], field: string) {
 
 export async function RECO_MEG_SITUATION_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repo = await getRecoMegSituationReportRepository();
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
 

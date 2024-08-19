@@ -1,8 +1,8 @@
 import { Component, Input, Output, EventEmitter, Attribute, AfterViewInit, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
-import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap } from '@kossi-models/org-unit-interface';
 import { UserContextService } from '@kossi-services/user-context.service';
-import { currentYear, currentMonth, getMonthsList, getYearsList, toArray, notNull } from '@kossi-src/app/utils/functions';
+import { currentYear, currentMonth, getMonthsList, getYearsList, notNull } from '@kossi-src/app/utils/functions';
 
 @Component({
   selector: 'repports-orgunit-selector',
@@ -22,26 +22,27 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   month$!: { labelEN: string; labelFR: string; id: string; uid: number };
   year$!: number;
 
-  Countries$: CountryCoustomQuery[] = [];
-  Regions$: RegionCoustomQuery[] = [];
-  Prefectures$: PrefectureCoustomQuery[] = [];
-  Communes$: CommuneCoustomQuery[] = [];
-  Hospitals$: HospitalCoustomQuery[] = [];
-  DistrictQuartiers$: DistrictQuartierCoustomQuery[] = [];
-  VillageSecteurs$: VillageSecteurCoustomQuery[] = [];
-  Chws$: ChwCoustomQuery[] = [];
-  Recos$: RecoCoustomQuery[] = [];
+  Countries$: CountryMap[] = [];
+  Regions$: RegionsMap[] = [];
+  Prefectures$: PrefecturesMap[] = [];
+  Communes$: CommunesMap[] = [];
+  Hospitals$: HospitalsMap[] = [];
+  DistrictQuartiers$: DistrictQuartiersMap[] = [];
+  VillageSecteurs$: VillageSecteursMap[] = [];
+  Chws$: ChwsMap[] = [];
+  Recos$: RecosMap[] = [];
 
 
-  countries: CountryCoustomQuery[] = [];
-  regions: RegionCoustomQuery[] = [];
-  prefectures: PrefectureCoustomQuery[] = [];
-  communes: CommuneCoustomQuery[] = [];
-  hospitals: HospitalCoustomQuery[] = [];
-  districtQuartiers: DistrictQuartierCoustomQuery[] = [];
-  villageSecteurs: VillageSecteurCoustomQuery[] = [];
-  chws: ChwCoustomQuery[] = [];
-  recos: RecoCoustomQuery[] = [];
+
+  countries: CountryMap[] = [];
+  regions: RegionsMap[] = [];
+  prefectures: PrefecturesMap[] = [];
+  communes: CommunesMap[] = [];
+  hospitals: HospitalsMap[] = [];
+  districtQuartiers: DistrictQuartiersMap[] = [];
+  villageSecteurs: VillageSecteursMap[] = [];
+  chws: ChwsMap[] = [];
+  recos: RecosMap[] = [];
 
   constructor(private userCtx: UserContextService) {
     this.getCurrentUserCtx();
@@ -96,7 +97,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   }
 
   countriesGenerate() {
-    this.setOrgUnitsValues({ country:true, region:true, prefecture:true, commune:true, hospital:true, district_quartier:true, recos:true})
+    this.setOrgUnitsValues({ country: true, region: true, prefecture: true, commune: true, hospital: true, district_quartier: true, recos: true })
     this.countries = this.Countries$;
     if (this.countries.length === 1) {
       this._formGroup.value['country'] = this.countries[0].id;
@@ -105,7 +106,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   }
 
   regionsGenerate() {
-    this.setOrgUnitsValues({ region:true, prefecture:true, commune:true, hospital:true, district_quartier:true, recos:true})
+    this.setOrgUnitsValues({ region: true, prefecture: true, commune: true, hospital: true, district_quartier: true, recos: true })
     if (this.Countries$.length > 0) {
       if (this.Regions$.length > 1 && notNull(this._formGroup.value.country)) {
         this.regions = this.Regions$.filter(d => d.country_id === this._formGroup.value.country);
@@ -122,7 +123,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   }
 
   prefecturesGenerate() {
-    this.setOrgUnitsValues({ prefecture:true, commune:true, hospital:true, district_quartier:true, recos:true})
+    this.setOrgUnitsValues({ prefecture: true, commune: true, hospital: true, district_quartier: true, recos: true })
     if (this.Regions$.length > 0) {
       if (this.Prefectures$.length > 1 && notNull(this._formGroup.value.region)) {
         this.prefectures = this.Prefectures$.filter(d => d.region_id === this._formGroup.value.region);
@@ -139,7 +140,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   }
 
   communesGenerate() {
-    this.setOrgUnitsValues({ commune:true, hospital:true, district_quartier:true, recos:true})
+    this.setOrgUnitsValues({ commune: true, hospital: true, district_quartier: true, recos: true })
     if (this.Prefectures$.length > 0) {
       if (this.Communes$.length > 1 && notNull(this._formGroup.value.prefecture)) {
         this.communes = this.Communes$.filter(d => d.prefecture_id === this._formGroup.value.prefecture);
@@ -156,7 +157,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   }
 
   hospitalsGenerate() {
-    this.setOrgUnitsValues({ hospital:true, district_quartier:true, recos:true})
+    this.setOrgUnitsValues({ hospital: true, district_quartier: true, recos: true })
     if (this.Communes$.length > 0) {
       if (this.Hospitals$.length > 1 && notNull(this._formGroup.value.commune)) {
         this.hospitals = this.Hospitals$.filter(d => d.commune_id === this._formGroup.value.commune);
@@ -173,7 +174,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   }
 
   districtsGenerate() {
-    this.setOrgUnitsValues({ district_quartier:true, recos:true})
+    this.setOrgUnitsValues({ district_quartier: true, recos: true })
     if (this.Hospitals$.length > 0) {
       if (this.DistrictQuartiers$.length > 1 && notNull(this._formGroup.value.hospital)) {
         this.districtQuartiers = this.DistrictQuartiers$.filter(d => d.hospital_id === this._formGroup.value.hospital);
@@ -196,7 +197,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   //   this._formGroup.value['recos'] = [];
   //   if (this.DistrictQuartiers$.length > 0) {
   //     if (this.Chws$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
-  //       this.chws = this.Chws$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
+  //       this.chws = this.Chws$.filter(d => d.district_quartier.id === this._formGroup.value.district_quartier);
   //     } else if (this.Chws$.length === 1) {
   //       this.chws = this.Chws$;
   //       this._formGroup.value['chw'] = this.Chws$[0].id;
@@ -222,7 +223,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   //   this._formGroup.value['recos'] = [];
   //   if (this.DistrictQuartiers$.length > 0) {
   //     if (this.VillageSecteurs$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
-  //       this.villageSecteurs = this.VillageSecteurs$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
+  //       this.villageSecteurs = this.VillageSecteurs$.filter(d => d.district_quartier.id === this._formGroup.value.district_quartier);
   //     } else if (this.VillageSecteurs$.length === 1) {
   //       this.villageSecteurs = this.VillageSecteurs$;
   //       this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;
@@ -245,7 +246,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   // }
 
   recosGenerate() {
-    this.setOrgUnitsValues({ recos:true})
+    this.setOrgUnitsValues({ recos: true })
     if (this.DistrictQuartiers$.length > 0) {
       if (this.Recos$.length > 1 && notNull(this._formGroup.value.district_quartier)) {
         this.recos = this.Recos$.filter(d => d.district_quartier_id === this._formGroup.value.district_quartier);
@@ -293,31 +294,31 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
 
 
   private setOrgUnitsValues(dt: { country?: boolean, region?: boolean, prefecture?: boolean, commune?: boolean, hospital?: boolean, district_quartier?: boolean, recos: boolean }) {
-    if (dt.country===true) {
+    if (dt.country === true) {
       this.countries = [];
       this._formGroup.value['country'] = '';
     }
-    if (dt.region===true) {
+    if (dt.region === true) {
       this.regions = [];
       this._formGroup.value['region'] = '';
     }
-    if (dt.prefecture===true) {
+    if (dt.prefecture === true) {
       this.prefectures = [];
       this._formGroup.value['prefecture'] = '';
     }
-    if (dt.commune===true) {
+    if (dt.commune === true) {
       this.communes = [];
       this._formGroup.value['commune'] = '';
     }
-    if (dt.hospital===true) {
+    if (dt.hospital === true) {
       this.hospitals = [];
       this._formGroup.value['hospital'] = '';
     }
-    if (dt.district_quartier===true) {
+    if (dt.district_quartier === true) {
       this.districtQuartiers = [];
       this._formGroup.value['district_quartier'] = '';
     }
-    if (dt.recos===true) {
+    if (dt.recos === true) {
       this.recos = [];
       this._formGroup.value['recos'] = [];
     }

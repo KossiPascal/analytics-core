@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { CountryCoustomQuery, RegionCoustomQuery, PrefectureCoustomQuery, CommuneCoustomQuery, HospitalCoustomQuery, DistrictQuartierCoustomQuery, VillageSecteurCoustomQuery, ChwCoustomQuery, RecoCoustomQuery } from '@kossi-models/org-units';
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap } from '@kossi-models/org-unit-interface';
 import { ApiService } from '@kossi-services/api.service';
 import { UserContextService } from '@kossi-services/user-context.service';
 import { AuthService } from '@kossi-src/app/services/auth.service';
@@ -14,7 +14,7 @@ import { DEFAULT_LOCAL_DB } from '@kossi-src/app/utils/const';
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
-  message!:string;
+  message!: string;
   constructor(private userCtx: UserContextService, private auth: AuthService, private api: ApiService, private store: AppStorageService) { }
 
   ngOnInit(): void {
@@ -39,7 +39,18 @@ export class LoginComponent implements OnInit {
 
   login(): any {
     return this.api.login(this.loginForm.value)
-        .subscribe((res: { status: number, data: any,countries: CountryCoustomQuery[], regions: RegionCoustomQuery[], prefectures: PrefectureCoustomQuery[], communes: CommuneCoustomQuery[], hospitals: HospitalCoustomQuery[], districtQuartiers: DistrictQuartierCoustomQuery[], villageSecteurs: VillageSecteurCoustomQuery[], chws: ChwCoustomQuery[], recos: RecoCoustomQuery[] }) => {
+      .subscribe((res: {
+        status: number, data: any,
+        countries: CountryMap[],
+        regions: RegionsMap[],
+        prefectures: PrefecturesMap[],
+        communes: CommunesMap[],
+        hospitals: HospitalsMap[],
+        districtQuartiers: DistrictQuartiersMap[],
+        villageSecteurs: VillageSecteursMap[],
+        chws: ChwsMap[],
+        recos: RecosMap[]
+      }) => {
         if (res.status === 200) {
           const token = res.data;
           this.store.set({ db: DEFAULT_LOCAL_DB, name: 'token', value: token });

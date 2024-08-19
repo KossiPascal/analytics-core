@@ -2,10 +2,11 @@ import * as jwt from 'jsonwebtoken';
 import { Entity, Column, Repository, DataSource, PrimaryColumn, In } from "typeorm"
 import { AppDataSource } from '../data_source';
 import { notEmpty } from '../utils/functions';
-import { ChwCoustomQuery, CommuneCoustomQuery, CountryCoustomQuery, DistrictQuartierCoustomQuery, HospitalCoustomQuery, PrefectureCoustomQuery, RecoCoustomQuery, RegionCoustomQuery, Routes, TokenUser, VillageSecteurCoustomQuery } from '../utils/Interfaces';
+import { Routes, TokenUser } from '../utils/Interfaces';
 import { GetRolesAndNamesPagesAutorizations, Roles, getRolesRepository } from './Roles';
 import { ROUTES_LIST, AUTORISATIONS_LIST } from '../utils/autorizations-pages';
 import { COUNTRIES_COUSTOM_QUERY, REGIONS_COUSTOM_QUERY, PREFECTURES_COUSTOM_QUERY, COMMUNES_COUSTOM_QUERY, HOSPITALS_COUSTOM_QUERY, DISTRICTS_QUARTIERS_COUSTOM_QUERY, CHWS_COUSTOM_QUERY, VILLAGES_SECTEURS_COUSTOM_QUERY, RECOS_COUSTOM_QUERY, FAMILIES_COUSTOM_QUERY, PATIENTS_COUSTOM_QUERY } from '../controllers/orgunit-query/org-units-coustom';
+import { ChwsMap, CommunesMap, CountryMap, DistrictQuartiersMap, GetChwsMap, GetCommunesMap, GetCountryMap, GetDistrictQuartiersMap, GetHospitalsMap, GetPrefecturesMap, GetRecosMap, GetRegionsMap, GetVillageSecteursMap, HospitalsMap, PrefecturesMap, RecosMap, RegionsMap, VillageSecteursMap } from '../utils/org-unit-interface';
 
 let Connection: DataSource = AppDataSource.manager.connection;
 
@@ -57,31 +58,31 @@ export class Users {
     mustLogin!: boolean
 
     @Column({ type: 'jsonb', nullable: true })
-    countries!: CountryCoustomQuery[]
+    countries!: CountryMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    regions!: RegionCoustomQuery[]
+    regions!: RegionsMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    prefectures!: PrefectureCoustomQuery[]
+    prefectures!: PrefecturesMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    communes!: CommuneCoustomQuery[]
+    communes!: CommunesMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    hospitals!: HospitalCoustomQuery[]
+    hospitals!: HospitalsMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    districtQuartiers!: DistrictQuartierCoustomQuery[]
+    districtQuartiers!: DistrictQuartiersMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    villageSecteurs!: VillageSecteurCoustomQuery[]
+    villageSecteurs!: VillageSecteursMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    chws!: ChwCoustomQuery[]
+    chws!: ChwsMap[]
 
     @Column({ type: 'jsonb', nullable: true })
-    recos!: RecoCoustomQuery[]
+    recos!: RecosMap[]
 
     @Column({ type: 'timestamp', nullable: true })
     deletedAt!: Date;
@@ -191,15 +192,15 @@ export async function userToken(user: Users, param: { hashToken?: boolean, check
     };
 
     if (param.outPutOrgUnits === true) {
-        tokenUser.countries = isAdmin !== true ? user.countries : await COUNTRIES_COUSTOM_QUERY();
-        tokenUser.regions = isAdmin !== true ? user.regions : await REGIONS_COUSTOM_QUERY();
-        tokenUser.prefectures = isAdmin !== true ? user.prefectures : await PREFECTURES_COUSTOM_QUERY();
-        tokenUser.communes = isAdmin !== true ? user.communes : await COMMUNES_COUSTOM_QUERY();
-        tokenUser.hospitals = isAdmin !== true ? user.hospitals : await HOSPITALS_COUSTOM_QUERY();
-        tokenUser.districtQuartiers = isAdmin !== true ? user.districtQuartiers : await DISTRICTS_QUARTIERS_COUSTOM_QUERY();
-        tokenUser.villageSecteurs = isAdmin !== true ? user.villageSecteurs : await VILLAGES_SECTEURS_COUSTOM_QUERY();
-        tokenUser.chws = isAdmin !== true ? user.chws : await CHWS_COUSTOM_QUERY();
-        tokenUser.recos = isAdmin !== true ? user.recos : await RECOS_COUSTOM_QUERY();
+        tokenUser.countries = isAdmin !== true ? user.countries : (await COUNTRIES_COUSTOM_QUERY()).map(d => GetCountryMap(d));
+        tokenUser.regions = isAdmin !== true ? user.regions : (await REGIONS_COUSTOM_QUERY()).map(d => GetRegionsMap(d));
+        tokenUser.prefectures = isAdmin !== true ? user.prefectures : (await PREFECTURES_COUSTOM_QUERY()).map(d => GetPrefecturesMap(d));
+        tokenUser.communes = isAdmin !== true ? user.communes : (await COMMUNES_COUSTOM_QUERY()).map(d => GetCommunesMap(d));
+        tokenUser.hospitals = isAdmin !== true ? user.hospitals : (await HOSPITALS_COUSTOM_QUERY()).map(d => GetHospitalsMap(d));
+        tokenUser.districtQuartiers = isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_COUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d));
+        tokenUser.villageSecteurs = isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_COUSTOM_QUERY()).map(d => GetVillageSecteursMap(d));
+        tokenUser.chws = isAdmin !== true ? user.chws : (await CHWS_COUSTOM_QUERY()).map(d => GetChwsMap(d));
+        tokenUser.recos = isAdmin !== true ? user.recos : (await RECOS_COUSTOM_QUERY()).map(d => GetRecosMap(d));
         // FAMILIES_COUSTOM_QUERY();
         // PATIENTS_COUSTOM_QUERY();
     }

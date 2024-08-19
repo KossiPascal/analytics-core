@@ -93,7 +93,18 @@ const routes: Routes = [
       href: 'admin/pdf-generator',
       title: 'Pdf Generator',
     },
-  }
+  },
+  {
+    path: 'download/kendeya.apk',
+    component: PdfGeneratorComponent,
+    canActivate: [LoginAccessGuard],
+    data: {
+      href: 'admin/download/kendeya.apk',
+      title: 'Pdf Generator',
+    },
+  },
+
+
 ];
 
 @NgModule({

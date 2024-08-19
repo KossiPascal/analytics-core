@@ -5,7 +5,7 @@ import { DataSource } from "typeorm";
 import { PcimneNewbornReport, getPcimneNewbornReportRepository } from "../../../entities/Reports";
 import { PcimneData } from "../../../entities/_Pcimne-data";
 import { NewbornData } from "../../../entities/_Newborn-data";
-import { PcimneNewbornReportUtils, RecoCoustomQuery } from "../../../utils/Interfaces";
+import { PcimneNewbornReportUtils } from "../../../utils/Interfaces";
 import { isTrue, isvalidCta } from "../../../utils/functions";
 import { DeathData } from "../../../entities/_Death-data";
 import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
@@ -32,7 +32,7 @@ export async function PCIMNE_NEWBORN_REPORTS_CALCULATION(req: Request, res: Resp
 export async function PCIMNE_NEWBORN_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoPecimne = await getPcimneNewbornReportRepository();
 
-    const recos: RecoCoustomQuery[] = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_COUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const __pcimnes: any[] = await Connection.query(`SELECT * FROM pcimne_data WHERE month = $1 AND year = $2 AND age_in_months >=0 AND age_in_months < 60`, [month, year]);

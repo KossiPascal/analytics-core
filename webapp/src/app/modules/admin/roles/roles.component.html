@@ -34,10 +34,12 @@
                 <td [innerHTML]="ToStringNewLine(role.autorizations, 'autorizations') | safeHtml"></td> -->
               <!-- <td>{{ role.default_route }}</td> -->
               <td>
-                <i style="padding: 1px 4px 1px 6px;" *ngIf="!role.autorizations?.includes('_admin')" (click)="EditRole(role)" class="btn btn-warning fas fa-edit"></i>
+                <i style="padding: 1px 4px 1px 6px;" *ngIf="!role.autorizations?.includes('_admin')"
+                  (click)="EditRole(role)" class="btn btn-warning fas fa-edit"></i>
               </td>
               <td>
-                <i style="padding: 1px 6px 1px 6px;" *ngIf="!role.autorizations?.includes('_admin')" (click)="RoleSelectedToDelete(role)" class="btn btn-danger fas fa-trash-alt"></i>
+                <i style="padding: 1px 6px 1px 6px;" *ngIf="!role.autorizations?.includes('_admin')"
+                  (click)="RoleSelectedToDelete(role)" class="btn btn-danger fas fa-trash-alt"></i>
               </td>
               <!-- <td></td> -->
             </tr>
@@ -71,8 +73,11 @@
 </div>
 
 
-<div *ngIf="addOrUpdateModalVisible" class="absolute-fix-modal-parent animated fadeIn">
-    <form style="width: 800px" [formGroup]="roleForm" (ngSubmit)="CreateOrUpdateRole()" novalidate
+<div *ngIf="addOrUpdateModalVisible" class="absolute-fix-modal animated fadeIn">
+
+  <div
+    style="width: 100%!important; height: 100%!important; background: rgba(0, 0, 0, 0.5); align-items: center!important; justify-content: center!important;display: flex;">
+    <form autocomplete="off" style="width: 800px" [formGroup]="roleForm" (ngSubmit)="CreateOrUpdateRole()" novalidate
       class="form-horizontal">
       <div class="modal-content">
         <div class="modal-header">
@@ -126,7 +131,7 @@
                       </label>
                     </div>
                     <br> -->
-                    
+
                     <div
                       style="max-height: 300px; overflow-y: scroll; overflow-x: hidden; border: 1px darkblue dashed; padding: 10px;">
                       <div class="row">
@@ -179,9 +184,8 @@
                         <ng-container *ngFor="let auton of autorizations$; let index = index;">
                           <div class="col-md-6" [ngClass]="{'custom-class': index <= autorizations$.length / 2}">
                             <p>
-                              <input class="form-check-input" type="checkbox"
-                                [checked]="containsAutorization(auton)" id="add-remove-autorization"
-                                (click)="AddOrRemoveAutorization(auton)">
+                              <input class="form-check-input" type="checkbox" [checked]="containsAutorization(auton)"
+                                id="add-remove-autorization" (click)="AddOrRemoveAutorization(auton)">
                               <label style="margin-left: 5px; cursor:pointer;" for="add-remove-autorization">
                                 {{ auton }}
                               </label>
@@ -205,5 +209,5 @@
         </div>
       </div>
     </form>
+  </div>
 </div>
-

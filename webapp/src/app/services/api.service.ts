@@ -31,6 +31,11 @@ export class ApiService {
 
   //START AUTH
 
+  // public(url: string, prodApp?: boolean, ): Observable<any> {
+  //   const fparams = this.ApiParams({prodApp}, false);
+  //   return this.http.post(`${this.backendUrl}/auth-user/${url}`, fparams, this.customHeaders);
+  // }
+
   login(params: { credential: string, password: string }): Observable<any> {
     const fparams = this.ApiParams(params, false);
     return this.http.post(`${this.backendUrl}/auth-user/login`, fparams, this.customHeaders);
