@@ -9,7 +9,8 @@ nvm use 20 && npm run dev-sentinel
 
 
 cd /home/integratehealth/KENDEYA/DEV && rm -rf analytics-core
-git clone https://github.com/KossiPascal/analytics-core
+git clone https://github.com/KossiPascal/analytics-core.git
+nvm use 20 && cd analytics-core && npm run server-install
 sudo systemctl restart kendeyadev-analytics.service
 
 
@@ -51,8 +52,7 @@ sudo systemctl stop analytics-core.service
 sudo systemctl restart analytics-core.service
 
 
-git clone https://github.com/KossiPascal/analytics-core.git
-nvm use 20 && cd analytics-core && npm run server-install
+
 
 
 cd /home/integratehealth/cht4_final_version/ih-cht-prod-dir
