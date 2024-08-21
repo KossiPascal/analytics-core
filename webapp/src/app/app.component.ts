@@ -66,32 +66,32 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
 
-    setTimeout(() => {
-      const self = this;
-      $(".body-container").click(function () {
-        if (self.responsiveService.isMobile || self.responsiveService.isTablette) {
-          const elm = $(".sidebar, .content");
-          if (elm.hasClass("open")) {
-            elm.removeClass("open");
-          }
-        }
-      });
-    }, 500);
+    // setTimeout(() => {
+    //   const self = this;
+    //   $(".body-container").click(function () {
+    //     if (self.responsiveService.isMobile || self.responsiveService.isTablette) {
+    //       const elm = $(".sidebar, .content");
+    //       if (elm.hasClass("open")) {
+    //         elm.removeClass("open");
+    //       }
+    //     }
+    //   });
+    // }, 500);
 
-    if (![4200, '4200'].includes(location.port)) {
-      this.usw.registerServiceWorker();
-      this.setupDb();
-      this.setupPromise = Promise.resolve()
-        .then(() => this.checkPrivacyPolicy())
-        .catch(err => {
-          this.initialisationComplete = true;
-          console.error('Error during initialisation', err);
-          this.router.navigate(['/errors', '503']);
-        });
-      this.usw.watchForChanges();
-      this.requestPersistentStorage();
-      // this.sw.checkForUpdates();
-    }
+    // if (![4200, '4200'].includes(location.port)) {
+    //   this.usw.registerServiceWorker();
+    //   this.setupDb();
+    //   this.setupPromise = Promise.resolve()
+    //     .then(() => this.checkPrivacyPolicy())
+    //     .catch(err => {
+    //       this.initialisationComplete = true;
+    //       console.error('Error during initialisation', err);
+    //       this.router.navigate(['/errors', '503']);
+    //     });
+    //   this.usw.watchForChanges();
+    //   this.requestPersistentStorage();
+    //   // this.sw.checkForUpdates();
+    // }
   }
 
   showMessage() {
