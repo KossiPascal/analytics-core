@@ -40,8 +40,10 @@
           <a href="">Mot de passe oublié</a>
         </div> -->
         <br>
-        <button [disabled]="!loginForm.valid" type="submit" class="btn btn-fifteen py-2 w-100 mb-4">Se
-          connecter</button>
+        <button [disabled]="!loginForm.valid || isLoading" type="submit" class="btn btn-fifteen py-2 w-100 mb-4">Se
+          connecter
+          <span *ngIf="isLoading" class="fas fa-1x fa-sync-alt fa-spin"></span>
+        </button>
         <!-- <p class="text-center mb-0">Pas encore de compte? <a href="">S'enrégistrer</a></p> -->
       </form>
     </div>

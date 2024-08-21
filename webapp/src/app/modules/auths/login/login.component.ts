@@ -15,10 +15,14 @@ import { DEFAULT_LOCAL_DB } from '@kossi-src/app/utils/const';
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
   message!: string;
+
+  isLoading:boolean = false;
+
+
   constructor(private userCtx: UserContextService, private auth: AuthService, private api: ApiService, private store: AppStorageService) { }
 
   ngOnInit(): void {
-    this.auth.isAlreadyLogin;
+    // this.auth.isAlreadyLogin;
     this.loginForm = this.createFormGroup();
   }
 
@@ -38,6 +42,7 @@ export class LoginComponent implements OnInit {
   }
 
   login(): any {
+    this.isLoading = true;
     return this.api.login(this.loginForm.value)
       .subscribe((res: {
         status: number, data: any,
@@ -66,14 +71,15 @@ export class LoginComponent implements OnInit {
           // const user = jwtDecode(token) as User;
           // this.router.navigate([user.defaultPageHref]);
           location.href = this.userCtx.defaultPage;
-          return;
         } else {
           this.message = res.data;
-          return;
         }
+        this.isLoading = false;
+        return;
       }, (err: any) => {
         this.message = err?.message;
         console.log(err);
+        this.isLoading = false;
         return;
       });
   }

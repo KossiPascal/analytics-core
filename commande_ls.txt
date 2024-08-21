@@ -8,6 +8,10 @@ nvm use 20 && npm run dev-sentinel
 
 
 
+cd /home/integratehealth/KENDEYA/DEV && rm -rf analytics-core
+git clone https://github.com/KossiPascal/analytics-core
+sudo systemctl restart kendeyadev-analytics.service
+
 
 tonoudayo.portal-integratehealth.org 4430
 tonoudayodev.portal-integratehealth.org 4431

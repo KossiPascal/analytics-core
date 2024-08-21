@@ -24,7 +24,10 @@ export class AuthService {
   }
 
   GoToDefaultPage(forcelogout: boolean = false) {
-    if (forcelogout) return this.logout();
+    if (forcelogout) {
+      this.logout();
+      return;
+    }
     const default_page = this.userCtx.defaultPage;
     if ((default_page ?? '') != '') return this.router.navigate([default_page]);
     const user = this.userCtx.currentUserCtx;

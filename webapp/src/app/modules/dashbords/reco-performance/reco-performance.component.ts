@@ -143,7 +143,16 @@ export class RecoPerformanceDashboardComponent {
 
   generateChart(p: { cibleId: string, type: ChartUtils['type'], absisseLabels: number[] | string[], datasets: ChartUtils['datasets'][] }) {
 
-    const canvas = $("#" + p.cibleId).get(0);
+    const canvases = $("#" + p.cibleId)
+
+    // Check if there is at least one canvas element
+    if (!canvases || canvases.length <= 0) {
+      return;
+    }
+
+    const canvas = canvases.get(0);
+
+
     if (canvas && canvas.chart) {
       // If a chart exists, destroy it
       canvas.chart.destroy();

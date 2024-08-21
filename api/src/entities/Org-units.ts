@@ -518,7 +518,7 @@ export class Chw {
 
   @ManyToOne(() => DistrictQuartier, (district_quartier) => district_quartier.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'district_quartier_id', referencedColumnName: 'id' })
-  district_quartier!: DistrictQuartier | string
+  district_quartier!: DistrictQuartier
 
   @Column({ type: 'bigint', nullable: false })
   reported_date_timestamp!: number

@@ -299,36 +299,39 @@ export async function VILLAGES_SECTEURS_COUSTOM_QUERY(): Promise<VillageSecteurC
 }
 
 export async function RECOS_COUSTOM_QUERY(): Promise<RecoCoustomQuery[]> {
-    return await Connection.query(`
-    SELECT 
-        r.*,
-        json_build_object('id', cy.id, 'name', cy.name) AS country, 
-        json_build_object('id', rg.id, 'name', rg.name) AS region, 
-        json_build_object('id', pr.id, 'name', pr.name) AS prefecture, 
-        json_build_object('id', co.id, 'name', co.name) AS commune, 
-        json_build_object('id', ho.id, 'name', ho.name) AS hospital,
-        json_build_object('id', dq.id, 'name', dq.name) AS district_quartier, 
-        json_build_object('id', ch.id, 'name', ch.name) AS chw,
-        json_build_object('id', vs.id, 'name', vs.name) AS village_secteur
-    FROM 
-        reco r 
-    JOIN 
-        country cy ON r.country_id = cy.id
-    JOIN 
-        region rg ON r.region_id = rg.id
-    JOIN 
-        prefecture pr ON r.prefecture_id = pr.id
-    JOIN 
-        commune co ON r.commune_id = co.id
-    JOIN 
-        hospital ho ON r.hospital_id = ho.id
-    JOIN 
-        district_quartier dq ON r.district_quartier_id = dq.id
-    JOIN 
-        village_secteur vs ON r.village_secteur_id = vs.id
-    JOIN 
-        chw ch ON r.chw_id = ch.id
-`);
+    const sql = `
+        SELECT 
+            r.*,
+            json_build_object('id', cy.id, 'name', cy.name) AS country, 
+            json_build_object('id', rg.id, 'name', rg.name) AS region, 
+            json_build_object('id', pr.id, 'name', pr.name) AS prefecture, 
+            json_build_object('id', co.id, 'name', co.name) AS commune, 
+            json_build_object('id', ho.id, 'name', ho.name) AS hospital,
+            json_build_object('id', dq.id, 'name', dq.name) AS district_quartier, 
+            json_build_object('id', ch.id, 'name', ch.name) AS chw,
+            json_build_object('id', vs.id, 'name', vs.name) AS village_secteur
+        FROM 
+            reco r 
+        JOIN 
+            country cy ON r.country_id = cy.id
+        JOIN 
+            region rg ON r.region_id = rg.id
+        JOIN 
+            prefecture pr ON r.prefecture_id = pr.id
+        JOIN 
+            commune co ON r.commune_id = co.id
+        JOIN 
+            hospital ho ON r.hospital_id = ho.id
+        JOIN 
+            district_quartier dq ON r.district_quartier_id = dq.id
+        JOIN 
+            village_secteur vs ON r.village_secteur_id = vs.id
+        JOIN 
+            chw ch ON r.chw_id = ch.id 
+        
+    `;
+
+return await Connection.query(sql);
 }
 
 export async function FAMILIES_COUSTOM_QUERY(): Promise<FamilyCoustomQuery[]> {

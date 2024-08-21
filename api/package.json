@@ -41,6 +41,7 @@
     "mongodb": "^5.9.2",
     "mssql": "^10.0.2",
     "mysql": "^2.18.1",
+    "nano": "^10.1.4",
     "node-couchdb": "^2.0.0",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
