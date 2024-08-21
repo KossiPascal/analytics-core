@@ -29,13 +29,18 @@ export class AuthService {
       return;
     }
     const default_page = this.userCtx.defaultPage;
-    if ((default_page ?? '') != '') return this.router.navigate([default_page]);
+    if ((default_page ?? '') != '') {
+      this.router.navigate([default_page]);
+      return;
+    }
     const user = this.userCtx.currentUserCtx;
     if (user && user.routes.length == 0 && this.userCtx.autorizations().length == 0) {
       const msg = "Vous n'avez aucun role attribué, Contacter votre administrateur!";
-      return this.router.navigate([`auths/error/500/${msg}`]);
+      this.router.navigate([`auths/error/500/${msg}`]);
+      return;
     }
-    return this.logout();
+    this.logout();
+    return;
   }
 
 

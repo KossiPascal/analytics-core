@@ -48,6 +48,7 @@ systemctl daemon-reload
 sudo systemctl stop ih_gas_online
 sudo systemctl stop analytics-core
 sudo systemctl stop analytics-core.service
+sudo systemctl restart analytics-core.service
 
 
 git clone https://github.com/KossiPascal/analytics-core.git

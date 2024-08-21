@@ -19,7 +19,7 @@ export class LogoutAccessGuard implements CanActivate, OnDestroy {
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
         if (this.userCtx.isLoggedIn) {
-            this.auth.GoToDefaultPage();
+            // this.auth.GoToDefaultPage();
             return false;
         }
 
@@ -27,7 +27,7 @@ export class LogoutAccessGuard implements CanActivate, OnDestroy {
         this.setRouteTitle(value);
         const requestedRoute = state.url.substring(1);
         if (!this.logoutAccessPages.includes(requestedRoute)) {
-            this.auth.GoToDefaultPage();
+            // this.auth.GoToDefaultPage();
             return false;
         }
         return true;
