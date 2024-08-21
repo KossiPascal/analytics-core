@@ -15,17 +15,17 @@ import { TokenInterceptor } from './interceptors/token.interceptor';
 import { MAT_MOMENT_DATE_FORMATS, MomentDateAdapter } from '@angular/material-moment-adapter';
 import { DateAdapter, MatDateFormats, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { ModalLayoutComponent } from './selectors/modal-layout/modal-layout.component';
-// import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { StoreModule } from '@ngrx/store';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-// import {
-//   TranslateModule,
-//   TranslateLoader,
-//   MissingTranslationHandler,
-//   MissingTranslationHandlerParams,
-//   TranslateCompiler,
-// } from '@ngx-translate/core';
-// import { ConstanteService } from './services/constantes.service';
+import {
+  TranslateModule,
+  TranslateLoader,
+  MissingTranslationHandler,
+  MissingTranslationHandlerParams,
+  TranslateCompiler,
+} from '@ngx-translate/core';
+import { ConstanteService } from './services/constantes.service';
 import { LogoutConfirmComponent } from './modals/logout/logout-confirm.component';
 import { ReloadingComponent } from './modals/reloading/reloading.component';
 import { SessionExpiredComponent } from '@kossi-modals/session-expired/session-expired.component';
@@ -49,13 +49,13 @@ MAT_MOMENT_DATE_FORMATS.display.monthYearA11yLabel = 'long';
 
 export const APP_DATE_FORMATS: MatDateFormats = MAT_MOMENT_DATE_FORMATS;
 
-// export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) {
-//   return new TranslateHttpLoader(
-//     httpClient,
-//     cst.backenUrl()+'/assets/i18n/',
-//     '-lang.json'
-//   );
-// }
+export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) {
+  return new TranslateHttpLoader(
+    httpClient,
+    cst.backenUrl()+'/assets/i18n/',
+    '-lang.json'
+  );
+}
 
 @NgModule({
   declarations: [
@@ -93,21 +93,21 @@ export const APP_DATE_FORMATS: MatDateFormats = MAT_MOMENT_DATE_FORMATS;
     }),
 
 
-    // TranslateModule.forRoot({
-    //   loader: {
-    //     provide: TranslateLoader,
-    //     useFactory: HttpLoaderFactory,
-    //     deps: [HttpClient]
-    //   },
-    //   // missingTranslationHandler: {
-    //   //   provide: MissingTranslationHandler,
-    //   //   useClass: MissingTranslationHandlerLog
-    //   // },
-    //   // compiler: {
-    //   //   provide: TranslateCompiler,
-    //   //   useClass: TranslateMessageFormatCompilerProvider,
-    //   // },
-    // }),
+    TranslateModule.forRoot({
+      loader: {
+        provide: TranslateLoader,
+        useFactory: HttpLoaderFactory,
+        deps: [HttpClient]
+      },
+      // missingTranslationHandler: {
+      //   provide: MissingTranslationHandler,
+      //   useClass: MissingTranslationHandlerLog
+      // },
+      // compiler: {
+      //   provide: TranslateCompiler,
+      //   useClass: TranslateMessageFormatCompilerProvider,
+      // },
+    }),
       ServiceWorkerModule.register('/ngsw-worker.js', {
         enabled: environment.production,
         // Register the ServiceWorker as soon as the application is stable

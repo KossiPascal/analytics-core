@@ -149,6 +149,12 @@ https://github.com/cartant/rxjs-etc by Nicholas Jamieson, MIT licensed. See the
 file header for details.
 
 
+@ngx-translate/core
+SEE LICENSE IN LICENSE
+
+@ngx-translate/http-loader
+SEE LICENSE IN LICENSE
+
 jwt-decode
 MIT
 The MIT License (MIT)

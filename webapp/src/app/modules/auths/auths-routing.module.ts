@@ -10,7 +10,7 @@ const routes: Routes = [
   {
     path: 'login',
     component: LoginComponent,
-    // canActivate: [LogoutAccessGuard],
+    canActivate: [LogoutAccessGuard],
     data: {
       href: 'auths/login',
       title: 'User login',

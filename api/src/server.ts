@@ -35,37 +35,37 @@ function app() {
   const server = express();
 
   server
-    .use(express.json({ limit: '50mb' }))
-    .use(express.urlencoded({ limit: '50mb', extended: true }))
-    .use(bodyParser.json())
-    .use(bodyParser.urlencoded({ extended: true }))
-    .use(helmet({ contentSecurityPolicy: false }))
-    .use(cors())
-    .use(json())
-    .use(responseTime())
-    .use(compression())
-    .use(urlencoded({ extended: false }))
-    .enable('trust proxy')
-    .set('strict routing', true)
-    .set('view engine', 'ejs')
-    .set('json spaces', 0)
-    .set('content-type', 'application/json; charset=utf-8')
-    .use(session({
-      secret: 'session',
-      cookie: {
-        secure: isSecure,
-        maxAge: 60000
-      },
-      saveUninitialized: true,
-      resave: true
-    }))
-    .use(bearerToken())
-    .use((req: Request, res: Response, next: NextFunction) => {
-      if (req.method === 'OPTIONS') return res.status(200).end();
-      if (isSecure && req.secure) return next();
-      if (isSecure && !req.secure) return res.redirect(`https://${req.headers.host}${req.url}`);
-      next();
-    })
+    // .use(express.json({ limit: '50mb' }))
+    // .use(express.urlencoded({ limit: '50mb', extended: true }))
+    // .use(bodyParser.json())
+    // .use(bodyParser.urlencoded({ extended: true }))
+    // .use(helmet({ contentSecurityPolicy: false }))
+    // .use(cors())
+    // .use(json())
+    // .use(responseTime())
+    // .use(compression())
+    // .use(urlencoded({ extended: false }))
+    // .enable('trust proxy')
+    // .set('strict routing', true)
+    // .set('view engine', 'ejs')
+    // .set('json spaces', 0)
+    // .set('content-type', 'application/json; charset=utf-8')
+    // .use(session({
+    //   secret: 'session',
+    //   cookie: {
+    //     secure: isSecure,
+    //     maxAge: 60000
+    //   },
+    //   saveUninitialized: true,
+    //   resave: true
+    // }))
+    // .use(bearerToken())
+    // .use((req: Request, res: Response, next: NextFunction) => {
+    //   if (req.method === 'OPTIONS') return res.status(200).end();
+    //   if (isSecure && req.secure) return next();
+    //   if (isSecure && !req.secure) return res.redirect(`https://${req.headers.host}${req.url}`);
+    //   next();
+    // })
     .use('/api/auth-user', authRouter)
     .use('/api/configs', configsRouter)
     .use('/api/reports', reportsRouter)
@@ -79,15 +79,6 @@ function app() {
     .use(express.static(join(PROJECT_FOLDER, 'views')))
     .use(express.static(join(SRC_FOLDER, 'public')))
 
-    .get('/', (req: Request, res: Response, next: NextFunction) => {
-      const indexPath = join(PROJECT_FOLDER, 'views', 'index.html');
-      res.sendFile(indexPath, (err: any) => {
-        if (err) {
-          err.noStaticFiles = true;
-          next(err);
-        }
-      });
-    })
     .get('/publics/download/kendeya-prod-apk', (req, res) => {
       const apkName = `kendeya-prod.apk`;
       const file = join(SRC_FOLDER, 'public', 'apk', apkName);
@@ -118,7 +109,17 @@ function app() {
         }
       });
     })
-    .all('*', (req: Request, res: Response) => res.status(200).redirect('/'))
+
+    .get('/', (req: Request, res: Response, next: NextFunction) => {
+      const indexPath = join(PROJECT_FOLDER, 'views', 'index.html');
+      res.sendFile(indexPath, (err: any) => {
+        if (err) {
+          err.noStaticFiles = true;
+          next(err);
+        }
+      });
+    })
+    // .all('*', (req: Request, res: Response) => res.status(200).redirect('/'))
     .use((req: Request, res: Response) => res.status(404).send('Not found.'))
     .use((error: any, req: Request, res: Response, next: NextFunction) => {
       console.error(error.stack);
