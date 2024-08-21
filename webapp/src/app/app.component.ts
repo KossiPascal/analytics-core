@@ -158,24 +158,24 @@ export class AppComponent implements OnInit {
   }
 
   private requestPersistentStorage() {
-    if (navigator.storage && navigator.storage.persist) {
-      navigator.storage
-        .persist()
-        .then(granted => {
-          if (granted) {
-            console.info('Persistent storage granted: storage will not be cleared except by explicit user action');
-          } else {
-            console.info('Persistent storage denied: storage may be cleared by the UA under storage pressure.');
-          }
-        });
-    }
+    // if (navigator.storage && navigator.storage.persist) {
+    //   navigator.storage
+    //     .persist()
+    //     .then(granted => {
+    //       if (granted) {
+    //         console.info('Persistent storage granted: storage will not be cleared except by explicit user action');
+    //       } else {
+    //         console.info('Persistent storage denied: storage may be cleared by the UA under storage pressure.');
+    //       }
+    //     });
+    // }
   }
 
   private checkPrivacyPolicy() {
-    return this.privacyPoliciesService
-      .hasAccepted()
-      .then(({ privacyPolicy, accepted }: any = {}) => {
-      })
-      .catch(err => console.error('Failed to load privacy policy', err));
+    // return this.privacyPoliciesService
+    //   .hasAccepted()
+    //   .then(({ privacyPolicy, accepted }: any = {}) => {
+    //   })
+    //   .catch(err => console.error('Failed to load privacy policy', err));
   }
 }
