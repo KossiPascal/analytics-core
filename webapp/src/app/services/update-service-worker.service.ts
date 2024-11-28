@@ -23,7 +23,8 @@ export class UpdateServiceWorkerService {
 
   public updateServiceWorker: boolean = true;
   public UPDATE_INTERVAL?: number;
-  public readonly TEN_SECOND: number = 10 * 1000;
+  // public readonly TEN_SECOND: number = 10 * 1000;
+  public readonly SIXTY_SECOND: number = 60 * 1000;
   public readonly TWO_HOURS: number = 2 * 60 * 60 * 1000;
 
   constructor(
@@ -161,10 +162,10 @@ export class UpdateServiceWorkerService {
             return this.store.set({ db: DEFAULT_LOCAL_DB, name: '_versions', value: JSON.stringify(newVersion) });
           }
         }
-        setTimeout(() => this.ngZone.run(() => this.watchForChanges()), this.UPDATE_INTERVAL ?? this.TEN_SECOND);
+        setTimeout(() => this.ngZone.run(() => this.watchForChanges()), this.UPDATE_INTERVAL ?? this.SIXTY_SECOND);
       }, (err: any) => {
         console.log(err.toString());
-        setTimeout(() => this.ngZone.run(() => this.watchForChanges()), this.UPDATE_INTERVAL ?? this.TEN_SECOND);
+        setTimeout(() => this.ngZone.run(() => this.watchForChanges()), this.UPDATE_INTERVAL ?? this.SIXTY_SECOND);
       });
     }
   }

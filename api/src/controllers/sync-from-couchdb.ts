@@ -27,7 +27,7 @@ import { SyncVaccinationData } from "./couchdb-sync-models/vaccination-data";
 import { SyncEventsData } from "./couchdb-sync-models/events-data";
 import { SyncFsMegData } from "./couchdb-sync-models/fs-meg-data";
 import { SyncPromotionalData } from "./couchdb-sync-models/promotional-data";
-import { getCountryRepository, getRegionRepository, getPrefectureRepository, getCommuneRepository, getHospitalRepository, getDistrictQuartierRepository, getVillageSecteurRepository, getFamilyRepository, getChwRepository, getRecoRepository, getPatientRepository, Country, Region, Prefecture, Commune, Hospital, DistrictQuartier, VillageSecteur, Family, Patient, Reco, Chw, getMentorRepository, Mentor } from "../entities/Org-units";
+import { getCountryRepository, getRegionRepository, getPrefectureRepository, getCommuneRepository, getHospitalRepository, getDistrictQuartierRepository, getVillageSecteurRepository, getFamilyRepository, getChwRepository, getRecoRepository, getPatientRepository, Country, Region, Prefecture, Commune, Hospital, DistrictQuartier, VillageSecteur, Family, Patient, Reco, Chw, getCommuneManagerRepository, getCountryManagerRepository, getHospitalManagerRepository, getPrefectureManagerRepository, getRegionManagerRepository, CommuneManager, CountryManager, HospitalManager, PrefectureManager, RegionManager } from "../entities/Org-units";
 import { SyncDeathData } from "./couchdb-sync-models/death-data";
 import { getDeathDataRepository } from "../entities/_Death-data";
 import { APP_ENV } from "../utils/constantes";
@@ -277,7 +277,8 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
         return resp.status(500).json(outPutInfo);
     }
     
-    const { userId, start_date, end_date, year, month, country, region, prefecture, commune, hospital, district_quartier, mentor, village_secteur, chw, reco, family, patient } = req.body;
+    
+    const { userId, start_date, end_date, year, month, country, region, prefecture, commune, hospital, district_quartier, country_manager, region_manager, prefecture_manager, commune_manager, hospital_manager, village_secteur, chw, reco, family, patient } = req.body;
     var filterDate = {start_date: '', end_date: ''};
     if (start_date && end_date) {
         filterDate = {start_date: start_date, end_date: end_date};
@@ -298,7 +299,11 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
                 const _repoDistrictQuartier = await getDistrictQuartierRepository();
                 const _repoVillageSecteur = await getVillageSecteurRepository();
                 const _repoFamily = await getFamilyRepository();
-                const _repoMentor = await getMentorRepository();
+                const _repoCountryManager = await getCountryManagerRepository();
+                const _repoRegionManager = await getRegionManagerRepository();
+                const _repoPrefectureManager = await getPrefectureManagerRepository();
+                const _repoCommuneManager = await getCommuneManagerRepository();
+                const _repoHospitalManager = await getHospitalManagerRepository();
                 const _repoChw = await getChwRepository();
                 const _repoReco = await getRecoRepository();
                 const _repoPatient = await getPatientRepository();
@@ -540,7 +545,7 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
                                     _districtH.prefecture = r.parent.parent.parent._id;
                                     _districtH.region = r.parent.parent.parent.parent._id;
                                     _districtH.country = r.parent.parent.parent.parent.parent._id;
-                                    _districtH.chw_id = r.contact._id;
+                                    // _districtH.chw_id = r.contact._id;
                                     _districtH.reported_date_timestamp = r.reported_date;
                                     _districtH.reported_date = reported_date;
                                     _districtH.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
@@ -606,12 +611,205 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
                         }
 
                     }
-                    if (mentor === true) {
+
+                    if (country_manager === true) {
                         outDoneLenght++;
                         for (let i = 0; i < len; i++) {
                             done++;
                             const r: any = rows[i].doc;
-                            if (!("Mentor" in outPutInfo)) outPutInfo["Mentor"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            if (!("CountryManager" in outPutInfo)) outPutInfo["CountryManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r && 
+                                    'parent' in r && 
+                                    r.type === 'person' && r.role === 'country_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _country = new CountryManager();
+                                    _country.id = r._id;
+                                    _country.rev = r._rev;
+                                    _country.name = r.name;
+                                    _country.external_id = r.external_id;
+                                    _country.code = r.code;
+                                    _country.role = r.role;
+                                    _country.sex = getSexe(r.sex);
+                                    _country.date_of_birth = r.date_of_birth;
+                                    _country.phone = r.phone;
+                                    _country.email = r.email;
+                                    _country.profession = r.profession;
+                                    _country.geolocation = r.geolocation;                                    
+                                    _country.country = r.parent._id;
+                                    _country.reported_date_timestamp = r.reported_date;
+                                    _country.reported_date = reported_date;
+                                    _country.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _country.year = year;
+                                    _country.month = month;
+                                    await _repoCountryManager.save(_country);
+                                    outPutInfo["CountryManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["CountryManager"]["ErrorCount"] += 1;
+                                outPutInfo["CountryManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["CountryManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (region_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("RegionManager" in outPutInfo)) outPutInfo["RegionManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    r.type === 'person' && r.role === 'region_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _region = new RegionManager();
+                                    _region.id = r._id;
+                                    _region.rev = r._rev;
+                                    _region.name = r.name;
+                                    _region.external_id = r.external_id;
+                                    _region.code = r.code;
+                                    _region.role = r.role;
+                                    _region.sex = getSexe(r.sex);
+                                    _region.date_of_birth = r.date_of_birth;
+                                    _region.phone = r.phone;
+                                    _region.email = r.email;
+                                    _region.profession = r.profession;
+                                    _region.geolocation = r.geolocation;
+                                    _region.region = r.parent._id;
+                                    _region.country = r.parent.parent._id;
+                                    _region.reported_date_timestamp = r.reported_date;
+                                    _region.reported_date = reported_date;
+                                    _region.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _region.year = year;
+                                    _region.month = month;
+                                    await _repoRegionManager.save(_region);
+                                    outPutInfo["RegionManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["RegionManager"]["ErrorCount"] += 1;
+                                outPutInfo["RegionManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["RegionManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (prefecture_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("PrefectureManager" in outPutInfo)) outPutInfo["PrefectureManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    r.type === 'person' && r.role === 'prefecture_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _prefecture = new PrefectureManager();
+                                    _prefecture.id = r._id;
+                                    _prefecture.rev = r._rev;
+                                    _prefecture.name = r.name;
+                                    _prefecture.external_id = r.external_id;
+                                    _prefecture.code = r.code;
+                                    _prefecture.role = r.role;
+                                    _prefecture.sex = getSexe(r.sex);
+                                    _prefecture.date_of_birth = r.date_of_birth;
+                                    _prefecture.phone = r.phone;
+                                    _prefecture.email = r.email;
+                                    _prefecture.profession = r.profession;
+                                    _prefecture.geolocation = r.geolocation;
+                                    _prefecture.prefecture = r.parent._id;
+                                    _prefecture.region = r.parent.parent._id;
+                                    _prefecture.country = r.parent.parent.parent._id;
+                                    _prefecture.reported_date_timestamp = r.reported_date;
+                                    _prefecture.reported_date = reported_date;
+                                    _prefecture.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _prefecture.year = year;
+                                    _prefecture.month = month;
+                                    await _repoPrefectureManager.save(_prefecture);
+                                    outPutInfo["PrefectureManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["PrefectureManager"]["ErrorCount"] += 1;
+                                outPutInfo["PrefectureManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["PrefectureManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (commune_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("CommuneManager" in outPutInfo)) outPutInfo["CommuneManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    'parent' in r.parent.parent.parent &&
+                                    r.type === 'person' && r.role === 'commune_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _commune = new CommuneManager();
+                                    _commune.id = r._id;
+                                    _commune.rev = r._rev;
+                                    _commune.name = r.name;
+                                    _commune.external_id = r.external_id;
+                                    _commune.code = r.code;
+                                    _commune.role = r.role;
+                                    _commune.sex = getSexe(r.sex);
+                                    _commune.date_of_birth = r.date_of_birth;
+                                    _commune.phone = r.phone;
+                                    _commune.email = r.email;
+                                    _commune.profession = r.profession;
+                                    _commune.geolocation = r.geolocation;
+                                    _commune.commune = r.parent._id;
+                                    _commune.prefecture = r.parent.parent._id;
+                                    _commune.region = r.parent.parent.parent._id;
+                                    _commune.country = r.parent.parent.parent.parent._id;
+                                    _commune.reported_date_timestamp = r.reported_date;
+                                    _commune.reported_date = reported_date;
+                                    _commune.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _commune.year = year;
+                                    _commune.month = month;
+                                    await _repoCommuneManager.save(_commune);
+                                    outPutInfo["CommuneManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["CommuneManager"]["ErrorCount"] += 1;
+                                outPutInfo["CommuneManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["CommuneManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (hospital_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("HospitalManager" in outPutInfo)) outPutInfo["HospitalManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
                             try {
                                 if (r &&
                                     'parent' in r &&
@@ -619,46 +817,47 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
                                     'parent' in r.parent.parent &&
                                     'parent' in r.parent.parent.parent &&
                                     'parent' in r.parent.parent.parent.parent &&
-                                    r.type === 'person' && r.role === 'mentor') {
+                                    r.type === 'person' && r.role === 'hospital_manager') {
                                     const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
                                     const m = (new Date(reported_date)).getMonth() + 1;
                                     const year = (new Date(reported_date)).getFullYear();
                                     const month = m < 10 ? `0${m}` : `${m}`
 
-                                    const _mentor = new Mentor();
-                                    _mentor.id = r._id;
-                                    _mentor.rev = r._rev;
-                                    _mentor.name = r.name;
-                                    _mentor.external_id = r.external_id;
-                                    _mentor.code = r.code;
-                                    _mentor.role = r.role;
-                                    _mentor.sex = getSexe(r.sex);
-                                    _mentor.date_of_birth = r.date_of_birth;
-                                    _mentor.phone = r.phone;
-                                    _mentor.email = r.email;
-                                    _mentor.profession = r.profession;
-                                    _mentor.geolocation = r.geolocation;
-                                    _mentor.hospital = r.parent._id;
-                                    _mentor.commune = r.parent.parent._id;
-                                    _mentor.prefecture = r.parent.parent.parent._id;
-                                    _mentor.region = r.parent.parent.parent.parent._id;
-                                    _mentor.country = r.parent.parent.parent.parent.parent._id;
-                                    _mentor.reported_date_timestamp = r.reported_date;
-                                    _mentor.reported_date = reported_date;
-                                    _mentor.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
-                                    _mentor.year = year;
-                                    _mentor.month = month;
-                                    await _repoMentor.save(_mentor);
-                                    outPutInfo["Mentor"]["SuccessCount"] += 1;
+                                    const _hospital = new HospitalManager();
+                                    _hospital.id = r._id;
+                                    _hospital.rev = r._rev;
+                                    _hospital.name = r.name;
+                                    _hospital.external_id = r.external_id;
+                                    _hospital.code = r.code;
+                                    _hospital.role = r.role;
+                                    _hospital.sex = getSexe(r.sex);
+                                    _hospital.date_of_birth = r.date_of_birth;
+                                    _hospital.phone = r.phone;
+                                    _hospital.email = r.email;
+                                    _hospital.profession = r.profession;
+                                    _hospital.geolocation = r.geolocation;
+                                    _hospital.hospital = r.parent._id;
+                                    _hospital.commune = r.parent.parent._id;
+                                    _hospital.prefecture = r.parent.parent.parent._id;
+                                    _hospital.region = r.parent.parent.parent.parent._id;
+                                    _hospital.country = r.parent.parent.parent.parent.parent._id;
+                                    _hospital.reported_date_timestamp = r.reported_date;
+                                    _hospital.reported_date = reported_date;
+                                    _hospital.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _hospital.year = year;
+                                    _hospital.month = month;
+                                    await _repoHospitalManager.save(_hospital);
+                                    outPutInfo["HospitalManager"]["SuccessCount"] += 1;
                                 }
                             } catch (err: any) {
-                                outPutInfo["Mentor"]["ErrorCount"] += 1;
-                                outPutInfo["Mentor"]["ErrorElements"] += `${_sepation}${err.toString()}`;
-                                outPutInfo["Mentor"]["ErrorIds"] += `${_sepation}${r._id}`;
+                                outPutInfo["HospitalManager"]["ErrorCount"] += 1;
+                                outPutInfo["HospitalManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["HospitalManager"]["ErrorIds"] += `${_sepation}${r._id}`;
                             }
                         }
 
                     }
+
                     if (chw === true) {
                         outDoneLenght++;
                         for (let i = 0; i < len; i++) {
@@ -747,7 +946,7 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
                                     _reco.phone = r.phone;
                                     _reco.email = r.email;
                                     _reco.profession = r.profession;
-                                    _reco.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent._id } }));
+                                    // _reco.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent._id } }));
                                     _reco.geolocation = r.geolocation;
                                     _reco.village_secteur = r.parent._id;
                                     _reco.district_quartier = r.parent.parent._id;
@@ -808,7 +1007,7 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
                                     _family.region = r.parent.parent.parent.parent.parent.parent._id;
                                     _family.country = r.parent.parent.parent.parent.parent.parent.parent._id;
                                     _family.reco = r.user_info.created_user_id
-                                    _family.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent._id } }));
+                                    // _family.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent._id } }));
                                     _family.household_has_working_latrine = r.household_has_working_latrine;
                                     _family.household_has_good_water_access = r.household_has_good_water_access;
                                     _family.reported_date_timestamp = r.reported_date;
@@ -880,7 +1079,7 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
                                     _patient.prefecture = r.parent.parent.parent.parent.parent.parent._id;
                                     _patient.region = r.parent.parent.parent.parent.parent.parent.parent._id;
                                     _patient.country = r.parent.parent.parent.parent.parent.parent.parent.parent._id;
-                                    _patient.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent.parent._id } }));
+                                    // _patient.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent.parent._id } }));
                                     _patient.reco = r.user_info.created_user_id
                                     _patient.reported_date_timestamp = r.reported_date;
                                     _patient.reported_date = reported_date;

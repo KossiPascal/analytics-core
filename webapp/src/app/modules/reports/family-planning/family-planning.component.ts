@@ -59,6 +59,10 @@ export class FamilyPlanningComponent {
     });
   }
 
+  cancelValidation(){
+
+  }
+
 
   SHOW_DATA(updatedFormGroup: any) {
     this._formGroup = updatedFormGroup;
@@ -81,7 +85,7 @@ export class FamilyPlanningComponent {
 
       this.REPPORTS_HEADER.REGION_NAME = _res$?.region.name;
       this.REPPORTS_HEADER.RECO_ASC_TYPE = _res$?.reco_asc_type;
-      this.REPPORTS_HEADER.RECO_ASC_NAME = (_res$?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : _res$?.chw.name);
+      this.REPPORTS_HEADER.RECO_ASC_NAME = (_res$?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : ''); //_res$?.chw.name);
       this.REPPORTS_HEADER.PREFECTURE_NAME = _res$?.prefecture.name;
       this.REPPORTS_HEADER.COMMUNE_NAME = _res$?.commune.name;
       // this.REPPORTS_HEADER.VILLAGE_CHIEF_NAME = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';

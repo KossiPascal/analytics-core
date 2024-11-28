@@ -1,10 +1,9 @@
 import "reflect-metadata";
 import express, { Request, Response, NextFunction } from 'express';
-import { json, urlencoded } from 'body-parser';
+// import bodyParser, { json, urlencoded } from 'body-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import bearerToken from 'express-bearer-token';
-import bodyParser from 'body-parser';
 import compression from 'compression';
 import responseTime from 'response-time';
 import cron from 'node-cron';
@@ -27,6 +26,9 @@ import apisRouter from "./routes/api-token";
 import syncRouter from "./routes/sync-data";
 import databaseRouter from "./routes/database";
 import dhis2Router from "./routes/dhis2";
+import surveyRouter from "./routes/survey";
+import { Errors } from "./routes/error";
+
 
 const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT, ACCESS_ALL_AVAILABE_PORT, USE_LOCALHOST, ACTIVE_SECURE_MODE } = APP_ENV;
 const isSecure = ACTIVE_SECURE_MODE === 'true';
@@ -35,37 +37,38 @@ function app() {
   const server = express();
 
   server
-    // .use(express.json({ limit: '50mb' }))
-    // .use(express.urlencoded({ limit: '50mb', extended: true }))
-    // .use(bodyParser.json())
-    // .use(bodyParser.urlencoded({ extended: true }))
-    // .use(helmet({ contentSecurityPolicy: false }))
-    // .use(cors())
-    // .use(json())
-    // .use(responseTime())
-    // .use(compression())
-    // .use(urlencoded({ extended: false }))
-    // .enable('trust proxy')
+    .enable('trust proxy')
+    .set('trust proxy', 1)
+    .set('view engine', 'ejs')
+    .set('json spaces', 2)
+    .set('content-type', 'application/json; charset=utf-8')
     // .set('strict routing', true)
-    // .set('view engine', 'ejs')
-    // .set('json spaces', 0)
-    // .set('content-type', 'application/json; charset=utf-8')
-    // .use(session({
-    //   secret: 'session',
-    //   cookie: {
-    //     secure: isSecure,
-    //     maxAge: 60000
-    //   },
-    //   saveUninitialized: true,
-    //   resave: true
-    // }))
-    // .use(bearerToken())
-    // .use((req: Request, res: Response, next: NextFunction) => {
-    //   if (req.method === 'OPTIONS') return res.status(200).end();
-    //   if (isSecure && req.secure) return next();
-    //   if (isSecure && !req.secure) return res.redirect(`https://${req.headers.host}${req.url}`);
-    //   next();
-    // })
+    .use(helmet({ contentSecurityPolicy: false }))
+    .use(cors())
+    // .use(json())
+    .use(responseTime())
+    .use(compression())
+    // .use(urlencoded({ extended: false }))
+    .use(express.json({ limit: '50mb' }))
+    .use(express.urlencoded({ limit: '50mb', extended: true }))
+    // .use(bodyParser.json({ limit: '10mb' }))
+    // .use(bodyParser.urlencoded({ limit: '10mb', extended: true }))
+    .use(session({
+      secret: 'session',
+      cookie: {
+        secure: isSecure,
+        maxAge: 60000
+      },
+      saveUninitialized: true,
+      resave: true
+    }))
+    .use(bearerToken())
+    .use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method === 'OPTIONS') return res.status(200).end();
+      if (isSecure && req.secure) return next();
+      if (isSecure && !req.secure) return res.redirect(`https://${req.headers.host}${req.url}`);
+      next();
+    })
     .use('/api/auth-user', authRouter)
     .use('/api/configs', configsRouter)
     .use('/api/reports', reportsRouter)
@@ -75,13 +78,15 @@ function app() {
     .use('/api/sync', syncRouter)
     .use('/api/database', databaseRouter)
     .use('/api/dhis2', dhis2Router)
+    .use('/api/survey', surveyRouter)
+  
     .use('/api/assets', express.static(join(__dirname, 'assets')))
+    
     .use(express.static(join(PROJECT_FOLDER, 'views')))
     .use(express.static(join(SRC_FOLDER, 'public')))
-
-    .get('/publics/download/kendeya-prod-apk', (req, res) => {
+    .use('/publics/download/kendeya-prod-apk', (req, res) => {
       const apkName = `kendeya-prod.apk`;
-      const file = join(SRC_FOLDER, 'public', 'apk', apkName);
+      const file = join(SRC_FOLDER, `public/apk/${apkName}`);
       res.download(file, apkName, (err) => {
           if (err) {
               console.error('Error downloading the file:', err);
@@ -89,9 +94,9 @@ function app() {
           }
       });
     })
-    .get('/publics/download/kendeya-dev-apk', (req, res) => {
+    .use('/publics/download/kendeya-dev-apk', (req, res) => {
       const apkName = `kendeya-dev.apk`;
-      const file = join(SRC_FOLDER, 'public', 'apk', apkName);
+      const file = join(SRC_FOLDER, `public/apk/${apkName}`);
       res.download(file, apkName, (err) => {
           if (err) {
               console.error('Error downloading the file:', err);
@@ -99,9 +104,8 @@ function app() {
           }
       });
     })
-
-    .get('/publics/kendeya-guide-formation', (req: Request, res: Response, next: NextFunction) => {
-      const indexPath = join(SRC_FOLDER, 'public', 'guide-formation', 'index.html');
+    .use('/', (req: Request, res: Response, next: NextFunction) => {
+      const indexPath = join(PROJECT_FOLDER, 'views/index.html');
       res.sendFile(indexPath, (err: any) => {
         if (err) {
           err.noStaticFiles = true;
@@ -109,39 +113,26 @@ function app() {
         }
       });
     })
-
-    .get('/', (req: Request, res: Response, next: NextFunction) => {
-      const indexPath = join(PROJECT_FOLDER, 'views', 'index.html');
-      res.sendFile(indexPath, (err: any) => {
-        if (err) {
-          err.noStaticFiles = true;
-          next(err);
-        }
-      });
-    })
-    // .all('*', (req: Request, res: Response) => res.status(200).redirect('/'))
-    .use((req: Request, res: Response) => res.status(404).send('Not found.'))
-    .use((error: any, req: Request, res: Response, next: NextFunction) => {
-      console.error(error.stack);
-      if (error.noStaticFiles) {
-        res.status(404).sendFile(join(__dirname, 'public', '404.html'));
-      } else {
-        res.status(error.statusCode || 500).json({
-          error: {
-            message: error.message,
-            data: error.data,
-          },
-        });
-      }
-    });
-
+    .all('*', (req: Request, res: Response) => res.status(200).redirect('/'))
+    .use(Errors.getErrors)
+    .use(Errors.get404)
+    // .get('/publics/kendeya-guide-formation', (req: Request, res: Response, next: NextFunction) => {
+    //   const indexPath = join(SRC_FOLDER, 'public/guide-formation/index.html');
+    //   res.sendFile(indexPath, (err: any) => {
+    //     if (err) {
+    //       err.noStaticFiles = true;
+    //       next(err);
+    //     }
+    //   });
+    // })
+    ;
   return server;
 }
 
 AppDataSource
   .initialize()
   .then(async () => {
-    logNginx(`initialize success!\nApp Version: ${appVersion()}`);
+    logNginx(`initialize success!\nApp Version: ${appVersion().app_version}`);
     await AuthUserController.DefaultAdminCreation();
 
     const server = app();
@@ -154,6 +145,7 @@ AppDataSource
     });
 
     const credential: Record<string, any>|any = {};
+
     if (isSecure) {
       credential.key = fs.readFileSync(`${ENV_FOLDER}/server.key`, 'utf8');
       credential.ca = fs.readFileSync(`${ENV_FOLDER}/server-ca.crt`, 'utf8');
@@ -169,5 +161,6 @@ AppDataSource
       hostnames,
       useLocalhost: USE_LOCALHOST === 'true',
     });
+
   })
   .catch(error => logNginx(`${error}`));

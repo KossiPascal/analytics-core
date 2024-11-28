@@ -11,8 +11,8 @@ export class RepportsHeaderSelectorComponent {
   @Input() REPPORTS_HEADER!: ReportsHealth;
 
   @Output() onValidateData: EventEmitter<any> = new EventEmitter();
+  @Output() onCancelDataValidated: EventEmitter<any> = new EventEmitter();
   @Output() onSendDataToDhis2: EventEmitter<any> = new EventEmitter();
-
 
   WHITE_SPACE: string = '&nbsp;'.repeat(5);
 
@@ -22,6 +22,13 @@ export class RepportsHeaderSelectorComponent {
     event.preventDefault();
     if (this.onValidateData) {
       this.onValidateData.emit();
+    }
+  }
+
+  async cancelValidation(event: Event) {
+    event.preventDefault();
+    if (this.onCancelDataValidated) {
+      this.onCancelDataValidated.emit();
     }
   }
 

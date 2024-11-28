@@ -1,6 +1,6 @@
 import { Entity, Column, Repository, DataSource, PrimaryColumn, JoinColumn, ManyToOne } from "typeorm"
 import { AppDataSource } from "../data_source"
-import { Country, Region, Prefecture, Commune, Hospital, DistrictQuartier, VillageSecteur, Family, Chw, Reco, Patient, Mentor } from "./Org-units";
+import { Country, Region, Prefecture, Commune, Hospital, DistrictQuartier, VillageSecteur, Family, Chw, Reco, Patient, HospitalManager } from "./Org-units";
 
 // export enum FlightType { DOMESTIC = "domestic", INTERNATIONAL = "international" }
 let Connection: DataSource = AppDataSource.manager.connection;
@@ -68,9 +68,9 @@ export class FsMegData {
     @JoinColumn({ name: 'hospital_id', referencedColumnName: 'id' })
     hospital!: Hospital
 
-    @ManyToOne(() => Mentor, (mentor) => mentor.id, { eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
-    @JoinColumn({ name: 'mentor_id', referencedColumnName: 'id' })
-    mentor!: Mentor
+    @ManyToOne(() => HospitalManager, (hospital_manager) => hospital_manager.id, { eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+    @JoinColumn({ name: 'hospital_manager_id', referencedColumnName: 'id' })
+    hospital_manager!: HospitalManager
 
     @Column({ type: 'bigint', nullable: false })
     reported_date_timestamp!: number

@@ -5,7 +5,7 @@ import { notEmpty } from '../utils/functions';
 import { Routes, TokenUser } from '../utils/Interfaces';
 import { GetRolesAndNamesPagesAutorizations, Roles, getRolesRepository } from './Roles';
 import { ROUTES_LIST, AUTORISATIONS_LIST } from '../utils/autorizations-pages';
-import { COUNTRIES_COUSTOM_QUERY, REGIONS_COUSTOM_QUERY, PREFECTURES_COUSTOM_QUERY, COMMUNES_COUSTOM_QUERY, HOSPITALS_COUSTOM_QUERY, DISTRICTS_QUARTIERS_COUSTOM_QUERY, CHWS_COUSTOM_QUERY, VILLAGES_SECTEURS_COUSTOM_QUERY, RECOS_COUSTOM_QUERY, FAMILIES_COUSTOM_QUERY, PATIENTS_COUSTOM_QUERY } from '../controllers/orgunit-query/org-units-coustom';
+import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, FAMILIES_CUSTOM_QUERY, PATIENTS_CUSTOM_QUERY } from '../controllers/orgunit-query/org-units-custom';
 import { ChwsMap, CommunesMap, CountryMap, DistrictQuartiersMap, GetChwsMap, GetCommunesMap, GetCountryMap, GetDistrictQuartiersMap, GetHospitalsMap, GetPrefecturesMap, GetRecosMap, GetRegionsMap, GetVillageSecteursMap, HospitalsMap, PrefecturesMap, RecosMap, RegionsMap, VillageSecteursMap } from '../utils/org-unit-interface';
 
 let Connection: DataSource = AppDataSource.manager.connection;
@@ -192,17 +192,17 @@ export async function userToken(user: Users, param: { hashToken?: boolean, check
     };
 
     if (param.outPutOrgUnits === true) {
-        tokenUser.countries = isAdmin !== true ? user.countries : (await COUNTRIES_COUSTOM_QUERY()).map(d => GetCountryMap(d));
-        tokenUser.regions = isAdmin !== true ? user.regions : (await REGIONS_COUSTOM_QUERY()).map(d => GetRegionsMap(d));
-        tokenUser.prefectures = isAdmin !== true ? user.prefectures : (await PREFECTURES_COUSTOM_QUERY()).map(d => GetPrefecturesMap(d));
-        tokenUser.communes = isAdmin !== true ? user.communes : (await COMMUNES_COUSTOM_QUERY()).map(d => GetCommunesMap(d));
-        tokenUser.hospitals = isAdmin !== true ? user.hospitals : (await HOSPITALS_COUSTOM_QUERY()).map(d => GetHospitalsMap(d));
-        tokenUser.districtQuartiers = isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_COUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d));
-        tokenUser.villageSecteurs = isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_COUSTOM_QUERY()).map(d => GetVillageSecteursMap(d));
-        tokenUser.chws = isAdmin !== true ? user.chws : (await CHWS_COUSTOM_QUERY()).map(d => GetChwsMap(d));
-        tokenUser.recos = isAdmin !== true ? user.recos : (await RECOS_COUSTOM_QUERY()).map(d => GetRecosMap(d));
-        // FAMILIES_COUSTOM_QUERY();
-        // PATIENTS_COUSTOM_QUERY();
+        tokenUser.countries = isAdmin !== true ? user.countries : (await COUNTRIES_CUSTOM_QUERY()).map(d => GetCountryMap(d));
+        tokenUser.regions = isAdmin !== true ? user.regions : (await REGIONS_CUSTOM_QUERY()).map(d => GetRegionsMap(d));
+        tokenUser.prefectures = isAdmin !== true ? user.prefectures : (await PREFECTURES_CUSTOM_QUERY()).map(d => GetPrefecturesMap(d));
+        tokenUser.communes = isAdmin !== true ? user.communes : (await COMMUNES_CUSTOM_QUERY()).map(d => GetCommunesMap(d));
+        tokenUser.hospitals = isAdmin !== true ? user.hospitals : (await HOSPITALS_CUSTOM_QUERY()).map(d => GetHospitalsMap(d));
+        tokenUser.districtQuartiers = isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_CUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d));
+        tokenUser.villageSecteurs = isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_CUSTOM_QUERY()).map(d => GetVillageSecteursMap(d));
+        tokenUser.chws = isAdmin !== true ? user.chws : (await CHWS_CUSTOM_QUERY()).map(d => GetChwsMap(d));
+        tokenUser.recos = isAdmin !== true ? user.recos : (await RECOS_CUSTOM_QUERY()).map(d => GetRecosMap(d));
+        // FAMILIES_CUSTOM_QUERY();
+        // PATIENTS_CUSTOM_QUERY();
     }
 
     if (param.outPutInitialRoles === true) {

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import { notEmpty } from "../../utils/functions";
 import { milisecond_to_date } from '../../utils/date-utils';
-import { COUNTRIES_COUSTOM_QUERY, REGIONS_COUSTOM_QUERY, PREFECTURES_COUSTOM_QUERY, COMMUNES_COUSTOM_QUERY, HOSPITALS_COUSTOM_QUERY, DISTRICTS_QUARTIERS_COUSTOM_QUERY, CHWS_COUSTOM_QUERY, VILLAGES_SECTEURS_COUSTOM_QUERY, RECOS_COUSTOM_QUERY, FAMILIES_COUSTOM_QUERY, PATIENTS_COUSTOM_QUERY } from './org-units-coustom';
+import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, FAMILIES_CUSTOM_QUERY, PATIENTS_CUSTOM_QUERY } from './org-units-custom';
 
 
 
@@ -30,7 +30,7 @@ export class OrgUnitsController {
             //     }
             // });
 
-            var data = await COUNTRIES_COUSTOM_QUERY();
+            var data = await COUNTRIES_CUSTOM_QUERY();
 
             console.log(data)
             if (notEmpty(req.body.id ?? req.body.countries)) {
@@ -61,7 +61,7 @@ export class OrgUnitsController {
             //         month: notEmpty(req.body.months) ? Array.isArray(req.body.months) ? In(req.body.months) : req.body.months : undefined,
             //     }
             // });
-            var data = await REGIONS_COUSTOM_QUERY();
+            var data = await REGIONS_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.regions)) {
                 const regions = Array.isArray(req.body.id ?? req.body.regions) ? (req.body.id ?? req.body.regions) : [req.body.id ?? req.body.regions];
                 data = data.filter(r => regions.includes(r.id));
@@ -96,7 +96,7 @@ export class OrgUnitsController {
             //     }
             // });
 
-            var data = await PREFECTURES_COUSTOM_QUERY();
+            var data = await PREFECTURES_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.prefectures)) {
                 const prefectures = Array.isArray(req.body.id ?? req.body.prefectures) ? (req.body.id ?? req.body.prefectures) : [req.body.id ?? req.body.prefectures];
                 data = data.filter(r => prefectures.includes(r.id));
@@ -138,7 +138,7 @@ export class OrgUnitsController {
             // });
 
 
-            var data= await COMMUNES_COUSTOM_QUERY();
+            var data= await COMMUNES_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.communes)) {
                 const communes = Array.isArray(req.body.id ?? req.body.communes) ? (req.body.id ?? req.body.communes) : [req.body.id ?? req.body.communes];
                 data = data.filter(r => communes.includes(r.id));
@@ -184,7 +184,7 @@ export class OrgUnitsController {
             //     }
             // });
 
-            var data = await HOSPITALS_COUSTOM_QUERY();
+            var data = await HOSPITALS_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.hospitals)) {
                 const hospitals = Array.isArray(req.body.id ?? req.body.hospitals) ? (req.body.id ?? req.body.hospitals) : [req.body.id ?? req.body.hospitals];
                 data = data.filter(r => hospitals.includes(r.id));
@@ -236,7 +236,7 @@ export class OrgUnitsController {
             //     }
             // });
 
-            var data = await DISTRICTS_QUARTIERS_COUSTOM_QUERY();
+            var data = await DISTRICTS_QUARTIERS_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.district_quartiers)) {
                 const district_quartiers = Array.isArray(req.body.id ?? req.body.district_quartiers) ? (req.body.id ?? req.body.district_quartiers) : [req.body.id ?? req.body.district_quartiers];
                 data = data.filter(r => district_quartiers.includes(r.id));
@@ -293,7 +293,7 @@ export class OrgUnitsController {
             //     }
             // });
 
-            var data = await VILLAGES_SECTEURS_COUSTOM_QUERY();
+            var data = await VILLAGES_SECTEURS_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.village_secteurs)) {
                 const village_secteurs = Array.isArray(req.body.id ?? req.body.village_secteurs) ? (req.body.id ?? req.body.village_secteurs) : [req.body.id ?? req.body.village_secteurs];
                 data = data.filter(r => village_secteurs.includes(r.id));
@@ -364,7 +364,7 @@ export class OrgUnitsController {
             // });
 
 
-            var data = await FAMILIES_COUSTOM_QUERY();
+            var data = await FAMILIES_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.families)) {
                 const families = Array.isArray(req.body.id ?? req.body.families) ? (req.body.id ?? req.body.families) : [req.body.id ?? req.body.families];
                 data = data.filter(r => families.includes(r.id));
@@ -399,7 +399,9 @@ export class OrgUnitsController {
             }
             if (notEmpty(req.body.chws)) {
                 const chws = Array.isArray(req.body.chws) ? req.body.chws : [req.body.chws];
-                data = data.filter(r => chws.includes(r.chw.id));
+                const chwList = await CHWS_CUSTOM_QUERY();
+                const CHWS = chwList.filter(r => chws.includes(r.id));
+                data = data.filter(r => CHWS.map(c=>c.district_quartier.id).includes(r.district_quartier.id));
             }
             if (notEmpty(req.body.recos)) {
                 const recos = Array.isArray(req.body.recos) ? req.body.recos : [req.body.recos];
@@ -435,7 +437,7 @@ export class OrgUnitsController {
             //         month: notEmpty(req.body.months) ? Array.isArray(req.body.months) ? In(req.body.months) : req.body.months : undefined,
             //     }
             // });
-            var data = await CHWS_COUSTOM_QUERY();
+            var data = await CHWS_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.chws)) {
                 const chws = Array.isArray(req.body.id ?? req.body.chws) ? (req.body.id ?? req.body.chws) : [req.body.id ?? req.body.chws];
                 data = data.filter(r => chws.includes(r.id));
@@ -496,7 +498,7 @@ export class OrgUnitsController {
             //         month: notEmpty(req.body.months) ? Array.isArray(req.body.months) ? In(req.body.months) : req.body.months : undefined,
             //     }
             // });
-            var data = await RECOS_COUSTOM_QUERY();
+            var data = await RECOS_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.recos)) {
                 const recos = Array.isArray(req.body.id ?? req.body.recos) ? (req.body.id ?? req.body.recos) : [req.body.id ?? req.body.recos];
                 data = data.filter(r => recos.includes(r.id));
@@ -531,7 +533,9 @@ export class OrgUnitsController {
             }
             if (notEmpty(req.body.chws)) {
                 const chws = Array.isArray(req.body.chws) ? req.body.chws : [req.body.chws];
-                data = data.filter(r => chws.includes(r.chw.id));
+                const chwList = await CHWS_CUSTOM_QUERY();
+                const CHWS = chwList.filter(r => chws.includes(r.id));
+                data = data.filter(r => CHWS.map(c=>c.district_quartier.id).includes(r.district_quartier.id));
             }
             
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
@@ -569,7 +573,7 @@ export class OrgUnitsController {
             //     }
             // });
 
-            var data = await PATIENTS_COUSTOM_QUERY();
+            var data = await PATIENTS_CUSTOM_QUERY();
             if (notEmpty(req.body.id ?? req.body.patients)) {
                 const patients = Array.isArray(req.body.id ?? req.body.patients) ? (req.body.id ?? req.body.patients) : [req.body.id ?? req.body.patients];
                 data = data.filter(r => patients.includes(r.id));
@@ -604,7 +608,9 @@ export class OrgUnitsController {
             }
             if (notEmpty(req.body.chws)) {
                 const chws = Array.isArray(req.body.chws) ? req.body.chws : [req.body.chws];
-                data = data.filter(r => chws.includes(r.chw.id));
+                const chwList = await CHWS_CUSTOM_QUERY();
+                const CHWS = chwList.filter(r => chws.includes(r.id));
+                data = data.filter(r => CHWS.map(c=>c.district_quartier.id).includes(r.district_quartier.id));
             }
             if (notEmpty(req.body.recos)) {
                 const recos = Array.isArray(req.body.recos) ? req.body.recos : [req.body.recos];

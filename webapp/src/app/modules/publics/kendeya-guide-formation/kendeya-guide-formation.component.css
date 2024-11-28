@@ -57,7 +57,7 @@ header {
 header h3 {
   margin: 0;
   font-size: 2.0em !important;
-  color: white!important;
+  color: white !important;
 }
 
 nav {
@@ -138,7 +138,7 @@ footer {
 }
 
 footer p {
-  color: white!important;
+  color: white !important;
 }
 
 .img {
@@ -197,14 +197,14 @@ footer p {
 
 @media print {
   body {
-      background-color: white;
-      color: black;
+    background-color: white;
+    color: black;
   }
 
   header,
   footer,
   nav {
-      display: none;
+    display: none;
   }
 }
 
@@ -328,4 +328,49 @@ footer p {
 
 .survey button:hover {
   background: #3498db;
+}
+
+
+/* ############################################### */
+
+label {
+  font-size: 18px!important;
+}
+
+.label {
+  font-weight: bold !important;
+}
+
+.question h1 {
+  text-align: center !important;
+  margin-bottom: 20px !important;
+  color: #333 !important;
+}
+
+.question p {
+  text-align: center !important;
+  margin-bottom: 20px !important;
+  color: #666 !important;
+}
+
+.question {
+  margin-bottom: 30px !important;
+  margin-left: 25px !important;
+}
+
+.question h2 {
+  margin-bottom: 10px !important;
+  font-size: 18px !important;
+  color: #333 !important;
+}
+
+.question label {
+  display: block !important;
+  margin-bottom: 8px !important;
+  font-size: 16px !important;
+  color: #444 !important;
+}
+
+.question input[type="radio"] {
+  margin-right: 10px !important;
 }

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
-import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
 import { RecoVaccinationDashboard, getRecoVaccinationDashboardRepository } from "../../../entities/dashboards";
 
@@ -83,7 +83,7 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year 
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: 0 };
     try {
         const _repoDashboard = await getRecoVaccinationDashboardRepository();
-        const recos = await RECOS_COUSTOM_QUERY();
+        const recos = await RECOS_CUSTOM_QUERY();
         outPutData.recos_length = recos.length;
         const filterDate = getFirstAndLastDayOfMonth(year, month);
 
@@ -200,7 +200,7 @@ export async function RECO_VACCINATION_DASHBOARD_CALCULATION_DATA({ month, year 
                     _vaccine.commune = reco.commune;
                     _vaccine.hospital = reco.hospital;
                     _vaccine.district_quartier = reco.district_quartier;
-                    _vaccine.chw = reco.chw;
+                    // _vaccine.chw = reco.chw;
                     _vaccine.village_secteur = reco.village_secteur;
                     _vaccine.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 

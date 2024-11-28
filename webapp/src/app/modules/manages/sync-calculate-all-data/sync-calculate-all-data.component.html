@@ -120,8 +120,7 @@
                     <div class="col-sm-3">
                       <div class="form-group">
                         <div class="form-check">
-                          <input id="district_quartier" class="form-check-input" type="checkbox"
-                            formControlName="district_quartier">
+                          <input id="district_quartier" class="form-check-input" type="checkbox" formControlName="district_quartier">
                           <label for="district_quartier" class="form-check-label">District/Quartier</label>
                         </div>
                       </div>
@@ -130,8 +129,7 @@
                     <div class="col-sm-3">
                       <div class="form-group">
                         <div class="form-check">
-                          <input id="village_secteur" class="form-check-input" type="checkbox"
-                            formControlName="village_secteur">
+                          <input id="village_secteur" class="form-check-input" type="checkbox" formControlName="village_secteur">
                           <label for="village_secteur" class="form-check-label">Village/Secteur</label>
                         </div>
                       </div>
@@ -149,8 +147,44 @@
                     <div class="col-sm-3">
                       <div class="form-group">
                         <div class="form-check">
-                          <input id="mentor" class="form-check-input" type="checkbox" formControlName="mentor">
-                          <label for="mentor" class="form-check-label">Mentor</label>
+                          <input id="country_manager" class="form-check-input" type="checkbox" formControlName="country_manager">
+                          <label for="country_manager" class="form-check-label">CountryManager</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                      <div class="form-group">
+                        <div class="form-check">
+                          <input id="region_manager" class="form-check-input" type="checkbox" formControlName="region_manager">
+                          <label for="region_manager" class="form-check-label">RegionManager</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                      <div class="form-group">
+                        <div class="form-check">
+                          <input id="prefecture_manager" class="form-check-input" type="checkbox" formControlName="prefecture_manager">
+                          <label for="prefecture_manager" class="form-check-label">PrefectureManager</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                      <div class="form-group">
+                        <div class="form-check">
+                          <input id="commune_manager" class="form-check-input" type="checkbox" formControlName="commune_manager">
+                          <label for="commune_manager" class="form-check-label">CommuneManager</label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                      <div class="form-group">
+                        <div class="form-check">
+                          <input id="hospital_manager" class="form-check-input" type="checkbox" formControlName="hospital_manager">
+                          <label for="hospital_manager" class="form-check-label">HospitalManager</label>
                         </div>
                       </div>
                     </div>
@@ -200,8 +234,9 @@
               <th>status</th>
               <td colspan="4">{{ OrgUnitSyncResult$.status }}</td>
             </tr>
+
             <tr
-              *ngIf="OrgUnitSyncResult$.Country|| OrgUnitSyncResult$.Region|| OrgUnitSyncResult$.Prefecture|| OrgUnitSyncResult$.Commune|| OrgUnitSyncResult$.Hospital|| OrgUnitSyncResult$.DistrictQuartier|| OrgUnitSyncResult$.VillageSecteur|| OrgUnitSyncResult$.Family|| OrgUnitSyncResult$.Mentor|| OrgUnitSyncResult$.Chw|| OrgUnitSyncResult$.Reco|| OrgUnitSyncResult$.Patient">
+              *ngIf="OrgUnitSyncResult$.Country|| OrgUnitSyncResult$.Region|| OrgUnitSyncResult$.Prefecture|| OrgUnitSyncResult$.Commune|| OrgUnitSyncResult$.Hospital|| OrgUnitSyncResult$.DistrictQuartier|| OrgUnitSyncResult$.VillageSecteur|| OrgUnitSyncResult$.Family|| OrgUnitSyncResult$.HospitalManager || OrgUnitSyncResult$.CommuneManager || OrgUnitSyncResult$.PrefectureManager || OrgUnitSyncResult$.RegionManager || OrgUnitSyncResult$.CountryManager || OrgUnitSyncResult$.Chw|| OrgUnitSyncResult$.Reco|| OrgUnitSyncResult$.Patient">
               <th>Cible</th>
               <th>SuccesCount</th>
               <th>ErrorCount</th>
@@ -266,12 +301,40 @@
               <td>{{ OrgUnitSyncResult$.Family.ErrorElements }}</td>
               <td>{{ OrgUnitSyncResult$.Family.ErrorIds }}</td>
             </tr>
-            <tr *ngIf="OrgUnitSyncResult$.Mentor">
-              <th>Mentor</th>
-              <td>{{ OrgUnitSyncResult$.Mentor.SuccessCount }}</td>
-              <td>{{ OrgUnitSyncResult$.Mentor.ErrorCount }}</td>
-              <td>{{ OrgUnitSyncResult$.Mentor.ErrorElements }}</td>
-              <td>{{ OrgUnitSyncResult$.Mentor.ErrorIds }}</td>
+            <tr *ngIf="OrgUnitSyncResult$.CountryManager">
+              <th>CountryManager</th>
+              <td>{{ OrgUnitSyncResult$.CountryManager.SuccessCount }}</td>
+              <td>{{ OrgUnitSyncResult$.CountryManager.ErrorCount }}</td>
+              <td>{{ OrgUnitSyncResult$.CountryManager.ErrorElements }}</td>
+              <td>{{ OrgUnitSyncResult$.CountryManager.ErrorIds }}</td>
+            </tr>
+            <tr *ngIf="OrgUnitSyncResult$.RegionManager">
+              <th>RegionManager</th>
+              <td>{{ OrgUnitSyncResult$.RegionManager.SuccessCount }}</td>
+              <td>{{ OrgUnitSyncResult$.RegionManager.ErrorCount }}</td>
+              <td>{{ OrgUnitSyncResult$.RegionManager.ErrorElements }}</td>
+              <td>{{ OrgUnitSyncResult$.RegionManager.ErrorIds }}</td>
+            </tr>
+            <tr *ngIf="OrgUnitSyncResult$.PrefectureManager">
+              <th>PrefectureManager</th>
+              <td>{{ OrgUnitSyncResult$.PrefectureManager.SuccessCount }}</td>
+              <td>{{ OrgUnitSyncResult$.PrefectureManager.ErrorCount }}</td>
+              <td>{{ OrgUnitSyncResult$.PrefectureManager.ErrorElements }}</td>
+              <td>{{ OrgUnitSyncResult$.PrefectureManager.ErrorIds }}</td>
+            </tr>
+            <tr *ngIf="OrgUnitSyncResult$.CommuneManager">
+              <th>CommuneManager</th>
+              <td>{{ OrgUnitSyncResult$.CommuneManager.SuccessCount }}</td>
+              <td>{{ OrgUnitSyncResult$.CommuneManager.ErrorCount }}</td>
+              <td>{{ OrgUnitSyncResult$.CommuneManager.ErrorElements }}</td>
+              <td>{{ OrgUnitSyncResult$.CommuneManager.ErrorIds }}</td>
+            </tr>
+            <tr *ngIf="OrgUnitSyncResult$.HospitalManager">
+              <th>HospitalManager</th>
+              <td>{{ OrgUnitSyncResult$.HospitalManager.SuccessCount }}</td>
+              <td>{{ OrgUnitSyncResult$.HospitalManager.ErrorCount }}</td>
+              <td>{{ OrgUnitSyncResult$.HospitalManager.ErrorElements }}</td>
+              <td>{{ OrgUnitSyncResult$.HospitalManager.ErrorIds }}</td>
             </tr>
             <tr *ngIf="OrgUnitSyncResult$.Chw">
               <th>Chw</th>

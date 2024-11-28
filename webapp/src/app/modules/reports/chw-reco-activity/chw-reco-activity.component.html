@@ -20,6 +20,7 @@
                   [id]="'chws-repports-header'"
                   [REPPORTS_HEADER]="REPPORTS_HEADER"
                   (onValidateData)="validateData()"
+                  (onCancelDataValidated)="cancelValidation()"
                   (onSendToDhis2)="sendDataToDhis2()">
                 </repports-header-selector>
               </td>
@@ -34,18 +35,21 @@
             </tr>
           </thead>
           <tbody *ngIf="MONTHLY_ACTIVITY$ as ma">
-            <tr class="row-group">
-              <th>{{ ma.reco_monitoring.position }}</th>
-              <th colspan="3">{{ ma.reco_monitoring.group }}</th>
-            </tr>
-            <tr *ngFor="let rm of ma.reco_monitoring.data; let i=index">
-              <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.reco_monitoring.data.length" scope="row">
-                {{ ma.reco_monitoring.group }}
-              </th>
-              <td>{{ rm.indicator }}</td>
-              <td>{{ rm.de_number }}</td>
-              <!-- <td>{{ rm.observation }}</td> -->
-            </tr>
+            <ng-container *ngIf="isRecoConnected != true">
+              <tr class="row-group">
+                <th>{{ ma.reco_monitoring.position }}</th>
+                <th colspan="3">{{ ma.reco_monitoring.group }}</th>
+              </tr>
+              <tr *ngFor="let rm of ma.reco_monitoring.data; let i=index">
+                <th class="row-first-column" *ngIf="i==0" [rowSpan]="ma.reco_monitoring.data.length" scope="row">
+                  {{ ma.reco_monitoring.group }}
+                </th>
+                <td>{{ rm.indicator }}</td>
+                <td>{{ rm.de_number }}</td>
+                <!-- <td>{{ rm.observation }}</td> -->
+              </tr>
+            </ng-container>
+
 
             <tr class="row-group">
               <th>{{ ma.demography.position }}</th>

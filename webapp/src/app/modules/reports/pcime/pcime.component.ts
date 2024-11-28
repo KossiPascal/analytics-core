@@ -58,6 +58,10 @@ export class PcimeComponent {
     });
   }
 
+  cancelValidation(){
+
+  }
+
   SHOW_DATA(updatedFormGroup: any) {
     this._formGroup = updatedFormGroup;
     if (!(this._formGroup.value.recos.length > 0)) {
@@ -79,7 +83,7 @@ export class PcimeComponent {
     this.ldbfetch.GetPcimneNewbornReports(this._formGroup.value).then((_res$: PcimneNewbornReport | undefined) => {
       this.REPPORTS_HEADER.REGION_NAME = _res$?.region.name;
       this.REPPORTS_HEADER.RECO_ASC_TYPE = (_res$ as any)?.reco_asc_type;
-      this.REPPORTS_HEADER.RECO_ASC_NAME = ((_res$ as any)?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : _res$?.chw.name);
+      this.REPPORTS_HEADER.RECO_ASC_NAME = ((_res$ as any)?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : ''); //_res$?.chw.name);
       this.REPPORTS_HEADER.PREFECTURE_NAME = _res$?.prefecture.name;
       this.REPPORTS_HEADER.COMMUNE_NAME = _res$?.commune.name;
       this.REPPORTS_HEADER.VILLAGE_SECTEUR_NAME = _res$?.village_secteur.name;
@@ -148,8 +152,8 @@ export class PcimeComponent {
   }
 
 
-  shawDarkMode(data: number[], element: number): 'dark-back' | '' {
-    return data.includes(element) ? 'dark-back' : '';
+  shawDarkMode(data: number[], element: number): 'grey-back' | '' {
+    return data.includes(element) ? 'grey-back' : '';
   }
 
 }

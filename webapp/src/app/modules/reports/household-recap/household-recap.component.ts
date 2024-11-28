@@ -60,6 +60,10 @@ export class HouseholdRecapComponent {
     });
   }
 
+  cancelValidation(){
+
+  }
+
   SHOW_DATA(updatedFormGroup: any) {
     this._formGroup = updatedFormGroup;
     if (!(this._formGroup.value.recos.length > 0)) {
@@ -81,7 +85,7 @@ export class HouseholdRecapComponent {
     this.ldbfetch.GetHouseholdRecapReports(this._formGroup.value).then((_res$: { total: HouseholdRecapReport, out: IndicatorsDataOutput<HouseholdRecapReport[]> } | undefined) => {
       this.REPPORTS_HEADER.REGION_NAME = _res$?.out.region.name;
       this.REPPORTS_HEADER.RECO_ASC_TYPE = _res$?.out.reco_asc_type;
-      this.REPPORTS_HEADER.RECO_ASC_NAME = (_res$?.out.reco_asc_type === 'RECO' ? (_res$?.out.reco?.name) : _res$?.out.chw.name);
+      this.REPPORTS_HEADER.RECO_ASC_NAME = (_res$?.out.reco_asc_type === 'RECO' ? (_res$?.out.reco?.name) : ''); //_res$?.out.chw.name);
       this.REPPORTS_HEADER.PREFECTURE_NAME = _res$?.out.prefecture.name;
       this.REPPORTS_HEADER.COMMUNE_NAME = _res$?.out.commune.name;
       this.REPPORTS_HEADER.DISTRICT_QUARTIER_NAME = _res$?.out.district_quartier.name;

@@ -27,7 +27,7 @@
               <div class="col-sm-3 col-6">
                 <div class="form-group">
                   <label>Country</label>
-                  <select style="background-color: whitesmoke;" (change)="genarateRegions()" class="form-control" formControlName="countries">
+                  <select multiple style="background-color: whitesmoke;" (change)="genarateRegions()" class="form-control" formControlName="countries">
                     <option value=""></option>
                     <option *ngFor="let ctr of Countries$" value="{{ctr.id}}">
                       {{ ctr.name }}
@@ -39,7 +39,7 @@
               <div class="col-sm-3 col-6">
                 <div class="form-group">
                   <label>Region</label>
-                  <select style="background-color: whitesmoke;" (change)="genaratePrefectures()" class="form-control" formControlName="regions">
+                  <select multiple style="background-color: whitesmoke;" (change)="genaratePrefectures()" class="form-control" formControlName="regions">
                     <option value=""></option>
                     <option *ngFor="let re of regions$" value="{{re.id}}">
                       {{ re.name }}
@@ -51,7 +51,7 @@
               <div class="col-sm-3 col-6">
                 <div class="form-group">
                   <label>Prefecture</label>
-                  <select style="background-color: whitesmoke;" (change)="genarateCommunes()" class="form-control" formControlName="prefectures">
+                  <select multiple style="background-color: whitesmoke;" (change)="genarateCommunes()" class="form-control" formControlName="prefectures">
                     <option value=""></option>
                     <option *ngFor="let pr of prefectures$" value="{{pr.id}}">
                       {{ pr.name }}
@@ -63,7 +63,7 @@
               <div class="col-sm-3 col-6">
                 <div class="form-group">
                   <label>Commune</label>
-                  <select style="background-color: whitesmoke;" (change)="genarateHospitals()" class="form-control" formControlName="communes">
+                  <select multiple style="background-color: whitesmoke;" (change)="genarateHospitals()" class="form-control" formControlName="communes">
                     <option value=""></option>
                     <option *ngFor="let co of communes$" value="{{co.id}}">
                       {{ co.name }}
@@ -75,7 +75,7 @@
               <div class="col-sm-3 col-6">
                 <div class="form-group">
                   <label>Hospital</label>
-                  <select style="background-color: whitesmoke;" (change)="genarateDistrictQuartiers()" class="form-control" formControlName="hospitals">
+                  <select multiple style="background-color: whitesmoke;" (change)="genarateDistrictQuartiers()" class="form-control" formControlName="hospitals">
                     <option value=""></option>
                     <option *ngFor="let hs of hospitals$" value="{{hs.id}}">
                       {{ hs.name }}
@@ -87,7 +87,7 @@
               <div class="col-sm-3 col-6">
                 <div class="form-group">
                   <label>District/Quartier</label>
-                  <select style="background-color: whitesmoke;" (change)="generateCible()" class="form-control" formControlName="district_quartiers">
+                  <select multiple style="background-color: whitesmoke;" (change)="generateCible()" class="form-control" formControlName="district_quartiers">
                     <option value=""></option>
                     <option *ngFor="let dq of districtQuartiers$" value="{{dq.id}}">
                       {{ dq.name }}
@@ -110,7 +110,7 @@
 
               <div class="col-sm-3 col-6">
                 <div class="form-group">
-                  <label>Reco/ASC/Mentor</label>
+                  <label>Reco/ASC/CountryMger/RegionMger/PrefectureMger/CommuneMger/HospitalMger</label>
                   <select style="background-color: whitesmoke;" class="form-control" multiple formControlName="cible">
                     <option value=""></option>
                     <option *ngFor="let cb of cibles$" value="{{cb.id}}">

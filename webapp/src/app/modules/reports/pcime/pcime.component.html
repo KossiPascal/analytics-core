@@ -17,6 +17,7 @@
                   [id]="'fp-repports-header'"
                   [REPPORTS_HEADER]="REPPORTS_HEADER"
                   (onValidateData)="validateData()"
+                  (onCancelDataValidated)="cancelValidation()"
                   (onSendToDhis2)="sendDataToDhis2()">
                 </repports-header-selector>
               </td>
@@ -103,7 +104,7 @@
               <td class="{{ shawDarkMode([2,3,4,5,6,7,13],p.index) }}">{{ p.nbr_malnutrition_2_12_months_M }}</td>
               <td class="{{ shawDarkMode([2,3,4,5,6,7,13],p.index) }}">{{ p.nbr_malnutrition_12_60_months_F }}</td>
               <td class="{{ shawDarkMode([2,3,4,5,6,7,13],p.index) }}">{{ p.nbr_malnutrition_12_60_months_M }}</td>
-              <th>{{ p.nbr_total }}</th>
+              <th class="pcimne-total">{{ p.nbr_total }}</th>
             </tr>
           </tbody>
 

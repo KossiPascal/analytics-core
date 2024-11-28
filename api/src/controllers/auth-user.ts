@@ -5,7 +5,7 @@ import { GetRolesAndNamesPagesAutorizations, Roles, getRolesRepository } from '.
 import crypto from 'crypto';
 import { ROUTES_LIST, AUTORISATIONS_LIST } from '../utils/autorizations-pages';
 import { TokenUser } from '../utils/Interfaces';
-import { COUNTRIES_COUSTOM_QUERY, REGIONS_COUSTOM_QUERY, PREFECTURES_COUSTOM_QUERY, COMMUNES_COUSTOM_QUERY, HOSPITALS_COUSTOM_QUERY, DISTRICTS_QUARTIERS_COUSTOM_QUERY, VILLAGES_SECTEURS_COUSTOM_QUERY, CHWS_COUSTOM_QUERY, RECOS_COUSTOM_QUERY, RecoCoustomQuery, ChwCoustomQuery } from './orgunit-query/org-units-coustom';
+import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, RecoCustomQuery, ChwCustomQuery, CountryManagerCustomQuery, RegionManagerCustomQuery, COMMUNES_MANAGER_CUSTOM_QUERY, COUNTRIES_MANAGER_CUSTOM_QUERY, CommuneManagerCustomQuery, HOSPITALS_MANAGER_CUSTOM_QUERY, HospitalManagerCustomQuery, PREFECTURES_MANAGER_CUSTOM_QUERY, PrefectureManagerCustomQuery, REGIONS_MANAGER_CUSTOM_QUERY, CommuneCustomQuery, HospitalCustomQuery, PrefectureCustomQuery, RegionCustomQuery, CountryCustomQuery, DistrictQuartierCustomQuery, VillageSecteurCustomQuery } from './orgunit-query/org-units-custom';
 import { ChwsMap, CommunesMap, CountryMap, DistrictQuartiersMap, GetChwsMap, GetCommunesMap, GetCountryMap, GetDistrictQuartiersMap, GetHospitalsMap, GetPrefecturesMap, GetRecosMap, GetRegionsMap, GetVillageSecteursMap, HospitalsMap, PrefecturesMap, RecosMap, RegionsMap, VillageSecteursMap } from '../utils/org-unit-interface';
 import { join } from 'path';
 import { APP_ENV } from '../utils/constantes';
@@ -42,7 +42,6 @@ function generateShortId(length: number): string {
 }
 
 export const ADMIN_USER_ID: string = 'Wy9bzA7a5kF'
-
 
 
 function availableUid<T>(datas: Array<T>): string {
@@ -86,7 +85,6 @@ export class AuthUserController {
                 await rolRepo.save(role2);
 
 
-
                 const RL = ROUTES_LIST.slice(0, 9);
 
                 const role3: Roles = new Roles();
@@ -112,7 +110,41 @@ export class AuthUserController {
                 role5.autorizations = AUTORISATIONS_LIST.slice(0, 6);
                 role5.default_route = RL[6];
                 await rolRepo.save(role5);
+
+                const role6: Roles = new Roles();
+                role6.id = 6;
+                role6.name = 'commune_manager';
+                role6.routes = RL;
+                role6.autorizations = AUTORISATIONS_LIST.slice(0, 6);
+                role6.default_route = RL[6];
+                await rolRepo.save(role6);
+
+                const role7: Roles = new Roles();
+                role7.id = 7;
+                role7.name = 'prefecture_manager';
+                role7.routes = RL;
+                role7.autorizations = AUTORISATIONS_LIST.slice(0, 6);
+                role7.default_route = RL[6];
+                await rolRepo.save(role7);
+
+                const role8: Roles = new Roles();
+                role8.id = 8;
+                role8.name = 'region_manager';
+                role8.routes = RL;
+                role8.autorizations = AUTORISATIONS_LIST.slice(0, 6);
+                role8.default_route = RL[6];
+                await rolRepo.save(role8);
+
+                const role9: Roles = new Roles();
+                role9.id = 9;
+                role9.name = 'country_manager';
+                role9.routes = RL;
+                role9.autorizations = AUTORISATIONS_LIST.slice(0, 6);
+                role9.default_route = RL[6];
+                await rolRepo.save(role9);
+
             }
+
             const user1 = new Users();
             const hash1 = hashPassword('district');
             user1.id = ADMIN_USER_ID;
@@ -125,10 +157,9 @@ export class AuthUserController {
             user1.mustLogin = true;
             await userRepo.save(user1);
 
-
             const user2 = new Users();
             const hash2 = hashPassword('manager');
-            user2.id = ADMIN_USER_ID;
+            user2.id = availableUid([user1]);;
             user2.username = 'manager';
             user2.fullname = 'Manager';
             user2.password = hash2.hashedPassword;
@@ -140,7 +171,7 @@ export class AuthUserController {
         }
     };
 
-    static getRecoParam = (recos: RecoCoustomQuery[]): RecosMap[] => {
+    static getRecoParam = (recos: RecoCustomQuery[]): RecosMap[] => {
         return recos.map(r => ({
             id: r.id,
             name: r.name,
@@ -154,8 +185,21 @@ export class AuthUserController {
         }));
     };
 
-    static getChwParam = (chws: ChwCoustomQuery[]): ChwsMap[] => {
-        return chws.map(r => ({
+    static getChwParam = (chws: ChwCustomQuery[]): ChwsMap[] => {
+        return chws.map(chw => ({
+            id: chw.id,
+            name: chw.name,
+            country_id: chw.country.id,
+            region_id: chw.region.id,
+            prefecture_id: chw.prefecture.id,
+            commune_id: chw.commune.id,
+            hospital_id: chw.hospital.id,
+            district_quartier_id: chw.district_quartier.id
+        }));
+    };
+
+    static getVillageSecteurParam = (data: VillageSecteurCustomQuery[]): VillageSecteursMap[] => {
+        return data.map(r => ({
             id: r.id,
             name: r.name,
             country_id: r.country.id,
@@ -163,9 +207,69 @@ export class AuthUserController {
             prefecture_id: r.prefecture.id,
             commune_id: r.commune.id,
             hospital_id: r.hospital.id,
-            district_quartier_id: r.district_quartier.id
+            district_quartier_id: r.district_quartier.id,
         }));
     };
+
+    static getDistrictQuartierParam = (data: DistrictQuartierCustomQuery[]): DistrictQuartiersMap[] => {
+        return data.map(r => ({
+            id: r.id,
+            name: r.name,
+            country_id: r.country.id,
+            region_id: r.region.id,
+            prefecture_id: r.prefecture.id,
+            commune_id: r.commune.id,
+            hospital_id: r.hospital.id,
+        }));
+    };
+    
+    
+    static getHospitalParam = (data: HospitalCustomQuery[]): HospitalsMap[] => {
+        return data.map(r => ({
+            id: r.id,
+            name: r.name,
+            country_id: r.country.id,
+            region_id: r.region.id,
+            prefecture_id: r.prefecture.id,
+            commune_id: r.commune.id,
+        }));
+    };
+
+    static getCommuneParam = (data: CommuneCustomQuery[]): CommunesMap[] => {
+        return data.map(r => ({
+            id: r.id,
+            name: r.name,
+            country_id: r.country.id,
+            region_id: r.region.id,
+            prefecture_id: r.prefecture.id,
+        }));
+    };
+
+    static getPrefectureParam = (data: PrefectureCustomQuery[]): PrefecturesMap[] => {
+        return data.map(r => ({
+            id: r.id,
+            name: r.name,
+            country_id: r.country.id,
+            region_id: r.region.id,
+        }));
+    };
+
+    static getRegionParam = (data: RegionCustomQuery[]): RegionsMap[] => {
+        return data.map(r => ({
+            id: r.id,
+            name: r.name,
+            country_id: r.country.id,
+        }));
+    };
+
+    static getCountryParam = (data: CountryCustomQuery[]): CountryMap[] => {
+        return data.map(r => ({
+            id: r.id,
+            name: r.name,
+        }));
+    };
+
+
 
     static startTchecking = async (user: Users, res: Response) => {
         const token = await userToken(user);
@@ -179,17 +283,17 @@ export class AuthUserController {
             const data = await GetRolesAndNamesPagesAutorizations(user.roles);
             const isAdmin = (data?.autorizations ?? []).includes('_admin');
 
-            var countries: CountryMap[] = isAdmin !== true ? user.countries : (await COUNTRIES_COUSTOM_QUERY()).map(d => GetCountryMap(d));
-            var regions: RegionsMap[] = isAdmin !== true ? user.regions : (await REGIONS_COUSTOM_QUERY()).map(d => GetRegionsMap(d));
-            var prefectures: PrefecturesMap[] = isAdmin !== true ? user.prefectures : (await PREFECTURES_COUSTOM_QUERY()).map(d => GetPrefecturesMap(d));
-            var communes: CommunesMap[] = isAdmin !== true ? user.communes : (await COMMUNES_COUSTOM_QUERY()).map(d => GetCommunesMap(d));
-            var hospitals: HospitalsMap[] = isAdmin !== true ? user.hospitals : (await HOSPITALS_COUSTOM_QUERY()).map(d => GetHospitalsMap(d));
-            var districtQuartiers: DistrictQuartiersMap[] = isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_COUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d));
-            var villageSecteurs: VillageSecteursMap[] = isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_COUSTOM_QUERY()).map(d => GetVillageSecteursMap(d));
-            var chws: ChwsMap[] = isAdmin !== true ? user.chws : (await CHWS_COUSTOM_QUERY()).map(d => GetChwsMap(d));
-            var recos: RecosMap[] = isAdmin !== true ? user.recos : (await RECOS_COUSTOM_QUERY()).map(d => GetRecosMap(d));
-            // FAMILIES_COUSTOM_QUERY();
-            // PATIENTS_COUSTOM_QUERY();
+            var countries: CountryMap[] = isAdmin !== true ? user.countries : (await COUNTRIES_CUSTOM_QUERY()).map(d => GetCountryMap(d));
+            var regions: RegionsMap[] = isAdmin !== true ? user.regions : (await REGIONS_CUSTOM_QUERY()).map(d => GetRegionsMap(d));
+            var prefectures: PrefecturesMap[] = isAdmin !== true ? user.prefectures : (await PREFECTURES_CUSTOM_QUERY()).map(d => GetPrefecturesMap(d));
+            var communes: CommunesMap[] = isAdmin !== true ? user.communes : (await COMMUNES_CUSTOM_QUERY()).map(d => GetCommunesMap(d));
+            var hospitals: HospitalsMap[] = isAdmin !== true ? user.hospitals : (await HOSPITALS_CUSTOM_QUERY()).map(d => GetHospitalsMap(d));
+            var districtQuartiers: DistrictQuartiersMap[] = isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_CUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d));
+            var villageSecteurs: VillageSecteursMap[] = isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_CUSTOM_QUERY()).map(d => GetVillageSecteursMap(d));
+            var chws: ChwsMap[] = isAdmin !== true ? user.chws : (await CHWS_CUSTOM_QUERY()).map(d => GetChwsMap(d));
+            var recos: RecosMap[] = isAdmin !== true ? user.recos : (await RECOS_CUSTOM_QUERY()).map(d => GetRecosMap(d));
+            // FAMILIES_CUSTOM_QUERY();
+            // PATIENTS_CUSTOM_QUERY();
 
             // return res.status(200).json({ status: 200, data: token });
             return res.status(200).json({ status: 200, data: token, countries: countries, regions: regions, prefectures: prefectures, communes: communes, hospitals: hospitals, districtQuartiers: districtQuartiers, villageSecteurs: villageSecteurs, chws: chws, recos: recos });
@@ -207,53 +311,152 @@ export class AuthUserController {
 
             if (!user) {
                 // return res.status(201).json({ status: 201, data: 'Not autorized' });
+                const chtUrl = `https://${USER_CHT_HOST}/medic/org.couchdb.user:${credential}`;
+
                 request({
-                    url: `https://${USER_CHT_HOST}/medic/org.couchdb.user:${credential}`,
+                    url: chtUrl,
                     method: 'GET',
                     headers: httpHeaders(credential, password)
                 }, async function (error: any, response: any, body: any) {
                     if (!error) {
                         const { _id, name, roles, facility_id, contact_id } = JSON.parse(body);
-                        const isReco:boolean = roles.includes('reco');
-                        const isChw:boolean = roles.includes('chw');
-                        if (isReco || isChw) {
-                            // const recoRepo = await getRecoRepository();
-                            // const chwRepo = await getChwRepository();
-                            const recoList = await RECOS_COUSTOM_QUERY();
-                            const chwList = await CHWS_COUSTOM_QUERY();
-                            // hospital_manager
-                            let RECO: RecoCoustomQuery[] = [];
-                            let CHWS: ChwCoustomQuery[] = [];
-                            if (isReco) {
-                                const RC = recoList.find(r  => r.id === contact_id);
-                                if(RC) RECO.push(RC);
-                            }
-                            if (isChw) {
-                                const CH = chwList.find(r  => r.id === contact_id);
-                                if(CH) CHWS.push(CH);
-                                RECO = recoList.filter(r  => r.chw.id === contact_id);
-                                //  await recoRepo.findBy({ chw: { id: contact_id } });
-                            }
-        
-                            if (RECO.length > 0 || CHWS.length  > 0) {
-                                var users: Users[] = await userRepo.find();
-                                const u = new Users();
-                                const { salt, hashedPassword } = hashPassword(password);
-                                u.id = availableUid(users);
-                                u.username = name;
-                                u.fullname = name.toUpperCase();
-                                u.password = hashedPassword;
-                                u.salt = salt;
-                                u.roles = isReco ? ['3'] : isChw ? ['4'] : [];
-                                u.isActive = true;
-                                u.mustLogin = true;
-                                u.recos = AuthUserController.getRecoParam(RECO);
-                                if(isChw && CHWS.length  > 0) u.chws = AuthUserController.getChwParam(CHWS);
-                                // countries // regions // prefectures // communes // hospitals // districtQuartiers // villageSecteurs
-                                const sUser = await userRepo.save(u);
 
-                                await AuthUserController.startTchecking(sUser, res);
+                        if (roles && Array.isArray(roles)) {
+                            const isReco: boolean = roles.includes('reco');
+                            const isChw: boolean = roles.includes('chw');
+                            const isHospitalManager: boolean = roles.includes('hospital_manager');
+                            const isCommuneManager: boolean = roles.includes('commune_manager');
+                            const isPrefectureManager: boolean = roles.includes('prefecture_manager');
+                            const isRegionManager: boolean = roles.includes('region_manager');
+                            const isCountryManager: boolean = roles.includes('country_manager');
+
+
+                            if (isReco || isChw || isHospitalManager || isCommuneManager || isPrefectureManager || isRegionManager || isCountryManager) {
+                                // const recoRepo = await getRecoRepository();
+                                // const chwRepo = await getChwRepository();
+
+                                const recoList = await RECOS_CUSTOM_QUERY();
+
+                                const villageList = await VILLAGES_SECTEURS_CUSTOM_QUERY();
+                                const districtList = await DISTRICTS_QUARTIERS_CUSTOM_QUERY();
+                                const hospitalList = await HOSPITALS_CUSTOM_QUERY();
+                                const communeList = await COMMUNES_CUSTOM_QUERY();
+                                const prefectureList = await PREFECTURES_CUSTOM_QUERY();
+                                const regionList = await REGIONS_CUSTOM_QUERY();
+                                const countryList = await COUNTRIES_CUSTOM_QUERY();
+                                
+
+                                let RECO: RecoCustomQuery[] = [];
+                                let CHWS: ChwCustomQuery[] = [];
+                                // let HOSPITALS_MANAGER: HospitalManagerCustomQuery[] = [];
+                                // let COMMUNES_MANAGER: CommuneManagerCustomQuery[] = [];
+                                // let PREFECTURES_MANAGER: PrefectureManagerCustomQuery[] = [];
+                                // let REGIONS_MANAGER: RegionManagerCustomQuery[] = [];
+                                // let COUNTRIES_MANAGER: CountryManagerCustomQuery[] = [];
+
+                                let VILLAGES: VillageSecteurCustomQuery[] = [];
+                                let DISTRICTS: DistrictQuartierCustomQuery[] = [];
+                                let HOSPITALS: HospitalCustomQuery[] = [];
+                                let COMMUNES: CommuneCustomQuery[] = [];
+                                let PREFECTURES: PrefectureCustomQuery[] = [];
+                                let REGIONS: RegionCustomQuery[] = [];
+                                let COUNTRIES: CountryCustomQuery[] = [];
+
+                                if (isReco) {
+                                    RECO = recoList.filter(r => r.id === contact_id);
+                                }
+
+                                if (isChw) {
+                                    const chwList = await CHWS_CUSTOM_QUERY();
+                                    CHWS = chwList.filter(r => r.id === contact_id);
+                                    const DISTRICTS_IDS = CHWS.map(c => c.district_quartier.id)
+                                    RECO = recoList.filter(r => DISTRICTS_IDS.includes(r.district_quartier.id));
+                                }
+
+                                if (isHospitalManager) {
+                                    const chwList = await CHWS_CUSTOM_QUERY();
+                                    const hospitalManagerList = await HOSPITALS_MANAGER_CUSTOM_QUERY();
+                                    const HOSPITALS_MANAGER = hospitalManagerList.filter(r => r.id === contact_id);
+                                    const HOSTPITAL_IDS = HOSPITALS_MANAGER.map(c => c.hospital.id);
+                                    RECO = recoList.filter(r => HOSTPITAL_IDS.includes(r.hospital.id));
+                                    CHWS = chwList.filter(r => HOSTPITAL_IDS.includes(r.hospital.id));
+                                }
+
+                                if (isCommuneManager) {
+                                    const chwList = await CHWS_CUSTOM_QUERY();
+                                    const communeManagerList = await COMMUNES_MANAGER_CUSTOM_QUERY();
+                                    const COMMUNES_MANAGER = communeManagerList.filter(r => r.id === contact_id);
+                                    const COMMUNE_IDS = COMMUNES_MANAGER.map(c => c.commune.id);
+                                    RECO = recoList.filter(r => COMMUNE_IDS.includes(r.commune.id));
+                                    CHWS = chwList.filter(r => COMMUNE_IDS.includes(r.commune.id));
+                                }
+
+                                if (isPrefectureManager) {
+                                    const chwList = await CHWS_CUSTOM_QUERY();
+                                    const prefectureManagerList = await PREFECTURES_MANAGER_CUSTOM_QUERY();
+                                    const PREFECTURES_MANAGER = prefectureManagerList.filter(r => r.id === contact_id);
+                                    const PREFECTURE_IDS = PREFECTURES_MANAGER.map(c => c.prefecture.id);
+                                    RECO = recoList.filter(r => PREFECTURE_IDS.includes(r.prefecture.id));
+                                    CHWS = chwList.filter(r => PREFECTURE_IDS.includes(r.prefecture.id));
+                                }
+
+                                if (isRegionManager) {
+                                    const chwList = await CHWS_CUSTOM_QUERY();
+                                    const regionManagerList = await REGIONS_MANAGER_CUSTOM_QUERY();
+                                    const REGIONS_MANAGER = regionManagerList.filter(r => r.id === contact_id);
+                                    const REGION_IDS = REGIONS_MANAGER.map(c => c.region.id);
+                                    RECO = recoList.filter(r => REGION_IDS.includes(r.region.id));
+                                    CHWS = chwList.filter(r => REGION_IDS.includes(r.region.id));
+                                }
+
+                                if (isCountryManager) {
+                                    const chwList = await CHWS_CUSTOM_QUERY();
+                                    const countryManagerList = await COUNTRIES_MANAGER_CUSTOM_QUERY();
+                                    const COUNTRIES_MANAGER = countryManagerList.filter(r => r.id === contact_id);
+                                    const COUNTRY_IDS = COUNTRIES_MANAGER.map(c => c.country.id);
+                                    RECO = recoList.filter(r => COUNTRY_IDS.includes(r.country.id));
+                                    CHWS = chwList.filter(r => COUNTRY_IDS.includes(r.country.id));
+                                }
+
+
+                                if (RECO.length > 0) {
+                                    // if (RECO.length > 0 || CHWS.length > 0) {
+                                    
+                                    VILLAGES = villageList.filter(r => (RECO.map(c => c.village_secteur.id)).includes(r.id));
+                                    DISTRICTS = districtList.filter(r => (RECO.map(c => c.district_quartier.id)).includes(r.id));
+                                    HOSPITALS = hospitalList.filter(r => (RECO.map(c => c.hospital.id)).includes(r.id));
+                                    COMMUNES = communeList.filter(r => (RECO.map(c => c.commune.id)).includes(r.id));
+                                    PREFECTURES = prefectureList.filter(r => (RECO.map(c => c.prefecture.id)).includes(r.id));
+                                    REGIONS = regionList.filter(r => (RECO.map(c => c.region.id)).includes(r.id));
+                                    COUNTRIES = countryList.filter(r => (RECO.map(c => c.country.id)).includes(r.id));
+                                    
+                                    var users: Users[] = await userRepo.find();
+                                    const u = new Users();
+                                    const { salt, hashedPassword } = hashPassword(password);
+                                    u.id = availableUid(users);
+                                    u.username = name;
+                                    u.fullname = name.toUpperCase();
+                                    u.password = hashedPassword;
+                                    u.salt = salt;
+                                    u.roles = isReco ? ['3'] : isChw ? ['4'] : isHospitalManager ? ['5'] : isCommuneManager ? ['6'] : isPrefectureManager ? ['7'] : isRegionManager ? ['8'] : isCountryManager ? ['9'] : [];
+                                    u.isActive = true;
+                                    u.mustLogin = true;
+                                    u.recos = AuthUserController.getRecoParam(RECO);
+                                    if (CHWS.length > 0) u.chws = AuthUserController.getChwParam(CHWS);
+                                    if (VILLAGES.length > 0) u.villageSecteurs = AuthUserController.getVillageSecteurParam(VILLAGES);
+                                    if (DISTRICTS.length > 0) u.districtQuartiers = AuthUserController.getDistrictQuartierParam(DISTRICTS);
+                                    if (HOSPITALS.length > 0) u.hospitals = AuthUserController.getHospitalParam(HOSPITALS);
+                                    if (COMMUNES.length > 0) u.communes = AuthUserController.getCommuneParam(COMMUNES);
+                                    if (PREFECTURES.length > 0) u.prefectures = AuthUserController.getPrefectureParam(PREFECTURES);
+                                    if (REGIONS.length > 0) u.regions = AuthUserController.getRegionParam(REGIONS);
+                                    if (COUNTRIES.length > 0) u.countries = AuthUserController.getCountryParam(COUNTRIES);
+
+                                    const sUser = await userRepo.save(u);
+                                    await AuthUserController.startTchecking(sUser, res);
+                                }
                             }
+                        } else {
+
                         }
                     }
                 });

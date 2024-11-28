@@ -6,7 +6,7 @@ import { DataSource } from "typeorm";
 import { HouseholdRecapReport, getHouseholdRecapReportRepository } from "../../../entities/Reports";
 import { getAgeIn } from "../../../utils/date-utils";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
-import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 
 
 let Connection: DataSource = AppDataSource.manager.connection;
@@ -31,7 +31,7 @@ export async function HOUSEHOLD_RECAPS_REPORTS_CALCULATION(req: Request, res: Re
 export async function HOUSEHOLD_RECAPS_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getHouseholdRecapReportRepository();
 
-    const recos = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_CUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const filterDate = getFirstAndLastDayOfMonth(year, month);
@@ -81,7 +81,7 @@ export async function HOUSEHOLD_RECAPS_REPORTS_CALCULATION_DATA({ month, year }:
                 _household.commune = reco.commune;
                 _household.hospital = reco.hospital;
                 _household.district_quartier = reco.district_quartier;
-                _household.chw = reco.chw;
+                // _household.chw = reco.chw;
                 _household.village_secteur = reco.village_secteur;
                 _household.reco = { id: reco.id, name: reco.name, phone: reco.phone };
     

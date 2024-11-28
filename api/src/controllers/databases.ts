@@ -20,6 +20,8 @@ import { ReferalData } from "../entities/_Referal-data";
 import { VaccinationData } from "../entities/_Vaccination-data";
 import { httpHeaders } from "../utils/functions";
 import { APP_ENV } from "../utils/constantes";
+import { RecoChartPerformanceDashboard, RecoPerformanceDashboard, RecoVaccinationDashboard } from "../entities/dashboards";
+import { ChwsRecoReport, FamilyPlanningReport, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PromotionReport, RecoMegSituationReport } from "../entities/Reports";
 // const axios = require('axios');
 // const fetch = require('node-fetch')
 
@@ -77,17 +79,88 @@ export async function GetRecoDataToBeDeleteFromCouchDb(req: Request, resp: Respo
 
     if (cible && type && start_date && end_date) {
         try {
-            cible = Array.isArray(cible) ? cible : [cible];
+            cible = (Array.isArray(cible) ? cible : [cible]).filter((item:any) => item !== '');
             const owners = cible.map((_: any, i: number) => `$${i + 1}`).join(',');
             const startDate = `$${cible.length + 1}`;
             const endDate = `$${cible.length + 2}`;
-            if (['reco-data', 'patients', 'families'].includes(type)) {
+
+            let monthCurrentDate = new Date(start_date);
+            let yearCurrentDate = new Date(start_date);
+            const endOfDate = new Date(end_date);
+                    
+            if (type == 'dashboards') {
+
+                let bData1:any[] = [];
+                let bData2:any[] = [];
+                let bData3:any[] = [];
+                
+                while (monthCurrentDate <= endOfDate) {
+                    // const month = monthCurrentDate.toLocaleString('default', { month: 'long' });
+                    const m = monthCurrentDate.getMonth() + 1;
+                    const month = m < 10 ? `0${m}` : `${m}`;
+                    const year = monthCurrentDate.getFullYear();
+
+                    const data1: RecoPerformanceDashboard[] = await Connection.query(`SELECT d.id, r.name as user, 'Performance Dashboard' AS form, 'reco_performance_dashboard' AS table FROM reco_performance_dashboard d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    const data2: RecoVaccinationDashboard[] = await Connection.query(`SELECT d.id, r.name as user, 'Vaccination Dashboard' AS form, 'reco_vaccination_dashboard' AS table FROM reco_vaccination_dashboard d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    
+                    bData1 = [...bData1, ...data1];
+                    bData2 = [...bData2, ...data2];
+
+                    monthCurrentDate.setMonth(monthCurrentDate.getMonth() + 1);
+                } 
+
+                while (yearCurrentDate <= endOfDate) {
+                    const data3: RecoChartPerformanceDashboard[] = await Connection.query(`SELECT d.id, r.name as user, 'Chart Performance Dashboard' AS form, 'reco_chart_performance_dashboard' AS table FROM reco_chart_performance_dashboard d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate}`, [...cible, yearCurrentDate.getFullYear()]);
+                    bData3 = [...bData3, ...data3];
+                    yearCurrentDate.setFullYear(yearCurrentDate.getFullYear() + 1);
+                }
+                
+                return resp.status(200).json({ status: 200, data: [...bData1, ...bData2, ...bData3] });
+            
+            } else if (type == 'reports') {
+
+                let bData1:any[] = [];
+                let bData2:any[] = [];
+                let bData3:any[] = [];
+                let bData4:any[] = [];
+                let bData5:any[] = [];
+                let bData6:any[] = [];
+                let bData7:any[] = [];
+                
+                while (monthCurrentDate <= endOfDate) {
+                    const m = monthCurrentDate.getMonth() + 1;
+                    const month = m < 10 ? `0${m}` : `${m}`;
+                    const year = monthCurrentDate.getFullYear();
+                    
+                    const data1: PromotionReport[] = await Connection.query(`SELECT d.id, r.name as user, 'Promotion Report' AS form, 'promotion_report' AS table FROM promotion_report d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    const data2: FamilyPlanningReport[] = await Connection.query(`SELECT d.id, r.name as user, 'Family Planning Report' AS form, 'family_planning_report' AS table FROM family_planning_report d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    const data3: MorbidityReport[] = await Connection.query(`SELECT d.id, r.name as user, 'Morbidity Report' AS form, 'morbidity_report' AS table FROM morbidity_report d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    const data4: HouseholdRecapReport[] = await Connection.query(`SELECT d.id, r.name as user, 'Household Recap Report' AS form, 'household_recap_report' AS table FROM household_recap_report d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    const data5: PcimneNewbornReport[] = await Connection.query(`SELECT d.id, r.name as user, 'Pcimne Newborn Report' AS form, 'pcimne_newborn_report' AS table FROM pcimne_newborn_report d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    const data6: ChwsRecoReport[] = await Connection.query(`SELECT d.id, r.name as user, 'Chws Reco Report' AS form, 'chws_reco_report' AS table FROM chws_reco_report d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    const data7: RecoMegSituationReport[] = await Connection.query(`SELECT d.id, r.name as user, 'Reco Meg Situation Report' AS form, 'reco_meg_situation_report' AS table FROM reco_meg_situation_report d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate} AND d.month = ${endDate}`, [...cible, year, month]);
+                    
+                    bData1 = [...bData1, ...data1];
+                    bData2 = [...bData2, ...data2];
+                    bData3 = [...bData3, ...data3];
+                    bData4 = [...bData4, ...data4];
+                    bData5 = [...bData5, ...data5];
+                    bData6 = [...bData6, ...data6];
+                    bData7 = [...bData7, ...data7];
+
+                    monthCurrentDate.setMonth(monthCurrentDate.getMonth() + 1);
+                }
+
+                return resp.status(200).json({ status: 200, data: [...bData1, ...bData2, ...bData3, ...bData4, ...bData5, ...bData6, ...bData7] });
+            
+            } else if (['reco-data', 'patients', 'families'].includes(type)) {
                 if (type == 'reco-data') {
                     const data1: AdultData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'adult_data' AS table FROM adult_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
                     const data2: DeathData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'death_data' AS table FROM death_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
                     const data3: DeliveryData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'delivery_data' AS table FROM delivery_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
                     const data4: EventsData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'events_data' AS table FROM events_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
                     const data5: FamilyPlanningData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'family_planning_data' AS table FROM family_planning_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
+                    
                     const data6: RecoMegData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'reco_meg_data' AS table FROM reco_meg_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
                     const data7: NewbornData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'newborn_data' AS table FROM newborn_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
                     const data8: PcimneData[] = await Connection.query(`SELECT d.id, d.rev, d.form, r.name as user, 'pcimne_data' AS table FROM pcimne_data d JOIN reco r ON d.reco_id = r.id WHERE (d.reco_id IN (${owners}) OR d.village_secteur_id IN (${owners})) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
@@ -107,8 +180,8 @@ export async function GetRecoDataToBeDeleteFromCouchDb(req: Request, resp: Respo
                 // await getChwsDataWithParams(req, resp, next);
                 return resp.status(200).json({ status: 200, data: [] });
             } else if (type === 'mentors-data') {
-                const data: FsMegData[] = await Connection.query(`SELECT d.id, d.rev, d.form, m.name as user, 'fs_meg_data' AS table FROM fs_meg_data d JOIN mentor m ON d.mentor_id = m.id WHERE d.mentor_id IN (${owners}) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
-                return resp.status(200).json({ status: 200, data: [...data] });
+                // const data: FsMegData[] = await Connection.query(`SELECT d.id, d.rev, d.form, m.name as user, 'fs_meg_data' AS table FROM fs_meg_data d JOIN mentor m ON d.mentor_id = m.id WHERE d.mentor_id IN (${owners}) AND d.reported_date BETWEEN ${startDate} AND ${endDate}`, [...cible, start_date, end_date]);
+                // return resp.status(200).json({ status: 200, data: [...data] });
             }
             return resp.status(200).json({ status: 200, data: [] });
         } catch (error) {
@@ -137,7 +210,7 @@ export async function DeleteFromCouchDb(req: Request, res: Response, next: NextF
             } else {
 
                 for (const dt of todelete) {
-                    await Connection.query(`DELETE FROM $1 WHERE id = $2`, [dt._table, dt._id]);
+                    await Connection.query(`DELETE FROM ${dt._table} WHERE id = $1`, [dt._id]);
                 }
                 // if (reqType == 'data') {
                 //     // const _repoData = await getChwsDataSyncRepository();

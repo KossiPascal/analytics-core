@@ -54,15 +54,37 @@
   <br>
 
   <div style="text-align: left!important;width: 100%!important;" *ngIf="h.CAN_VISIBLE" class="validate-data col-12">
-    <button [disabled]="h.IS_VALIDATED" (click)="validateData($event)" style="width: auto;"
-      class="submitBtn {{ h.IS_VALIDATED ? 'btn btn-success' : 'btn-warning' }}">
-      {{ h.IS_VALIDATED ? 'Rapport deja validé' : 'Valider ce rapport' }}
-      <span *ngIf="h.ON_VALIDATION" class="fas fa-1x fa-sync-alt fa-spin"></span>
-    </button>
+      <button [disabled]="" (click)="h.IS_VALIDATED ? cancelValidation($event) :validateData($event)" style="width: auto;" class="submitBtn {{ h.IS_VALIDATED ? 'btn btn-info' : 'btn-warning' }}">
+        {{ h.IS_VALIDATED ? 'Annuler ce rapport deja validé' : 'Valider ce rapport' }}
+        <span *ngIf="h.ON_VALIDATION" class="fas fa-1x fa-sync-alt fa-spin"></span>
 
-    <button *ngIf="h.IS_VALIDATED" [disabled]="h.ON_DHIS2_SENDING || h.IS_ALREADY_ON_DHIS2"
-      (click)="sendDataToDhis2($event)" style="width: auto;"
-      class="submitBtn {{ h.IS_ALREADY_ON_DHIS2 ? 'btn btn-info' : 'btn-warning' }}">
+      <!-- <a *ngIf="h.IS_VALIDATED" href="" style="color: brown;text-decoration: none; margin-left: 3px; border-radius: 5px; background: white; padding: 2px; cursor: pointer; position: relative; z-index: 9999;">Annuler</a> -->
+
+      </button>
+
+      <!-- <div style="display: inline-flex; align-items: center;">
+        <button
+          [disabled]="h.IS_VALIDATED"
+          (click)="validateData($event)"
+          class="submitBtn {{ h.IS_VALIDATED ? 'btn btn-success' : 'btn btn-warning' }}"
+          style="width: auto;margin-right: 0px;"
+        >
+          {{ h.IS_VALIDATED ? 'Rapport déjà validé' : 'Valider ce rapport' }}
+          <span *ngIf="h.ON_VALIDATION" class="fas fa-1x fa-sync-alt fa-spin"></span>
+        </button>
+
+        <a
+          *ngIf="h.IS_VALIDATED"
+          (click)="cancelValidation($event)"
+          class="submitBtn {{ h.IS_VALIDATED ? 'btn btn-success' : '' }}"
+          style="color: brown; text-decoration: none; margin-left: 0px; border-radius: 0px 5px 5px 0px; padding: 4px 8px; cursor: pointer; font-size: 10px;"
+        >
+          Annuler
+        </a>
+      </div> -->
+
+
+    <button *ngIf="h.IS_VALIDATED" [disabled]="h.ON_DHIS2_SENDING || h.IS_ALREADY_ON_DHIS2" (click)="sendDataToDhis2($event)" style="width: auto;" class="submitBtn {{ h.IS_ALREADY_ON_DHIS2 ? 'btn btn-info' : 'btn-warning' }}">
       {{ h.IS_ALREADY_ON_DHIS2 ? 'Modifier sur DHIS2' : 'Envoyer au DHIS2' }}
       <span *ngIf="h.ON_DHIS2_SENDING" class="fas fa-1x fa-sync-alt fa-spin"></span>
     </button>

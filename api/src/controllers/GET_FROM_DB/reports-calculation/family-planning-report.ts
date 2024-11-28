@@ -8,7 +8,7 @@ import { FP_Utils } from "../../../utils/Interfaces";
 import { RecoMegData } from "../../../entities/_Meg-Reco-data";
 import { date_to_milisecond } from "../../../utils/date-utils";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
-import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 
 
 let Connection: DataSource = AppDataSource.manager.connection;
@@ -33,7 +33,7 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION(req: Request, res: Re
 export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getFamilyPlanningReportRepository();
 
-    const recos = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_CUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const __familyPlannings: any[] = await Connection.query(`SELECT * FROM family_planning_data WHERE month = $1 AND year = $2`, [month, year]);
@@ -272,7 +272,7 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
             _fp.commune = reco.commune;
             _fp.hospital = reco.hospital;
             _fp.district_quartier = reco.district_quartier;
-            _fp.chw = reco.chw;
+            // _fp.chw = reco.chw;
             _fp.village_secteur = reco.village_secteur;
             _fp.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 

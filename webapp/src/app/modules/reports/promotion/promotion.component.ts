@@ -57,6 +57,9 @@ export class PromotionComponent {
     });
   }
 
+  cancelValidation(){
+
+  }
 
   SHOW_DATA(updatedFormGroup: any) {
     this._formGroup = updatedFormGroup;
@@ -80,7 +83,7 @@ export class PromotionComponent {
     this.ldbfetch.GetPromotionReports(this._formGroup.value).then((_res$: IndicatorsDataOutput<PromotionReport> | undefined) => {
       this.REPPORTS_HEADER.REGION_NAME = _res$?.region.name;
       this.REPPORTS_HEADER.RECO_ASC_TYPE = (_res$ as any)?.reco_asc_type;
-      this.REPPORTS_HEADER.RECO_ASC_NAME = ((_res$ as any)?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : _res$?.chw.name);
+      this.REPPORTS_HEADER.RECO_ASC_NAME = ((_res$ as any)?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : ''); //_res$?.chw.name);
       this.REPPORTS_HEADER.PREFECTURE_NAME = _res$?.prefecture.name;
       this.REPPORTS_HEADER.COMMUNE_NAME = _res$?.commune.name;
       this.REPPORTS_HEADER.VILLAGE_SECTEUR_NAME = _res$?.village_secteur.name;

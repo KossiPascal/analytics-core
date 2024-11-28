@@ -17,7 +17,7 @@ import { AppDataSource } from "../../../data_source";
 import { DeathData } from "../../../entities/_Death-data";
 import { date_to_milisecond, isChildUnder5 } from "../../../utils/date-utils";
 import { getFirstAndLastDayOfMonth, isvalidCta, notEmpty } from "../../../utils/functions";
-import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 
 let Connection: DataSource = AppDataSource.manager.connection;
 
@@ -40,7 +40,7 @@ export async function CHW_RECO_REPORTS_CALCULATION(req: Request, res: Response, 
 
 export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getChwsRecoReportRepository();
-    const recos = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_CUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
     const filterDate = getFirstAndLastDayOfMonth(year, month);
     const timestamp = parseInt(date_to_milisecond(filterDate.end_date, false));
@@ -962,7 +962,7 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
             _chwReco.commune = reco.commune;
             _chwReco.hospital = reco.hospital;
             _chwReco.district_quartier = reco.district_quartier;
-            _chwReco.chw = reco.chw;
+            // _chwReco.chw = reco.chw;
             _chwReco.village_secteur = reco.village_secteur;
             _chwReco.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 

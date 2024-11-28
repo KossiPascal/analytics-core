@@ -47,6 +47,17 @@ export class ApiService {
   }
   //END AUTH
 
+
+  saveSurvey(params: any): Observable<any> {
+    const fparams = this.ApiParams({ survey:params }, false);
+    return this.http.post(`${this.backendUrl}/survey/save`, fparams, this.customHeaders);
+  }
+
+  getAverage(): Observable<any> {
+    const fparams = this.ApiParams({},false);
+    return this.http.post(`${this.backendUrl}/survey/get-averages`, fparams, this.customHeaders);
+  }
+
   //START ADMIN
 
   getUsers(): Observable<any> {

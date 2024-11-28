@@ -111,7 +111,7 @@ export class LocalDbDataFetchService {
         commune: promotionReport[0].commune,
         hospital: promotionReport[0].hospital,
         district_quartier: promotionReport[0].district_quartier,
-        chw: promotionReport[0].chw,
+        // chw: promotionReport[0].chw,
         village_secteur: promotionReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -172,7 +172,7 @@ export class LocalDbDataFetchService {
         commune: familyPlanningReport[0].commune,
         hospital: familyPlanningReport[0].hospital,
         district_quartier: familyPlanningReport[0].district_quartier,
-        chw: familyPlanningReport[0].chw,
+        // chw: familyPlanningReport[0].chw,
         village_secteur: familyPlanningReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -233,7 +233,12 @@ export class LocalDbDataFetchService {
               if (!(sousCategory in summedReport[category])) {
                 summedReport[category][sousCategory] = 0;
               }
-              summedReport[category][sousCategory] += parseInt((r as any)[category][sousCategory]);
+              if ((r as any)[category][sousCategory] == undefined) {
+                summedReport[category][sousCategory] = undefined;
+              } else {
+                summedReport[category][sousCategory] += parseInt((r as any)[category][sousCategory]);
+              }
+
             }
           }
         }
@@ -252,7 +257,7 @@ export class LocalDbDataFetchService {
         commune: morbidityReport[0].commune,
         hospital: morbidityReport[0].hospital,
         district_quartier: morbidityReport[0].district_quartier,
-        chw: morbidityReport[0].chw,
+        // chw: morbidityReport[0].chw,
         village_secteur: morbidityReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -360,7 +365,7 @@ export class LocalDbDataFetchService {
         commune: householdRecapReport[0].commune,
         hospital: householdRecapReport[0].hospital,
         district_quartier: householdRecapReport[0].district_quartier,
-        chw: householdRecapReport[0].chw,
+        // chw: householdRecapReport[0].chw,
         village_secteur: householdRecapReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -434,8 +439,12 @@ export class LocalDbDataFetchService {
 
           if (found) {
             for (const category of Object.keys(summedReport)) {
-              const nrb = parseInt(`${(found as any)[category]}`) + parseInt(`${(r as any)[category]}`);
-              (found as any)[category] = nrb;
+              if ((found as any)[category] == undefined || (r as any)[category] == undefined) {
+                (found as any)[category] = undefined;
+              } else {
+                const nrb = parseInt(`${(found as any)[category]}`) + parseInt(`${(r as any)[category]}`);
+                (found as any)[category] = nrb;
+              }
             }
             dataToOut[index] = found;
           } else {
@@ -458,7 +467,7 @@ export class LocalDbDataFetchService {
         commune: pcimneNewbornReport[0].commune,
         hospital: pcimneNewbornReport[0].hospital,
         district_quartier: pcimneNewbornReport[0].district_quartier,
-        chw: pcimneNewbornReport[0].chw,
+        // chw: pcimneNewbornReport[0].chw,
         village_secteur: pcimneNewbornReport[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -545,7 +554,7 @@ export class LocalDbDataFetchService {
         commune: chwsRecoReports[0].commune,
         hospital: chwsRecoReports[0].hospital,
         district_quartier: chwsRecoReports[0].district_quartier,
-        chw: chwsRecoReports[0].chw,
+        // chw: chwsRecoReports[0].chw,
         village_secteur: chwsRecoReports[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -617,7 +626,7 @@ export class LocalDbDataFetchService {
         commune: recoMegReports[0].commune,
         hospital: recoMegReports[0].hospital,
         district_quartier: recoMegReports[0].district_quartier,
-        chw: recoMegReports[0].chw,
+        // chw: recoMegReports[0].chw,
         village_secteur: recoMegReports[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -657,7 +666,7 @@ export class LocalDbDataFetchService {
         commune: recoVaccineDashboard[0].commune,
         hospital: recoVaccineDashboard[0].hospital,
         district_quartier: recoVaccineDashboard[0].district_quartier,
-        chw: recoVaccineDashboard[0].chw,
+        // chw: recoVaccineDashboard[0].chw,
         village_secteur: recoVaccineDashboard[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',
@@ -763,7 +772,7 @@ export class LocalDbDataFetchService {
         commune: recoPerfDashboard[0].commune,
         hospital: recoPerfDashboard[0].hospital,
         district_quartier: recoPerfDashboard[0].district_quartier,
-        chw: recoPerfDashboard[0].chw,
+        // chw: recoPerfDashboard[0].chw,
         village_secteur: recoPerfDashboard[0].village_secteur,
         reco: reco_names.length !== 1 ? null : reco_names[0],
         reco_asc_type: reco_names.length !== 1 ? 'ASC' : 'RECO',

@@ -4,7 +4,7 @@ import { PromotionReport, getPromotionReportRepository } from "../../../entities
 import { PromotionalActivityData } from "../../../entities/_Promotional-data";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
-import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 
 
 let Connection: DataSource = AppDataSource.manager.connection;
@@ -28,7 +28,7 @@ export async function PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION(req: Request, re
 export async function PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getPromotionReportRepository();
 
-    const recos = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_CUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const __promotionalsA: any[] = await Connection.query(`SELECT * FROM promotional_activity_data WHERE month = $1 AND year = $2`, [month, year]);
@@ -98,7 +98,7 @@ export async function PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION_DATA({ month, ye
             _promoReport.commune = reco.commune;
             _promoReport.hospital = reco.hospital;
             _promoReport.district_quartier = reco.district_quartier;
-            _promoReport.chw = reco.chw;
+            // _promoReport.chw = reco.chw;
             _promoReport.village_secteur = reco.village_secteur;
             _promoReport.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 

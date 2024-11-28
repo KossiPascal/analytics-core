@@ -244,8 +244,281 @@ export async function getHospitalRepository(): Promise<Repository<Hospital>> {
 }
 
 // ##################################################################
+
 @Entity()
-export class Mentor {
+export class CountryManager {
+  @PrimaryColumn({ type: 'text', nullable: false })
+  id!: string
+
+  @Column({ type: 'varchar', nullable: false })
+  rev!: string
+
+  @Column({ type: 'bigint', nullable: false })
+  year!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  month!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  name!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  code!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  external_id!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  role!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  sex!: 'M' | 'F' | null
+
+  @Column({ type: 'varchar', nullable: true })
+  date_of_birth!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  phone!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  email!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  profession!: string
+
+  @Column({ type: 'simple-json', nullable: true })
+  geolocation!: object | null
+
+  @ManyToOne(() => Country, (country) => country.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
+  country!: Country
+
+  @Column({ type: 'bigint', nullable: false })
+  reported_date_timestamp!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  reported_date!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  reported_full_date!: string | null
+}
+export async function getCountryManagerRepository(): Promise<Repository<CountryManager>> {
+  return Connection.getRepository(CountryManager);
+}
+
+// ##################################################################
+@Entity()
+export class RegionManager {
+  @PrimaryColumn({ type: 'text', nullable: false })
+  id!: string
+
+  @Column({ type: 'varchar', nullable: false })
+  rev!: string
+
+  @Column({ type: 'bigint', nullable: false })
+  year!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  month!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  name!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  code!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  external_id!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  role!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  sex!: 'M' | 'F' | null
+
+  @Column({ type: 'varchar', nullable: true })
+  date_of_birth!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  phone!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  email!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  profession!: string
+
+  @Column({ type: 'simple-json', nullable: true })
+  geolocation!: object | null
+
+  @ManyToOne(() => Country, (country) => country.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
+  country!: Country
+
+  @ManyToOne(() => Region, (region) => region.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })
+  region!: Region
+
+  @Column({ type: 'bigint', nullable: false })
+  reported_date_timestamp!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  reported_date!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  reported_full_date!: string | null
+}
+export async function getRegionManagerRepository(): Promise<Repository<RegionManager>> {
+  return Connection.getRepository(RegionManager);
+}
+
+// ##################################################################
+@Entity()
+export class PrefectureManager {
+  @PrimaryColumn({ type: 'text', nullable: false })
+  id!: string
+
+  @Column({ type: 'varchar', nullable: false })
+  rev!: string
+
+  @Column({ type: 'bigint', nullable: false })
+  year!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  month!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  name!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  code!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  external_id!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  role!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  sex!: 'M' | 'F' | null
+
+  @Column({ type: 'varchar', nullable: true })
+  date_of_birth!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  phone!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  email!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  profession!: string
+
+  @Column({ type: 'simple-json', nullable: true })
+  geolocation!: object | null
+
+  @ManyToOne(() => Country, (country) => country.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
+  country!: Country
+
+  @ManyToOne(() => Region, (region) => region.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })
+  region!: Region
+
+  @ManyToOne(() => Prefecture, (prefecture) => prefecture.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'prefecture_id', referencedColumnName: 'id' })
+  prefecture!: Prefecture
+
+  @Column({ type: 'bigint', nullable: false })
+  reported_date_timestamp!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  reported_date!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  reported_full_date!: string | null
+}
+export async function getPrefectureManagerRepository(): Promise<Repository<PrefectureManager>> {
+  return Connection.getRepository(PrefectureManager);
+}
+
+// ##################################################################
+@Entity()
+export class CommuneManager {
+  @PrimaryColumn({ type: 'text', nullable: false })
+  id!: string
+
+  @Column({ type: 'varchar', nullable: false })
+  rev!: string
+
+  @Column({ type: 'bigint', nullable: false })
+  year!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  month!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  name!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  code!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  external_id!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  role!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  sex!: 'M' | 'F' | null
+
+  @Column({ type: 'varchar', nullable: true })
+  date_of_birth!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  phone!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  email!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  profession!: string
+
+  @Column({ type: 'simple-json', nullable: true })
+  geolocation!: object | null
+
+  @ManyToOne(() => Country, (country) => country.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'country_id', referencedColumnName: 'id' })
+  country!: Country
+
+  @ManyToOne(() => Region, (region) => region.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'region_id', referencedColumnName: 'id' })
+  region!: Region
+
+  @ManyToOne(() => Prefecture, (prefecture) => prefecture.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'prefecture_id', referencedColumnName: 'id' })
+  prefecture!: Prefecture
+
+  @ManyToOne(() => Commune, (commune) => commune.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  @JoinColumn({ name: 'commune_id', referencedColumnName: 'id' })
+  commune!: Commune
+
+  @Column({ type: 'bigint', nullable: false })
+  reported_date_timestamp!: number
+
+  @Column({ type: 'varchar', nullable: false })
+  reported_date!: string
+
+  @Column({ type: 'varchar', nullable: true })
+  reported_full_date!: string | null
+}
+export async function getCommuneManagerRepository(): Promise<Repository<CommuneManager>> {
+  return Connection.getRepository(CommuneManager);
+}
+
+// ##################################################################
+@Entity()
+export class HospitalManager {
   @PrimaryColumn({ type: 'text', nullable: false })
   id!: string
 
@@ -317,8 +590,8 @@ export class Mentor {
   @Column({ type: 'varchar', nullable: true })
   reported_full_date!: string | null
 }
-export async function getMentorRepository(): Promise<Repository<Mentor>> {
-  return Connection.getRepository(Mentor);
+export async function getHospitalManagerRepository(): Promise<Repository<HospitalManager>> {
+  return Connection.getRepository(HospitalManager);
 }
 
 // ##################################################################
@@ -345,8 +618,8 @@ export class DistrictQuartier {
   @Column({ type: 'varchar', nullable: true })
   code!: string
 
-  @Column({ type: 'varchar', nullable: true })
-  chw_id!: string
+  // @Column({ type: 'varchar', nullable: true })
+  // chw_id!: string
 
   @Column({ type: 'simple-json', nullable: true })
   geolocation!: object | null
@@ -606,9 +879,12 @@ export class Reco {
   @JoinColumn({ name: 'village_secteur_id', referencedColumnName: 'id' })
   village_secteur!: VillageSecteur
 
-  @ManyToOne(() => Chw, (chw) => chw.id, { lazy: true, eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'chw_id', referencedColumnName: 'id' })
-  chw!: Chw | null
+  // @ManyToOne(() => Chw, (chw) => chw.id, { lazy: true, eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  // @JoinColumn({ name: 'chw_id', referencedColumnName: 'id' })
+  // chw!: Chw | null
+
+  // @Column({ type: 'simple-json', nullable: true })
+  // chw!: object | null
 
   @Column({ type: 'bigint', nullable: false })
   reported_date_timestamp!: number
@@ -683,9 +959,9 @@ export class Family {
   @JoinColumn({ name: 'district_quartier_id', referencedColumnName: 'id' })
   district_quartier!: DistrictQuartier
 
-  @ManyToOne(() => Chw, (chw) => chw.id, { lazy: true, eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'chw_id', referencedColumnName: 'id' })
-  chw!: Chw | null
+  // @ManyToOne(() => Chw, (chw) => chw.id, { lazy: true, eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  // @JoinColumn({ name: 'chw_id', referencedColumnName: 'id' })
+  // chw!: Chw | null
 
   @ManyToOne(() => VillageSecteur, (village_secteur) => village_secteur.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'village_secteur_id', referencedColumnName: 'id' })
@@ -807,9 +1083,9 @@ export class Patient {
   @JoinColumn({ name: 'family_id', referencedColumnName: 'id' })
   family!: Family
 
-  @ManyToOne(() => Chw, (chw) => chw.id, { lazy: true, eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'chw_id', referencedColumnName: 'id' })
-  chw!: Chw | null
+  // @ManyToOne(() => Chw, (chw) => chw.id, { lazy: true, eager: true, nullable: true, onDelete: "CASCADE", onUpdate: 'CASCADE' })
+  // @JoinColumn({ name: 'chw_id', referencedColumnName: 'id' })
+  // chw!: Chw | null
 
   @ManyToOne(() => Reco, (reco) => reco.id, { lazy: true, eager: true, nullable: false, onDelete: "CASCADE", onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'reco_id', referencedColumnName: 'id' })

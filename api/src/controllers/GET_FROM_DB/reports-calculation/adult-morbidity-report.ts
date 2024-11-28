@@ -5,7 +5,7 @@ import { DataSource } from "typeorm";
 import { MorbidityReport, getMorbidityReportRepository } from "../../../entities/Reports";
 import { MorbidityUtils } from "../../../utils/Interfaces";
 import { AdultData } from "../../../entities/_Adult-data";
-import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 import { isvalidCta } from "../../../utils/functions";
 
 
@@ -42,7 +42,7 @@ function getMorbidityUtils<T>(data: T[] | any[], name:string, field: string) : M
 
 export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: { month: string, year: number }): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoReport = await getMorbidityReportRepository();
-    const recos = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_CUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
     const __adults: any[] = await Connection.query(`SELECT * FROM adult_data WHERE month = $1 AND year = $2`, [month, year]);
 
@@ -95,9 +95,9 @@ export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: 
                 nbr_14_25_years: malaria_14_25_years.filter(a => a.rdt_given).length,
                 nbr_25_60_years: malaria_25_60_years.filter(a => a.rdt_given).length,
                 nbr_60_more_years: malaria_60_more_years.filter(a => a.rdt_given).length,
-                nbr_pregnant_woman: malaria_pregnant_woman.filter(a => a.rdt_given).length,
+                nbr_pregnant_woman: undefined,
                 nbr_total: malaria_total.filter(a => a.rdt_given).length,
-                nbr_referred: malaria_referred.filter(a => a.rdt_given).length
+                nbr_referred: undefined
             };
             const malaria_positive_rdts: MorbidityUtils = {
                 indicator: 'Nombre de TDR positifs',
@@ -105,9 +105,9 @@ export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: 
                 nbr_14_25_years: malaria_14_25_years.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
                 nbr_25_60_years: malaria_25_60_years.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
                 nbr_60_more_years: malaria_60_more_years.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
-                nbr_pregnant_woman: malaria_pregnant_woman.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
+                nbr_pregnant_woman: undefined,
                 nbr_total: malaria_total.filter(a => a.rdt_given && a.rdt_result === 'positive').length,
-                nbr_referred: malaria_referred.filter(a => a.rdt_given && a.rdt_result === 'positive').length
+                nbr_referred: undefined
             };
             // ##################################################
             const malaria_cases_treated_with_cta: MorbidityUtils = {
@@ -116,9 +116,9 @@ export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: 
                 nbr_14_25_years: adults.filter(a => isvalidCta(a) && a.age_in_years >= 14 && a.age_in_years < 25).length,
                 nbr_25_60_years: adults.filter(a => isvalidCta(a) && a.age_in_years >= 25 && a.age_in_years < 60).length,
                 nbr_60_more_years: adults.filter(a => isvalidCta(a) && a.age_in_years >= 60).length,
-                nbr_pregnant_woman: adults.filter(a => isvalidCta(a) && a.age_in_years >= 5 && a.is_pregnant === true).length,
+                nbr_pregnant_woman: undefined,
                 nbr_total: adults.filter(a => isvalidCta(a) && a.age_in_years >= 5).length,
-                nbr_referred: adults.filter(a => isvalidCta(a) && a.age_in_years >= 5 && a.is_referred === true).length
+                nbr_referred: undefined
             };
 
             const _morbidity = new MorbidityReport();
@@ -154,7 +154,7 @@ export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: 
             _morbidity.commune = reco.commune;
             _morbidity.hospital = reco.hospital;
             _morbidity.district_quartier = reco.district_quartier;
-            _morbidity.chw = reco.chw;
+            // _morbidity.chw = reco.chw;
             _morbidity.village_secteur = reco.village_secteur;
             _morbidity.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 

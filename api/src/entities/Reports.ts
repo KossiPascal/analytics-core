@@ -168,8 +168,8 @@ export class PromotionReport {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone:string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone:string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -192,7 +192,6 @@ export class PromotionReport {
 export async function getPromotionReportRepository(): Promise<Repository<PromotionReport>> {
     return Connection.getRepository(PromotionReport);
 }
-
 @Entity()
 export class FamilyPlanningReport {
     @PrimaryColumn({ type: 'text', nullable: false })
@@ -249,8 +248,8 @@ export class FamilyPlanningReport {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone:string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone:string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -273,7 +272,6 @@ export class FamilyPlanningReport {
 export async function getFamilyPlanningReportRepository(): Promise<Repository<FamilyPlanningReport>> {
     return Connection.getRepository(FamilyPlanningReport);
 }
-
 @Entity()
 export class MorbidityReport {
     @PrimaryColumn({ type: 'text', nullable: false })
@@ -367,8 +365,8 @@ export class MorbidityReport {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone:string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone:string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -391,7 +389,6 @@ export class MorbidityReport {
 export async function getMorbidityReportRepository(): Promise<Repository<MorbidityReport>> {
     return Connection.getRepository(MorbidityReport);
 }
-
 @Entity()
 export class HouseholdRecapReport {
     constructor() { };
@@ -452,8 +449,8 @@ export class HouseholdRecapReport {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone:string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone:string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -476,7 +473,6 @@ export class HouseholdRecapReport {
 export async function getHouseholdRecapReportRepository(): Promise<Repository<HouseholdRecapReport>> {
     return Connection.getRepository(HouseholdRecapReport);
 }
-
 @Entity()
 export class PcimneNewbornReport {
     constructor() { };
@@ -510,8 +506,8 @@ export class PcimneNewbornReport {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone:string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone:string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -534,7 +530,6 @@ export class PcimneNewbornReport {
 export async function getPcimneNewbornReportRepository(): Promise<Repository<PcimneNewbornReport>> {
     return Connection.getRepository(PcimneNewbornReport);
 }
-
 @Entity()
 export class ChwsRecoReport {
     constructor() { };
@@ -598,8 +593,8 @@ export class ChwsRecoReport {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone:string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone:string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -622,9 +617,6 @@ export class ChwsRecoReport {
 export async function getChwsRecoReportRepository(): Promise<Repository<ChwsRecoReport>> {
     return Connection.getRepository(ChwsRecoReport);
 }
-
-
-
 @Entity()
 export class RecoMegSituationReport {
 
@@ -658,8 +650,8 @@ export class RecoMegSituationReport {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone: string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone: string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }

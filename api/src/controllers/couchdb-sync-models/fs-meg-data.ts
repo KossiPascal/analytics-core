@@ -33,7 +33,7 @@ export async function SyncFsMegData(report: any, _repoFsMeg: Repository<FsMegDat
         _fsMeg.prefecture = fields.prefecture_id;
         _fsMeg.commune = fields.commune_id;
         _fsMeg.hospital = fields.hospital_id;
-        _fsMeg.mentor = fields.user_id;
+        _fsMeg.hospital_manager = fields.user_id;
         _fsMeg.reported_date_timestamp = report.reported_date;
         _fsMeg.reported_date = reported_date;
         _fsMeg.reported_full_date = milisecond_to_date(report.reported_date, 'fulldate');

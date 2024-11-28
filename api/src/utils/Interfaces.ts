@@ -72,9 +72,9 @@ export interface MorbidityUtils {
     nbr_14_25_years: number
     nbr_25_60_years: number
     nbr_60_more_years: number
-    nbr_pregnant_woman: number
+    nbr_pregnant_woman: number|undefined
     nbr_total: number
-    nbr_referred: number
+    nbr_referred: number|undefined
 }
 
 export interface CouchDbFetchData {
@@ -94,33 +94,33 @@ export interface CouchDbFetchData {
 export interface PcimneNewbornReportUtils {
     index: number
     indicator: string
-    nbr_malaria_0_2_months_F: number
-    nbr_malaria_0_2_months_M: number
-    nbr_malaria_2_12_months_F: number
-    nbr_malaria_2_12_months_M: number
-    nbr_malaria_12_60_months_F: number
-    nbr_malaria_12_60_months_M: number
+    nbr_malaria_0_2_months_F: number|undefined
+    nbr_malaria_0_2_months_M: number|undefined
+    nbr_malaria_2_12_months_F: number|undefined
+    nbr_malaria_2_12_months_M: number|undefined
+    nbr_malaria_12_60_months_F: number|undefined
+    nbr_malaria_12_60_months_M: number|undefined
 
-    nbr_cough_pneumonia_0_2_months_F: number
-    nbr_cough_pneumonia_0_2_months_M: number
-    nbr_cough_pneumonia_2_12_months_F: number
-    nbr_cough_pneumonia_2_12_months_M: number
-    nbr_cough_pneumonia_12_60_months_F: number
-    nbr_cough_pneumonia_12_60_months_M: number
+    nbr_cough_pneumonia_0_2_months_F: number|undefined
+    nbr_cough_pneumonia_0_2_months_M: number|undefined
+    nbr_cough_pneumonia_2_12_months_F: number|undefined
+    nbr_cough_pneumonia_2_12_months_M: number|undefined
+    nbr_cough_pneumonia_12_60_months_F: number|undefined
+    nbr_cough_pneumonia_12_60_months_M: number|undefined
 
-    nbr_diarrhea_0_2_months_F: number
-    nbr_diarrhea_0_2_months_M: number
-    nbr_diarrhea_2_12_months_F: number
-    nbr_diarrhea_2_12_months_M: number
-    nbr_diarrhea_12_60_months_F: number
-    nbr_diarrhea_12_60_months_M: number
-    nbr_malnutrition_0_2_months_F: number
-    nbr_malnutrition_0_2_months_M: number
-    nbr_malnutrition_2_12_months_F: number
-    nbr_malnutrition_2_12_months_M: number
-    nbr_malnutrition_12_60_months_F: number
-    nbr_malnutrition_12_60_months_M: number
-    nbr_total: number
+    nbr_diarrhea_0_2_months_F: number|undefined
+    nbr_diarrhea_0_2_months_M: number|undefined
+    nbr_diarrhea_2_12_months_F: number|undefined
+    nbr_diarrhea_2_12_months_M: number|undefined
+    nbr_diarrhea_12_60_months_F: number|undefined
+    nbr_diarrhea_12_60_months_M: number|undefined
+    nbr_malnutrition_0_2_months_F: number|undefined
+    nbr_malnutrition_0_2_months_M: number|undefined
+    nbr_malnutrition_2_12_months_F: number|undefined
+    nbr_malnutrition_2_12_months_M: number|undefined
+    nbr_malnutrition_12_60_months_F: number|undefined
+    nbr_malnutrition_12_60_months_M: number|undefined
+    nbr_total: number|undefined
 }
 
 

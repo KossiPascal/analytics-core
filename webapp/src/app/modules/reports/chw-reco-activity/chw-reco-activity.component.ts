@@ -23,6 +23,7 @@ export class ChwRecoMonthlyActivityComponent {
   COLUMN_WIDTH: number;
   _formGroup!: FormGroup;
   _dhis2FormGroup!: FormGroup;
+  isRecoConnected!:boolean
 
 
   REPPORTS_HEADER: ReportsHealth = {
@@ -59,6 +60,10 @@ export class ChwRecoMonthlyActivityComponent {
     });
   }
 
+  cancelValidation(){
+
+  }
+
   SHOW_DATA(updatedFormGroup: any) {
     this._formGroup = updatedFormGroup;
     if (!(this._formGroup.value.recos.length > 0)) {
@@ -78,10 +83,11 @@ export class ChwRecoMonthlyActivityComponent {
     this.REPPORTS_HEADER.ON_FETCHING = true;
     this._formGroup.value.months = toArray(this._formGroup.value.months);
     this.ldbfetch.GetChwsRecoReports(this._formGroup.value).then((_res$: IndicatorsDataOutput<ChwsRecoReport> | undefined) => {
+      this.isRecoConnected = _res$?.reco_asc_type === 'RECO';
       this.REPPORTS_HEADER.REGION_NAME = _res$?.region.name;
       this.REPPORTS_HEADER.RECO_ASC_TYPE = _res$?.reco_asc_type;
-      this.REPPORTS_HEADER.RECO_ASC_NAME = (_res$?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : _res$?.chw.name);
-      this.REPPORTS_HEADER.RECO_ASC_PHONE = (_res$?.reco_asc_type === 'RECO' ? (_res$?.reco?.phone) : _res$?.chw.phone);
+      this.REPPORTS_HEADER.RECO_ASC_NAME = (this.isRecoConnected ? (_res$?.reco?.name) : ''); //_res$?.chw.name);
+      this.REPPORTS_HEADER.RECO_ASC_PHONE = (this.isRecoConnected ? (_res$?.reco?.phone) : ''); //_res$?.chw.phone);
       this.REPPORTS_HEADER.PREFECTURE_NAME = _res$?.prefecture.name;
       this.REPPORTS_HEADER.COMMUNE_NAME = _res$?.commune.name;
       this.REPPORTS_HEADER.HEALTH_CENTER_NAME = _res$?.hospital.name;

@@ -18,6 +18,7 @@
                   [id]="'fp-repports-header'"
                   [REPPORTS_HEADER]="REPPORTS_HEADER"
                   (onValidateData)="validateData()"
+                  (onCancelDataValidated)="cancelValidation()"
                   (onSendToDhis2)="sendDataToDhis2()">
                 </repports-header-selector>
 
@@ -38,7 +39,7 @@
               <th style="width: 9%;" scope="col">Nombre référés</th>
             </tr>
           </thead>
-          <tbody *ngIf="MORBIDITY$ as m">
+          <tbody class="morbidity-health" *ngIf="MORBIDITY$ as m">
             <tr>
               <th scope="row">01</th>
               <td>{{ m.hp_circulation_accident.indicator }}</td>
@@ -246,7 +247,7 @@
               <th scope="col">Nombre référés</th>
             </tr>
           </thead>
-          <tbody *ngIf="MORBIDITY$ as m">
+          <tbody class="morbidity-malaria" *ngIf="MORBIDITY$ as m">
             <tr>
               <th scope="row">{{ 1 }}</th>
               <td>{{ m.malaria_total_cases.indicator }}</td>
@@ -259,37 +260,37 @@
               <td>{{ m.malaria_total_cases.nbr_referred }}</td>
             </tr>
             <tr>
-              <th scope="row">{{ 1 }}</th>
+              <th scope="row">{{ 2 }}</th>
               <td>{{ m.malaria_rdt_performed.indicator }}</td>
               <td>{{ m.malaria_rdt_performed.nbr_5_14_years }}</td>
               <td>{{ m.malaria_rdt_performed.nbr_14_25_years }}</td>
               <td>{{ m.malaria_rdt_performed.nbr_25_60_years }}</td>
               <td>{{ m.malaria_rdt_performed.nbr_60_more_years }}</td>
-              <td class="dark-back">{{ m.malaria_rdt_performed.nbr_pregnant_woman }}</td>
+              <td class="grey-back">{{ m.malaria_rdt_performed.nbr_pregnant_woman }}</td>
               <td>{{ m.malaria_rdt_performed.nbr_total }}</td>
-              <td class="dark-back">{{ m.malaria_rdt_performed.nbr_referred }}</td>
+              <td class="grey-back">{{ m.malaria_rdt_performed.nbr_referred }}</td>
             </tr>
             <tr>
-              <th scope="row">{{ 1 }}</th>
+              <th scope="row">{{ 3 }}</th>
               <td>{{ m.malaria_positive_rdts.indicator }}</td>
               <td>{{ m.malaria_positive_rdts.nbr_5_14_years }}</td>
               <td>{{ m.malaria_positive_rdts.nbr_14_25_years }}</td>
               <td>{{ m.malaria_positive_rdts.nbr_25_60_years }}</td>
               <td>{{ m.malaria_positive_rdts.nbr_60_more_years }}</td>
-              <td class="dark-back">{{ m.malaria_positive_rdts.nbr_pregnant_woman }}</td>
+              <td class="grey-back">{{ m.malaria_positive_rdts.nbr_pregnant_woman }}</td>
               <td>{{ m.malaria_positive_rdts.nbr_total }}</td>
-              <td class="dark-back">{{ m.malaria_positive_rdts.nbr_referred }}</td>
+              <td class="grey-back">{{ m.malaria_positive_rdts.nbr_referred }}</td>
             </tr>
             <tr>
-              <th scope="row">{{ 1 }}</th>
+              <th scope="row">{{ 4 }}</th>
               <td>{{ m.malaria_cases_treated_with_cta.indicator }}</td>
               <td>{{ m.malaria_cases_treated_with_cta.nbr_5_14_years }}</td>
               <td>{{ m.malaria_cases_treated_with_cta.nbr_14_25_years }}</td>
               <td>{{ m.malaria_cases_treated_with_cta.nbr_25_60_years }}</td>
               <td>{{ m.malaria_cases_treated_with_cta.nbr_60_more_years }}</td>
-              <td class="dark-back">{{ m.malaria_cases_treated_with_cta.nbr_pregnant_woman }}</td>
+              <td class="grey-back">{{ m.malaria_cases_treated_with_cta.nbr_pregnant_woman }}</td>
               <td>{{ m.malaria_cases_treated_with_cta.nbr_total }}</td>
-              <td class="dark-back">{{ m.malaria_cases_treated_with_cta.nbr_referred }}</td>
+              <td class="grey-back">{{ m.malaria_cases_treated_with_cta.nbr_referred }}</td>
             </tr>
           </tbody>
 

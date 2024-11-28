@@ -21,7 +21,7 @@ export interface RecoPerformanceDashboard {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?:boolean
@@ -43,7 +43,7 @@ export interface RecoChartPerformanceDashboard {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?:boolean
@@ -87,7 +87,7 @@ export interface RecoVaccinationDashboard {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?:boolean

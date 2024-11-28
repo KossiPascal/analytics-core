@@ -30,7 +30,7 @@ const hasServiceWorkerChanged = (): boolean => {
 // Function to calculate hash of a file
 const calculateFileHash = (filePath: string): string => {
   const fileContent = fs.readFileSync(filePath);
-  return crypto.createHash('md5').update(fileContent).digest("hex");
+  return crypto.createHash('md5').update(fileContent as any).digest("hex");
 };
 
 // Function to watch for changes in the build directory

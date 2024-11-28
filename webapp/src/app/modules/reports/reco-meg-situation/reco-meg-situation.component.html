@@ -12,8 +12,12 @@
           <thead class="no-border center">
             <tr class="no-border org-units center">
               <td class="no-border org-units center" colspan="13">
-                <repports-header-selector [id]="'fp-repports-header'" [REPPORTS_HEADER]="REPPORTS_HEADER"
-                  (onValidateData)="validateData()" (onSendToDhis2)="sendDataToDhis2()">
+                <repports-header-selector
+                  [id]="'fp-repports-header'"
+                  [REPPORTS_HEADER]="REPPORTS_HEADER"
+                  (onValidateData)="validateData()"
+                  (onCancelDataValidated)="cancelValidation()"
+                  (onSendToDhis2)="sendDataToDhis2()">
                 </repports-header-selector>
               </td>
             </tr>

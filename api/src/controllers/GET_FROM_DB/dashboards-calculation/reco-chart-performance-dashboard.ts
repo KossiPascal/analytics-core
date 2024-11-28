@@ -3,7 +3,7 @@ import { validationResult } from "express-validator";
 import { AppDataSource } from "../../../data_source";
 import { DataSource } from "typeorm";
 import { RecoPerformanceDashboardUtils } from "../../../utils/Interfaces";
-import { RECOS_COUSTOM_QUERY } from "../../orgunit-query/org-units-coustom";
+import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 import { RecoChartPerformanceDashboard, getRecoChartPerformanceDashboardRepository } from "../../../entities/dashboards";
 import { getColors } from "../../../utils/functions";
 
@@ -26,7 +26,7 @@ export async function RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION(req: Request,
 
 export async function RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION_DATA(year: number): Promise<{ status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number }> {
     const _repoDashboard = await getRecoChartPerformanceDashboardRepository();
-    const recos = await RECOS_COUSTOM_QUERY();
+    const recos = await RECOS_CUSTOM_QUERY();
     const outPutData: { status: number, ErrorsCount: number, SuccessCount: number, data: any, recos_length: number } = { status: 201, ErrorsCount: 0, SuccessCount: 0, data: null, recos_length: recos.length };
 
     const __adultData: any[] = await Conn.query(`SELECT * FROM adult_data WHERE year = $1`, [year]);
@@ -153,7 +153,7 @@ export async function RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION_DATA(year: nu
             _per.commune = reco.commune;
             _per.hospital = reco.hospital;
             _per.district_quartier = reco.district_quartier;
-            _per.chw = reco.chw;
+            // _per.chw = reco.chw;
             _per.village_secteur = reco.village_secteur;
             _per.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 

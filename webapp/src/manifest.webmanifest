@@ -1,18 +1,6 @@
 {
-  "$schema": "http://json.schemastore.org/web-manifest",
   "name": "Reco Analytics",
   "short_name": "Reco Analytics",
-  "theme_color": "#1976d2",
-  "background_color": "#fafafa",
-  "display": "standalone",
-  "scope": "./",
-  "start_url": "./",
-  "dir": "ltr",
-  "lang": "en",
-  "description": "Analytics PWA",
-  "orientation": "any",
-  "related_applications": [],
-  "prefer_related_applications": false,
   "icons": [
     {
       "src": "assets/icons/icon-72x72.png",
@@ -55,5 +43,9 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "start_url": "./",
+  "display": "standalone",
+  "theme_color": "#1976d2",
+  "background_color": "#fafafa"
 }

@@ -44,20 +44,21 @@
           </option>
         </select>
 
-        <!-- <select *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="orgunit-style form-select mb-2" multiple formControlName="recos">
-          <option *ngFor="let r of recos" [value]="r.id">
-            {{ r.name }}
-          </option>
-        </select> -->
+        <select
+          *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="orgunit-style mb-1" multiple="{{ recos.length > 1 ? 'multiple' : '' }}" formControlName="recos">
+            <option *ngFor="let r of recos" [value]="r.id">
+              {{ r.name }}
+            </option>
+          </select>
 
-        <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="reco-list-container orgunit-style form-selec mb-2">
+        <!-- <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="reco-list-container orgunit-style form-selec mb-2">
           <div *ngIf="recos.length > 0" style="color:darkblue; width: 200%; font-weight: bold;">
             <input type="checkbox" [checked]="_formGroup.value.recos.length === recos.length" (change)="selectAllRecos()" id="reco-list-all"> <label for="reco-list-all"> Tout sélectionner</label>
           </div>
           <div *ngFor="let r of recos" class="reco-list {{ isSelected(r.id, 'recos') ? 'reco-selected' : '' }}" (click)="onCheckboxChange(r.id, $event)">
             {{ r.name }}
           </div>
-        </div>
+        </div> -->
 
         <select class="orgunit-style form-select mb-2" formControlName="year">
           <ng-container *ngIf="Years$.length > 0">

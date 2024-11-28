@@ -31,8 +31,12 @@ export interface SyncOrgUnit {
   prefecture: boolean
   commune: boolean
   hospital: boolean
-  mentor: boolean
   district_quartier: boolean
+  country_manager: boolean
+  region_manager: boolean
+  prefecture_manager: boolean
+  commune_manager: boolean
+  hospital_manager: boolean
   chw: boolean
   village_secteur: boolean
   reco: boolean
@@ -50,7 +54,11 @@ export interface OrgUnitSyncResult {
   DistrictQuartier?: SyncOutputUtils
   VillageSecteur?: SyncOutputUtils
   Family?: SyncOutputUtils
-  Mentor?: SyncOutputUtils
+  CountryManager?: SyncOutputUtils
+  RegionManager?: SyncOutputUtils
+  PrefectureManager?: SyncOutputUtils
+  CommuneManager?: SyncOutputUtils
+  HospitalManager?: SyncOutputUtils
   Chw?: SyncOutputUtils
   Reco?: SyncOutputUtils
   Patient?: SyncOutputUtils
@@ -104,13 +112,13 @@ export interface getOrgUnitFromDbFilter {
 
 // ###################### ORG UNITS ##########################
 
-// export interface CountryCoustomQuery {
+// export interface CountryCustomQuery {
 //   id: string
 //   name: string
 //   external_id: string
 // }
 
-// export interface RegionCoustomQuery {
+// export interface RegionCustomQuery {
 //   id: string
 //   name: string
 //   external_id: string
@@ -118,7 +126,7 @@ export interface getOrgUnitFromDbFilter {
 //   country: { id: string, name: string }
 // }
 
-// export interface PrefectureCoustomQuery {
+// export interface PrefectureCustomQuery {
 //   id: string
 //   name: string
 //   external_id: string
@@ -127,7 +135,7 @@ export interface getOrgUnitFromDbFilter {
 //   region: { id: string, name: string }
 // }
 
-// export interface CommuneCoustomQuery {
+// export interface CommuneCustomQuery {
 //   id: string
 //   name: string
 //   external_id: string
@@ -137,7 +145,7 @@ export interface getOrgUnitFromDbFilter {
 //   prefecture: { id: string, name: string }
 // }
 
-// export interface HospitalCoustomQuery {
+// export interface HospitalCustomQuery {
 //   id: string
 //   name: string
 //   external_id: string
@@ -148,7 +156,7 @@ export interface getOrgUnitFromDbFilter {
 //   commune: { id: string, name: string }
 // }
 
-// export interface DistrictQuartierCoustomQuery {
+// export interface DistrictQuartierCustomQuery {
 //   id: string
 //   name: string
 //   external_id: string
@@ -161,7 +169,7 @@ export interface getOrgUnitFromDbFilter {
 //   chw: { id: string, name: string, phone: string }
 // }
 
-// export interface VillageSecteurCoustomQuery {
+// export interface VillageSecteurCustomQuery {
 //   id: string
 //   name: string
 //   external_id: string
@@ -175,7 +183,7 @@ export interface getOrgUnitFromDbFilter {
 //   reco: { id: string, name: string, phone: string }
 // }
 
-// export interface ChwCoustomQuery {
+// export interface ChwCustomQuery {
 //   id: string
 //   name: string
 //   phone: string
@@ -189,7 +197,7 @@ export interface getOrgUnitFromDbFilter {
 //   district_quartier: { id: string, name: string }
 // }
 
-// export interface RecoCoustomQuery {
+// export interface RecoCustomQuery {
 //   id: string
 //   name: string
 //   phone: string
@@ -205,7 +213,7 @@ export interface getOrgUnitFromDbFilter {
 //   village_secteur: { id: string, name: string }
 // }
 
-export interface FamilyCoustomQuery {
+export interface FamilyCustomQuery {
   id: string
   name: string
   external_id: string
@@ -219,11 +227,11 @@ export interface FamilyCoustomQuery {
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
   village_secteur: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   reco: { id: string, name: string, phone: string }
 }
 
-export interface PatientCoustomQuery {
+export interface PatientCustomQuery {
   id: string
   name: string
   phone: string
@@ -240,6 +248,6 @@ export interface PatientCoustomQuery {
   district_quartier: { id: string, name: string }
   village_secteur: { id: string, name: string }
   family: { id: string, name: string, phone: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   reco: { id: string, name: string, phone: string }
 }

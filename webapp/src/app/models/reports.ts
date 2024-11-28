@@ -15,9 +15,9 @@ export interface MorbidityUtils {
   nbr_14_25_years: number
   nbr_25_60_years: number
   nbr_60_more_years: number
-  nbr_pregnant_woman: number
+  nbr_pregnant_woman: number|undefined
   nbr_total: number
-  nbr_referred: number
+  nbr_referred: number|undefined
 }
 
 export interface IndicatorsDataOutput<T> {
@@ -27,7 +27,7 @@ export interface IndicatorsDataOutput<T> {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   reco_asc_type: string
@@ -53,7 +53,7 @@ export interface RecoMegSituationReport {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?: boolean
@@ -140,7 +140,7 @@ export interface PromotionReport {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?: boolean
@@ -169,7 +169,7 @@ export interface FamilyPlanningReport {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?: boolean
@@ -211,7 +211,7 @@ export interface MorbidityReport {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?: boolean
@@ -241,7 +241,7 @@ export interface HouseholdRecapReport {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?: boolean
@@ -262,7 +262,7 @@ export interface PcimneNewbornReport {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?: boolean
@@ -276,33 +276,35 @@ export interface PcimneNewbornReport {
 export interface PcimneNewbornReportUtils {
   index: number
   indicator: string
-  nbr_malaria_0_2_months_F: number
-  nbr_malaria_0_2_months_M: number
-  nbr_malaria_2_12_months_F: number
-  nbr_malaria_2_12_months_M: number
-  nbr_malaria_12_60_months_F: number
-  nbr_malaria_12_60_months_M: number
+  nbr_malaria_0_2_months_F: number|undefined
+  nbr_malaria_0_2_months_M: number|undefined
+  nbr_malaria_2_12_months_F: number|undefined
+  nbr_malaria_2_12_months_M: number|undefined
+  nbr_malaria_12_60_months_F: number|undefined
+  nbr_malaria_12_60_months_M: number|undefined
 
-  nbr_cough_pneumonia_0_2_months_F: number
-  nbr_cough_pneumonia_0_2_months_M: number
-  nbr_cough_pneumonia_2_12_months_F: number
-  nbr_cough_pneumonia_2_12_months_M: number
-  nbr_cough_pneumonia_12_60_months_F: number
-  nbr_cough_pneumonia_12_60_months_M: number
+  nbr_cough_pneumonia_0_2_months_F: number|undefined
+  nbr_cough_pneumonia_0_2_months_M: number|undefined
+  nbr_cough_pneumonia_2_12_months_F: number|undefined
+  nbr_cough_pneumonia_2_12_months_M: number|undefined
+  nbr_cough_pneumonia_12_60_months_F: number|undefined
+  nbr_cough_pneumonia_12_60_months_M: number|undefined
 
-  nbr_diarrhea_0_2_months_F: number
-  nbr_diarrhea_0_2_months_M: number
-  nbr_diarrhea_2_12_months_F: number
-  nbr_diarrhea_2_12_months_M: number
-  nbr_diarrhea_12_60_months_F: number
-  nbr_diarrhea_12_60_months_M: number
-  nbr_malnutrition_0_2_months_F: number
-  nbr_malnutrition_0_2_months_M: number
-  nbr_malnutrition_2_12_months_F: number
-  nbr_malnutrition_2_12_months_M: number
-  nbr_malnutrition_12_60_months_F: number
-  nbr_malnutrition_12_60_months_M: number
-  nbr_total: number
+  nbr_diarrhea_0_2_months_F: number|undefined
+  nbr_diarrhea_0_2_months_M: number|undefined
+  nbr_diarrhea_2_12_months_F: number|undefined
+  nbr_diarrhea_2_12_months_M: number|undefined
+  nbr_diarrhea_12_60_months_F: number|undefined
+  nbr_diarrhea_12_60_months_M: number|undefined
+
+  nbr_malnutrition_0_2_months_F: number|undefined
+  nbr_malnutrition_0_2_months_M: number|undefined
+  nbr_malnutrition_2_12_months_F: number|undefined
+  nbr_malnutrition_2_12_months_M: number|undefined
+  nbr_malnutrition_12_60_months_F: number|undefined
+  nbr_malnutrition_12_60_months_M: number|undefined
+
+  nbr_total: number|undefined
 }
 
 export interface ChwsRecoReport {
@@ -328,7 +330,7 @@ export interface ChwsRecoReport {
   commune: { id: string, name: string }
   hospital: { id: string, name: string }
   district_quartier: { id: string, name: string }
-  chw: { id: string, name: string, phone: string }
+  // chw: { id: string, name: string, phone: string }
   village_secteur: { id: string, name: string }
   reco: { id: string, name: string, phone: string } | null
   is_validate?: boolean

@@ -135,7 +135,13 @@ export class SyncCalculateAllDataComponent implements OnInit {
       district_quartier: new FormControl(true, [Validators.required]),
       village_secteur: new FormControl(true, [Validators.required]),
       family: new FormControl(true, [Validators.required]),
-      mentor: new FormControl(true, [Validators.required]),
+
+      country_manager: new FormControl(true, [Validators.required]),
+      region_manager: new FormControl(true, [Validators.required]),
+      prefecture_manager: new FormControl(true, [Validators.required]),
+      commune_manager: new FormControl(true, [Validators.required]),
+      hospital_manager: new FormControl(true, [Validators.required]),
+
       chw: new FormControl(true, [Validators.required]),
       reco: new FormControl(true, [Validators.required]),
       patient: new FormControl(true, [Validators.required]),

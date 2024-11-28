@@ -71,8 +71,8 @@ export class RecoPerformanceDashboard {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone: string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone: string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -119,8 +119,8 @@ export class RecoChartPerformanceDashboard {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone: string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone: string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
@@ -166,8 +166,8 @@ export class RecoVaccinationDashboard {
     @Column({ type: 'jsonb', nullable: false })
     district_quartier!: { id: string, name: string }
 
-    @Column({ type: 'jsonb', nullable: false })
-    chw!: { id: string, name: string, phone: string }
+    // @Column({ type: 'jsonb', nullable: false })
+    // chw!: { id: string, name: string, phone: string }
 
     @Column({ type: 'jsonb', nullable: false })
     village_secteur!: { id: string, name: string }
