@@ -791,4 +791,5 @@ export class AuthUserController {
         return res.status(200).json({ status: 200, data: ROUTES_LIST });
     }
 
+    
 }

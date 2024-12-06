@@ -707,6 +707,7 @@ export class ChwsRecoReport {
 export async function getChwsRecoReportRepository(): Promise<Repository<ChwsRecoReport>> {
     return Connection.getRepository(ChwsRecoReport);
 }
+
 @Entity()
 export class RecoMegSituationReport {
 

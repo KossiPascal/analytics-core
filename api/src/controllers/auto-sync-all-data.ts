@@ -168,6 +168,7 @@ export async function AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA(params: { wait?: bool
             if (!error2 && notEmpty(body2)) output.data = JSON.parse(`${body2}`);
             logNginx('\n\nstart data calculation\n');
 
+            
             for (const year of YEARS) {
               for (const month of MONTHS) {
                 //REPORTS
