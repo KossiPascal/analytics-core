@@ -23,6 +23,7 @@ export class UserContextService {
   get currentUserCtx(): User | null {
     if (this.token !== '') {
       const user = jwtDecode(this.token) as User;
+
       const countries = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'countries' });
       const regions = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'regions' });
       const prefectures = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'prefectures' });
@@ -107,6 +108,16 @@ export class UserContextService {
   isOnlineOnly(userCtx: User | AdminUser | null = null) {
     userCtx = userCtx || this.currentUserCtx;
     return userCtx?.isAdmin === true || this.hasRole('can_use_offline_mode', userCtx);
+  }
+
+  canValidateReportData(userCtx: User | AdminUser | null = null) {
+    userCtx = userCtx || this.currentUserCtx;
+    return userCtx?.isAdmin === true || this.hasRole('can_validate_data', userCtx);
+  }
+
+  canSendValidatedReportToDhis2(userCtx: User | AdminUser | null = null) {
+    userCtx = userCtx || this.currentUserCtx;
+    return userCtx?.isAdmin === true || this.hasRole('can_send_data_to_dhis2', userCtx);
   }
 
 }

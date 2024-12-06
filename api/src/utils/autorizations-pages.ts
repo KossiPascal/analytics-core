@@ -17,6 +17,7 @@ export const AUTORISATIONS_LIST:string[] = [
 
     'can_delete_user',
     'can_delete_role',
+    
     'can_send_data_to_dhis2',
 ];
 

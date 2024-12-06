@@ -966,6 +966,8 @@ export async function CHW_RECO_REPORTS_CALCULATION_DATA({ month, year }: { month
             _chwReco.village_secteur = reco.village_secteur;
             _chwReco.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 
+            // _chwReco.orgunit = ;
+
             await _repoReport.save(_chwReco);
             outPutData.SuccessCount += 1;
         } catch (err) {

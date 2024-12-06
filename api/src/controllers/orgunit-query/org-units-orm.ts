@@ -73,7 +73,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -113,7 +113,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -159,7 +159,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -209,7 +209,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -265,7 +265,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -327,7 +327,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -411,7 +411,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -470,7 +470,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -541,7 +541,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -620,7 +620,7 @@ export class OrgUnitsController {
             if (!data) return res.status(201).json({ status: 201, data: 'No Data Found !' });
             return res.status(200).json({ status: 200, data: data });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 

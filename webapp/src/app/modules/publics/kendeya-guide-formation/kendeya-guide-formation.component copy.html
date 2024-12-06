@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formation des Formateurs - KENDEYA</title>
+  <!-- <link rel="stylesheet" type="text/css" id="theme" href="./style.css" /> -->
+</head>
+
+<body>
+  <header>
+    <h3>Formation des Formateurs sur KENDEYA</h3>
+  </header>
+
+  <!-- <nav>
+        <a href="#introduction">Introduction</a>
+        <a href="#module1">Module 1</a>
+        <a href="#module2">Module 2</a>
+        <a href="#module3">Module 3</a>
+        <a href="#module4">Module 4</a>
+    </nav> -->
+
+  <section id="introduction">
+    <h2>Introduction</h2>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img1_5" src="assets/guide-images/m1.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m22.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa5.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa1.png" alt="">
+      <!-- <img class="img1_5" src="assets/guide-images/m15.png" alt=""> -->
+      <!-- <img class="img2_5" src="assets/guide-images/m19.png" alt=""> -->
+    </div>
+    <p>Bienvenue à cette formation des formateurs sur l'utilisation des outils digitaux en santé communautaire.</p>
+    <p>Cette formation porte principalement sur l'application KENDEYA et son module Kendeya-Analytics.</p>
+    <p><b>Les objectifs de cette formation sont</b> d'équiper les formateurs avec les compétences nécessaires pour
+      enseigner efficacement l'utilisation de KENDEYA et de Kendeya-Analytics aux RECO (Relais Communautaires) et
+      aux ASC (Agents de Santé Communautaire).</p>
+  </section>
+
+  <section id="agenda">
+    <h2>Agenda</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Jour</th>
+          <th>Session</th>
+          <th>Horaire</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Jour 1</td>
+          <td>Présentation de la Hiérarchie dans l'application KENDEYA</td>
+          <td>10:00 - 11:00</td>
+        </tr>
+        <tr>
+          <td>Jour 1</td>
+          <td>Présentation des formulaires paramettrés</td>
+          <td>11:00 - 12:00</td>
+        </tr>
+        <tr>
+          <td>Jour 1</td>
+          <td>Installation de KENDEYA et authentification des utilisateurs</td>
+          <td>13:00 - 16:00</td>
+        </tr>
+        <tr>
+          <td colspan="3">-----------</td>
+        </tr>
+        <tr>
+          <td>Jour 2</td>
+          <td>Présentation et explication de l’Outil Digital KENDEYA</td>
+          <td>09:00 - 12:00</td>
+        </tr>
+
+        <tr>
+          <td>Jour 2</td>
+          <td>Création des utilisateurs (RECO, ASC, ...)</td>
+          <td>13:00 - 14:00</td>
+        </tr>
+        <tr>
+          <td>Jour 2</td>
+          <td>Phase pratique en tant que RECO</td>
+          <td>14:00 - 16:00</td>
+        </tr>
+
+        <tr>
+          <td colspan="3">-----------</td>
+        </tr>
+        <tr>
+          <td>Jour 3</td>
+          <td>Phase pratique en tant qu'ASC</td>
+          <td>09:00 - 10:00</td>
+        </tr>
+        <tr>
+          <td>Jour 3</td>
+          <td>Phase pratique en tant que Centre de Santé</td>
+          <td>10:00 - 12:00</td>
+        </tr>
+        <tr>
+          <td>Jour 3</td>
+          <td>Présentation et explication de l’Outil de visualisation et gestion des données de KENDEYA</td>
+          <td>13:00 - 16:00</td>
+        </tr>
+
+        <tr>
+          <td colspan="3">-----------</td>
+        </tr>
+        <tr>
+          <td>Jour 4</td>
+          <td>Exercices Pratiques d'Analyse et validation de chaque rapport des RECO/ASC</td>
+          <td>09:00 - 12:00</td>
+        </tr>
+        <tr>
+          <td>Jour 4</td>
+          <td>Discussion sur les options d'amélioration et des prochaine étapes</td>
+          <td>13:00 - 15:00</td>
+        </tr>
+        <tr>
+          <td>Jour 4</td>
+          <td>Sondage de Satisfaction et Cloture</td>
+          <td>15:00 - 16:00</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="hierarchie">
+    <h2>Module 1: Présentation de la Hiérarchie dans l'application KENDEYA</h2>
+    <h3>Ce module décrit l'Hiérarchisation complète prise en compte dans l'application et qui sera nécéssaire pour
+      l'envoi des données dans le DHIS2 plus tard</h3>
+
+    <div class="hierarchy">
+      <div class="level country">
+        <p>Pays</p>
+        <!-- <div class="representative">Qui peut voir ce niveau: Niveau national</div> -->
+
+        - Gestionnaire de données <br>
+        - Inspecteur Régional de Santé <br>
+        - SBC Régional ( Service à Base Communautaire) <br>
+        - Partenaire Technique et financier ( PTF) <br>
+
+        <div class="children">
+          <div class="level region">
+            <p>Region 1</p>
+            <!-- <div class="representative">Qui peut voir ce niveau: Niveau Regional</div> -->
+
+            - Gestionnaire de données <br>
+            - Inspecteur Régional de Santé <br>
+            - SBC Régional ( Service à Base Communautaire) <br>
+            - Partenaire Technique et financier ( PTF) <br>
+            <div class="children">
+              <div class="level prefecture">
+                <p>Prefecture / District Sanitaire 1</p>
+                <!-- <div class="representative">Qui peut voir ce niveau: Niveau Prefectoral</div> -->
+                - Gestionnaire de données <br>
+                - Directeur Préfectoral de Santé <br>
+                - SBC du District ( Service à Base Communautaire) <br>
+                - Partenaire Technique et financier ( PTF) <br>
+                - ATD ( Assistant Technique du District) <br>
+                <div class="children">
+                  <div class="level commune">
+                    <p>Commune 1</p>
+                    <!-- <div class="representative">Qui peut voir ce niveau: Niveau Commune</div> -->
+                    - Gestionnaire de données <br>
+                    - Directeur Préfectoral de Santé <br>
+                    - SBC du District ( Service à Base Communautaire) <br>
+                    - Partenaire Technique et financier ( PTF) <br>
+                    - ATD ( Assistant Technique du District) <br>
+
+                    <div class="children">
+                      <div class="level hospital">
+                        <p>Hospital/Centre de Santé</p>
+                        <!-- <div class="representative">Qui peut voir ce niveau: Niveau Hospital</div> -->
+                        - Chef de centre de santé <br>
+                        - Comité de Santé d’hygiène <br>
+                        - Partenaire Technique et financier PTF <br>
+                        <div class="children">
+                          <div class="level district">
+                            <p>(District/Quartier) 1</p>
+                            <!-- <div class="representative">Qui peut voir ce niveau: ASC</div> -->
+                            - ASC (Agent de Santé Communautaire)<br>
+                            <div class="children">
+                              <div class="level zone1">
+                                <p>Zone du RECO 1</p>
+                                <!-- <div class="representative">Qui peut voir ce niveau: RECO</div> -->
+                                - RECO 1 (Relai Communautaire)<br>
+                                <div class="children">
+                                  <div class="level household">
+                                    <p>Ménage 1</p>
+                                    <div class="members">
+                                      <div>- Chef de Ménage</div>
+                                      <div>- Sa maman</div>
+                                      <div>- Son enfant 7 ans</div>
+                                      <div>- Son enfant 2 mois</div>
+                                      <div>- ...</div>
+                                    </div>
+                                  </div>
+                                  <div class="level household">
+                                    <p>Ménage 2</p>
+                                    <div class="members">
+                                      <div>- Chef de Ménage</div>
+                                      <div>- Sa femme</div>
+                                      <div>- Son enfant 3 mois</div>
+                                      <div>- Sonc enfant 5 jours</div>
+                                      <div>- ...</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div class="level zone2">
+                                <p>Zone du RECO 2</p>
+                                <!-- <div class="representative">Qui peut voir ce niveau: Zone Chief 1</div> -->
+                                - RECO 2 (Relai Communautaire)<br>
+                                <div class="children">
+                                  <div class="level household">
+                                    <p>Ménage 1</p>
+                                    <div class="members">
+                                      <div>- Chef de Ménage</div>
+                                      <div>- Sa femme</div>
+                                      <div>- Son enfant 7 ans</div>
+                                      <div>- Son enfant 2 mois</div>
+                                      <div>- ...</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- Repeat for more districts, zones, and households -->
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Repeat for more communes -->
+                </div>
+              </div>
+              <!-- Repeat for more prefectures -->
+            </div>
+          </div>
+          <!-- Repeat for more regions -->
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="module2">
+    <h2>Module 2 : Présentation des formulaires paramettrés</h2>
+    <h3>Ce module montre les formulaires attribués au RECO et à l'ASC conformement aux outils utilisés sur le
+      terrain</h3>
+    <h4>Liste des formulaires accessible aux RECO uniquement :</h4>
+    <div style="display: flex;" class="row">
+      <ul>
+        <li>Enrégistrement de ménages</li>
+        <li>Enrégistrement de personne</li>
+
+        <li>Rapport de décès</li>
+        <li>Annuler le rapport de décès</li>
+
+        <li>CE: Causerie éducative</li>
+        <li>CIP:Communication Inter-Personnelle</li>
+        <li>VAD: Visite à domicile</li>
+        <li>Cahier de confirmation de supervision</li>
+
+        <li>Gestion de médicaments</li>
+
+        <li>Consultation Adulte</li>
+        <li>Régistre PCIMNE</li>
+        <li>Registre nouveau né</li>
+        <li>Régistre Évènement</li>
+      </ul>
+
+      <ul>
+        <li>Enrégistrement Femme enceinte</li>
+        <li>Accouchement</li>
+
+        <li>Planification Familiale</li>
+        <li>Suivi signe de danger PF</li>
+        <li>Renouvellement PF</li>
+        <li>PF Masculin</li>
+
+        <li>Suivi PCIMNE</li>
+        <li>Suivi Prénatal</li>
+        <li>Suivi Réference Adulte</li>
+        <li>Suivi Vaccinale</li>
+        <li>Suivi extrait de naissance</li>
+        <li>Suivi nouveau né</li>
+        <li>Suivi référence</li>
+      </ul>
+    </div>
+
+    <h4>Liste des formulaires accessible aux ASC uniquement :</h4>
+    <ul>
+      <li>Grille de Supervision du RECO</li>
+      <li>Cahier de suivi/supervision</li>
+    </ul>
+  </section>
+
+  <section id="module3">
+    <h2>Module 3 : Installation de KENDEYA et authentification des utilisateurs</h2>
+    <h3>Ce module montre les étapes à suivre pour installer l'application et authentifier les utilisateurs.</h3>
+    <p>Pour le RECO, il est important de former sur :</p>
+    <ul>
+      <li>Comment allumer et éteindre les téléphones android</li>
+      <li>Comment allumer et éteindre la connexion 3G/4G</li>
+      <li>Comment charger les téléphones</li>
+      <li>Comment allumer la géolocalisation du téléphone</li>
+      <li>Télécharger l'application sur Playstore en Saisisant <b>KENDEYA</b> ou sur la source désigné</li>
+      <li>Où trouver l'application dans le téléphone</li>
+      <li>Comment se reconnecter si l'application se déconnecte <i>(insister sur la memorisation du nom
+          utilisateur et du mot de pass)</i></li>
+      <li>Comment synchroniser les données vers le serveur <i>(insister sur la vérification de disponibilité et
+          d'activation de la connexion internet et l'actualisation de l'application en cas d'erreur)</i></li>
+    </ul>
+  </section>
+
+  <section id="module4">
+    <h2>Module 4 : Présentation et explication de l’Outil Digital KENDEYA</h2>
+    <h3>Ce module décrit l'application dans sa forme conceptuelle global, ses fonctionnalités principales et son
+      interface utilisateur tout en mentionnant le comportement de l'application selon les paramettre du système
+    </h3>
+    <h4>Voici la liste de ce qu'on aura à faire ici :</h4>
+    <ul>
+      <li>Tous les formulaires démmarrent en appuyant sur le bouton <img class="img1" src="assets/guide-images/plus.png"
+          alt=""></li>
+      <li>Pour éviter la confusion lors de l'utilisation de l'application par les acteurs, il faut attirer
+        l'attention sur la diversité de l'affichage des éléments dans l'application en fonction de l'utilisateur
+        connecté</li>
+      <li>Faire un focus au RECO sur le fonctionnement de l'affichage des formulaires en fonction de l'endroit ou
+        la personne choisie. (Par exemple, on ne peut faire une consultation que si on selectionne une personne)
+      </li>
+      <li>Lors du remplissage des formulaires, être attentif aux messages d'erreurs signalé par l'application, les
+        corriger avant de pourvoir soumettre</li>
+      <li>Insister sur la validation/appui du boutton <b>Soumettre</b> afin de valider leformulaire rempli</li>
+    </ul>
+
+    <h4>Les taches de suivi :</h4>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img8" src="assets/guide-images/i2.png" alt="">
+      <img class="img2" src="assets/guide-images/t1.png" alt="">
+    </div>
+    <br><br>
+    <h4>Historiques de toutes les activitées :</h4>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img8" src="assets/guide-images/i3.png" alt="">
+      <img class="img2" src="assets/guide-images/m3.png" alt="">
+    </div>
+    <br><br>
+    <h4>Contact où enrégistrer les ménages, les personnes et faire les consultations:</h4>
+    <h4>Cas du RECO</h4>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img2" src="assets/guide-images/aa5.png" alt="">
+      <img class="img8" src="assets/guide-images/i4.png" alt="">
+    </div>
+    <br><br>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img1_5" src="assets/guide-images/m4.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m8.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m9.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m10.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m11.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m12.png" alt="">
+    </div>
+    <br><br>
+    <h4>Cas de l'ASC</h4>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img1_5" src="assets/guide-images/aa2.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa3.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa4.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa6.png" alt="">
+    </div>
+    <br><br>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img1_5" src="assets/guide-images/aa7.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa8.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa9.png" alt="">
+      <img class="img1_5" src="assets/guide-images/aa10.png" alt="">
+    </div>
+    <br><br>
+    <h4>Vérifier et Voir les données aggrégées dans Analyse :</h4>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img8" src="assets/guide-images/i5.png" alt="">
+      <img class="img2" src="assets/guide-images/m5.png" alt="">
+    </div>
+    <br><br>
+    <h4>Synchronisation de données et autres éléments utiles (Signaler une erreur, A propos, A propos, modifier ses
+      informations personnelles):</h4>
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img2_5" src="assets/guide-images/m13.png" alt="">
+      <img class="img2_5" src="assets/guide-images/m6.png" alt="">
+      <img class="img2_5" src="assets/guide-images/m7.png" alt="">
+    </div>
+    <br><br>
+  </section>
+
+  <section id="module5">
+    <h2>Module 5 : Création des utilisateurs (RECO, ASC, ...)</h2>
+    <h3>Ce module montre les étapes à suivre pour créer un utilisateur dans l'application.</h3>
+
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img7" src="assets/guide-images/a1.png" alt="">
+      <img class="img3" src="assets/guide-images/a2.png" alt="">
+    </div>
+
+    <h4>Quelques recommandations :</h4>
+    <p>Le role de créer un utilisateur doit être restreint afin que n'importe qui ne vienne mélanger ce qui est deja
+      fait.</p>
+    <p>Il est à noter qu'une mauvaise manipulation de cette partie entrainera un disfonctionnement dans le système
+    </p>
+
+    <h4>Etape à suivre pour la création d'utilisateur :</h4>
+    <p>Il faut noter qu'un utilisateur est forcement associé à un contact, </p>
+    <p>ce contact peut être associé à un ou plusieurs place / lieu. </p>
+
+    <ul>
+      <li>Ouvril l'application en tant que parent de la personne à créer et s'assurer d'avoir le droit de créer un
+        utilisateur</li>
+      <li>Créer l'endroit/lieu où la personne va exercer et créer le contact associé</li>
+      <li>Ensuite, se rendre sur la partie Administrateur afin de créer l'utilisateur et l'associer à la
+        place/lieu et au contact créé</li>
+      <li>Une fois la soumission réussi, l'utilisateur pourra se connecter avec son nom utilisateur et mot de
+        passe</li>
+      <li>Si après authentification, l'utilisateur n'est pas à l'endroit souhaité, alors vous n'avez pas bien
+        suivi l'étape, retourner et modifier l'erreur</li>
+    </ul>
+  </section>
+
+  <section id="module6">
+    <h2>Module 6 : Phase pratique en tant que RECO</h2>
+    <p>Dans module nous allons faire les activités comme un RECO afin d'aprécier le rendu du calcul des indicateurs
+    </p>
+    <p><b>NB: Chacun doit pourvoir noter ce qu'il fera afin de confirmer les chiffres dans la partie
+        Analytics/tableau de bord</b></p>
+    <ul>
+      <li>Enrégistrer chacun 3 Ménages avec les Chefs de ménage respectifs</li>
+      <li>Ajouter au moins 4 personnes dans ces ménages (femme en age de procréer, un enfant entre 2 et 60 mois,
+        et un nouveau né) tout en variant les options des questions</li>
+      <li>Faire les activités qui concernent la communauté de facon général du RECO</li>
+      <li>Faire les activités qui concernent les ménages de facon général</li>
+      <li>Faire les activités de consultation sur chaque cible</li>
+      <li>Faire les activités de suivi des taches</li>
+      <li>Vérifier au fure et à mesure le dynamisme des chiffres dans l'onget <b>Analyse</b></li>
+    </ul>
+  </section>
+
+  <section id="module7">
+    <h2>Module 7 : Phase pratique en tant qu'ASC</h2>
+    <p>Dans ce module nous allons faire les activités comme un ASC entrain de superviser ses RECO</p>
+    <ul>
+      <li>Faire la supervision des RECO</li>
+      <li>Faire au moins 2 suivi en remplissant le cahier de supervision</li>
+      <li>Vérifier les données de chaque RECO dans l'onget <b>Analyse</b></li>
+    </ul>
+  </section>
+
+  <section id="module8">
+    <h2>Module 8 : Phase pratique en tant que Centre de Santé</h2>
+    <p>Dans ce module nous allons apprécier l'affichage des RECO et ASC selon le CS</p>
+    <ul>
+      <li>Visualiser les données</li>
+    </ul>
+  </section>
+
+  <section id="module9">
+    <h2>Module 9 : Présentation et explication de l’Outil de visualisation et gestion des données de KENDEYA</h2>
+    <h3>Ce module aborde la présentation des différents rapports mensuels conformement aux données renseignés par
+      les RECO et ASC.</h3>
+
+    <div style="display: flex;justify-content: space-between;">
+      <img class="img1_5" src="assets/guide-images/m24.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m15.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m17.png" alt="">
+      <img class="img1_5" src="assets/guide-images/m19.png" alt="">
+    </div>
+    <br><br>
+    <ul>
+      <li>Présentation des étapes de la création d'utilisateurs et l'attribution de role</li>
+      <li>Présentation des divers rapports et le mode de calcul des indicateurs</li>
+      <li>Présentation du module de validation des données des RECO</li>
+      <li>Simulation d'envoi de données vers le DHIS2</li>
+    </ul>
+  </section>
+
+  <section id="module10">
+    <h2>Module 10 : Exercices Pratiques d'Analyse et validation de chaque rapport des RECO/ASC</h2>
+    <h3>Ce module aborde des cas pratiques pour mieux comprendre les indicateurs.</h3>
+
+    <!-- <div style="display: flex;justify-content: space-between;">
+            <img class="img1_5" src="assets/guide-images/m24.png" alt="">
+            <img class="img1_5" src="assets/guide-images/m15.png" alt="">
+            <img class="img1_5" src="assets/guide-images/m17.png" alt="">
+            <img class="img1_5" src="assets/guide-images/m19.png" alt="">
+        </div> -->
+
+    <ul>
+      <li>Exercices Pratiques de visualisation de chaque rapports / Tableau de bord selon le role de l'utilisateur</li>
+      <li>Exercices Pratiques d'Analyse et validation de chaque rapport des RECO/ASC</li>
+      <li>Simulation d'envoi de données vers le DHIS2</li>
+    </ul>
+  </section>
+
+  <section id="survey" class="survey">
+    <h2>Sondage de Formation des Formateurs sur KENDEYA</h2>
+    <h3>Merci de prendre quelques minutes pour répondre à ce sondage. Vos réponses nous aideront à améliorer la
+      formation.</h3>
+      <br>
+
+    <form id="survey-form" action="#" method="POST">
+      <!-- <div>
+        <label class="label">Ecrire votre nom</label>
+      </div> -->
+
+      <div>
+        <label class="label">1. Le contenu de la formation était-il clair et pertinent ?</label>
+        <!-- <textarea name="clarity" placeholder="Votre réponse..."></textarea> -->
+        <div class="question">
+          <label>
+            <input type="radio" name="question1" value="a"> Très clair et pertinent
+          </label>
+          <label>
+            <input type="radio" name="question1" value="b"> Clair et pertinent
+          </label>
+          <label>
+            <input type="radio" name="question1" value="c"> Moyennement clair et pertinent
+          </label>
+          <label>
+            <input type="radio" name="question1" value="d"> Peu clair et pertinent
+          </label>
+          <label>
+            <input type="radio" name="question1" value="e"> Pas clair et pas pertinent
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">2. Les modules étaient-ils bien structurés et adaptés à vos besoins ?</label>
+        <div class="question">
+          <label>
+            <input type="radio" name="question2" value="a"> Très bien structurés et parfaitement adaptés
+          </label>
+          <label>
+            <input type="radio" name="question2" value="b"> Bien structurés et adaptés
+          </label>
+          <label>
+            <input type="radio" name="question2" value="c"> Moyennement structurés et adaptés
+          </label>
+          <label>
+            <input type="radio" name="question2" value="d"> Mal structurés et peu adaptés
+          </label>
+          <label>
+            <input type="radio" name="question2" value="e"> Très mal structurés et pas du tout adaptés
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">3. Avez-vous rencontré des difficultés lors des exercices pratiques ?</label>
+        <div class="question">
+          <label>
+            <input type="radio" name="question3" value="a"> Aucune difficulté
+          </label>
+          <label>
+            <input type="radio" name="question3" value="b"> Quelques difficultés mineures
+          </label>
+          <label>
+            <input type="radio" name="question3" value="c"> Des difficultés modérées
+          </label>
+          <label>
+            <input type="radio" name="question3" value="d"> Des difficultés importantes
+          </label>
+          <label>
+            <input type="radio" name="question3" value="e"> Impossible de réaliser les exercices
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">4. Comment évaluez-vous la qualité des supports de formation (images, guides) ?</label>
+        <div class="question">
+          <label>
+            <input type="radio" name="question4" value="a"> Excellent
+          </label>
+          <label>
+            <input type="radio" name="question4" value="b"> Bon
+          </label>
+          <label>
+            <input type="radio" name="question4" value="c"> Satisfaisant
+          </label>
+          <label>
+            <input type="radio" name="question4" value="d"> Médiocre
+          </label>
+          <label>
+            <input type="radio" name="question4" value="e"> Très mauvais
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">5. Comment évalueriez-vous l'organisation générale de la formation ?</label>
+        <div class="question">
+          <label>
+            <input type="radio" name="question5" value="a"> Excellente
+          </label>
+          <label>
+            <input type="radio" name="question5" value="b"> Très bonne
+          </label>
+          <label>
+            <input type="radio" name="question5" value="c"> Bonne
+          </label>
+          <label>
+            <input type="radio" name="question5" value="d"> Passable
+          </label>
+          <label>
+            <input type="radio" name="question5" value="e"> Mauvaise
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="label">6. Comment évaluez-vous les compétences des formateurs ?</label>
+        <div class="question">
+          <label>
+            <input type="radio" name="question6" value="a" required> Très compétents
+          </label>
+          <label>
+            <input type="radio" name="question6" value="b"> Compétents
+          </label>
+          <label>
+            <input type="radio" name="question6" value="c"> Moyennement compétents
+          </label>
+          <label>
+            <input type="radio" name="question6" value="d"> Peu compétents
+          </label>
+          <label>
+            <input type="radio" name="question6" value="e"> Incompétents
+          </label>
+        </div>
+      </div>
+      <div>
+        <label>7. Aimeriez-vous donner des recommandations d'amélioration pour les prochaines fois ?</label>
+        <textarea name="recommendation" placeholder="Vos recommandations..."></textarea>
+        <!-- <div class="question">
+                  <label>
+                    <input type="radio" name="question7" value="a"> Oui, sans hésitation
+                  </label>
+                  <label>
+                    <input type="radio" name="question7" value="b"> Oui, avec quelques réserves
+                  </label>
+                  <label>
+                    <input type="radio" name="question7" value="c"> Peut-être
+                  </label>
+                  <label>
+                    <input type="radio" name="question7" value="d"> Non, pas vraiment
+                  </label>
+                  <label>
+                    <input type="radio" name="question7" value="e"> Non, pas du tout
+                  </label>
+                </div> -->
+      </div>
+      <br>
+      <button type="submit">Envoyer Sondage</button>
+    </form>
+  </section>
+
+  <footer>
+    <p>&copy; 2024 Formation KENDEYA | Tous droits réservés.</p>
+  </footer>
+</body>
+
+</html>

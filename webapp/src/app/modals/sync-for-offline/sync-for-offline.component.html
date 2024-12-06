@@ -1,6 +1,14 @@
-<kossi-modal-layout [id]="'sync-for-offline-confirm-modal'" [modalActionColor]="'light-back'" [showCloseButton]="false"
-  [modalTitle]="'sync.for.offline'" [cancelBtnName]="'Annuler'" [submitBtnName]="'Synchroniser'"
-  [showBottomElements]="false" [showCancelButton]="true" [reloadApp]="false" [hideOnConfirm]="true"
+<kossi-modal-layout
+  [id]="'sync-for-offline-confirm-modal'"
+  [modalActionColor]="'light-back'"
+  [showCloseButton]="false"
+  [modalTitle]="'Synchroniser en local'"
+  [cancelBtnName]="'Annuler'"
+  [submitBtnName]="'Synchroniser'"
+  [showBottomElements]="false"
+  [showCancelButton]="true"
+  [reloadApp]="false"
+  [hideOnConfirm]="true"
   (onCancel)="close()">
   <div class="rounded p-4">
     <div *ngIf="errorMessage" style="color: red; text-align: center; margin: -10px 0px 10px 0px;"><b>{{ errorMessage }}</b></div>

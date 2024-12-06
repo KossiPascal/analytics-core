@@ -7,7 +7,7 @@ import { PcimeComponent } from './pcime/pcime.component';
 import { PromotionComponent } from './promotion/promotion.component';
 import { HouseholdRecapComponent } from './household-recap/household-recap.component';
 import { LoginAccessGuard } from '@kossi-src/app/guards/login-access-guard';
-import { RecoMegSituationComponent } from './reco-meg-situation/reco-meg-situationcomponent';
+import { RecoMegSituationComponent } from './reco-meg-situation/reco-meg-situation.component';
 
 
 const routes: Routes = [

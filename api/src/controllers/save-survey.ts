@@ -27,7 +27,7 @@ export class SurveyController {
                     .getRawMany();
                 return res.status(200).json({ status: 200, data: averages });
             }
-            return res.status(201).json({ status: 201, data: 'no user ID provided' });
+            return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
         } catch (err) {
             return res.status(500).json({ status: 500, data: `${err}` });
         }
@@ -46,7 +46,7 @@ export class SurveyController {
                     .getRawMany();
                 return res.status(200).json({ status: 200, data: averages });
             }
-            return res.status(201).json({ status: 201, data: 'no user ID provided' });
+            return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
         } catch (err) {
             return res.status(500).json({ status: 500, data: `${err}` });
         }

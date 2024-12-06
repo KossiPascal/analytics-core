@@ -79,9 +79,9 @@
             class=" btn-{{ isEditMode?'warning':'success' }}">{{ isEditMode ? 'Modifier un utilisateur'
             :'Ajouter un utilisateur' }}</span></strong>
 
-        <button (click)="closeAddOrUpdateModalVisible()" type="button" class="close" data-dismiss="modal"
-          aria-label="Close">
-          <span aria-hidden="true">&times;</span>
+        <button (click)="closeAddOrUpdateModalVisible()" type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span>&times;</span>
+          <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null">&times;</span> -->
         </button>
       </div>
 
@@ -218,7 +218,9 @@
                     <div class="org-units-checkbox-parent" *ngFor="let country of countriesList; let index = index;">
                       <aside class="input-checkbox-group">
                         <button (click)="toggleList('country-'+country.id)" type="button" class="list-unlist">
-                          <span aria-hidden="true">{{ isListOpenToShow('country-'+country.id) ? '-' : '+' }}</span>
+
+                          <span>{{ isListOpenToShow('country-'+country.id) ? '-' : '+' }}</span>
+                          <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null"></span> -->
                         </button>
                         <input (change)="selectCountries(country)" class="form-check-input org-units-check-input"
                           type="checkbox" [checked]="containsOrgUnits('countries', country.id)"
@@ -231,7 +233,8 @@
                         *ngFor="let region of generateRegions(country.id); let index = index;">
                         <aside class="input-checkbox-group">
                           <button (click)="toggleList('region-'+region.id)" type="button" class="list-unlist">
-                            <span aria-hidden="true">{{ isListOpenToShow('region-'+region.id) ? '-' : '+' }}</span>
+                            <span>{{ isListOpenToShow('region-'+region.id) ? '-' : '+' }}</span>
+                            <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null"></span> -->
                           </button>
                           <input (change)="selectRegions(region)" class="form-check-input org-units-check-input"
                             type="checkbox" [checked]="containsOrgUnits('regions', region.id)"
@@ -245,8 +248,8 @@
                           *ngFor="let prefecture of generatePrefectures(region.id); let index = index;">
                           <aside class="input-checkbox-group">
                             <button (click)="toggleList('prefecture-'+prefecture.id)" type="button" class="list-unlist">
-                              <span aria-hidden="true">{{ isListOpenToShow('prefecture-'+prefecture.id) ? '-' : '+'
-                                }}</span>
+                              <span>{{ isListOpenToShow('prefecture-'+prefecture.id) ? '-' : '+' }}</span>
+                              <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null"></span> -->
                             </button>
                             <input (change)="selectPrefectures(prefecture)"
                               class="form-check-input org-units-check-input" type="checkbox"
@@ -260,8 +263,8 @@
                             *ngFor="let commune of generateCommunes(prefecture.id); let index = index;">
                             <aside class="input-checkbox-group">
                               <button (click)="toggleList('commune-'+commune.id)" type="button" class="list-unlist">
-                                <span aria-hidden="true">{{ isListOpenToShow('commune-'+commune.id) ? '-' : '+'
-                                  }}</span>
+                                <span>{{ isListOpenToShow('commune-'+commune.id) ? '-' : '+' }}</span>
+                                <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null"></span> -->
                               </button>
                               <input (change)="selectCommunes(commune)" class="form-check-input org-units-check-input"
                                 type="checkbox" [checked]="containsOrgUnits('communes', commune.id)"
@@ -274,8 +277,8 @@
                               *ngFor="let hospital of generateHospitals(commune.id); let index = index;">
                               <aside class="input-checkbox-group">
                                 <button (click)="toggleList('hospital-'+hospital.id)" type="button" class="list-unlist">
-                                  <span aria-hidden="true">{{ isListOpenToShow('hospital-'+hospital.id) ? '-' : '+'
-                                    }}</span>
+                                  <span>{{ isListOpenToShow('hospital-'+hospital.id) ? '-' : '+' }}</span>
+                                  <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null"></span> -->
                                 </button>
                                 <input (change)="selectHospitals(hospital)"
                                   class="form-check-input org-units-check-input" type="checkbox"
@@ -289,8 +292,8 @@
                                 <aside class="input-checkbox-group">
                                   <button (click)="toggleList('district-'+district.id)" type="button"
                                     class="list-unlist">
-                                    <span aria-hidden="true">{{ isListOpenToShow('district-'+district.id) ? '-' : '+'
-                                      }}</span>
+                                    <span>{{ isListOpenToShow('district-'+district.id) ? '-' : '+' }}</span>
+                                    <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null"></span> -->
                                   </button>
                                   <input (change)="selectDistrictQuartiers(district)"
                                     class="form-check-input org-units-check-input" type="checkbox"
@@ -349,7 +352,8 @@
         <img height="30" class="modal-title" src="{{ APP_LOGO}}" alt="" srcset="">
 
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
+          <span>&times;</span>
+          <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null">&times;</span> -->
         </button>
       </div>
 
@@ -381,7 +385,8 @@
 
         <h4 class="modal-title">Suppression d'utilisateur</h4>
         <button id="close-delete-modal" type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
+          <span>&times;</span>
+          <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null">&times;</span> -->
         </button>
       </div>
       <div class="modal-body">

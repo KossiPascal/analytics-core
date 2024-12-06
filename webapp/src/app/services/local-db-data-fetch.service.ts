@@ -27,7 +27,7 @@ export class LocalDbDataFetchService {
 
   async GetPromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<PromotionReport> | undefined> {
     var promotionReport: PromotionReport[] = [];
-
+    
     if (this.USER?.can_use_offline_mode === true) {
       promotionReport = await this.indexdb.getAllData<PromotionReport>('promotion_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);

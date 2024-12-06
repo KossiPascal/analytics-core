@@ -5,6 +5,7 @@ import { User } from '@kossi-models/user';
 import { AuthService } from '@kossi-services/auth.service';
 import { ConnectivityService } from '@kossi-services/connectivity.service';
 import { FixeModalService } from '@kossi-services/fix-modal.service';
+import { PublicPagesService } from '@kossi-services/public-pages.service';
 import { SnackbarService } from '@kossi-services/snackbar.service';
 import { UserContextService } from '@kossi-services/user-context.service';
 import { ModalService } from '@kossi-src/app/services/modal.service';
@@ -21,7 +22,7 @@ export class TopNavigationComponent {
   USER: User | null;
   isOnline:boolean;
 
-  constructor(private conn: ConnectivityService, private mService: ModalService, private snackbar: SnackbarService, private auth: AuthService, private userCtx: UserContextService, private fix: FixeModalService) {
+  constructor(private conn: ConnectivityService, private pb:PublicPagesService, private mService: ModalService, private snackbar: SnackbarService, private auth: AuthService, private userCtx: UserContextService, private fix: FixeModalService) {
     this.APP_NAME = this.auth.APP_NAME;
     this.USER = this.userCtx.currentUserCtx;
     this.isOnline = window.navigator.onLine;
@@ -61,9 +62,7 @@ export class TopNavigationComponent {
       },
       errorMsg: 'string'
     });
-
   }
-
 
   noAvailableImplementation(event: Event) {
     event.preventDefault();
@@ -75,6 +74,18 @@ export class TopNavigationComponent {
   logout(event: Event) {
     event.preventDefault();
     this.mService.open({ component: LogoutConfirmComponent });
+  }
+
+  downloadAPK(prodApp: boolean){
+    this.pb.downloadAPK(prodApp);
+  }
+
+  openGuidePage(){
+    this.pb.openGuidePage();
+  }
+
+  openRecoGuidePage(){
+    this.pb.openRecoGuidePage();
   }
 }
 

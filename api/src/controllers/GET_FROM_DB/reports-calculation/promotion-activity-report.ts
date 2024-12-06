@@ -102,6 +102,8 @@ export async function PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION_DATA({ month, ye
             _promoReport.village_secteur = reco.village_secteur;
             _promoReport.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 
+            // _promoReport.orgunit = ;
+
             await _repoReport.save(_promoReport);
             outPutData.SuccessCount += 1;
 

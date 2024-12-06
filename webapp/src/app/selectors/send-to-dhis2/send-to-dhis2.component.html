@@ -1,0 +1,35 @@
+<!-- <kossi-modal-layout
+  [id]="'logout-confirm-modal'"
+  [modalActionColor]="'light-back'"
+  [showCloseButton]="true"
+  [modalTitle]="'Envoi au DHIS2'"
+  [cancelBtnName]="'Annuler'"
+  [submitBtnName]="'Procéder à l\'envoi'"
+  [showBottomElements]="true"
+  [showCancelButton]="true"
+  [reloadApp]="false"
+  [hideOnConfirm]="true"
+  (onCancel)="close()"
+  (onSubmit)="sendToDhis2($event)"
+>
+
+<div>
+  <label for="dhis2_orgunit"> Username</label><br>
+  <select formControlName="dhis2_orgunit" id="dhis2_orgunit">
+    <option value="{{ ORG_UNIT.dhis2_uid }}">{{ ORG_UNIT.name }}</option>
+  </select>
+</div>
+
+<div>
+<label for="dhis2_username"> Username</label><br>
+  <input type="text" formControlName="dhis2_username" id="dhis2_username" >
+</div>
+
+<div>
+  <label for="dhis2_password"> Username</label><br>
+  <input type="text" formControlName="dhis2_password" id="dhis2_password" >
+</div>
+
+
+</kossi-modal-layout>
+ -->

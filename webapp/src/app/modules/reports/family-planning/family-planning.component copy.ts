@@ -428,16 +428,16 @@
 // SHOW_DATA(event: Event) {
 //   event.preventDefault();
 //   if (!(this._formGroup.value.recos.length > 0)) {
-//     this.snackbar.show('You don\'t provide recos, please select reco!', { backgroundColor: 'warning', position: 'TOP' });
+//     this.snackbar.show('Veuillez sélectionner au moins un RECO', { backgroundColor: 'warning', position: 'TOP' });
 //     return;
 //   }
 //   if (!(toArray(this._formGroup.value.months).length > 0)) {
-//     this.snackbar.show('You don\'t provide month, please select month!', { backgroundColor: 'warning', position: 'TOP' });
+//     this.snackbar.show('Veuillez sélectionner au moins un mois', { backgroundColor: 'warning', position: 'TOP' });
 //     return;
 //   }
 
 //   if (!(this._formGroup.value.year > 0)) {
-//     this.snackbar.show('You don\'t provide year, please select year!', { backgroundColor: 'warning', position: 'TOP' });
+//     this.snackbar.show('Veuillez sélectionner au moins une année', { backgroundColor: 'warning', position: 'TOP' });
 //     return;
 //   }
 
@@ -457,7 +457,7 @@
 //       this.IS_VALIDATE = _res$?.is_validate === true,
 //       this.FAMILY_PLANNING$ = _res$?.data;
 //       if (!_res$) {
-//         this.snackbar.show('No data found for this RECO with informations you provide!\nYou can sync data from cloud and retry!', { backgroundColor: 'info', position: 'TOP', duration: 5000 });
+//         this.snackbar.show('Aucune données disponible pour ces paramettres. Veuillez reessayer!', { backgroundColor: 'info', position: 'TOP', duration: 5000 });
 //       }
 //       this.data_syncing = false;
 //   }, (err: any) => {

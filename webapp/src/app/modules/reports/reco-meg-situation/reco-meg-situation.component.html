@@ -15,9 +15,12 @@
                 <repports-header-selector
                   [id]="'fp-repports-header'"
                   [REPPORTS_HEADER]="REPPORTS_HEADER"
+                  [ORG_UNIT]="ORG_UNIT_TO_SEND_DATA"
+                  [ALL_NEEDED_RECOS]="ALL_NEEDED_RECOS"
+                  [SELECTED_RECOS]="SELECTED_RECOS"
                   (onValidateData)="validateData()"
                   (onCancelDataValidated)="cancelValidation()"
-                  (onSendToDhis2)="sendDataToDhis2()">
+                  (onSendDataToDhis2)="sendDataToDhis2($event)">
                 </repports-header-selector>
               </td>
             </tr>

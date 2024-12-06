@@ -19,7 +19,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { StoreModule } from '@ngrx/store';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import {
-  TranslateModule,
+  TranslateModule, 
   TranslateLoader,
   MissingTranslationHandler,
   MissingTranslationHandlerParams,

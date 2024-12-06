@@ -18,6 +18,9 @@ export class PromotionReport {
     @Column({ type: 'bigint', nullable: false })
     year!: number
 
+    @Column({ type: 'varchar', nullable: true })
+    orgunit!: string
+
     @Column({ type: 'bigint', nullable: false })
     malaria_nbr_touched_by_VAD_F!: number
 
@@ -183,11 +186,23 @@ export class PromotionReport {
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
 
+    @Column({ type: 'varchar', nullable: true })
+    validated_at!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validate_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validated_at!:string
+
     @Column({ type: 'boolean', nullable: false, default:false })
     already_on_dhis2!:boolean
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_at!:string
 }
 export async function getPromotionReportRepository(): Promise<Repository<PromotionReport>> {
     return Connection.getRepository(PromotionReport);
@@ -202,6 +217,9 @@ export class FamilyPlanningReport {
 
     @Column({ type: 'bigint', nullable: false })
     year!: number
+
+    @Column({ type: 'varchar', nullable: true })
+    orgunit!: string
 
     @Column({ type: 'jsonb', nullable: false })
     pill_coc!: FP_Utils
@@ -263,11 +281,23 @@ export class FamilyPlanningReport {
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
 
+    @Column({ type: 'varchar', nullable: true })
+    validated_at!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validate_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validated_at!:string
+
     @Column({ type: 'boolean', nullable: false, default:false })
     already_on_dhis2!:boolean
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_at!:string
 }
 export async function getFamilyPlanningReportRepository(): Promise<Repository<FamilyPlanningReport>> {
     return Connection.getRepository(FamilyPlanningReport);
@@ -282,6 +312,9 @@ export class MorbidityReport {
 
     @Column({ type: 'bigint', nullable: false })
     year!: number
+
+    @Column({ type: 'varchar', nullable: true })
+    orgunit!: string
 
     @Column({ type: 'jsonb', nullable: false })
     hp_circulation_accident!: MorbidityUtils
@@ -380,11 +413,23 @@ export class MorbidityReport {
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
 
+    @Column({ type: 'varchar', nullable: true })
+    validated_at!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validate_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validated_at!:string
+
     @Column({ type: 'boolean', nullable: false, default:false })
     already_on_dhis2!:boolean
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_at!:string
 }
 export async function getMorbidityReportRepository(): Promise<Repository<MorbidityReport>> {
     return Connection.getRepository(MorbidityReport);
@@ -403,6 +448,9 @@ export class HouseholdRecapReport {
 
     @Column({ type: 'bigint', nullable: false })
     index!: number
+
+    @Column({ type: 'varchar', nullable: true })
+    orgunit!: string
 
     @Column({ type: 'varchar', length: 255, nullable: false })
     household_code!: string
@@ -464,11 +512,23 @@ export class HouseholdRecapReport {
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
 
+    @Column({ type: 'varchar', nullable: true })
+    validated_at!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validate_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validated_at!:string
+
     @Column({ type: 'boolean', nullable: false, default:false })
     already_on_dhis2!:boolean
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_at!:string
 }
 export async function getHouseholdRecapReportRepository(): Promise<Repository<HouseholdRecapReport>> {
     return Connection.getRepository(HouseholdRecapReport);
@@ -484,6 +544,9 @@ export class PcimneNewbornReport {
 
     @Column({ type: 'bigint', nullable: false })
     year!: number
+
+    @Column({ type: 'varchar', nullable: true })
+    orgunit!: string
 
     @Column({ type: 'jsonb', nullable: false })
     pcimne_newborn!: PcimneNewbornReportUtils[]
@@ -521,11 +584,23 @@ export class PcimneNewbornReport {
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
 
+    @Column({ type: 'varchar', nullable: true })
+    validated_at!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validate_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validated_at!:string
+
     @Column({ type: 'boolean', nullable: false, default:false })
     already_on_dhis2!:boolean
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_at!:string
 }
 export async function getPcimneNewbornReportRepository(): Promise<Repository<PcimneNewbornReport>> {
     return Connection.getRepository(PcimneNewbornReport);
@@ -541,6 +616,9 @@ export class ChwsRecoReport {
 
     @Column({ type: 'bigint', nullable: false })
     year!: number
+
+    @Column({ type: 'varchar', nullable: true })
+    orgunit!: string
 
     @Column({ type: 'jsonb', nullable: false })
     reco_monitoring!: ChwsRecoReportElements
@@ -608,11 +686,23 @@ export class ChwsRecoReport {
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
 
+    @Column({ type: 'varchar', nullable: true })
+    validated_at!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validate_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validated_at!:string
+
     @Column({ type: 'boolean', nullable: false, default:false })
     already_on_dhis2!:boolean
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_at!:string
 }
 export async function getChwsRecoReportRepository(): Promise<Repository<ChwsRecoReport>> {
     return Connection.getRepository(ChwsRecoReport);
@@ -628,6 +718,9 @@ export class RecoMegSituationReport {
 
     @Column({ type: 'varchar', nullable: false })
     month!: string
+
+    @Column({ type: 'varchar', nullable: true })
+    orgunit!: string
 
     @Column({ type: 'jsonb', nullable: false })
     meg_data!: RecoMegQuantityUtils[]
@@ -665,11 +758,23 @@ export class RecoMegSituationReport {
     @Column({ type: 'varchar', nullable: true })
     validate_user_id!:string
 
+    @Column({ type: 'varchar', nullable: true })
+    validated_at!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validate_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    cancel_validated_at!:string
+
     @Column({ type: 'boolean', nullable: false, default:false })
     already_on_dhis2!:boolean
 
     @Column({ type: 'varchar', nullable: true })
     already_on_dhis2_user_id!:string
+
+    @Column({ type: 'varchar', nullable: true })
+    already_on_dhis2_at!:string
 
 }
 export async function getRecoMegSituationReportRepository(): Promise<Repository<RecoMegSituationReport>> {

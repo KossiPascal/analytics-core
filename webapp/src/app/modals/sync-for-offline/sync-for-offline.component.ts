@@ -386,15 +386,15 @@ export class SyncForOfflineConfirmComponent implements OnInit, AfterViewInit{
     event.preventDefault();
     this.errorMessage = null;
     if (!(this._formGroup.value.recos.length > 0)) {
-      this.errorMessage = 'You don\'t provide recos, please select reco!';
+      this.errorMessage = 'Veuillez sélectionner au moins un RECO';
       return;
     }
     if (!(toArray(this._formGroup.value.months).length > 0)) {
-      this.errorMessage = 'You don\'t provide month, please select month!';
+      this.errorMessage = 'Veuillez sélectionner au moins un mois';
       return;
     }
     if (!(this._formGroup.value.year > 0)) {
-      this.errorMessage = 'You don\'t provide year, please select year!';
+      this.errorMessage = 'Veuillez sélectionner au moins une année';
       return;
     }
 

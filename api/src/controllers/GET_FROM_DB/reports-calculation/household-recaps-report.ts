@@ -8,7 +8,6 @@ import { getAgeIn } from "../../../utils/date-utils";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
 import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 
-
 let Connection: DataSource = AppDataSource.manager.connection;
 
 export async function HOUSEHOLD_RECAPS_REPORTS_CALCULATION(req: Request, res: Response, next: NextFunction): Promise<any> {
@@ -84,6 +83,8 @@ export async function HOUSEHOLD_RECAPS_REPORTS_CALCULATION_DATA({ month, year }:
                 // _household.chw = reco.chw;
                 _household.village_secteur = reco.village_secteur;
                 _household.reco = { id: reco.id, name: reco.name, phone: reco.phone };
+
+                // _household.orgunit = ;
     
                 await _repoReport.save(_household);
             }

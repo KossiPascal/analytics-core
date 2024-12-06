@@ -26,9 +26,9 @@ export async function GET_PROMOTION_REPORTS(req: Request, res: Response, next: N
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -53,9 +53,9 @@ export async function GET_FAMILY_PLANNING_REPORTS(req: Request, res: Response, n
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -79,9 +79,9 @@ export async function GET_MORBIDITY_REPORTS(req: Request, res: Response, next: N
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -105,9 +105,9 @@ export async function GET_HOUSEHOLD_RECAP_REPORTS(req: Request, res: Response, n
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -131,9 +131,9 @@ export async function GET_PCIME_REPORTS(req: Request, res: Response, next: NextF
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -157,9 +157,9 @@ export async function GET_CHWS_RECO_REPORTS(req: Request, res: Response, next: N
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -183,9 +183,9 @@ export async function GET_RECO_MEG_REPORTS(req: Request, res: Response, next: Ne
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 }
 

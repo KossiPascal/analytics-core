@@ -10,7 +10,6 @@ import { date_to_milisecond } from "../../../utils/date-utils";
 import { getFirstAndLastDayOfMonth } from "../../../utils/functions";
 import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 
-
 let Connection: DataSource = AppDataSource.manager.connection;
 
 
@@ -275,6 +274,8 @@ export async function FAMILY_PLANNNING_REPORTS_CALCULATION_DATA({ month, year }:
             // _fp.chw = reco.chw;
             _fp.village_secteur = reco.village_secteur;
             _fp.reco = { id: reco.id, name: reco.name, phone: reco.phone };
+
+            // _fp.orgunit = ;
 
             await _repoReport.save(_fp);
             outPutData.SuccessCount += 1;

@@ -8,7 +8,7 @@ import { AdminUser } from '@kossi-models/user';
 import { notNull } from '../utils/functions';
 import { UserContextService } from './user-context.service';
 import { SyncOrgUnit, getOrgUnitFromDbFilter } from '@kossi-models/org-units';
-import { DataValue } from '@kossi-models/dhis2';
+import { Dhis2DataValueSetParams } from '@kossi-models/dhis2';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -194,7 +194,6 @@ export class ApiService {
 
 
   //START REPPORTS
-
   GetPromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/promotion-reports`, fparams, this.customHeaders);
@@ -234,42 +233,68 @@ export class ApiService {
 
 
   //START VALIDATE REPPORTS
-
   ValidatePromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/promotion-reports-validation`, fparams, this.customHeaders);
+  }
+  CancelValidatePromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/cancel-promotion-reports-validation`, fparams, this.customHeaders);
   }
 
   ValidateFamilyPlanningReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/family-planning-reports-validation`, fparams, this.customHeaders);
   }
+  CancelValidateFamilyPlanningReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/cancel-family-planning-reports-validation`, fparams, this.customHeaders);
+  }
 
   ValidateMorbidityReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/morbidity-reports-validation`, fparams, this.customHeaders);
+  }
+  CancelValidateMorbidityReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/cancel-morbidity-reports-validation`, fparams, this.customHeaders);
   }
 
   ValidateHouseholdRecapReports({ months, year, recos, dataIds }: { months: string[], year: number, recos: string[], dataIds: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos, dataIds });
     return this.http.post(`${this.backendUrl}/reports/household-recaps-reports-validation`, fparams, this.customHeaders);
   }
+  CancelValidateHouseholdRecapReports({ months, year, recos, dataIds }: { months: string[], year: number, recos: string[], dataIds: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos, dataIds });
+    return this.http.post(`${this.backendUrl}/reports/cancel-household-recaps-reports-validation`, fparams, this.customHeaders);
+  }
 
   ValidatePcimneNewbornReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/pcime-newborn-reports-validation`, fparams, this.customHeaders);
+  }
+  CancelValidatePcimneNewbornReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/cancel-pcime-newborn-reports-validation`, fparams, this.customHeaders);
   }
 
   ValidateChwsRecoReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/chws-reco-reports-validation`, fparams, this.customHeaders);
   }
+  CancelValidateChwsRecoReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/cancel-chws-reco-reports-validation`, fparams, this.customHeaders);
+  }
 
   ValidateRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
     const fparams = this.ApiParams({ months, year, recos });
     return this.http.post(`${this.backendUrl}/reports/reco-meg-situation-reports-validation`, fparams, this.customHeaders);
   }
-
+  CancelValidateRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<any> {
+    const fparams = this.ApiParams({ months, year, recos });
+    return this.http.post(`${this.backendUrl}/reports/cancel-reco-meg-situation-reports-validation`, fparams, this.customHeaders);
+  }
   //END VALIDATE REPPORTS
 
 
@@ -369,14 +394,40 @@ export class ApiService {
   //END DATABASES UTILS
 
 
+
   //START DHIS2
-  SendPromotionActivitiesToDhis2({ dataValues, months, year, recos }: { dataValues: DataValue[], months: string[], year: number, recos: string[] }): any {
-    const fparams = this.ApiParams({ dataValues, months, year, recos });
+  SendMonthlyActivitiesToDhis2({ username, password, data, period, months, year, recos }: Dhis2DataValueSetParams): any {
+    const fparams = this.ApiParams({ username, password, data, period, months, year, recos });
+    return this.http.post(`${this.backendUrl}/dhis2/send/monthly-activity`, fparams, this.customHeaders);
+  }
+
+  SendFamilyPlanningActivitiesToDhis2({ username, password, data, period, months, year, recos }: Dhis2DataValueSetParams): any {
+    const fparams = this.ApiParams({ username, password, data, period, months, year, recos });
+    return this.http.post(`${this.backendUrl}/dhis2/send/family-planning-activity`, fparams, this.customHeaders);
+  }
+
+  SendHouseholdActivitiesToDhis2({ username, password, data, period, months, year, recos }: Dhis2DataValueSetParams): any {
+    const fparams = this.ApiParams({ username, password, data, period, months, year, recos });
+    return this.http.post(`${this.backendUrl}/dhis2/send/household-activity`, fparams, this.customHeaders);
+  }
+
+  SendMorbidityActivitiesToDhis2({ username, password, data, period, months, year, recos }: Dhis2DataValueSetParams): any {
+    const fparams = this.ApiParams({ username, password, data, period, months, year, recos });
+    return this.http.post(`${this.backendUrl}/dhis2/send/morbidity-activity`, fparams, this.customHeaders);
+  }
+
+  SendPcimneNewbornActivitiesToDhis2({ username, password, data, period, months, year, recos }: Dhis2DataValueSetParams): any {
+    const fparams = this.ApiParams({ username, password, data, period, months, year, recos });
+    return this.http.post(`${this.backendUrl}/dhis2/send/pcimne-newborn-activity`, fparams, this.customHeaders);
+  }
+
+  SendPromotionActivitiesToDhis2({ username, password, data, period, months, year, recos }: Dhis2DataValueSetParams): any {
+    const fparams = this.ApiParams({ username, password, data, period, months, year, recos });
     return this.http.post(`${this.backendUrl}/dhis2/send/promotional-activity`, fparams, this.customHeaders);
   }
 
-  SendRecoMegSituationActivitiesToDhis2({ dataValues, months, year, recos }: { dataValues: DataValue[], months: string[], year: number, recos: string[] }): any {
-    const fparams = this.ApiParams({ dataValues, months, year, recos });
+  SendRecoMegSituationActivitiesToDhis2({ username, password, data, period, months, year, recos }: Dhis2DataValueSetParams): any {
+    const fparams = this.ApiParams({ username, password, data, period, months, year, recos });
     return this.http.post(`${this.backendUrl}/dhis2/send/reco-meg-situation-activity`, fparams, this.customHeaders);
   }
 

@@ -37,7 +37,7 @@ export class ApisController {
                 }
                 return res.status(201).json({ status: 201, data: 'error' });
             }
-            return res.status(201).json({ status: 201, data: 'no user ID provided' });
+            return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
         } catch (err) {
             return res.status(500).json({ status: 500, data: `${err}` });
         }

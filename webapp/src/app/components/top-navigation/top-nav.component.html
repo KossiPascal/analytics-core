@@ -85,8 +85,7 @@
 
     <!-- ######################################################################################## -->
 
-    <div *ngIf="USER?.can_use_offline_mode === true && isOnline === true" (click)="syncForOffline($event)"
-      class="sync-for-offline">
+    <div *ngIf="USER?.can_use_offline_mode === true && isOnline === true" (click)="syncForOffline($event)" class="sync-for-offline">
       <b style="font-size: 10px;">SYNCHRONISER EN LOCAL</b>
     </div>
 
@@ -104,8 +103,12 @@
         <a *ngIf="USER?.can_use_offline_mode === true && isOnline === true" (click)="syncForOffline($event)" href="#"
           class="dropdown-item offline-sync"><b style="font-size: 10px;">SYNCHRONISER EN LOCAL</b></a>
 
-        <a (click)="noAvailableImplementation($event)" href="#" class="dropdown-item">Profile</a>
-        <a *ngIf="USER?.isAdmin === true" href="#" (click)="TestMyModal($event)" class="dropdown-item">TEST MY MODAL</a>
+        <!-- <a (click)="noAvailableImplementation($event)" href="#" class="dropdown-item">Profile</a> -->
+        <div class="dropdown-item" (click)="openGuidePage()">Guide formateurs/ASC/CCS</div>
+        <div class="dropdown-item" (click)="openRecoGuidePage()">Guide RECO / ASC</div>
+        <div class="dropdown-item" (click)="downloadAPK(true)">Téléchargé Kendeya (Production)</div>
+        <!-- <div style="color: red;" class="dropdown-item" (click)="downloadAPK(false)">Téléchargé Kendeya (de Test)</div> -->
+        <!-- <a *ngIf="USER?.isAdmin === true" href="#" (click)="TestMyModal($event)" class="dropdown-item">TEST MY MODAL</a> -->
 
         <app-public-utils  style="margin: 5px 0px 5px 0px!important;"></app-public-utils>
 
@@ -116,11 +119,13 @@
   </div>
 </nav>
 
+
 <ng-template #content let-modal>
   <div class="modal-header">
     <h4 class="modal-title">Modal Title</h4>
     <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true">&times;</span>
+      <span>&times;</span>
+      <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null">&times;</span> -->
     </button>
   </div>
   <div class="modal-body">

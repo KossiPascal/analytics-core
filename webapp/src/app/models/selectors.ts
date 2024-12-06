@@ -24,5 +24,11 @@ export interface ReportsHealth {
 
   ON_FETCHING?: boolean | null | undefined;
   ON_VALIDATION?: boolean | null | undefined;
+  ON_CANCEL_VALIDATION?: boolean | null | undefined;
   ON_DHIS2_SENDING?: boolean | null | undefined;
+
+  ON_DHIS2_SENDING_ERROR?: boolean | null | undefined;
+  DHIS2_SENDING_ERROR_MESSAGE?: string | null | undefined;
+
+  SHOW_DHIS2_MODAL?: boolean | null | undefined;
 }

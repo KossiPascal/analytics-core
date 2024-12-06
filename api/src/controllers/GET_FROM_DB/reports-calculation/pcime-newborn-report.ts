@@ -10,7 +10,6 @@ import { isTrue, isvalidCta } from "../../../utils/functions";
 import { DeathData } from "../../../entities/_Death-data";
 import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 
-
 let Connection: DataSource = AppDataSource.manager.connection;
 
 export async function PCIMNE_NEWBORN_REPORTS_CALCULATION(req: Request, res: Response, next: NextFunction): Promise<any> {
@@ -645,6 +644,8 @@ export async function PCIMNE_NEWBORN_REPORTS_CALCULATION_DATA({ month, year }: {
             // _pecimne.chw = reco.chw;
             _pecimne.village_secteur = reco.village_secteur;
             _pecimne.reco = { id: reco.id, name: reco.name, phone: reco.phone };
+
+            // _pecimne.orgunit = ;
 
             await _repoPecimne.save(_pecimne);
 

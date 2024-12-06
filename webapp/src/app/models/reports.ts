@@ -15,9 +15,9 @@ export interface MorbidityUtils {
   nbr_14_25_years: number
   nbr_25_60_years: number
   nbr_60_more_years: number
-  nbr_pregnant_woman: number|undefined
+  nbr_pregnant_woman: number | undefined
   nbr_total: number
-  nbr_referred: number|undefined
+  nbr_referred: number | undefined
 }
 
 export interface IndicatorsDataOutput<T> {
@@ -40,7 +40,7 @@ export interface IndicatorsDataOutput<T> {
 
 
 export interface RecoMegSituationReport {
-  orgUnit: string
+  orgunit: string
   id: string
   month: string
   year: number
@@ -83,7 +83,7 @@ export interface PromotionReport {
   id: string
   month: string
   year: number
-  orgUnit?: string
+  orgunit: string
 
   malaria_nbr_touched_by_VAD_F: number
   malaria_nbr_touched_by_VAD_M: number
@@ -150,7 +150,7 @@ export interface PromotionReport {
 }
 
 export interface FamilyPlanningReport {
-  orgUnit: string
+  orgunit: string
   id: string
   month: string
   year: number
@@ -179,7 +179,7 @@ export interface FamilyPlanningReport {
 }
 
 export interface MorbidityReport {
-  orgUnit: string
+  orgunit: string
   id: string
   month: string
   year: number
@@ -221,7 +221,7 @@ export interface MorbidityReport {
 }
 
 export interface HouseholdRecapReport {
-  orgUnit: string
+  orgunit: string
   id: string
   month: string
   year: number
@@ -251,7 +251,7 @@ export interface HouseholdRecapReport {
 }
 
 export interface PcimneNewbornReport {
-  orgUnit: string
+  orgunit: string
   id: string
   month: string
   year: number
@@ -276,39 +276,39 @@ export interface PcimneNewbornReport {
 export interface PcimneNewbornReportUtils {
   index: number
   indicator: string
-  nbr_malaria_0_2_months_F: number|undefined
-  nbr_malaria_0_2_months_M: number|undefined
-  nbr_malaria_2_12_months_F: number|undefined
-  nbr_malaria_2_12_months_M: number|undefined
-  nbr_malaria_12_60_months_F: number|undefined
-  nbr_malaria_12_60_months_M: number|undefined
+  nbr_malaria_0_2_months_F: number | undefined
+  nbr_malaria_0_2_months_M: number | undefined
+  nbr_malaria_2_12_months_F: number | undefined
+  nbr_malaria_2_12_months_M: number | undefined
+  nbr_malaria_12_60_months_F: number | undefined
+  nbr_malaria_12_60_months_M: number | undefined
 
-  nbr_cough_pneumonia_0_2_months_F: number|undefined
-  nbr_cough_pneumonia_0_2_months_M: number|undefined
-  nbr_cough_pneumonia_2_12_months_F: number|undefined
-  nbr_cough_pneumonia_2_12_months_M: number|undefined
-  nbr_cough_pneumonia_12_60_months_F: number|undefined
-  nbr_cough_pneumonia_12_60_months_M: number|undefined
+  nbr_cough_pneumonia_0_2_months_F: number | undefined
+  nbr_cough_pneumonia_0_2_months_M: number | undefined
+  nbr_cough_pneumonia_2_12_months_F: number | undefined
+  nbr_cough_pneumonia_2_12_months_M: number | undefined
+  nbr_cough_pneumonia_12_60_months_F: number | undefined
+  nbr_cough_pneumonia_12_60_months_M: number | undefined
 
-  nbr_diarrhea_0_2_months_F: number|undefined
-  nbr_diarrhea_0_2_months_M: number|undefined
-  nbr_diarrhea_2_12_months_F: number|undefined
-  nbr_diarrhea_2_12_months_M: number|undefined
-  nbr_diarrhea_12_60_months_F: number|undefined
-  nbr_diarrhea_12_60_months_M: number|undefined
+  nbr_diarrhea_0_2_months_F: number | undefined
+  nbr_diarrhea_0_2_months_M: number | undefined
+  nbr_diarrhea_2_12_months_F: number | undefined
+  nbr_diarrhea_2_12_months_M: number | undefined
+  nbr_diarrhea_12_60_months_F: number | undefined
+  nbr_diarrhea_12_60_months_M: number | undefined
 
-  nbr_malnutrition_0_2_months_F: number|undefined
-  nbr_malnutrition_0_2_months_M: number|undefined
-  nbr_malnutrition_2_12_months_F: number|undefined
-  nbr_malnutrition_2_12_months_M: number|undefined
-  nbr_malnutrition_12_60_months_F: number|undefined
-  nbr_malnutrition_12_60_months_M: number|undefined
+  nbr_malnutrition_0_2_months_F: number | undefined
+  nbr_malnutrition_0_2_months_M: number | undefined
+  nbr_malnutrition_2_12_months_F: number | undefined
+  nbr_malnutrition_2_12_months_M: number | undefined
+  nbr_malnutrition_12_60_months_F: number | undefined
+  nbr_malnutrition_12_60_months_M: number | undefined
 
-  nbr_total: number|undefined
+  nbr_total: number | undefined
 }
 
 export interface ChwsRecoReport {
-  orgUnit: string
+  orgunit: string
   id: string
   month: string
   year: number

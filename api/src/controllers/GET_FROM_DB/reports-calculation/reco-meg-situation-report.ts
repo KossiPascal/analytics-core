@@ -131,6 +131,8 @@ export async function RECO_MEG_SITUATION_REPORTS_CALCULATION_DATA({ month, year 
             _meg.village_secteur = reco.village_secteur;
             _meg.reco = { id: reco.id, name: reco.name, phone: reco.phone };
 
+            // _meg.orgunit = ;
+
             await _repo.save(_meg);
             outPutData.SuccessCount += 1;
         } catch (err) {

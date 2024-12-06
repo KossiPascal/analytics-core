@@ -2,7 +2,8 @@
   <div class="modal-header {{ modalActionColor }}">
     <h4 class="modaltitle {{ modalActionColor }}">{{ modalTitle }}</h4>
     <button *ngIf="showCloseButton == true" class="close" aria-label="Close" (click)="bsModalRef.hide()">
-      <span aria-hidden="true">&times;</span>
+      <span>&times;</span>
+      <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null">&times;</span> -->
     </button>
   </div>
 

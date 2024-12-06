@@ -8,7 +8,6 @@ import { AdultData } from "../../../entities/_Adult-data";
 import { RECOS_CUSTOM_QUERY } from "../../orgunit-query/org-units-custom";
 import { isvalidCta } from "../../../utils/functions";
 
-
 let Connection: DataSource = AppDataSource.manager.connection;
 
 export async function ADULT_MORBIDITY_REPORTS_CALCULATION(req: Request, res: Response, next: NextFunction): Promise<any> {
@@ -157,6 +156,8 @@ export async function ADULT_MORBIDITY_REPORTS_CALCULATION_DATA({ month, year }: 
             // _morbidity.chw = reco.chw;
             _morbidity.village_secteur = reco.village_secteur;
             _morbidity.reco = { id: reco.id, name: reco.name, phone: reco.phone };
+
+            // _morbidity.orgunit = ;
 
             await _repoReport.save(_morbidity);
             outPutData.SuccessCount += 1;

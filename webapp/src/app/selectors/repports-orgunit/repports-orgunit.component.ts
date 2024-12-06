@@ -32,8 +32,6 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   Chws$: ChwsMap[] = [];
   Recos$: RecosMap[] = [];
 
-
-
   countries: CountryMap[] = [];
   regions: RegionsMap[] = [];
   prefectures: PrefecturesMap[] = [];
@@ -99,9 +97,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   countriesGenerate() {
     this.setOrgUnitsValues({ country: true, region: true, prefecture: true, commune: true, hospital: true, district_quartier: true, recos: true })
     this.countries = this.Countries$;
-    if (this.countries.length === 1) {
-      this._formGroup.value['country'] = this.countries[0].id;
-    }
+    if (this.countries.length === 1) this._formGroup.value['country'] = this.countries[0].id;
     this.regionsGenerate();
   }
 
@@ -116,9 +112,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
     } else if (this.Regions$.length >= 1) {
       this.regions = this.Regions$;
     }
-    if (this.regions.length === 1) {
-      this._formGroup.value['region'] = this.regions[0].id;
-    }
+    if (this.regions.length === 1) this._formGroup.value['region'] = this.regions[0].id;
     this.prefecturesGenerate();
   }
 
@@ -133,9 +127,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
     } else if (this.Prefectures$.length >= 1) {
       this.prefectures = this.Prefectures$;
     }
-    if (this.prefectures.length === 1) {
-      this._formGroup.value['prefecture'] = this.prefectures[0].id;
-    }
+    if (this.prefectures.length === 1) this._formGroup.value['prefecture'] = this.prefectures[0].id;
     this.communesGenerate();
   }
 
@@ -150,9 +142,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
     } else if (this.Communes$.length >= 1) {
       this.communes = this.Communes$;
     }
-    if (this.communes.length === 1) {
-      this._formGroup.value['commune'] = this.communes[0].id;
-    }
+    if (this.communes.length === 1) this._formGroup.value['commune'] = this.communes[0].id;
     this.hospitalsGenerate();
   }
 
@@ -167,9 +157,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
     } else if (this.Hospitals$.length >= 1) {
       this.hospitals = this.Hospitals$;
     }
-    if (this.hospitals.length === 1) {
-      this._formGroup.value['hospital'] = this.hospitals[0].id;
-    }
+    if (this.hospitals.length === 1) this._formGroup.value['hospital'] = this.hospitals[0].id;
     this.districtsGenerate();
   }
 
@@ -184,9 +172,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
     } else if (this.DistrictQuartiers$.length >= 1) {
       this.districtQuartiers = this.DistrictQuartiers$;
     }
-    if (this.districtQuartiers.length === 1) {
-      this._formGroup.value['district_quartier'] = this.districtQuartiers[0].id;
-    }
+    if (this.districtQuartiers.length === 1) this._formGroup.value['district_quartier'] = this.districtQuartiers[0].id;
     this.recosGenerate();
   }
 
@@ -212,9 +198,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   //   } else {
   //     this.chws = [];
   //   }
-  //   if (this.chws.length === 1) {
-  //     this._formGroup.value['chw'] = this.chws[0].id;
-  //   }
+  //   if (this.chws.length === 1) this._formGroup.value['chw'] = this.chws[0].id;
   //   this.villagesGenerate();
   // }
 
@@ -233,15 +217,11 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
   //     this.villageSecteurs = [];
   //   } else if (this.VillageSecteurs$.length >= 1) {
   //     this.villageSecteurs = this.VillageSecteurs$;
-  //     if (this.VillageSecteurs$.length === 1) {
-  //       this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;
-  //     }
+  //     if (this.VillageSecteurs$.length === 1) this._formGroup.value['village_secteur'] = this.VillageSecteurs$[0].id;
   //   } else {
   //     this.villageSecteurs = [];
   //   }
-  //   if (this.villageSecteurs.length === 1) {
-  //     this._formGroup.value['village_secteur'] = this.villageSecteurs[0].id;
-  //   }
+  //   if (this.villageSecteurs.length === 1) this._formGroup.value['village_secteur'] = this.villageSecteurs[0].id;
   //   this.recosGenerate();
   // }
 
@@ -256,9 +236,7 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
     } else if (this.Recos$.length >= 1) {
       this.recos = this.Recos$;
     }
-    if (this.recos.length === 1) {
-      this._formGroup.value['recos'] = [this.recos[0].id];
-    }
+    if (this.recos.length === 1) this._formGroup.value['recos'] = [this.recos[0].id];
   }
 
   // onCheckboxChange(id: string, event: Event) {
@@ -324,9 +302,37 @@ export class RepportsOrgunitSelectorComponent implements OnInit, AfterViewInit {
     }
   }
 
+
   SHOW_DATA(event: Event) {
     event.preventDefault();
     if (this.ON_SHOW_DATA) {
+
+      if (this.countries.length === 1) this._formGroup.value['country'] = this.countries[0].id;
+      if (this.regions.length === 1) this._formGroup.value['region'] = this.regions[0].id;
+      if (this.prefectures.length === 1) this._formGroup.value['prefecture'] = this.prefectures[0].id;
+      if (this.communes.length === 1) this._formGroup.value['commune'] = this.communes[0].id;
+      if (this.hospitals.length === 1) this._formGroup.value['hospital'] = this.hospitals[0].id;
+      if (this.districtQuartiers.length === 1) this._formGroup.value['district_quartier'] = this.districtQuartiers[0].id;
+      if (this.chws.length === 1) this._formGroup.value['chw'] = this.chws[0].id;
+      if (this.villageSecteurs.length === 1) this._formGroup.value['village_secteur'] = this.villageSecteurs[0].id;
+      if (this.recos.length === 1) this._formGroup.value['recos'] = [this.recos[0].id];
+
+      const recos = this.recos.filter(r=>(this._formGroup.value.recos ?? []).includes(r.id));
+
+      this._formGroup.value['org_units'] = {
+        country: this.countries.find(r=>r.id === this._formGroup.value.country),
+        region: this.regions.find(r=>r.id === this._formGroup.value.region),
+        prefecture: this.prefectures.find(r=>r.id === this._formGroup.value.prefecture),
+        commune: this.communes.find(r=>r.id === this._formGroup.value.commune),
+        hospital: this.hospitals.find(r=>r.id === this._formGroup.value.hospital),
+        district_quartier: this.districtQuartiers.find(r=>r.id === this._formGroup.value.district_quartier),
+        chws: this.chws.find(r=>r.id === this._formGroup.value.chw),
+        village_secteur: this.villageSecteurs.find(r=>r.id === this._formGroup.value.village_secteur),
+        recos: recos,
+        all_recos_ids: this.Recos$.map(r=>r.id),
+        selected_recos_ids: recos.map(r=>r.id),
+      }
+
       this.ON_SHOW_DATA.emit(this._formGroup);
     }
   }

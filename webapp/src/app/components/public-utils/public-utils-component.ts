@@ -1,5 +1,6 @@
 import { Attribute, Component, Input } from '@angular/core';
 import { ConstanteService } from '@kossi-services/constantes.service';
+import { PublicPagesService } from '@kossi-services/public-pages.service';
 
 @Component({
   selector: 'app-public-utils',
@@ -8,22 +9,18 @@ import { ConstanteService } from '@kossi-services/constantes.service';
 })
 export class PublicUtilsComponent {
 
-  constructor(private cst:ConstanteService){}
+  constructor(private pb:PublicPagesService){}
 
   downloadAPK(prodApp: boolean){
-    // const baseUrl = `${window.location.protocol}//${window.location.host}`;
-    const link = document.createElement('a');
-    link.href = this.cst.backenUrl(`publics/download/kendeya-${prodApp ? 'prod' : 'dev'}-apk`);
-    link.download = `kendeya-${prodApp ? 'prod' : 'dev'}.apk`;
-    link.click();
+    this.pb.downloadAPK(prodApp);
   }
 
   openGuidePage(){
-    // const baseUrl = `${window.location.protocol}//${window.location.host}`;
-    const link = document.createElement('a');
-    link.href = this.cst.backenUrl(`publics/kendeya-guide-formation`);
-    link.target = '_blank';
-    link.click();
+    this.pb.openGuidePage();
+  }
+
+  openRecoGuidePage(){
+    this.pb.openRecoGuidePage();
   }
 }
 

@@ -27,9 +27,9 @@ export async function GET_RECO_VACCINATION_DASHBOARD(req: Request, res: Response
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -54,9 +54,9 @@ export async function GET_RECO_PERFORMANCE_DASHBOARD(req: Request, res: Response
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 
@@ -78,9 +78,9 @@ export async function GET_RECO_CHART_PERFORMANCE_DASHBOARD(req: Request, res: Re
             }
             return res.status(201).json({ status: 201, data: 'You provide empty filters' });
         }
-        return res.status(201).json({ status: 201, data: 'not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     } catch (err: any) {
-        return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+        return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
     }
 };
 

@@ -55,7 +55,7 @@
     <div class="modal-header bg-danger">
       <h4 class="modal-title">Suppression de role</h4>
       <button (click)="closeRemoveRoleModalVisible()" id="close-delete-modal" type="button" class="close">
-        <span aria-hidden="true">&times;</span>
+
       </button>
     </div>
     <div class="modal-body">
@@ -85,9 +85,9 @@
               class=" btn-{{ isEditMode?'warning':'success' }}">
               {{ isEditMode ? 'Modifier un role' :'Ajouter un role' }}</span></strong>
 
-          <button (click)="closeAddOrUpdateModalVisible()" type="button" class="close" data-dismiss="modal"
-            aria-label="Close">
-            <span aria-hidden="true">&times;</span>
+          <button (click)="closeAddOrUpdateModalVisible()" type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span>&times;</span>
+            <!-- <span [attr.aria-hidden]="isHidden ? 'true' : null" [attr.inert]="isHidden ? '' : null">&times;</span> -->
           </button>
         </div>
 

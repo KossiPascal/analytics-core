@@ -17,9 +17,12 @@
                 <repports-header-selector
                   [id]="'fp-repports-header'"
                   [REPPORTS_HEADER]="REPPORTS_HEADER"
+                  [ORG_UNIT]="ORG_UNIT_TO_SEND_DATA"
+                  [ALL_NEEDED_RECOS]="ALL_NEEDED_RECOS"
+                  [SELECTED_RECOS]="SELECTED_RECOS"
                   (onValidateData)="validateData()"
                   (onCancelDataValidated)="cancelValidation()"
-                  (onSendToDhis2)="sendDataToDhis2()">
+                  (onSendDataToDhis2)="sendDataToDhis2($event)">
                 </repports-header-selector>
               </td>
             </tr>
@@ -144,16 +147,6 @@
     </div>
   </div>
 </div>
-
-
-<!-- <dhis2-sender-selector
-  [SHOW_DHIS2_MODAL]="SHOW_DHIS2_MODAL"
-  [DHIS2_DATA_SENDING]="DHIS2_DATA_SENDING"
-  [_dhis2FormGroup]="_dhis2FormGroup"
-  (onSendDataToDhis2)="sendDataToDhis2($event)"
-  (onCloseDhis2Modal)="openDhis2Modal(false)"
-  >
-</dhis2-sender-selector> -->
 
 
 

@@ -64,7 +64,12 @@
   </div>
 </kendeya-guide-formation>
 
+<kendeya-reco-guide-formation *ngIf="isPublicPage()">
+  <div style="height: 100%;width: 100%;">
+    <router-outlet></router-outlet>
+  </div>
+</kendeya-reco-guide-formation>
+
 <app-snackbar></app-snackbar>
 <device-detection></device-detection>
 <!-- <kossi-fix-modal-layout></kossi-fix-modal-layout> -->
-

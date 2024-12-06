@@ -1,6 +1,6 @@
 {
     "app-title": "TODO app",
-    "confirm.logout":"LOGOUT",
+    "Confirmation de déconnection":"LOGOUT",
     "choose-language": "Choose language",
     "todo-list": "TODO list",
     "completed-todos": "Completed TODOs",

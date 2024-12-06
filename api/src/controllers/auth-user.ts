@@ -5,12 +5,10 @@ import { GetRolesAndNamesPagesAutorizations, Roles, getRolesRepository } from '.
 import crypto from 'crypto';
 import { ROUTES_LIST, AUTORISATIONS_LIST } from '../utils/autorizations-pages';
 import { TokenUser } from '../utils/Interfaces';
-import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, RecoCustomQuery, ChwCustomQuery, CountryManagerCustomQuery, RegionManagerCustomQuery, COMMUNES_MANAGER_CUSTOM_QUERY, COUNTRIES_MANAGER_CUSTOM_QUERY, CommuneManagerCustomQuery, HOSPITALS_MANAGER_CUSTOM_QUERY, HospitalManagerCustomQuery, PREFECTURES_MANAGER_CUSTOM_QUERY, PrefectureManagerCustomQuery, REGIONS_MANAGER_CUSTOM_QUERY, CommuneCustomQuery, HospitalCustomQuery, PrefectureCustomQuery, RegionCustomQuery, CountryCustomQuery, DistrictQuartierCustomQuery, VillageSecteurCustomQuery } from './orgunit-query/org-units-custom';
+import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, RecoCustomQuery, ChwCustomQuery, COMMUNES_MANAGER_CUSTOM_QUERY, COUNTRIES_MANAGER_CUSTOM_QUERY, HOSPITALS_MANAGER_CUSTOM_QUERY, PREFECTURES_MANAGER_CUSTOM_QUERY, REGIONS_MANAGER_CUSTOM_QUERY, CommuneCustomQuery, HospitalCustomQuery, PrefectureCustomQuery, RegionCustomQuery, CountryCustomQuery, DistrictQuartierCustomQuery, VillageSecteurCustomQuery } from './orgunit-query/org-units-custom';
 import { ChwsMap, CommunesMap, CountryMap, DistrictQuartiersMap, GetChwsMap, GetCommunesMap, GetCountryMap, GetDistrictQuartiersMap, GetHospitalsMap, GetPrefecturesMap, GetRecosMap, GetRegionsMap, GetVillageSecteursMap, HospitalsMap, PrefecturesMap, RecosMap, RegionsMap, VillageSecteursMap } from '../utils/org-unit-interface';
-import { join } from 'path';
 import { APP_ENV } from '../utils/constantes';
 import request from 'request';
-import { Chw, getChwRepository, getRecoRepository, Reco } from '../entities/Org-units';
 
 // import uuidv4 from 'uuid';
 
@@ -174,6 +172,7 @@ export class AuthUserController {
     static getRecoParam = (recos: RecoCustomQuery[]): RecosMap[] => {
         return recos.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
             country_id: r.country.id,
             region_id: r.region.id,
@@ -188,6 +187,7 @@ export class AuthUserController {
     static getChwParam = (chws: ChwCustomQuery[]): ChwsMap[] => {
         return chws.map(chw => ({
             id: chw.id,
+            external_id: chw.external_id,
             name: chw.name,
             country_id: chw.country.id,
             region_id: chw.region.id,
@@ -201,6 +201,7 @@ export class AuthUserController {
     static getVillageSecteurParam = (data: VillageSecteurCustomQuery[]): VillageSecteursMap[] => {
         return data.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
             country_id: r.country.id,
             region_id: r.region.id,
@@ -214,6 +215,7 @@ export class AuthUserController {
     static getDistrictQuartierParam = (data: DistrictQuartierCustomQuery[]): DistrictQuartiersMap[] => {
         return data.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
             country_id: r.country.id,
             region_id: r.region.id,
@@ -227,6 +229,7 @@ export class AuthUserController {
     static getHospitalParam = (data: HospitalCustomQuery[]): HospitalsMap[] => {
         return data.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
             country_id: r.country.id,
             region_id: r.region.id,
@@ -238,6 +241,7 @@ export class AuthUserController {
     static getCommuneParam = (data: CommuneCustomQuery[]): CommunesMap[] => {
         return data.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
             country_id: r.country.id,
             region_id: r.region.id,
@@ -248,6 +252,7 @@ export class AuthUserController {
     static getPrefectureParam = (data: PrefectureCustomQuery[]): PrefecturesMap[] => {
         return data.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
             country_id: r.country.id,
             region_id: r.region.id,
@@ -257,6 +262,7 @@ export class AuthUserController {
     static getRegionParam = (data: RegionCustomQuery[]): RegionsMap[] => {
         return data.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
             country_id: r.country.id,
         }));
@@ -265,6 +271,7 @@ export class AuthUserController {
     static getCountryParam = (data: CountryCustomQuery[]): CountryMap[] => {
         return data.map(r => ({
             id: r.id,
+            external_id: r.external_id,
             name: r.name,
         }));
     };
@@ -295,22 +302,25 @@ export class AuthUserController {
             // FAMILIES_CUSTOM_QUERY();
             // PATIENTS_CUSTOM_QUERY();
 
+            // const isReco = user.roles.length == 1 && user.roles[0] == '3';
+            // const isChws = user.roles.length == 1 && user.roles[0] == '4';
+
             // return res.status(200).json({ status: 200, data: token });
             return res.status(200).json({ status: 200, data: token, countries: countries, regions: regions, prefectures: prefectures, communes: communes, hospitals: hospitals, districtQuartiers: districtQuartiers, villageSecteurs: villageSecteurs, chws: chws, recos: recos });
         }
-        return res.status(201).json({ status: 201, data: 'Not autorized' });
+        return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
     }
 
     static login = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { credential, password } = req.body;
-            if (!credential || !password) return res.status(201).json({ status: 201, data: 'Invalid credentials' });
+            if (!credential || !password) return res.status(201).json({ status: 201, data: 'Informations Invalide, Reesayer!' });
 
             const userRepo = await getUsersRepository();
             const user = await userRepo.findOne({ where: [{ username: credential }, { email: credential }] });
 
             if (!user) {
-                // return res.status(201).json({ status: 201, data: 'Not autorized' });
+                // return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
                 const chtUrl = `https://${USER_CHT_HOST}/medic/org.couchdb.user:${credential}`;
 
                 request({
@@ -461,25 +471,25 @@ export class AuthUserController {
                     }
                 });
             } else {
-                if (!user.isActive || user.isDeleted) return res.status(201).json({ status: 201, data: "Sorry! You don't have permission to login. Contact the administrator." });
+                if (!user.isActive || user.isDeleted) return res.status(201).json({ status: 201, data: "Vous n'avez pas les Sorry! You don't have permission to login. Contact the administrator." });
                 const isPasswordValid = verifyPassword(password, user.salt ?? 'ZerD2345~@PRET', user.password);
                 if (!isPasswordValid) return res.status(201).json({ status: 201, data: 'Invalid password' });
                 await AuthUserController.startTchecking(user, res);
             }
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
         }
     };
 
     static register = async (req: Request, res: Response, next: NextFunction) => {
         // try {
         const { userId, username, email, password, fullname, roles, isActive, countries, regions, prefectures, communes, hospitals, districtQuartiers, villageSecteurs, chws, recos } = req.body;
-        if (!username || !password) return res.status(201).json({ status: 201, data: 'Invalid credentials' });
+        if (!username || !password) return res.status(201).json({ status: 201, data: 'Informations Invalide, Reesayer!' });
 
         const userRepo = await getUsersRepository();
         const userFound = await userRepo.findOne({ where: [{ username: username }, notEmpty(email) && email !== '@' ? { email: email } : {}] });
 
-        if (userFound && notEmpty(userFound)) return res.status(201).json({ status: 201, data: 'Username or email already in use' });
+        if (userFound && notEmpty(userFound)) return res.status(201).json({ status: 201, data: 'Identifiants Invalides, Reesayer un autre!' });
         var users: Users[] = await userRepo.find();
 
         const { salt, hashedPassword } = hashPassword(password);
@@ -506,9 +516,9 @@ export class AuthUserController {
 
         await userRepo.save(user);
 
-        return res.status(200).json({ status: 200, data: 'User registered successfully' });
+        return res.status(200).json({ status: 200, data: 'Utilisateur enrégistré avec succès' });
         // } catch (err: any) {
-        //     return res.status(500).json({ status: 500, data: `${err?.message || 'Internal Server Error'}` });
+        //     return res.status(500).json({ status: 500, data: `${err?.message || 'Erreur Interne Du Serveur'}` });
         // }
     };
 
@@ -527,9 +537,9 @@ export class AuthUserController {
                     await userRepo.save(user);
                     return res.status(200).json({ status: 200, data: token });
                 }
-                return res.status(201).json({ status: 201, data: 'not autorized' });
+                return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
             }
-            return res.status(201).json({ status: 201, data: 'no user ID provided' });
+            return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
         } catch (err) {
             return res.status(500).json({ status: 500, data: `${err}` });
         }
@@ -545,7 +555,7 @@ export class AuthUserController {
                 if (user.mustLogin) return res.status(202).json({ status: 202, data: 'error' });
                 return res.status(200).json({ status: 200, data: user.token });
             }
-            return res.status(201).json({ status: 201, data: 'no user ID provided' });
+            return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
         } catch (err) {
             return res.status(500).json({ status: 500, data: `${err}` });
         }
@@ -557,9 +567,9 @@ export class AuthUserController {
             const { userId } = req.body;
             const userRepo = await getUsersRepository();
             var currentUser: Users | null = await userRepo.findOneBy({ id: userId });
-            if (!currentUser) return res.status(201).json({ status: 200, data: 'You must logout and re-login' });
+            if (!currentUser) return res.status(201).json({ status: 200, data: 'Vous devez vous déconnecter et reessayer!' });
             const currentUserToken = await userToken(currentUser, { hashToken: false, checkValidation: false, outPutInitialRoles: true, outPutOrgUnits: true });
-            if (!currentUserToken) return res.status(201).json({ status: 200, data: 'You must logout and re-login' });
+            if (!currentUserToken) return res.status(201).json({ status: 200, data: 'Vous devez vous déconnecter et reessayer!' });
 
             var users: Users[] = await userRepo.find();
             var finalUsers = await Promise.all(users.map(async user => {
@@ -582,11 +592,11 @@ export class AuthUserController {
     static updateUser = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { userId, id, username, email, password, fullname, roles, isActive, countries, regions, prefectures, communes, hospitals, districtQuartiers, villageSecteurs, chws, recos } = req.body;
-            if (!id) return res.status(201).json({ status: 201, data: 'Invalid user ID' });
+            if (!id) return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
 
             const userRepo = await getUsersRepository();
             const user = await userRepo.findOneBy({ id: id });
-            if (!user) return res.status(201).json({ status: 201, data: 'User not found' });
+            if (!user) return res.status(201).json({ status: 201, data: 'Aucun utilisateur trouvé' });
 
             if (password && notEmpty(password)) {
                 const { salt, hashedPassword } = hashPassword(password);
@@ -613,22 +623,22 @@ export class AuthUserController {
 
             return res.status(200).json({ status: 200, data: user.token });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
     static updateUserPassWord = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { userId, old_password, new_password } = req.body;
-            if (!userId) return res.status(201).json({ status: 201, data: 'Invalid user ID' });
+            if (!userId) return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
 
             const userRepo = await getUsersRepository();
             const user = await userRepo.findOneBy({ id: userId });
-            if (!user) return res.status(201).json({ status: 201, data: 'User not found' });
+            if (!user) return res.status(201).json({ status: 201, data: 'Aucun utilisateur trouvé' });
 
             if (old_password && notEmpty(old_password) && new_password && notEmpty(new_password)) {
                 const isOldPasswordValid = verifyPassword(old_password, user.salt, user.password);
-                if (!isOldPasswordValid) return res.status(201).json({ status: 201, data: 'Old password does not match' });
+                if (!isOldPasswordValid) return res.status(201).json({ status: 201, data: 'L\'ancien mot de passe n\'est pas correct' });
                 if (new_password && notEmpty(new_password)) {
                     const { salt, hashedPassword } = hashPassword(new_password);
                     user.password = hashedPassword;
@@ -641,7 +651,7 @@ export class AuthUserController {
 
             return res.status(200).json({ status: 200, data: user.token });
         } catch (err: any) {
-            return res.status(500).json({ status: 500, data: `${err.message || 'Internal Server Error'}` });
+            return res.status(500).json({ status: 500, data: `${err.message || 'Erreur Interne Du Serveur'}` });
         }
     };
 
@@ -692,7 +702,7 @@ export class AuthUserController {
             const roleFound = await repo.findOne({ where: [notEmpty(id) ? { id: id } : {}, notEmpty(name) ? { name: name } : {}] });
 
             if (roleFound && notEmpty(roleFound)) {
-                return res.status(201).json({ status: 201, data: 'Role already exist' });
+                return res.status(201).json({ status: 201, data: 'Le Role existe deja' });
             }
             const role: Roles = new Roles();
             role.name = name;
@@ -732,7 +742,7 @@ export class AuthUserController {
                 var roles: Roles[] = await repo.find();
                 return res.status(200).json({ status: 200, data: roles });
             }
-            return res.status(201).json({ status: 201, data: 'No Id Provided' });
+            return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
         } catch (err: any) {
             return res.status(500).json({ status: 500, data: `${err}` });
         }
@@ -765,7 +775,7 @@ export class AuthUserController {
 
                     return res.status(200).json({ status: 200, data: 'success' });
                 }
-                return res.status(201).json({ status: 201, data: 'No role found' });
+                return res.status(201).json({ status: 201, data: 'Pas de role trouvé' });
             }
             return res.status(201).json({ status: 201, data: 'Vous ne pouvez pas supprimer cet utilisateur' });
         } catch (err: any) {
