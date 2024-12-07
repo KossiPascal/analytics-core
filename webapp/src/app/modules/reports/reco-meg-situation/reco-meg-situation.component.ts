@@ -83,11 +83,13 @@ export class RecoMegSituationComponent {
     this.REPPORTS_HEADER.ON_VALIDATION = true;
     this.api.ValidateRecoMegSituationReports(this._formGroup.value).subscribe(async (_c$: { status: number, data: string }) => {
       if (_c$.status == 200) {
+        this.SHOW_DATA(this._formGroup);
+        this.snackbar.show('Validate successfuly', { backgroundColor: 'success', position: 'TOP' });
+        this.REPPORTS_HEADER.ON_VALIDATION = false;
+        
         if(this.userCtx.currentUserCtx?.can_use_offline_mode === true && this.isOnline) {
           await this.db.all(this._formGroup.value).then(res =>{});
         }
-        this.SHOW_DATA(this._formGroup);
-        this.snackbar.show('Validate successfuly', { backgroundColor: 'success', position: 'TOP' });
       }
       this.REPPORTS_HEADER.ON_VALIDATION = false;
     }, (err: any) => {
@@ -99,11 +101,13 @@ export class RecoMegSituationComponent {
     this.REPPORTS_HEADER.ON_CANCEL_VALIDATION = true;
     this.api.CancelValidateRecoMegSituationReports(this._formGroup.value).subscribe(async (_c$: { status: number, data: string }) => {
       if (_c$.status == 200) {
+        this.SHOW_DATA(this._formGroup);
+        this.snackbar.show('Validation annulée avec succès', { backgroundColor: 'success', position: 'TOP' });
+        this.REPPORTS_HEADER.ON_CANCEL_VALIDATION = false;
+
         if(this.userCtx.currentUserCtx?.can_use_offline_mode === true && this.isOnline) {
           await this.db.all(this._formGroup.value).then(res =>{});
         }
-        this.SHOW_DATA(this._formGroup);
-        this.snackbar.show('Validation annulée avec succès', { backgroundColor: 'success', position: 'TOP' });
       }
       this.REPPORTS_HEADER.ON_CANCEL_VALIDATION = false;
     }, (err: any) => {
@@ -142,7 +146,7 @@ export class RecoMegSituationComponent {
     this.REPPORTS_HEADER.ON_FETCHING = true;
     this._formGroup.value.months = toArray(this._formGroup.value.months);
 
-    this.ldbfetch.GetRecoMegSituationReports(this._formGroup.value).then((_res$: IndicatorsDataOutput<RecoMegQuantityUtils[]> | undefined) => {
+    this.ldbfetch.GetRecoMegSituationReports(this._formGroup.value, this.isOnline).then((_res$: IndicatorsDataOutput<RecoMegQuantityUtils[]> | undefined) => {
       this.REPPORTS_HEADER.REGION_NAME = _res$?.region.name;
       this.REPPORTS_HEADER.RECO_ASC_TYPE = (_res$ as any)?.reco_asc_type;
       this.REPPORTS_HEADER.RECO_ASC_NAME = ((_res$ as any)?.reco_asc_type === 'RECO' ? (_res$?.reco?.name) : '');//_res$?.chw.name);

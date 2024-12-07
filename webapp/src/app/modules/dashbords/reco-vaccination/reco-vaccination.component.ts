@@ -2,6 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { FormGroup} from '@angular/forms';
 import { RecoVaccinationDashboard } from '@kossi-models/dashboards';
 import { IndicatorsDataOutput } from '@kossi-models/reports';
+import { ConnectivityService } from '@kossi-services/connectivity.service';
 import { LocalDbDataFetchService } from '@kossi-services/local-db-data-fetch.service';
 import { SnackbarService } from '@kossi-services/snackbar.service';
 import { toArray, monthByArg } from '@kossi-src/app/utils/functions';
@@ -16,6 +17,8 @@ export class RecoVaccinationDashboardComponent {
 
   RECO_VACCINES$: RecoVaccinationDashboard[]|undefined;
 
+  isOnline:boolean;
+
   MONTH!: string;
   YEAR!: number;
   ON_FETCHING: boolean = false;
@@ -25,9 +28,11 @@ export class RecoVaccinationDashboardComponent {
   _formGroup!: FormGroup;
 
 
-  constructor(private ldbfetch: LocalDbDataFetchService, private snackbar: SnackbarService) {
+  constructor(private ldbfetch: LocalDbDataFetchService,private conn: ConnectivityService, private snackbar: SnackbarService) {
     this.screenWidth = window.innerWidth;
     this.COLUMN_WIDTH = (window.innerWidth - 600) / 4;
+    this.isOnline = window.navigator.onLine;
+    this.conn.getOnlineStatus().subscribe(isOnline => this.isOnline = isOnline);
   }
 
   @HostListener('window:resize', ['$event'])
@@ -64,7 +69,7 @@ export class RecoVaccinationDashboardComponent {
 
     this.ON_FETCHING = true;
     this._formGroup.value.months = toArray(this._formGroup.value.months);
-    this.ldbfetch.GetRecoVaccinationDashboard(this._formGroup.value).then((_res$: IndicatorsDataOutput<RecoVaccinationDashboard[]> | undefined) => {
+    this.ldbfetch.GetRecoVaccinationDashboard(this._formGroup.value, this.isOnline).then((_res$: IndicatorsDataOutput<RecoVaccinationDashboard[]> | undefined) => {
       this.RECO_VACCINES$ = _res$?.data;
 
       this.MONTH = monthByArg(this._formGroup.value.month).labelFR;

@@ -60,11 +60,13 @@ export class HouseholdRecapComponent {
     const dataIds = this.HOUSE_HOLD_RECAP$?.map(h => h.id) ?? [];
     this.api.ValidateHouseholdRecapReports({ ...this._formGroup.value, dataIds }).subscribe(async (_c$: { status: number, data: string }) => {
       if (_c$.status == 200) {
+        this.SHOW_DATA(this._formGroup);
+        this.snackbar.show('Validate successfuly', { backgroundColor: 'success', position: 'TOP' });
+        this.REPPORTS_HEADER.ON_VALIDATION = false;
+        
         if(this.userCtx.currentUserCtx?.can_use_offline_mode === true && this.isOnline) {
           await this.db.all(this._formGroup.value).then(res =>{});
         }
-        this.SHOW_DATA(this._formGroup);
-        this.snackbar.show('Validate successfuly', { backgroundColor: 'success', position: 'TOP' });
       }
       this.REPPORTS_HEADER.ON_VALIDATION = false;
     }, (err: any) => {
@@ -76,11 +78,13 @@ export class HouseholdRecapComponent {
     this.REPPORTS_HEADER.ON_CANCEL_VALIDATION = true;
     this.api.CancelValidateHouseholdRecapReports(this._formGroup.value).subscribe(async (_c$: { status: number, data: string }) => {
       if (_c$.status == 200) {
+        this.SHOW_DATA(this._formGroup);
+        this.snackbar.show('Validation annulée avec succès', { backgroundColor: 'success', position: 'TOP' });
+        this.REPPORTS_HEADER.ON_CANCEL_VALIDATION = false;
+
         if(this.userCtx.currentUserCtx?.can_use_offline_mode === true && this.isOnline) {
           await this.db.all(this._formGroup.value).then(res =>{});
         }
-        this.SHOW_DATA(this._formGroup);
-        this.snackbar.show('Validation annulée avec succès', { backgroundColor: 'success', position: 'TOP' });
       }
       this.REPPORTS_HEADER.ON_CANCEL_VALIDATION = false;
     }, (err: any) => {
@@ -118,7 +122,7 @@ export class HouseholdRecapComponent {
     this.REPPORTS_HEADER.ON_FETCHING = true;
     this._formGroup.value.months = toArray(this._formGroup.value.months);
 
-    this.ldbfetch.GetHouseholdRecapReports(this._formGroup.value).then((_res$: { total: HouseholdRecapReport, out: IndicatorsDataOutput<HouseholdRecapReport[]> } | undefined) => {
+    this.ldbfetch.GetHouseholdRecapReports(this._formGroup.value, this.isOnline).then((_res$: { total: HouseholdRecapReport, out: IndicatorsDataOutput<HouseholdRecapReport[]> } | undefined) => {
       this.REPPORTS_HEADER.REGION_NAME = _res$?.out.region.name;
       this.REPPORTS_HEADER.RECO_ASC_TYPE = _res$?.out.reco_asc_type;
       this.REPPORTS_HEADER.RECO_ASC_NAME = (_res$?.out.reco_asc_type === 'RECO' ? (_res$?.out.reco?.name) : ''); //_res$?.out.chw.name);

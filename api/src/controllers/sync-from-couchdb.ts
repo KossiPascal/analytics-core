@@ -1142,3 +1142,1072 @@ export async function SYNC_ORG_UNITS_AND_CONTACTS_FROM_COUCHDB(req: Request, res
         return resp.status(err.statusCode).json(outPutInfo);
     }
 }
+
+
+
+
+
+
+
+export async function SYNC_CONTACTS_WITHOUT_CHWS_RECOS_PATIENTS_FROM_COUCHDB(req: Request, resp: Response, next: NextFunction) {
+    var outPutInfo: any = {};
+    if (!validationResult(req).isEmpty()) {
+        outPutInfo["status"] = 500;
+        outPutInfo["validationError"] = "Your request provides was rejected !";
+        return resp.status(500).json(outPutInfo);
+    }
+    
+    
+    const { userId, start_date, end_date, year, month, country, region, prefecture, commune, hospital, district_quartier, country_manager, region_manager, prefecture_manager, commune_manager, hospital_manager, village_secteur, family } = req.body;
+    var filterDate = {start_date: '', end_date: ''};
+    if (start_date && end_date) {
+        filterDate = {start_date: start_date, end_date: end_date};
+    } else {
+        filterDate = getFirstAndLastDayOfMonth(year, month);
+    }
+    try {
+        // const startKey = date_to_milisecond('2024-04-01', true);
+        const startKey = date_to_milisecond(filterDate.start_date, true);
+        const endKey = date_to_milisecond(filterDate.end_date, false);
+        await AxioFetchCouchDbData('contacts_by_date', { startKey, endKey }).then(async (response: any) => {
+            try {
+                const _repoCountry = await getCountryRepository();
+                const _repoRegion = await getRegionRepository();
+                const _repoPrefecture = await getPrefectureRepository();
+                const _repoCommune = await getCommuneRepository();
+                const _repoHospital = await getHospitalRepository();
+                const _repoDistrictQuartier = await getDistrictQuartierRepository();
+                const _repoVillageSecteur = await getVillageSecteurRepository();
+                const _repoFamily = await getFamilyRepository();
+                const _repoCountryManager = await getCountryManagerRepository();
+                const _repoRegionManager = await getRegionManagerRepository();
+                const _repoPrefectureManager = await getPrefectureManagerRepository();
+                const _repoCommuneManager = await getCommuneManagerRepository();
+                const _repoHospitalManager = await getHospitalManagerRepository();
+
+                var rows: any = response.data.rows;
+                if (rows && rows.length > 0) {
+                    var len = rows.length;
+                    var done: number = 0;
+                    var outDoneLenght: number = 0;
+
+                    if (country === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("Country" in outPutInfo)) outPutInfo["Country"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r && (r.type === 'country' || r.contact_type === 'country')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _country = new Country();
+                                    _country.id = r._id;
+                                    _country.rev = r._rev;
+                                    _country.name = r.name;
+                                    _country.external_id = r.external_id;
+                                    _country.code = r.code;
+                                    _country.geolocation = r.geolocation;
+                                    _country.reported_date_timestamp = r.reported_date;
+                                    _country.reported_date = reported_date;
+                                    _country.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _country.year = year;
+                                    _country.month = month;
+                                    await _repoCountry.save(_country);
+                                    outPutInfo["Country"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["Country"]["ErrorCount"] += 1;
+                                outPutInfo["Country"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["Country"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+                    }
+                    if (region === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("Region" in outPutInfo)) outPutInfo["Region"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    (r.type === 'region' || r.contact_type === 'region')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _region = new Region();
+                                    _region.id = r._id;
+                                    _region.rev = r._rev;
+                                    _region.name = r.name;
+                                    _region.external_id = r.external_id;
+                                    _region.code = r.code;
+                                    _region.geolocation = r.geolocation;
+                                    _region.country = r.parent._id;
+                                    _region.reported_date_timestamp = r.reported_date;
+                                    _region.reported_date = reported_date;
+                                    _region.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _region.year = year;
+                                    _region.month = month;
+                                    await _repoRegion.save(_region);
+                                    outPutInfo["Region"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["Region"]["ErrorCount"] += 1;
+                                outPutInfo["Region"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["Region"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+                    }
+                    if (prefecture === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("Prefecture" in outPutInfo)) outPutInfo["Prefecture"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    (r.type === 'prefecture' || r.contact_type === 'prefecture')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _prefecture = new Prefecture();
+                                    _prefecture.id = r._id;
+                                    _prefecture.rev = r._rev;
+                                    _prefecture.name = r.name;
+                                    _prefecture.external_id = r.external_id;
+                                    _prefecture.code = r.code;
+                                    _prefecture.geolocation = r.geolocation;
+                                    _prefecture.region = r.parent._id;
+                                    _prefecture.country = r.parent.parent._id;
+                                    _prefecture.reported_date_timestamp = r.reported_date;
+                                    _prefecture.reported_date = reported_date;
+                                    _prefecture.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _prefecture.year = year;
+                                    _prefecture.month = month;
+                                    await _repoPrefecture.save(_prefecture);
+                                    outPutInfo["Prefecture"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["Prefecture"]["ErrorCount"] += 1;
+                                outPutInfo["Prefecture"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["Prefecture"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (commune === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("Commune" in outPutInfo)) outPutInfo["Commune"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    (r.type === 'commune' || r.contact_type === 'commune')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _commune = new Commune();
+                                    _commune.id = r._id;
+                                    _commune.rev = r._rev;
+                                    _commune.name = r.name;
+                                    _commune.external_id = r.external_id;
+                                    _commune.code = r.code;
+                                    _commune.geolocation = r.geolocation;
+                                    _commune.prefecture = r.parent._id;
+                                    _commune.region = r.parent.parent._id;
+                                    _commune.country = r.parent.parent.parent._id;
+                                    _commune.reported_date_timestamp = r.reported_date;
+                                    _commune.reported_date = reported_date;
+                                    _commune.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _commune.year = year;
+                                    _commune.month = month;
+                                    await _repoCommune.save(_commune);
+                                    outPutInfo["Commune"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["Commune"]["ErrorCount"] += 1;
+                                outPutInfo["Commune"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["Commune"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (hospital === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("Hospital" in outPutInfo)) outPutInfo["Hospital"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    'parent' in r.parent.parent.parent && (r.type === 'hospital' || r.contact_type === 'hospital')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _hospital = new Hospital();
+                                    _hospital.id = r._id;
+                                    _hospital.rev = r._rev;
+                                    _hospital.name = r.name;
+                                    _hospital.external_id = r.external_id;
+                                    _hospital.code = r.code;
+                                    _hospital.geolocation = r.geolocation;
+                                    _hospital.commune = r.parent._id;
+                                    _hospital.prefecture = r.parent.parent._id;
+                                    _hospital.region = r.parent.parent.parent._id;
+                                    _hospital.country = r.parent.parent.parent.parent._id;
+                                    _hospital.reported_date_timestamp = r.reported_date;
+                                    _hospital.reported_date = reported_date;
+                                    _hospital.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _hospital.year = year;
+                                    _hospital.month = month;
+                                    await _repoHospital.save(_hospital);
+                                    outPutInfo["Hospital"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["Hospital"]["ErrorCount"] += 1;
+                                outPutInfo["Hospital"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["Hospital"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+                    }
+                    if (district_quartier === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("DistrictQuartier" in outPutInfo)) outPutInfo["DistrictQuartier"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    'parent' in r.parent.parent.parent &&
+                                    'parent' in r.parent.parent.parent.parent &&
+                                    (r.type === 'district_hospital' || r.contact_type === 'district_hospital')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _districtH = new DistrictQuartier();
+                                    _districtH.id = r._id;
+                                    _districtH.rev = r._rev;
+                                    _districtH.name = r.name;
+                                    _districtH.external_id = r.external_id;
+                                    _districtH.code = r.code;
+                                    _districtH.geolocation = r.geolocation;
+                                    _districtH.hospital = r.parent._id;
+                                    _districtH.commune = r.parent.parent._id;
+                                    _districtH.prefecture = r.parent.parent.parent._id;
+                                    _districtH.region = r.parent.parent.parent.parent._id;
+                                    _districtH.country = r.parent.parent.parent.parent.parent._id;
+                                    // _districtH.chw_id = r.contact._id;
+                                    _districtH.reported_date_timestamp = r.reported_date;
+                                    _districtH.reported_date = reported_date;
+                                    _districtH.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _districtH.year = year;
+                                    _districtH.month = month;
+                                    await _repoDistrictQuartier.save(_districtH);
+                                    outPutInfo["DistrictQuartier"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["DistrictQuartier"]["ErrorCount"] += 1;
+                                outPutInfo["DistrictQuartier"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["DistrictQuartier"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+                    }
+                    if (village_secteur === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("VillageSecteur" in outPutInfo)) outPutInfo["VillageSecteur"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    'parent' in r.parent.parent.parent &&
+                                    'parent' in r.parent.parent.parent.parent &&
+                                    'parent' in r.parent.parent.parent.parent.parent &&
+                                    (r.type === 'health_center' || r.contact_type === 'health_center')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _villageS = new VillageSecteur();
+                                    _villageS.id = r._id;
+                                    _villageS.rev = r._rev;
+                                    _villageS.name = r.name;
+                                    _villageS.external_id = r.external_id;
+                                    _villageS.code = r.code;
+                                    _villageS.geolocation = r.geolocation;
+                                    _villageS.district_quartier = r.parent._id;
+                                    _villageS.hospital = r.parent.parent._id;
+                                    _villageS.commune = r.parent.parent.parent._id;
+                                    _villageS.prefecture = r.parent.parent.parent.parent._id;
+                                    _villageS.region = r.parent.parent.parent.parent.parent._id;
+                                    _villageS.country = r.parent.parent.parent.parent.parent.parent._id;
+                                    _villageS.reco_id = r.contact._id;
+                                    _villageS.reported_date_timestamp = r.reported_date;
+                                    _villageS.reported_date = reported_date;
+                                    _villageS.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _villageS.year = year;
+                                    _villageS.month = month;
+                                    await _repoVillageSecteur.save(_villageS);
+                                    outPutInfo["VillageSecteur"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["VillageSecteur"]["ErrorCount"] += 1;
+                                outPutInfo["VillageSecteur"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["VillageSecteur"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (country_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("CountryManager" in outPutInfo)) outPutInfo["CountryManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r && 
+                                    'parent' in r && 
+                                    r.type === 'person' && r.role === 'country_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _country = new CountryManager();
+                                    _country.id = r._id;
+                                    _country.rev = r._rev;
+                                    _country.name = r.name;
+                                    _country.external_id = r.external_id;
+                                    _country.code = r.code;
+                                    _country.role = r.role;
+                                    _country.sex = getSexe(r.sex);
+                                    _country.date_of_birth = r.date_of_birth;
+                                    _country.phone = r.phone;
+                                    _country.email = r.email;
+                                    _country.profession = r.profession;
+                                    _country.geolocation = r.geolocation;                                    
+                                    _country.country = r.parent._id;
+                                    _country.reported_date_timestamp = r.reported_date;
+                                    _country.reported_date = reported_date;
+                                    _country.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _country.year = year;
+                                    _country.month = month;
+                                    await _repoCountryManager.save(_country);
+                                    outPutInfo["CountryManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["CountryManager"]["ErrorCount"] += 1;
+                                outPutInfo["CountryManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["CountryManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (region_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("RegionManager" in outPutInfo)) outPutInfo["RegionManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    r.type === 'person' && r.role === 'region_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _region = new RegionManager();
+                                    _region.id = r._id;
+                                    _region.rev = r._rev;
+                                    _region.name = r.name;
+                                    _region.external_id = r.external_id;
+                                    _region.code = r.code;
+                                    _region.role = r.role;
+                                    _region.sex = getSexe(r.sex);
+                                    _region.date_of_birth = r.date_of_birth;
+                                    _region.phone = r.phone;
+                                    _region.email = r.email;
+                                    _region.profession = r.profession;
+                                    _region.geolocation = r.geolocation;
+                                    _region.region = r.parent._id;
+                                    _region.country = r.parent.parent._id;
+                                    _region.reported_date_timestamp = r.reported_date;
+                                    _region.reported_date = reported_date;
+                                    _region.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _region.year = year;
+                                    _region.month = month;
+                                    await _repoRegionManager.save(_region);
+                                    outPutInfo["RegionManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["RegionManager"]["ErrorCount"] += 1;
+                                outPutInfo["RegionManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["RegionManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (prefecture_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("PrefectureManager" in outPutInfo)) outPutInfo["PrefectureManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    r.type === 'person' && r.role === 'prefecture_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _prefecture = new PrefectureManager();
+                                    _prefecture.id = r._id;
+                                    _prefecture.rev = r._rev;
+                                    _prefecture.name = r.name;
+                                    _prefecture.external_id = r.external_id;
+                                    _prefecture.code = r.code;
+                                    _prefecture.role = r.role;
+                                    _prefecture.sex = getSexe(r.sex);
+                                    _prefecture.date_of_birth = r.date_of_birth;
+                                    _prefecture.phone = r.phone;
+                                    _prefecture.email = r.email;
+                                    _prefecture.profession = r.profession;
+                                    _prefecture.geolocation = r.geolocation;
+                                    _prefecture.prefecture = r.parent._id;
+                                    _prefecture.region = r.parent.parent._id;
+                                    _prefecture.country = r.parent.parent.parent._id;
+                                    _prefecture.reported_date_timestamp = r.reported_date;
+                                    _prefecture.reported_date = reported_date;
+                                    _prefecture.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _prefecture.year = year;
+                                    _prefecture.month = month;
+                                    await _repoPrefectureManager.save(_prefecture);
+                                    outPutInfo["PrefectureManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["PrefectureManager"]["ErrorCount"] += 1;
+                                outPutInfo["PrefectureManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["PrefectureManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (commune_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("CommuneManager" in outPutInfo)) outPutInfo["CommuneManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    'parent' in r.parent.parent.parent &&
+                                    r.type === 'person' && r.role === 'commune_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _commune = new CommuneManager();
+                                    _commune.id = r._id;
+                                    _commune.rev = r._rev;
+                                    _commune.name = r.name;
+                                    _commune.external_id = r.external_id;
+                                    _commune.code = r.code;
+                                    _commune.role = r.role;
+                                    _commune.sex = getSexe(r.sex);
+                                    _commune.date_of_birth = r.date_of_birth;
+                                    _commune.phone = r.phone;
+                                    _commune.email = r.email;
+                                    _commune.profession = r.profession;
+                                    _commune.geolocation = r.geolocation;
+                                    _commune.commune = r.parent._id;
+                                    _commune.prefecture = r.parent.parent._id;
+                                    _commune.region = r.parent.parent.parent._id;
+                                    _commune.country = r.parent.parent.parent.parent._id;
+                                    _commune.reported_date_timestamp = r.reported_date;
+                                    _commune.reported_date = reported_date;
+                                    _commune.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _commune.year = year;
+                                    _commune.month = month;
+                                    await _repoCommuneManager.save(_commune);
+                                    outPutInfo["CommuneManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["CommuneManager"]["ErrorCount"] += 1;
+                                outPutInfo["CommuneManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["CommuneManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (hospital_manager === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("HospitalManager" in outPutInfo)) outPutInfo["HospitalManager"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    'parent' in r.parent.parent.parent &&
+                                    'parent' in r.parent.parent.parent.parent &&
+                                    r.type === 'person' && r.role === 'hospital_manager') {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _hospital = new HospitalManager();
+                                    _hospital.id = r._id;
+                                    _hospital.rev = r._rev;
+                                    _hospital.name = r.name;
+                                    _hospital.external_id = r.external_id;
+                                    _hospital.code = r.code;
+                                    _hospital.role = r.role;
+                                    _hospital.sex = getSexe(r.sex);
+                                    _hospital.date_of_birth = r.date_of_birth;
+                                    _hospital.phone = r.phone;
+                                    _hospital.email = r.email;
+                                    _hospital.profession = r.profession;
+                                    _hospital.geolocation = r.geolocation;
+                                    _hospital.hospital = r.parent._id;
+                                    _hospital.commune = r.parent.parent._id;
+                                    _hospital.prefecture = r.parent.parent.parent._id;
+                                    _hospital.region = r.parent.parent.parent.parent._id;
+                                    _hospital.country = r.parent.parent.parent.parent.parent._id;
+                                    _hospital.reported_date_timestamp = r.reported_date;
+                                    _hospital.reported_date = reported_date;
+                                    _hospital.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _hospital.year = year;
+                                    _hospital.month = month;
+                                    await _repoHospitalManager.save(_hospital);
+                                    outPutInfo["HospitalManager"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["HospitalManager"]["ErrorCount"] += 1;
+                                outPutInfo["HospitalManager"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["HospitalManager"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                    if (family === true) {
+                        outDoneLenght++;
+                        for (let i = 0; i < len; i++) {
+                            done++;
+                            const r: any = rows[i].doc;
+                            if (!("Family" in outPutInfo)) outPutInfo["Family"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                            try {
+                                if (r &&
+                                    'parent' in r &&
+                                    'parent' in r.parent &&
+                                    'parent' in r.parent.parent &&
+                                    'parent' in r.parent.parent.parent &&
+                                    'parent' in r.parent.parent.parent.parent &&
+                                    'parent' in r.parent.parent.parent.parent.parent &&
+                                    'parent' in r.parent.parent.parent.parent.parent.parent &&
+                                    (r.type === 'clinic' || r.contact_type === 'clinic')) {
+                                    const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                    const m = (new Date(reported_date)).getMonth() + 1;
+                                    const year = (new Date(reported_date)).getFullYear();
+                                    const month = m < 10 ? `0${m}` : `${m}`
+
+                                    const _family = new Family();
+                                    _family.id = r._id;
+                                    _family.rev = r._rev;
+                                    _family.name = r.name;
+                                    _family.external_id = r.external_id;
+                                    _family.code = r.code;
+                                    _family.geolocation = r.geolocation;
+                                    _family.village_secteur = r.parent._id;
+                                    _family.district_quartier = r.parent.parent._id;
+                                    _family.hospital = r.parent.parent.parent._id;
+                                    _family.commune = r.parent.parent.parent.parent._id;
+                                    _family.prefecture = r.parent.parent.parent.parent.parent._id;
+                                    _family.region = r.parent.parent.parent.parent.parent.parent._id;
+                                    _family.country = r.parent.parent.parent.parent.parent.parent.parent._id;
+                                    _family.reco = r.user_info.created_user_id
+                                    // _family.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent._id } }));
+                                    _family.household_has_working_latrine = r.household_has_working_latrine;
+                                    _family.household_has_good_water_access = r.household_has_good_water_access;
+                                    _family.reported_date_timestamp = r.reported_date;
+                                    _family.reported_date = reported_date;
+                                    _family.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                    _family.year = year;
+                                    _family.month = month;
+                                    await _repoFamily.save(_family);
+                                    outPutInfo["Family"]["SuccessCount"] += 1;
+                                }
+                            } catch (err: any) {
+                                outPutInfo["Family"]["ErrorCount"] += 1;
+                                outPutInfo["Family"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                                outPutInfo["Family"]["ErrorIds"] += `${_sepation}${r._id}`;
+                            }
+                        }
+
+                    }
+                   
+                    if (done === len * outDoneLenght) {
+                        outPutInfo["status"] = 200;
+                        return resp.status(200).json(outPutInfo);
+                    }
+                } else {
+                    outPutInfo["status"] = 200;
+                    if (!("Message" in outPutInfo)) {
+                        outPutInfo["Message"] = { 
+                            SuccessCount: 0, 
+                            ErrorCount: 0, 
+                            ErrorElements: 'Pas de donnée trouvée avec les paramettres renseignés', 
+                            ErrorIds: '' 
+                        };
+                    }
+                    return resp.status(200).json(outPutInfo);
+                }
+            } catch (err: any) {
+                if (!err.statusCode) err.statusCode = 500;
+                outPutInfo["status"] = err.statusCode;
+                outPutInfo["InnerCatch"] = "Inner Catch Error";
+                return resp.status(err.statusCode).json(outPutInfo);
+            }
+        }).catch((err: any) => {
+            if (!err.statusCode) err.statusCode = 500;
+            outPutInfo["status"] = err.statusCode;
+            outPutInfo["AxioCatch"] = "Axio Catch Error";
+            return resp.status(err.statusCode).json(outPutInfo);
+        });
+    } catch (err: any) {
+        if (!err.statusCode) err.statusCode = 500;
+        outPutInfo["status"] = err.statusCode;
+        outPutInfo["GlobalCatch"] = "Global Catch Error";
+        return resp.status(err.statusCode).json(outPutInfo);
+    }
+}
+
+export async function SYNC_CONTACTS_CHWS_FROM_COUCHDB(req: Request, resp: Response, next: NextFunction) {
+    var outPutInfo: any = {};
+    if (!validationResult(req).isEmpty()) {
+        outPutInfo["status"] = 500;
+        outPutInfo["validationError"] = "Your request provides was rejected !";
+        return resp.status(500).json(outPutInfo);
+    }
+    
+    const { userId, start_date, end_date, year, month } = req.body;
+    var filterDate = {start_date: '', end_date: ''};
+    if (start_date && end_date) {
+        filterDate = {start_date: start_date, end_date: end_date};
+    } else {
+        filterDate = getFirstAndLastDayOfMonth(year, month);
+    }
+    try {
+        // const startKey = date_to_milisecond('2024-04-01', true);
+        const startKey = date_to_milisecond(filterDate.start_date, true);
+        const endKey = date_to_milisecond(filterDate.end_date, false);
+        await AxioFetchCouchDbData('contacts_chws_by_date', { startKey, endKey }).then(async (response: any) => {
+            try {
+                const _repoChw = await getChwRepository();
+
+                var rows: any = response.data.rows;
+                if (rows && rows.length > 0) {
+                    var len = rows.length;
+                    var done: number = 0;
+                    var outDoneLenght: number = 0;
+
+                    outDoneLenght++;
+                    for (let i = 0; i < len; i++) {
+                        done++;
+                        const r: any = rows[i].doc;
+                        if (!("Chw" in outPutInfo)) outPutInfo["Chw"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                        try {
+                            if (r &&
+                                'parent' in r &&
+                                'parent' in r.parent &&
+                                'parent' in r.parent.parent &&
+                                'parent' in r.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent.parent &&
+                                r.type === 'person' && r.role === 'chw') {
+                                const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                const m = (new Date(reported_date)).getMonth() + 1;
+                                const year = (new Date(reported_date)).getFullYear();
+                                const month = m < 10 ? `0${m}` : `${m}`
+
+                                const _chw = new Chw();
+                                _chw.id = r._id;
+                                _chw.rev = r._rev;
+                                _chw.name = r.name;
+                                _chw.external_id = r.external_id;
+                                _chw.code = r.code;
+                                _chw.role = r.role;
+                                _chw.sex = getSexe(r.sex);;
+                                _chw.date_of_birth = r.date_of_birth;
+                                _chw.phone = r.phone;
+                                _chw.email = r.email;
+                                _chw.profession = r.profession;
+                                _chw.geolocation = r.geolocation;
+                                _chw.district_quartier = r.parent._id;
+                                _chw.hospital = r.parent.parent._id;
+                                _chw.commune = r.parent.parent.parent._id;
+                                _chw.prefecture = r.parent.parent.parent.parent._id;
+                                _chw.region = r.parent.parent.parent.parent.parent._id;
+                                _chw.country = r.parent.parent.parent.parent.parent.parent._id;
+                                _chw.reported_date_timestamp = r.reported_date;
+                                _chw.reported_date = reported_date;
+                                _chw.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                _chw.year = year;
+                                _chw.month = month;
+                                await _repoChw.save(_chw);
+                                outPutInfo["Chw"]["SuccessCount"] += 1;
+                            }
+                        } catch (err: any) {
+                            outPutInfo["Chw"]["ErrorCount"] += 1;
+                            outPutInfo["Chw"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                            outPutInfo["Chw"]["ErrorIds"] += `${_sepation}${r._id}`;
+                        }
+                    }
+
+                    if (done === len * outDoneLenght) {
+                        outPutInfo["status"] = 200;
+                        return resp.status(200).json(outPutInfo);
+                    }
+                } else {
+                    outPutInfo["status"] = 200;
+                    if (!("Message" in outPutInfo)) {
+                        outPutInfo["Message"] = { 
+                            SuccessCount: 0, 
+                            ErrorCount: 0, 
+                            ErrorElements: 'Pas de donnée trouvée avec les paramettres renseignés', 
+                            ErrorIds: '' 
+                        };
+                    }
+                    return resp.status(200).json(outPutInfo);
+                }
+            } catch (err: any) {
+                if (!err.statusCode) err.statusCode = 500;
+                outPutInfo["status"] = err.statusCode;
+                outPutInfo["InnerCatch"] = "Inner Catch Error";
+                return resp.status(err.statusCode).json(outPutInfo);
+            }
+        }).catch((err: any) => {
+            if (!err.statusCode) err.statusCode = 500;
+            outPutInfo["status"] = err.statusCode;
+            outPutInfo["AxioCatch"] = "Axio Catch Error";
+            return resp.status(err.statusCode).json(outPutInfo);
+        });
+    } catch (err: any) {
+        if (!err.statusCode) err.statusCode = 500;
+        outPutInfo["status"] = err.statusCode;
+        outPutInfo["GlobalCatch"] = "Global Catch Error";
+        return resp.status(err.statusCode).json(outPutInfo);
+    }
+}
+
+export async function SYNC_CONTACTS_RECOS_FROM_COUCHDB(req: Request, resp: Response, next: NextFunction) {
+    var outPutInfo: any = {};
+    if (!validationResult(req).isEmpty()) {
+        outPutInfo["status"] = 500;
+        outPutInfo["validationError"] = "Your request provides was rejected !";
+        return resp.status(500).json(outPutInfo);
+    }
+    
+    
+    const { userId, start_date, end_date, year, month } = req.body;
+    var filterDate = {start_date: '', end_date: ''};
+    if (start_date && end_date) {
+        filterDate = {start_date: start_date, end_date: end_date};
+    } else {
+        filterDate = getFirstAndLastDayOfMonth(year, month);
+    }
+    try {
+        // const startKey = date_to_milisecond('2024-04-01', true);
+        const startKey = date_to_milisecond(filterDate.start_date, true);
+        const endKey = date_to_milisecond(filterDate.end_date, false);
+        await AxioFetchCouchDbData('contacts_recos_by_date', { startKey, endKey }).then(async (response: any) => {
+            try {
+                const _repoReco = await getRecoRepository();
+
+                var rows: any = response.data.rows;
+                if (rows && rows.length > 0) {
+                    var len = rows.length;
+                    var done: number = 0;
+                    var outDoneLenght: number = 0;
+                    
+                    outDoneLenght++;
+                    for (let i = 0; i < len; i++) {
+                        done++;
+                        const r: any = rows[i].doc;
+                        if (!("Reco" in outPutInfo)) outPutInfo["Reco"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                        try {
+                            if (r &&
+                                'parent' in r &&
+                                'parent' in r.parent &&
+                                'parent' in r.parent.parent &&
+                                'parent' in r.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent.parent.parent &&
+                                r.type === 'person' && r.role === 'reco') {
+                                const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                const m = (new Date(reported_date)).getMonth() + 1;
+                                const year = (new Date(reported_date)).getFullYear();
+                                const month = m < 10 ? `0${m}` : `${m}`
+
+                                const _reco = new Reco();
+                                _reco.id = r._id;
+                                _reco.rev = r._rev;
+                                _reco.name = r.name;
+                                _reco.external_id = r.external_id;
+                                _reco.code = r.code;
+                                _reco.role = r.role;
+                                _reco.sex = getSexe(r.sex);;
+                                _reco.date_of_birth = r.date_of_birth;
+                                _reco.phone = r.phone;
+                                _reco.email = r.email;
+                                _reco.profession = r.profession;
+                                // _reco.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent._id } }));
+                                _reco.geolocation = r.geolocation;
+                                _reco.village_secteur = r.parent._id;
+                                _reco.district_quartier = r.parent.parent._id;
+                                _reco.hospital = r.parent.parent.parent._id;
+                                _reco.commune = r.parent.parent.parent.parent._id;
+                                _reco.prefecture = r.parent.parent.parent.parent.parent._id;
+                                _reco.region = r.parent.parent.parent.parent.parent.parent._id;
+                                _reco.country = r.parent.parent.parent.parent.parent.parent.parent._id;
+                                _reco.reported_date_timestamp = r.reported_date;
+                                _reco.reported_date = reported_date;
+                                _reco.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                _reco.year = year;
+                                _reco.month = month;
+                                await _repoReco.save(_reco);
+                                outPutInfo["Reco"]["SuccessCount"] += 1;
+                            }
+                        } catch (err: any) {
+                            outPutInfo["Reco"]["ErrorCount"] += 1;
+                            outPutInfo["Reco"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                            outPutInfo["Reco"]["ErrorIds"] += `${_sepation}${r._id}`;
+                        }
+                    }
+
+                
+
+                    if (done === len * outDoneLenght) {
+                        outPutInfo["status"] = 200;
+                        return resp.status(200).json(outPutInfo);
+                    }
+                } else {
+                    outPutInfo["status"] = 200;
+                    if (!("Message" in outPutInfo)) {
+                        outPutInfo["Message"] = { 
+                            SuccessCount: 0, 
+                            ErrorCount: 0, 
+                            ErrorElements: 'Pas de donnée trouvée avec les paramettres renseignés', 
+                            ErrorIds: '' 
+                        };
+                    }
+                    return resp.status(200).json(outPutInfo);
+                }
+            } catch (err: any) {
+                if (!err.statusCode) err.statusCode = 500;
+                outPutInfo["status"] = err.statusCode;
+                outPutInfo["InnerCatch"] = "Inner Catch Error";
+                return resp.status(err.statusCode).json(outPutInfo);
+            }
+        }).catch((err: any) => {
+            if (!err.statusCode) err.statusCode = 500;
+            outPutInfo["status"] = err.statusCode;
+            outPutInfo["AxioCatch"] = "Axio Catch Error";
+            return resp.status(err.statusCode).json(outPutInfo);
+        });
+    } catch (err: any) {
+        if (!err.statusCode) err.statusCode = 500;
+        outPutInfo["status"] = err.statusCode;
+        outPutInfo["GlobalCatch"] = "Global Catch Error";
+        return resp.status(err.statusCode).json(outPutInfo);
+    }
+}
+
+export async function SYNC_PATIENTS_FROM_COUCHDB(req: Request, resp: Response, next: NextFunction) {
+    var outPutInfo: any = {};
+    if (!validationResult(req).isEmpty()) {
+        outPutInfo["status"] = 500;
+        outPutInfo["validationError"] = "Your request provides was rejected !";
+        return resp.status(500).json(outPutInfo);
+    }
+    
+    const { userId, start_date, end_date, year, month } = req.body;
+    var filterDate = {start_date: '', end_date: ''};
+    if (start_date && end_date) {
+        filterDate = {start_date: start_date, end_date: end_date};
+    } else {
+        filterDate = getFirstAndLastDayOfMonth(year, month);
+    }
+    try {
+        // const startKey = date_to_milisecond('2024-04-01', true);
+        const startKey = date_to_milisecond(filterDate.start_date, true);
+        const endKey = date_to_milisecond(filterDate.end_date, false);
+        await AxioFetchCouchDbData('contacts_patients_by_date', { startKey, endKey }).then(async (response: any) => {
+            try {
+                const _repoPatient = await getPatientRepository();
+
+                var rows: any = response.data.rows;
+                if (rows && rows.length > 0) {
+                    var len = rows.length;
+                    var done: number = 0;
+                    var outDoneLenght: number = 0;
+
+                    outDoneLenght++;
+                    for (let i = 0; i < len; i++) {
+                        done++;
+                        const r: any = rows[i].doc;
+                        if (!("Patient" in outPutInfo)) outPutInfo["Patient"] = { SuccessCount: 0, ErrorCount: 0, ErrorElements: '', ErrorIds: '' };
+                        try {
+                            if (r &&
+                                'parent' in r &&
+                                'parent' in r.parent &&
+                                'parent' in r.parent.parent &&
+                                'parent' in r.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent.parent.parent &&
+                                'parent' in r.parent.parent.parent.parent.parent.parent.parent &&
+                                r.type === 'person' && r.role === 'patient') {
+                                const reported_date = milisecond_to_date(r.reported_date, 'dateOnly');
+                                const m = (new Date(reported_date)).getMonth() + 1;
+                                const year = (new Date(reported_date)).getFullYear();
+                                const month = m < 10 ? `0${m}` : `${m}`
+
+                                const _patient = new Patient();
+                                var date_of_death = null;
+                                var year_of_death = null;
+                                var month_of_death = null;
+
+                                if (notEmpty(r.date_of_death) && parseFloat(`${r.date_of_death}`) > 0) {
+                                    date_of_death = milisecond_to_date(r.date_of_death, 'dateOnly');
+                                    const dm = (new Date(date_of_death)).getMonth() + 1;
+                                    year_of_death = (new Date(date_of_death)).getFullYear();
+                                    month_of_death = dm < 10 ? `0${dm}` : `${dm}`
+                                }
+                                _patient.id = r._id;
+                                _patient.rev = r._rev;
+                                _patient.name = r.name;
+                                _patient.external_id = r.external_id;
+                                _patient.code = r.code;
+                                _patient.role = r.role;
+                                _patient.sex = getSexe(r.sex);
+                                _patient.date_of_birth = r.date_of_birth;
+                                _patient.phone = r.phone;
+                                _patient.profession = r.profession;
+                                _patient.has_birth_certificate = isTrue(r.has_birth_certificate);
+                                _patient.geolocation = r.geolocation;
+                                _patient.family = r.parent._id;
+                                _patient.village_secteur = r.parent.parent._id;
+                                _patient.district_quartier = r.parent.parent.parent._id;
+                                _patient.hospital = r.parent.parent.parent.parent._id;
+                                _patient.commune = r.parent.parent.parent.parent.parent._id;
+                                _patient.prefecture = r.parent.parent.parent.parent.parent.parent._id;
+                                _patient.region = r.parent.parent.parent.parent.parent.parent.parent._id;
+                                _patient.country = r.parent.parent.parent.parent.parent.parent.parent.parent._id;
+                                // _patient.chw = (await _repoChw.findOneBy({ district_quartier: { id: r.parent.parent.parent._id } }));
+                                _patient.reco = r.user_info.created_user_id
+                                _patient.reported_date_timestamp = r.reported_date;
+                                _patient.reported_date = reported_date;
+                                _patient.reported_full_date = milisecond_to_date(r.reported_date, 'fulldate');
+                                _patient.year = year;
+                                _patient.month = month;
+                                _patient.age_in_year_on_creation = getAgeIn("years", r.date_of_birth, r.reported_date);
+                                _patient.age_in_month_on_creation = getAgeIn("months", r.date_of_birth, r.reported_date);
+                                _patient.age_in_day_on_creation = getAgeIn("days", r.date_of_birth, r.reported_date);
+                                _patient.date_of_death = date_of_death;
+                                _patient.year_of_death = year_of_death;
+                                _patient.month_of_death = month_of_death;
+                                _patient.place_of_death = r.place_of_death;
+                                _patient.is_home_death = isTrue(r.is_home_death)
+                                _patient.is_stillbirth = isTrue(r.is_stillbirth)
+                                await _repoPatient.save(_patient);
+                                outPutInfo["Patient"]["SuccessCount"] += 1;
+                            }
+                        } catch (err: any) {
+                            outPutInfo["Patient"]["ErrorCount"] += 1;
+                            outPutInfo["Patient"]["ErrorElements"] += `${_sepation}${err.toString()}`;
+                            outPutInfo["Patient"]["ErrorIds"] += `${_sepation}${r._id}`;
+                        }
+                    }
+
+                
+
+                    if (done === len * outDoneLenght) {
+                        outPutInfo["status"] = 200;
+                        return resp.status(200).json(outPutInfo);
+                    }
+                } else {
+                    outPutInfo["status"] = 200;
+                    if (!("Message" in outPutInfo)) {
+                        outPutInfo["Message"] = { 
+                            SuccessCount: 0, 
+                            ErrorCount: 0, 
+                            ErrorElements: 'Pas de donnée trouvée avec les paramettres renseignés', 
+                            ErrorIds: '' 
+                        };
+                    }
+                    return resp.status(200).json(outPutInfo);
+                }
+            } catch (err: any) {
+                if (!err.statusCode) err.statusCode = 500;
+                outPutInfo["status"] = err.statusCode;
+                outPutInfo["InnerCatch"] = "Inner Catch Error";
+                return resp.status(err.statusCode).json(outPutInfo);
+            }
+        }).catch((err: any) => {
+            if (!err.statusCode) err.statusCode = 500;
+            outPutInfo["status"] = err.statusCode;
+            outPutInfo["AxioCatch"] = "Axio Catch Error";
+            return resp.status(err.statusCode).json(outPutInfo);
+        });
+    } catch (err: any) {
+        if (!err.statusCode) err.statusCode = 500;
+        outPutInfo["status"] = err.statusCode;
+        outPutInfo["GlobalCatch"] = "Global Catch Error";
+        return resp.status(err.statusCode).json(outPutInfo);
+    }
+}

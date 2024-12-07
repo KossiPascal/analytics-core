@@ -3,6 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { ChartUtils } from '@kossi-models/charts';
 import { RecoPerformanceDashboard } from '@kossi-models/dashboards';
 import { IndicatorsDataOutput } from '@kossi-models/reports';
+import { ConnectivityService } from '@kossi-services/connectivity.service';
 import { LocalDbDataFetchService } from '@kossi-services/local-db-data-fetch.service';
 import { SnackbarService } from '@kossi-services/snackbar.service';
 import { toArray, monthByArg } from '@kossi-src/app/utils/functions';
@@ -34,6 +35,8 @@ export class RecoPerformanceDashboardComponent {
 
   RECOS_PERFORMANCE$!: RecoPerformanceDashboard | undefined;
 
+  isOnline:boolean;
+
   MONTH!: string;
   YEAR!: number;
   ON_FETCHING: boolean = false;
@@ -59,9 +62,11 @@ export class RecoPerformanceDashboardComponent {
   _formGroup!: FormGroup;
 
 
-  constructor(private ldbfetch: LocalDbDataFetchService, private snackbar: SnackbarService) {
+  constructor(private ldbfetch: LocalDbDataFetchService, private conn: ConnectivityService, private snackbar: SnackbarService) {
     this.screenWidth = window.innerWidth;
     this.COLUMN_WIDTH = (window.innerWidth - 600) / 4;
+    this.isOnline = window.navigator.onLine;
+    this.conn.getOnlineStatus().subscribe(isOnline => this.isOnline = isOnline);
   }
 
   @HostListener('window:resize', ['$event'])
@@ -91,7 +96,7 @@ export class RecoPerformanceDashboardComponent {
 
     this.ON_FETCHING = true;
     this._formGroup.value.months = toArray(this._formGroup.value.months);
-    this.ldbfetch.GetRecoPerformanceDashboard(this._formGroup.value).then((_res$: IndicatorsDataOutput<RecoPerformanceDashboard> | undefined) => {
+    this.ldbfetch.GetRecoPerformanceDashboard(this._formGroup.value, this.isOnline).then((_res$: IndicatorsDataOutput<RecoPerformanceDashboard> | undefined) => {
       // this.RECOS_PERFORMANCE$ = _res$?.data;
       this.householdCount = _res$?.data.householdCount ?? 0;
       this.patientCount = _res$?.data.patientCount ?? 0;

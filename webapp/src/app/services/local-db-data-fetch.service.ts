@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { ChwsRecoReport, ChwsRecoReportElements, FamilyPlanningReport, HouseholdRecapReport, IndicatorsDataOutput, MorbidityReport, PcimneNewbornReport, PcimneNewbornReportUtils, PromotionReport, RecoMegQuantityUtils, RecoMegSituationReport } from '@kossi-models/reports';
 import { IndexedDbService } from './indexed-db.service';
 import { ApiService } from './api.service';
-import { RecoChartPerformanceDashboard, RecoPerformanceDashboard, RecoPerformanceDashboardUtils, RecoVaccinationDashboard, RecoVaccinationDashboardUtils } from '@kossi-models/dashboards';
+import { RecoChartPerformanceDashboard, RecoPerformanceDashboard, RecoVaccinationDashboard } from '@kossi-models/dashboards';
 import { monthByArg, notNull } from '../utils/functions';
 import { UserContextService } from './user-context.service';
 import { User } from '@kossi-models/user';
@@ -25,10 +25,10 @@ export class LocalDbDataFetchService {
 
   // ############################## REPORTS ################################
 
-  async GetPromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<PromotionReport> | undefined> {
+  async GetPromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<IndicatorsDataOutput<PromotionReport> | undefined> {
     var promotionReport: PromotionReport[] = [];
-    
-    if (this.USER?.can_use_offline_mode === true) {
+
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       promotionReport = await this.indexdb.getAllData<PromotionReport>('promotion_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -124,9 +124,9 @@ export class LocalDbDataFetchService {
     return;
   }
 
-  async GetFamilyPlanningReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<FamilyPlanningReport> | undefined> {
+  async GetFamilyPlanningReports({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<IndicatorsDataOutput<FamilyPlanningReport> | undefined> {
     var familyPlanningReport: FamilyPlanningReport[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       familyPlanningReport = await this.indexdb.getAllData<FamilyPlanningReport>('family_planning_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -185,9 +185,9 @@ export class LocalDbDataFetchService {
     return;
   }
 
-  async GetMorbidityReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<MorbidityReport> | undefined> {
+  async GetMorbidityReports({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<IndicatorsDataOutput<MorbidityReport> | undefined> {
     var morbidityReport: MorbidityReport[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       morbidityReport = await this.indexdb.getAllData<MorbidityReport>('morbidity_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -270,9 +270,9 @@ export class LocalDbDataFetchService {
     return;
   }
 
-  async GetHouseholdRecapReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<{ total: HouseholdRecapReport, out: IndicatorsDataOutput<HouseholdRecapReport[]> } | undefined> {
+  async GetHouseholdRecapReports({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<{ total: HouseholdRecapReport, out: IndicatorsDataOutput<HouseholdRecapReport[]> } | undefined> {
     var householdRecapReport: HouseholdRecapReport[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       householdRecapReport = await this.indexdb.getAllData<HouseholdRecapReport>('household_recaps_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -378,9 +378,9 @@ export class LocalDbDataFetchService {
     return;
   }
 
-  async GetPcimneNewbornReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<PcimneNewbornReport | undefined> {
+  async GetPcimneNewbornReports({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<PcimneNewbornReport | undefined> {
     var pcimneNewbornReport: PcimneNewbornReport[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       pcimneNewbornReport = await this.indexdb.getAllData<PcimneNewbornReport>('pcime_newborn_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -480,9 +480,9 @@ export class LocalDbDataFetchService {
     return;
   }
 
-  async GetChwsRecoReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<ChwsRecoReport> | undefined> {
+  async GetChwsRecoReports({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<IndicatorsDataOutput<ChwsRecoReport> | undefined> {
     var chwsRecoReports: ChwsRecoReport[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       chwsRecoReports = await this.indexdb.getAllData<ChwsRecoReport>('chws_reco_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -577,11 +577,9 @@ export class LocalDbDataFetchService {
     }
   }
 
-
-
-  async GetRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoMegQuantityUtils[]> | undefined> {
+  async GetRecoMegSituationReports({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<IndicatorsDataOutput<RecoMegQuantityUtils[]> | undefined> {
     var recoMegReports: RecoMegSituationReport[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       recoMegReports = await this.indexdb.getAllData<RecoMegSituationReport>('reco_meg_situation_reports', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -641,9 +639,9 @@ export class LocalDbDataFetchService {
 
   // ############################## DASHBOARDS ################################
 
-  async GetRecoVaccinationDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoVaccinationDashboard[]> | undefined> {
+  async GetRecoVaccinationDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<IndicatorsDataOutput<RecoVaccinationDashboard[]> | undefined> {
     var recoVaccineDashboard: RecoVaccinationDashboard[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       recoVaccineDashboard = await this.indexdb.getAllData<RecoVaccinationDashboard>('reco_vaccination_dashboard', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -679,9 +677,9 @@ export class LocalDbDataFetchService {
     return;
   }
 
-  async GetRecoPerformanceDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }): Promise<IndicatorsDataOutput<RecoPerformanceDashboard> | undefined> {
+  async GetRecoPerformanceDashboard({ months, year, recos }: { months: string[], year: number, recos: string[] }, isOnline:boolean): Promise<IndicatorsDataOutput<RecoPerformanceDashboard> | undefined> {
     var recoPerfDashboard: RecoPerformanceDashboard[] = [];
-    if (this.USER?.can_use_offline_mode === true) {
+    if (this.USER?.can_use_offline_mode === true && !isOnline) {
       recoPerfDashboard = await this.indexdb.getAllData<RecoPerformanceDashboard>('reco_performance_dashboard', this.keyPath, (item) => {
         return months.includes(item.month) && year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
       });
@@ -724,7 +722,7 @@ export class LocalDbDataFetchService {
     var recoChartPerfDashboard: RecoChartPerformanceDashboard[] = [];
     if (recos.length === 1) {
 
-      if (this.USER?.can_use_offline_mode === true) {
+      if (this.USER?.can_use_offline_mode === true && !isOnline) {
         recoChartPerfDashboard = await this.indexdb.getAllData<RecoChartPerformanceDashboard>('reco_chart_performance_dashboard', this.keyPath, (item) => {
           return year === parseInt(`${item.year}`) && notNull(item.reco?.id) && recos.includes(item.reco!.id);
         });
