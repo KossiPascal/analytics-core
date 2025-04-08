@@ -1,0 +1,78 @@
+<div [formGroup]="form">
+
+
+  <div *ngIf="isNote" class="note-field {{appearance}} {{invalidField}}">
+    <p *ngIf="getLabel as label"
+      [innerHTML]="label| titlecase"></p>
+    <small *ngIf="getHint as hint" [innerHTML]="hint| titlecase"></small>
+  </div>
+  
+  <div *ngIf="isInput" class="input-field {{appearance}} {{invalidField}}">
+    <label *ngIf="getLabel as label" [for]="fieldName"
+      class="form-label" [innerHTML]="label + required ? ' *' : ''| titlecase"></label>
+    <input
+      [type]="field.type || 'text'"
+      [formControlName]="fieldName"
+      class="form-control {{appearance}}">
+  </div>
+  
+  <!-- <div
+    *ngIf="isOtherFieldToShow" class=" {{appearance}} {{invalidField}} ">
+    <label *ngIf="getLabel as label" [for]="fieldName" class="form-label" [innerHTML]="label + required ? ' *' : ''| titlecase"></label>
+    <small *ngIf="getHint as hint" [innerHTML]="hint| titlecase"></small>
+    <input
+      [type]="field.type || 'text'"
+      [formControlName]="fieldName"
+      class="form-control {{appearance}}">
+  </div> -->
+  
+  
+  <div *ngIf="isDbObject" class="input-field {{appearance}} {{invalidField}}">
+    <label *ngIf="getLabel as label" class="form-label" [innerHTML]="label + required ? ' *' : ''| titlecase"></label>
+    <small *ngIf="getHint as hint" [innerHTML]="hint| titlecase"></small>
+    <select [formControlName]="fieldName" class="form-control {{appearance}} " >
+      <option *ngFor="let item of getDbData" value="{{item.value}}" [innerHTML]="item.name| titlecase"></option>
+    </select>
+  </div>
+  
+  
+  <div *ngIf="isSelectOne" class="select-one {{appearance}} {{invalidField}}">
+    <label *ngIf="getLabel as label" class="form-label" [innerHTML]="label + required ? ' *' : ''| titlecase"></label>
+    <small *ngIf="getHint as hint" [innerHTML]="hint| titlecase"></small>
+    <div *ngFor="let choice of field.choices; let i = index" class="input-field">
+      <ng-container *ngIf="getRadioCheckboxId('radio', choice.name, i) as radioId">
+        <input 
+          type="radio" 
+          [id]="radioId" 
+          [formControlName]="fieldName"
+          [value]="choice.name" 
+          class="{{appearance}}">
+  
+        <label *ngIf="getChoiceLabel(choice.label) as choice_label"
+          [for]="radioId" 
+          class="radio-label"
+          [innerHTML]="choice_label| titlecase"></label>
+      </ng-container>
+    </div>
+  </div>
+  
+  <div *ngIf="isSelectMultiple" class="select-multiple {{appearance}}{{invalidField}}">
+    <label *ngIf="getLabel as label" class="form-label" [innerHTML]="label + required ? ' *' : ''| titlecase"></label>
+    <small *ngIf="getHint as hint" [innerHTML]="hint| titlecase"></small>
+    <div *ngFor="let choice of field.choices; let i = index" class="input-field">
+      <ng-container *ngIf="getRadioCheckboxId('checkbox', choice.name, i) as checkboxId">
+        <input 
+          type="checkbox" 
+          [id]="checkboxId" 
+          [value]="choice.name" 
+          (change)="handleCheckboxChange($event, choice.name)" 
+          [checked]="(selectedValues??[]).includes(choice.name)" 
+          class="{{appearance}}">
+        
+        <label *ngIf="getChoiceLabel(choice.label) as choice_label"
+          [for]="checkboxId" class="checkbox-label"
+          [innerHTML]="choice_label| titlecase"></label>
+      </ng-container>
+    </div>
+  </div>
+  </div>

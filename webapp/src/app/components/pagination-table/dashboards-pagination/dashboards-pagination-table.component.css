@@ -1,0 +1,63 @@
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  font-family: 'Arial', sans-serif;
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+/* Dropdown styling */
+.pagination select {
+  padding: 8px 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #6200ea;
+  background: #f3f3f3;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.pagination select:hover {
+  background: #ddd;
+}
+
+/* Buttons styling */
+.pagination button {
+  background: linear-gradient(135deg, #6200ea, #9c27b0);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.pagination button:hover {
+  background: linear-gradient(135deg, #9c27b0, #6200ea);
+  transform: scale(1.05);
+}
+
+.pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Page counter styling */
+.pagination span {
+  font-size: 18px;
+  font-weight: bold;
+  color: #444;
+  padding: 8px 15px;
+  border-radius: 10px;
+  background: #f3f3f3;
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.1);
+}

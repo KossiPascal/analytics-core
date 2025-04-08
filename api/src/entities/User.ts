@@ -1,14 +1,15 @@
 import * as jwt from 'jsonwebtoken';
 import { Entity, Column, Repository, DataSource, PrimaryColumn, In } from "typeorm"
-import { AppDataSource } from '../data_source';
-import { notEmpty } from '../utils/functions';
-import { Routes, TokenUser } from '../utils/Interfaces';
-import { GetRolesAndNamesPagesAutorizations, Roles, getRolesRepository } from './Roles';
-import { ROUTES_LIST, AUTORISATIONS_LIST } from '../utils/autorizations-pages';
-import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, FAMILIES_CUSTOM_QUERY, PATIENTS_CUSTOM_QUERY } from '../controllers/orgunit-query/org-units-custom';
-import { ChwsMap, CommunesMap, CountryMap, DistrictQuartiersMap, GetChwsMap, GetCommunesMap, GetCountryMap, GetDistrictQuartiersMap, GetHospitalsMap, GetPrefecturesMap, GetRecosMap, GetRegionsMap, GetVillageSecteursMap, HospitalsMap, PrefecturesMap, RecosMap, RegionsMap, VillageSecteursMap } from '../utils/org-unit-interface';
+import { AppDataSource } from '../data-source';
+import { notEmpty } from '../functions/functions';
+import { GetRolesAndNamesPagesAuthorizations, Roles } from './Roles';
+import { ROUTES_LIST, AUTHORIZATIONS_LIST, _admin, can_use_offline_mode } from '../providers/authorizations-pages';
+import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY } from '../controllers/ORGUNITS/org-units-custom';
+import { SECRET_PRIVATE_KEY } from '../providers/constantes';
+import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap, GetCountryMap, GetRegionsMap, GetPrefecturesMap, GetCommunesMap, GetHospitalsMap, GetDistrictQuartiersMap, GetVillageSecteursMap, GetChwsMap, GetRecosMap } from '../models/org-units/orgunits-map';
 
 let Connection: DataSource = AppDataSource.manager.connection;
+
 
 @Entity("user", {
     orderBy: {
@@ -30,6 +31,9 @@ export class Users {
     @Column({ type: 'varchar', nullable: true })
     email!: string
 
+    @Column({ type: 'varchar', nullable: true })
+    phone!: string | null
+
     @Column({ type: 'timestamp', nullable: true })
     email_verified_at!: Date;
 
@@ -43,7 +47,7 @@ export class Users {
     salt!: string
 
     @Column({ type: 'jsonb', nullable: true })
-    roles!: string[]
+    roles!: number[]
 
     @Column({ type: 'text', nullable: true })
     token!: string
@@ -53,6 +57,9 @@ export class Users {
 
     @Column({ nullable: false, default: false })
     isDeleted!: boolean
+
+    @Column({ nullable: false, default: false })
+    hasChangedPassword!: boolean
 
     @Column({ nullable: false, default: false })
     mustLogin!: boolean
@@ -90,72 +97,121 @@ export class Users {
     @Column({ type: 'timestamp', nullable: true })
     created_at!: Date
 
+    @Column({ type: 'text', nullable: true })
+    created_by!: Users
+
     @Column({ type: 'timestamp', nullable: true })
     updated_at!: Date
+
+    @Column({ type: 'text', nullable: true })
+    updated_by!: Users
 }
 
 export async function getUsersRepository(): Promise<Repository<Users>> {
     return Connection.getRepository(Users);
 }
 
-export async function jwSecretKey(data: { userId?: string, user?: Users }): Promise<{ expiredIn: number, secretOrPrivateKey: string }> {
-    const second1 = 1000 * 60 * 60 * 24 * 366;
-    const second2 = 1000 * 60 * 60 * 12;
+
+export interface TokenUser {
+    id: string
+    username: string
+    fullname: string
+    email: string
+    phone: string | null
+    rolesIds?: number[]
+    rolesNames?: string[]
+    roles?: Roles[]
+    routes: Routes[]
+    authorizations: string[]
+    countries?: CountryMap[]
+    regions?: RegionsMap[]
+    prefectures?: PrefecturesMap[]
+    communes?: CommunesMap[]
+    hospitals?: HospitalsMap[]
+    districtQuartiers?: DistrictQuartiersMap[]
+    villageSecteurs?: VillageSecteursMap[]
+    chws?: ChwsMap[]
+    recos?: RecosMap[]
+}
+
+export interface Routes {
+    path: string;
+    label: string
+    authorizations: string[];
+}
+
+export interface UserRole {
+    isAdmin: boolean,
+    canUseOfflineMode: boolean,
+    canViewReports: boolean,
+    canViewDashboards: boolean,
+    canManageData: boolean,
+    canCreateUser: boolean,
+    canUpdateUser: boolean,
+    canDeleteUser: boolean,
+    canCreateRole: boolean,
+    canUpdateRole: boolean,
+    canDeleteRole: boolean,
+    changeDefaultPassword: boolean,
+    canValidateData: boolean,
+    canSendDataToDhis2: boolean,
+    canViewUsers: boolean,
+    canViewRoles: boolean,
+    canDownloadData: boolean,
+    canSendSms: boolean,
+    canLogout: boolean,
+    canUpdateProfile: boolean,
+    canUpdateLanguage: boolean,
+    canViewNotifications: boolean,
+}
+
+export interface FullRolesUtils {
+    rolesObj: Roles[]
+    rolesIds: number[]
+    rolesNames: string[]
+    routes: Routes[]
+    authorizations: string[]
+}
+
+export async function jwSecretKey({ userId, user, userToken, isOfflineUser }: { userId?: string, user?: Users, userToken?: TokenUser, isOfflineUser?: boolean }): Promise<{ expiredIn: number, secretOrPrivateKey: string }> {
+    isOfflineUser = isOfflineUser ?? false;
+
+    if (userId || user) {
+        if (userId) {
+            const _repo = await getUsersRepository();
+            const userF = await _repo.findOneBy({ id: userId });
+            if (userF) user = userF;
+        }
+
+        if (user) {
+            const data = await GetRolesAndNamesPagesAuthorizations(user.roles);
+            isOfflineUser = (data?.authorizations ?? []).includes(can_use_offline_mode);
+        }
+    } else if (userToken) {
+        isOfflineUser = userToken.authorizations.includes(can_use_offline_mode);
+    }
+
+    const offlinetimesecond = 60 * 60 * 24 * 366;
+    const onlinetimesecond = 60 * 60;
     return {
-        expiredIn: second2,
-        secretOrPrivateKey: 'Kossi-TSOLEGNAGBO-secretfortoken',
+        expiredIn: isOfflineUser ? offlinetimesecond : onlinetimesecond,
+        secretOrPrivateKey: SECRET_PRIVATE_KEY,
     }
 }
 
-export async function userToken(user: Users, param: { hashToken?: boolean, checkValidation?: boolean, outPutInitialRoles?: boolean, outPutOrgUnits?: boolean } = { hashToken: true, checkValidation: true, outPutInitialRoles: false, outPutOrgUnits: false }): Promise<TokenUser | string | null> {
-    const secret = await jwSecretKey({ user: user });
-    var roleIds: string[] = [];
-    var roles: Roles[] = [];
-    var routes: Routes[] = [];
-    var default_routes: Routes[] = [];
-    var autorizations: string[] = [];
-    var isAdmin: boolean = false;
-    var can_use_offline_mode: boolean = false;
-    var can_view_reports: boolean = false;
-    var can_view_dashboards: boolean = false;
-    var can_manage_data: boolean = false;
-    var can_create_user: boolean = false;
-    var can_update_user: boolean = false;
-    var can_delete_user: boolean = false;
-    var can_create_role: boolean = false;
-    var can_update_role: boolean = false;
-    var can_delete_role: boolean = false;
-    var can_logout: boolean = false;
+export async function userTokenGenerated(user: Users, param: { checkValidation?: boolean, outPutInitialRoles?: boolean, outPutOrgUnits?: boolean } = { checkValidation: true, outPutInitialRoles: false, outPutOrgUnits: false }): Promise<TokenUser | null> {
 
-    
+    const data = await GetRolesAndNamesPagesAuthorizations(user.roles);
 
-    const data = await GetRolesAndNamesPagesAutorizations(user.roles);
+    var rolesIds: number[] = data && notEmpty(data) ? data.rolesIds : [];
+    var rolesNames: string[] = data && notEmpty(data) ? data.rolesNames : [];
+    var roles: Roles[] = data && notEmpty(data) ? data.rolesObj : [];
+    var routes: Routes[] = data && notEmpty(data) ? data.routes : [];
+    var authorizations: string[] = data && notEmpty(data) ? data.authorizations : [];
+    var isAdmin: boolean = data && notEmpty(data) ? (data.authorizations.includes(_admin)) : false;
 
-    if (data && notEmpty(data)) {
-        roleIds = data.roles;
-        roles = data.rolesObj;
-        autorizations = data.autorizations;
-        isAdmin = data.autorizations.includes('_admin');
-        can_use_offline_mode = isAdmin ? false : data.autorizations.includes('can_use_offline_mode');
-        can_view_reports = isAdmin ? true : data.autorizations.includes('can_view_reports');
-        can_view_dashboards = isAdmin ? true : data.autorizations.includes('can_view_dashboards');
-        can_manage_data = isAdmin ? true : data.autorizations.includes('can_manage_data');
-        can_create_user = isAdmin ? true : data.autorizations.includes('can_create_user');
-        can_update_user = isAdmin ? true : data.autorizations.includes('can_update_user');
-        can_delete_user = isAdmin ? true : data.autorizations.includes('can_delete_user');
-        can_create_role = isAdmin ? true : data.autorizations.includes('can_create_role');
-        can_update_role = isAdmin ? true : data.autorizations.includes('can_update_role');
-        can_delete_role = isAdmin ? true : data.autorizations.includes('can_delete_role');
-        can_logout = isAdmin ? true : data.autorizations.includes('can_logout');
-
-        routes = data.routes;
-        default_routes = data.default_routes;
-    }
-    
-    if (param.checkValidation === true) {
-        if (!user.isActive || user.isDeleted || roleIds.length == 0 && !isAdmin || routes.length == 0 && !isAdmin || autorizations.length == 0) {
-            return null;
-        }
+    if (param.checkValidation === true && (!user.isActive || user.isDeleted || rolesIds.length == 0 && !isAdmin || routes.length == 0 && !isAdmin || authorizations.length == 0)) {
+        return null;
     }
 
     const tokenUser: TokenUser = {
@@ -163,62 +219,48 @@ export async function userToken(user: Users, param: { hashToken?: boolean, check
         username: user.username,
         fullname: user.fullname,
         email: user.email,
-        isAdmin: isAdmin,
-        can_use_offline_mode: can_use_offline_mode,
-        can_view_reports: can_view_reports,
-        can_view_dashboards: can_view_dashboards,
-        can_manage_data: can_manage_data,
-        can_create_user: can_create_user,
-        can_update_user: can_update_user,
-        can_delete_user: can_delete_user,
-        can_create_role: can_create_role,
-        can_update_role: can_update_role,
-        can_delete_role: can_delete_role,
-        can_logout: can_logout,
+        phone: user.phone,
         routes: isAdmin ? ROUTES_LIST : routes,
-        default_route: isAdmin ? routes[0] : default_routes[0],
-        autorizations: isAdmin ? AUTORISATIONS_LIST : autorizations,
-        // roleIds: roleIds,
-        // roles: roles,
-        // countries: countries,
-        // regions: regions,
-        // prefectures: prefectures,
-        // communes: communes,
-        // hospitals: hospitals,
-        // districtQuartiers: districtQuartiers,
-        // villageSecteurs: villageSecteurs,
-        // chws: chws,
-        // recos: recos
+        authorizations: isAdmin ? [...AUTHORIZATIONS_LIST, _admin] : authorizations,
+
+        countries: param.outPutOrgUnits === true ? (isAdmin !== true ? user.countries : (await COUNTRIES_CUSTOM_QUERY()).map(d => GetCountryMap(d))) : undefined,
+        regions: param.outPutOrgUnits === true ? (isAdmin !== true ? user.regions : (await REGIONS_CUSTOM_QUERY()).map(d => GetRegionsMap(d))) : undefined,
+        prefectures: param.outPutOrgUnits === true ? (isAdmin !== true ? user.prefectures : (await PREFECTURES_CUSTOM_QUERY()).map(d => GetPrefecturesMap(d))) : undefined,
+        communes: param.outPutOrgUnits === true ? (isAdmin !== true ? user.communes : (await COMMUNES_CUSTOM_QUERY()).map(d => GetCommunesMap(d))) : undefined,
+        hospitals: param.outPutOrgUnits === true ? (isAdmin !== true ? user.hospitals : (await HOSPITALS_CUSTOM_QUERY()).map(d => GetHospitalsMap(d))) : undefined,
+        districtQuartiers: param.outPutOrgUnits === true ? (isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_CUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d))) : undefined,
+        villageSecteurs: param.outPutOrgUnits === true ? (isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_CUSTOM_QUERY()).map(d => GetVillageSecteursMap(d))) : undefined,
+        chws: param.outPutOrgUnits === true ? (isAdmin !== true ? user.chws : (await CHWS_CUSTOM_QUERY()).map(d => GetChwsMap(d))) : undefined,
+        recos: param.outPutOrgUnits === true ? (isAdmin !== true ? user.recos : (await RECOS_CUSTOM_QUERY()).map(d => GetRecosMap(d))) : undefined,
+
+        rolesIds: param.outPutInitialRoles === true ? rolesIds : undefined,
+        rolesNames: param.outPutInitialRoles === true ? rolesNames : undefined,
+        roles: param.outPutInitialRoles === true ? roles : undefined,
+
+        // can_use_offline_mode: data && notEmpty(data) ? (isAdmin ? false : data.authorizations.includes(can_use_offline_mode)) : false,
+        // can_view_reports: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_view_reports)) : false,
+        // can_view_dashboards: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_view_dashboards)) : false,
+        // can_manage_data: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_manage_data)) : false,
+        // can_create_user: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_create_user)) : false,
+        // can_update_user: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_update_user)) : false,
+        // can_delete_user: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_delete_user)) : false,
+        // can_create_role: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_create_role)) : false,
+        // can_update_role: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_update_role)) : false,
+        // can_delete_role: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_delete_role)) : false,
+        // can_logout: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_logout)) : false,
     };
 
-    if (param.outPutOrgUnits === true) {
-        tokenUser.countries = isAdmin !== true ? user.countries : (await COUNTRIES_CUSTOM_QUERY()).map(d => GetCountryMap(d));
-        tokenUser.regions = isAdmin !== true ? user.regions : (await REGIONS_CUSTOM_QUERY()).map(d => GetRegionsMap(d));
-        tokenUser.prefectures = isAdmin !== true ? user.prefectures : (await PREFECTURES_CUSTOM_QUERY()).map(d => GetPrefecturesMap(d));
-        tokenUser.communes = isAdmin !== true ? user.communes : (await COMMUNES_CUSTOM_QUERY()).map(d => GetCommunesMap(d));
-        tokenUser.hospitals = isAdmin !== true ? user.hospitals : (await HOSPITALS_CUSTOM_QUERY()).map(d => GetHospitalsMap(d));
-        tokenUser.districtQuartiers = isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_CUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d));
-        tokenUser.villageSecteurs = isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_CUSTOM_QUERY()).map(d => GetVillageSecteursMap(d));
-        tokenUser.chws = isAdmin !== true ? user.chws : (await CHWS_CUSTOM_QUERY()).map(d => GetChwsMap(d));
-        tokenUser.recos = isAdmin !== true ? user.recos : (await RECOS_CUSTOM_QUERY()).map(d => GetRecosMap(d));
-        // FAMILIES_CUSTOM_QUERY();
-        // PATIENTS_CUSTOM_QUERY();
-    }
+    // if (param.outPutInitialRoles === true) {
+    //     const _repoRole = await getRolesRepository();
+    //     var rolesList: Roles[] = await _repoRole.find({ where: { id: In(user.roles.map(r => parseInt(r))) } });
+    //     tokenUser.roleIds = user.roles;
+    //     tokenUser.roles = rolesList;
+    // }
 
-    if (param.outPutInitialRoles === true) {
-        const _repoRole = await getRolesRepository();
-        var rolesList: Roles[] = await _repoRole.find({ where: { id: In(user.roles.map(r => parseInt(r))) } });
-        tokenUser.roleIds = user.roles;
-        tokenUser.roles = rolesList;
-    }
-
-    if (param.hashToken === true) {
-        return jwt.sign(
-            tokenUser,
-            secret.secretOrPrivateKey,
-            { expiresIn: `${secret.expiredIn}s` }
-        );
-    }
     return tokenUser;
+}
 
+export async function hashUserToken(user: TokenUser): Promise<string> {
+    const secret = await jwSecretKey({ userToken: user });
+    return jwt.sign(user, secret.secretOrPrivateKey, { expiresIn: secret.expiredIn });
 }

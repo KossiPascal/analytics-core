@@ -3,6 +3,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 
 
 @Pipe({
+  standalone: false,
   name: 'phone'
 })
 @Injectable({

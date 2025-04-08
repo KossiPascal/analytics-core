@@ -1,0 +1,178 @@
+
+.section-title {
+    margin-bottom: 12px!important;
+    font-size: 18px!important;
+    font-weight: bold!important;
+    color: black!important;
+  }
+  
+  .custom-checkbox {
+    display: flex!important;
+    align-items: center!important;
+    gap: 8px!important; /* Espacement entre la case et le texte */
+  }
+  
+  .custom-checkbox input[type="checkbox"] {
+    width: 18px!important;
+    height: 18px!important;
+    accent-color: #007bff!important; /* Couleur bleue professionnelle */
+    cursor: pointer!important;
+    zoom: 1.1!important;
+  }
+  
+  .custom-checkbox label {
+    font-size: 16px!important;
+    color: #333!important; /* Couleur sobre pour le texte */
+    font-weight: 500!important;
+    cursor: pointer!important;
+  }
+  
+  .checkbox-group {
+    position: relative!important;
+  }
+  
+  .parent-checkbox {
+    cursor: pointer!important;
+    display: flex!important;
+    align-items: center!important;
+  }
+  
+  .checkbox-list {
+    display: none!important;
+    background-color: #fff!important;
+    border: none!important;
+    padding: 5px!important;
+  }
+  
+  .checkbox-list.show {
+    display: block!important;
+  }
+  
+  .list-unlist {
+    background: transparent !important;
+    border: none !important;
+    color: rgb(2, 2, 74) !important;
+    cursor: pointer !important;
+    font-size: 32px !important;
+    padding: 0px!important;
+    /* margin-top: -8px; */
+    margin-left: 2px!important;
+    font-weight: bolder!important;
+    transition: color 0.3s ease-in-out !important;
+    width: 15px!important;
+    height: 32px!important;
+  }
+  
+  .list-unlist:hover {
+    color: darkblue !important;
+  }
+  
+  /* .list-unlist span {
+    margin-top: -10px;
+  } */
+  
+  
+  /* ################################################################################ */
+  .row {
+    width: 100%!important;
+    display: flex!important;
+    flex-wrap: wrap!important;
+    gap: 10px!important; /* Alternative au margin des colonnes */
+    align-items: center!important;
+    justify-content: left!important;
+    justify-items: center!important;
+  }
+  
+  /* Colonnes responsives */
+  .col-md-2 {
+    width: calc(16.666% - 10px)!important; /* 2 colonnes sur 12 */
+  }
+  
+  .col-md-3 {
+    width: calc(25% - 10px)!important; /* 3 colonnes sur 12 */
+  }
+  
+  .col-md-4 {
+    width: calc(33.333% - 10px)!important; /* 4 colonnes sur 12 */
+  }
+  
+  .col-md-6 {
+    width: calc(50% - 10px)!important; /* 6 colonnes sur 12 */
+  }
+  
+  /* Éviter dépassement */
+  .col-md-2, .col-md-3, .col-md-4, .col-md-6 {
+    box-sizing: border-box!important;
+    /* background-color: #f0f0f0;
+    border: 1px solid #ddd;  */
+  }
+  
+  
+  @media (max-width: 768px) {
+    .row {
+      flex-direction: column!important;
+    }
+    .col-md-2, .col-md-3, .col-md-4, .col-md-6 {
+      width: 100%!important;
+    }
+  }
+  
+  /* ############################################################################## */
+  
+  
+  
+  
+   .org-units-label {
+    margin-left: 5px!important;
+    cursor: pointer!important;
+  }
+  
+  .org-units-checkbox-parent {
+    margin-left: 25px!important;
+    /* margin-bottom: 20px!important; */
+    border-left: gray 1px dashed!important;
+    padding: 0px!important;
+  }
+  
+  .input-checkbox-group {
+    /* margin-bottom: 10px!important; */
+    padding: 0px!important;
+    margin-bottom: 10px!important;
+  }
+  
+  .org-units-check-input {
+    margin-left: 5px!important;
+    cursor: pointer!important;
+  }
+  
+  /* .undeleted-user{
+    background-color: white!important;
+  } */
+  
+  .deleted-user{
+    background-color: rgb(241, 241, 241)!important;
+    color: #b9b9b9;
+  }
+  
+  .action-checked {
+    color:black!important;
+    /* font-weight: bold; */
+  }
+  
+  .action-unchecked {
+    color:rgb(214, 213, 213)!important;
+  }
+  
+
+
+.update-color {
+    color: rgb(221, 143, 0)!important;
+    cursor: pointer; 
+    font-size: 18px;
+  }
+  
+  .delete-color {
+    color: rgb(191, 1, 1)!important;
+    cursor: pointer; 
+    font-size: 18px;
+  }

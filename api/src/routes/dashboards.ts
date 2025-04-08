@@ -2,7 +2,7 @@
 
 import { Router } from 'express';
 import { Middelware } from "../middleware/auth";
-import { GET_RECO_CHART_PERFORMANCE_DASHBOARD, GET_RECO_VACCINATION_DASHBOARD, GET_RECO_PERFORMANCE_DASHBOARD } from '../controllers/GET_FROM_DB/dashboars';
+import { GET_RECO_CHART_PERFORMANCE_DASHBOARD, GET_RECO_VACCINATION_DASHBOARD, GET_RECO_PERFORMANCE_DASHBOARD } from '../controllers/DASHBOARDS/dashboars';
 
 const Dashboards = Router();
 

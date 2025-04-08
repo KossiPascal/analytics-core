@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { AuthService } from '@kossi-services/auth.service';
 
 @Component({
+  standalone: false,
   selector: 'session-expired',
   templateUrl: './session-expired.component.html'
 })

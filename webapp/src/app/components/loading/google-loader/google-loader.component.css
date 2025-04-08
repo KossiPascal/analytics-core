@@ -1,0 +1,32 @@
+/* Fond semi-transparent couvrant toute la page */
+.loading-overlay {
+  position: relatif;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* background: rgba(255, 255, 255, 0.8); */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Loader circulaire type Google */
+.google-loader {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 5px solid transparent;
+  border-top-color: #4285F4; /* Bleu Google */
+  border-right-color: #EA4335; /* Rouge Google */
+  border-bottom-color: #FBBC05; /* Jaune Google */
+  border-left-color: #34A853; /* Vert Google */
+  animation: spin 1.2s linear infinite;
+}
+
+/* Animation de rotation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

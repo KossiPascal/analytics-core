@@ -1,0 +1,45 @@
+<!-- sync-status.component.html -->
+<div *ngIf="status" class="sync-status" [ngClass]="status">
+  <ng-container [ngSwitch]="status">
+    <div *ngSwitchCase="'pending'">
+      <i class="fas fa-spinner fa-spin text-blue-500"></i>
+      <span> Synchronisation en cours...</span>
+    </div>
+    <div *ngSwitchCase="'success'">
+      <i class="fas fa-check-circle text-green-600"></i>
+      <span> Synchronisation réussie</span>
+    </div>
+    <div *ngSwitchCase="'error'">
+      <i class="fas fa-times-circle text-red-600"></i>
+      <span> Échec de synchronisation</span>
+    </div>
+    <div *ngSwitchCase="'offline'">
+      <i class="fas fa-wifi-slash text-gray-500"></i>
+      <span> Mode hors ligne – en attente de connexion</span>
+    </div>
+    <div *ngSwitchCase="'outdated'">
+      <i class="fas fa-clock text-yellow-500"></i>
+      <span> Synchronisation conseillée</span>
+    </div>
+    <div *ngSwitchCase="'idle'">
+      <i class="fas fa-pause-circle text-gray-400"></i>
+      <span> Synchronisation en pause</span>
+    </div>
+    <div *ngSwitchDefault>
+      <span> Statut inconnu</span>
+    </div>
+  </ng-container>
+</div>
+
+
+
+
+
+<!-- <div *ngIf="status !== 'success'" class="sync-banner" [ngClass]="status">
+    <ng-container [ngSwitch]="status">
+      <p *ngSwitchCase="'pending'">⏳ Synchronisation en cours...</p>
+      <p *ngSwitchCase="'error'">❌ Erreur lors de la synchronisation</p>
+      <p *ngSwitchCase="'offline'">📴 Hors ligne — Synchronisation impossible</p>
+      <p *ngSwitchCase="'outdated'">⚠️ Données désynchronisées — Veuillez vous reconnecter</p>
+    </ng-container>
+  </div> -->

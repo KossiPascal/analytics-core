@@ -1,0 +1,199 @@
+
+/* Label and input styling */
+.form-label {
+  /* font-size: 16px; */
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: block;
+  color: #333;
+}
+
+.input-field input {
+  zoom: 1.5;
+}
+
+.input-field, .note-field {
+  margin-bottom: 15px;
+}
+
+input[type="text"] {
+  padding: 10px;
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-bottom: 8px;
+  font-size: 16px;
+} 
+
+input[type="radio"], input[type="checkbox"] {
+  /* padding: 10px; */
+  width: 100%;
+  /* border-radius: 4px; */
+  /* border: 1px solid #ccc; */
+  /* margin-bottom: 8px; */
+  font-size: 14px;
+}
+
+input[type="radio"], input[type="checkbox"] {
+  width: auto;
+}
+
+input[type="text"]:focus, input[type="radio"]:focus, input[type="checkbox"]:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.radio-label, .checkbox-label {
+  font-size: 16px;
+  margin-left: 10px;
+  color: #333;
+}
+
+/* Styling for note field */
+.note-field p {
+  font-size: 14px;
+  color: #555;
+}
+
+.note-field small {
+  font-size: 12px;
+  color: #888;
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+/* General styles for readonly fields */
+input[readonly],
+textarea[readonly],
+select[readonly],
+input[type="radio"][disabled],
+input[type="checkbox"][disabled] {
+  background-color: #f5f5f5; /* Light gray background */
+  color: #666; /* Darker text for readability */
+  cursor: not-allowed; /* Show disabled cursor */
+  border: 1px solid #ccc; /* Keep consistent border */
+}
+
+/* Disable pointer events for radio and checkboxes */
+input[type="radio"][disabled],
+input[type="checkbox"][disabled] {
+  opacity: 0.6; /* Reduce visibility */
+  pointer-events: none; /* Prevent interaction */
+}
+
+/* Style selects to look disabled */
+select[readonly] {
+  pointer-events: none; /* Prevent dropdown interaction */
+  appearance: none; /* Remove native dropdown styling */
+  background-color: #f5f5f5;
+}
+
+/* Placeholder color for readonly inputs */
+input[readonly]::placeholder,
+textarea[readonly]::placeholder {
+  color: #aaa;
+}
+
+/* Optional: Add a custom icon or overlay effect */
+.readonly-wrapper {
+  position: relative;
+}
+
+.readonly-wrapper::after {
+  content: "🔒"; /* Lock icon */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+
+
+/* General styles for readonly fields */
+.readonly input,
+.readonly textarea,
+.readonly select,
+.readonly input[type="radio"],
+.readonly input[type="checkbox"] {
+  background-color: #f5f5f5; /* Light gray background */
+  color: #666; /* Darker text for readability */
+  cursor: not-allowed; /* Show disabled cursor */
+  border: 1px solid #ccc; /* Keep consistent border */
+}
+
+/* Disable pointer events for radio and checkboxes */
+.readonly input[type="radio"],
+.readonly input[type="checkbox"] {
+  opacity: 0.6; /* Reduce visibility */
+  pointer-events: none; /* Prevent interaction */
+}
+
+/* Style selects to look disabled */
+.readonly select {
+  pointer-events: none; /* Prevent dropdown interaction */
+  appearance: none; /* Remove native dropdown styling */
+  background-color: #f5f5f5;
+}
+
+/* Placeholder color for readonly inputs */
+.readonly input::placeholder,
+.readonly textarea::placeholder {
+  color: #aaa;
+}
+
+/* Optional: Add a custom icon or overlay effect */
+.readonly {
+  position: relative;
+}
+
+.readonly::after {
+  content: "🔒"; /* Lock icon */
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+
+
+
+
+
+
+/* Style pour les champs invalides */
+.invalid-field {
+  /* border: 2px solid red!important; */
+  background-color: #f8d7da!important;
+  padding: 10px!important;
+}
+
+/* Style pour afficher un message d'erreur */
+.invalid-field input,
+.invalid-field textarea {
+  color: #721c24!important;
+  font-weight: bold!important;
+}
+
+.submit-btn {
+  margin-top: 20px!important;
+  padding: 10px 20px!important;
+  background-color: #007bff!important;
+  color: white!important;
+  border: none!important;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background-color: #0056b3!important;
+}
+
+

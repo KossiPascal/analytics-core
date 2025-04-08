@@ -1,123 +1,128 @@
 import { Injectable } from '@angular/core';
 import { AppStorageService } from './local-storage.service';
-import { AdminUser, Routes, User } from '../models/user';
+import { User } from '../models/user-role';
 import { jwtDecode } from "jwt-decode";
-import { DEFAULT_LOCAL_DB, DEFAULT_SECOND_LOCAL_DB } from '../utils/const';
+import { IndexedDbService } from './indexed-db.service';
+import { userRoles } from '@kossi-shared/functions';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserContextService {
 
-  constructor(private store: AppStorageService) { }
+  constructor(private indexdb: IndexedDbService, private store: AppStorageService) { }
 
-  get appLoadToken(): string | null | undefined {
-    return 'Kossi TSOLEGNAGBO';
-  }
+  APP_AUTH_TOKEN: string = 'Kossi TSOLEGNAGBO 26/06/1989 Lomé/Kara Integrate Health';
+  APP_ADMIN_PRIVILEGE: string = `${this.APP_AUTH_TOKEN} PRIVILEGES`;
 
-  get isLoggedIn(): boolean {
-    const user = this.currentUserCtx;
-    return user ? Math.floor(Date.now() / 1000) < user.exp : false;
-  }
-
-  get currentUserCtx(): User | null {
-    if (this.token !== '') {
-      const user = jwtDecode(this.token) as User;
-
-      const countries = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'countries' });
-      const regions = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'regions' });
-      const prefectures = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'prefectures' });
-      const communes = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'communes' });
-      const hospitals = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'hospitals' });
-      const districtQuartiers = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'districtQuartiers' });
-      const villageSecteurs = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'villageSecteurs' });
-      const chws = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'chws' });
-      const recos = this.store.get({ db: DEFAULT_LOCAL_DB, name: 'recos' });
-
-      if (countries !== '') user.countries = JSON.parse(countries);
-      if (regions !== '') user.regions = JSON.parse(regions);
-      if (prefectures !== '') user.prefectures = JSON.parse(prefectures);
-      if (communes !== '') user.communes = JSON.parse(communes);
-      if (hospitals !== '') user.hospitals = JSON.parse(hospitals);
-      if (districtQuartiers !== '') user.districtQuartiers = JSON.parse(districtQuartiers);
-      if (villageSecteurs !== '') user.villageSecteurs = JSON.parse(villageSecteurs);
-      if (chws !== '') user.chws = JSON.parse(chws);
-      if (recos !== '') user.recos = JSON.parse(recos);
-      return user;
+  async isLoggedIn(userObj: User | null = null): Promise<boolean> {
+    try {
+      const user = (userObj ?? await this.currentUser()) as User | null;
+      const currentTime = Math.floor(Date.now() / 1000);
+      return user && user != null ? (currentTime < user.exp) : false;
+    } catch (error) {
+      return false;
     }
-    return null;
   }
 
-  async getCurrentUserCtx(): Promise<User | null> {
-    return this.currentUserCtx;
+  async currentUser(userTokens?:{ id: string, data: string}[]): Promise<User | null> {
+    userTokens = userTokens ?? await this.indexdb.getAll<{ id: string, data: string }>('token');
+
+    const jsonUser: any = userTokens.reduce((acc, { id, data }) => {
+      (acc as any)[id] = data;
+      return acc;
+    }, {});
+
+    if (!jsonUser || !jsonUser.user || !jsonUser.persons) return null;
+
+    const user = jwtDecode(jsonUser.user) as User;
+    if (!user) return null;
+
+    if (jsonUser.orgunits) {
+      const ou = jwtDecode(jsonUser.orgunits) as any;
+      if ((ou.countries ?? '') !== '') user.countries = ou.countries;
+      if ((ou.regions ?? '') !== '') user.regions = ou.regions;
+      if ((ou.prefectures ?? '') !== '') user.prefectures = ou.prefectures;
+      if ((ou.communes ?? '') !== '') user.communes = ou.communes;
+      if ((ou.hospitals ?? '') !== '') user.hospitals = ou.hospitals;
+      if ((ou.districtQuartiers ?? '') !== '') user.districtQuartiers = ou.districtQuartiers;
+      if ((ou.villageSecteurs ?? '') !== '') user.villageSecteurs = ou.villageSecteurs;
+    }
+    if (!jsonUser.persons) return null
+    const ps = jwtDecode(jsonUser.persons) as any;
+    if ((ps.chws ?? '') !== '') user.chws = ps.chws;
+    if ((ps.recos ?? '') !== '') user.recos = ps.recos;
+
+    if (!user.recos || user.recos.length === 0) return null;
+
+    
+   
+    user.role = userRoles(user.authorizations ?? [], user.routes ?? [])
+
+    return user;
   }
 
-  get token(): string {
-    return this.store.get({ db: DEFAULT_LOCAL_DB, name: 'token' });
+  async token(): Promise<string> {
+    const token = await this.indexdb.getOne<{ id: string, data: string }>('token', 'user');
+    return token?.data ?? '';
   }
 
-  get defaultPage(): string {
-    const user = this.currentUserCtx;
+  async defaultPage(userObj: User | null = null): Promise<string> {
+    const user = userObj ?? await this.currentUser();
     if (user) {
-      const lastVisitedUrl = this.store.get({ db: DEFAULT_SECOND_LOCAL_DB, name: 'lastVisitedUrl' })
+      const lastVisitedUrl = this.store.get({ db: 'session', name: 'lastVisitedUrl' })
       if ((lastVisitedUrl ?? '') != '') return lastVisitedUrl!;
-      const dph = user.default_route?.path ?? '';
-      if (dph != '') return dph;
-      if (user.isAdmin) return 'admin/users';
-      const uph = user.routes?.[0]?.path ?? '';
-      if (uph != '') return uph;
+      if (user.role.isAdmin) return '/admin/users';
     }
-    return '';
+    return '/dashboards';
   }
 
-  get routesObg(): Routes[] {
-    const user = this.currentUserCtx;
-    return user && user.routes ? user.routes : [];
+
+
+
+  authorizations(userCtx: User | null): string[] {
+    return userCtx?.authorizations ?? [];
   }
 
-  get allRoutes(): string[] {
-    return this.routesObg.map(route => route.path);
-  }
 
-  get groupedRoutes(): { group: string, routes: { path: string, label: string }[] }[] {
-    const groups: { group: string, routes: { path: string, label: string }[] }[] = [];
-    var gMap: { [key: string]: { path: string, label: string }[] } = {};
-    for (const rt of this.routesObg) {
-      if (!(rt.group in gMap)) {
-        gMap[`${rt.group}`] = [];
-      }
-      gMap[`${rt.group}`].push({ path: rt.path, label: rt.label })
-    }
+  // routesObg(user: User | null): Routes[] {
+  //   return user && user.routes ? user.routes : [];
+  // }
 
-    for (let [group, routes] of Object.entries(gMap)) {
-      groups.push({ group: group, routes: routes })
-    }
-    return groups;
-  }
+  // allRoutes(user: User | null): string[] {
+  //   return this.routesObg(user).map(route => route.path);
+  // }
 
-  autorizations(userCtx: User | AdminUser | null = null): string[] {
-    userCtx = userCtx || this.currentUserCtx;
-    return userCtx?.autorizations ?? [];
-  }
+  // groupedRoutes(user: User | null): { group: string, routes: { path: string, label: string }[] }[] {
+  //   const groups: { group: string, routes: { path: string, label: string }[] }[] = [];
+  //   var gMap: { [key: string]: { path: string, label: string }[] } = {};
+  //   for (const rt of this.routesObg(user)) {
+  //     if (!(rt.group in gMap)) {
+  //       gMap[`${rt.group}`] = [];
+  //     }
+  //     gMap[`${rt.group}`].push({ path: rt.path, label: rt.label })
+  //   }
 
-  hasRole(role: any, userCtx: User | AdminUser | null = null) {
-    userCtx = userCtx || this.currentUserCtx;
-    return !!(userCtx && this.autorizations(userCtx)?.includes(role));
-  }
+  //   for (let [group, routes] of Object.entries(gMap)) {
+  //     groups.push({ group: group, routes: routes })
+  //   }
+  //   return groups;
+  // }
 
-  isOnlineOnly(userCtx: User | AdminUser | null = null) {
-    userCtx = userCtx || this.currentUserCtx;
-    return userCtx?.isAdmin === true || this.hasRole('can_use_offline_mode', userCtx);
-  }
+  // hasRole(role: any, userCtx: User | null) {
+  //   return !!(userCtx && this.authorizations(userCtx)?.includes(role));
+  // }
 
-  canValidateReportData(userCtx: User | AdminUser | null = null) {
-    userCtx = userCtx || this.currentUserCtx;
-    return userCtx?.isAdmin === true || this.hasRole('can_validate_data', userCtx);
-  }
+  // isOnlineOnly(userCtx: User | null) {
+  //   return userCtx?.isAdmin === true || this.hasRole('can_use_offline_mode', userCtx);
+  // }
 
-  canSendValidatedReportToDhis2(userCtx: User | AdminUser | null = null) {
-    userCtx = userCtx || this.currentUserCtx;
-    return userCtx?.isAdmin === true || this.hasRole('can_send_data_to_dhis2', userCtx);
-  }
+  // canValidateReportsData(userCtx: User | null) {
+  //   return userCtx?.isAdmin === true || this.hasRole('can_validate_data', userCtx);
+  // }
+
+  // canSendValidatedReportToDhis2(userCtx: User | null) {
+  //   return userCtx?.isAdmin === true || this.hasRole('can_send_data_to_dhis2', userCtx);
+  // }
 
 }

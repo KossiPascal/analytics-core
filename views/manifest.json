@@ -1,7 +1,7 @@
 {
   "$schema": "http://json.schemastore.org/web-manifest",
-  "name": "Reco Analytics",
-  "short_name": "Reco Analytics",
+  "name": "Kendeya Dashboards",
+  "short_name": "Kendeya",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
@@ -12,6 +12,12 @@
   "description": "Analytics PWA",
   "orientation": "any",
   "icons": [
+    {
+      "src": "icons/icon-48x48.png",
+      "sizes": "48x48",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
     {
       "src": "/assets/icons/icon-72x72.png",
       "sizes": "72x72",

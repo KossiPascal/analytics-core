@@ -1,16 +1,22 @@
-import { Component, Input, HostListener, Output, EventEmitter, Attribute } from '@angular/core';
-import { BsModalRef } from 'ngx-bootstrap/modal';
+import { Component, Input, HostListener, Output, EventEmitter, Attribute, OnChanges, SimpleChanges } from '@angular/core';
+import { ModalColor, ModalWidth } from '@kossi-models/interfaces';
+import { ModalService } from '@kossi-services/modal.service';
 
 @Component({
+  standalone: false,
   selector: 'kossi-modal-layout',
   templateUrl: './modal-layout.component.html',
   styleUrls: ['./modal-layout.component.css'],
 })
-export class ModalLayoutComponent {
+
+export class ModalLayoutComponent implements OnChanges {
+  private stateChange!: any;
+
   @Attribute('id') id: any;
   @Input() showCloseButton!: boolean;
   @Input() error?: string;
   @Input() processing!: boolean;
+  @Input() disableSubmitButton!: boolean;
   @Input() isFlatButton!: boolean;
   @Input() modalTitle = 'Modal Title';
   @Input() cancelBtnName!: string;
@@ -18,17 +24,33 @@ export class ModalLayoutComponent {
   @Input() showBottomElements!: boolean;
   @Input() showCancelButton!: boolean;
   @Input() reloadApp!: boolean;
-  @Input() hideOnConfirm: boolean = true;
-
-  @Input() modalActionColor: 'danger-back' | 'info-back' | 'warning-back' | 'success-back' | 'light-back' = 'light-back';
+  @Input() closeAfterSubmited: boolean = true;
+  @Input() closeAfterCanceled: boolean = true;
+  
+  @Input() modalActionColor: ModalColor = 'light-back';
+  @Input() modalContentWidth:ModalWidth = 'small-width'
 
   @Output() onSubmit: EventEmitter<any> = new EventEmitter();
   @Output() onCancel: EventEmitter<any> = new EventEmitter();
 
   errorMsg!:string;
 
-  constructor(public bsModalRef: BsModalRef) { }
+  constructor(public modalService: ModalService) { }
 
+  
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['processing']) {
+      this.stateChange = new Date();
+    }
+    if (changes['disableSubmitButton']) {
+      this.stateChange = new Date();
+    }
+    if (changes['error']) {
+      this.stateChange = new Date();
+    }
+  }
+
+    
   @HostListener('window:keydown.enter')
   onEnterHandler() {
     this.submit();
@@ -40,7 +62,9 @@ export class ModalLayoutComponent {
       this.onCancel.emit();
       this.processing = false;
     }
-    this.bsModalRef.hide();
+    if (this.closeAfterCanceled) {
+      this.modalService.close();
+    }
   }
 
   async submit() {
@@ -59,20 +83,20 @@ export class ModalLayoutComponent {
       try {
         // Attendre la fin de l'événement onSubmit
         await onSubmitPromise;
-        // this.processing = false;
-        if (this.hideOnConfirm) {
-          this.bsModalRef.hide();
+        if (this.closeAfterSubmited) {
+          this.modalService.close();
         }
         if (this.reloadApp == true) {
           window.location.reload();
         }
+        // this.processing = false;
       } catch (error) {
         this.errorMsg = "Erreur lors de l'execution, veuillez réessayer";
         console.error("Erreur lors de l'execution, veuillez réessayer :", error);
         this.processing = false;
       }
     } else {
-      this.bsModalRef.hide();
+      this.modalService.close();
     }
   }
 }

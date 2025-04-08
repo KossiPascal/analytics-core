@@ -1,0 +1,47 @@
+/* thead th, thead td, tbody th, tbody td {
+  padding: 1px!important;
+} */
+
+thead .indicator-count {
+  width: 30px !important;
+}
+
+thead .indicator-total {
+  width: 25px !important;
+}
+
+thead .indicator {
+  width: 300px !important;
+}
+
+thead .pcimne-count .indicator-sex {
+  width: 30px !important;
+}
+
+.grey-back {
+  background-color: gray;
+  border: 1px gray solid;
+}
+
+.pcimne-body td,.pcimne-body th {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.pcimne-body .pcimne-total {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.pcimne-body .pcimne-bigtotal {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.left-border-separation {
+  border-left: 10px solid #ddd!important;
+}
+
+thead tr th {
+  text-align: center!important;
+}

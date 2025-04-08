@@ -2,6 +2,7 @@ import { Injectable, Pipe, PipeTransform } from '@angular/core';
 import { DomSanitizer, SafeHtml, SafeStyle, SafeScript, SafeUrl, SafeResourceUrl } from '@angular/platform-browser';
 
 @Pipe({
+  standalone: false,
   name: 'safeHtml'
 })
 @Injectable({

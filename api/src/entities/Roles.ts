@@ -1,7 +1,7 @@
 import { Entity, Column, Repository, DataSource, PrimaryGeneratedColumn } from "typeorm"
-import { AppDataSource } from '../data_source';
-import { notEmpty } from "../utils/functions";
-import { FullRolesUtils, Routes } from "../utils/Interfaces";
+import { AppDataSource } from '../data-source';
+import { notEmpty } from "../functions/functions";
+import { Routes, FullRolesUtils } from "./User";
 
 let Connection: DataSource = AppDataSource.manager.connection;
 
@@ -15,13 +15,10 @@ export class Roles {
     name!: string
 
     @Column({ type: 'jsonb', nullable: true })
-    autorizations!: string[]
+    authorizations!: string[]
 
     @Column({ type: 'jsonb', nullable: true })
     routes!: Routes[]
-
-    @Column({ type: 'jsonb', nullable: true })
-    default_route!: Routes
 
     @Column({ nullable: false, default: false })
     isDeleted!: boolean
@@ -29,12 +26,11 @@ export class Roles {
     @Column({ type: 'timestamp', nullable: true })
     deletedAt!: Date;
 }
-
 export async function getRolesRepository(): Promise<Repository<Roles>> {
     return Connection.getRepository(Roles);
 }
 
-export async function GetRolesAndNamesPagesAutorizations(rolesIds: string[]): Promise<FullRolesUtils | undefined> {
+export async function GetRolesAndNamesPagesAuthorizations(rolesIds: number[]): Promise<FullRolesUtils | undefined> {
     try {
         if (rolesIds && notEmpty(rolesIds)) {
             const repo = await getRolesRepository();
@@ -42,37 +38,37 @@ export async function GetRolesAndNamesPagesAutorizations(rolesIds: string[]): Pr
 
             if (rolesList && notEmpty(rolesList)) {
                 const rolesObj: Roles[] = Array.from(new Set(rolesIds
-                    .map(roleId => rolesList.find(role => role.id === parseInt(roleId.trim(), 10)))
-                    .filter(role => notEmpty(role?.name) && notEmpty(role?.autorizations)) as Roles[]));
+                    .map(roleId => rolesList.find(role => role.id === roleId))
+                    .filter(role => role && role?.name && role?.authorizations)))
+                    .filter(role => role != undefined);
 
-                const autorizations: string[] = Array.from(new Set(rolesObj.flatMap(role => role?.autorizations as string[])));
+                const authorizations: string[] = Array.from(new Set(rolesObj.flatMap(role => role?.authorizations as string[])));
 
-                const roles: Roles[] = rolesObj.filter(role => role && hasCommunAutorisations(role.routes, autorizations));
-                // const routesAutorizations = Array.from(new Set(roles.flatMap(role => role?.routes ?? []).map(role => role.autorisations).reduce((acc, curr) => acc.concat(curr), [])));
-                const default_routes: Routes[] = Array.from(new Set(roles.map(role => role.default_route).filter(droute => notEmpty(droute)) as Routes[]));
-                const rolesNames: string[] = Array.from(new Set(roles.map(role => (role as Roles).name)));
-                const routes: Routes[] = Array.from(new Set(roles.flatMap(role => role?.routes as Routes[])));
+                const roles: Roles[] = rolesObj.filter(role => role && hasCommunAuthorizations(role.routes, authorizations));
+                // const routesAuthorizations = Array.from(new Set(roles.flatMap(role => role?.routes ?? []).map(role => role.authorizations).reduce((acc, curr) => acc.concat(curr), [])));
+                const rolesIdsOut: number[] = Array.from(new Set(roles.flatMap(role => role.id)));
+                const rolesNames: string[] = Array.from(new Set(roles.flatMap(role => role.name)));
+                const routes: Routes[] = Array.from(new Set(roles.flatMap(role => role.routes)));
 
-                return { roles: rolesNames, rolesObj: roles, routes: routes, default_routes: default_routes, autorizations: autorizations }
+                return { rolesIds: rolesIdsOut, rolesNames: rolesNames, rolesObj: roles, routes: routes, authorizations: authorizations }
             }
         }
     } catch (error) { }
     return undefined;
 }
 
-function hasCommunAutorisations(routesList: Routes[], autorizations: string[]): boolean {
-    if (routesList.length > 0 && autorizations.length > 0) {
-        const routeAutorizations = routesList.flatMap(role => role.autorisations).reduce((unique: string[], r: string|null|undefined) => {
+function hasCommunAuthorizations(routesList: Routes[], authorizations: string[]): boolean {
+    if (routesList.length > 0 && authorizations.length > 0) {
+        const routeAuthorizations = routesList.flatMap(role => role.authorizations).reduce((unique: string[], r: string | null | undefined) => {
             if (r && !(unique.find(i => i === r))) {
-              unique.push(r);
+                unique.push(r);
             }
             return unique;
-          }, []);;
+        }, []);;
 
-        console.log(routesList)
-        // const routeAutorizations = routesList.map(role => role.autorisations).reduce((acc, curr) => acc.concat(curr), [])
-        for (const auth of routeAutorizations) {
-            if (autorizations.includes(auth)) {
+        // const routeAuthorizations = routesList.map(role => role.authorizations).reduce((acc, curr) => acc.concat(curr), [])
+        for (const auth of routeAuthorizations) {
+            if (authorizations.includes(auth)) {
                 return true;
             }
         }

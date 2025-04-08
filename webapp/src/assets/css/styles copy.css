@@ -1,0 +1,208 @@
+
+
+
+h1 {
+  color: #003366;
+}
+
+
+.filter-btn {
+  background-color: white;
+  color: #003366;
+  /* border: none; */
+  padding: 10px 15px;
+  cursor: pointer;
+  border: 1px solid #003366;
+  border-radius: 5px;
+  width: 110px;
+  font-weight: bold;
+}
+
+.filter-btn:hover {
+  background-color: #0055aa;
+}
+
+/* Barre de navigation */
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 25px;
+  margin-bottom: 20px;
+}
+
+.tab-link {
+  padding: 10px 20px;
+  border: none;
+  background: #003366;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.tab-link.active {
+  background: #0055aa;
+}
+
+/* Contenu des vues */
+.tab-content {
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+/* Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #003366;
+  color: white;
+}
+
+/* Modal de filtre */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 23%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  width: 90%;
+  max-width: 500px;
+}
+
+/* Style pour l'arrière-plan gris lorsqu'on ouvre le modal */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+/* Classe pour afficher le modal et l'overlay */
+.modal.open,
+.overlay.open {
+  display: block;
+}
+
+.modal-content {
+  text-align: center;
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+/* Empêcher le défilement de la page quand le modal est ouvert */
+body.modal-open {
+  overflow: hidden;
+}
+
+.close {
+  float: right;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+/* Style des champs */
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+/* Style du bouton */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  background: #0055aa;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.btn:hover {
+  background: #003366;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.stat-box {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 30%;
+}
+
+.stat-box h3 {
+  color: #555;
+}
+
+.stat-number {
+  font-size: 24px;
+  color: #003366;
+}
+
+
+.export-buttons {
+  margin-bottom: 10px;
+}
+
+.export-buttons button {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin-right: 5px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.export-buttons button:hover {
+  background-color: #0055aa;
+}
+

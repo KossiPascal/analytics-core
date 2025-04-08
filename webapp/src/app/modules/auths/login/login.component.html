@@ -1,51 +1,46 @@
-<app-public-utils></app-public-utils>
-
-<div class="row h-100 align-items-center justify-content-center" style="height: 100%;width: 100%;padding-top: 100px;">
-  <div class="col-12 col-sm-8 col-md-6 col-lg-5 col-xl-4" style="max-width: 500px;">
-    <div class="bg-white rounded p-4 p-sm-5 my-4 mx-3">
-      <!-- <div style="width: 100%;align-items: center;text-align: center;margin-bottom: 10px;">
-        <img height="80px" src="assets/logo/guinee.png" alt="">
-      </div> -->
-
-      <div class="d-flex align-items-center justify-content-between mb-3">
-
-        <a href="#" class="">
-          <h4 class="app-text-style">
-            <i class="fa fa-user-edit me-2"></i>
-            Connexion
-          </h4>
-        </a>
-        <h3 class="app-text-style">
-        <img height="40px" src="assets/logo/guinee.png" alt="">
-
-          </h3>
-      </div>
-      <form [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
-        <h6 style="color: darkred;" *ngIf="message">{{ message }}</h6>
-        <div class="form-floating mb-3">
-          <input style="background-color: whitesmoke;" type="text" class="form-control" id="floatingUsername"
-            placeholder="Username" formControlName="credential">
-          <label for="floatingUsername">Nom Utilisateur</label>
-        </div>
-        <div class="form-floating mb-3">
-          <input style="background-color: whitesmoke;" type="password" class="form-control" id="floatingPassword"
-            placeholder="Password" formControlName="password">
-          <label for="floatingPassword">Mot de passe</label>
-        </div>
-        <!-- <div class="d-flex align-items-center justify-content-between mb-4">
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="rememberMe" formControlName="rememberMe">
-            <label class="form-check-label" for="rememberMe">Se souvenir</label>
-          </div>
-          <a href="">Mot de passe oublié</a>
-        </div> -->
-        <br>
-        <button [disabled]="!loginForm.valid || isLoading" type="submit" class="btn btn-fifteen py-2 w-100 mb-4">Se
-          connecter
-          <span *ngIf="isLoading" class="fas fa-1x fa-sync-alt fa-spin"></span>
-        </button>
-        <!-- <p class="text-center mb-0">Pas encore de compte? <a href="">S'enrégistrer</a></p> -->
-      </form>
+<div class="login-body">
+  <!-- Country logo and name at the top-left -->
+  <div class="country-logo">
+    <img src="{{COUNTRY_LOGO}}" alt="Country Logo">
+    <div>
+      <div class="country-name">Integrate Health DHIS 2</div>
+      <div class="country-subname">Welcome to Integrate Health DHIS2</div>
     </div>
+  </div>
+
+
+  <!-- Login Form Section -->
+  <div class="login-form">
+    <!-- App Logo -->
+    <div class="login-header">
+      <img src="{{APP_LOGO}}" alt="App Logo">
+
+      <p class="login-title">Connexion</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()" autocomplete="off" novalidate>
+      <h6 *ngIf="message">{{ message }}</h6>
+
+      <div class="form-group">
+        <input type="text" id="username" formControlName="credential" placeholder="Username" autocomplete="off"
+          autocorrect="off" spellcheck="false" autocapitalize="none" required>
+      </div>
+
+      <div class="form-group">
+        <input type="password" id="password" formControlName="password" placeholder="Password"
+          autocomplete="new-password" autocorrect="off" spellcheck="false" autocapitalize="none" required>
+      </div>
+
+      <button [disabled]="!loginForm.valid || isLoading" type="submit" class="login-button">
+        Se connecter
+        <span *ngIf="isLoading" class="fas fa-1x fa-sync-alt fa-spin"></span>
+      </button>
+
+      <br><br>
+      <br><br>
+
+      <a class="documentations" href="/documentations" target="_blank" rel="noopener noreferrer">Documentations</a>
+
+    </form>
   </div>
 </div>

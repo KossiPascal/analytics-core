@@ -1,0 +1,10 @@
+<div *ngIf="SHOW_EXPORT_TABLE_BTN == true && this.USER?.role?.canDownloadData == true" class="export-buttons">
+  <button (click)="exportToCSV()">📂 CSV</button>
+  <button (click)="exportToJSON()">📂 JSON</button>
+  <button (click)="exportToExcel()">📂 Excel</button>
+  <button (click)="exportToPDF('p')">📂 PDF (Portrait)</button>
+  <button (click)="exportToPDF('l')">📂 PDF (Paysage)</button>
+</div>
+
+
+

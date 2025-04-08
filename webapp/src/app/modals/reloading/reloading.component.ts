@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { UpdateServiceWorkerService } from '@kossi-services/update-service-worker.service';
 @Component({
+  standalone: false,
   selector: 'reloading-modal',
   templateUrl: './reloading.component.html'
 })

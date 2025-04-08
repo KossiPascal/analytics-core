@@ -17,4 +17,5 @@ export interface Dhis2DataValueSetParams {
   recos: string[],
   period: { year: any, month: any }
   data: any,
+  orgunit: any,
 }

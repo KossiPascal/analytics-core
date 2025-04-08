@@ -1,5 +1,6 @@
 
 export interface FP_Utils {
+  label: string
   nbr_new_user: number
   nbr_regular_user: number
   nbr_total_user: number
@@ -20,33 +21,13 @@ export interface MorbidityUtils {
   nbr_referred: number | undefined
 }
 
-export interface IndicatorsDataOutput<T> {
-  country: { id: string, name: string }
-  region: { id: string, name: string }
-  prefecture: { id: string, name: string }
-  commune: { id: string, name: string }
-  hospital: { id: string, name: string }
-  district_quartier: { id: string, name: string }
-  // chw: { id: string, name: string, phone: string }
-  village_secteur: { id: string, name: string }
-  reco: { id: string, name: string, phone: string } | null
-  reco_asc_type: string
-  is_validate?: boolean
-  validate_user_id?: string
-  already_on_dhis2?: boolean
-  already_on_dhis2_user_id?: string
-  data: T
-}
-
 
 export interface RecoMegSituationReport {
   orgunit: string
   id: string
   month: string
   year: number
-
   meg_data: RecoMegQuantityUtils[]
-
   country: { id: string, name: string }
   region: { id: string, name: string }
   prefecture: { id: string, name: string }
@@ -79,7 +60,7 @@ export interface RecoMegQuantityUtils {
 
 
 
-export interface PromotionReport {
+export interface PromotionReport_OLD {
   id: string
   month: string
   year: number
@@ -149,20 +130,118 @@ export interface PromotionReport {
   already_on_dhis2_user_id?: string
 }
 
+export interface DomainsThemesUtils {
+  label: string,
+  vad: { F: number|null, M: number|null },
+  talk: { F: number|null, M: number|null },
+  personal: { F: number|null, M: number|null },
+  total: { F: number|null, M: number|null },
+  bigtotal: number
+}
+
+export interface PromotionReport {
+  id: string
+  month: string
+  year: number
+  orgunit: string
+  domains: {
+    maternel_childhealth: DomainsThemesUtils
+    education: DomainsThemesUtils
+    gbv: DomainsThemesUtils
+    nutrition: DomainsThemesUtils
+    water_hygiene: DomainsThemesUtils
+    ist_vih: DomainsThemesUtils
+    disease_control: DomainsThemesUtils
+    others: DomainsThemesUtils
+  },
+  themes: {
+    prenatal_consultation: DomainsThemesUtils
+    birth_attended: DomainsThemesUtils
+    delivery: DomainsThemesUtils
+    birth_registration: DomainsThemesUtils
+    post_natal: DomainsThemesUtils
+    post_abortion: DomainsThemesUtils
+    obstetric_fistula: DomainsThemesUtils
+    family_planning: DomainsThemesUtils
+    oral_contraceptive: DomainsThemesUtils
+    vaccination: DomainsThemesUtils
+    newborn_care_home: DomainsThemesUtils
+    care_home_illness_case: DomainsThemesUtils
+    child_development_care: DomainsThemesUtils
+    advice_for_child_development: DomainsThemesUtils
+    child_abuse: DomainsThemesUtils
+    female_genital_mutilation: DomainsThemesUtils
+    exclusive_breastfeeding: DomainsThemesUtils
+    vitamin_a_supp: DomainsThemesUtils
+    suppl_feeding: DomainsThemesUtils
+    malnutrition: DomainsThemesUtils
+    combating_iodine: DomainsThemesUtils
+    hand_washing: DomainsThemesUtils
+    community_led: DomainsThemesUtils
+    tuberculosis: DomainsThemesUtils
+    leprosy: DomainsThemesUtils
+    buruli_ulcer: DomainsThemesUtils
+    onchocerciasis: DomainsThemesUtils
+    bilharzia: DomainsThemesUtils
+    mass_deworming: DomainsThemesUtils
+    human_african_trypanosomiasis: DomainsThemesUtils
+    lymphatic: DomainsThemesUtils
+    trachoma: DomainsThemesUtils
+    sti_and_hepatitis: DomainsThemesUtils
+    hypertension: DomainsThemesUtils
+    diabetes: DomainsThemesUtils
+    cancers: DomainsThemesUtils
+    sickle_cell_disease: DomainsThemesUtils
+    malaria: DomainsThemesUtils
+    diarrhea: DomainsThemesUtils
+    bloody_diarrhea: DomainsThemesUtils
+    pneumonia: DomainsThemesUtils
+    yellow_fever: DomainsThemesUtils
+    cholera: DomainsThemesUtils
+    tetanus: DomainsThemesUtils
+    viral_diseases: DomainsThemesUtils
+    meningitis: DomainsThemesUtils
+    pfa: DomainsThemesUtils
+    urine_loss: DomainsThemesUtils
+    blood_pressure: DomainsThemesUtils
+    hiv: DomainsThemesUtils
+    ist: DomainsThemesUtils
+  }
+  country: { id: string, name: string }
+  region: { id: string, name: string }
+  prefecture: { id: string, name: string }
+  commune: { id: string, name: string }
+  hospital: { id: string, name: string }
+  district_quartier: { id: string, name: string }
+  // chw: { id: string, name: string, phone:string }
+  village_secteur: { id: string, name: string }
+  reco: { id: string, name: string, phone: string }
+  is_validate: boolean
+  validate_user_id: string
+  validated_at: string
+  cancel_validate_user_id: string
+  cancel_validated_at: string
+  already_on_dhis2: boolean
+  already_on_dhis2_user_id: string
+  already_on_dhis2_at: string
+}
+
 export interface FamilyPlanningReport {
   orgunit: string
   id: string
   month: string
   year: number
-  pill_coc: FP_Utils
-  pill_cop: FP_Utils
-  condoms: FP_Utils
-  depo_provera_im: FP_Utils
-  dmpa_sc: FP_Utils
-  cycle_necklace: FP_Utils
-  diu: FP_Utils
-  implant: FP_Utils
-  tubal_ligation: FP_Utils
+  methods: {
+    pill_coc: FP_Utils
+    pill_cop: FP_Utils
+    condoms: FP_Utils
+    depo_provera_im: FP_Utils
+    dmpa_sc: FP_Utils
+    cycle_necklace: FP_Utils
+    diu: FP_Utils
+    implant: FP_Utils
+    tubal_ligation: FP_Utils
+  }
   country: { id: string, name: string }
   region: { id: string, name: string }
   prefecture: { id: string, name: string }
@@ -276,39 +355,29 @@ export interface PcimneNewbornReport {
 export interface PcimneNewbornReportUtils {
   index: number
   indicator: string
-  nbr_malaria_0_2_months_F: number | undefined
-  nbr_malaria_0_2_months_M: number | undefined
-  nbr_malaria_2_12_months_F: number | undefined
-  nbr_malaria_2_12_months_M: number | undefined
-  nbr_malaria_12_60_months_F: number | undefined
-  nbr_malaria_12_60_months_M: number | undefined
 
-  nbr_cough_pneumonia_0_2_months_F: number | undefined
-  nbr_cough_pneumonia_0_2_months_M: number | undefined
-  nbr_cough_pneumonia_2_12_months_F: number | undefined
-  nbr_cough_pneumonia_2_12_months_M: number | undefined
-  nbr_cough_pneumonia_12_60_months_F: number | undefined
-  nbr_cough_pneumonia_12_60_months_M: number | undefined
+  malaria_0_2: { F: number|null, M: number|null }
+  malaria_2_12: { F: number|null, M: number|null }
+  malaria_12_60: { F: number|null, M: number|null }
 
-  nbr_diarrhea_0_2_months_F: number | undefined
-  nbr_diarrhea_0_2_months_M: number | undefined
-  nbr_diarrhea_2_12_months_F: number | undefined
-  nbr_diarrhea_2_12_months_M: number | undefined
-  nbr_diarrhea_12_60_months_F: number | undefined
-  nbr_diarrhea_12_60_months_M: number | undefined
+  cough_pneumonia_0_2: { F: number|null, M: number|null }
+  cough_pneumonia_2_12: { F: number|null, M: number|null }
+  cough_pneumonia_12_60: { F: number|null, M: number|null }
 
-  nbr_malnutrition_0_2_months_F: number | undefined
-  nbr_malnutrition_0_2_months_M: number | undefined
-  nbr_malnutrition_2_12_months_F: number | undefined
-  nbr_malnutrition_2_12_months_M: number | undefined
-  nbr_malnutrition_12_60_months_F: number | undefined
-  nbr_malnutrition_12_60_months_M: number | undefined
+  diarrhea_0_2: { F: number|null, M: number|null }
+  diarrhea_2_12: { F: number|null, M: number|null }
+  diarrhea_12_60: { F: number|null, M: number|null }
 
-  nbr_total: number | undefined
+  malnutrition_0_2: { F: number|null, M: number|null }
+  malnutrition_2_12: { F: number|null, M: number|null }
+  malnutrition_12_60: { F: number|null, M: number|null }
+
+  total: { F: number, M: number }
+  bigtotal: number
 }
 
 export interface ChwsRecoReport {
-  orgunit: string
+  // orgunit: string
   id: string
   month: string
   year: number
@@ -320,7 +389,7 @@ export interface ChwsRecoReport {
   morbidity_activities: ChwsRecoReportElements
   malaria_more_5_years: ChwsRecoReportElements
   home_visit: ChwsRecoReportElements
-  educational_chat: ChwsRecoReportElements
+  educational_talk: ChwsRecoReportElements
   developed_areas: ChwsRecoReportElements
   diseases_alerts: ChwsRecoReportElements,
 

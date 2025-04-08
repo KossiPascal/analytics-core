@@ -1,0 +1,16 @@
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.sync-status.pending { background-color: #e0f2fe; color: #0369a1; }
+.sync-status.success { background-color: #dcfce7; color: #15803d; }
+.sync-status.error { background-color: #fee2e2; color: #b91c1c; }
+.sync-status.offline { background-color: #f3f4f6; color: #4b5563; }
+.sync-status.outdated { background-color: #fef9c3; color: #92400e; }
+.sync-status.idle { background-color: #f9fafb; color: #6b7280; }

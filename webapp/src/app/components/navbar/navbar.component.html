@@ -1,0 +1,84 @@
+<!-- Navbar -->
+<nav class="navbar">
+  <!-- Left: Logo and Name -->
+  <div class="navbar-left">
+    <img src="{{ APP_LOGO}}" alt="Logo" class="app-logo">
+    <h2 class="app-title">{{ APP_NAME }}</h2>
+  </div>
+  
+  <div class="navbar-right">
+
+    <ng-container *ngIf="!isAuthenticated">
+      <div class="icon profile-icon " id="profile-icon">
+        <!-- <img class="rounded-circle me-lg-2" src="assets/img/default_icon.png" alt="" style="width: 40px; height: 40px;"> -->
+        <i class="fas fa-user-circle" style="margin-right: 10px;"></i>
+        <span routerLink="/auths/login" class="d-none d-lg-inline-flex" style="font-size: 18px;"> Se connecter</span>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="isAuthenticated">
+
+      <div *ngIf="USER?.role?.canViewNotifications == true" class="icon">
+        <i class="fas fa-envelope"></i>
+      </div>
+
+      <div *ngIf="USER?.role?.canUseOfflineMode == true" class="icon">
+        <i (click)="syncForOffline($event)" class="fas fa-sync-alt"></i>
+      </div>
+
+      <div *ngIf="USER?.role?.canViewNotifications == true" class="icon">
+        <i class="fas fa-bell"></i>
+      </div>
+      <div class="icon menu-toggle" id="menu-toggle">
+        <i class="fas fa-bars"></i>
+      </div>
+
+      <!-- Profile Icon to trigger popup menu -->
+      <div class="icon profile-icon " id="profile-icon">
+        <img class="rounded-circle me-lg-2" src="assets/img/default_icon.png" alt="" style="width: 40px; height: 40px;">
+        <!-- <i class="fas fa-user-circle">{{ USER?.fullname }}</i> -->
+        <span class="d-none d-lg-inline-flex">{{ USER?.fullname }}</span>
+      </div>
+
+    </ng-container>
+  </div>
+</nav>
+
+
+<!-- <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+  <div id="online-rounded-circle"
+    class="bg-{{ isOnline ? 'success' : 'danger' }} rounded-circle border border-2 border-white"></div>
+</a> -->
+
+<!-- USER?.role?.canUseOfflineMode == true -->
+
+<!-- Popup Menu -->
+<div *ngIf="isAuthenticated" class="popup-menu" id="popup-menu">
+  <!-- Barre de recherche dans le menu -->
+  <div *ngIf="APP_ROUTES.length > 1" class="search-container">
+    <input type="text" id="search-input" placeholder="Rechercher..." autocomplete="off">
+  </div>
+
+  <!-- First Row of 5 items -->
+  <div class="menu-row">
+      <div *ngFor="let route of APP_ROUTES" class="menu-item" [routerLink]="route.link" [attr.dataName]="route.dataName">
+        <i class="{{ route.icon }}"></i>
+        <span>{{ route.name }}</span>
+      </div>
+  </div>
+
+  <div id="no-results" class="no-results">Aucun élément trouvé</div>
+</div>
+
+
+<div *ngIf="isAuthenticated" class="profile-popup" id="profile-popup">
+  <div>
+    <app-sync-indicator *ngIf="USER?.role?.canUseOfflineMode == true"></app-sync-indicator>
+  </div>
+  <div *ngIf="USER?.role?.canUpdateProfile == true" class="profile-option" (click)="viewProfile($event)">Voir Profil</div>
+  <div *ngIf="USER?.role?.canUpdateLanguage == true" class="profile-option" (click)="setLanguage($event)">Changer Langue</div>
+  <div *ngIf="USER?.role?.canLogout == true" class="profile-option" (click)="logout($event)"><span class="fa fa-sign-out"></span> Déconnexion</div>
+</div>
+
+
+

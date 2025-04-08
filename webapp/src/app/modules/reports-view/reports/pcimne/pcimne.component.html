@@ -1,0 +1,114 @@
+<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.PCIMNE_NEWBORN == true"></app-google-loader>
+
+<ng-container *ngIf="DATA_FETCHED as pn">
+
+  <repports-header-selector
+    [id]="'pcimne-table-header'"
+    [REPPORT_NAME]="REPPORT_NAME"
+    [CHANGE_STATE]="CHANGE_STATE" 
+    [HIDE_ZERO_ID]="'pcimne-rep'"
+    [TABLE_ID]="'pcimne-table'"
+    [SHOW_EXPORT_TABLE_BTN]="true"
+    (onValidateData)="validateData()"
+    (onCancelDataValidated)="cancelValidation()"
+    (onSendDataToDhis2)="sendDataToDhis2($event)"
+    (onHideZero)="hideZero($event)"
+    >
+  </repports-header-selector>
+
+  <table id="pcimne-table" class="table table-bordered table-hover">
+    <thead>
+      <tr class="table-head">
+        <th class="indicator-count" rowspan="3" scope="col">N°</th>
+        <th class="indicator" rowspan="3" scope="col">Description</th>
+        <th colspan="6" scope="col">Corps chaud/ Paludisme</th>
+        <th colspan="6" scope="col">Toux ou difficulté respiratoire/ Pneumonie simple</th>
+        <th colspan="6" scope="col">Diarrhée simple</th>
+        <th colspan="6" scope="col">Malnutrition</th>
+        <th class="left-border-separation" colspan="2" rowspan="2" scope="col">TOTAL</th>
+        <th class="indicator-total" rowspan="3" scope="col">Grand TOTAL</th>
+      </tr>
+      <tr class="table-head">
+        <th colspan="2" scope="col">0-2 mois</th>
+        <th colspan="2" scope="col">2- 11 mois</th>
+        <th colspan="2" scope="col">12- 59 mois</th>
+        <th colspan="2" scope="col">0-2 mois</th>
+        <th colspan="2" scope="col">2- 11 mois</th>
+        <th colspan="2" scope="col">12- 59 mois</th>
+        <th colspan="2" scope="col">0-2 mois</th>
+        <th colspan="2" scope="col">2- 11 mois</th>
+        <th colspan="2" scope="col">12- 59 mois</th>
+        <th colspan="2" scope="col">0-2 mois</th>
+        <th colspan="2" scope="col">2- 11 mois</th>
+        <th colspan="2" scope="col">12- 59 mois</th>
+      </tr>
+
+      <tr class="table-head pcimne-count">
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+        <th class="indicator-sex left-border-separation" scope="col">F</th>
+        <th class="indicator-sex" scope="col">M</th>
+      </tr>
+    </thead>
+    <tbody class="pcimne-body">
+      <tr *ngFor="let p of pn">
+        <td scope="row">{{ p.index }}</td>
+        <td>{{ p.indicator }}</td>
+        <td class="{{ shawDarkMode(p.malaria_0_2.F) }}">{{ shawValue(p.malaria_0_2.F) }}</td>
+        <td class="{{ shawDarkMode(p.malaria_0_2.M) }}">{{ shawValue(p.malaria_0_2.M) }}</td>
+        <td class="{{ shawDarkMode(p.malaria_2_12.F) }}">{{ shawValue(p.malaria_2_12.F) }}</td>
+        <td class="{{ shawDarkMode(p.malaria_2_12.M) }}">{{ shawValue(p.malaria_2_12.M) }}</td>
+        <td class="{{ shawDarkMode(p.malaria_12_60.F) }}">{{ shawValue(p.malaria_12_60.F) }}</td>
+        <td class="{{ shawDarkMode(p.malaria_12_60.M) }}">{{ shawValue(p.malaria_12_60.M) }}</td>
+        <td class="{{ shawDarkMode(p.cough_pneumonia_0_2.F) }}">{{ shawValue(p.cough_pneumonia_0_2.F) }}</td>
+        <td class="{{ shawDarkMode(p.cough_pneumonia_0_2.M) }}">{{ shawValue(p.cough_pneumonia_0_2.M) }}</td>
+        <td class="{{ shawDarkMode(p.cough_pneumonia_2_12.F) }}">{{ shawValue(p.cough_pneumonia_2_12.F) }}</td>
+        <td class="{{ shawDarkMode(p.cough_pneumonia_2_12.M) }}">{{ shawValue(p.cough_pneumonia_2_12.M) }}</td>
+        <td class="{{ shawDarkMode(p.cough_pneumonia_12_60.F) }}">{{ shawValue(p.cough_pneumonia_12_60.F) }}</td>
+        <td class="{{ shawDarkMode(p.cough_pneumonia_12_60.M) }}">{{ shawValue(p.cough_pneumonia_12_60.M) }}</td>
+        <td class="{{ shawDarkMode(p.diarrhea_0_2.F) }}">{{ shawValue(p.diarrhea_0_2.F) }}</td>
+        <td class="{{ shawDarkMode(p.diarrhea_0_2.M) }}">{{ shawValue(p.diarrhea_0_2.M) }}</td>
+        <td class="{{ shawDarkMode(p.diarrhea_2_12.F) }}">{{ shawValue(p.diarrhea_2_12.F) }}</td>
+        <td class="{{ shawDarkMode(p.diarrhea_2_12.M) }}">{{ shawValue(p.diarrhea_2_12.M) }}</td>
+        <td class="{{ shawDarkMode(p.diarrhea_12_60.F) }}">{{ shawValue(p.diarrhea_12_60.F) }}</td>
+        <td class="{{ shawDarkMode(p.diarrhea_12_60.M) }}">{{ shawValue(p.diarrhea_12_60.M) }}</td>
+        <td class="{{ shawDarkMode(p.malnutrition_0_2.F) }}">{{ shawValue(p.malnutrition_0_2.F) }}</td>
+        <td class="{{ shawDarkMode(p.malnutrition_0_2.M) }}">{{ shawValue(p.malnutrition_0_2.M) }}</td>
+        <td class="{{ shawDarkMode(p.malnutrition_2_12.F) }}">{{ shawValue(p.malnutrition_2_12.F) }}</td>
+        <td class="{{ shawDarkMode(p.malnutrition_2_12.M) }}">{{ shawValue(p.malnutrition_2_12.M) }}</td>
+        <td class="{{ shawDarkMode(p.malnutrition_12_60.F) }}">{{ shawValue(p.malnutrition_12_60.F) }}</td>
+        <td class="{{ shawDarkMode(p.malnutrition_12_60.M) }}">{{ shawValue(p.malnutrition_12_60.M) }}</td>
+        <td class="pcimne-total left-border-separation">{{ shawValue(p.total.F) }}</td>
+        <td class="pcimne-total">{{ shawValue(p.total.M) }}</td>
+        <td class="pcimne-bigtotal">{{ shawValue(p.bigtotal) }}</td>
+      </tr>
+    </tbody>
+
+    <tr class="no-border">
+      <td class="separation" colspan="27"></td>
+    </tr>
+  </table>
+</ng-container>
+

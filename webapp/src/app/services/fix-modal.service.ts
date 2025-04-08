@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
+import { ModalColor } from '@kossi-models/interfaces';
 import { Subject } from 'rxjs';
 
-export interface ModalColor {
-  color: 'danger-back' | 'info-back' | 'warning-back' | 'success-back' | 'default-back' | 'light-back'
-}
 
 @Injectable({
   providedIn: 'root'
@@ -20,8 +18,8 @@ export class FixeModalService {
   private showBottomElements: Subject<boolean | undefined> = new Subject<boolean | undefined>();
   private showCancelButton: Subject<boolean | undefined> = new Subject<boolean | undefined>();
   private reloadApp: Subject<boolean | undefined> = new Subject<boolean | undefined>();
-  private hideOnConfirm: Subject<boolean | undefined> = new Subject<boolean | undefined>();
-  private modalActionColor: Subject<ModalColor['color'] | undefined> = new Subject<ModalColor['color'] | undefined>();
+  private closeAfterSubmited: Subject<boolean | undefined> = new Subject<boolean | undefined>();
+  private modalActionColor: Subject<ModalColor | undefined> = new Subject<ModalColor | undefined>();
   private onSubmit: Subject<(() => Promise<void>) | undefined> = new Subject<(() => Promise<void>) | undefined>();
   private onCancel: Subject<(() => Promise<void>) | undefined> = new Subject<(() => Promise<void>) | undefined>();
   private errorMsg: Subject<string | undefined> = new Subject<string | undefined>();
@@ -31,7 +29,7 @@ export class FixeModalService {
 
   constructor() { }
 
-  show(d: { modalContentHtmh?: any, message?:string, showCloseButton?: boolean, error?: string, processing?: boolean, isFlatButton?: boolean, modalTitle?: string, cancelBtnName?: string, submitBtnName?: string, showBottomElements?: boolean, showCancelButton?: boolean, reloadApp?: boolean, hideOnConfirm?: boolean, modalActionColor?: ModalColor['color'], onSubmit?: () => Promise<void>, onCancel?: () => Promise<void>, errorMsg?: string }) {
+  show(d: { modalContentHtmh?: any, message?:string, showCloseButton?: boolean, error?: string, processing?: boolean, isFlatButton?: boolean, modalTitle?: string, cancelBtnName?: string, submitBtnName?: string, showBottomElements?: boolean, showCancelButton?: boolean, reloadApp?: boolean, closeAfterSubmited?: boolean, modalActionColor?: ModalColor, onSubmit?: () => Promise<void>, onCancel?: () => Promise<void>, errorMsg?: string }) {
     this.modalVisibilitySubject.next(true);
     this.showCloseButton.next(d.showCloseButton);
     this.error.next(d.error);
@@ -43,7 +41,7 @@ export class FixeModalService {
     this.showBottomElements.next(d.showBottomElements);
     this.showCancelButton.next(d.showCancelButton);
     this.reloadApp.next(d.reloadApp);
-    this.hideOnConfirm.next(d.hideOnConfirm);
+    this.closeAfterSubmited.next(d.closeAfterSubmited);
     this.modalActionColor.next(d.modalActionColor);
     this.onSubmit.next(d.onSubmit);
     this.onCancel.next(d.onCancel);
@@ -66,7 +64,7 @@ export class FixeModalService {
   getShowBottomElements = () => this.showBottomElements.asObservable();
   getShowCancelButton = () => this.showCancelButton.asObservable();
   getReloadApp = () => this.reloadApp.asObservable();
-  getHideOnConfirm = () => this.hideOnConfirm.asObservable();
+  getcloseAfterSubmited = () => this.closeAfterSubmited.asObservable();
   getModalActionColor = () => this.modalActionColor.asObservable();
   getOnSubmit = () => this.onSubmit.asObservable();
   getOnCancel = () => this.onCancel.asObservable();

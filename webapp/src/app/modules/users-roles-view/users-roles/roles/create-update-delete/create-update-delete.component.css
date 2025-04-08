@@ -1,0 +1,14 @@
+.role-routes, .role-authorizations {
+    overflow-y: auto!important;
+    overflow-x: hidden!important;
+    border: 1px darkblue dashed!important;
+    padding: 10px!important;
+}
+
+.role-routes {
+    max-height: 300px!important;
+}
+
+.role-authorizations {
+    max-height: 200px!important;
+}

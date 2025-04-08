@@ -1,0 +1,269 @@
+/* Navbar Styles */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  /* justify-items: center; */
+  align-items: center;
+  padding: 10px 20px;
+  /* background-color: #003366; */
+  background-color: #004422;
+  color: white;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.app-logo {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.navbar-left .app-title {
+  color: white;
+  font-size: 25px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  margin-left: 30px;
+  font-size: 30px;
+  color: white;
+  cursor: pointer;
+}
+
+
+.menu-toggle {
+  margin-left: 30px;
+}
+
+.profile-icon {
+  margin-left: 30px;
+  /* font-size: 40px; */
+}
+
+.popup-menu {
+  display: none;
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  /* width: 550px; */
+  width: auto;
+  padding: 20px;
+  z-index: 1001;
+}
+
+
+.search-container {
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+#search-input {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 100% !important;
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+.menu-row {
+  display: grid;
+  margin-top: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  justify-items: stretch;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+.menu-item {
+  width: 110px;
+  height: auto;
+  align-items: center;
+  text-align: center;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  color: #444;
+}
+
+.menu-item i {
+  font-size: 30px;
+  margin-bottom: 5px;
+
+}
+
+.menu-item span {
+  font-size: 14px;
+  display: block;
+  /* Force le retour à la ligne */
+  word-wrap: break-word;
+  /* Permet de casser les mots si nécessaire */
+  overflow-wrap: break-word;
+  /* Alternative pour assurer le retour à la ligne */
+  white-space: normal;
+  /* Permet aux retours à la ligne automatiques */
+}
+
+.menu-item:hover {
+  background-color: #444;
+  border-radius: 5px;
+  color: white;
+  /* padding: 5px; */
+}
+
+/* Profile Popup Styles */
+.profile-popup {
+  display: none;
+  position: absolute;
+  right: 10px;
+  top: 40px;
+  background-color: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  width: 200px;
+  z-index: 1001;
+}
+
+.profile-option {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.profile-option:hover {
+  background-color: #f1f1f1;
+}
+
+.no-results {
+  display: none;
+  text-align: center;
+  font-size: 14px;
+  color: red;
+  margin-top: 10px;
+}
+
+
+
+
+/* Conteneur de l'icône de profil */
+.profile-icon {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 25px;
+  transition: background-color 0.3s ease;
+}
+
+.profile-icon:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Image de profil arrondie */
+.profile-icon img.rounded-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 8px;
+  border: 2px solid #ddd;
+  /* Bordure légère */
+}
+
+/* Texte du nom d'utilisateur */
+.profile-icon span {
+  font-size: 14px;
+  font-weight: 600;
+  /* color: white; */
+  white-space: nowrap;
+}
+
+.app-title {
+  font-size: 16px;
+  white-space: wrap;
+}
+
+/* Responsiveness */
+
+@media (max-width: 991px) {
+  .icon {
+    margin-left: 10px;
+    font-size: 25px;
+  }
+
+  .navbar-left .app-title {
+    font-size: 12px;
+    white-space: wrap;
+    ;
+  }
+
+  /* .profile-icon span {
+    display: none;
+  } */
+}
+
+@media (max-width: 768px) {
+  .popup-menu {
+    width: auto;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .menu-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .navbar {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    display: flex;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #search-input {
+    width: 150px;
+  }
+
+  .navbar {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    display: flex;
+    align-items: center;
+  }
+}

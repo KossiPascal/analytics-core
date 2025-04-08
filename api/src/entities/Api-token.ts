@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, Repository, DataSource } from "typeorm"
-import { AppDataSource } from "../data_source"
+import { AppDataSource } from "../data-source"
 
 let Connection: DataSource = AppDataSource.manager.connection;
 

@@ -1,0 +1,66 @@
+<kossi-modal-layout
+  [id]="'send-dhis2-modal'"
+  [modalActionColor]="'info-back'"
+  [showCloseButton]="true"
+  [modalTitle]="'Envoi des données au DHIS2'"
+  [cancelBtnName]="'Annuler'"
+  [submitBtnName]="'Démarrer l\'Envoie au DHIS2'"
+  [showBottomElements]="true"
+  [showCancelButton]="true"
+  [reloadApp]="false"
+
+  (onCancel)="close()"
+  [closeAfterCanceled]="false"
+  
+  (onSubmit)="sendDataToDhis2()"
+  [closeAfterSubmited]="false"
+>
+ 
+<form [formGroup]="dhis2Form" (ngSubmit)="sendDataToDhis2($event)" novalidate class="form-horizontal">
+
+      <div class="form-group">
+        <label style="text-align: left; justify-content: center;" for="dhis2_orgunits">
+          <span>Place Dhis2 : ({{ selectedOrgUnitsLength() }})</span>
+          <input style="margin: 0px;" id="all-dhis2_orgunits" (change)="selectAllOrgUnits($event)"
+            [checked]="isAllOrgUnitsChecked()" type="checkbox">
+        </label>
+        <select style="background-color: white;" id="dhis2_orgunits" formControlName="dhis2_orgunits"
+          multiple="{{ ORG_UNIT.length > 0 ? 'multiple' : '' }}" class="form-control"
+          placeholder="Place D'envoi DHIS2" aria-label="dhis2_orgunits" aria-describedby="basic-addon1">
+          <option *ngFor="let ou of ORG_UNIT" [value]="ou.id">
+            {{ ou.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="dhis2_username">Nom utilisateur DHIS2</label>
+        <input style="background-color: white;" type="text" id="dhis2_username" formControlName="dhis2_username"
+          class="form-control" placeholder="Nom utilisateur DHIS2" aria-label="dhis2_username"
+          aria-describedby="basic-addon1">
+      </div>
+
+      <div class="form-group">
+        <label for="dhis2_password">Mot de passe DHIS2</label>
+        <input style="background-color: white;" type="password" id="dhis2_password" formControlName="dhis2_password"
+          class="form-control" placeholder="Mot de passe DHIS2" aria-label="dhis2_password"
+          aria-describedby="basic-addon1">
+      </div>
+
+      <!-- <div *ngIf="ON_DHIS2_SENDING_ERROR == true" class="form-group">
+        <strong style="color: red;">{{ (DHIS2_ERROR_MESSAGE ?? '')!='' ? DHIS2_ERROR_MESSAGE :
+          ('Erreur lors de l\'envoie des données') }}</strong>
+      </div> -->
+
+    <!-- <div class="mt-4 modal-footer">
+      <button (click)="closeSendDataToDhis2Modal()" id="close-modal" type="button" class="btn btn-default"
+        data-dismiss="modal">Annuler</button>
+      <button [disabled]="!dhis2Form.valid" type="submit" class="btn btn-info">
+        Démarrer l'Envoie au DHIS2
+        <span *ngIf="ON_DHIS2_SENDING" class="fas fa-1x fa-sync-alt fa-spin"></span>
+      </button>
+    </div> -->
+
+</form>
+
+</kossi-modal-layout>

@@ -3,6 +3,7 @@ import { Location } from '@angular/common';
 import { AuthService } from '@kossi-services/auth.service';
 
 @Component({
+  standalone: false,
   selector: 'app-error-404',
   templateUrl: `./404.component.html`,
   styleUrls: ['./404.component.css'],

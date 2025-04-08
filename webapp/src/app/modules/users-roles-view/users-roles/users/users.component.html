@@ -1,0 +1,51 @@
+<div style="display: flex; align-items: center; justify-content: space-between; margin: 15px 10px 5px 10px;">
+  <h2>Utilisateurs</h2>
+  <button *ngIf="USER?.role?.canCreateUser == true" (click)="openCreateOrEditUserModal()" style="width: auto; float: right; background: green; color: aliceblue; font-weight: bold; font-size: 14px;" type="button" class="btn">
+    <i style="font-size: 15px;" class="fa fa-add"></i> Nouvel utilisateur
+  </button>
+</div>
+
+
+  <table class="table table-white">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Username</th>
+        <th>Full name</th>
+        <th>Email</th>
+        <th>Rôles</th>
+        <th>Inactifs</th>
+        <th>IsAdmin</th>
+        <th *ngIf="USER?.role?.canUpdateUser == true || USER?.role?.canDeleteUser == true" colspan="3"></th>
+      </tr>
+    </thead>
+    <tbody *ngFor="let user of users$; let index = index; let isFirst = first; let isOdd = odd;">
+      <tr *ngIf="!isAdmin(user) || USER?.role?.isAdmin == true" [class]="user.isDeleted ? 'deleted-user' : 'undeleted-user'">
+        <td scope="row">{{ index+1 }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.fullname }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+            <i *ngIf="!user.isDeleted" style="cursor: pointer;" (click)="openSelectedRolesModal(user)" class="fas fa-eye"></i>
+        </td>
+        <!-- <td [innerHTML]="ToStringNewLine(user?.roles, 'roles') | safeHtml"></td> -->
+        <td><span *ngIf="!user.isDeleted" style="font-size: 18px; font-weight: bold;">{{user.isActive ? '' : '&#10003;'}}</span></td>
+        <td><span *ngIf="!user.isDeleted" style="font-size: 18px; font-weight: bold;">{{isAdmin(user) ? '&#10003;' : ''}}</span></td>
+        
+        <ng-container *ngIf="USER?.role?.canUpdateUser == true || USER?.role?.canDeleteUser == true">
+        
+        <td>
+            <i *ngIf="USER?.role?.canUpdateUser == true && !user.isDeleted && !isAdmin(user) || USER?.role?.isAdmin == true" 
+               (click)="openCreateOrEditUserModal(user)" class="fas fa-edit {{ !user.isDeleted ? 'update-color' : '' }}"></i>
+        </td>
+        <td>
+            <i *ngIf="USER?.role?.canDeleteUser == true && !user.isDeleted && !isAdmin(user)" 
+               (click)="openDeleteUserModal(user)" class="fas fa-trash-alt {{ !user.isDeleted ? 'delete-color' : '' }}"></i>
+        </td>
+        <td>
+            <i *ngIf="!user.isDeleted && isAdmin(user)" style="cursor: pointer; font-size: 18px;" class="fas fa-lock"></i>
+        </td>
+      </ng-container>
+      </tr>
+    </tbody>
+  </table>

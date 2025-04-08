@@ -1,82 +1,49 @@
-import { Component, OnInit } from '@angular/core';
-import { WebSocketService } from './services/web-socket.service';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from './services/auth.service';
-import { PrivacyPoliciesService } from './services/privacy-policies.service';
-import { ModalService } from './services/modal.service';
-import { UpdateServiceWorkerService } from '@kossi-services/update-service-worker.service';
-import { SessionExpiredComponent } from '@kossi-modals/session-expired/session-expired.component';
-import { SnackbarService } from '@kossi-services/snackbar.service';
-import { UserContextService } from '@kossi-services/user-context.service';
+import { AuthService } from '@kossi-services/auth.service';
+import { LocalSyncService } from '@kossi-services/local-sync.service';
+import { ModalService } from '@kossi-services/modal.service';
+import { PrivacyPoliciesService } from '@kossi-services/privacy-policies.service';
 import { ResponsiveService } from '@kossi-services/responsive.service';
-
-declare var $: any;
-
-const SYNC_STATUS = {
-  inProgress: {
-    icon: 'fa-refresh',
-    key: 'sync.status.in_progress',
-    disableSyncButton: true
-  },
-  success: {
-    icon: 'fa-check',
-    key: 'sync.status.not_required',
-    className: 'success'
-  },
-  required: {
-    icon: 'fa-exclamation-triangle',
-    key: 'sync.status.required',
-    className: 'required'
-  },
-  unknown: {
-    icon: 'fa-info-circle',
-    key: 'sync.status.unknown'
-  }
-};
+import { SnackbarService } from '@kossi-services/snackbar.service';
+import { UpdateServiceWorkerService } from '@kossi-services/update-service-worker.service';
+import { UserContextService } from '@kossi-services/user-context.service';
+import { WebSocketService } from '@kossi-services/web-socket.service';
 
 @Component({
+  standalone: false,
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
-  title = 'webapp';
-  navStyleControl: number = 0;
+export class AppComponent {
+
   private initialisationComplete: boolean = false;
   private setupPromise: any;
 
-  public showCustom:boolean = false;
+  isAuthenticated!:boolean;
 
   YEAR:number = new Date().getFullYear();
-
-
+  
+ 
   constructor(
-    private webSocketService: WebSocketService,
-    private auth: AuthService,
+    private userCtx: UserContextService, 
+    private lSync:LocalSyncService,
+
     private router: Router,
-    private modalService: ModalService,
     private privacyPoliciesService: PrivacyPoliciesService,
     private usw: UpdateServiceWorkerService,
-    private snackbar: SnackbarService,
-    private userCtx: UserContextService,
-    private responsiveService:ResponsiveService,
   ) {
-
+    this.initializeComponent();
   }
 
-  ngOnInit(): void {
+  private async initializeComponent(){
+    // window.addEventListener('online', () => this.lSync. initializeSync());
+    // window.addEventListener('offline', () => this.lSync.setStatus('offline'));
 
-    setTimeout(() => {
-      const self = this;
-      $(".body-container").click(function () {
-        if (self.responsiveService.isMobile || self.responsiveService.isTablette) {
-          const elm = $(".sidebar, .content");
-          if (elm.hasClass("open")) {
-            elm.removeClass("open");
-          }
-        }
-      });
-    }, 500);
+    this.isAuthenticated = await this.userCtx.isLoggedIn();
+    await this.lSync.initializeSync()
+
 
     if (![4200, '4200'].includes(location.port)) {
       this.usw.registerServiceWorker();
@@ -92,48 +59,7 @@ export class AppComponent implements OnInit {
       this.requestPersistentStorage();
       // this.sw.checkForUpdates();
     }
-  }
 
-  showMessage() {
-    this.makeSpinner(() => { }, 5000)
-    this.snackbar.show('Your message here', { backgroundColor: 'danger', duration: 5000 });
-  }
-
-  hideMainPage(): boolean {
-    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    return s.includes('errors') || s.includes('auths/login');
-  }
-
-  isPublicPage(): boolean {
-    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    return s.includes('public') || s.includes('publics');
-  }
-
-  isAuthenticated(): boolean {
-    return this.userCtx.isLoggedIn;
-  }
-
-  logout() {
-    this.auth.logout();
-  }
-
-  reload() {
-    this.webSocketService.sendReloadMessage();
-  }
-
-  async makeSpinner(callBack: () => any, duration: number = 1000): Promise<void> {
-    $("#spinner").addClass("show");
-    await new Promise<void>((resolve) => {
-      const result = callBack();
-      if (!(result instanceof Promise)) {
-        resolve();
-      } else {
-        result.then(() => resolve());
-      }
-    });
-    setTimeout(() => {
-      $("#spinner").removeClass("show");
-    }, duration);
   }
 
 
@@ -153,8 +79,19 @@ export class AppComponent implements OnInit {
     // }
   }
 
-  private showSessionExpired() {
-    this.modalService.open({ component: SessionExpiredComponent });
+  hideMainPage(): boolean {
+    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    return s.includes('errors') || s.includes('auths/login');
+  }
+
+  isPublicPage(): boolean {
+    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    return s.includes('public') || s.includes('publics');
+  }
+
+  isChartsPage(): boolean {
+    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    return s.includes('charts') || s.includes('/charts');
   }
 
   private requestPersistentStorage() {
@@ -171,6 +108,7 @@ export class AppComponent implements OnInit {
     }
   }
 
+
   private checkPrivacyPolicy() {
     return this.privacyPoliciesService
       .hasAccepted()
@@ -178,4 +116,6 @@ export class AppComponent implements OnInit {
       })
       .catch(err => console.error('Failed to load privacy policy', err));
   }
+
 }
+

@@ -14,6 +14,7 @@ const routes: Routes = [
     data: {
       href: 'errors/404',
       title: 'Error 404',
+      access: ['_public']
     },
   },
   {
@@ -23,6 +24,7 @@ const routes: Routes = [
     data: {
       href: 'errors/500',
       title: 'Error 500',
+      access: ['_public']
     },
   },
   {
@@ -32,6 +34,7 @@ const routes: Routes = [
     data: {
       href: 'errors/unauthorized',
       title: 'Unauthorized',
+      access: ['_public']
     },
   },
 

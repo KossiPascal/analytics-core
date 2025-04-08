@@ -1,0 +1,72 @@
+
+<kossi-modal-layout
+  [id]="'send-sms-modal'"
+  [modalActionColor]="'info-back'"
+  [showCloseButton]="true"
+  [modalTitle]="'Envoi de SMS Professionnel'"
+  [cancelBtnName]="'Annuler'"
+  [submitBtnName]="''"
+  [showBottomElements]="false"
+  [showCancelButton]="false"
+  [reloadApp]="false"
+  [closeAfterSubmited]="false"
+  [modalContentWidth]="isCustomSms == true ? 'xx-large-width' : 'x-large-width'">
+
+  <div *ngIf="isCustomSms == false" class="sms-container">
+    <label>Numéros (séparés par virgule)</label>
+    <textarea [disabled]="true" [(ngModel)]="recipientInput"
+      placeholder="+224620000000, +224621111111"></textarea>
+
+    <label>Message</label>
+    <textarea [(ngModel)]="message" placeholder="Votre message ici..." cols="30"
+      rows="10"></textarea>
+
+    <button (click)="sendSms()" [disabled]="loading">
+      <i class="fas fa-paper-plane"></i>
+      {{ loading ? 'Envoi...' : 'Envoyer SMS' }}
+    </button>
+
+    <div *ngIf="results.length" class="success">
+      ✅ SMS envoyés avec succès :
+      <ul><li *ngFor="let r of results">{{ r }}</li></ul>
+    </div>
+
+    <div *ngIf="error" class="error">❌ {{ error }}</div>
+  </div>
+
+
+  <div>
+    <button style="position: absolute; right:30px; bottom: 5px;" (click)="sendCustomSms()" [disabled]="loading">
+      <i class="fas fa-paper-plane"></i>
+      {{ loading ? 'Envoi...' : 'Envoyer SMS' }}
+    </button>
+    <div *ngIf="isCustomSms == true" class="table-responsive" style="max-height: 800px; overflow: auto;">
+      <table id="vaccination-table" class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th style="width: 150px;">Téléphone</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of customRecipients">
+            <td>{{ item.phone }}</td>
+            <td>{{ item.message }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <br>
+    <br>
+
+    <div *ngIf="results.length" class="success">
+      ✅ SMS envoyés avec succès :
+      <ul><li *ngFor="let r of results">{{ r }}</li></ul>
+    </div>
+
+    <div *ngIf="error" class="error">❌ {{ error }}</div>
+  </div>
+
+
+
+</kossi-modal-layout>

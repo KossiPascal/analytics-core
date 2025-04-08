@@ -1,0 +1,36 @@
+<div *ngIf="SHOW_EXPORT_TABLE_BTN == true && this.USER?.role?.canDownloadData == true" class="export-buttons">
+  <button (click)="exportToCSV()">📂 CSV</button>
+  <button (click)="exportToJSON()">📂 JSON</button>
+  <button (click)="exportToExcel()">📂 Excel</button>
+  <button (click)="exportToPDF('p')">📂 PDF (Portrait)</button>
+  <button (click)="exportToPDF('l')">📂 PDF (Paysage)</button>
+</div>
+
+<label for="{{ HIDE_ZERO_ID }}">
+  <input style="zoom: 1.5;" type="checkbox" (change)="hideZero($event)" id="{{ HIDE_ZERO_ID }}"> Masquer Zero
+</label>
+
+
+<ng-container *ngIf="REPORTS_HEADER">
+  <div *ngIf="this.USER?.role?.canValidateData == true" class="validate-data col-12">
+    <button style="width: auto!important;" [disabled]="ON_VALIDATION || ON_CANCEL_VALIDATION || ON_DHIS2_SENDING || IS_ON_DHIS2"
+      (click)="IS_VALIDATED ? cancelValidation($event) : validateData($event)"
+      class="submitBtn btn {{ IS_VALIDATED ? 'btn-info' : 'btn-warning' }}">
+      <span *ngIf="(ON_DHIS2_SENDING || IS_ON_DHIS2)">{{ 'Rapport déja validé' }}</span>
+      <span *ngIf="!(ON_DHIS2_SENDING || IS_ON_DHIS2)">
+        {{ IS_VALIDATED ? 'Annuler validation du rapport' : 'Valider ce rapport' }}
+      </span>
+      <span *ngIf="ON_VALIDATION || ON_CANCEL_VALIDATION" class="fas fa-1x fa-sync-alt fa-spin"></span>
+    </button>
+
+
+    <button *ngIf="this.USER?.role?.canSendDataToDhis2 && IS_VALIDATED" [disabled]="ON_DHIS2_SENDING || IS_ON_DHIS2"
+      (click)="openSendDataToDhis2Modal()" style="width: auto;"
+      class="submitBtn btn {{ IS_ON_DHIS2 ? 'btn-info' : 'btn-warning' }}">
+      {{ IS_ON_DHIS2 ? 'Déja envoyé au DHIS2 et terminé' : 'Envoyer au DHIS2' }}
+      <span *ngIf="ON_DHIS2_SENDING" class="fas fa-1x fa-sync-alt fa-spin"></span>
+    </button>
+  </div>
+</ng-container>
+
+

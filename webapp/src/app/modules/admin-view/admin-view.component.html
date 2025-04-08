@@ -1,0 +1,43 @@
+
+<div class="nav-tabs">
+  <button class="tab-link active" data-target="API_ACCESS">API ACCESS</button>
+  <button class="tab-link" data-target="DATABASE">BASE DE DONNEES</button>
+  <button class="tab-link" data-target="DELETE_COUCHDB_DATA">DELETE COUCHDB DATA</button>
+  <button class="tab-link" data-target="PDF_GENERATOR">PDF GENERATOR</button>
+  <button class="tab-link" data-target="SIGNATURE">SIGNATURE</button>
+  <button class="tab-link" data-target="TRUNCATE_DATABASE">TRUNCATE DATABASE</button>
+</div>
+
+
+<!-- Contenu des vues -->
+<div class="tab-content">
+  <div id="API_ACCESS" class="view active">
+    <h2>📈 API d'accès</h2>
+    <app-admin-api [CHANGE_STATE]="CHANGE_STATE"></app-admin-api>
+  </div>
+
+  <div id="DATABASE" class="view">
+    <h2>📊 ACTIONS BASE DE DONNEES</h2>
+    <app-admin-database [CHANGE_STATE]="CHANGE_STATE"></app-admin-database>
+  </div>
+
+  <div id="DELETE_COUCHDB_DATA" class="view">
+    <h2>📊 DELETE COUCHDB DATA</h2>
+    <app-admin-delete-couchdb [CHANGE_STATE]="CHANGE_STATE"></app-admin-delete-couchdb>
+  </div>
+
+  <div id="PDF_GENERATOR" class="view">
+    <h2>📊 PDF GENERATOR</h2>
+    <app-admin-pdf-generator [CHANGE_STATE]="CHANGE_STATE"></app-admin-pdf-generator>
+  </div>
+
+  <div id="SIGNATURE" class="view">
+    <h2>📊 SIGNATURE</h2>
+    <app-admin-signature [CHANGE_STATE]="CHANGE_STATE"></app-admin-signature>
+  </div>
+
+  <div id="TRUNCATE_DATABASE" class="view">
+    <h2>📊 TRUNCATE DATABASE</h2>
+    <app-admin-truncate-database [CHANGE_STATE]="CHANGE_STATE"></app-admin-truncate-database>
+  </div>
+</div>

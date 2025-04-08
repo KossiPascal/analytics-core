@@ -1,0 +1,40 @@
+
+
+
+/* SCROLL BAR */
+
+
+/* Scrollbar width */
+::-webkit-scrollbar {
+    width: 10px; /* Adjust the width */
+  }
+  
+  /* Scrollbar track */
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Light gray background */
+    border-radius: 10px;
+  }
+  
+  /* Scrollbar handle */
+  ::-webkit-scrollbar-thumb {
+    background: #888; /* Darker gray */
+    border-radius: 10px;
+  }
+  
+  /* Scrollbar handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Even darker gray */
+  }
+  
+  
+  /* Thin scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+  }
+  
+  /* Works on Edge (old versions) */
+  body {
+    -ms-overflow-style: none; /* Hides default scrollbar */
+  }
+  

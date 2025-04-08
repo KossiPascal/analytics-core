@@ -45,9 +45,61 @@
 /***************************************************************************************************
  * Zone JS is required by default for Angular itself.
  */
+
+// import '@angular/localize/init';
+
+// // Enable Web Animations for older browsers
+// import 'web-animations-js';  // Needed for Safari < 11
+
+// // Fetch API Polyfill (for older browsers)
+// import 'whatwg-fetch';  // Polyfill for Fetch API
+
+// // Promise Polyfill (for old browsers like IE11)
+// import 'core-js/es/promise';
+
+// // Intersection Observer Polyfill (for older browsers)
+// import 'intersection-observer'; // Polyfill for IntersectionObserver
+
 import 'zone.js';  // Included with Angular CLI.
 
 
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+
+// // Polyfills for JS/Web API functions used in enketo-core but not found in Chrome 53
+// import 'core-js/es/object/entries';
+// import 'core-js/es/string/pad-start';
+// import '@webcomponents/webcomponentsjs/src/platform/child-node/after';
+// import '@webcomponents/webcomponentsjs/src/platform/child-node/before';
+// import '@webcomponents/webcomponentsjs/src/platform/child-node/replace-with';
+// import '@webcomponents/webcomponentsjs/src/platform/parent-node/append';
+// import '@webcomponents/webcomponentsjs/src/platform/parent-node/prepend';
+
+// (window as any).global = window;
+// declare global {
+//   interface Window {
+//     startupTimes: any;
+//     PouchDB: any;
+//     $: any;
+//     jQuery: any;
+//     bootstrapFeedback: any;
+//     medicmobile_android: any;
+//     CHTCore: any;
+//     angular: any;
+//     EnketoForm:any;
+//   }
+//   interface JQuery {
+//     daterangepicker(options?: any, callback?: Function) : any;
+//     select2(event?:any, options?:any):any;
+//   }
+//   interface Node {
+//     _couchId: any;
+//   }
+// }
+
+// (window as any).process = {
+//   env: { DEBUG: undefined },
+//   browser: true,
+//   nextTick: require('next-tick')
+// };

@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { LocalDbName } from '@kossi-models/db';
 import { CookieService } from 'ngx-cookie-service';
 
 
@@ -9,7 +10,7 @@ export class AppStorageService {
 
   constructor(private coo: CookieService) { }
 
-  get = ({ db, name }: { db: 'local' | 'session' | 'coockie', name: string }): string => {
+  get = ({ db, name }: { db: LocalDbName, name: string }): string => {
     if (db === 'local') {
       return localStorage.getItem(name) ?? '';
     } else if (db === 'session') {
@@ -20,7 +21,7 @@ export class AppStorageService {
     return '';
   }
 
-  set = ({ db, name, value }: { db: 'local' | 'session' | 'coockie', name: string, value: string }) => {
+  set = ({ db, name, value }: { db: LocalDbName, name: string, value: string }) => {
     if (db === 'local') {
       sessionStorage.removeItem(name);
       this.coo.delete(name);
@@ -36,7 +37,7 @@ export class AppStorageService {
     }
   }
 
-  delete = ({ db, name }: { db: 'local' | 'session' | 'coockie', name: string }) => {
+  delete = ({ db, name }: { db: LocalDbName, name: string }) => {
     if (db === 'local') {
       localStorage.removeItem(name);
     } else if (db === 'session') {
@@ -46,7 +47,13 @@ export class AppStorageService {
     }
   };
 
-  deleteAll = (db: 'local' | 'session' | 'coockie') => {
+  deleteSelected = ({ db, names }: { db: LocalDbName, names: string[] }) => {
+    for (const name of names) {
+      this.delete({db, name})
+    }
+  };
+
+  deleteAll = (db: LocalDbName) => {
     if (db === 'local') {
       localStorage.clear();
     } else if (db === 'session') {

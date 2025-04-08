@@ -1,0 +1,20 @@
+
+<div class="nav-tabs">
+  <button  *ngIf="USER?.role?.canViewUsers == true" class="tab-link active" data-target="USERS">UTILISATEURS</button>
+  <button  *ngIf="USER?.role?.canViewRoles == true" class="tab-link" data-target="ROLES">ROLES D'ACCES</button>
+</div>
+
+
+<!-- Contenu des vues -->
+<div class="tab-content">
+  <div  *ngIf="USER?.role?.canViewUsers == true" id="USERS" class="view active">
+    <h2>📈 Utilisateurs de l'application</h2>
+    <app-users-view [CHANGE_STATE]="CHANGE_STATE"></app-users-view>
+  </div>
+
+  <div  *ngIf="USER?.role?.canViewRoles == true" id="ROLES" class="view">
+    <h2>📊 Roles des utilisateurs</h2>
+    <app-roles-view [CHANGE_STATE]="CHANGE_STATE"></app-roles-view>
+  </div>
+</div>
+

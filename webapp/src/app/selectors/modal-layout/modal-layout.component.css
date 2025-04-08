@@ -1,18 +1,40 @@
-/* Modal Header */
-.modal-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  color: #fff !important;
-  border: 1px solid white !important;
-  border-top-left-radius: 5px !important;
-  border-top-right-radius: 5px !important;
+
+
+.small-width {
+  width: 100%;
+  max-width: 400px;
+}
+
+.medium-width {
+  width: 100%;
+  max-width: 600px;
+}
+
+.large-width {
+  width: 100%;
+  max-width: 800px;
+}
+
+.x-large-width {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.xx-large-width {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.xx-large-width {
+  width: 100%;
+  max-width: 1500px;
 }
 
 
-.modaltitle {
+/* Error Message */
+.modal-error {
+  color: #dc3545 !important;
   margin: 0 !important;
-  font-size: 1.5rem !important;
 }
 
 .grey {
@@ -44,8 +66,14 @@
   font-weight: bold !important;
 }
 
+.dark-back {
+  background-color: rgb(48, 48, 48) !important;
+  color: #fff !important;
+  font-weight: bold !important;
+}
+
 .info {
-  color: #007bff !important;
+  color: #005bbd !important;
 }
 
 .info-back {
@@ -65,79 +93,14 @@
 }
 
 .success {
-  color: #23ff70 !important;
+  color: #00a239 !important;
 }
 
 .success-back {
-  background-color: #23ff70 !important;
+  /* background-color: #23ff70 !important; */
+  background-color: #00a239 !important;
   color: #fff !important;
   font-weight: bold !important;
-}
-
-
-/* Modal Body */
-.modal-body {
-  padding: 10px !important;
-  /* border-bottom: 1px solid #dee2e6 !important; */
-  color: #000!important;
-}
-
-/* Modal Footer */
-.modal-footer {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: flex-end !important;
-  padding: 5px !important;
-  border: 1px solid white !important;
-  background-color: #f3f8fc !important;
-  border-bottom-left-radius: 5px !important;
-  border-bottom-right-radius: 5px !important;
-}
-
-/* Error Message */
-.modal-error {
-  color: #dc3545 !important;
-  margin: 0 !important;
-}
-
-/* Buttons */
-.btn {
-  cursor: pointer !important;
-  margin-left: 5px !important;
-  transition: background-color 0.3s ease-in-out !important;
-}
-
-.btn.disabled {
-  opacity: 0.65 !important;
-  pointer-events: none !important;
-}
-
-.btn-primary {
-  background-color: #007bff !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 3px !important;
-  padding: 10px 20px !important;
-  font-size: 1rem !important;
-  transition: background-color 0.3s ease-in-out !important;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3 !important;
-}
-
-.btn-secondary {
-  background-color: #6c757d !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 3px !important;
-  padding: 10px 20px !important;
-  font-size: 1rem !important;
-  transition: background-color 0.3s ease-in-out !important;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268 !important;
 }
 
 /* Flat Button */
@@ -159,4 +122,29 @@
 
 .flat-button {
   display:flex;
+  padding-left: 30px;
+  padding-right: 30px;
+  font-size: 15px;
+  font-weight: 800;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

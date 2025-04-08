@@ -1,0 +1,11 @@
+<!-- Pagination Controls -->
+<div *ngIf="datalength > initialPageSize" class="pagination">
+    <select (change)="changePageSize($event)">
+        <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+    </select>
+
+    <button (click)="prevPage()" [disabled]="currentPage === 1">Précédent</button>
+    <span>Page {{ currentPage }} of {{ totalPages }}</span>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages">Suivant</button>
+</div>
+

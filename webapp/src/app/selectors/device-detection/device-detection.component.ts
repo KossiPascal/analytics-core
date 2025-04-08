@@ -3,6 +3,7 @@ import { AfterViewInit, Component, ElementRef, HostListener } from '@angular/cor
 import { ResponsiveService } from '@kossi-services/responsive.service';
 
 @Component({
+  standalone: false,
   template: `<div class="mobile-detection"></div>
             <div class="tablette-detection"></div>`,
   selector: 'device-detection',

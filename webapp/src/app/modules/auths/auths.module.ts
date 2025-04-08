@@ -2,19 +2,13 @@ import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, NgModule } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AuthsRoutingModule } from './auths-routing.module';
-import { RegisterComponent } from './register/register.component';
 import { LoginComponent } from './login/login.component';
-import { DeleteCouchdbDataComponent } from '@kossi-modules/admin/delete_couchdb_data/delete_couchdb_data.component';
-import { PublicUtilsComponent } from '@kossi-components/public-utils/public-utils-component';
 
 
 
 @NgModule({
   declarations: [
     LoginComponent,
-    RegisterComponent,
-    DeleteCouchdbDataComponent,
-    PublicUtilsComponent
   ],
   imports: [
     CommonModule,

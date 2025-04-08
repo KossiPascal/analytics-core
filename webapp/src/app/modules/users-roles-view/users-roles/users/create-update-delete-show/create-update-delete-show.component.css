@@ -1,0 +1,20 @@
+  .user-container {
+      height: 100% !important;
+      /* max-height: 900px !important; */
+      overflow-y: auto !important;
+  }
+
+  .user-role, .user-orgunits {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      border: 1px darkblue dashed !important;
+      padding: 10px !important;
+  }
+
+  .user-role {
+      max-height: 150px !important;
+  }
+
+  .user-orgunits {
+      max-height: 300px !important;
+  }

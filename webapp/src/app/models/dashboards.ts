@@ -1,3 +1,5 @@
+import { ChartDataSet } from "./interfaces"
+
 export interface RecoPerformanceDashboard {
   id: string
   year: number
@@ -58,19 +60,11 @@ export interface RecoPerformanceDashboardUtils {
   title: string
   type: 'line' | 'bar',
   absisseLabels: number[] | string[],
-  datasets: {
-    label: string,
-    backgroundColor: string[] | string,
-    data: number[] | string[],
-    borderColor?: string[] | string,
-    pointBackgroundColor?: string,
-    pointHoverBorderColor?: string,
-    fill?: boolean
-  }[]
+  datasets: ChartDataSet[]
 }
 
 
-export interface RecoVaccinationDashboard {
+export interface RecoVaccinationDashboardDbOutput {
   id: string
   month: string
   year: number
@@ -79,7 +73,7 @@ export interface RecoVaccinationDashboard {
     family_name: string,
     family_code: string,
     family_fullname: string,
-    data: RecoVaccinationDashboardUtils[]
+    data: RecoVaccinationDashboard[]
   }[]
   country: { id: string, name: string }
   region: { id: string, name: string }
@@ -95,11 +89,22 @@ export interface RecoVaccinationDashboard {
   already_on_dhis2?:boolean
   already_on_dhis2_user_id?:string
 }
-export interface RecoVaccinationDashboardUtils {
+
+
+
+
+export interface RecoVaccinationDashboard {
+  family_id: string, 
+  family_name: string, 
+  family_code: string, 
+  family_fullname: string, 
+  child_id: string
   child_name: string
   child_code: string
   child_sex: string
-  child_phone: string
+  reco_phone: string
+  parent_phone: string
+  neighbor_phone: string
   child_age_in_days: number
   child_age_in_months: number
   child_age_in_years: number
@@ -134,3 +139,4 @@ export interface RecoVaccinationDashboardUtils {
   no_MEN_A_reason: string | null | ''
   no_VAR_2_reason: string | null | ''
 }
+

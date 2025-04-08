@@ -1,21 +1,18 @@
 import "reflect-metadata";
 import express, { Request, Response, NextFunction } from 'express';
-// import bodyParser, { json, urlencoded } from 'body-parser';
 import helmet from 'helmet';
 import cors from 'cors';
 import bearerToken from 'express-bearer-token';
 import compression from 'compression';
 import responseTime from 'response-time';
-import cron from 'node-cron';
 import fs from 'fs';
 import session from 'express-session';
 import { join } from 'path';
 
-import { ServerStart, appVersion, getIPAddress, logNginx, normalizePort } from './utils/functions';
-import { APP_ENV, ENV_FOLDER, PROJECT_FOLDER, SRC_FOLDER } from "./utils/constantes";
-import { ADMIN_USER_ID, AuthUserController } from "./controllers/auth-user";
-import { AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA } from "./controllers/auto-sync-all-data";
-import { AppDataSource } from './data_source';
+import { ServerStart, appVersion, getIPAddress, logNginx, normalizePort } from './functions/functions';
+import { APP_ENV, ENV_FOLDER, PROJECT_FOLDER, SRC_FOLDER } from "./providers/constantes";
+import { AuthUserController } from "./controllers/auth-user";
+import { AppDataSource } from './data-source';
 
 import authRouter from "./routes/auth-user";
 import configsRouter from "./routes/config";
@@ -26,8 +23,13 @@ import apisRouter from "./routes/api-token";
 import syncRouter from "./routes/sync-data";
 import databaseRouter from "./routes/database";
 import dhis2Router from "./routes/dhis2";
-import surveyRouter from "./routes/survey";
+import smsRouter from "./routes/sms";
+
+// import functionsRouter from "./routes/handel-functions";
+
 import { Errors } from "./routes/error";
+import { syncCouchDBToPostgres } from "./couch2pg/couch2pg";
+
 
 
 const { NODE_ENV, APP_PROD_PORT, APP_DEV_PORT, ACCESS_ALL_AVAILABE_PORT, USE_LOCALHOST, ACTIVE_SECURE_MODE } = APP_ENV;
@@ -78,30 +80,30 @@ function app() {
     .use('/api/sync', syncRouter)
     .use('/api/database', databaseRouter)
     .use('/api/dhis2', dhis2Router)
-    .use('/api/survey', surveyRouter)
-  
+    .use('/api/sms', smsRouter)
+    // .use('/api/functions', functionsRouter)
     .use('/api/assets', express.static(join(__dirname, 'assets')))
-    
     .use(express.static(join(PROJECT_FOLDER, 'views')))
     .use(express.static(join(SRC_FOLDER, 'public')))
+
     .use('/publics/download/kendeya-prod-apk', (req, res) => {
       const apkName = `kendeya-prod.apk`;
       const file = join(SRC_FOLDER, `public/apk/${apkName}`);
       res.download(file, apkName, (err) => {
-          if (err) {
-              console.error('Error downloading the file:', err);
-              res.status(500).send('Error downloading the file.');
-          }
+        if (err) {
+          console.error('Error downloading the file:', err);
+          res.status(500).send('Error downloading the file.');
+        }
       });
     })
     .use('/publics/download/kendeya-dev-apk', (req, res) => {
       const apkName = `kendeya-dev.apk`;
       const file = join(SRC_FOLDER, `public/apk/${apkName}`);
       res.download(file, apkName, (err) => {
-          if (err) {
-              console.error('Error downloading the file:', err);
-              res.status(500).send('Error downloading the file.');
-          }
+        if (err) {
+          console.error('Error downloading the file:', err);
+          res.status(500).send('Error downloading the file.');
+        }
       });
     })
     .use('/', (req: Request, res: Response, next: NextFunction) => {
@@ -133,18 +135,27 @@ AppDataSource
   .initialize()
   .then(async () => {
     logNginx(`initialize success!\nApp Version: ${appVersion().app_version}`);
+
+    // npx typeorm migration:create src/migrations/materialised-views/reports/RecoMegSituationReportsView
+    // npx typeorm migration:create src/migrations/materialised-views/dashboards/RecoVaccinationDashboardView
+    // npx typeorm migration:create src/migrations/materialised-views/views/UsersView
+    
+
+    // await DropOrTruncateDataFromDatabase({ procide:true, entities:[{name:'', table:'typeorm_migrations'}], action:'TRUNCATE' })
+
+    await AppDataSource.runMigrations();
+
     await AuthUserController.DefaultAdminCreation();
 
     const server = app();
     const port = normalizePort(NODE_ENV === 'production' ? APP_PROD_PORT : APP_DEV_PORT || 3000);
     const hostnames = getIPAddress(ACCESS_ALL_AVAILABE_PORT === 'true');
 
-    cron.schedule('00 59 23 * * *', () => {
-      logNginx('Running this task every day at 23:59:00.');
-      AUTO_SYNC_AND_CALCULATE_COUCHDB_DATA({ userId: ADMIN_USER_ID });
-    });
+    // cron.schedule('00 59 23 * * *', () => {
+    //   logNginx('Running this task every day at 23:59:00.');
+    // });
 
-    const credential: Record<string, any>|any = {};
+    const credential: Record<string, any> | any = {};
 
     if (isSecure) {
       credential.key = fs.readFileSync(`${ENV_FOLDER}/server.key`, 'utf8');
@@ -161,6 +172,8 @@ AppDataSource
       hostnames,
       useLocalhost: USE_LOCALHOST === 'true',
     });
+
+    syncCouchDBToPostgres();
 
   })
   .catch(error => logNginx(`${error}`));

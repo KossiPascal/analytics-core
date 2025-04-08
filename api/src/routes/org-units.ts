@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 import { Middelware } from "../middleware/auth";
-import { OrgUnitsController } from '../controllers/orgunit-query/org-units-orm';
+import { OrgUnitsController } from '../controllers/ORGUNITS/org-units-orm';
 
 const OrgUnitsRouter = Router();
 

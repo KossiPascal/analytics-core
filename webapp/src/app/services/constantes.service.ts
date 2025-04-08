@@ -9,17 +9,17 @@ import { UserContextService } from './user-context.service';
 })
 export class ConstanteService {
   private env: any;
-  APP_LOGO: string = '';
 
-  get defaultTitle(): string {
-    return 'KENDEYA DASHBOARD';
-  }
-
-  constructor(private http: HttpClient, private userCtx: UserContextService) { }
+  APP_LOGO: string = 'assets/logo/guinee.png';
+  COUNTRY_LOGO: string = 'assets/logo/guinea-flag.png';
+  APP_TITLE: string = 'KENDEYA DASHBOARD';
 
 
-  CustomHttpHeaders(): { headers: HttpHeaders } {
-    const token = this.userCtx.token;
+  constructor(private userCtx: UserContextService) { }
+
+
+  async CustomHttpHeaders(): Promise<{ headers: HttpHeaders; }> {
+    const token = await this.userCtx.token();
     return {
       headers: new HttpHeaders({
         Authorization: token != '' ? `Bearer ${token}` : ''
@@ -50,11 +50,11 @@ export class ConstanteService {
 
   backenUrl(cible: string = 'api'): string {
     if (location.port == '4200') {
-      const isProduction: boolean = false;
+      const isProduction: boolean = true;
       const port = isProduction ? 4437 : 8837;
       return `${location.protocol}//${location.hostname}:${port}/${cible}`;
     }
     return `${location.origin}/${cible}`;
   }
-  
+
 }

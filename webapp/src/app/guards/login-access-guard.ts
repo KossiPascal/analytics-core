@@ -1,65 +1,63 @@
-// Import necessary modules
 import { Injectable, OnDestroy } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { filter, map, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { UserContextService } from '@kossi-services/user-context.service';
 import { ConstanteService } from '@kossi-services/constantes.service';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LoginAccessGuard implements CanActivate, OnDestroy {
 
-  private destroy$ = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
 
-  constructor(private titleService: Title, private cst: ConstanteService, private activatedRoute: ActivatedRoute, private router: Router, private userCtx: UserContextService, private auth: AuthService) { }
+  constructor(
+    private titleService: Title,
+    private constants: ConstanteService,
+    private router: Router,
+    private userContext: UserContextService,
+    private authService: AuthService
+  ) {}
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    const user = this.userCtx.currentUserCtx;
+  async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
+    const user = await this.userContext.currentUser();
 
-    if (!this.userCtx.isLoggedIn || !user) {
-      this.auth.logout();
+    // Redirect if user is not logged in
+    if (!this.userContext.isLoggedIn() || !user) {
+      this.authService.logout();
       return false;
     }
 
-    const pageHref = route.data?.['href'];
-    const f = [].concat.apply([], ) ;
+    const routeAccess: string[] = route.data?.['access'] ?? [];
+    const routeTitle: string = route.data?.['title'] || this.constants.APP_TITLE;
 
-    if (!pageHref || pageHref && (user.isAdmin || (user.routes??[]).map(val=>val.path).includes(pageHref))) {
-      const title = route.data?.['title'] || this.cst.defaultTitle;
-      this.setRouteTitle(title);
+    // Build user's effective access rights
+    const userAuthorizations = new Set<string>();
+    for (const r of user.routes ?? []) {
+      for (const auth of r.authorizations ?? []) {
+        userAuthorizations.add(auth);
+      }
+    }
 
-      const requestedRoute = state.url.substring(1);
+    // Check if user has access
+    const hasAccess = user.role?.isAdmin === true || this.hasAnyMatch(userAuthorizations, routeAccess);
 
+    if (hasAccess) {
+      this.titleService.setTitle(routeTitle);
       return true;
     } else {
-      this.router.navigate(["errors/unauthorized"]);
-      // this.router.createUrlTree(['errors/unauthorized']);
+      this.router.navigate(['/errors/unauthorized']);
       return false;
     }
   }
 
-  setRouteTitle(title: string): void {
-    this.titleService.setTitle(title);
-  }
-
-  subscribeToNavigationEnd(): void {
-    this.router.events.pipe(
-      takeUntil(this.destroy$),
-      filter(event => event instanceof NavigationEnd),
-      map(() => {
-        const child = this.activatedRoute.firstChild;
-        if (child && child.snapshot.data['title']) {
-          return child.snapshot.data['title'];
-        }
-        return this.cst.defaultTitle;
-      })
-    ).subscribe((ttl: string) => {
-      this.setRouteTitle(ttl);
-    });
+  /**
+   * Returns true if any of the required accesses is in user's authorizations.
+   */
+  private hasAnyMatch(userAuths: Set<string>, required: string[]): boolean {
+    return required.some(access => userAuths.has(access));
   }
 
   ngOnDestroy(): void {

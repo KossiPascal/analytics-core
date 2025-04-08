@@ -8,10 +8,10 @@
   [showBottomElements]="true"
   [showCancelButton]="true"
   [reloadApp]="false"
-  [hideOnConfirm]="false"
+  [closeAfterSubmited]="false"
   (onCancel)="close()"
   (onSubmit)="logout()"
 >
-  <h5 style="color:black!important;">Êtes-vous sûr de vouloir vous déconnecter?</h5>
-  <h6 style="color:black!important;">Appuyez sur Annuler si vous souhaitez continuer à travailler.</h6>
+  <div class="logout-title">Êtes-vous sûr de vouloir vous déconnecter?</div>
+  <div class="logout-message">Appuyez sur Annuler si vous souhaitez continuer à travailler.</div>
 </kossi-modal-layout>

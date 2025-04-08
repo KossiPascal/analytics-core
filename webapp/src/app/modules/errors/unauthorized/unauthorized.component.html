@@ -1,14 +1,9 @@
-<div class="row h-100 align-items-center justify-content-center" style="height: 100%;width: 100%;padding-top: 100px;">
-  <div class="col-md-6 text-center p-4">
-    <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
-    <h1 class="display-1 fw-bold text-black">401</h1>
-    <h1 class="mb-4 text-black">Votre action n'est pas Authorisée</h1>
-    <h3 class="mb-4 text-black">Contacter votre administrateur s'il s'agit d'une erreur!</h3>
-
-    <div style="display: flex;align-items: center;justify-content: center;">
-      <button style="margin-right: 10px;" class="btn btn-warning btn-block btn-lg" (click)="goBack()">Page Précédente</button>
-      <button style="margin-left: 10px;" class="btn btn-info btn-block btn-lg" (click)="gotToDefaultPage()">Page d'accueil</button>
-      <button style="margin-left: 10px;" class="btn btn-info btn-block btn-lg" (click)="logout()">Se Déconnecter</button>
-    </div>
+<div class="big-container">
+  <div class="container">
+    <div class="icon">🚫</div>
+    <h1>401</h1>
+    <p>Vous n'êtes pas autorisé à accéder à cette page.</p>
+    <button (click)="goBack()">Page précédente</button>
+    <button (click)="logout()">Se Déconnecter</button>
   </div>
 </div>

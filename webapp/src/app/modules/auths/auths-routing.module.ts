@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { RegisterComponent } from './register/register.component';
 import { LoginComponent } from './login/login.component';
 import { LogoutAccessGuard } from '@kossi-src/app/guards/logout-access-guard';
 
@@ -14,17 +13,9 @@ const routes: Routes = [
     data: {
       href: 'auths/login',
       title: 'User login',
+      access: ['_public']
     },
   },
-  {
-    path: 'auths/register',
-    component: RegisterComponent,
-    canActivate: [LogoutAccessGuard],
-    data: {
-      href: 'auths/register',
-      title: 'User registration',
-    },
-  }
 ];
 
 @NgModule({

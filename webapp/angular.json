@@ -43,68 +43,60 @@
             "outputPath": "../views",
             "index": "src/index.html",
             "main": "src/main.ts",
-            "tsConfig": "tsconfig.app.json",
             "polyfills": "src/polyfills.ts",
+            "tsConfig": "tsconfig.app.json",
             "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              },
               "src/favicon.ico",
               "src/assets",
-              "src/manifest.json"
+              "src/manifest.json",
+              "src/manifest.webmanifest"
             ],
             "styles": [
               "src/styles.css",
-              "src/assets/css/bootstrap.min.css",
-              "src/assets/css/style.css",
-              "src/assets/css/forms-style.css",
-              "src/assets/css/main-app.css"
+              "src/assets/css/styles.css",
+              "src/assets/css/tab-link.css",
+              "src/assets/css/form-check-input.css",
+              "src/assets/css/scroll-bar.css",
+              "src/assets/css/input-group.css",
+              "src/assets/css/form-styles.css",
+              "src/assets/css/font-awesome.min.css"
             ],
             "scripts": [
               "src/assets/js/jquery-3.4.1.min.js",
-              "src/assets/js/bootstrap.bundle.min.js",
-              "src/assets/lib/chart/chart.min.js",
-              "src/assets/lib/easing/easing.min.js",
-              "src/assets/lib/waypoints/waypoints.min.js",
-              "src/assets/lib/owlcarousel/owl.carousel.min.js",
-              "src/assets/lib/tempusdominus/js/moment.min.js",
-              "src/assets/lib/tempusdominus/js/moment-timezone.min.js",
-              "src/assets/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js",
-              "src/assets/js/main.js",
-              "src/assets/js/style.js"
+              "src/assets/js/scripts.js",
+              "src/assets/js/xlsx.full.min.js",
+              "src/assets/js/jspdf.umd.min.js",
+              "src/assets/js/chart.js"
             ],
             "allowedCommonJsDependencies": [
               "moment",
-              "lodash"
+              "lodash",
+              "canvg",
+              "core-js",
+              "raf",
+              "rgbcolor",
+              "jquery",
+              "html2canvas",
+              "@canvasjs/stockcharts"
             ],
             "serviceWorker": true,
             "ngswConfigPath": "ngsw-config.json"
           },
           "configurations": {
-            "development": {
-              "optimization": false,
-              "outputHashing": "none",
-              "buildOptimizer": true,
-              "extractLicenses": false,
-              "sourceMap": true,
-              "deleteOutputPath": false,
-              "namedChunks": true,
-              "aot": true,
-              "serviceWorker": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.dev.ts"
-                }
-              ]
-            },
             "production": {
               "deleteOutputPath": false,
               "optimization": true,
-              "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
+              "aot": true,
+              "outputHashing": "all",
               "vendorChunk": false,
               "buildOptimizer": true,
-              "aot": true,
               "budgets": [
                 {
                   "type": "initial",
@@ -121,6 +113,23 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "outputHashing": "none",
+              "deleteOutputPath": false,
+              "namedChunks": true,
+              "aot": true,
+              "buildOptimizer": true,
+              "serviceWorker": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dev.ts"
                 }
               ]
             }
@@ -157,6 +166,10 @@
             ],
             "tsConfig": "tsconfig.spec.json",
             "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              },
               "src/favicon.ico",
               "src/assets",
               "src/manifest.json"

@@ -1,0 +1,59 @@
+<kossi-modal-layout
+  [id]="'sync-for-offline-confirm-modal'"
+  [modalActionColor]="'light-back'"
+  [showCloseButton]="true"
+  [modalTitle]="'User Profile'"
+  [cancelBtnName]="'Annuler'"
+  [submitBtnName]="''"
+  [showBottomElements]="false"
+  [showCancelButton]="false"
+  [reloadApp]="false"
+  [closeAfterSubmited]="false"
+  [modalContentWidth]="'medium-width'"
+  >
+
+  
+<div class="container">
+    <div class="card">
+      <h3>Edit Information</h3>
+      <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+        <label>Nom complet:</label>
+        <input formControlName="fullname" type="text" />
+        <div *ngIf="profileForm.get('fullname')?.invalid && profileForm.get('fullname')?.touched" class="error">
+          Le nom est obligatoire
+        </div>
+  
+        <label>Email:</label>
+        <input formControlName="email" type="email" />
+        <div *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched" class="error">
+          L'Email n'est pas valide
+        </div>
+  
+        <label>Téléphone:</label>
+        <input formControlName="phone" type="text" />
+  
+        <button type="submit" [disabled]="!profileForm.valid">Save Changes</button>
+      </form>
+    </div>
+  
+    <div class="card">
+      <h3>Change Password</h3>
+      <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
+        <label>Current Password:</label>
+        <input type="password" formControlName="currentPassword" />
+  
+        <label>New Password:</label>
+        <input type="password" formControlName="newPassword" />
+  
+        <label>Confirm New Password:</label>
+        <input type="password" formControlName="confirmPassword" />
+        <div *ngIf="passwordForm.value.newPassword !== passwordForm.value.confirmPassword" class="error">
+          Passwords do not match
+        </div>
+  
+        <button type="submit" [disabled]="!passwordForm.valid">Update Password</button>
+      </form>
+    </div>
+  </div>
+
+</kossi-modal-layout>

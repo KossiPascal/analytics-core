@@ -1,0 +1,52 @@
+/* Fond semi-transparent couvrant toute la page */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Conteneur du loader */
+.loading-container {
+  text-align: center;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Animation de la vague */
+.wave path {
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  animation: waveAnimation 2s infinite linear;
+}
+
+/* Animation de la ligne serpent */
+@keyframes waveAnimation {
+  0% { stroke-dashoffset: 180; }
+  100% { stroke-dashoffset: 0; }
+}
+
+/* Texte animé */
+.loading-text {
+  font-size: 16px;
+  color: #333;
+  margin-top: 10px;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+/* Effet d’animation du texte */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}

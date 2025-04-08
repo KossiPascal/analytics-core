@@ -1,0 +1,100 @@
+
+.vaccine-big-head {
+  padding: 2px !important;
+  text-align: center !important;
+}
+
+.vaccine-head {
+  font-size: 14px !important;
+  width: 50px !important;
+  padding: 2px !important;
+}
+
+.vaccine-on {
+  text-align: center !important;
+  font-size: 18px !important;
+  font-weight: bold !important;
+  color: green !important;
+  padding: 2px 0px 0px 0px !important;
+}
+
+.vaccine-off {
+  text-align: center !important;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  color: brown !important;
+  padding: 0px 0px 0px 0px !important;
+}
+
+.vaccine-NA {
+  text-align: center !important;
+  font-size: 14px !important;
+  font-weight: bold !important;
+  color: rgb(215, 215, 215) !important;
+  padding: 5px 0px 0px 0px !important;
+}
+
+
+.many-child {
+  background: rgb(240, 251, 255) !important;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  position: relative; /* Important pour positionner le tooltip */
+}
+
+td[data-tooltip]:not([data-tooltip=""]):hover::after {
+  content: attr(data-tooltip); /* Affiche le texte seulement si non vide */
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out;
+}
+
+td[data-tooltip]:not([data-tooltip=""]):hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+
+
+.call-sms {
+  display: inline-block;
+  color: blue;
+  text-decoration: none;
+  text-align: center;
+}
+
+.sms-sender {
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  margin: 5px;
+}
+
+.sms-sender:hover {
+  background-color: #45a049;
+}
+

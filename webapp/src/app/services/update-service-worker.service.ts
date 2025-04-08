@@ -9,7 +9,6 @@ import { ConfigService } from './config.service';
 import { AppStorageService } from './local-storage.service';
 import { ModalService } from './modal.service';
 import { UserContextService } from './user-context.service';
-import { DEFAULT_LOCAL_DB } from '../utils/const';
 
 
 @Injectable({
@@ -125,7 +124,7 @@ export class UpdateServiceWorkerService {
     try {
       await this.unregisterServiceWorker();
       if (this.appNewVersion) {
-        this.store.set({ db: DEFAULT_LOCAL_DB, name: '_versions', value: JSON.stringify(this.appNewVersion) });
+        this.store.set({ db: 'local', name: '_versions', value: JSON.stringify(this.appNewVersion) });
       }
       // Nettoyer le cache du navigateur
       const cacheKeys = await caches.keys();
@@ -146,20 +145,24 @@ export class UpdateServiceWorkerService {
     }
   }
 
-  watchForChanges() {
-    const user = this.userCtx.currentUserCtx?.id;
-    if (user) {
+  async watchForChanges() {
+    const user = await this.userCtx.currentUser();
+    if (user?.id) {
       this.conf.appVersion().subscribe((newVersion: { service_worker_version: number | null, app_version: string | null }) => {
         if (newVersion) {
-          const oldVersionsStr = this.store.get({ db: DEFAULT_LOCAL_DB, name: '_versions' });
+          const oldVersionsStr = this.store.get({ db: 'local', name: '_versions' });
           if (oldVersionsStr) {
             const oldVersions = JSON.parse(oldVersionsStr) as { service_worker_version: number | null, app_version: string | null };
             if (newVersion.service_worker_version && `${oldVersions.service_worker_version}` != `${newVersion.service_worker_version}`) {
               this.appNewVersion = newVersion;
-              this.modalService.open({ component: ReloadingComponent });
+              this.modalService.open(ReloadingComponent).subscribe((result) => {
+                if (result) {
+                  console.log("Données reçues depuis la modal :", result);
+                }
+              });
             }
           } else {
-            return this.store.set({ db: DEFAULT_LOCAL_DB, name: '_versions', value: JSON.stringify(newVersion) });
+            return this.store.set({ db: 'local', name: '_versions', value: JSON.stringify(newVersion) });
           }
         }
         setTimeout(() => this.ngZone.run(() => this.watchForChanges()), this.UPDATE_INTERVAL ?? this.SIXTY_SECOND);

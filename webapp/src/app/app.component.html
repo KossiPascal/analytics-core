@@ -1,75 +1,29 @@
-
-<ng-container *ngIf="!isPublicPage() && (isAuthenticated() && !hideMainPage())">
-  <div class="container-fluid position-relative d-flex p-0">
-    <!-- Spinner Start -->
-    <div id="spinner"
-      class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
-      <app-loader></app-loader>
-      <div class="spinner-border app-text-style" style="width: 3rem; height: 3rem;" role="status">
-        <span class="sr-only" style="color: black;">...</span>
-      </div>
-    </div>
-    <!-- Spinner End -->
-
-    <app-side-navigation></app-side-navigation>
-
-    <!-- Content Start -->
-    <div class="content">
-      <app-top-navigation></app-top-navigation>
-      <!-- Widgets Start -->
-      <div style="overflow: hidden;padding-bottom: 70px!important;" class="body-container container-fluid pt-1 px-1">
-        <div class="body-container bg-white rounded align-items-center justify-content-center mx-0">
-          <!-- <button (click)="showMessage()">Show Snackbar</button> -->
-          <!-- <div *ngIf="!isOnline" class="offline-warning">Vous n'êtes pas connecté à internet!</div> -->
-          <!-- <div *ngIf="isOnline; else offline">Device is online</div>
-          <ng-template #offline><div>Device is offline</div></ng-template> -->
-          <router-outlet class="body-container"></router-outlet>
-        </div>
-      </div>
-      <!-- Widgets End -->
-    </div>
-    <!-- Content End -->
-
-    <!-- Back to Top -->
-    <a href="#" class="btn btn-lg btn-fifteen btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
-
-    <!-- Footer Start -->
-    <div class="body-container"
-      style="position: absolute!important;bottom: 0!important; left: 0!important; right: 0!important; padding: 0px!important;">
-      <div style="padding: 2px!important;" class="bg-white">
-        <div style="text-align: center!important;" class="text-center text-sm-start">
-          &copy;{{ YEAR }} , All right reserved
-          <!--  |<span style="color: rgb(0, 0, 159);">République de Guinée</span>  -->
-          <img style="margin-left: 10px;" height="30" src="assets/logo/guinea-flag.png" alt="Conakry">
-          <!-- <a target="_blank" href="https://integratehealth.org/">Integrate Health</a>
-          <img style="margin-left: 10px;" height="30" src="assets/logo/ih-logo.png" alt=""> -->
-        </div>
-      </div>
-    </div>
-    <!-- Footer End -->
-
-  </div>
-</ng-container>
-
-<ng-container *ngIf="!isPublicPage() && (!isAuthenticated() || hideMainPage())">
-  <div style="height: 100%;width: 100%;">
-    <router-outlet></router-outlet>
-  </div>
+<ng-container *ngIf="!isChartsPage() && (!isPublicPage() && (!isAuthenticated || hideMainPage()))">
+  <router-outlet></router-outlet>
 </ng-container>
 
 
-<kendeya-guide-formation *ngIf="isPublicPage()">
-  <div style="height: 100%;width: 100%;">
-    <router-outlet></router-outlet>
-  </div>
-</kendeya-guide-formation>
+<ng-container *ngIf="!isChartsPage() && (isPublicPage() || (isAuthenticated && !hideMainPage()))">
 
-<kendeya-reco-guide-formation *ngIf="isPublicPage()">
-  <div style="height: 100%;width: 100%;">
-    <router-outlet></router-outlet>
-  </div>
-</kendeya-reco-guide-formation>
+  <app-navbar></app-navbar>
+
+  <router-outlet></router-outlet>
+</ng-container>
+
+<ng-container *ngIf="isChartsPage()">
+
+  <app-navbar></app-navbar>
+  <charts-views></charts-views>
+
+  <router-outlet></router-outlet>
+</ng-container>
+
+
+
+
+
+
 
 <app-snackbar></app-snackbar>
 <device-detection></device-detection>
-<!-- <kossi-fix-modal-layout></kossi-fix-modal-layout> -->
+

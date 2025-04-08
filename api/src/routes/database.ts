@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-import { DeleteFromCouchDb, databaseEntitiesList, GetRecoDataToBeDeleteFromCouchDb, TruncatePostgresMysqlJsonDatabase, UpdateUserFacilityIdAndContactPlace } from "../controllers/databases";
+import { DeleteFromCouchDb, databaseEntitiesList, GetRecoDataToBeDeleteFromCouchDb, DeleteAllDataFromDatabase, UpdateUserFacilityIdAndContactPlace } from "../controllers/databases";
 import { Middelware } from "../middleware/auth";
 
 const express = require('express');
@@ -14,7 +14,7 @@ databaseRouter.post('/postgres/truncate',
     body('entities').isArray().not().isEmpty(),
     body('action').not().isEmpty(),
   ],
-  Middelware.authMiddleware, TruncatePostgresMysqlJsonDatabase);
+  Middelware.authMiddleware, DeleteAllDataFromDatabase);
 
 databaseRouter.post('/couchdb/update-user-facility-contact-place', Middelware.authMiddleware, UpdateUserFacilityIdAndContactPlace);
 
