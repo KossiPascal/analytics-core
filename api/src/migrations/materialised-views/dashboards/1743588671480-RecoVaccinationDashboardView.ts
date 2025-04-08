@@ -111,11 +111,12 @@ export class RecoVaccinationDashboardView1743588671480 implements MigrationInter
 
                                                     ppt.date_of_birth AS birth_date,
 
-                                                    calculateAgeIn('days',ppt.date_of_birth::DATE) AS child_age_in_days,
-                                                    calculateAgeIn('months',ppt.date_of_birth::DATE) AS child_age_in_months,
-                                                    calculateAgeIn('years',ppt.date_of_birth::DATE) AS child_age_in_years,
+                                                    calculateAgeIn('days'::TEXT, ppt.date_of_birth::DATE) AS child_age_in_days,
+                                                    calculateAgeIn('months'::TEXT, ppt.date_of_birth::DATE) AS child_age_in_months,
+                                                    calculateAgeIn('years'::TEXT, ppt.date_of_birth::DATE) AS child_age_in_years,
                                                     
-                                                    ageWithFullLabel(ppt.date_of_birth::DATE) child_age_str,
+                                                    
+                                                    ageWithFullLabel(NULL, calculateAgeIn('days'::TEXT, ppt.date_of_birth::DATE)::BIGINT) AS child_age_str,
 
                                                     ppt.family_id,
                                                     vd.reco_id,
@@ -242,15 +243,15 @@ export class RecoVaccinationDashboardView1743588671480 implements MigrationInter
                                                     v.family_id = f.id
                                                 AND v.child_id IS NOT NULL
                                                 AND v.reco_id = a.reco_id 
-                                                AND calculateAgeIn('days',v.birth_date::DATE) > 0 
-                                                AND calculateAgeIn('months',v.birth_date::DATE) < 60 
+                                                AND calculateAgeIn('days'::TEXT, v.birth_date::DATE) > 0 
+                                                AND calculateAgeIn('months'::TEXT, v.birth_date::DATE) < 60 
                                                 AND (
-                                                    (calculateAgeIn('days',v.birth_date::DATE) > 0 AND v.is_birth_vaccine_ok IS NOT TRUE) OR
-                                                    (calculateAgeIn('days',v.birth_date::DATE) >= 42 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE)) OR
-                                                    (calculateAgeIn('days',v.birth_date::DATE) >= 70 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE)) OR
-                                                    (calculateAgeIn('days',v.birth_date::DATE) >= 98 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE OR v.is_forteen_weeks_vaccine_ok IS NOT TRUE)) OR
-                                                    (calculateAgeIn('months',v.birth_date::DATE) >= 9 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE OR v.is_forteen_weeks_vaccine_ok IS NOT TRUE OR v.is_nine_months_vaccine_ok IS NOT TRUE)) OR
-                                                    (calculateAgeIn('months',v.birth_date::DATE) >= 15 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE OR v.is_forteen_weeks_vaccine_ok IS NOT TRUE OR v.is_nine_months_vaccine_ok IS NOT TRUE OR v.is_fifty_months_vaccine_ok IS NOT TRUE))
+                                                    (calculateAgeIn('days'::TEXT, v.birth_date::DATE) > 0 AND v.is_birth_vaccine_ok IS NOT TRUE) OR
+                                                    (calculateAgeIn('days'::TEXT, v.birth_date::DATE) >= 42 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE)) OR
+                                                    (calculateAgeIn('days'::TEXT, v.birth_date::DATE) >= 70 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE)) OR
+                                                    (calculateAgeIn('days'::TEXT, v.birth_date::DATE) >= 98 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE OR v.is_forteen_weeks_vaccine_ok IS NOT TRUE)) OR
+                                                    (calculateAgeIn('months'::TEXT, v.birth_date::DATE) >= 9 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE OR v.is_forteen_weeks_vaccine_ok IS NOT TRUE OR v.is_nine_months_vaccine_ok IS NOT TRUE)) OR
+                                                    (calculateAgeIn('months'::TEXT, v.birth_date::DATE) >= 15 AND (v.is_birth_vaccine_ok IS NOT TRUE OR v.is_six_weeks_vaccine_ok IS NOT TRUE OR v.is_ten_weeks_vaccine_ok IS NOT TRUE OR v.is_forteen_weeks_vaccine_ok IS NOT TRUE OR v.is_nine_months_vaccine_ok IS NOT TRUE OR v.is_fifty_months_vaccine_ok IS NOT TRUE))
                                                 )
                                         )
 
@@ -285,15 +286,15 @@ export class RecoVaccinationDashboardView1743588671480 implements MigrationInter
                                     AND vdd.has_all_vaccine_done IS DISTINCT FROM TRUE
                                     AND pt.date_of_birth IS NOT NULL 
                                     AND pt.date_of_death IS NULL
-                                    AND calculateAgeIn('days',pt.date_of_birth::DATE) > 0 
-                                    AND calculateAgeIn('months', pt.date_of_birth::DATE) < 60
+                                    AND calculateAgeIn('days'::TEXT, pt.date_of_birth::DATE) > 0 
+                                    AND calculateAgeIn('months'::TEXT,  pt.date_of_birth::DATE) < 60
                                     AND (
-                                        (calculateAgeIn('days',pt.date_of_birth::DATE) > 0 AND vdd.is_birth_vaccine_ok IS NOT TRUE) OR
-                                        (calculateAgeIn('days',pt.date_of_birth::DATE) >= 42 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE)) OR
-                                        (calculateAgeIn('days',pt.date_of_birth::DATE) >= 70 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE)) OR
-                                        (calculateAgeIn('days',pt.date_of_birth::DATE) >= 98 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE OR vdd.is_forteen_weeks_vaccine_ok IS NOT TRUE)) OR
-                                        (calculateAgeIn('months',pt.date_of_birth::DATE) >= 9 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE OR vdd.is_forteen_weeks_vaccine_ok IS NOT TRUE OR vdd.is_nine_months_vaccine_ok IS NOT TRUE)) OR
-                                        (calculateAgeIn('months',pt.date_of_birth::DATE) >= 15 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE OR vdd.is_forteen_weeks_vaccine_ok IS NOT TRUE OR vdd.is_nine_months_vaccine_ok IS NOT TRUE OR vdd.is_fifty_months_vaccine_ok IS NOT TRUE))
+                                        (calculateAgeIn('days'::TEXT, pt.date_of_birth::DATE) > 0 AND vdd.is_birth_vaccine_ok IS NOT TRUE) OR
+                                        (calculateAgeIn('days'::TEXT, pt.date_of_birth::DATE) >= 42 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE)) OR
+                                        (calculateAgeIn('days'::TEXT, pt.date_of_birth::DATE) >= 70 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE)) OR
+                                        (calculateAgeIn('days'::TEXT, pt.date_of_birth::DATE) >= 98 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE OR vdd.is_forteen_weeks_vaccine_ok IS NOT TRUE)) OR
+                                        (calculateAgeIn('months'::TEXT, pt.date_of_birth::DATE) >= 9 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE OR vdd.is_forteen_weeks_vaccine_ok IS NOT TRUE OR vdd.is_nine_months_vaccine_ok IS NOT TRUE)) OR
+                                        (calculateAgeIn('months'::TEXT, pt.date_of_birth::DATE) >= 15 AND (vdd.is_birth_vaccine_ok IS NOT TRUE OR vdd.is_six_weeks_vaccine_ok IS NOT TRUE OR vdd.is_ten_weeks_vaccine_ok IS NOT TRUE OR vdd.is_forteen_weeks_vaccine_ok IS NOT TRUE OR vdd.is_nine_months_vaccine_ok IS NOT TRUE OR vdd.is_fifty_months_vaccine_ok IS NOT TRUE))
                                     )
                                     AND vdd.patient_id IS NOT NULL
                             ) AS f

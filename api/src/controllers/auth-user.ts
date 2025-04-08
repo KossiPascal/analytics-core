@@ -65,6 +65,16 @@ export async function CurrentUser(currentUserId: string): Promise<Users | null> 
 export class AuthUserController {
     static DefaultAdminCreation = async () => {
         const userRepo = await getUsersRepository();
+
+
+        // const allusers = await userRepo.find();
+
+        // for (const user of allusers) {
+        //     user.roles = user.roles.map(u=>parseInt(`${u}`))
+        //     await userRepo.save(user);
+        // }
+
+
         const existingUsers = await userRepo.count();
         if (existingUsers > 0) return;
 

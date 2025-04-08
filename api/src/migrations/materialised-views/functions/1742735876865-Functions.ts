@@ -16,6 +16,11 @@ export class Functions1742735876865 implements MigrationInterface {
                     totalMonths INT;
                     years NUMERIC;
                 BEGIN
+                    -- Check if output or dateOfBirth is unknown (NULL), return NULL if so
+                    IF output IS NULL OR dateOfBirth IS NULL OR output = '' OR output = 'unknown'
+                        THEN RETURN NULL;
+                    END IF;
+
                     -- Calculate the end of the month (last day of the given month) using DATE arithmetic
                     ref_date := COALESCE(anotherDate, 
                          CASE WHEN month IS NOT NULL AND year IS NOT NULL 
