@@ -1,11 +1,11 @@
 
+<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.PROMOTION == true"></app-google-loader>
+
 
 <ng-container *ngIf="DATA_FETCHED">
   <h2>📈 RAPPORT PROMOTIONS</h2>
   <br>
   
-  <app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.PROMOTION == true"></app-google-loader>
-
   <repports-header-selector
     [id]="'promotion-table-header'"
     [REPPORT_NAME]="REPPORT_NAME"

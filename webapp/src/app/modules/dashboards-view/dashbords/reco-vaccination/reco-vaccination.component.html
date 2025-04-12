@@ -1,10 +1,10 @@
 
+<app-google-loader [isLoading]="DASHBOARDS_HEADER.ON_FETCHING.RECOS_PERFORMANCES == true"></app-google-loader>
+
 <ng-container *ngIf="DATA_FETCHED && DATA_FETCHED.length > 0">
 
   <h2>📈 LIST DES MOINS DE 5 ANS AVEC VACCINS NON A JOUR</h2>
   <br>
-
-  <app-google-loader [isLoading]="DASHBOARDS_HEADER.ON_FETCHING.RECOS_PERFORMANCES == true"></app-google-loader>
 
   <dashboards-header-selector
     [id]="'vaccination-table-header'"

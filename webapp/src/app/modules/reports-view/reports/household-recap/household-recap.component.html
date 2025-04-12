@@ -1,12 +1,12 @@
 
+<app-google-loader
+[isLoading]="REPORTS_HEADER.ON_FETCHING.HOUSE_HOLD_RECAP == true"></app-google-loader>
+
 <ng-container *ngIf="DATA_FETCHED && DATA_FETCHED.length > 0">
 
   <ng-container *ngIf="DATA_FETCHED_TOTAL as t">
     <h2>📋 RAPPORT RÉCAP DES MÉNAGES</h2>
     <br>
-
-    <app-google-loader
-      [isLoading]="REPORTS_HEADER.ON_FETCHING.HOUSE_HOLD_RECAP == true"></app-google-loader>
 
     <repports-header-selector
       [id]="'recap-menage-table-header'"

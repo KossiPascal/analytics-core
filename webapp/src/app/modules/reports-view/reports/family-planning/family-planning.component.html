@@ -1,11 +1,11 @@
 
 
+<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.FAMILY_PLANNING == true"></app-google-loader>
+
 <ng-container *ngIf="DATA_FETCHED">
 
   <h2>📋 RAPPORT PLANIFICATION FAMILIALE</h2>
   <br>
-
-  <app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.FAMILY_PLANNING == true"></app-google-loader>
 
   <repports-header-selector
     [id]="'family-planning-table-header'"

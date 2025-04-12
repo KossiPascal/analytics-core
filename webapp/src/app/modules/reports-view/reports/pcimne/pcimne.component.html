@@ -1,11 +1,11 @@
 
+<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.PCIMNE_NEWBORN == true"></app-google-loader>
+
 
 <ng-container *ngIf="DATA_FETCHED as pn">
   
   <h2>📋 RAPPORT PCIMNE</h2>
   <br>
-
-  <app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.PCIMNE_NEWBORN == true"></app-google-loader>
 
   <repports-header-selector
     [id]="'pcimne-table-header'"
