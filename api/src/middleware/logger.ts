@@ -63,13 +63,13 @@ export const userLoggerMiddleware = async (req: Request, res: Response, next: Ne
   }
 
   try {
-    // 🔒 Vérifie si l'IP est autorisée
-    if (!TRUSTED_IPS.includes(clientIp)) {
-      if (!isExcludedUrl()) {
-        console.warn(`⛔ Unauthorized IP: ${clientIp}`);
-      }
-      return res.status(403).json({ message: 'Forbidden: Unauthorized IP' });
-    }
+    // // 🔒 Vérifie si l'IP est autorisée
+    // if (!TRUSTED_IPS.includes(clientIp)) {
+    //   if (!isExcludedUrl()) {
+    //     console.warn(`⛔ Unauthorized IP: ${clientIp}`);
+    //   }
+    //   return res.status(403).json({ message: 'Forbidden: Unauthorized IP' });
+    // }
 
     // 🔒 Vérifie le Content-Type sur les POST
     if (method === 'POST' && req.headers['content-type'] !== 'application/json') {
@@ -83,8 +83,10 @@ export const userLoggerMiddleware = async (req: Request, res: Response, next: Ne
     const rawUserId = req.body?.userId || req.headers['x-user-id'];
     const userId = typeof rawUserId === 'string' && /^[a-zA-Z0-9\-]{10,}$/.test(rawUserId) ? rawUserId : null;
 
+    const logData = req.body?.noLogData != true;
+
     if (!userId) {
-      if (!isExcludedUrl()) {
+      if (!isExcludedUrl() && logData) {
         console.warn(`⚠️ Invalid or missing userId | Method: ${method} | URL: ${req.originalUrl}`);
       }
       return proceed();
@@ -94,13 +96,13 @@ export const userLoggerMiddleware = async (req: Request, res: Response, next: Ne
     const user = await userRepo.findOne({ where: { id: userId } });
 
     if (!user) {
-      if (!isExcludedUrl()) {
+      if (!isExcludedUrl() && logData) {
         console.warn(`⚠️ Unknown user with ID: ${userId} | Method: ${method} | URL: ${req.originalUrl}`);
       }
       return proceed();
     }
 
-    if (!isExcludedUrl()) {
+    if (!isExcludedUrl() && logData) {
       // Parsing User-Agent information
       const agent = useragent.parse(req.headers['user-agent']);
       const deviceInfo = {

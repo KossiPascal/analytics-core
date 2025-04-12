@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1744495033519,
+  "timestamp": 1744497404434,
   "appData": [
     "/index.html",
     "/*.bundle.css",
@@ -20,7 +20,7 @@
         "/default-src_app_components_base-header_base-header_component_ts-src_app_components_orgunits-f-3d3208.ba7de85a0f6139fd.js",
         "/favicon.ico",
         "/index.html",
-        "/main.f17827ace2cff296.js",
+        "/main.31d19627a2540207.js",
         "/manifest.json",
         "/node_modules_canvg_lib_index_es_js.c0f78bf77cbb278e.js",
         "/node_modules_dompurify_dist_purify_es_mjs.f07efc6fba706463.js",
@@ -298,8 +298,8 @@
     "/assets/webfonts/fa-v4compatibility.woff2": "4fd82f39237a3e52cb4e311d1961bbb47353a147",
     "/default-src_app_components_base-header_base-header_component_ts-src_app_components_orgunits-f-3d3208.ba7de85a0f6139fd.js": "97c1b711da44cea2591b12443b5196b94e00b4aa",
     "/favicon.ico": "07f15e9ed87a7c2472982bcabe676d065b68b4cc",
-    "/index.html": "3ac8c3835400f82ea92cb19e33f03854fe0dcafb",
-    "/main.f17827ace2cff296.js": "9ae1d1902936d1baef192a7c280bb411495953b8",
+    "/index.html": "71ea0952cdcfe51a3671b70c034cfdc6486eb3ab",
+    "/main.31d19627a2540207.js": "c3b8ef9c1a827c8df3209e727afab4655ce33408",
     "/manifest.json": "eff1abf1462538afdb41a605f9b559eb8b0d31fc",
     "/node_modules_canvg_lib_index_es_js.c0f78bf77cbb278e.js": "a50410e132875645dad671d195e99d1815f2239e",
     "/node_modules_dompurify_dist_purify_es_mjs.f07efc6fba706463.js": "b42c466f1f9b81c78a129d4850c38a83294b4e3d",

@@ -38,7 +38,7 @@ export class ApiService {
 
   getConfigs(): Observable<any> {
     const userHttpUrl = `${this.backendUrl}/configs`;
-    return from(this.ApiParams({ userHttpUrl })).pipe(
+    return from(this.ApiParams({ userHttpUrl, noLogData: true })).pipe(
       switchMap(fparams =>
         this.http.post(userHttpUrl, fparams, this.customHeaders)
       )
@@ -47,7 +47,7 @@ export class ApiService {
 
   appVersion(): Observable<any> {
     const userHttpUrl = `${this.backendUrl}/configs/version`;
-    return from(this.ApiParams({ userHttpUrl })).pipe(
+    return from(this.ApiParams({ userHttpUrl, noLogData: true })).pipe(
       switchMap(fparams =>
         this.http.post(userHttpUrl, fparams, this.customHeaders)
       )
