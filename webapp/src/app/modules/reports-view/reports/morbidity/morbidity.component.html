@@ -1,6 +1,10 @@
-<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.MORBIDITY == true"></app-google-loader>
 
 <ng-container *ngIf="DATA_FETCHED as m">
+  
+  <h2>📋 RAPPORT MORBIDITÉ</h2>
+  <br>
+
+  <app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.MORBIDITY == true"></app-google-loader>
 
   <repports-header-selector
     [id]="'morbidity-table-header'"
@@ -289,5 +293,9 @@
       <td class="separation" colspan="9"></td>
     </tr>
   </table>
+</ng-container>
+
+<ng-container *ngIf="!DATA_FETCHED">
+  <h1 style="margin-top: 150px; width: 100%; text-align: center; color:brown;">Pas de données</h1>
 </ng-container>
 

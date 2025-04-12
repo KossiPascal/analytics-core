@@ -1,70 +1,85 @@
-<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.HOUSE_HOLD_RECAP == true"></app-google-loader>
 
-<ng-container *ngIf="DATA_FETCHED && DATA_FETCHED_TOTAL as t">
+<ng-container *ngIf="DATA_FETCHED && DATA_FETCHED.length > 0">
 
-  <repports-header-selector
-    [id]="'recap-menage-table-header'"
-    [REPPORT_NAME]="REPPORT_NAME"
-    [CHANGE_STATE]="CHANGE_STATE" 
-    [HIDE_ZERO_ID]="'household-rep'"
-    [TABLE_ID]="'recap-menage-table'"
-    [SHOW_EXPORT_TABLE_BTN]="true"
-    (onValidateData)="validateData()"
-    (onCancelDataValidated)="cancelValidation()"
-    (onSendDataToDhis2)="sendDataToDhis2($event)"
-    (onHideZero)="hideZero($event)"
-    >
-  </repports-header-selector>
+  <ng-container *ngIf="DATA_FETCHED_TOTAL as t">
+    <h2>📋 RAPPORT RÉCAP DES MÉNAGES</h2>
+    <br>
 
-  <table id="recap-menage-table" class="table table-bordered table-hover">
-    <thead>
-      <tr class="table-head">
-        <!-- <th style="width: 2%;" scope="col">N°</th> -->
-        <th style="width: 2.5%;" scope="col">N° ménage</th>
-        <th scope="col">Nom Ménage</th>
-        <th style="width: 10%;" scope="col">Total membres ménages</th>
-        <th style="width: 10%;" scope="col">Total femmes 15-49 ans</th>
-        <th style="width: 10%;" scope="col">Total enfants moins de 5 ans</th>
-        <th style="width: 10%;" scope="col">Total enfants de 0-11 mois</th>
-        <th style="width: 10%;" scope="col">Total enfants de 12-59 mois</th>
-        <th style="width: 10%;" scope="col">Latrine fonctionnelle</th>
-        <th style="width: 10%;" scope="col">Accès à l'eau potable</th>
-      </tr>
-    </thead>
-    <thead>
-      <!-- <tr style="background-color: rgb(30, 127, 255); font-weight: bold;"> -->
-      <tr>
-        <td class="h-total" colspan="2" scope="row">TOTAL</td>
-        <td class="h-total">{{ shawValue(t.total_household_members) }}</td>
-        <td class="h-total">{{ shawValue(t.total_women_15_50_years) }}</td>
-        <td class="h-total">{{ shawValue(t.total_children_under_5_years) }}</td>
-        <td class="h-total">{{ shawValue(t.total_children_0_12_months) }}</td>
-        <td class="h-total">{{ shawValue(t.total_children_12_60_months) }}</td>
-        <td class="h-total">{{ shawValue(t.has_functional_latrine) }}</td>
-        <td class="h-total">{{ shawValue(t.has_drinking_water_access) }}</td>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let hr of PAGINATION_DATA; let i=index">
-        <!-- <td scope="row">{{ hr.index }}</td> -->
-        <!-- <td scope="row">{{ i + 1 }}</td> -->
-        <td>{{ shawValue(hr.household_code) }}</td>
-        <td>{{ shawValue(hr.household_name) }}</td>
-        <td>{{ shawValue(hr.total_household_members) }}</td>
-        <td>{{ shawValue(hr.total_women_15_50_years) }}</td>
-        <td>{{ shawValue(hr.total_children_under_5_years) }}</td>
-        <td>{{ shawValue(hr.total_children_0_12_months) }}</td>
-        <td>{{ shawValue(hr.total_children_12_60_months) }}</td>
-        <td>{{ shawValue(hr.has_functional_latrine === true ? 'OUI' : '') }}</td>
-        <td>{{ shawValue(hr.has_drinking_water_access === true ? 'OUI' : '') }}</td>
-      </tr>
-    </tbody>
-  </table>
+    <app-google-loader
+      [isLoading]="REPORTS_HEADER.ON_FETCHING.HOUSE_HOLD_RECAP == true"></app-google-loader>
 
-  <reports-pagination-table 
-    [id]="'pagination-recap-menage'"
-    [PAGINATION_DATA]="DATA_FETCHED"
-    (onPageChanged)="onUpdatedPaginate($event)"
-  ></reports-pagination-table>
+    <repports-header-selector
+      [id]="'recap-menage-table-header'"
+      [REPPORT_NAME]="REPPORT_NAME"
+      [CHANGE_STATE]="CHANGE_STATE"
+      [HIDE_ZERO_ID]="'household-rep'"
+      [TABLE_ID]="'recap-menage-table'"
+      [SHOW_EXPORT_TABLE_BTN]="true"
+      (onValidateData)="validateData()"
+      (onCancelDataValidated)="cancelValidation()"
+      (onSendDataToDhis2)="sendDataToDhis2($event)"
+      (onHideZero)="hideZero($event)">
+    </repports-header-selector>
+
+    <table id="recap-menage-table" class="table table-bordered table-hover">
+      <thead>
+        <tr class="table-head">
+          <!-- <th style="width: 2%;" scope="col">N°</th> -->
+          <th style="width: 2.5%;" scope="col">N° ménage</th>
+          <th scope="col">Nom Ménage</th>
+          <th style="width: 10%;" scope="col">Total membres ménages</th>
+          <th style="width: 10%;" scope="col">Total femmes 15-49 ans</th>
+          <th style="width: 10%;" scope="col">Total enfants moins de 5 ans</th>
+          <th style="width: 10%;" scope="col">Total enfants de 0-11 mois</th>
+          <th style="width: 10%;" scope="col">Total enfants de 12-59 mois</th>
+          <th style="width: 10%;" scope="col">Latrine fonctionnelle</th>
+          <th style="width: 10%;" scope="col">Accès à l'eau potable</th>
+        </tr>
+      </thead>
+      <thead>
+        <!-- <tr style="background-color: rgb(30, 127, 255); font-weight: bold;"> -->
+        <tr>
+          <td class="h-total" colspan="2" scope="row">TOTAL</td>
+          <td class="h-total">{{ shawValue(t.total_household_members) }}</td>
+          <td class="h-total">{{ shawValue(t.total_women_15_50_years) }}</td>
+          <td class="h-total">{{ shawValue(t.total_children_under_5_years)
+            }}</td>
+          <td class="h-total">{{ shawValue(t.total_children_0_12_months) }}</td>
+          <td class="h-total">{{ shawValue(t.total_children_12_60_months)
+            }}</td>
+          <td class="h-total">{{ shawValue(t.has_functional_latrine) }}</td>
+          <td class="h-total">{{ shawValue(t.has_drinking_water_access) }}</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let hr of PAGINATION_DATA; let i=index">
+          <!-- <td scope="row">{{ hr.index }}</td> -->
+          <!-- <td scope="row">{{ i + 1 }}</td> -->
+          <td>{{ shawValue(hr.household_code) }}</td>
+          <td>{{ shawValue(hr.household_name) }}</td>
+          <td>{{ shawValue(hr.total_household_members) }}</td>
+          <td>{{ shawValue(hr.total_women_15_50_years) }}</td>
+          <td>{{ shawValue(hr.total_children_under_5_years) }}</td>
+          <td>{{ shawValue(hr.total_children_0_12_months) }}</td>
+          <td>{{ shawValue(hr.total_children_12_60_months) }}</td>
+          <td>{{ shawValue(hr.has_functional_latrine === true ? 'OUI' : '')
+            }}</td>
+          <td>{{ shawValue(hr.has_drinking_water_access === true ? 'OUI' : '')
+            }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <reports-pagination-table
+      [id]="'pagination-recap-menage'"
+      [PAGINATION_DATA]="DATA_FETCHED"
+      (onPageChanged)="onUpdatedPaginate($event)"></reports-pagination-table>
+  </ng-container>
+
 </ng-container>
 
+<ng-container *ngIf="!DATA_FETCHED || DATA_FETCHED && DATA_FETCHED.length == 0">
+  <h1
+    style="margin-top: 150px; width: 100%; text-align: center; color:brown;">Pas
+    de données</h1>
+</ng-container>

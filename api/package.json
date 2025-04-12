@@ -67,6 +67,7 @@
     "twilio": "^5.5.2",
     "typeorm": "^0.3.20",
     "typeorm-extension": "^3.5.1",
+    "useragent": "^2.3.0",
     "utf8": "^3.0.0",
     "uuid": "^9.0.1"
   },
@@ -81,6 +82,7 @@
     "@types/pg": "^8.11.11",
     "@types/pouchdb": "^6.4.2",
     "@types/response-time": "^2.3.8",
+    "@types/useragent": "^2.3.4",
     "@types/uuid": "^9.0.8",
     "concurrently": "^8.2.2",
     "nodemon": "^3.1.0",

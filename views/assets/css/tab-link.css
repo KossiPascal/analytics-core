@@ -29,9 +29,9 @@
   
   /* Contenu des vues */
   .tab-content {
-    border: 1px solid #ddd;
-    padding: 20px;
-    border-radius: 5px;
+    /* border: 1px solid #ddd; */
+    padding: 8px;
+    /* border-radius: 5px; */
   }
   
   .view {

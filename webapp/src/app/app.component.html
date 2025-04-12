@@ -1,29 +1,29 @@
-<ng-container *ngIf="!isChartsPage() && (!isPublicPage() && (!isAuthenticated || hideMainPage()))">
-  <router-outlet></router-outlet>
+<ng-container
+  *ngIf="!isChartsPage() && (!isPublicPage() && (!isAuthenticated || hideMainPage()))">
+  <div class="app-content">
+    <router-outlet></router-outlet>
+  </div>
 </ng-container>
 
-
-<ng-container *ngIf="!isChartsPage() && (isPublicPage() || (isAuthenticated && !hideMainPage()))">
+<ng-container
+  *ngIf="!isChartsPage() && (isPublicPage() || (isAuthenticated && !hideMainPage()))">
 
   <app-navbar></app-navbar>
 
-  <router-outlet></router-outlet>
+  <div class="app-content">
+    <router-outlet></router-outlet>
+  </div>
+
 </ng-container>
 
 <ng-container *ngIf="isChartsPage()">
 
   <app-navbar></app-navbar>
   <charts-views></charts-views>
-
-  <router-outlet></router-outlet>
+  <div class="app-content">
+    <router-outlet></router-outlet>
+  </div>
 </ng-container>
-
-
-
-
-
-
 
 <app-snackbar></app-snackbar>
 <device-detection></device-detection>
-

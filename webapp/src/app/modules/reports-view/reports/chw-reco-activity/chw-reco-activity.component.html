@@ -1,13 +1,13 @@
 
-<!-- <app-sample-loader [isLoading]="isLoading"></app-sample-loader> -->
-<!-- <app-snake-loader [isLoading]="isLoading"></app-snake-loader> -->
-<!-- <app-graduation-loader [isLoading]="isLoading"></app-graduation-loader> -->
-
-<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.MONTHLY_ACTIVITY == true"></app-google-loader>
-
-  <!-- <p>Bienvenue dans notre application ! 🌎</p> -->
 
 <ng-container *ngIf="DATA_FETCHED as ma">
+  <h2>📊 RAPPORT MENSUEL D'ACTIVITÉ</h2>
+  <br>
+  <!-- <app-sample-loader [isLoading]="isLoading"></app-sample-loader> -->
+  <!-- <app-snake-loader [isLoading]="isLoading"></app-snake-loader> -->
+  <!-- <app-graduation-loader [isLoading]="isLoading"></app-graduation-loader> -->
+  <app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.MONTHLY_ACTIVITY == true"></app-google-loader>
+  <!-- <p>Bienvenue dans notre application ! 🌎</p> -->
 
   <repports-header-selector
     [id]="'month-activity-table-header'"
@@ -22,7 +22,6 @@
     (onHideZero)="hideZero($event)"
     >
   </repports-header-selector>
-
 
   <table id="month-activity-table" class="table table-bordered table-hover">
     <thead class="no-border center">
@@ -144,4 +143,9 @@
       <tr>
     </tbody>
   </table>
+
+</ng-container>
+
+<ng-container *ngIf="!DATA_FETCHED">
+  <h1 style="margin-top: 150px; width: 100%; text-align: center; color:brown;">Pas de données</h1>
 </ng-container>

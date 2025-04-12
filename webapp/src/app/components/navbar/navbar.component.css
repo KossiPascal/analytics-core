@@ -1,5 +1,12 @@
 /* Navbar Styles */
 .navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+
+
   display: flex;
   justify-content: space-between;
   /* justify-items: center; */
@@ -197,23 +204,22 @@
   white-space: nowrap;
 }
 
-.app-title {
+/* .app-title {
   font-size: 16px;
   white-space: wrap;
-}
+} */
 
 /* Responsiveness */
 
 @media (max-width: 991px) {
   .icon {
-    margin-left: 10px;
-    font-size: 25px;
+    margin-left: 15px;
+    font-size: 28px;
   }
 
   .navbar-left .app-title {
-    font-size: 12px;
+    font-size: 16px;
     white-space: wrap;
-    ;
   }
 
   /* .profile-icon span {

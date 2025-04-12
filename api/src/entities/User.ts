@@ -288,24 +288,24 @@ export async function generateSelectedUserOrgUnitsAndContact({recos, tokenUser, 
     let recosQuery:RecoCustomQuery[] = [];
 
     if (isSuperUser !== true) {
-        const countriesIds = [...new Set(recos.map(r => r.country_id))];
-        const regionsIds = [...new Set(recos.map(r => r.region_id))];
-        const prefecturesIds = [...new Set(recos.map(r => r.prefecture_id))];
-        const communesIds = [...new Set(recos.map(r => r.commune_id))];
-        const hospitalsIds = [...new Set(recos.map(r => r.hospital_id))];
-        const districtQuartiersIds = [...new Set(recos.map(r => r.district_quartier_id))];
-        const villageSecteursIds = [...new Set(recos.map(r => r.village_secteur_id))];
-        const recosIds = [...new Set(recos.map(r => r.id))];
+        const countriesIds = recos ? [...new Set(recos.map(r => r.country_id))] : [];
+        const regionsIds = recos ? [...new Set(recos.map(r => r.region_id))] : [];
+        const prefecturesIds = recos ? [...new Set(recos.map(r => r.prefecture_id))] : [];
+        const communesIds = recos ? [...new Set(recos.map(r => r.commune_id))] : [];
+        const hospitalsIds = recos ? [...new Set(recos.map(r => r.hospital_id))] : [];
+        const districtQuartiersIds = recos ? [...new Set(recos.map(r => r.district_quartier_id))] : [];
+        const villageSecteursIds = recos ? [...new Set(recos.map(r => r.village_secteur_id))] : [];
+        const recosIds = recos ? [...new Set(recos.map(r => r.id))] : [];
     
-        countriesQuery = allCountries.filter(r=>r.id && countriesIds.includes(r.id));
-        regionsQuery = allRegions.filter(r=>r.id && regionsIds.includes(r.id));
-        prefecturesQuery = allPrefectures.filter(r=>r.id && prefecturesIds.includes(r.id));
-        communesQuery = allCommunes.filter(r=>r.id && communesIds.includes(r.id));
-        hospitalsQuery = allHospitals.filter(r=>r.id && hospitalsIds.includes(r.id));
-        districtQuartiersQuery = allDistrictQuartiers.filter(r=>r.id && districtQuartiersIds.includes(r.id));
-        villageSecteursQuery = allVillageSecteursd.filter(r=>r.id && villageSecteursIds.includes(r.id));
+        countriesQuery = countriesIds.length > 0 ? allCountries.filter(r=>r.id && countriesIds.includes(r.id)) : [];
+        regionsQuery = regionsIds.length > 0 ? allRegions.filter(r=>r.id && regionsIds.includes(r.id)) : [];
+        prefecturesQuery = prefecturesIds.length > 0 ? allPrefectures.filter(r=>r.id && prefecturesIds.includes(r.id)) : [];
+        communesQuery = communesIds.length > 0 ? allCommunes.filter(r=>r.id && communesIds.includes(r.id)) : [];
+        hospitalsQuery = hospitalsIds.length > 0 ? allHospitals.filter(r=>r.id && hospitalsIds.includes(r.id)) : [];
+        districtQuartiersQuery = districtQuartiersIds.length > 0 ? allDistrictQuartiers.filter(r=>r.id && districtQuartiersIds.includes(r.id)) : [];
+        villageSecteursQuery = villageSecteursIds.length > 0 ? allVillageSecteursd.filter(r=>r.id && villageSecteursIds.includes(r.id)) : [];
         chwsQuery = allChws.filter(r=>r.district_quartier && r.district_quartier.id && districtQuartiersIds.includes(r.district_quartier.id));
-        recosQuery = allRecos.filter(r=>r.id && recosIds.includes(r.id));
+        recosQuery = recosIds.length > 0 ? allRecos.filter(r=>r.id && recosIds.includes(r.id)) : [];
     }
 
     return {

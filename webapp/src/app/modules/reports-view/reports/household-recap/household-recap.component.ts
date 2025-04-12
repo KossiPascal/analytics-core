@@ -54,8 +54,7 @@ export class HouseholdRecapReportComponent extends BaseReportsComponent<Househol
   }
 
   get DATA_FETCHED_TOTAL(): HouseholdRecapReport|undefined {
-
-    return this.DATA_FETCHED ? {
+    return this.DATA_FETCHED && this.DATA_FETCHED.length > 0 ? {
       total_household_members: this.DATA_FETCHED.map(d => d.total_household_members).reduce((total, num) => total + num, 0),
       total_women_15_50_years: this.DATA_FETCHED.map(d => d.total_women_15_50_years).reduce((total, num) => total + num, 0),
       total_children_under_5_years: this.DATA_FETCHED.map(d => d.total_children_under_5_years).reduce((total, num) => total + num, 0),
@@ -64,6 +63,8 @@ export class HouseholdRecapReportComponent extends BaseReportsComponent<Househol
       has_functional_latrine: this.DATA_FETCHED.map(d => d.has_functional_latrine).reduce((acc, val) => val === true ? acc + 1 : acc, 0),
       has_drinking_water_access: this.DATA_FETCHED.map(d => d.has_drinking_water_access).reduce((acc, val) => val === true ? acc + 1 : acc, 0)
     } as any : undefined;
+
+
   }
 
 }

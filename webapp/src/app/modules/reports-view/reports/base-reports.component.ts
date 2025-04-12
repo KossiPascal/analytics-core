@@ -85,8 +85,6 @@ export abstract class BaseReportsComponent<T> implements OnInit, OnDestroy, OnCh
             if (!this.Recos$ || this.Recos$.length == 0) this.Recos$ = this.USER?.recos ?? [];
         }
     }
-
-
     
     get canValidateReportsData() {
         return this.USER?.role.canValidateData ?? false;
@@ -95,7 +93,6 @@ export abstract class BaseReportsComponent<T> implements OnInit, OnDestroy, OnCh
     get canSendValidatedReportToDhis2() {
         return this.canValidateReportsData && (this.USER?.role.canValidateData ?? false);
     }
-
 
     ngOnInit(): void {
         this.conn.getOnlineStatus().pipe(takeUntil(this.destroy$)).subscribe(isOnline => {
@@ -150,7 +147,6 @@ export abstract class BaseReportsComponent<T> implements OnInit, OnDestroy, OnCh
             this.stateChange = changes['CHANGE_STATE'].currentValue;
         }
     }
-
 
     private SET_REPORTS_HEADER() {
         this.fGroup.SET_REPORTS_HEADER(this.REPORTS_HEADER);

@@ -1,6 +1,11 @@
-<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.RECO_MEG_QUANTITIES == true"></app-google-loader>
+
 
 <ng-container *ngIf="DATA_FETCHED">
+
+  <h2>📋 RAPPORT GESTION MEDICAMENTS RECO</h2>
+  <br>
+  
+  <app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.RECO_MEG_QUANTITIES == true"></app-google-loader>
 
   <repports-header-selector
     [id]="'meg-reco-table-header'"
@@ -64,4 +69,8 @@
       </tr>
     </tbody>
   </table>
+</ng-container>
+
+<ng-container *ngIf="!DATA_FETCHED">
+  <h1 style="margin-top: 150px; width: 100%; text-align: center; color:brown;">Pas de données</h1>
 </ng-container>

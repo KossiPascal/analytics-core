@@ -36,10 +36,6 @@ export async function VALIDATE_PROMOTION_REPORTS(req: Request, res: Response, ne
         }
         if (errorsCount > 0) return res.status(201).json({ status: 201, data: 'error found' });
         return res.status(200).json({ status: 200, data: 'success' });
-
-
-
-
     } catch (err: any) {
         return res.status(500).json({ status: 500, data: serverErrorMsg(err) });
     }

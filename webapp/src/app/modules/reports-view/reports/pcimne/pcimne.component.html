@@ -1,6 +1,11 @@
-<app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.PCIMNE_NEWBORN == true"></app-google-loader>
+
 
 <ng-container *ngIf="DATA_FETCHED as pn">
+  
+  <h2>📋 RAPPORT PCIMNE</h2>
+  <br>
+
+  <app-google-loader [isLoading]="REPORTS_HEADER.ON_FETCHING.PCIMNE_NEWBORN == true"></app-google-loader>
 
   <repports-header-selector
     [id]="'pcimne-table-header'"
@@ -110,5 +115,9 @@
       <td class="separation" colspan="27"></td>
     </tr>
   </table>
+</ng-container>
+
+<ng-container *ngIf="!DATA_FETCHED">
+  <h1 style="margin-top: 150px; width: 100%; text-align: center; color:brown;">Pas de données</h1>
 </ng-container>
 

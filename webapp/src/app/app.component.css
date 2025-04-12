@@ -58,3 +58,8 @@
     margin: 0 !important;
     padding: 0 !important;
   }
+
+  .app-content {
+    margin-top: 90px!important;
+    margin-bottom: 20px!important;
+  }

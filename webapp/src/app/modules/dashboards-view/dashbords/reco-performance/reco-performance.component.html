@@ -1,9 +1,10 @@
 
 
-<app-google-loader
-  [isLoading]="DASHBOARDS_HEADER.ON_FETCHING.RECOS_PERFORMANCES == true"></app-google-loader>
-
 <ng-container *ngIf="RECOS_PERFORMANCE$">
+  <h2>📊 PERFORMANCES DES RECOS</h2>
+  <br>
+  <app-google-loader
+  [isLoading]="DASHBOARDS_HEADER.ON_FETCHING.RECOS_PERFORMANCES == true"></app-google-loader>
 
   <repports-header-selector
     [id]="'recos_performances-table-header'"
@@ -96,4 +97,12 @@
     <canvas id="line-chart"></canvas>
   </div> -->
 
+</ng-container>
+
+
+
+<ng-container *ngIf="!RECOS_PERFORMANCE$">
+  <h1
+    style="margin-top: 150px; width: 100%; text-align: center; color:brown;">Pas
+    de données</h1>
 </ng-container>

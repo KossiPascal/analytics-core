@@ -29,6 +29,7 @@ import smsRouter from "./routes/sms";
 
 import { Errors } from "./routes/error";
 import { syncCouchDBToPostgres } from "./couch2pg/couch2pg";
+import { userLoggerMiddleware } from "./middleware/logger";
 
 
 
@@ -65,12 +66,9 @@ function app() {
       resave: true
     }))
     .use(bearerToken())
-    .use((req: Request, res: Response, next: NextFunction) => {
-      if (req.method === 'OPTIONS') return res.status(200).end();
-      if (isSecure && req.secure) return next();
-      if (isSecure && !req.secure) return res.redirect(`https://${req.headers.host}${req.url}`);
-      next();
-    })
+
+    .use(userLoggerMiddleware)
+
     .use('/api/auth-user', authRouter)
     .use('/api/configs', configsRouter)
     .use('/api/reports', reportsRouter)
@@ -134,7 +132,7 @@ function app() {
 AppDataSource
   .initialize()
   .then(async () => {
-    logNginx(`initialize success!\nApp Version: ${appVersion().app_version}`);
+    logNginx(`📦 Database connected successfully!\nApp Version: ${appVersion().app_version}`);
 
     // npx typeorm migration:create src/migrations/materialised-views/reports/RecoMegSituationReportsView
     // npx typeorm migration:create src/migrations/materialised-views/dashboards/RecoVaccinationDashboardView
@@ -153,7 +151,7 @@ AppDataSource
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
-    
+
 
     // await DropOrTruncateDataFromDatabase({ procide:true, entities:[{name:'', table:'typeorm_migrations'}], action:'TRUNCATE' })
 

@@ -18,7 +18,7 @@ export class SnackbarService {
    */
   show(param: SnakBarOutPut): void {
     const fadeOutDuration = 1000; // Durée du fade-out en ms
-    const displayDuration = param.duration ?? 3000; // Durée totale d'affichage
+    const displayDuration = param.duration ?? 2000; // Durée totale d'affichage
 
     const snackbar: SnakBarOutPut = {
       msg: param.msg,

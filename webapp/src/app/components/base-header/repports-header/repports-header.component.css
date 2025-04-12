@@ -36,3 +36,11 @@
 .validate-data button {
   margin: 0px 3px 0px 3px !important;
 }
+
+
+
+@media (max-width: 991px) {
+  * {
+      font-size: 13px !important;
+  }
+}

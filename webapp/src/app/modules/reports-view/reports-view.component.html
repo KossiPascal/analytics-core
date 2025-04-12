@@ -3,8 +3,7 @@
 (onValidateAllReports)="VALIDATE_ALL_REPORTS()"
 (onCancelAllValidation)="CANCEL_ALL_VALIDATION()"
 (onSendAllReportsToDhis2)="SEND_ALL_REPPORTS_DATA_TO_DHIS2($event)"
->
-</reports-orgunits-filter>
+></reports-orgunits-filter>
 
 
 <div class="nav-tabs">
@@ -21,48 +20,32 @@
 <!-- Contenu des vues -->
 <div class="tab-content">
   <div id="MONTH_ACTIVITY" class="view active">
-    <h2>📊 RAPPORT MENSUEL D'ACTIVITÉ</h2>
-    <br>
     <chw-reco-activity-report [CHANGE_STATE]="CHANGE_STATE"></chw-reco-activity-report>
   </div>
 
   <div id="PROMOTIONS" class="view">
-    <h2>📈 RAPPORT PROMOTIONS</h2>
-    <br>
     <promotion-activity-report [CHANGE_STATE]="CHANGE_STATE"></promotion-activity-report>
   </div>
 
   <div id="PF" class="view">
-    <h2>📋 RAPPORT PLANIFICATION FAMILIALE</h2>
-    <br>
     <family-planning-report [CHANGE_STATE]="CHANGE_STATE"></family-planning-report>
   </div>
 
   <div id="MORBIDITY" class="view">
-    <h2>📋 RAPPORT MORBIDITÉ</h2>
-    <br>
     <morbidity-report [CHANGE_STATE]="CHANGE_STATE"></morbidity-report>
   </div>
 
   <div id="PECIMNE" class="view">
-    <h2>📋 RAPPORT PCIMNE</h2>
-    <br>
     <pcimne-report [CHANGE_STATE]="CHANGE_STATE"></pcimne-report>
   </div>
 
   <div id="RECAP_MENAGE" class="view">
-    <h2>📋 RAPPORT RÉCAP DES MÉNAGES</h2>
-    <br>
     <household-recap-report [CHANGE_STATE]="CHANGE_STATE"></household-recap-report>
   </div>
 
   <div id="MEG_RECO" class="view">
-    <h2>📋 RAPPORT GESTION MEDICAMENTS RECO</h2>
-    <br>
     <reco-meg-situation-report [CHANGE_STATE]="CHANGE_STATE"></reco-meg-situation-report>
   </div>
-
-
 
   <!-- <div>
     <h2>📋 </h2>

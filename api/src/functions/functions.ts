@@ -5,6 +5,7 @@ import https from "https";
 import http from "http";
 import axios from 'axios';
 import { APP_ENV } from '../providers/constantes';
+import { Express } from 'express';
 
 const { NODE_ENV, CHT_USER, CHT_PASS, CHT_PROD_HOST, CHT_DEV_HOST, CHT_PROTOCOL, CHT_PORT } = APP_ENV;
 
@@ -197,23 +198,58 @@ export function onProcess() {
 }
 
 export function ServerStart(data: {
-    isSecure: boolean, credential?: {
+    isSecure: boolean;
+    credential?: {
         key: string;
         ca: string;
         cert: string;
-    }, server: any, access_all_host: boolean, port: any, hostnames: string[], useLocalhost: boolean
+    };
+    server: Express;
+    access_all_host: boolean;
+    port: number;
+    hostnames: string[];
+    useLocalhost: boolean;
 }) {
-    const server = data.isSecure == true ? https.createServer(data.credential ?? {}, data.server) : http.createServer(data.server);
+    // const handler = async (req: http.IncomingMessage, res: http.ServerResponse) => {
+    //     if (req.method === 'POST' && req.headers['content-type'] === 'application/json') {
+    //         let body = '';
+    //         req.on('data', chunk => {
+    //             body += chunk;
+    //         });
+    //         req.on('end', () => {
+    //             try {
+    //                 const bodyData = JSON.parse(body);
+    //                 const userId = bodyData.userId;
+    //                 console.log('Received userID:', userId);
+    //                 res.writeHead(200, { 'Content-Type': 'application/json' });
+    //                 res.end(JSON.stringify({ status: 'ok', received: userId }));
+    //             } catch (e) {
+    //                 res.writeHead(400);
+    //                 res.end('Invalid JSON');
+    //             }
+    //         });
+    //     } else {
+    //         res.writeHead(404);
+    //         res.end('Not found');
+    //     }
+    // };
+
+    const server = data.isSecure 
+        ? https.createServer(data.credential ?? {}, data.server) 
+        : http.createServer(data.server);
     // var io = require('socket.io')(server, {});
-    // server.listen(data.port, '0.0.0.0', () => onProcess)
-    if (data.access_all_host) server.listen(data.port, '0.0.0.0', () => onProcess);
-    if (!data.access_all_host) {
-        if (data.useLocalhost) server.listen(data.port, '127.0.0.1', () => onProcess);
-        if (!data.useLocalhost) server.listen(data.port, data.hostnames[0], () => onProcess);
+    if (data.access_all_host) {
+        server.listen(data.port, '0.0.0.0', () => onProcess);
+    } else if (data.useLocalhost) {
+        server.listen(data.port, '127.0.0.1', () => onProcess);
+    } else {
+        server.listen(data.port, data.hostnames[0], () => onProcess);
     }
     server.on('error', (err) => onError(err, data.port));
     server.on('listening', () => onListening(server, data.useLocalhost ? ['localhost'] : data.hostnames, data.isSecure == true ? 'https' : 'http'));
-    server.on('connection', (stream) => console.log('someone connected!'));
+    server.on('connection', (stream) => {
+        // console.log('someone connected!')
+    });
     return server;
 }
 

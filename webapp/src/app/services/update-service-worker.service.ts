@@ -5,10 +5,10 @@ import { Injectable, NgZone } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import { CacheStorageService } from './cache-storage.service';
 import { ReloadingComponent } from '@kossi-modals/reloading/reloading.component';
-import { ConfigService } from './config.service';
 import { AppStorageService } from './local-storage.service';
 import { ModalService } from './modal.service';
 import { UserContextService } from './user-context.service';
+import { ApiService } from './api.service';
 
 
 @Injectable({
@@ -30,11 +30,10 @@ export class UpdateServiceWorkerService {
     private swUpdate: SwUpdate,
     private cache: CacheStorageService,
     private ngZone: NgZone,
-    private conf: ConfigService,
     private store: AppStorageService,
     private modalService: ModalService,
-    private userCtx: UserContextService
-
+    private userCtx: UserContextService,
+    private api: ApiService
   ) {
   }
 
@@ -148,7 +147,7 @@ export class UpdateServiceWorkerService {
   async watchForChanges() {
     const user = await this.userCtx.currentUser();
     if (user?.id) {
-      this.conf.appVersion().subscribe((newVersion: { service_worker_version: number | null, app_version: string | null }) => {
+      this.api.appVersion().subscribe((newVersion: { service_worker_version: number | null, app_version: string | null }) => {
         if (newVersion) {
           const oldVersionsStr = this.store.get({ db: 'local', name: '_versions' });
           if (oldVersionsStr) {
