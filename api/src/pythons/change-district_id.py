@@ -64,9 +64,9 @@ def chunked(iterable, size):
 def UpdateDistrictId():
     import requests
     # Configuration
-    COUCHDB_URL = "https://kendeya.portal-integratehealth.org"
-    DB_NAME = "medic"
-    AUTH = ('admin', 'IntHea2004')
+    COUCHDB_URL = ""
+    DB_NAME = ""
+    AUTH = ('username', 'password')
 
     # Requête pour récupérer tous les documents
     all_docs_url = f"{COUCHDB_URL}/{DB_NAME}/_all_docs?include_docs=true"
