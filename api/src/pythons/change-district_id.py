@@ -64,9 +64,9 @@ def chunked(iterable, size):
 def UpdateDistrictId():
     import requests
     # Configuration
-    COUCHDB_URL = ""
-    DB_NAME = ""
-    AUTH = ('username', 'password')
+    COUCHDB_URL = "https://kendeya.portal-integratehealth.org"
+    DB_NAME = "medic"
+    AUTH = ('admin', 'IntHea2004')
 
     # Requête pour récupérer tous les documents
     all_docs_url = f"{COUCHDB_URL}/{DB_NAME}/_all_docs?include_docs=true"
@@ -212,17 +212,17 @@ def UpdateDbUsersInfos():
     import psycopg2
 
     # Données SSH
-    ssh_host = ""
-    ssh_port = 5555
-    ssh_user = ""
-    ssh_password = ""  # ou None si tu utilises un mot de passe
+    ssh_host = "portal-integratehealth.org"
+    ssh_port = 7822
+    ssh_user = "kossi"
+    ssh_password = "kossi@123"  # ou None si tu utilises un mot de passe
 
     # Données PostgreSQL (côté serveur distant)
     remote_pg_host = "127.0.0.1"
     remote_pg_port = 5432
-    db_name = ""
-    db_user = ""
-    db_password = ""
+    db_name = "guinee_db"
+    db_user = "kossi"
+    db_password = "kossi@123"
 
     # Liste des reco_id
     reco_ids = ['abc123', 'def456', 'ghi789']
