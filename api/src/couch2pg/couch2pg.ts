@@ -19,7 +19,6 @@ type CouchDBResponse = {
 
 const { NODE_ENV, CHT_USER, CHT_PASS, CHT_PROD_HOST, CHT_DEV_HOST, CHT_PROTOCOL, CHT_PORT } = APP_ENV;
 // const USERS_URL  = `${CHT_PROTOCOL}://${NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST}:${CHT_PORT}/api/v1/users`;
-// const COUCHDB_URL = "https://admin:IntHea2004@kendeya.portal-integratehealth.org/medic";
 
 const COUCHDB_URL  = `${CHT_PROTOCOL}://${CHT_USER}:${CHT_PASS}@${NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST}:${CHT_PORT}/medic`;
 
