@@ -24,12 +24,12 @@
       <ng-container *ngIf="USER?.role?.canUpdateRole == true || USER?.role?.canDeleteRole == true">
 
       <td>
-        <i *ngIf="USER?.role?.canUpdateRole == true && !role.authorizations?.includes('_admin')" (click)="openCreateOrEditRoleModal(role)"
+        <i *ngIf="USER?.role?.canUpdateRole == true && !role.authorizations?.includes('_superuser')" (click)="openCreateOrEditRoleModal(role)"
         class="fas fa-edit {{ !role.isDeleted ? 'update-color' : '' }}"></i>
       </td>
 
       <td>
-        <i *ngIf="USER?.role?.canDeleteRole == true && !role.authorizations?.includes('_admin')"
+        <i *ngIf="USER?.role?.canDeleteRole == true && !role.authorizations?.includes('_superuser')"
           (click)="openDeleteRoleModal(role)"  class="fas fa-trash-alt {{ !role.isDeleted ? 'delete-color' : '' }}"></i>
       </td>
     </ng-container>

@@ -1,12 +1,12 @@
 import { Routes, UserRole } from "../entities/User";
 
-export const _admin = '_admin';
+export const _superuser = '_superuser';
 export const _public = '_public';
 
 export const can_view_reports = 'can_view_reports';
 export const can_view_dashboards = 'can_view_dashboards';
 export const can_manage_data = 'can_manage_data';
-export const change_default_password = 'change_default_password';
+export const must_change_default_password = 'must_change_default_password';
 
 export const can_view_users = 'can_view_users';
 export const can_create_user = 'can_create_user';
@@ -29,6 +29,7 @@ export const is_administration = 'is_administration';
 
 export const can_logout = 'can_logout';
 export const can_update_profile = 'can_update_profile';
+export const can_update_password = 'can_update_password';
 export const can_update_language = 'can_update_language';
 export const can_view_notifications = 'can_view_notifications';
 
@@ -40,7 +41,7 @@ export const AUTHORIZATIONS_LIST: string[] = [
     can_logout,
 
     can_manage_data,
-    change_default_password,
+    must_change_default_password,
 
     can_validate_data,
     can_send_data_to_dhis2,
@@ -60,34 +61,35 @@ export const AUTHORIZATIONS_LIST: string[] = [
     can_send_sms,
 
     can_update_profile,
+    can_update_password,
     can_update_language,
     can_view_notifications,
 ];
 
 
 // export function roleAuthorizations(userAuthorizations:string[]){
-//     const isAdmin = userAuthorizations.includes(_admin)
+//     const isSuperUser = userAuthorizations.includes(_superuser)
 //     return {
-//         isAdmin: isAdmin,
-//         canUseOfflineMode: isAdmin ? false : userAuthorizations.includes(can_use_offline_mode),
-//         canViewReports: isAdmin ? true : userAuthorizations.includes(can_view_reports),
-//         canViewDashboards: isAdmin ? true : userAuthorizations.includes(can_view_dashboards),
-//         canManageData: isAdmin ? true : userAuthorizations.includes(can_manage_data),
-//         canCreateUser: isAdmin ? true : userAuthorizations.includes(can_create_user),
-//         canUpdateUser: isAdmin ? true : userAuthorizations.includes(can_update_user),
-//         canDeleteUser: isAdmin ? true : userAuthorizations.includes(can_delete_user),
-//         canCreateRole: isAdmin ? true : userAuthorizations.includes(can_create_role),
-//         canUpdateRole: isAdmin ? true : userAuthorizations.includes(can_update_role),
-//         canDeleteRole: isAdmin ? true : userAuthorizations.includes(can_delete_role),
-//         canLogout: isAdmin ? true : userAuthorizations.includes(can_logout),
-//         changeDefaultPassword: isAdmin ? true : userAuthorizations.includes(change_default_password),
-//         canValidateData: isAdmin ? true : userAuthorizations.includes(can_validate_data),
-//         canSendDataToDhis2: isAdmin ? true : userAuthorizations.includes(can_send_data_to_dhis2),
-//         canViewUsers: isAdmin ? true : userAuthorizations.includes(can_view_users),
-//         canViewRoles: isAdmin ? true : userAuthorizations.includes(can_view_roles),
+//         isSuperUser: isSuperUser,
+//         canUseOfflineMode: isSuperUser ? false : userAuthorizations.includes(can_use_offline_mode),
+//         canViewReports: isSuperUser ? true : userAuthorizations.includes(can_view_reports),
+//         canViewDashboards: isSuperUser ? true : userAuthorizations.includes(can_view_dashboards),
+//         canManageData: isSuperUser ? true : userAuthorizations.includes(can_manage_data),
+//         canCreateUser: isSuperUser ? true : userAuthorizations.includes(can_create_user),
+//         canUpdateUser: isSuperUser ? true : userAuthorizations.includes(can_update_user),
+//         canDeleteUser: isSuperUser ? true : userAuthorizations.includes(can_delete_user),
+//         canCreateRole: isSuperUser ? true : userAuthorizations.includes(can_create_role),
+//         canUpdateRole: isSuperUser ? true : userAuthorizations.includes(can_update_role),
+//         canDeleteRole: isSuperUser ? true : userAuthorizations.includes(can_delete_role),
+//         canLogout: isSuperUser ? true : userAuthorizations.includes(can_logout),
+//         changeDefaultPassword: isSuperUser ? true : userAuthorizations.includes(must_change_default_password),
+//         canValidateData: isSuperUser ? true : userAuthorizations.includes(can_validate_data),
+//         canSendDataToDhis2: isSuperUser ? true : userAuthorizations.includes(can_send_data_to_dhis2),
+//         canViewUsers: isSuperUser ? true : userAuthorizations.includes(can_view_users),
+//         canViewRoles: isSuperUser ? true : userAuthorizations.includes(can_view_roles),
 
-//         canDownloadData: isAdmin ? true : userAuthorizations.includes(can_download_data),
-//         canSendSms: isAdmin ? true : userAuthorizations.includes(can_send_sms),
+//         canDownloadData: isSuperUser ? true : userAuthorizations.includes(can_download_data),
+//         canSendSms: isSuperUser ? true : userAuthorizations.includes(can_send_sms),
 //     }
 // }
 
@@ -104,30 +106,31 @@ export function roleAuthorizations(userAuthorizations: string[], routes: Routes[
         }
     }
     const combinedAuthorizations = Array.from(new Set([...userAuthorizations, ...allAuthorizations]));
-    const isAdmin = combinedAuthorizations.includes('_admin');
+    const isSuperUser = combinedAuthorizations.includes('_superuser');
     return {
-        isAdmin,
-        canUseOfflineMode: isAdmin ? false : combinedAuthorizations.includes('can_use_offline_mode'),
-        canViewReports: combinedAuthorizations.includes(can_view_reports) || isAdmin,
-        canViewDashboards: combinedAuthorizations.includes(can_view_dashboards) || isAdmin,
-        canManageData: combinedAuthorizations.includes(can_manage_data) || isAdmin,
-        canCreateUser: combinedAuthorizations.includes(can_create_user) || isAdmin,
-        canUpdateUser: combinedAuthorizations.includes(can_update_user) || isAdmin,
-        canDeleteUser: combinedAuthorizations.includes(can_delete_user) || isAdmin,
-        canCreateRole: combinedAuthorizations.includes(can_create_role) || isAdmin,
-        canUpdateRole: combinedAuthorizations.includes(can_update_role) || isAdmin,
-        canDeleteRole: combinedAuthorizations.includes(can_delete_role) || isAdmin,
-        canLogout: combinedAuthorizations.includes(can_logout) || isAdmin,
-        changeDefaultPassword: combinedAuthorizations.includes(change_default_password) || isAdmin,
-        canValidateData: combinedAuthorizations.includes(can_validate_data) || isAdmin,
-        canSendDataToDhis2: combinedAuthorizations.includes(can_send_data_to_dhis2) || isAdmin,
-        canViewUsers: combinedAuthorizations.includes(can_view_users) || isAdmin,
-        canViewRoles: combinedAuthorizations.includes(can_view_roles) || isAdmin,
-        canDownloadData: combinedAuthorizations.includes(can_download_data) || isAdmin,
-        canSendSms: combinedAuthorizations.includes(can_send_sms) || isAdmin,
-        canUpdateProfile: combinedAuthorizations.includes(can_update_profile) || isAdmin,
-        canUpdateLanguage: combinedAuthorizations.includes(can_update_language) || isAdmin,
-        canViewNotifications: combinedAuthorizations.includes(can_view_notifications) || isAdmin,
+        isSuperUser,
+        canUseOfflineMode: isSuperUser ? false : combinedAuthorizations.includes('can_use_offline_mode'),
+        canViewReports: combinedAuthorizations.includes(can_view_reports) || isSuperUser,
+        canViewDashboards: combinedAuthorizations.includes(can_view_dashboards) || isSuperUser,
+        canManageData: combinedAuthorizations.includes(can_manage_data) || isSuperUser,
+        canCreateUser: combinedAuthorizations.includes(can_create_user) || isSuperUser,
+        canUpdateUser: combinedAuthorizations.includes(can_update_user) || isSuperUser,
+        canDeleteUser: combinedAuthorizations.includes(can_delete_user) || isSuperUser,
+        canCreateRole: combinedAuthorizations.includes(can_create_role) || isSuperUser,
+        canUpdateRole: combinedAuthorizations.includes(can_update_role) || isSuperUser,
+        canDeleteRole: combinedAuthorizations.includes(can_delete_role) || isSuperUser,
+        canLogout: combinedAuthorizations.includes(can_logout) || isSuperUser,
+        mustChangeDefaultPassword: combinedAuthorizations.includes(must_change_default_password) || isSuperUser,
+        canValidateData: combinedAuthorizations.includes(can_validate_data) || isSuperUser,
+        canSendDataToDhis2: combinedAuthorizations.includes(can_send_data_to_dhis2) || isSuperUser,
+        canViewUsers: combinedAuthorizations.includes(can_view_users) || isSuperUser,
+        canViewRoles: combinedAuthorizations.includes(can_view_roles) || isSuperUser,
+        canDownloadData: combinedAuthorizations.includes(can_download_data) || isSuperUser,
+        canSendSms: combinedAuthorizations.includes(can_send_sms) || isSuperUser,
+        canUpdateProfile: combinedAuthorizations.includes(can_update_profile) || isSuperUser,
+        canUpdatePassword: combinedAuthorizations.includes(can_update_password) || isSuperUser,
+        canUpdateLanguage: combinedAuthorizations.includes(can_update_language) || isSuperUser,
+        canViewNotifications: combinedAuthorizations.includes(can_view_notifications) || isSuperUser,
     };
 }
 

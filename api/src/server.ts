@@ -139,6 +139,20 @@ AppDataSource
     // npx typeorm migration:create src/migrations/materialised-views/reports/RecoMegSituationReportsView
     // npx typeorm migration:create src/migrations/materialised-views/dashboards/RecoVaccinationDashboardView
     // npx typeorm migration:create src/migrations/materialised-views/views/UsersView
+
+
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/RecosMapFamilyUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/RecosMapPatientsUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/RecosMapDataUidView
+
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapDatasUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapFamiliesUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapFamiliesDatasUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapPatientsUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
+    // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
     
 
     // await DropOrTruncateDataFromDatabase({ procide:true, entities:[{name:'', table:'typeorm_migrations'}], action:'TRUNCATE' })

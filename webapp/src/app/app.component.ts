@@ -1,14 +1,9 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '@kossi-services/auth.service';
 import { LocalSyncService } from '@kossi-services/local-sync.service';
-import { ModalService } from '@kossi-services/modal.service';
 import { PrivacyPoliciesService } from '@kossi-services/privacy-policies.service';
-import { ResponsiveService } from '@kossi-services/responsive.service';
-import { SnackbarService } from '@kossi-services/snackbar.service';
 import { UpdateServiceWorkerService } from '@kossi-services/update-service-worker.service';
 import { UserContextService } from '@kossi-services/user-context.service';
-import { WebSocketService } from '@kossi-services/web-socket.service';
 
 @Component({
   standalone: false,

@@ -17,7 +17,7 @@ config({ path: `${JSON_DB_PATH}/.env` });
 
 export const APP_ENV = process.env;
 
-export const SECRET_PRIVATE_KEY: string = 'Kossi-TSOLEGNAGBO-secretfortoken';
-export const APP_AUTH_TOKEN: string = 'Kossi TSOLEGNAGBO 26/06/1989 Lomé/Kara Integrate Health';
+export const SECRET_PRIVATE_KEY: string = 'Kossi-TSOLEGNAGBO-Pascal-secretfortoken made at 2025-04-12 16:10:23';
+export const APP_AUTH_TOKEN: string = 'Kossi TSOLEGNAGBO Pascal 26/03/1989 Lomé/Kara Integrate Health (+228) 92645651 (Token du 12 Avril 2025 à 16:10:23)';
 
 export const APP_ADMIN_PRIVILEGE: string = `${APP_AUTH_TOKEN} PRIVILEGES`;

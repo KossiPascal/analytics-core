@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { User } from '@kossi-models/user-role';
 import { ApiService } from '@kossi-services/api.service';
@@ -15,6 +15,12 @@ import { UserContextService } from '@kossi-services/user-context.service';
     styleUrls: ['./user-profile.component.css']
 })
 export class UserProfileComponent implements OnInit {
+
+
+    @Input() COMPONENT_TYPE!: 'profile' | 'update_password';
+
+    passwordMinLength = 8;
+
     profileForm!: FormGroup;
     passwordForm!: FormGroup;
 
@@ -32,19 +38,30 @@ export class UserProfileComponent implements OnInit {
     }
 
     initForms() {
-        this.profileForm = this.fb.group({
-            fullname: [this.USER?.fullname ?? '', [Validators.required]],
-            email: [this.USER?.email ?? '', [Validators.email]],
-            phone: [this.USER?.phone ?? '']
-            //   userLogo
-        });
+        if (this.COMPONENT_TYPE == 'profile') {
+            this.profileForm = this.fb.group({
+                fullname: [this.USER?.fullname ?? '', [Validators.required]],
+                email: [this.USER?.email ?? '', [Validators.email]],
+                phone: [this.USER?.phone ?? '', [Validators.required]]
+                //   userLogo
+            });
+        }
+        if (this.COMPONENT_TYPE == 'update_password') {
+            this.passwordForm = this.fb.group({
+                currentPassword: ['', [Validators.required]],
+                newPassword: ['', [Validators.required, Validators.minLength(this.passwordMinLength)]],
+                confirmPassword: ['', [Validators.required, Validators.minLength(this.passwordMinLength)]]
+            });
+        }
+    }
 
-
-        this.passwordForm = this.fb.group({
-            currentPassword: ['', [Validators.required]],
-            newPassword: ['', [Validators.required, Validators.minLength(8)]],
-            confirmPassword: ['', [Validators.required, Validators.minLength(8)]]
-        });
+    get passwordNotMatch(): any {
+        const newPassword:string = (this.passwordForm.value.newPassword ?? '');
+        const confirmPassword:string = (this.passwordForm.value.confirmPassword ?? '');
+        const isOk1 = (newPassword.trim()).length > this.passwordMinLength;
+        const isOk2 = (confirmPassword.trim()).length > this.passwordMinLength;
+        // if (!isOk1 || !isOk2)  return false;
+        return isOk1 && isOk2 && newPassword !== confirmPassword;
     }
 
 
@@ -53,62 +70,71 @@ export class UserProfileComponent implements OnInit {
     }
 
     updateProfile(): void {
-        if (this.profileForm.valid) {
-            const id = this.USER?.id;
-            const { fullname, email, phone } = this.profileForm.value;
-            this.api.updateProfile({ id, fullname, email, phone }).subscribe({
-                next: (res: { status: number, data: any }) => {
-                    if (res.status == 200) {
-                        this.indexdb.update<{ id: string; data: any }>({ dbName: 'token', newData: { id: 'user', data: res.data } }).then(async () => {
-                            const userTokens = await this.indexdb.getAll<{ id: string, data: string }>('token');
+        if (this.COMPONENT_TYPE == 'profile') {
+            if (this.profileForm.valid) {
+                const id = this.USER?.id;
+                const { fullname, email, phone } = this.profileForm.value;
+                this.api.updateProfile({ id, fullname, email, phone }).subscribe({
+                    next: (res: { status: number, data: any }) => {
+                        if (res.status == 200) {
+                            this.indexdb.update<{ id: string; data: any }>({ dbName: 'token', newData: { id: 'user', data: res.data } }).then(async () => {
+                                const userTokens = await this.indexdb.getAll<{ id: string, data: string }>('token');
 
-                            this.USER = await this.userCtx.currentUser(userTokens);
+                                this.USER = await this.userCtx.currentUser(userTokens);
 
-                            this.snackbar.show({ msg: 'Modifié avec succès', color: 'success', duration: 3000 });
-                            // location.reload();
-                            // window.location.reload();
-                            // this.mService.close({ success: true });
-                        }).catch((error) => {
-                            this.snackbar.show({ msg: 'Vous devez vous reconnecter', color: 'danger', duration: 5000 });
-                        });
-                    } else {
-                        this.snackbar.show({ msg: res.data || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
+                                this.snackbar.show({ msg: 'Modifié avec succès', color: 'success', duration: 3000 });
+                                // location.reload();
+                                // window.location.reload();
+                                // this.mService.close({ success: true });
+                            }).catch((error) => {
+                                this.snackbar.show({ msg: 'Vous devez vous reconnecter', color: 'danger', duration: 5000 });
+                            });
+                        } else {
+                            this.snackbar.show({ msg: res.data || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
+                        }
+                    },
+                    error: (err) => {
+                        this.snackbar.show({ msg: err || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
                     }
-                },
-                error: (err) => {
-                    this.snackbar.show({ msg: err || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
-                }
-            })
-        } else {
-            this.snackbar.show({ msg: 'Données incorrect', color: 'danger', duration: 5000 });
+                })
+            } else {
+                this.snackbar.show({ msg: 'Données incorrect', color: 'danger', duration: 5000 });
+            }
         }
     }
 
     updatePassword(): void {
-        if (this.passwordForm.valid && this.passwordForm.value.newPassword === this.passwordForm.value.confirmPassword) {
-            const id = this.USER?.id;
-            const oldPassword = this.passwordForm.value.currentPassword;
-            const newPassword = this.passwordForm.value.newPassword;
+        if (this.COMPONENT_TYPE == 'update_password') {
+            if (this.passwordForm.valid) {
+                if (this.passwordForm.value.newPassword === this.passwordForm.value.confirmPassword) {
+                    const id = this.USER?.id;
+                    const oldPassword = this.passwordForm.value.currentPassword;
+                    const newPassword = this.passwordForm.value.newPassword;
 
-            this.api.updatePassword({ id, newPassword, oldPassword }).subscribe({
-                next: (res: { status: number, data: any }) => {
-                    if (res.status == 200) {
+                    this.api.updatePassword({ id, newPassword, oldPassword }).subscribe({
+                        next: (res: { status: number, data: any }) => {
+                            if (res.status == 200) {
 
-                        this.snackbar.show({ msg: 'Modifié avec succès, déconnection imminante', color: 'success', duration: 3000 });
-                        // this.mService.close({ success: true });
+                                this.snackbar.show({ msg: 'Modifié avec succès, déconnection imminante', color: 'success', duration: 3000 });
+                                // this.mService.close({ success: true });
 
-                        this.auth.logout()
-                    } else {
-                        this.snackbar.show({ msg: res.data || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
-                    }
-                },
-                error: (err) => {
-                    this.snackbar.show({ msg: err || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
+                                this.auth.logout()
+                            } else {
+                                this.snackbar.show({ msg: res.data || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
+                            }
+                        },
+                        error: (err) => {
+                            this.snackbar.show({ msg: err || 'Erreur, pas de changement effectué', color: 'danger', duration: 5000 });
+                        }
+                    });
+
+                } else {
+                    this.snackbar.show({ msg: 'Les mots de passe ne concordent pas', color: 'danger', duration: 5000 });
                 }
-            });
+            } else {
+                this.snackbar.show({ msg: 'Les mots de passe sont invalident!', color: 'danger', duration: 5000 });
+            }
 
-        } else {
-            this.snackbar.show({ msg: 'Les mots de passe ne concordent pas', color: 'danger', duration: 5000 });
         }
     }
 }

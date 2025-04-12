@@ -65,9 +65,9 @@ export class UsersComponent implements OnInit {
     return data.length === 0;
   }
 
-  isAdmin(user: User) {
+  isSuperUser(user: User) {
     const role = userRoles(user.authorizations ?? [], user.routes ?? [])
-    return role?.isAdmin === true;
+    return role?.isSuperUser === true;
   }
 
   GetRoles() {

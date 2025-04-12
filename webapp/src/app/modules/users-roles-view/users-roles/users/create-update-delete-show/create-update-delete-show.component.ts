@@ -287,7 +287,7 @@ export class CreateUpdateDeleteShowUserComponent implements OnInit {
 
   userFormGroup(user?: User | null): FormGroup {
     const isExistingUser = !!user;
-    // const isAdmin = this.userCtx.currentUser?.isAdmin === true;
+    // const isSuperUser = this.userCtx.currentUser?.isSuperUser === true;
     const username = user?.username ?? '';
 
     const formControls: { [key: string]: FormControl } = {

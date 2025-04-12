@@ -12,7 +12,7 @@ export class UserContextService {
 
   constructor(private indexdb: IndexedDbService, private store: AppStorageService) { }
 
-  APP_AUTH_TOKEN: string = 'Kossi TSOLEGNAGBO 26/06/1989 Lomé/Kara Integrate Health';
+  APP_AUTH_TOKEN: string = 'Kossi TSOLEGNAGBO Pascal 26/03/1989 Lomé/Kara Integrate Health (+228) 92645651 (Token du 12 Avril 2025 à 16:10:23)';
   APP_ADMIN_PRIVILEGE: string = `${this.APP_AUTH_TOKEN} PRIVILEGES`;
 
   async isLoggedIn(userObj: User | null = null): Promise<boolean> {
@@ -72,7 +72,7 @@ export class UserContextService {
     if (user) {
       const lastVisitedUrl = this.store.get({ db: 'session', name: 'lastVisitedUrl' })
       if ((lastVisitedUrl ?? '') != '') return lastVisitedUrl!;
-      if (user.role.isAdmin) return '/admin/users';
+      if (user.role.isSuperUser) return '/admin/users';
     }
     return '/dashboards';
   }
@@ -114,15 +114,15 @@ export class UserContextService {
   // }
 
   // isOnlineOnly(userCtx: User | null) {
-  //   return userCtx?.isAdmin === true || this.hasRole('can_use_offline_mode', userCtx);
+  //   return userCtx?.isSuperUser === true || this.hasRole('can_use_offline_mode', userCtx);
   // }
 
   // canValidateReportsData(userCtx: User | null) {
-  //   return userCtx?.isAdmin === true || this.hasRole('can_validate_data', userCtx);
+  //   return userCtx?.isSuperUser === true || this.hasRole('can_validate_data', userCtx);
   // }
 
   // canSendValidatedReportToDhis2(userCtx: User | null) {
-  //   return userCtx?.isAdmin === true || this.hasRole('can_send_data_to_dhis2', userCtx);
+  //   return userCtx?.isSuperUser === true || this.hasRole('can_send_data_to_dhis2', userCtx);
   // }
 
 }

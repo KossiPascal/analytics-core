@@ -34,11 +34,11 @@
                 <td [innerHTML]="ToStringNewLine(role.authorizations, 'authorizations') | safeHtml"></td> -->
             
               <td>
-                <i style="padding: 1px 4px 1px 6px;" *ngIf="!role.authorizations?.includes('_admin')"
+                <i style="padding: 1px 4px 1px 6px;" *ngIf="!role.authorizations?.includes('_superuser')"
                   (click)="EditRole(role)" class="btn btn-warning fas fa-edit"></i>
               </td>
               <td>
-                <i style="padding: 1px 6px 1px 6px;" *ngIf="!role.authorizations?.includes('_admin')"
+                <i style="padding: 1px 6px 1px 6px;" *ngIf="!role.authorizations?.includes('_superuser')"
                   (click)="RoleSelectedToDelete(role)" class="btn btn-danger fas fa-trash-alt"></i>
               </td>
               <!-- <td></td> -->

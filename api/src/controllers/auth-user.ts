@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { Routes, TokenUser, Users, getUsersRepository, hashUserToken, jwSecretKey, userTokenGenerated } from '../entities/User';
+import { Routes, TokenUser, Users, generateSelectedUserOrgUnitsAndContact, getUsersRepository, hashUserToken, jwSecretKey, userTokenGenerated } from '../entities/User';
 import { httpHeaders, notEmpty } from '../functions/functions';
 import { Roles, getRolesRepository } from '../entities/Roles';
 import crypto from 'crypto';
-import { ROUTES_LIST, _admin, can_view_reports, can_logout, can_manage_data, can_view_dashboards, change_default_password, can_delete_role, can_delete_user, can_update_role, can_update_user, can_create_user, can_create_role, can_view_roles, can_view_users, AUTHORIZATIONS_LIST, dashboardsRoute, reportsRoute, usersRoute, can_use_offline_mode, roleAuthorizations, _public } from '../providers/authorizations-pages';
+import { ROUTES_LIST, _superuser, can_view_reports, can_logout, can_manage_data, can_view_dashboards, must_change_default_password, can_delete_role, can_delete_user, can_update_role, can_update_user, can_create_user, can_create_role, can_view_roles, can_view_users, AUTHORIZATIONS_LIST, dashboardsRoute, reportsRoute, usersRoute, can_use_offline_mode, roleAuthorizations, _public, can_update_password, can_update_profile } from '../providers/authorizations-pages';
 import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, COMMUNES_MANAGER_CUSTOM_QUERY, COUNTRIES_MANAGER_CUSTOM_QUERY, HOSPITALS_MANAGER_CUSTOM_QUERY, PREFECTURES_MANAGER_CUSTOM_QUERY, REGIONS_MANAGER_CUSTOM_QUERY } from './ORGUNITS/org-units-custom';
 import { APP_ENV } from '../providers/constantes';
 import request from 'request';
@@ -66,14 +66,12 @@ export class AuthUserController {
     static DefaultAdminCreation = async () => {
         const userRepo = await getUsersRepository();
 
-
         // const allusers = await userRepo.find();
 
         // for (const user of allusers) {
         //     user.roles = user.roles.map(u=>parseInt(`${u}`))
         //     await userRepo.save(user);
         // }
-
 
         const existingUsers = await userRepo.count();
         if (existingUsers > 0) return;
@@ -88,13 +86,15 @@ export class AuthUserController {
             const adminRoutes = [reportsRoute, dashboardsRoute];
             const usersManagerRoutes = [usersRoute];
 
+            
+
             const recoAuthorizations = [_public, can_view_reports, can_view_dashboards, can_use_offline_mode, can_logout];
-            const managersAuthorizations = [_public, can_view_reports, can_view_dashboards, can_manage_data, can_logout, change_default_password];
-            const adminAuthorizations = [_public, can_view_reports, can_view_dashboards, can_manage_data, can_logout, change_default_password];
-            const usersManagerAuthorizations = [_public, can_view_users, can_create_user, can_update_user, can_delete_user, can_view_roles, can_create_role, can_update_role, can_delete_role,];
+            const managersAuthorizations = [_public, can_view_reports, can_view_dashboards, can_manage_data, can_logout, can_update_profile, can_update_password, must_change_default_password];
+            const adminAuthorizations = [_public, can_view_reports, can_view_dashboards, can_manage_data, can_logout, can_update_profile, can_update_password, must_change_default_password];
+            const usersManagerAuthorizations = [_public, can_view_users, can_create_user, can_update_user, can_delete_user, can_view_roles, can_create_role, can_update_role, can_delete_role, can_update_profile, can_update_password];
 
             const rolesData: { id: number; name: string; routes: Routes[]; authorizations: string[] }[] = [
-                { id: 1, name: 'super_admin', routes: [], authorizations: [_admin] },
+                { id: 1, name: 'superuser', routes: [], authorizations: [_superuser] },
                 { id: 2, name: 'admin', routes: adminRoutes, authorizations: adminAuthorizations },
                 { id: 3, name: 'reco', routes: recoRoutes, authorizations: recoAuthorizations },
                 { id: 4, name: 'chws', routes: managersRoutes, authorizations: managersAuthorizations },
@@ -254,28 +254,40 @@ export class AuthUserController {
 
         if (!userToken) return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
 
+        const role = roleAuthorizations(userToken.authorizations ?? [], userToken.routes ?? []);
+        const selectedUserOU = await generateSelectedUserOrgUnitsAndContact({isSuperUser:role.isSuperUser, recos: user.recos});
+
         const token = await hashUserToken(userToken);
         const userRepo = await getUsersRepository();
         user.token = token;
         user.mustLogin = false;
+
+        if (selectedUserOU && !role.isSuperUser) {
+            user.countries = selectedUserOU?.countries;
+            user.regions = selectedUserOU?.regions;
+            user.prefectures = selectedUserOU?.prefectures;
+            user.communes = selectedUserOU?.communes;
+            user.hospitals = selectedUserOU?.hospitals;
+            user.districtQuartiers = selectedUserOU?.districtQuartiers;
+            user.villageSecteurs = selectedUserOU?.villageSecteurs;
+            user.chws = selectedUserOU?.chws;
+            user.recos = selectedUserOU?.recos;
+        }
         await userRepo.save(user);
 
-        const role = roleAuthorizations(userToken.authorizations ?? [], userToken.routes ?? []);
-
         const orgunits = {
-            countries: role.isAdmin !== true ? user.countries : (await COUNTRIES_CUSTOM_QUERY()).map(d => GetCountryMap(d)),
-            regions: role.isAdmin !== true ? user.regions : (await REGIONS_CUSTOM_QUERY()).map(d => GetRegionsMap(d)),
-            prefectures: role.isAdmin !== true ? user.prefectures : (await PREFECTURES_CUSTOM_QUERY()).map(d => GetPrefecturesMap(d)),
-            communes: role.isAdmin !== true ? user.communes : (await COMMUNES_CUSTOM_QUERY()).map(d => GetCommunesMap(d)),
-            hospitals: role.isAdmin !== true ? user.hospitals : (await HOSPITALS_CUSTOM_QUERY()).map(d => GetHospitalsMap(d)),
-            districtQuartiers: role.isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_CUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d)),
-            villageSecteurs: role.isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_CUSTOM_QUERY()).map(d => GetVillageSecteursMap(d)),
+            countries: selectedUserOU?.countries ?? [],
+            regions: selectedUserOU?.regions ?? [],
+            prefectures: selectedUserOU?.prefectures ?? [],
+            communes: selectedUserOU?.communes ?? [],
+            hospitals: selectedUserOU?.hospitals ?? [],
+            districtQuartiers: selectedUserOU?.districtQuartiers ?? [],
+            villageSecteurs: selectedUserOU?.villageSecteurs ?? []
         };
         const persons = {
-            chws: role.isAdmin !== true ? user.chws : (await CHWS_CUSTOM_QUERY()).map(d => GetChwsMap(d)),
-            recos: role.isAdmin !== true ? user.recos : (await RECOS_CUSTOM_QUERY()).map(d => GetRecosMap(d)),
+            chws: selectedUserOU?.chws ?? [],
+            recos: selectedUserOU?.recos ?? []
         }
-
 
         const secret = await jwSecretKey({ user: user });
 
@@ -439,7 +451,6 @@ export class AuthUserController {
                     } catch (err: any) {
                         return res.status(500).json({ status: 500, data: `${err || 'Erreur Interne Du Serveur'}` });
                     }
-
                 });
             }
         } catch (err: any) {
@@ -551,12 +562,12 @@ export class AuthUserController {
 
             const role = roleAuthorizations(currentUserToken.authorizations ?? [], currentUserToken.routes ?? []);
 
-            if (role.isAdmin !== true) {
+            if (role.isSuperUser !== true) {
                 finalUsers = finalUsers.filter(async user => {
                     const uToken = await userTokenGenerated(user, { checkValidation: false, outPutInitialRoles: true, outPutOrgUnits: true });
                     if (uToken) {
                         const uRole = roleAuthorizations(uToken.authorizations ?? [], uToken.routes ?? []);
-                        return uRole.isAdmin !== true
+                        return uRole.isSuperUser !== true
                     }
                     return true;
                 })
@@ -684,9 +695,9 @@ export class AuthUserController {
             const { userId, id, permanentDelete } = req.body;
             if (!userId || !id) return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
             const userRepo = await getUsersRepository();
-            const isSuperAdmin = true;
+            const isSuperUser = true;
 
-            if (!(isSuperAdmin != true && id)) return res.status(201).json({ status: 201, data: 'Vous ne pouvez pas supprimer cet utilisateur' });
+            if (!(isSuperUser != true && id)) return res.status(201).json({ status: 201, data: 'Vous ne pouvez pas supprimer cet utilisateur' });
             const user = await userRepo.findOneBy({ id: id });
             if (!user) return res.status(200).json({ status: 200, data: 'Supprimé avec succès' });
             if (permanentDelete != true) {
@@ -777,10 +788,10 @@ export class AuthUserController {
 
     static DeleteRole = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { userId, id, isSuperAdmin } = req.body;
+            const { userId, id, isSuperUser } = req.body;
             if (!userId || !id) return res.status(201).json({ status: 201, data: 'Aucun utilisateur selectionné' });
 
-            if (isSuperAdmin !== true) return res.status(201).json({ status: 201, data: 'Vous ne pouvez pas supprimer cet utilisateur' });
+            if (isSuperUser !== true) return res.status(201).json({ status: 201, data: 'Vous ne pouvez pas supprimer cet utilisateur' });
             const repo = await getRolesRepository();
             const role = await repo.findOneBy({ id: id });
             if (!role) return res.status(201).json({ status: 201, data: 'Pas de role trouvé' });

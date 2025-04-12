@@ -5,7 +5,12 @@ import { Routes, FullRolesUtils } from "./User";
 
 let Connection: DataSource = AppDataSource.manager.connection;
 
-@Entity()
+@Entity("roles", {
+    orderBy: {
+        name: "ASC",
+        id: "DESC"
+    }
+})
 export class Roles {
     constructor() { };
     @PrimaryGeneratedColumn()

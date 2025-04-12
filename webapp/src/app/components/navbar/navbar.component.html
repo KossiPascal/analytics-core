@@ -76,6 +76,7 @@
     <app-sync-indicator *ngIf="USER?.role?.canUseOfflineMode == true"></app-sync-indicator>
   </div>
   <div *ngIf="USER?.role?.canUpdateProfile == true" class="profile-option" (click)="viewProfile($event)">Voir Profil</div>
+  <div *ngIf="USER?.role?.canUpdatePassword == true" class="profile-option" (click)="updatePassword($event)">Changer Mot de passe</div>
   <div *ngIf="USER?.role?.canUpdateLanguage == true" class="profile-option" (click)="setLanguage($event)">Changer Langue</div>
   <div *ngIf="USER?.role?.canLogout == true" class="profile-option" (click)="logout($event)"><span class="fa fa-sign-out"></span> Déconnexion</div>
 </div>

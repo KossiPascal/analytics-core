@@ -3,10 +3,11 @@ import { Entity, Column, Repository, DataSource, PrimaryColumn, In } from "typeo
 import { AppDataSource } from '../data-source';
 import { notEmpty } from '../functions/functions';
 import { GetRolesAndNamesPagesAuthorizations, Roles } from './Roles';
-import { ROUTES_LIST, AUTHORIZATIONS_LIST, _admin, can_use_offline_mode } from '../providers/authorizations-pages';
+import { ROUTES_LIST, AUTHORIZATIONS_LIST, _superuser, can_use_offline_mode, roleAuthorizations } from '../providers/authorizations-pages';
 import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY } from '../controllers/ORGUNITS/org-units-custom';
 import { SECRET_PRIVATE_KEY } from '../providers/constantes';
 import { CountryMap, RegionsMap, PrefecturesMap, CommunesMap, HospitalsMap, DistrictQuartiersMap, VillageSecteursMap, ChwsMap, RecosMap, GetCountryMap, GetRegionsMap, GetPrefecturesMap, GetCommunesMap, GetHospitalsMap, GetDistrictQuartiersMap, GetVillageSecteursMap, GetChwsMap, GetRecosMap } from '../models/org-units/orgunits-map';
+import { ChwCustomQuery, CommuneCustomQuery, CountryCustomQuery, DistrictQuartierCustomQuery, HospitalCustomQuery, PrefectureCustomQuery, RecoCustomQuery, RegionCustomQuery, VillageSecteurCustomQuery } from '../models/org-units/orgunits-query';
 
 let Connection: DataSource = AppDataSource.manager.connection;
 
@@ -111,6 +112,18 @@ export async function getUsersRepository(): Promise<Repository<Users>> {
     return Connection.getRepository(Users);
 }
 
+export interface SelectedUserOrgUnitsAndContact {
+    countries: CountryMap[]
+    regions: RegionsMap[]
+    prefectures: PrefecturesMap[]
+    communes: CommunesMap[]
+    hospitals: HospitalsMap[]
+    districtQuartiers: DistrictQuartiersMap[]
+    villageSecteurs: VillageSecteursMap[]
+    chws: ChwsMap[]
+    recos: RecosMap[]
+}
+
 
 export interface TokenUser {
     id: string
@@ -141,7 +154,7 @@ export interface Routes {
 }
 
 export interface UserRole {
-    isAdmin: boolean,
+    isSuperUser: boolean,
     canUseOfflineMode: boolean,
     canViewReports: boolean,
     canViewDashboards: boolean,
@@ -152,7 +165,6 @@ export interface UserRole {
     canCreateRole: boolean,
     canUpdateRole: boolean,
     canDeleteRole: boolean,
-    changeDefaultPassword: boolean,
     canValidateData: boolean,
     canSendDataToDhis2: boolean,
     canViewUsers: boolean,
@@ -161,8 +173,10 @@ export interface UserRole {
     canSendSms: boolean,
     canLogout: boolean,
     canUpdateProfile: boolean,
+    canUpdatePassword: boolean,
     canUpdateLanguage: boolean,
     canViewNotifications: boolean,
+    mustChangeDefaultPassword: boolean,
 }
 
 export interface FullRolesUtils {
@@ -208,9 +222,9 @@ export async function userTokenGenerated(user: Users, param: { checkValidation?:
     var roles: Roles[] = data && notEmpty(data) ? data.rolesObj : [];
     var routes: Routes[] = data && notEmpty(data) ? data.routes : [];
     var authorizations: string[] = data && notEmpty(data) ? data.authorizations : [];
-    var isAdmin: boolean = data && notEmpty(data) ? (data.authorizations.includes(_admin)) : false;
+    var isSuperUser: boolean = data && notEmpty(data) ? (data.authorizations.includes(_superuser)) : false;
 
-    if (param.checkValidation === true && (!user.isActive || user.isDeleted || rolesIds.length == 0 && !isAdmin || routes.length == 0 && !isAdmin || authorizations.length == 0)) {
+    if (param.checkValidation === true && (!user.isActive || user.isDeleted || rolesIds.length == 0 && !isSuperUser || routes.length == 0 && !isSuperUser || authorizations.length == 0)) {
         return null;
     }
 
@@ -220,44 +234,92 @@ export async function userTokenGenerated(user: Users, param: { checkValidation?:
         fullname: user.fullname,
         email: user.email,
         phone: user.phone,
-        routes: isAdmin ? ROUTES_LIST : routes,
-        authorizations: isAdmin ? [...AUTHORIZATIONS_LIST, _admin] : authorizations,
-
-        countries: param.outPutOrgUnits === true ? (isAdmin !== true ? user.countries : (await COUNTRIES_CUSTOM_QUERY()).map(d => GetCountryMap(d))) : undefined,
-        regions: param.outPutOrgUnits === true ? (isAdmin !== true ? user.regions : (await REGIONS_CUSTOM_QUERY()).map(d => GetRegionsMap(d))) : undefined,
-        prefectures: param.outPutOrgUnits === true ? (isAdmin !== true ? user.prefectures : (await PREFECTURES_CUSTOM_QUERY()).map(d => GetPrefecturesMap(d))) : undefined,
-        communes: param.outPutOrgUnits === true ? (isAdmin !== true ? user.communes : (await COMMUNES_CUSTOM_QUERY()).map(d => GetCommunesMap(d))) : undefined,
-        hospitals: param.outPutOrgUnits === true ? (isAdmin !== true ? user.hospitals : (await HOSPITALS_CUSTOM_QUERY()).map(d => GetHospitalsMap(d))) : undefined,
-        districtQuartiers: param.outPutOrgUnits === true ? (isAdmin !== true ? user.districtQuartiers : (await DISTRICTS_QUARTIERS_CUSTOM_QUERY()).map(d => GetDistrictQuartiersMap(d))) : undefined,
-        villageSecteurs: param.outPutOrgUnits === true ? (isAdmin !== true ? user.villageSecteurs : (await VILLAGES_SECTEURS_CUSTOM_QUERY()).map(d => GetVillageSecteursMap(d))) : undefined,
-        chws: param.outPutOrgUnits === true ? (isAdmin !== true ? user.chws : (await CHWS_CUSTOM_QUERY()).map(d => GetChwsMap(d))) : undefined,
-        recos: param.outPutOrgUnits === true ? (isAdmin !== true ? user.recos : (await RECOS_CUSTOM_QUERY()).map(d => GetRecosMap(d))) : undefined,
-
+        routes: isSuperUser ? ROUTES_LIST : routes,
+        authorizations: isSuperUser ? [...AUTHORIZATIONS_LIST, _superuser] : authorizations,
         rolesIds: param.outPutInitialRoles === true ? rolesIds : undefined,
         rolesNames: param.outPutInitialRoles === true ? rolesNames : undefined,
         roles: param.outPutInitialRoles === true ? roles : undefined,
-
-        // can_use_offline_mode: data && notEmpty(data) ? (isAdmin ? false : data.authorizations.includes(can_use_offline_mode)) : false,
-        // can_view_reports: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_view_reports)) : false,
-        // can_view_dashboards: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_view_dashboards)) : false,
-        // can_manage_data: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_manage_data)) : false,
-        // can_create_user: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_create_user)) : false,
-        // can_update_user: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_update_user)) : false,
-        // can_delete_user: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_delete_user)) : false,
-        // can_create_role: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_create_role)) : false,
-        // can_update_role: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_update_role)) : false,
-        // can_delete_role: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_delete_role)) : false,
-        // can_logout: data && notEmpty(data) ? (isAdmin ? true : data.authorizations.includes(can_logout)) : false,
     };
 
-    // if (param.outPutInitialRoles === true) {
-    //     const _repoRole = await getRolesRepository();
-    //     var rolesList: Roles[] = await _repoRole.find({ where: { id: In(user.roles.map(r => parseInt(r))) } });
-    //     tokenUser.roleIds = user.roles;
-    //     tokenUser.roles = rolesList;
-    // }
+    if (param.outPutOrgUnits === true) {
+        const orgUnits = await generateSelectedUserOrgUnitsAndContact({tokenUser:tokenUser, isSuperUser:isSuperUser, recos: user.recos});
+        if (orgUnits) {
+            tokenUser.countries = orgUnits.countries;
+            tokenUser.regions = orgUnits.regions;
+            tokenUser.prefectures = orgUnits.prefectures;
+            tokenUser.communes = orgUnits.communes;
+            tokenUser.hospitals = orgUnits.hospitals;
+            tokenUser.districtQuartiers = orgUnits.districtQuartiers;
+            tokenUser.villageSecteurs = orgUnits.villageSecteurs;
+            tokenUser.chws = orgUnits.chws;
+            tokenUser.recos = orgUnits.recos;
+        }
+    }
 
     return tokenUser;
+}
+
+export async function generateSelectedUserOrgUnitsAndContact({recos, tokenUser, isSuperUser }:{recos: RecosMap[], tokenUser?: TokenUser, isSuperUser?:boolean}): Promise<SelectedUserOrgUnitsAndContact|undefined> {
+    
+    if (isSuperUser !== false && isSuperUser != true) {
+        if (!tokenUser) return;
+        const role = roleAuthorizations(tokenUser.authorizations ?? [], tokenUser.routes ?? []);
+        isSuperUser = role.isSuperUser;
+    }
+    
+    const allCountries = await COUNTRIES_CUSTOM_QUERY();
+    const allRegions = await REGIONS_CUSTOM_QUERY();
+    const allPrefectures = await PREFECTURES_CUSTOM_QUERY();
+    const allCommunes = await COMMUNES_CUSTOM_QUERY();
+    const allHospitals = await HOSPITALS_CUSTOM_QUERY();
+    const allDistrictQuartiers = await DISTRICTS_QUARTIERS_CUSTOM_QUERY();
+    const allVillageSecteursd = await VILLAGES_SECTEURS_CUSTOM_QUERY();
+    const allChws = await CHWS_CUSTOM_QUERY();
+    const allRecos = await RECOS_CUSTOM_QUERY();
+
+    let countriesQuery:CountryCustomQuery[] = [];
+    let regionsQuery:RegionCustomQuery[] = [];
+    let prefecturesQuery:PrefectureCustomQuery[] = [];
+    let communesQuery:CommuneCustomQuery[] = [];
+    let hospitalsQuery:HospitalCustomQuery[] = [];
+    let districtQuartiersQuery:DistrictQuartierCustomQuery[] = [];
+    let villageSecteursQuery:VillageSecteurCustomQuery[] = [];
+    let chwsQuery:ChwCustomQuery[] = [];
+    let recosQuery:RecoCustomQuery[] = [];
+
+    if (isSuperUser !== true) {
+        const countriesIds = [...new Set(recos.map(r => r.country_id))];
+        const regionsIds = [...new Set(recos.map(r => r.region_id))];
+        const prefecturesIds = [...new Set(recos.map(r => r.prefecture_id))];
+        const communesIds = [...new Set(recos.map(r => r.commune_id))];
+        const hospitalsIds = [...new Set(recos.map(r => r.hospital_id))];
+        const districtQuartiersIds = [...new Set(recos.map(r => r.district_quartier_id))];
+        const villageSecteursIds = [...new Set(recos.map(r => r.village_secteur_id))];
+        const recosIds = [...new Set(recos.map(r => r.id))];
+    
+        countriesQuery = allCountries.filter(r=>r.id && countriesIds.includes(r.id));
+        regionsQuery = allRegions.filter(r=>r.id && regionsIds.includes(r.id));
+        prefecturesQuery = allPrefectures.filter(r=>r.id && prefecturesIds.includes(r.id));
+        communesQuery = allCommunes.filter(r=>r.id && communesIds.includes(r.id));
+        hospitalsQuery = allHospitals.filter(r=>r.id && hospitalsIds.includes(r.id));
+        districtQuartiersQuery = allDistrictQuartiers.filter(r=>r.id && districtQuartiersIds.includes(r.id));
+        villageSecteursQuery = allVillageSecteursd.filter(r=>r.id && villageSecteursIds.includes(r.id));
+        chwsQuery = allChws.filter(r=>r.district_quartier && r.district_quartier.id && districtQuartiersIds.includes(r.district_quartier.id));
+        recosQuery = allRecos.filter(r=>r.id && recosIds.includes(r.id));
+    }
+
+    return {
+        countries: (isSuperUser === true ? allCountries : countriesQuery).map(d => GetCountryMap(d)),
+        regions: (isSuperUser === true ? allRegions : regionsQuery).map(d => GetRegionsMap(d)),
+        prefectures: (isSuperUser === true ? allPrefectures : prefecturesQuery).map(d => GetPrefecturesMap(d)),
+        communes: (isSuperUser === true ? allCommunes : communesQuery).map(d => GetCommunesMap(d)),
+        hospitals: (isSuperUser === true ? allHospitals : hospitalsQuery).map(d => GetHospitalsMap(d)),
+        districtQuartiers: (isSuperUser === true ? allDistrictQuartiers : districtQuartiersQuery).map(d => GetDistrictQuartiersMap(d)),
+        villageSecteurs: (isSuperUser === true ? allVillageSecteursd : villageSecteursQuery).map(d => GetVillageSecteursMap(d)),
+        chws: (isSuperUser === true ? allChws : chwsQuery).map(d => GetChwsMap(d)),
+        recos: (isSuperUser === true ? allRecos : recosQuery).map(d => GetRecosMap(d)),
+    }
+    
 }
 
 export async function hashUserToken(user: TokenUser): Promise<string> {

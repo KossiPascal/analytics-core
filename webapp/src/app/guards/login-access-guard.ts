@@ -42,7 +42,7 @@ export class LoginAccessGuard implements CanActivate, OnDestroy {
     }
 
     // Check if user has access
-    const hasAccess = user.role?.isAdmin === true || this.hasAnyMatch(userAuthorizations, routeAccess);
+    const hasAccess = user.role?.isSuperUser === true || this.hasAnyMatch(userAuthorizations, routeAccess);
 
     if (hasAccess) {
       this.titleService.setTitle(routeTitle);

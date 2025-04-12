@@ -70,7 +70,7 @@ export class NavbarComponent {
       // <i class="fas fa-user"></i>
       // <i class="fas fa-calendar-alt"></i>
     ];
-    if (this.USER?.role.isAdmin == true) {
+    if (this.USER?.role.isSuperUser == true) {
       outputRoutes = routes;
     } else {
 
@@ -105,12 +105,23 @@ export class NavbarComponent {
 
   viewProfile(event: Event) {
     event.preventDefault();
-    this.mService.open(UserProfileComponent).subscribe((result) => {
+    this.mService.open(UserProfileComponent, {data: {COMPONENT_TYPE: 'profile'}}).subscribe((result) => {
       if (result) {
         console.log("Données reçues depuis la modal :", result);
       }
     });
   }
+
+  updatePassword(event: Event) {
+    event.preventDefault();
+    this.mService.open(UserProfileComponent, {data: {COMPONENT_TYPE: 'update_password'}}).subscribe((result) => {
+      if (result) {
+        console.log("Données reçues depuis la modal :", result);
+      }
+    });
+  }
+
+  
 
   setLanguage(event: Event) {
   }

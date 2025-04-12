@@ -49,7 +49,7 @@ export interface Roles {
 }
 
 export interface UserRole {
-  isAdmin: boolean,
+  isSuperUser: boolean,
   canUseOfflineMode: boolean,
   canViewReports: boolean,
   canViewDashboards: boolean,
@@ -60,7 +60,6 @@ export interface UserRole {
   canCreateRole: boolean,
   canUpdateRole: boolean,
   canDeleteRole: boolean,
-  changeDefaultPassword: boolean,
   canValidateData: boolean,
   canSendDataToDhis2: boolean,
   canViewUsers: boolean,
@@ -69,8 +68,10 @@ export interface UserRole {
   canSendSms: boolean,
   canLogout: boolean,
   canUpdateProfile: boolean,
+  canUpdatePassword: boolean,
   canUpdateLanguage: boolean,
   canViewNotifications: boolean,
+  mustChangeDefaultPassword: boolean,
 }
 
 

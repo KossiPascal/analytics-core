@@ -1,8 +1,8 @@
 <kossi-modal-layout
   [id]="'sync-for-offline-confirm-modal'"
-  [modalActionColor]="'light-back'"
+  [modalActionColor]="'warning-back'"
   [showCloseButton]="true"
-  [modalTitle]="'User Profile'"
+  [modalTitle]="COMPONENT_TYPE == 'profile' ? 'Modifier mes informations' : COMPONENT_TYPE == 'update_password' ? 'Modifier mon mot de passe' : 'Infos Utilisateur'"
   [cancelBtnName]="'Annuler'"
   [submitBtnName]="''"
   [showBottomElements]="false"
@@ -14,8 +14,7 @@
 
   
 <div class="container">
-    <div class="card">
-      <h3>Edit Information</h3>
+    <div *ngIf="COMPONENT_TYPE == 'profile'" class="card">
       <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
         <label>Nom complet:</label>
         <input formControlName="fullname" type="text" />
@@ -32,26 +31,25 @@
         <label>Téléphone:</label>
         <input formControlName="phone" type="text" />
   
-        <button type="submit" [disabled]="!profileForm.valid">Save Changes</button>
+        <button type="submit" [disabled]="!profileForm.valid">Mettre à jour</button>
       </form>
     </div>
   
-    <div class="card">
-      <h3>Change Password</h3>
+    <div *ngIf="COMPONENT_TYPE == 'update_password'" class="card">
       <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
-        <label>Current Password:</label>
+        <label>Mot de passe actuelle:</label>
         <input type="password" formControlName="currentPassword" />
   
-        <label>New Password:</label>
+        <label>Nouveau mot de passe:</label>
         <input type="password" formControlName="newPassword" />
   
-        <label>Confirm New Password:</label>
+        <label>Confirmer ce mot de passe:</label>
         <input type="password" formControlName="confirmPassword" />
-        <div *ngIf="passwordForm.value.newPassword !== passwordForm.value.confirmPassword" class="error">
-          Passwords do not match
+        <div *ngIf="passwordNotMatch" class="error">
+          Les mots de passe ne concordent pas!
         </div>
   
-        <button type="submit" [disabled]="!passwordForm.valid">Update Password</button>
+        <button type="submit" [disabled]="!passwordForm.valid">Mettre à jour</button>
       </form>
     </div>
   </div>

@@ -12,7 +12,7 @@ const routes: Routes = [
     data: {
       href: 'admin',
       title: 'ADMINISTRATION',
-      access: ['_admin']
+      access: ['_superuser']
     },
   },
 ];

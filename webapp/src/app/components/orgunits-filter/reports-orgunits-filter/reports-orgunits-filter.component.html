@@ -121,7 +121,7 @@
           </select>
         </div>
 
-        <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 1" class="form-group">
+        <div *ngIf="(Recos$.length > 1 && recos.length === 0) || recos.length > 0" class="form-group">
           <label for="recos">
             Recos :({{ selectedLength('recos') }})
             <input id="all-recos" (change)="selectAll('recos', $event)" [checked]="isChecked('recos')" type="checkbox">
