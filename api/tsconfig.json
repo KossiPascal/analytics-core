@@ -106,7 +106,7 @@
   },
   "include": [
     "src/**/*",
-    "*",
+    "*", "../webapp/to_delete/migrations copy",
   ],
   "exclude": [
     "./node_modules"

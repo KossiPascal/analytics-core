@@ -5,7 +5,7 @@ import { AppDataSource } from "../data-source";
 import request from 'request';
 import { httpHeaders, notEmpty } from "../functions/functions";
 import { APP_ENV } from "../providers/constantes";
-import { RecoChartPerformanceDashboard, RecoPerformanceDashboard, RecoVaccinationDashboardDbOutput } from "../models/dashboards";
+import { RecoPerformanceDashboard, RecoVaccinationDashboardDbOutput } from "../models/dashboards";
 import { ChwsRecoReport, FamilyPlanningReport, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PromotionReport, RecoMegSituationReport } from "../models/reports";
 // const axios = require('axios');
 // const fetch = require('node-fetch')
@@ -111,11 +111,11 @@ export async function GetRecoDataToBeDeleteFromCouchDb(req: Request, resp: Respo
                     monthCurrentDate.setMonth(monthCurrentDate.getMonth() + 1);
                 }
 
-                while (yearCurrentDate <= endOfDate) {
-                    const data3: RecoChartPerformanceDashboard[] = await Connection.query(`SELECT d.id, r.name as user, 'Chart Performance Dashboard' AS form, 'reco_chart_performance_dashboard' AS table FROM reco_chart_performance_dashboard d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate}`, [...cible, yearCurrentDate.getFullYear()]);
-                    bData3 = [...bData3, ...data3];
-                    yearCurrentDate.setFullYear(yearCurrentDate.getFullYear() + 1);
-                }
+                // while (yearCurrentDate <= endOfDate) {
+                //     const data3: RecoChartPerformanceDashboard[] = await Connection.query(`SELECT d.id, r.name as user, 'Chart Performance Dashboard' AS form, 'reco_chart_performance_dashboard' AS table FROM reco_chart_performance_dashboard d JOIN reco r ON d.reco->>'id' = r.id WHERE (r.id IN (${owners}) OR d.village_secteur->>'id' IN (${owners})) AND d.year = ${startDate}`, [...cible, yearCurrentDate.getFullYear()]);
+                //     bData3 = [...bData3, ...data3];
+                //     yearCurrentDate.setFullYear(yearCurrentDate.getFullYear() + 1);
+                // }
 
                 return resp.status(200).json({ status: 200, data: [...bData1, ...bData2, ...bData3] });
 

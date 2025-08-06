@@ -64,12 +64,19 @@ export class CreateUpdateDeleteShowUserComponent implements OnInit {
 
   message!: string;
 
+  visibleSection: string = 'info';
+
   private isToOpenList: { [key: string]: boolean } = {};
 
   constructor(private api: ApiService, private userCtx: UserContextService, private mService: ModalService, private cst: ConstanteService) {
     this.APP_LOGO = this.cst.APP_LOGO;
 
   }
+
+  toggleSection(section: string) {
+    this.visibleSection = this.visibleSection === section ? '' : section;
+  }
+  
 
   ngOnInit(): void {
     if (this.IS_CREATE_OR_UPDATE == true) {
@@ -94,13 +101,16 @@ export class CreateUpdateDeleteShowUserComponent implements OnInit {
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
+
   isListOpenToShow(elmId: string): boolean {
     return this.isToOpenList[elmId] ?? false;
   }
+
   toggleList(elmId: string) {
     const cible = this.isToOpenList[elmId];
     this.isToOpenList[elmId] = !(cible === true);
   }
+
   orgUnitsIsEmpty(): boolean {
     const data = [
       ...(this.countries ?? []),
@@ -113,9 +123,11 @@ export class CreateUpdateDeleteShowUserComponent implements OnInit {
     ];
     return data.length === 0;
   }
+
   rolesIsEmpty(): boolean {
     return (this.SELECTED_ROLE ?? []).length === 0;
   }
+
   containsOrgUnits(cible: 'countries' | 'regions' | 'prefectures' | 'communes' | 'hospitals' | 'districtQuartiers' | 'villageSecteurs', elemId: string): boolean {
     if (cible === 'countries') {
       const ok0 = ((this.countries ?? []).map(c => c.id)).includes(elemId);

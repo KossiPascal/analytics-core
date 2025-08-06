@@ -2,38 +2,46 @@ import { CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, NgModule } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { DashboardsRoutingModule } from './dashboards-routing.module';
-import { DashboardsViewComponent } from './dashboards-view.component';
 import { GraduationLoaderComponent } from '@kossi-components/loading/graduation-loader/graduation-loader.component';
 import { SharedModule } from '@kossi-src/app/shared/shared.module';
 import { HttpClientModule } from '@angular/common/http';
-import { DashboardsOrgunitsFilterComponent } from '@kossi-components/orgunits-filter/dashboards-orgunits-filter/dashboards-orgunits-filter.component';
-import { RecoPerformanceDashboardComponent } from '@kossi-modules/dashboards-view/dashbords/reco-performance/reco-performance.component';
-import { RecoVaccinationDashboardComponent } from '@kossi-modules/dashboards-view/dashbords/reco-vaccination/reco-vaccination.component';
+import { RecoPerformanceDashboardComponent } from '@kossi-modules/dashboards-view/monthly/dashbords/reco-performance/reco-performance.component';
 import { DashboardsPaginationTableComponent } from '@kossi-components/pagination-table/dashboards-pagination/dashboards-pagination-table.component';
+import { RecoVaccinationAllDoneDashboardComponent } from './realtime/dashbords/reco-vaccination/reco-vaccination-all-done.component';
+import { RecoVaccinationNotDoneDashboardComponent } from './realtime/dashbords/reco-vaccination/reco-vaccination-not-done.component';
+import { RecoVaccinationPartialDoneDashboardComponent } from './realtime/dashbords/reco-vaccination/reco-vaccination-partial-done.component';
 import { DashboardsHeaderSelectorComponent } from '@kossi-components/base-header/dashboards-header/dashboards-header.component';
-import {  } from '@kossi-modals/sms/sms.component';
+import { RecoTasksStateComponent } from './monthly/dashbords/reco-tasks-state/reco-tasks-state.component';
+import { DashboardsOrgunitsRealtimeFilterComponent } from '@kossi-components/orgunits-filter/component/dashboards-orgunits-realtime-filter.component';
+import { DashboardsOrgunitsMonthlyFilterComponent } from '@kossi-components/orgunits-filter/component/dashboards-orgunits-monthly-filter.component';
+import { DashboardsMonthlyViewComponent } from './monthly/dashboards-monthly-view.component';
+import { DashboardsRealtimeViewComponent } from './realtime/dashboards-realtime-view.component';
+import { RecoActiveComponent } from './monthly/dashbords/reco-active/reco-active.component';
 
 
 @NgModule({
   declarations: [
-    DashboardsViewComponent,
-    DashboardsOrgunitsFilterComponent,
-    RecoPerformanceDashboardComponent,
-    RecoVaccinationDashboardComponent,
+    GraduationLoaderComponent,
     DashboardsPaginationTableComponent,
-
     DashboardsHeaderSelectorComponent,
 
-    GraduationLoaderComponent,
-    // SampleLoaderComponent,
-    // SnakeLoaderComponent,
-    // GoogleLoaderComponent,
+    DashboardsOrgunitsMonthlyFilterComponent,
+    DashboardsMonthlyViewComponent,
+    RecoPerformanceDashboardComponent,
+    RecoTasksStateComponent,
+    RecoActiveComponent,
+
+    DashboardsOrgunitsRealtimeFilterComponent,
+    DashboardsRealtimeViewComponent,
+    RecoVaccinationPartialDoneDashboardComponent,
+    RecoVaccinationAllDoneDashboardComponent,
+    RecoVaccinationNotDoneDashboardComponent,
   ],
   imports: [
     CommonModule,
     ReactiveFormsModule,
     DashboardsRoutingModule,
-    SharedModule,    
+    SharedModule,
     HttpClientModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],

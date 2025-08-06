@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { FormGroup } from '@angular/forms';
 import { ReportsData, ReportsFilterData, ReportsHealth } from '@kossi-models/reports-selectors';
 import { DashboardsData, DashboardsHealth } from '@kossi-models/dashboards-selectors';
+import { MapsData, MapsHealth } from '@kossi-models/maps-selectors';
 
 @Injectable({ providedIn: 'root' })
 export class FormGroupService {
@@ -19,6 +20,10 @@ export class FormGroupService {
   private DASHBOARDS_HEADER = new BehaviorSubject<DashboardsHealth | any>({});
 
 
+  private MAPS_DATA = new BehaviorSubject<MapsData | undefined>(undefined);
+  private MAPS_HEADER = new BehaviorSubject<MapsHealth | any>({});
+
+
 
   formGroup$ = this.formGroupSource.asObservable();
   dhis2FormGroup$ = this.dhis2FormGroupSource.asObservable();
@@ -29,6 +34,9 @@ export class FormGroupService {
 
   DASHBOARDS_DATA$ = this.DASHBOARDS_DATA.asObservable();
   DASHBOARDS_HEADER$ = this.DASHBOARDS_HEADER.asObservable();
+
+  MAPS_DATA$ = this.MAPS_DATA.asObservable();
+  MAPS_HEADER$ = this.MAPS_HEADER.asObservable();
 
 
   setFormGroup(formGroup: FormGroup<any>) {
@@ -62,6 +70,17 @@ export class FormGroupService {
 
   async SET_DASHBOARDS_HEADER(dataToSet: DashboardsHealth) {
     this.DASHBOARDS_HEADER.next(dataToSet);
+    return;
+  }
+
+
+  async SET_MAPS_DATA(dataToSet: MapsData | undefined) {
+    this.MAPS_DATA.next(dataToSet);
+    return;
+  }
+
+  async SET_MAPS_HEADER(dataToSet: MapsHealth) {
+    this.MAPS_HEADER.next(dataToSet);
     return;
   }
 }

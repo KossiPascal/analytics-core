@@ -60,7 +60,7 @@ export class Users {
     isDeleted!: boolean
 
     @Column({ nullable: false, default: false })
-    hasChangedPassword!: boolean
+    hasChangedDefaultPassword!: boolean
 
     @Column({ nullable: false, default: false })
     mustLogin!: boolean
@@ -131,6 +131,7 @@ export interface TokenUser {
     fullname: string
     email: string
     phone: string | null
+    hasChangedDefaultPassword: boolean
     rolesIds?: number[]
     rolesNames?: string[]
     roles?: Roles[]
@@ -156,6 +157,7 @@ export interface Routes {
 export interface UserRole {
     isSuperUser: boolean,
     canUseOfflineMode: boolean,
+    canViewMaps: boolean,
     canViewReports: boolean,
     canViewDashboards: boolean,
     canManageData: boolean,
@@ -234,6 +236,7 @@ export async function userTokenGenerated(user: Users, param: { checkValidation?:
         fullname: user.fullname,
         email: user.email,
         phone: user.phone,
+        hasChangedDefaultPassword: user.hasChangedDefaultPassword,
         routes: isSuperUser ? ROUTES_LIST : routes,
         authorizations: isSuperUser ? [...AUTHORIZATIONS_LIST, _superuser] : authorizations,
         rolesIds: param.outPutInitialRoles === true ? rolesIds : undefined,

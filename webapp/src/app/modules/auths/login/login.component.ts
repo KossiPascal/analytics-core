@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { LOCAL_REPPORTS_DB_NAME, LOCAL_DASHBOARDS_DB_NAME, DatabaseName } from '@kossi-models/db';
+import { AuthResponse } from '@kossi-models/user-role';
 import { AuthService } from '@kossi-services/auth.service';
 import { ConstanteService } from '@kossi-services/constantes.service';
 import { IndexedDbService } from '@kossi-services/indexed-db.service';
@@ -21,6 +22,7 @@ export class LoginComponent implements OnInit {
   COUNTRY_LOGO!: string;
   APP_NAME!: string;
 
+  showPassword: boolean = false;
 
   constructor(private cst: ConstanteService, private auth: AuthService, private indexdb: IndexedDbService) {
     this.APP_LOGO = this.cst.APP_LOGO;
@@ -48,12 +50,17 @@ export class LoginComponent implements OnInit {
   }
 
 
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
   login(): void {
     this.isLoading = true;
     const { credential, password } = this.loginForm.value;
     // Appel à la méthode de connexion
     this.auth.login({ credential, password }).subscribe({
-      next: async () => {
+      next: async (res:AuthResponse) => {
 
         const username = await this.indexdb.getOne<{ id: string; data: any }>('user_info', 'username');
 
@@ -63,11 +70,20 @@ export class LoginComponent implements OnInit {
             await this.indexdb.deleteAllFromDB({ dbName: name });
           }
 
-          await this.indexdb.update<{ id: string; data: any }>({ dbName: 'user_info', newData: { id: 'username', data: credential } }).then(() => {})
+          await this.indexdb.update<{ id: string; data: any }>({ dbName: 'user_info', newData: { id: 'username', data: credential } }).then(() => {});
         }
 
         this.isLoading = false;
+
+        if (res.mustChangeDefaultPassword) {
+          location.href = 'auths/change-default-password';
+          return;
+        }
+
+        console.log(res)
+
         location.href = 'reports';
+        return;
       },
       error: (err: any) => {
         // Gestion des erreurs

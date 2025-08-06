@@ -30,3 +30,13 @@ export interface CouchDbFetchData {
     dhisusername: string
     dhispassword: string
 }
+
+
+export type IndexTarget = 'only_id' | 'id' | 'id_reco' | 'reco_month_year' | 'reco_month' | 'reco_year' | 'month' | 'year' | 'year_month';
+
+
+
+export type CouchdbFetchCible = 'medic' | 'users' | 'logs' | 'sentinel' | 'users_meta';
+
+
+

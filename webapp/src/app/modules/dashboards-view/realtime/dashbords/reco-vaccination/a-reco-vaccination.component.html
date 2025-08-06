@@ -1,0 +1,233 @@
+
+<app-sample-loader [isLoading]="IS_FILTER_LOADING"></app-sample-loader>
+
+<ng-container *ngIf="DATA_FETCHED && DATA_FETCHED.length > 0">
+
+  <h2>📈 LIST DES MOINS DE 5 ANS AVEC VACCINS NON A JOUR</h2>
+  <br>
+
+  <dashboards-header-selector
+    [id]="'vaccination-table-header'"
+    [REPPORT_NAME]="DASHBOARD_NAME"
+    [CHANGE_STATE]="CHANGE_STATE" 
+    [TABLE_ID]="'vaccination-table'"
+    [SHOW_EXPORT_TABLE_BTN]="true"
+    >
+  </dashboards-header-selector>
+
+  <button *ngIf="showGeneralCallAndSmsButton && USER?.role?.canSendSms == true" class="sms-sender" (click)="sendSms($event)">Envois Sms Multiple</button>
+  <button *ngIf="showGeneralCallAndSmsButton && USER?.role?.canSendSms == true" class="sms-sender" (click)="sendCustomSms($event)">Envoi Sms Costomisé Multiple</button>
+
+  
+
+
+
+  <div class="table-responsive">
+    <table id="vaccination-table" class="table table-bordered table-hover">
+      <thead>
+        <tr class="table-head fp-header-1">
+          <th scope="col" [rowSpan]="2">N°</th>
+          <th class="vaccine-big-head" [rowSpan]="2" scope="col">Ménage</th>
+          <th class="vaccine-big-head" [rowSpan]="2" scope="col">Nom</th>
+          <th class="vaccine-big-head" [rowSpan]="2" scope="col">Sexe</th>
+          <th class="vaccine-big-head" [rowSpan]="2" scope="col">Age</th>
+          <th class="vaccine-big-head" [rowSpan]="2" scope="col">Code</th>
+          <th class="vaccine-big-head" [colSpan]="3" scope="col">Téléphone</th>
+          <th *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" class="vaccine-big-head" [colSpan]="3" scope="col">Actions</th>
+          <th class="vaccine-big-head" [colSpan]="2" scope="col">Naissance</th>
+          <th class="vaccine-big-head" [colSpan]="2" scope="col">6 semaines</th>
+          <th class="vaccine-big-head" [colSpan]="2" scope="col">10 semaines</th>
+          <th class="vaccine-big-head" [colSpan]="3" scope="col">14 semaines</th>
+          <th class="vaccine-big-head" [colSpan]="3" scope="col">9 mois</th>
+          <th class="vaccine-big-head" [colSpan]="2" scope="col">15 mois</th>
+        </tr>
+        <tr class="table-head fp-header-1">
+          <th class="vaccine-head" scope="col">RECO</th>
+          <th class="vaccine-head" scope="col">Parent</th>
+          <th class="vaccine-head" scope="col">Voisin</th>
+          <th *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" class="vaccine-head" scope="col">APPEL</th>
+          <th *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" class="vaccine-head" [colSpan]="2" scope="col">SMS</th>
+          <th class="vaccine-head" scope="col">BCG</th>
+          <th class="vaccine-head" scope="col">VPO_0</th>
+          <th class="vaccine-head" scope="col">PENTA_1</th>
+          <th class="vaccine-head" scope="col">VPO_1</th>
+          <th class="vaccine-head" scope="col">PENTA_2</th>
+          <th class="vaccine-head" scope="col">VPO_2</th>
+          <th class="vaccine-head" scope="col">PENTA_3</th>
+          <th class="vaccine-head" scope="col">VPO_3</th>
+          <th class="vaccine-head" scope="col">VPI_1</th>
+          <th class="vaccine-head" scope="col">VAR_1</th>
+          <th class="vaccine-head" scope="col">VAA</th>
+          <th class="vaccine-head" scope="col">VPI_2</th>
+          <th class="vaccine-head" scope="col">MEN_A</th>
+          <th class="vaccine-head" scope="col">VAR_2</th>
+        </tr>
+      </thead>
+      <tbody>
+          <ng-container *ngFor="let cv of PAGINATION_DATA">
+
+              <tr>
+                <td [class]="cv.length>1 ? 'many-child' : ''" [attr.rowspan]="cv.length" scope="row">{{ cv[0].family_code }}</td>
+                <td [class]="cv.length>1 ? 'many-child' : ''" [attr.rowspan]="cv.length">{{ cv[0].family_name }}</td>
+                <!-- First row of data -->
+                  <ng-container *ngFor="let v of cv; let i = index">
+                    <ng-container  *ngIf="i === 0">
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" >{{ v.child_name }}</td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" >{{ v.child_sex }}</td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" >{{ v.child_age_str }}</td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" >{{ v.child_code }}</td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" >{{ v.reco_phone }}</td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" >{{ v.parent_phone }}</td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" >{{ v.neighbor_phone }}</td>
+
+                      <td *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" class="{{cv.length>1 ? 'many-child' : ''}}" >
+                        <a *ngIf="v.parent_phone" [href]="'tel:' + (v.parent_phone|guineaPhone)" class="call-sms">
+                          <i class="fas fa-phone"></i>
+                        </a>
+                      </td>
+                      <td *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" class="{{cv.length>1 ? 'many-child' : ''}}" >
+                        <i *ngIf="v.parent_phone" (click)="sendSms($event, {phone: v.parent_phone})" class="fas fa-comment-dots call-sms"></i>
+                      </td>
+                      <td *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" class="{{cv.length>1 ? 'many-child' : ''}}" >
+                        <i *ngIf="v.parent_phone" (click)="sendCustomSms($event, {vaccine: v})" class="fas fa-sms call-sms"></i>
+                        <!-- <a *ngIf="v.parent_phone" [href]="'sms:' + (v.parent_phone|guineaPhone)" (click)="sendSms($event, {phone: v.parent_phone})" class="call-sms">
+                          <i class="fas fa-sms"></i>
+                        </a> -->
+                      </td>
+
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_BCG_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_BCG, v.child_age_in_days, 0) as BCG" [ngClass]="BCG.class" [innerHTML]="BCG.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VPO_0_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VPO_0, v.child_age_in_days, 0) as VPO0" [ngClass]="VPO0.class" [innerHTML]="VPO0.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_PENTA_1_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_PENTA_1, v.child_age_in_days, 42) as PENTA1" [ngClass]="PENTA1.class" [innerHTML]="PENTA1.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VPO_1_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VPO_1, v.child_age_in_days, 42) as VPO1" [ngClass]="VPO1.class" [innerHTML]="VPO1.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_PENTA_2_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_PENTA_2, v.child_age_in_days, 70) as PENTA2" [ngClass]="PENTA2.class" [innerHTML]="PENTA2.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VPO_2_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VPO_2, v.child_age_in_days, 70) as VPO2" [ngClass]="VPO2.class" [innerHTML]="VPO2.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_PENTA_3_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_PENTA_3, v.child_age_in_days, 98) as PENTA3" [ngClass]="PENTA3.class" [innerHTML]="PENTA3.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VPO_3_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VPO_3, v.child_age_in_days, 98) as VPO3" [ngClass]="VPO3.class" [innerHTML]="VPO3.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VPI_1_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VPI_1, v.child_age_in_days, 98) as VPI1" [ngClass]="VPI1.class" [innerHTML]="VPI1.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VAR_1_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VAR_1, v.child_age_in_months, 9) as VAR1" [ngClass]="VAR1.class" [innerHTML]="VAR1.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VAA_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VAA, v.child_age_in_months, 9) as VAA" [ngClass]="VAA.class" [innerHTML]="VAA.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VPI_2_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VPI_2, v.child_age_in_months, 9) as VPI2" [ngClass]="VPI2.class" [innerHTML]="VPI2.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_MEN_A_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_MEN_A, v.child_age_in_months, 15) as MENA" [ngClass]="MENA.class" [innerHTML]="MENA.action | safeHtml"></span>
+                      </td>
+                      <td class="{{cv.length>1 ? 'many-child' : ''}}" [attr.data-tooltip]="v.no_VAR_2_reason">
+                        <span *ngIf="vaccineUtils(v.vaccine_VAR_2, v.child_age_in_months, 15) as VAR2" [ngClass]="VAR2.class" [innerHTML]="VAR2.action | safeHtml"></span>
+                      </td>
+                    </ng-container>
+                  </ng-container>
+              </tr>
+              
+              <!-- Remaining rows for the same cv -->
+              <ng-container *ngFor="let v of cv; let j = index">
+                <tr class="many-child" *ngIf="j !== 0">
+                  <td style="font-weight: normal!important;" >{{ v.child_name }}</td>
+                  <td>{{ v.child_sex }}</td>
+                  <td>{{ v.child_age_str }}</td>
+                  <td>{{ v.child_code }}</td>
+                  <td>{{ v.reco_phone }}</td>
+                  <td>{{ v.parent_phone }}</td>
+                  <td>{{ v.neighbor_phone }}</td>
+
+                  <td *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" >
+                    <a *ngIf="v.parent_phone" [href]="'tel:' + (v.parent_phone|guineaPhone)" class="call-sms">
+                      <i class="fas fa-phone"></i>
+                    </a>
+                  </td>
+                  <td *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" >
+                    <i *ngIf="v.parent_phone" (click)="sendSms($event, {phone: v.parent_phone})" class="fas fa-comment-dots call-sms"></i>
+                  </td>
+                  <td *ngIf="showOneByOneCallAndSmsButton && USER?.role?.canSendSms == true" >
+                    <i *ngIf="v.parent_phone" (click)="sendCustomSms($event, {vaccine: v})" class="fas fa-sms call-sms"></i>
+                    <!-- <a *ngIf="v.parent_phone" [href]="'sms:' + (v.parent_phone|guineaPhone)" class="call-sms">
+                      <i class="fas fa-comment-dots"></i>
+                    </a> -->
+                  </td>
+
+                  <td [attr.data-tooltip]="v.no_BCG_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_BCG, v.child_age_in_days, 0) as BCG" [ngClass]="BCG.class" [innerHTML]="BCG.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VPO_0_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VPO_0, v.child_age_in_days, 0) as VPO0" [ngClass]="VPO0.class" [innerHTML]="VPO0.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_PENTA_1_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_PENTA_1, v.child_age_in_days, 42) as PENTA1" [ngClass]="PENTA1.class" [innerHTML]="PENTA1.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VPO_1_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VPO_1, v.child_age_in_days, 42) as VPO1" [ngClass]="VPO1.class" [innerHTML]="VPO1.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_PENTA_2_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_PENTA_2, v.child_age_in_days, 70) as PENTA2" [ngClass]="PENTA2.class" [innerHTML]="PENTA2.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VPO_2_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VPO_2, v.child_age_in_days, 70) as VPO2" [ngClass]="VPO2.class" [innerHTML]="VPO2.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_PENTA_3_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_PENTA_3, v.child_age_in_days, 98) as PENTA3" [ngClass]="PENTA3.class" [innerHTML]="PENTA3.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VPO_3_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VPO_3, v.child_age_in_days, 98) as VPO3" [ngClass]="VPO3.class" [innerHTML]="VPO3.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VPI_1_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VPI_1, v.child_age_in_days, 98) as VPI1" [ngClass]="VPI1.class" [innerHTML]="VPI1.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VAR_1_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VAR_1, v.child_age_in_months, 9) as VAR1" [ngClass]="VAR1.class" [innerHTML]="VAR1.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VAA_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VAA, v.child_age_in_months, 9) as VAA" [ngClass]="VAA.class" [innerHTML]="VAA.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VPI_2_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VPI_2, v.child_age_in_months, 9) as VPI2" [ngClass]="VPI2.class" [innerHTML]="VPI2.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_MEN_A_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_MEN_A, v.child_age_in_months, 15) as MENA" [ngClass]="MENA.class" [innerHTML]="MENA.action | safeHtml"></span>
+                  </td>
+                  <td [attr.data-tooltip]="v.no_VAR_2_reason">
+                    <span *ngIf="vaccineUtils(v.vaccine_VAR_2, v.child_age_in_months, 15) as VAR2" [ngClass]="VAR2.class" [innerHTML]="VAR2.action | safeHtml"></span>
+                  </td>
+                </tr>
+              </ng-container>
+
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <dashboards-pagination-table 
+    [id]="'pagination-vaccination'"
+    [PAGINATION_DATA]="DATA_FETCHED"
+    (onPageChanged)="onUpdatedPaginate($event)"
+></dashboards-pagination-table>
+
+</ng-container>
+
+
+<ng-container *ngIf="!DATA_FETCHED || DATA_FETCHED && DATA_FETCHED.length == 0">
+  <h1 style="margin-top: 150px; width: 100%; text-align: center; color:brown;">
+    Pas de données, appliquer le filtre !
+  </h1>
+</ng-container>

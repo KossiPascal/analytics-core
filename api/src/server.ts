@@ -19,8 +19,9 @@ import configsRouter from "./routes/config";
 import orgUnitsRouter from "./routes/org-units";
 import reportsRouter from "./routes/reports";
 import dashboardsRouter from "./routes/dashboards";
+import mapsRouter from "./routes/maps";
 import apisRouter from "./routes/api-token";
-import syncRouter from "./routes/sync-data";
+import sqlManageRouter from "./routes/sql-management";
 import databaseRouter from "./routes/database";
 import dhis2Router from "./routes/dhis2";
 import smsRouter from "./routes/sms";
@@ -73,9 +74,10 @@ function app() {
     .use('/api/configs', configsRouter)
     .use('/api/reports', reportsRouter)
     .use('/api/dashboards', dashboardsRouter)
+    .use('/api/maps', mapsRouter)
     .use('/api/org-units', orgUnitsRouter)
     .use('/api/api-token', apisRouter)
-    .use('/api/sync', syncRouter)
+    .use('/api/sql', sqlManageRouter)
     .use('/api/database', databaseRouter)
     .use('/api/dhis2', dhis2Router)
     .use('/api/sms', smsRouter)
@@ -84,23 +86,26 @@ function app() {
     .use(express.static(join(PROJECT_FOLDER, 'views')))
     .use(express.static(join(SRC_FOLDER, 'public')))
 
-    .use('/publics/download/kendeya-prod-apk', (req, res) => {
+
+    .use('/publics/download/kendeya-prod-apk', (req: Request, res: Response, next: NextFunction) => {
       const apkName = `kendeya-prod.apk`;
       const file = join(SRC_FOLDER, `public/apk/${apkName}`);
       res.download(file, apkName, (err) => {
         if (err) {
           console.error('Error downloading the file:', err);
-          res.status(500).send('Error downloading the file.');
+          // res.status(500).send('Error downloading the file.');
+          next(err);
         }
       });
     })
-    .use('/publics/download/kendeya-dev-apk', (req, res) => {
+    .use('/publics/download/kendeya-dev-apk', (req: Request, res: Response, next: NextFunction) => {
       const apkName = `kendeya-dev.apk`;
       const file = join(SRC_FOLDER, `public/apk/${apkName}`);
       res.download(file, apkName, (err) => {
         if (err) {
           console.error('Error downloading the file:', err);
-          res.status(500).send('Error downloading the file.');
+          // res.status(500).send('Error downloading the file.');
+          next(err);
         }
       });
     })
@@ -138,7 +143,6 @@ AppDataSource
     // npx typeorm migration:create src/migrations/materialised-views/dashboards/RecoVaccinationDashboardView
     // npx typeorm migration:create src/migrations/materialised-views/views/UsersView
 
-
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/RecosMapFamilyUidView
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/RecosMapPatientsUidView
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/RecosMapDataUidView
@@ -151,7 +155,6 @@ AppDataSource
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
     // npx typeorm migration:create src/migrations/materialised-views/manages/recos/ZoneMapRecosUidView
-
 
     // await DropOrTruncateDataFromDatabase({ procide:true, entities:[{name:'', table:'typeorm_migrations'}], action:'TRUNCATE' })
 
@@ -189,3 +192,8 @@ AppDataSource
 
   })
   .catch(error => logNginx(`${error}`));
+
+
+  
+  
+  

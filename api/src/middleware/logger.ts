@@ -16,10 +16,11 @@ if (SERVER_HOST) {
 }
 
 const EXCLUDED_ORIGIN = [
-  '/icons/',
-  '/assets/',
+  '/icons',
+  '/assets',
   '/ngsw.json',
   '/auths/login',
+  '/api/auth-user/login',
   '/runtime',
   '/polyfills',
   '/main',
@@ -29,7 +30,9 @@ const EXCLUDED_ORIGIN = [
   // '/src_app_modules_auths_auths_module_ts',
   '/favicon.ico',
   '/ngsw-worker.js',
-  '/index.html'
+  '/index.html',
+  '/publics',
+  '/fa-solid-900'
 ];
 
 

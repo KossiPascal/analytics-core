@@ -170,7 +170,7 @@ export interface PatientCustomQuery {
     phone: string
     external_id: string
     sex: string
-    date_of_birth: string
+    birth_date: string
     has_birth_certificate: boolean
     country: { id: string, name: string }
     region: { id: string, name: string }

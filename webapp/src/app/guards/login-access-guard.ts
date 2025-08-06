@@ -5,6 +5,8 @@ import { Title } from '@angular/platform-browser';
 import { UserContextService } from '@kossi-services/user-context.service';
 import { ConstanteService } from '@kossi-services/constantes.service';
 import { Subject } from 'rxjs';
+import { IndexedDbService } from '@kossi-services/indexed-db.service';
+import { ErrorNavigatorService } from '@kossi-services/error-navigator.service';
 
 @Injectable({
   providedIn: 'root',
@@ -18,16 +20,29 @@ export class LoginAccessGuard implements CanActivate, OnDestroy {
     private constants: ConstanteService,
     private router: Router,
     private userContext: UserContextService,
-    private authService: AuthService
-  ) {}
+    private auth: AuthService,
+    private indexdb: IndexedDbService,
+    private error: ErrorNavigatorService
+  ) { }
 
   async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
     const user = await this.userContext.currentUser();
 
     // Redirect if user is not logged in
     if (!this.userContext.isLoggedIn() || !user) {
-      this.authService.logout();
+      this.auth.logout();
       return false;
+    }
+
+    const href: string = route.data?.['href'];
+
+    if (user.mustChangeDefaultPassword && !user.hasChangedDefaultPassword) {
+
+      if (href != 'auths/change-default-password') {
+        location.href = 'auths/change-default-password';
+        return false;
+      }
+
     }
 
     const routeAccess: string[] = route.data?.['access'] ?? [];
@@ -48,7 +63,7 @@ export class LoginAccessGuard implements CanActivate, OnDestroy {
       this.titleService.setTitle(routeTitle);
       return true;
     } else {
-      this.router.navigate(['/errors/unauthorized']);
+      this.error.navigateTo('401');
       return false;
     }
   }

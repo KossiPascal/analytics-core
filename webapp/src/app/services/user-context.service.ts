@@ -28,6 +28,9 @@ export class UserContextService {
   async currentUser(userTokens?:{ id: string, data: string}[]): Promise<User | null> {
     userTokens = userTokens ?? await this.indexdb.getAll<{ id: string, data: string }>('token');
 
+
+    const mcdp: { id: string, data: boolean } | undefined = await this.indexdb.getOne<{ id: string; data: any }>('user_info', 'mustChangeDefaultPassword');
+
     const jsonUser: any = userTokens.reduce((acc, { id, data }) => {
       (acc as any)[id] = data;
       return acc;
@@ -37,6 +40,8 @@ export class UserContextService {
 
     const user = jwtDecode(jsonUser.user) as User;
     if (!user) return null;
+
+    user.mustChangeDefaultPassword = jsonUser.mustChangeDefaultPassword;
 
     if (jsonUser.orgunits) {
       const ou = jwtDecode(jsonUser.orgunits) as any;
@@ -54,8 +59,6 @@ export class UserContextService {
     if ((ps.recos ?? '') !== '') user.recos = ps.recos;
 
     if (!user.recos || user.recos.length === 0) return null;
-
-    
    
     user.role = userRoles(user.authorizations ?? [], user.routes ?? [])
 

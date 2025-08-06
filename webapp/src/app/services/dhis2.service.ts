@@ -46,7 +46,7 @@ export class Dhis2Service implements OnDestroy {
 
     constructor(protected userCtx: UserContextService, protected conn: ConnectivityService, protected fGroup: FormGroupService, private api: ApiService, private ldbfetch: LocalDbDataFetchService) {
         this.getCurrentUser();
-        this.conn.getOnlineStatus().pipe(takeUntil(this.destroy$)).subscribe(isOnline => {
+        this.conn.onlineStatus$.pipe(takeUntil(this.destroy$)).subscribe(isOnline => {
             this.isOnline = isOnline;
         });
 

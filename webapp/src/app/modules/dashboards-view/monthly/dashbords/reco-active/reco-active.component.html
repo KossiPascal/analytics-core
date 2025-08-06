@@ -1,0 +1,121 @@
+
+<app-sample-loader [isLoading]="IS_FILTER_LOADING"></app-sample-loader>
+
+<ng-container *ngIf="DATA_FETCHED && DATA_FETCHED.record && DATA_FETCHED.record.length > 0 && wantedMonth.length > 0">
+
+  <h2>📈 STATUS RECOS ACTIVES</h2>
+  <br>
+
+  <dashboards-header-selector
+    [id]="'active-reco-table-header'"
+    [REPPORT_NAME]="DASHBOARD_NAME"
+    [CHANGE_STATE]="CHANGE_STATE" 
+    [TABLE_ID]="'active-recos-table'"
+    [SHOW_EXPORT_TABLE_BTN]="true"
+    >
+  </dashboards-header-selector>
+
+
+  <div class="table-responsive">
+    <table id="active-recos-table" class="table table-bordered table-hover">
+
+      <thead>
+        <tr class="total-head">
+          <td [colSpan]="6">
+            <div class="checkbox-row" *ngFor="let item of CIBLE; let i = index">
+              <label>
+                <input type="checkbox" [checked]="item.show" (change)="onCheckboxChange($event, i)" />
+                {{ item.name }}
+              </label>
+            </div>
+          </td> 
+          <td [colSpan]="1"> 
+            TOTAL
+          </td> 
+          <ng-container *ngFor="let key of monthKeys">
+            <ng-container *ngIf="isIncludeMonth(key)">
+              <ng-container *ngFor="let cible of CIBLE">
+                  <td *ngIf="cible.show" >{{ DATA_FETCHED.total[key][cible.key] }}</td>
+              </ng-container>
+            </ng-container>
+          </ng-container>
+        </tr>
+
+        <tr class="table-head fp-header-1">
+          <th [colSpan]="2" scope="col">INFOS ASC</th>
+          <th [colSpan]="5" scope="col">INFOS RECO</th>
+          <ng-container *ngFor="let month of monthNames" >
+            <th [colSpan]="cibleCheckedLength" scope="col" *ngIf="isIncludeMonth(month.key)">
+              {{ month.label }} {{ year }}
+            </th>
+          </ng-container>
+        </tr>
+
+        <tr class="table-head fp-header-1">
+          <th class="small-head" scope="col">N°</th>
+          <th class="small-head" scope="col">Nom & District</th>
+
+          <th class="small-head" scope="col">N°G</th>
+          <th class="small-head" scope="col">N°</th>
+          <th class="small-head" scope="col">Nom</th>
+          <th class="small-head" scope="col">Téléphone</th>
+          <th class="small-head" scope="col">Village</th>
+
+          <ng-container *ngFor="let m of monthNames">
+            <ng-container *ngIf="isIncludeMonth(m.key)">
+              <ng-container *ngFor="let cible of CIBLE">
+                <th *ngIf="cible.show" class="small-head" scope="col">{{cible.name}}</th>
+              </ng-container>
+            </ng-container>
+          </ng-container>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <ng-container *ngFor="let chw of PAGINATION_DATA; let i = index">
+          <ng-container *ngFor="let reco of chw.recos; let j = index">
+            <tr>
+              <td *ngIf="j === 0" [attr.rowspan]="chw.recos.length">{{ i + 1 }}</td>
+              <td *ngIf="j === 0" [attr.rowspan]="chw.recos.length">
+                {{ chw.name }} <br>
+                <strong>[ {{ chw.district_quartier.name }} ]</strong>
+              </td>
+              
+
+              <th style="background: none; color:black;">{{ getRecoIndex(i, j) }}</th>
+              <td>{{ j + 1 }}</td>
+              <td>{{ reco.name }}</td>
+              <td>{{ reco.phone }}</td>
+              <td>{{ reco.village_secteur.name }}</td>
+
+              <ng-container *ngFor="let key of monthKeys">
+                <ng-container *ngIf="isIncludeMonth(key)">
+                  <ng-container *ngFor="let cible of CIBLE">
+                    <td style="font-size: 14px;" *ngIf="cible.show">{{ reco[key][cible.key] ? '✔️' : '❌' }}</td>
+                  </ng-container>
+                </ng-container>
+              </ng-container>
+            </tr>
+          </ng-container>
+        </ng-container>
+      </tbody>
+    </table>
+
+  </div>
+
+
+  <dashboards-pagination-table 
+    [id]="'pagination-active-recos'"
+    [PAGINATION_DATA]="DATA_FETCHED.record"
+    (onPageChanged)="onUpdatedPaginate($event)"
+></dashboards-pagination-table>
+
+</ng-container>
+
+
+<ng-container *ngIf="!DATA_FETCHED || !DATA_FETCHED.record || DATA_FETCHED.record.length == 0">
+  <h1 style="margin-top: 150px; width: 100%; text-align: center; color:brown;">
+    Pas de données, appliquer le filtre !
+  </h1>
+</ng-container>

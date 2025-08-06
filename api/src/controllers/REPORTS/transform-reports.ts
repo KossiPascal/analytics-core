@@ -1,4 +1,4 @@
-import { ChwsRecoReport, ChwsRecoReportElements, DomainsThemesUtils, FamilyPlanningReport, FP_Utils, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PcimneNewbornReportUtils, PromotionReport, RecoMegQuantityUtils, RecoMegSituationReport } from "../../models/reports";
+import { ChwsRecoReport, ChwsRecoReportElements, ChwsRecoReportElementsUtils, DomainsThemesUtils, FamilyPlanningReport, FP_Utils, HouseholdRecapReport, MorbidityReport, PcimneNewbornReport, PcimneNewbornReportUtils, PromotionReport, RecoMegQuantityUtils, RecoMegSituationReport } from "../../models/reports";
 import { IndicatorsDataOutput, } from "../../models/Interfaces";
 
 
@@ -18,6 +18,62 @@ export async function TransformChwsRecoReports(reports: ChwsRecoReport[]): Promi
       diseases_alerts: {} as ChwsRecoReportElements,
     };
 
+    // const recosData: Record<string, any> = {};
+    // for (const r of reports) {
+    //   const recoId = r.reco.id;
+    //   if (!(recoId in recosData)) {
+    //     recosData[recoId] = {
+    //       reco_monitoring: {},
+    //       demography: {},
+    //       child_health_0_59_months: {},
+    //       mother_health: {},
+    //       pcimne_activity: {},
+    //       morbidity_activities: {},
+    //       malaria_more_5_years: {},
+    //       home_visit: {},
+    //       educational_talk: {},
+    //       developed_areas: {},
+    //       diseases_alerts: {}
+    //     }
+    //   }
+
+    //   const cible = recosData[recoId];
+
+    //   for (const category of Object.keys(summedReport)) {
+    //     if (!cible[category].index) cible[category].index = cible.index;
+    //     if (!cible[category].group) cible[category].group = cible.group;
+    //     if (!cible[category].position) cible[category].position = cible.position;
+    //     if (!cible[category].bigGroup) cible[category].bigGroup = cible.bigGroup;
+    //     if (!cible[category].data) (cible[category].data as any) = {};
+
+    //     for (const d of (r as any)[category].data) {
+    //       if (!(d.index in cible[category].data)) {
+    //         cible[category].data[d.index] = { ...d }; // Clonage
+    //       } else {
+    //         cible[category].data[d.index].de_number += Number(d.de_number);
+    //       }
+    //     }
+    //   }
+
+    //   r.reco_monitoring
+    //   r.demography
+    //   r.child_health_0_59_months
+    //   r.mother_health
+    //   r.pcimne_activity
+    //   r.morbidity_activities
+    //   r.malaria_more_5_years
+    //   r.home_visit
+    //   r.educational_talk
+    //   r.developed_areas
+    //   r.diseases_alerts
+
+
+
+    //   recosData[recoId].push(r)
+    // }
+
+    const recosData: Record<string, any> = {};
+
     for (const category of Object.keys(summedReport)) {
       for (const r of reports) {
         const cible = (r as any)[category] as ChwsRecoReportElements;
@@ -30,9 +86,19 @@ export async function TransformChwsRecoReports(reports: ChwsRecoReport[]): Promi
 
         for (const d of cible.data) {
           if (!(d.index in summedReport[category].data)) {
-            summedReport[category].data[d.index] = { ...d }; // Clonage
+            const { de_number, ...rest } = d;
+            summedReport[category].data[d.index] = { de_number: 0, ...rest } as ChwsRecoReportElementsUtils; // Clonage
+          }
+          const value = Number(d.de_number);
+
+          if (category == 'reco_monitoring') {
+            if (!(r.reco.id in recosData)) recosData[r.reco.id] = {};
+            if (!(d.index in recosData[r.reco.id]) && value > 0) {
+              summedReport[category].data[d.index].de_number += 1;
+              recosData[r.reco.id][d.index] = 1;
+            }
           } else {
-            summedReport[category].data[d.index].de_number += Number(d.de_number);
+            summedReport[category].data[d.index].de_number += value;
           }
         }
       }
@@ -418,11 +484,13 @@ export async function TransformHouseholdRecapReports(reports: HouseholdRecapRepo
     const outPutData: any[] = (reports.map(r => {
       return {
         id: r.id,
-        index: r.household_code.replaceAll('-', ''),//parseInt(r.household_code),
-        household_code: r.household_code,
-        household_name: r.household_name.replace(`${r.household_code} - `, ''),
+        // index: r.family_code.replaceAll('-', ''),//parseInt(r.family_code),
+        index: r.family_code,//parseInt(r.family_code),
+        family_code: r.family_code,
+        family_name: r.family_name,
+        family_fullname: r.family_fullname,
         total_household_members: parseInt(`${r.total_household_members}`),
-        total_women_15_50_years: parseInt(`${r.total_women_15_50_years}`),
+        total_adult_women_15_50_years: parseInt(`${r.total_adult_women_15_50_years}`),
         total_children_under_5_years: parseInt(`${r.total_children_under_5_years}`),
         total_children_0_12_months: parseInt(`${r.total_children_0_12_months}`),
         total_children_12_60_months: parseInt(`${r.total_children_12_60_months}`),
@@ -433,7 +501,7 @@ export async function TransformHouseholdRecapReports(reports: HouseholdRecapRepo
 
     // const totalData: any = {
     //   total_household_members: outPutData.map(d => d.total_household_members).reduce((total, num) => total + num, 0),
-    //   total_women_15_50_years: outPutData.map(d => d.total_women_15_50_years).reduce((total, num) => total + num, 0),
+    //   total_adult_women_15_50_years: outPutData.map(d => d.total_adult_women_15_50_years).reduce((total, num) => total + num, 0),
     //   total_children_under_5_years: outPutData.map(d => d.total_children_under_5_years).reduce((total, num) => total + num, 0),
     //   total_children_0_12_months: outPutData.map(d => d.total_children_0_12_months).reduce((total, num) => total + num, 0),
     //   total_children_12_60_months: outPutData.map(d => d.total_children_12_60_months).reduce((total, num) => total + num, 0),
@@ -520,14 +588,18 @@ export async function TransformPcimneNewbornReports(reports: PcimneNewbornReport
               if (!['index', 'indicator'].includes(subKey) && !exclude.includes(data[subKey])) {
                 if (data[subKey].F != null) {
                   const female = parseInt(data[subKey].F);
-                  if ((summedReport as any)[key][subKey].F == null) (summedReport as any)[key][subKey].F = 0;
+                  if ((summedReport as any)[key][subKey].F == null) {
+                    (summedReport as any)[key][subKey].F = 0;
+                  }
                   (summedReport as any)[key][subKey].F += female;
                   (summedReport as any)[key].total.F += female;
                   (summedReport as any)[key].bigtotal += female;
                 }
                 if (data[subKey].M != null) {
                   const male = parseInt(data[subKey].M);
-                  if ((summedReport as any)[key][subKey].M == null) (summedReport as any)[key][subKey].M = 0;
+                  if ((summedReport as any)[key][subKey].M == null) {
+                    (summedReport as any)[key][subKey].M = 0;
+                  }
                   (summedReport as any)[key][subKey].M += male;
                   (summedReport as any)[key].total.M += male;
                   (summedReport as any)[key].bigtotal += male;

@@ -11,7 +11,6 @@ import { from } from "rxjs";
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-
   backendUrl!: string;
   customHeaders!: { headers: HttpHeaders };
 
@@ -53,8 +52,8 @@ export class ApiService {
       )
     );
   }
-  //START AUTH
 
+  //START AUTH
   // public(url: string, prodApp?: boolean, ): Observable<any> {
   //   const userHttpUrl = `${this.backendUrl}/auth-user/${url}`;
   //   return from(this.ApiParams({prodApp}, false)).pipe(
@@ -92,6 +91,43 @@ export class ApiService {
     );
   }
   //END AUTH
+
+  getAllMigrationsPathList(): Observable<any> {
+    const userHttpUrl = `${this.backendUrl}/sql/getall`;
+    return from(this.ApiParams({ userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
+  runAllMigrationsAvailable(runAllMigrations: boolean = true): Observable<any> {
+    const userHttpUrl = `${this.backendUrl}/sql/runall`;
+    return from(this.ApiParams({ runAllMigrations, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
+  getOneMigrationsPath(migrationName: string): Observable<any> {
+    const userHttpUrl = `${this.backendUrl}/sql/getone`;
+    return from(this.ApiParams({ migrationName, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
+  runOneMigrationAvailable(migrationName: string, runOneMigrations: boolean = true): Observable<any> {
+    const userHttpUrl = `${this.backendUrl}/sql/runone`;
+    return from(this.ApiParams({ migrationName, runOneMigrations, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
 
   saveSurvey(params: any): Observable<any> {
     const userHttpUrl = `${this.backendUrl}/survey/save`;
@@ -239,132 +275,6 @@ export class ApiService {
     );
   }
   //END ADMIN
-
-
-  //START REPORTS CALCULATION FROM DB
-  CHW_RECO_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-chws-reco-report-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  FAMILY_PLANNNING_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-family-planning-report-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  ADULT_MORBIDITY_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-adult-morbidity-report-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  HOUSEHOLD_RECAPS_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-household-recaps-report-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  PCIMNE_NEWBORN_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-pcimne-newborn-report-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  PROMOTONAL_ACTIVITIES_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-promotional-activity-report-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  RECO_MEG_SITUATION_REPORTS_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-reco-meg-situation-report-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  //END REPORTS CALCULATION FROM DB
-
-
-  //END DASHBOARD CALCULATION FROM DB
-  RECO_VACCINATION_DASHBOARD_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-reco-vaccination-dashboard-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-
-  RECO_PERFORMANCE_DASHBOARD_CALCULATION({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-reco-performance-dashboard-calculation`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-
-  RECO_CHART_PERFORMANCE_DASHBOARD_CALCULATION(year: number): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/db-reco-chart-performance-dashboard-calculation`;
-    return from(this.ApiParams({ year, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  //END DASHBOARD CALCULATION FROM DB
-
-
-  //START SYNC FROM COUCH-DB
-  SYNC_ALL_FORMS_DATA_FROM_COUCHDB({ year, month }: { year: number, month: string }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/couchdb-forms-data`;
-    return from(this.ApiParams({ year, month, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  SYNC_APP_USERS_FROM_COUCHDB(): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/couchdb-users`;
-    return from(this.ApiParams({ userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  SYNC_ALL_ORGUNITS_AND_CONTACTS_FROM_COUCHDB(param: SyncOrgUnit): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/couchdb-orgunits-and-contacts`;
-    return from(this.ApiParams({ ...param, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  FULL_SYNC_AND_CALCULATE_COUCHDB_DATA(params: { year: number | undefined, month: string | undefined, start_date: string | undefined, end_date: string | undefined }): Observable<any> {
-    const userHttpUrl = `${this.backendUrl}/sync/all-in-one-from-couchdb-and-calculate`;
-    return from(this.ApiParams({ ...params, userHttpUrl })).pipe(
-      switchMap(fparams =>
-        this.http.post(userHttpUrl, fparams, this.customHeaders)
-      )
-    );
-  }
-  //END SYNC FROM COUCH-DB
 
 
   //START REPPORTS
@@ -565,9 +475,29 @@ export class ApiService {
 
 
   //START DASHBOARD
-  GetRecoVaccinationDashboards({ months, year, recos, sync }: { months: string[], year: number, recos: string[], sync?: boolean }): Observable<any> {
+  GetRecoVaccinationNotDoneDashboards({ months, year, recos, sync }: { months: string[], year: number, recos: string[], sync?: boolean }): Observable<any> {
     sync = sync ?? false;
-    const userHttpUrl = `${this.backendUrl}/dashboards/reco-vaccination-dashboards`;
+    const userHttpUrl = `${this.backendUrl}/dashboards/reco-vaccination-not-done-dashboards`;
+    return from(this.ApiParams({ months, year, recos, sync, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
+  GetRecoVaccinationPartialDoneDashboards({ months, year, recos, sync }: { months: string[], year: number, recos: string[], sync?: boolean }): Observable<any> {
+    sync = sync ?? false;
+    const userHttpUrl = `${this.backendUrl}/dashboards/reco-vaccination-partial-done-dashboards`;
+    return from(this.ApiParams({ months, year, recos, sync, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
+  GetRecoVaccinationAllDoneDashboards({ months, year, recos, sync }: { months: string[], year: number, recos: string[], sync?: boolean }): Observable<any> {
+    sync = sync ?? false;
+    const userHttpUrl = `${this.backendUrl}/dashboards/reco-vaccination-all-done-dashboards`;
     return from(this.ApiParams({ months, year, recos, sync, userHttpUrl })).pipe(
       switchMap(fparams =>
         this.http.post(userHttpUrl, fparams, this.customHeaders)
@@ -585,18 +515,42 @@ export class ApiService {
     );
   }
 
-  // GetRecoChartPerformanceDashboards({ year, recos, sync }: { year: number, recos: string[], sync?: boolean }): Observable<any> {
-  //   sync = sync ?? false;
-  //   const userHttpUrl = `${this.backendUrl}/dashboards/reco-chart-performance-dashboards`;
-  //   return from(this.ApiParams({ year, recos, sync, userHttpUrl })).pipe(
-  //     switchMap(fparams =>
-  //       this.http.post(userHttpUrl, fparams, this.customHeaders)
-  //     )
-  //   );
-  // }
+  GetActiveRecoDashboards({ year, recos, sync }: { year: number, recos: string[], sync?: boolean }): Observable<any> {
+    sync = sync ?? false;
+    const userHttpUrl = `${this.backendUrl}/dashboards/active-reco-dashboards`;
+    return from(this.ApiParams({ year, recos, sync, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
+
+  GetRecoTasksStateDashboards({ start_date, end_date, recos, sync }: { start_date: string; end_date: string; recos: string[]; sync?: boolean }): Observable<any> {
+    sync = sync ?? false;
+    const userHttpUrl = `${this.backendUrl}/dashboards/reco-tasks-state-dashboards`;
+    return from(this.ApiParams({ start_date, end_date, recos, sync, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
   //END DASHBOARD
 
 
+  //START MAPS
+  GetRecoDataMaps({ months, year, recos, sync }: { months: string[], year: number, recos: string[], sync?: boolean }): Observable<any> {
+    sync = sync ?? false;
+    const userHttpUrl = `${this.backendUrl}/maps/reco-data-maps`;
+    return from(this.ApiParams({ months, year, recos, sync, userHttpUrl })).pipe(
+      switchMap(fparams =>
+        this.http.post(userHttpUrl, fparams, this.customHeaders)
+      )
+    );
+  }
+
+  //END MAPS
 
   //START ORG UNITS
   GetCountries(param?: getOrgUnitFromDbFilter): Observable<any> {

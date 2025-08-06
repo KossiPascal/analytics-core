@@ -1,48 +1,34 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { Error404Component } from './404/404.component';
-import { Error500Component } from './500/500.component';
-import { UnauthorizedComponent } from './unauthorized/unauthorized.component';
-
+import { ErrorPageComponent } from './error-page.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: '404', pathMatch: 'full' },
   {
-    path: '404',
-    component: Error404Component,
-    canActivate: [],
-    data: {
-      href: 'errors/404',
-      title: 'Error 404',
-      access: ['_public']
-    },
+    path: '',
+    redirectTo: '404/Oups%20!%20La%20page%20que%20vous%20recherchez%20n’existe%20pas.',
+    pathMatch: 'full'
   },
   {
-    path: '500',
-    component: Error500Component,
-    canActivate: [],
+    path: ':code/:msg',
+    component: ErrorPageComponent,
     data: {
-      href: 'errors/500',
-      title: 'Error 500',
-      access: ['_public']
-    },
-  },
-  {
-    path: 'unauthorized',
-    component: UnauthorizedComponent,
-    canActivate: [],
-    data: {
-      href: 'errors/unauthorized',
-      title: 'Unauthorized',
-      access: ['_public']
-    },
-  },
-
-
+      iconMap: {
+        '404': '😞',
+        '500': '😵',
+        '401': '🚫'
+      },
+      defaultMessage: {
+        '404': 'Oups ! La page que vous recherchez n’existe pas.',
+        '500': 'Oups ! Il y a eu un problème avec le serveur.',
+        '401': 'Vous n’êtes pas autorisé à accéder à cette page.'
+      }
+    }
+  }
 ];
+
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule],
+  exports: [RouterModule]
 })
-export class ErrorsRoutingModule { }
+export class ErrorsRoutingModule {}

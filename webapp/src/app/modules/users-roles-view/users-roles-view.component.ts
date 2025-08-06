@@ -28,5 +28,4 @@ export class UsersRolesViewComponent {
     initTabsLinkView();
   }
 
-
 }

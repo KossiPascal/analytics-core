@@ -6,6 +6,27 @@ import { Routes, UserRole } from '../models/user-role';
 
 export const RETRY_MILLIS = 5000;
 
+export function formatDistance(meters: number) {
+  const isValid = typeof meters === 'number' && !isNaN(meters) && meters >= 0;
+  const safeMeters = isValid ? meters : 0;
+
+  const kilometers = safeMeters / 1000;
+  const miles = safeMeters / 1609.344;
+  const feet = safeMeters * 3.28084;
+
+  const readable =
+    kilometers >= 1
+      ? `${kilometers.toFixed(2)} km`
+      : `${Math.round(safeMeters)} m`;
+
+  return {
+    meters: safeMeters,
+    kilometers,
+    miles,
+    feet,
+    readable,
+  };
+}
 
 export function userRoles(userAuthorizations: string[], routes: Routes[]): UserRole {
     const allAuthorizations: string[] = [];
@@ -30,6 +51,7 @@ export function userRoles(userAuthorizations: string[], routes: Routes[]): UserR
       canUseOfflineMode: isSuperUser ? false : combinedAuthorizations.includes('can_use_offline_mode'),
       canViewReports: combinedAuthorizations.includes('can_view_reports') || isSuperUser,
       canViewDashboards: combinedAuthorizations.includes('can_view_dashboards') || isSuperUser,
+      canViewMaps: combinedAuthorizations.includes('can_view_maps') || isSuperUser,
       canManageData: combinedAuthorizations.includes('can_manage_data') || isSuperUser,
       canCreateUser: combinedAuthorizations.includes('can_create_user') || isSuperUser,
       canUpdateUser: combinedAuthorizations.includes('can_update_user') || isSuperUser,
@@ -117,20 +139,20 @@ export function getHideMainPage(): boolean {
   return scs;
 }
 
-export function getMonthsList(): { labelEN: string; labelFR: string; id: string; uid: number }[] {
+export function getMonthsList(): { labelEN: string; labelFR: string; short: string; id: string; uid: number }[] {
   return [
-    { labelEN: "January", labelFR: "Janvier", id: "01", uid: 1 },
-    { labelEN: "February", labelFR: "Février", id: "02", uid: 2 },
-    { labelEN: "March", labelFR: "Mars", id: "03", uid: 3 },
-    { labelEN: "April", labelFR: "Avril", id: "04", uid: 4 },
-    { labelEN: "May", labelFR: "Mai", id: "05", uid: 5 },
-    { labelEN: "June", labelFR: "Juin", id: "06", uid: 6 },
-    { labelEN: "July", labelFR: "Juillet", id: "07", uid: 7 },
-    { labelEN: "August", labelFR: "Août", id: "08", uid: 8 },
-    { labelEN: "September", labelFR: "Septembre", id: "09", uid: 9 },
-    { labelEN: "October", labelFR: "Octobre", id: "10", uid: 10 },
-    { labelEN: "November", labelFR: "Novembre", id: "11", uid: 11 },
-    { labelEN: "December", labelFR: "Décembre", id: "12", uid: 12 },
+    { labelEN: "January", labelFR: "Janvier", short: "jan", id: "01", uid: 1 },
+    { labelEN: "February", labelFR: "Février", short: "fev", id: "02", uid: 2 },
+    { labelEN: "March", labelFR: "Mars", short: "mar", id: "03", uid: 3 },
+    { labelEN: "April", labelFR: "Avril", short: "avr", id: "04", uid: 4 },
+    { labelEN: "May", labelFR: "Mai", short: "mai", id: "05", uid: 5 },
+    { labelEN: "June", labelFR: "Juin", short: "jui", id: "06", uid: 6 },
+    { labelEN: "July", labelFR: "Juillet", short: "jul", id: "07", uid: 7 },
+    { labelEN: "August", labelFR: "Août", short: "aou", id: "08", uid: 8 },
+    { labelEN: "September", labelFR: "Septembre", short: "sep", id: "09", uid: 9 },
+    { labelEN: "October", labelFR: "Octobre", short: "oct", id: "10", uid: 10 },
+    { labelEN: "November", labelFR: "Novembre", short: "nov", id: "11", uid: 11 },
+    { labelEN: "December", labelFR: "Décembre", short: "dec", id: "12", uid: 12 },
   ];
 }
 
@@ -216,6 +238,28 @@ export function updateFetchingArray(array: string[], value: string): string[] {
   }
 }
 
-function formatDate(date: Date): string {
+export function formatDate(date: Date): string {
   return date.getFullYear().toString();
 }
+
+
+
+
+export function generateStartEndDate(months: string[], year: number): { start_date: string, end_date: string } {
+    const monthsInt = months.map(m => parseInt(m)).sort((a, b) => a - b);
+
+    const padMonth = (month: number) => String(month).padStart(2, '0');
+
+    // Premier mois
+    const startMonth = padMonth(monthsInt[0]);
+    const start_date = `${year}-${startMonth}-01`;
+
+    // Dernier mois
+    const endMonth = padMonth(monthsInt[monthsInt.length - 1]);
+
+    // Calcul du dernier jour du mois
+    const lastDay = new Date(year, monthsInt[monthsInt.length - 1], 0).getDate();
+    const end_date = `${year}-${endMonth}-${String(lastDay).padStart(2, '0')}`;
+
+    return { start_date, end_date };
+  }

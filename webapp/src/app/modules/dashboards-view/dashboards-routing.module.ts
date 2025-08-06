@@ -1,18 +1,29 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DashboardsViewComponent } from './dashboards-view.component';
 import { LoginAccessGuard } from '@kossi-src/app/guards/login-access-guard';
+import { DashboardsMonthlyViewComponent } from './monthly/dashboards-monthly-view.component';
+import { DashboardsRealtimeViewComponent } from './realtime/dashboards-realtime-view.component';
 
 
 const routes: Routes = [
-  // { path: '', redirectTo: 'reports-view', pathMatch: 'full' },
+  { path: '', redirectTo: 'monthly', pathMatch: 'full' },
   {
-    path: '',
-    component: DashboardsViewComponent,
+    path: 'monthly',
+    component: DashboardsMonthlyViewComponent,
     canActivate: [LoginAccessGuard],
     data: {
-      href: 'dashboards',
-      title: 'TABLEAUX DE BORD',
+      href: 'dashboards/monthly',
+      title: 'TABLEAUX DE BORD MENSUEL',
+      access: ['can_view_dashboards']
+    },
+  },
+  {
+    path: 'realtime',
+    component: DashboardsRealtimeViewComponent,
+    canActivate: [LoginAccessGuard],
+    data: {
+      href: 'dashboards/realtime',
+      title: 'TABLEAUX DE BORD ANNUEL',
       access: ['can_view_dashboards']
     },
   },

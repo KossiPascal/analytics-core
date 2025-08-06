@@ -5,10 +5,43 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: Arial, sans-serif;
+/* Don't use this */
+/* html,
+body { */
+  /* touch-action: none; */
+  /* ❌ this disables pinch-to-zoom */
+  /* font-family: Arial, sans-serif;
   background-color: #f4f7fc;
-  color: #333;
+  color: #333; */
+
+  /* Empêche le "pull to refresh" vertical */
+  /* overscroll-behavior-y: contain; */
+
+  /* Pour bloquer toutes directions */
+  /* overscroll-behavior: none; */
+
+  /* Bloque le scroll vertical */
+  /* touch-action: pan-x; */
+/* } */
+
+/* 
+html, body {
+  overscroll-behavior: none;
+  touch-action: pan-x; 
+  height: 100%;
+  overflow: hidden;
+} */
+
+html, body {
+  /* bloque le pull-to-refresh mais autorise le scroll vertical */
+  overscroll-behavior-y: contain; 
+  height: 100%;
+  overflow-y: auto;
+}
+
+body.no-pull-to-refresh {
+  overscroll-behavior-y: contain;
+  touch-action: pan-x;
 }
 
 /* Style des champs */
@@ -33,7 +66,8 @@ body {
   border: none;
   background: #eee;
   /* background: #0055aa; */
-  color: #004422;;
+  color: #004422;
+  ;
   cursor: pointer;
   border-radius: 5px;
   transition: background-color 0.3s ease-in-out !important;
@@ -86,7 +120,8 @@ table {
   margin-top: 10px;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   border: 1px solid #ddd;
   padding: 12px;
   text-align: left;
@@ -100,25 +135,26 @@ table {
 }
 
 .table-hover tbody tr:hover {
-    background-color: #f1f1f1;
-    transition: background-color 0.3s ease-in-out;
+  background-color: #f1f1f1;
+  transition: background-color 0.3s ease-in-out;
 }
 
 .table-bordered {
-    border: 2px solid #ccc;
+  border: 2px solid #ccc;
 }
 
 .table-striped tbody tr:nth-child(odd) {
-    background-color: #f9f9f9;
+  background-color: #f9f9f9;
 }
 
 .table-hover tbody tr:hover td {
-    color: #333;
-    /* font-weight: bold; */
+  color: #333;
+  /* font-weight: bold; */
 }
 
-.table tbody tr td:first-child, .first-element {
-  font-weight: bold!important;
+.table tbody tr td:first-child,
+.first-element {
+  font-weight: bold !important;
   /* background-color: #f0f0f0!important; */
   /* color: #333!important; */
   /* padding-left: 15px!important; */
@@ -146,8 +182,10 @@ table {
   height: auto;
 
   /* height: 85vh;  */
-  max-height: 85vh; /* Ensures it doesn't exceed the viewport height */
-  overflow-y: auto; /* Enables vertical scrolling if content overflows */
+  max-height: 85vh;
+  /* Ensures it doesn't exceed the viewport height */
+  overflow-y: auto;
+  /* Enables vertical scrolling if content overflows */
 }
 
 /* Arrière-plan sombre */
@@ -306,6 +344,7 @@ body.modal-open {
     opacity: 0;
     transform: translate(-50%, -55%);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, -50%);
@@ -367,7 +406,7 @@ body.modal-open {
 }
 
 /* Pied de page du modal */
-.modal-footer button{
+.modal-footer button {
   width: auto;
 }
 
@@ -376,15 +415,22 @@ button {
 }
 
 
-button:disabled, 
+button:disabled,
 button[disabled] {
-    background-color: #ccc;  /* Gris clair */
-    color: #666;  /* Texte grisé */
-    cursor: not-allowed;  /* Curseur interdit */
-    opacity: 0.6;  /* Transparence pour montrer l'état désactivé */
-    border: 1px solid #999;  /* Bordure plus claire */
-    box-shadow: none;  /* Désactive les ombres pour un effet plat */
-    pointer-events: none;  /* Empêche tout événement de clic */
+  background-color: #ccc;
+  /* Gris clair */
+  color: #666;
+  /* Texte grisé */
+  cursor: not-allowed;
+  /* Curseur interdit */
+  opacity: 0.6;
+  /* Transparence pour montrer l'état désactivé */
+  border: 1px solid #999;
+  /* Bordure plus claire */
+  box-shadow: none;
+  /* Désactive les ombres pour un effet plat */
+  pointer-events: none;
+  /* Empêche tout événement de clic */
 }
 
 
@@ -427,15 +473,15 @@ select option:checked {
 }
 
 
-input:disabled, 
-textarea:disabled, 
+input:disabled,
+textarea:disabled,
 select:disabled {
-  background-color: #f5f5f5!important;
-  color: #777!important;
+  background-color: #f5f5f5 !important;
+  color: #777 !important;
   /* border: 1px solid #ccc!important; */
-  cursor: not-allowed!important;
-  opacity: 0.6!important;
-  font-weight: 600!important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+  font-weight: 600 !important;
 }
 
 /* Optional: If inside a form group, make the label look disabled too */

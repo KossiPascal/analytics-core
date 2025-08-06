@@ -14,7 +14,7 @@
             // const deliveries = await _repoDelivery.findBy({ month: month, year: year });
             // const familyPlannings = await _repoFP.findBy({ month: month, year: year });
             
-// de_number: patients.filter(p => getAgeInMonths(p.date_of_birth) >=0 && getAgeInMonths(p.date_of_birth) < 12).length,
+// de_number: patients.filter(p => getAgeInMonths(p.birth_date) >=0 && getAgeInMonths(p.birth_date) < 12).length,
                     // de_number: await _repoPatient.createQueryBuilder('nbr11')
                     //     .where({
                     //         reco: reco.id,
@@ -26,7 +26,7 @@
 
 
 
-                                    // de_number: patients.filter(p => p.date_of_birth !==null && getAgeInMonths(p.date_of_birth) >= 12 && getAgeInMonths(p.date_of_birth) < 60).length,
+                                    // de_number: patients.filter(p => p.birth_date !==null && getAgeInMonths(p.birth_date) >= 12 && getAgeInMonths(p.birth_date) < 60).length,
                     // de_number: await _repoPatient.createQueryBuilder('p')
                     //     .where({
                     //         reco: reco.id,
@@ -36,7 +36,7 @@
                     //     .andWhere('(p.age_in_month_on_creation IS NOT NULL AND p.age_in_month_on_creation >= 12 AND p.age_in_month_on_creation < 60)')
                     //     .getCount(),
 
-                    // de_number: patients.filter(p => p.sex === 'F' && p.date_of_birth !==null && getAgeInYear(p.date_of_birth) >= 15 && getAgeInYear(p.date_of_birth) < 60).length,
+                    // de_number: patients.filter(p => p.sex === 'F' && p.birth_date !==null && getAgeInYear(p.birth_date) >= 15 && getAgeInYear(p.birth_date) < 60).length,
                     // de_number: await _repoPatient.createQueryBuilder('p')
                     //     .where({
                     //         reco: reco.id,
@@ -123,11 +123,11 @@
                     //     AND (f.month = $2)
                     //     AND (f.year = $3)
                     //     AND (f.household_has_good_water_access = $4)
-                    //     AND (p.date_of_birth IS NULL)
-                    //     AND (EXTRACT(YEAR FROM AGE(CURRENT_DATE, CAST(p.date_of_birth AS DATE))) * 12 + 
-                    //     EXTRACT(MONTH FROM AGE(CURRENT_DATE, CAST(p.date_of_birth AS DATE))) IS NOT NULL AND 
-                    //     EXTRACT(YEAR FROM AGE(CURRENT_DATE, CAST(p.date_of_birth AS DATE))) * 12 + 
-                    //     EXTRACT(MONTH FROM AGE(CURRENT_DATE, CAST(p.date_of_birth AS DATE))) < 60)
+                    //     AND (p.birth_date IS NULL)
+                    //     AND (EXTRACT(YEAR FROM AGE(CURRENT_DATE, CAST(p.birth_date AS DATE))) * 12 + 
+                    //     EXTRACT(MONTH FROM AGE(CURRENT_DATE, CAST(p.birth_date AS DATE))) IS NOT NULL AND 
+                    //     EXTRACT(YEAR FROM AGE(CURRENT_DATE, CAST(p.birth_date AS DATE))) * 12 + 
+                    //     EXTRACT(MONTH FROM AGE(CURRENT_DATE, CAST(p.birth_date AS DATE))) < 60)
                     //     GROUP BY f.id
                     // `, [reco.id, month, year, true]))[0]?.count || 0,
 

@@ -5,29 +5,38 @@ import { AppStorageService } from './local-storage.service';
 import { UserContextService } from './user-context.service';
 import { IndexedDbService } from './indexed-db.service';
 import { Observable } from "rxjs";
-import { switchMap, tap } from "rxjs/operators";
 import { ApiService } from './api.service';
+import { AuthResponse } from '@kossi-models/user-role';
+import { ErrorNavigatorService } from './error-navigator.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  constructor(private http: HttpClient, private api: ApiService, private router: Router, private store: AppStorageService, private userCtx: UserContextService, private indexdb: IndexedDbService) { }
+  constructor(
+    private http: HttpClient,
+    private api: ApiService,
+    private router: Router,
+    private store: AppStorageService,
+    private userCtx: UserContextService,
+    private indexdb: IndexedDbService,
+    private error: ErrorNavigatorService
+  ) { }
 
   async isAlreadyLogin(): Promise<boolean> {
     const isLoggedIn = await this.userCtx.isLoggedIn();
     if (isLoggedIn) {
-      await this.GoToDefaultPage();
+      await this.goToDefaultPage();
       return true;
     }
     return false;
   }
 
-  refreshToken(): Observable<{ status: number, data: string, token: any, orgunits: any, persons: any, message: any }> {
-    return new Observable<{ status: number, data: string, token: any, orgunits: any, persons: any, message: any }>((observer) => {
+  refreshToken(): Observable<AuthResponse> {
+    return new Observable<AuthResponse>((observer) => {
       this.api.newToken().subscribe({
-        next: (res: { status: number, data: string, token: any, orgunits: any, persons: any, message: any }) => {
+        next: (res: AuthResponse) => {
           if (res.status === 200) {
             observer.next(res);
             observer.complete();
@@ -41,23 +50,23 @@ export class AuthService {
       });
     });
   }
-  
+
   saveToken(
-    res: { status: number; data:string; token: any; orgunits: any; persons: any; message: any },
+    res: AuthResponse,
     redirectTo?: string
-  ): Observable<void> {
-    return new Observable<void>((observer) => {
+  ): Observable<AuthResponse> {
+    return new Observable<AuthResponse>((observer) => {
       try {
         if (res.status === 200 && res.token && res.orgunits && res.persons) {
           const userData = Object.entries(res).map(([key, value]) => ({
             id: key === 'token' ? 'user' : key,
             data: value
           }));
-  
+
           this.indexdb.saveMany<{ id: string; data: any }>({ dbName: 'token', datas: userData }).then(() => {
             // localStorage.setItem('token', res.token);
             if (redirectTo) location.href = redirectTo;
-            observer.next();
+            observer.next(res);
             observer.complete();
           }).catch((error) => {
             console.error('Erreur lors de la sauvegarde du token :', error);
@@ -76,13 +85,13 @@ export class AuthService {
 
 
 
-  login(params: { credential: string; password: string }, redirectTo?: string): Observable<void> {
-    return new Observable<void>((observer) => {
+  login(params: { credential: string; password: string }, redirectTo?: string): Observable<AuthResponse> {
+    return new Observable<AuthResponse>((observer) => {
       this.api.login(params).subscribe({
-        next: (res: { status: number; data: string; token: any; orgunits: any; persons: any; message: any }) => {
+        next: (res: AuthResponse) => {
           this.saveToken(res, redirectTo).subscribe({
             next: () => {
-              observer.next();
+              observer.next(res);
               observer.complete();
             },
             error: (saveError) => {
@@ -99,7 +108,7 @@ export class AuthService {
       });
     });
   }
-  
+
   async clearToken(): Promise<void> {
     try {
       await this.indexdb.deleteAllFromDB({ dbName: 'token' });
@@ -109,26 +118,40 @@ export class AuthService {
     }
   }
 
-  async GoToDefaultPage(forcelogout: boolean = false) {
+  async goToDefaultPage(forceLogout: boolean = false): Promise<void> {
     const user = await this.userCtx.currentUser();
-    if (forcelogout) {
+
+    if (forceLogout) {
       this.logout();
       return;
     }
-    const default_page = await this.userCtx.defaultPage(user);
-    if ((default_page ?? '') != '') return this.router.navigate([default_page]);
-    if (user && user.routes.length == 0 && this.userCtx.authorizations(user).length == 0) {
-      const msg = "Vous n'avez aucun role attribué, Contacter votre administrateur!";
-      return this.router.navigate([`/auths/error/500/${msg}`]);
+
+    const defaultPage = await this.userCtx.defaultPage(user);
+
+    if (defaultPage && defaultPage.trim() !== '') {
+      this.router.navigate([defaultPage]);
+      return;
     }
-    return this.logout();
+
+    const hasNoRoutes = user?.routes?.length === 0;
+    const hasNoAuthorizations = this.userCtx.authorizations(user).length === 0;
+
+    if (user && hasNoRoutes && hasNoAuthorizations) {
+      const message = "Vous n'avez aucun rôle attribué. Veuillez contacter votre administrateur.";
+      this.error.navigateTo('500', message);
+      return;
+    }
+
+    // Par défaut, déconnexion de sécurité
+    this.logout();
   }
+
 
   async logout(): Promise<any> {
     await this.indexdb.deleteAllFromDB({ dbName: 'token' });
     this.store.delete({ db: 'session', name: 'lastVisitedUrl' });
     location.href = "auths/login";
-  
+
     // const namesToDelete = ['token', 'countries', 'regions', 'prefectures', 'communes', 'hospitals', 'districtQuartiers', 'villageSecteurs', 'chws', 'recos'];
     // this.store.deleteSelected({ db: 'local', names: namesToDelete });
     // this.store.delete({ db: 'local', name: '_versions' });

@@ -76,7 +76,7 @@ export abstract class BaseReportsComponent<T> implements OnInit, OnDestroy, OnCh
         @Inject(SEND_REPORT_TO_DHIS2) protected sendReportToDhis2: (dhis2Params: any) => Observable<any>
     ) {
         this.initializeComponent();
-        this.isOnline = this.conn.isOnline();
+        this.isOnline = this.conn.isOnline;
     }
 
     private async initializeComponent(){
@@ -95,7 +95,7 @@ export abstract class BaseReportsComponent<T> implements OnInit, OnDestroy, OnCh
     }
 
     ngOnInit(): void {
-        this.conn.getOnlineStatus().pipe(takeUntil(this.destroy$)).subscribe(isOnline => {
+        this.conn.onlineStatus$.pipe(takeUntil(this.destroy$)).subscribe(isOnline => {
             this.isOnline = isOnline;
         });
 
@@ -173,6 +173,10 @@ export abstract class BaseReportsComponent<T> implements OnInit, OnDestroy, OnCh
 
     shawValue(value: any) {
         return this.activeHideZero ? (value == 0 || value == '0' ? '' : value) : value;
+    }
+
+    get IS_FILTER_LOADING():boolean {
+        return (this.REPORTS_HEADER.ON_FETCHING as any)[this.REPPORT_NAME] == true;
     }
     
     SHOW_DATA(showProcess: boolean): void {

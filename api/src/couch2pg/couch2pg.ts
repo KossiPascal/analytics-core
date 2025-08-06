@@ -1,33 +1,23 @@
 import axios from "axios";
 // import * as fs from "fs";
 // import * as path from "path";
-import { getCouchDBRepository, getCouchDBLastSeqRepository, getCouchDbLogRepository } from "../entities/Couchdb";
-import { In } from "typeorm";
+import { getCouchDBRepository, getCouchDBLastSeqRepository, getCouchDbLogRepository, getCouchDBLogsRepository, getCouchDBMetasRepository, getCouchDBSentinelRepository, getCouchDBUsersRepository } from "../entities/Couchdb";
+import { In, Repository } from "typeorm";
 import { APP_ENV } from "../providers/constantes";
 import { RefreshMaterializedView } from "./refresh-view";
-
-type CouchDBChange = {
-    id: string;
-    doc?: any;
-    deleted?: boolean;
-};
-
-type CouchDBResponse = {
-    last_seq: string;
-    results: CouchDBChange[];
-};
+import { CouchdbFetchCible } from "../models/Interfaces";
 
 const { NODE_ENV, CHT_USER, CHT_PASS, CHT_PROD_HOST, CHT_DEV_HOST, CHT_PROTOCOL, CHT_PORT } = APP_ENV;
+
 // const USERS_URL  = `${CHT_PROTOCOL}://${NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST}:${CHT_PORT}/api/v1/users`;
+const COUCHDB_BASE_URI = `${CHT_PROTOCOL}://${CHT_USER}:${CHT_PASS}@${NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST}:${CHT_PORT}`;
 
-const COUCHDB_URL  = `${CHT_PROTOCOL}://${CHT_USER}:${CHT_PASS}@${NODE_ENV === 'production' ? CHT_PROD_HOST : CHT_DEV_HOST}:${CHT_PORT}/medic`;
-
-const LOW_MEMORY_LIMIT = 500;    // Limite pour les serveurs avec peu de RAM
-const DEFAULT_LIMIT = 1000;      // Limite recommandée pour des performances équilibrées
-const HIGH_PERFORMANCE_LIMIT = 10000; // Limite pour des serveurs puissants
+const LOW_MEMORY_LIMIT = 500;
+const DEFAULT_LIMIT = 2000;
+const HIGH_PERFORMANCE_LIMIT = 10000;
 
 const EXCLUDED_PATTERNS: RegExp[] = [
-    /^task~org\.couchdb\.user/,
+    // /^task~org\.couchdb\.user/,
     /^target~.*~org\.couchdb\.user/,
     /^target~[^~]+~org\.couchdb\.user/,
     /^settings/,
@@ -43,6 +33,17 @@ const EXCLUDED_PATTERNS: RegExp[] = [
     /^messages-/ // Matches any string starting with "messages-"
 ];
 
+type CouchDBChange = { id: string; doc?: any; deleted?: boolean; };
+type CouchDBResponse = { last_seq: string; results: CouchDBChange[]; };
+const cibleArray: CouchdbFetchCible[] = ['medic', 'users', 'logs', 'sentinel', 'users_meta']
+const cibleMap: Record<CouchdbFetchCible, { index: number, name: string }> = {
+    'medic': { index: 1, name: 'medic' },
+    'users': { index: 2, name: '_users' },
+    'logs': { index: 3, name: 'medic-logs' },
+    'sentinel': { index: 4, name: 'medic-sentinel' },
+    'users_meta': { index: 5, name: 'medic-users-meta' }
+};
+
 
 async function logMessage(message: string): Promise<void> {
     const timestamp = new Date().toISOString();
@@ -50,38 +51,81 @@ async function logMessage(message: string): Promise<void> {
     // const LOG_FILE = path.join(__dirname, "couch2pg_replicate.log");
     // fs.appendFileSync(LOG_FILE, logEntry);
     const _repo = await getCouchDbLogRepository();
-    _repo.save({log:logEntry});
+    _repo.save({ log: logEntry });
 
     // console.log(logEntry.trim());
 }
 
-async function getLastSequence(): Promise<string> {
+async function getLastSequence(cible: CouchdbFetchCible): Promise<string> {
     try {
         const _repo = await getCouchDBLastSeqRepository();
-        const found = await _repo.findOneBy({ id: 1 });
+        const id = cibleMap[cible]?.index ?? cibleMap['medic'].index;
+        const found = await _repo.findOneBy({ id });
         return found?.seq?.trim() || "0";
     } catch (error) {
-        logMessage(`⚠️ Erreur lors de la lecture de la séquence: ${(error as Error).message}`);
+        await logMessage(`${cible}: ⚠️ Failed to retrieve sequence: ${(error as Error).message}`);
+        return "0";
     }
-    return "0";
 }
 
-async function updateLastSequence(seq: string): Promise<void> {
+async function updateLastSequence(cible: CouchdbFetchCible, seq: string): Promise<void> {
     if (!seq || seq == '') return;
     try {
+        const id = cibleMap[cible]?.index ?? cibleMap['medic'].index;
         const _repo = await getCouchDBLastSeqRepository();
-        await _repo.save({ id: 1, seq: seq });
-        logMessage(`Updated last sequence to ${seq}`);
+        await _repo.save({ id, seq: seq });
+        await logMessage(`${cible}: ✅ Sequence updated: ${seq}`);
     } catch (error) {
-        logMessage(`⚠️ Error updating last sequence: ${(error as Error).message}`);
+        await logMessage(`${cible}: ⚠️ Failed to update sequence: ${(error as Error).message}`);
     }
 }
 
-async function fetchCouchDBChanges(lastSeq: string, limit?:number): Promise<CouchDBResponse | undefined | 'error_found'> {
-    try {
-        limit = limit ?? DEFAULT_LIMIT;
+// --- Repository Fetcher ---
+async function getRepository(cible: CouchdbFetchCible): Promise<Repository<any>> {
+    switch (cible) {
+        case 'users':
+            return await getCouchDBUsersRepository();
+        case 'logs':
+            return await getCouchDBLogsRepository();
+        case 'sentinel':
+            return await getCouchDBSentinelRepository();
+        case 'users_meta':
+            return await getCouchDBMetasRepository();
+        default:
+            return await getCouchDBRepository();
+    }
+}
 
-        const response = await axios.get<CouchDBResponse>(`${COUCHDB_URL}/_changes`, {
+// --- PostgreSQL Operations ---
+async function saveToPostgres(cible: CouchdbFetchCible, docs: { id: string; doc: any }[]): Promise<void> {
+    if (!docs.length) return;
+
+    try {
+        const repo = await getRepository(cible);
+        await logMessage(`${cible}: 💾 Saving ${docs.length} documents to PostgreSQL...`);
+        await repo.save(docs.map(d => ({ id: d.id, doc: d.doc })));
+    } catch (error) {
+        await logMessage(`${cible}: ❌ Error saving documents: ${(error as Error).message}`);
+    }
+}
+
+async function deleteFromPostgres(cible: CouchdbFetchCible, docIds: string[]): Promise<void> {
+    if (!docIds.length) return;
+
+    try {
+        const repo = await getRepository(cible);
+        await logMessage(`${cible}: 🗑️ Deleting ${docIds.length} documents from PostgreSQL...`);
+        await repo.delete({ id: In(docIds) });
+    } catch (error) {
+        await logMessage(`${cible}: ❌ Error deleting documents: ${(error as Error).message}`);
+    }
+}
+
+
+async function fetchCouchDBChanges(cible: CouchdbFetchCible, lastSeq: string, limit: number = DEFAULT_LIMIT): Promise<CouchDBResponse | undefined | 'error_found'> {
+    try {
+        const dbName = cibleMap[cible].name;
+        const response = await axios.get<CouchDBResponse>(`${COUCHDB_BASE_URI}/${dbName}/_changes`, {
             params: {
                 since: lastSeq,
                 include_docs: true,
@@ -93,77 +137,46 @@ async function fetchCouchDBChanges(lastSeq: string, limit?:number): Promise<Couc
         });
         return response.data;
     } catch (error) {
-        return 'error_found'
-        logMessage(`⚠️ Erreur de mise à jour de la séquence: ${(error as Error).message}`);
+        await logMessage(`⚠️ Failed to fetch CouchDB changes: ${(error as Error).message}`);
+        return 'error_found';
     }
 }
 
-async function saveToPostgres(docs: { id: string; doc: any }[]): Promise<void> {
-    if (docs.length === 0) return;
-    logMessage("🔄 Start saving data to PostgreSQL...");
-    try {
-        const _repo = await getCouchDBRepository();
-        logMessage(`✅ Saving ${docs.length} documents to PostgreSQL...`);
-        await _repo.save(docs.map(d => ({ id: d.id, doc: d.doc })));
-    } catch (error) {
-        logMessage(`❌ Error saving to PostgreSQL: ${(error as Error).message}`);
-    }
-}
+async function processCouchDBChanges(cible: CouchdbFetchCible): Promise<void> {
+    await logMessage(`${cible}: 🔄 Starting synchronization...`);
 
-async function deleteFromPostgres(docIds: string[]): Promise<void> {
-    if (docIds.length === 0) return;
-    try {
-        const _repo = await getCouchDBRepository();
-        logMessage(`🗑️ Deleting ${docIds.length} documents from PostgreSQL...`);
-        await _repo.delete({ id: In(docIds) });
-    } catch (error) {
-        logMessage(`Error deleting from PostgreSQL: ${(error as Error).message}`);
-    }
-}
-
-async function processCouchDBChanges(): Promise<void> {
-    logMessage("🔄 Démarrage de la synchronisation CouchDB -> PostgreSQL...");
-
-    const _12hours = 60 * 60 * 1000 * 12; // 12 heures
-    // const _12hours = 60 * 1000; // 12 heures
+    const twelveHours = 12 * 60 * 60 * 1000;
     const oneMinute = 60 * 1000;
 
-    let lastSeq = await getLastSequence();
-    let retryDelay = oneMinute; // 1 minute en cas d'erreur
-    let keepFetching = true;
+    let lastSeq = await getLastSequence(cible);
+    let retryDelay = oneMinute;
+    let successCount = 0;
 
-    let okLength = 0;
-
-    while (keepFetching) {
+    while (true) {
         try {
-            const changes = await fetchCouchDBChanges(lastSeq);
+            const changes = await fetchCouchDBChanges(cible, lastSeq);
 
             if (changes == 'error_found') {
-                logMessage("❌ Error found, will retry after 1 min");
-                setTimeout(async() => await processCouchDBChanges(), oneMinute);
+                await logMessage(`${cible}: ❌ Error occurred. Retrying in 1 minute...`);
+                setTimeout(() => processCouchDBChanges(cible), oneMinute);
                 return;
             }
 
             if (!changes || changes.results.length === 0) {
-                logMessage("📌 Aucun nouveau changement détecté dans CouchDB.");
-
-                if (okLength == 0) {
-                    setTimeout(async() => await processCouchDBChanges(), _12hours);
-                    return; 
+                await logMessage(`${cible}: 📌 No new changes detected.`);
+                if (successCount === 0) {
+                    setTimeout(() => processCouchDBChanges(cible), twelveHours);
+                    return;
                 }
 
-                // setTimeout(async() => await RefreshMaterializedView(), oneMinute);
-                okLength = 0;
-                await RefreshMaterializedView();
-                logMessage("✅ Sync completed successfully.");
-
-                setTimeout(async() => await processCouchDBChanges(), _12hours);
-                return; 
+                successCount = 0;
+                await RefreshMaterializedView(cible);
+                await logMessage(`${cible}: ✅ Synchronization complete.`);
+                setTimeout(() => processCouchDBChanges(cible), twelveHours);
+                return;
             }
 
-            okLength++;
-
-            const validDocs: any[] = [];
+            const validDocs: { id: string; doc: any }[] = [];
             const docsToDelete: string[] = [];
 
             for (const change of changes.results) {
@@ -180,26 +193,29 @@ async function processCouchDBChanges(): Promise<void> {
                 }
             }
 
-            await saveToPostgres(validDocs);
-            await deleteFromPostgres(docsToDelete);
-            await updateLastSequence(changes.last_seq);
+            await saveToPostgres(cible, validDocs);
+            await deleteFromPostgres(cible, docsToDelete);
+            await updateLastSequence(cible, changes.last_seq);
 
             lastSeq = changes.last_seq;
-            retryDelay = oneMinute; // Réinitialiser le délai après succès
+            retryDelay = oneMinute;
+            successCount++;
         } catch (error: any) {
-            logMessage(`❌ Erreur lors de la synchronisation: ${error.message}`);
-            logMessage(`🔄 Nouvelle tentative dans ${retryDelay / 1000} secondes...`);
+            await logMessage(`${cible}: ❌ Synchronization error: ${error.message}`);
+            await logMessage(`${cible}: 🔁 Retrying in ${retryDelay / 1000}s...`);
 
-            await new Promise((resolve) => setTimeout(resolve, retryDelay));
-            retryDelay = Math.min(retryDelay * 2, _12hours); // Augmentation progressive jusqu'à 12h
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            retryDelay = Math.min(retryDelay * 2, twelveHours);
         }
     }
 }
 
 export async function syncCouchDBToPostgres(): Promise<void> {
-    logMessage("Starting CouchDB to PostgreSQL sync...");
+    await logMessage("🚀 Initiating CouchDB to PostgreSQL synchronization...");
     try {
-        await processCouchDBChanges();
+        for (const cible of cibleArray) {
+            await processCouchDBChanges(cible);
+        }
     } catch (error) {
         logMessage(`Unhandled error: ${(error as Error).message}`);
     }

@@ -10,6 +10,7 @@ import { catchError, Observable, throwError, from, switchMap, of } from "rxjs";
 import { UserContextService } from "@kossi-services/user-context.service";
 import { AuthService } from "@kossi-services/auth.service";
 import { jwtDecode } from "jwt-decode";
+import { AuthResponse } from "@kossi-models/user-role";
 
 @Injectable({
   providedIn: "root",
@@ -81,7 +82,7 @@ export class TokenExpiredInterceptor implements HttpInterceptor {
     this.refreshInProgress = true;
 
     return this.auth.refreshToken().pipe(
-      switchMap((res:{ status: number, data: string, token: any, orgunits: any, persons: any, message: any }) => {
+      switchMap((res:AuthResponse) => {
         this.refreshInProgress = false;
         return from(this.auth.saveToken(res)).pipe(
           switchMap(() => {

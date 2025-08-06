@@ -4,6 +4,7 @@ import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 
 
+import 'hammerjs';
 
 // // require('./assets/js/enketo/main');
 // import './assets/js/moment-locales/tl';

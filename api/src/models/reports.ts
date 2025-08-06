@@ -177,10 +177,11 @@ export interface HouseholdRecapReport {
     year: number
     index: number
     // orgunit: string
-    household_code: string
-    household_name: string
+    family_code: string
+    family_name: string
+    family_fullname: string
     total_household_members: number
-    total_women_15_50_years: number
+    total_adult_women_15_50_years: number
     total_children_under_5_years: number
     total_children_0_12_months: number
     total_children_12_60_months: number

@@ -88,7 +88,7 @@ export interface CountryManagerView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   phone: string
   email: string
   profession: string
@@ -109,7 +109,7 @@ export interface RegionManagerView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   phone: string
   email: string
   profession: string
@@ -131,7 +131,7 @@ export interface PrefectureManagerView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   phone: string
   email: string
   profession: string
@@ -154,7 +154,7 @@ export interface CommuneManagerView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   phone: string
   email: string
   profession: string
@@ -178,7 +178,7 @@ export interface HospitalManagerView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   phone: string
   email: string
   profession: string
@@ -243,7 +243,7 @@ export interface ChwView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   phone: string
   email: string
   profession: string
@@ -269,7 +269,7 @@ export interface RecoView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   phone: string
   email: string
   profession: string
@@ -321,7 +321,7 @@ export interface PatientView {
   external_id: string
   role: string
   sex: 'M' | 'F' | null
-  date_of_birth: string
+  birth_date: string
   age_in_year_on_creation: number
   age_in_month_on_creation: number
   age_in_day_on_creation: number
@@ -342,7 +342,7 @@ export interface PatientView {
   village_secteur_id: string | null
   family_id: string | null
   reco_id: string | null
-  date_of_death: string | null
+  death_date: string | null
   year_of_death: number | null
   month_of_death: string | null
   reported_date_timestamp: number

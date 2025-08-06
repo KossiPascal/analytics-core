@@ -7,7 +7,7 @@ export interface VaccinationDataView {
     year?: number
     month?: string
     sex?: 'M' | 'F' | null
-    date_of_birth?: string
+    birth_date?: string
     age_in_years?: number
     age_in_months?: number
     age_in_days?: number
@@ -27,21 +27,33 @@ export interface VaccinationDataView {
     vaccine_MEN_A?: boolean | null
     vaccine_VAR_2?: boolean | null
 
-    no_BCG_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VPO_0_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_PENTA_1_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VPO_1_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_PENTA_2_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VPO_2_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_PENTA_3_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VPO_3_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VPI_1_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VAR_1_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VAA_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VPI_2_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_MEN_A_reason?: 'shortage' | 'no_appointment_respect' | null
-    no_VAR_2_reason?: 'shortage' | 'no_appointment_respect' | null
+    no_BCG_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VPO_0_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_PENTA_1_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VPO_1_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_PENTA_2_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VPO_2_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_PENTA_3_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VPO_3_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VPI_1_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VAR_1_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VAA_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VPI_2_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_MEN_A_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
+    no_VAR_2_reason?: 'upcoming' | 'shortage' | 'no_appointment_respect' | 'hesitancy' | 'others' | null
     
+
+
+
+
+
+
+
+
+
+
+
+
     is_birth_vaccine_ok?: boolean | null
     is_six_weeks_vaccine_ok?: boolean | null
     is_ten_weeks_vaccine_ok?: boolean | null

@@ -7,7 +7,7 @@ export interface AdultDataView {
     year?: number
     month?: string
     sex?:'M'|'F'|null
-    date_of_birth?: string | null
+    birth_date?: string | null
     age_in_years?:number | null
     age_in_months?:number | null
     age_in_days?:number | null

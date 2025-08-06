@@ -27,8 +27,20 @@ export interface User {
   token: string
   userLogo: string
   mustLogin: boolean
+  mustChangeDefaultPassword: boolean
+  hasChangedDefaultPassword: boolean
   isDeleted: boolean
   deletedAt: Date
+}
+
+export interface AuthResponse {
+  status: number;
+  data: string;
+  token: string;
+  orgunits: { [key: string]: any[] };
+  persons: { [key: string]: any[] };
+  message: any;
+  mustChangeDefaultPassword: boolean
 }
 
 
@@ -51,6 +63,7 @@ export interface Roles {
 export interface UserRole {
   isSuperUser: boolean,
   canUseOfflineMode: boolean,
+  canViewMaps: boolean,
   canViewReports: boolean,
   canViewDashboards: boolean,
   canManageData: boolean,

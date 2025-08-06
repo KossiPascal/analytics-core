@@ -7,12 +7,12 @@ export interface DeathDataView {
     year?: number
     month?: string
     sex?: 'M' | 'F' | null
-    date_of_birth?: string
+    birth_date?: string
     age_in_years?: number
     age_in_months?: number
     age_in_days?: number
 
-    date_of_death?: string | null
+    death_date?: string | null
     death_place?: string | null
     death_reason?: string[]
     death_place_label?: string | null

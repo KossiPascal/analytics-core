@@ -48,7 +48,7 @@ export class UserProfileComponent implements OnInit {
         }
         if (this.COMPONENT_TYPE == 'update_password') {
             this.passwordForm = this.fb.group({
-                currentPassword: ['', [Validators.required]],
+                oldPassword: ['', [Validators.required]],
                 newPassword: ['', [Validators.required, Validators.minLength(this.passwordMinLength)]],
                 confirmPassword: ['', [Validators.required, Validators.minLength(this.passwordMinLength)]]
             });
@@ -106,10 +106,9 @@ export class UserProfileComponent implements OnInit {
     updatePassword(): void {
         if (this.COMPONENT_TYPE == 'update_password') {
             if (this.passwordForm.valid) {
-                if (this.passwordForm.value.newPassword === this.passwordForm.value.confirmPassword) {
+                const { oldPassword, newPassword, confirmPassword } = this.passwordForm.value;
+                if (newPassword === confirmPassword) {
                     const id = this.USER?.id;
-                    const oldPassword = this.passwordForm.value.currentPassword;
-                    const newPassword = this.passwordForm.value.newPassword;
 
                     this.api.updatePassword({ id, newPassword, oldPassword }).subscribe({
                         next: (res: { status: number, data: any }) => {

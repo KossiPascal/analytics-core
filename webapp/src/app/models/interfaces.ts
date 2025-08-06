@@ -107,6 +107,7 @@ export interface ChartDataSet {
 
 export interface ChartOptions {
   cibleId: string;
+  title: string;
   type: ChartType;
   absisseLabels: (number | string)[];
   datasets: ChartDataSet[];

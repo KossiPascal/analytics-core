@@ -3,7 +3,7 @@ import { Routes, TokenUser, Users, generateSelectedUserOrgUnitsAndContact, getUs
 import { httpHeaders, notEmpty } from '../functions/functions';
 import { Roles, getRolesRepository } from '../entities/Roles';
 import crypto from 'crypto';
-import { ROUTES_LIST, _superuser, can_view_reports, can_logout, can_manage_data, can_view_dashboards, must_change_default_password, can_delete_role, can_delete_user, can_update_role, can_update_user, can_create_user, can_create_role, can_view_roles, can_view_users, AUTHORIZATIONS_LIST, dashboardsRoute, reportsRoute, usersRoute, can_use_offline_mode, roleAuthorizations, _public, can_update_password, can_update_profile } from '../providers/authorizations-pages';
+import { ROUTES_LIST, _superuser, can_view_reports, can_logout, can_manage_data, can_view_dashboards, must_change_default_password, can_delete_role, can_delete_user, can_update_role, can_update_user, can_create_user, can_create_role, can_view_roles, can_view_users, AUTHORIZATIONS_LIST, dashboardsRoute, reportsRoute, usersRoute, can_use_offline_mode, roleAuthorizations, _public, can_update_password, can_update_profile, can_view_maps } from '../providers/authorizations-pages';
 import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, COMMUNES_MANAGER_CUSTOM_QUERY, COUNTRIES_MANAGER_CUSTOM_QUERY, HOSPITALS_MANAGER_CUSTOM_QUERY, PREFECTURES_MANAGER_CUSTOM_QUERY, REGIONS_MANAGER_CUSTOM_QUERY } from './ORGUNITS/org-units-custom';
 import { APP_ENV } from '../providers/constantes';
 import request from 'request';
@@ -11,7 +11,10 @@ import * as jwt from 'jsonwebtoken';
 import { RecosMap, ChwsMap, VillageSecteursMap, DistrictQuartiersMap, HospitalsMap, CommunesMap, PrefecturesMap, RegionsMap, CountryMap, GetCountryMap, GetRegionsMap, GetPrefecturesMap, GetCommunesMap, GetHospitalsMap, GetDistrictQuartiersMap, GetVillageSecteursMap, GetChwsMap, GetRecosMap } from '../models/org-units/orgunits-map';
 import { RecoCustomQuery, ChwCustomQuery, VillageSecteurCustomQuery, DistrictQuartierCustomQuery, HospitalCustomQuery, CommuneCustomQuery, PrefectureCustomQuery, RegionCustomQuery, CountryCustomQuery } from '../models/org-units/orgunits-query';
 import { TransformChwsRecoReports, TransformFamilyPlanningReports, TransformHouseholdRecapReports, TransformMorbidityReports, TransformPcimneNewbornReports, TransformPromotionReports, TransformRecoMegSituationReports } from './REPORTS/transform-reports';
-import { TransformRecoVaccinationDashboard, TransformRecoPerformanceDashboard } from './DASHBOARDS/transform-dashboards';
+import { TransformRecoVaccinationDashboard, TransformRecoPerformanceDashboard, TransformActiveRecoDashboard, TransformRecoTasksStateDashboard } from './DASHBOARDS/transform-dashboards';
+import { TransformRecoDataMaps } from './MAPS/transform-maps';
+
+
 
 // import uuidv4 from 'uuid';
 
@@ -86,12 +89,12 @@ export class AuthUserController {
             const adminRoutes = [reportsRoute, dashboardsRoute];
             const usersManagerRoutes = [usersRoute];
 
-            
+
 
             const recoAuthorizations = [_public, can_view_reports, can_view_dashboards, can_use_offline_mode, can_logout];
-            const managersAuthorizations = [_public, can_view_reports, can_view_dashboards, can_manage_data, can_logout, can_update_profile, can_update_password, must_change_default_password];
-            const adminAuthorizations = [_public, can_view_reports, can_view_dashboards, can_manage_data, can_logout, can_update_profile, can_update_password, must_change_default_password];
-            const usersManagerAuthorizations = [_public, can_view_users, can_create_user, can_update_user, can_delete_user, can_view_roles, can_create_role, can_update_role, can_delete_role, can_update_profile, can_update_password];
+            const managersAuthorizations = [_public, can_view_reports, can_view_dashboards, can_view_maps, can_manage_data, can_logout, can_update_profile, can_update_password, must_change_default_password];
+            const adminAuthorizations = [_public, can_view_reports, can_view_dashboards, can_view_maps, can_manage_data, can_logout, can_update_profile, can_update_password, must_change_default_password];
+            const usersManagerAuthorizations = [_public, can_view_users, can_create_user, can_update_user, can_delete_user, can_view_roles, can_create_role, can_update_role, can_delete_role, can_update_profile, can_update_password, must_change_default_password];
 
             const rolesData: { id: number; name: string; routes: Routes[]; authorizations: string[] }[] = [
                 { id: 1, name: 'superuser', routes: [], authorizations: [_superuser] },
@@ -255,11 +258,26 @@ export class AuthUserController {
         if (!userToken) return res.status(201).json({ status: 201, data: 'Vous n\'êtes pas autorisé à effectuer cette action!' });
 
         const role = roleAuthorizations(userToken.authorizations ?? [], userToken.routes ?? []);
-        const selectedUserOU = await generateSelectedUserOrgUnitsAndContact({isSuperUser:role.isSuperUser, recos: user.recos});
+        const selectedUserOU = await generateSelectedUserOrgUnitsAndContact({ isSuperUser: role.isSuperUser, recos: user.recos });
 
         const token = await hashUserToken(userToken);
         const userRepo = await getUsersRepository();
         user.token = token;
+
+        if (role.mustChangeDefaultPassword && !user.hasChangedDefaultPassword) {
+            const secret = await jwSecretKey({ user: user });
+            const dataToSend: any = {
+                status: 200,
+                token: token,
+                mustChangeDefaultPassword: true,
+                orgunits: jwt.sign({}, secret.secretOrPrivateKey),
+                persons: jwt.sign({ recos: [''] }, secret.secretOrPrivateKey),
+            };
+
+            return res.status(200).json(dataToSend);
+        }
+
+
         user.mustLogin = false;
 
         if (selectedUserOU && !role.isSuperUser) {
@@ -294,6 +312,7 @@ export class AuthUserController {
         const dataToSend: any = {
             status: 200,
             token: token,
+            mustChangeDefaultPassword: false,
             orgunits: jwt.sign(orgunits, secret.secretOrPrivateKey),
             persons: jwt.sign(persons, secret.secretOrPrivateKey),
         };
@@ -307,8 +326,10 @@ export class AuthUserController {
         dataToSend['pcimneNewbornTransformFunction'] = TransformPcimneNewbornReports.toString();
         dataToSend['recoMegTransformFunction'] = TransformRecoMegSituationReports.toString();
         dataToSend['vaccineTransformFunction'] = TransformRecoVaccinationDashboard.toString();
-        dataToSend['performanceChartTransformFunction'] = TransformRecoPerformanceDashboard.toString();
-        // const chwsRecoReportsFunctionAsString = jwt.sign(TransformeChwsRecoReports.toString(), secret.secretOrPrivateKey);
+        dataToSend['recoPerformanceTransformFunction'] = TransformRecoPerformanceDashboard.toString();
+        dataToSend['recoDataMapsTransformFunction'] = TransformRecoDataMaps.toString();
+        dataToSend['activeRecoTransformFunction'] = TransformActiveRecoDashboard.toString();
+        dataToSend['recoTasksStateTransformFunction'] = TransformRecoTasksStateDashboard.toString();
         // }
 
         return res.status(200).json(dataToSend);
@@ -643,6 +664,7 @@ export class AuthUserController {
             user.mustLogin = true;
             user.updated_at = new Date();
             user.updated_by = userId;
+            user.hasChangedDefaultPassword = true;
 
             const userToken = await userTokenGenerated(user);
             if (userToken) {

@@ -17,7 +17,7 @@
   },
   "scripts": {
     "build-watch": "cd webapp && npm run simple-build -- --watch=true & node ./scripts/watch.js",
-    "dev-api": "nodemon --watch 'api' --watch 'views/*.json' --watch 'shared-libs/**/*.ts' api/src/server.ts -- --allow-cors",
+    "dev-api": "nodemon --watch 'api' --watch 'views/*.json' --watch 'shared-libs/**/*.ts' api/src/server.ts -- --allow-cors --max-old-space-size=4096",
     "dev-new-api": "nodemon --watch 'new-api' --watch 'views/*.json' --watch 'shared-libs/**/*.ts' new-api/src/server.ts -- --allow-cors",
     "dev-sentinel": "nodemon --watch 'sentinel' --watch 'views/*.json' --watch 'shared-libs/**/*.ts' sentinel/src/server.ts",
     "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status && git push -u origin main && git status",

@@ -1,7 +1,7 @@
 <ng-container
   *ngIf="!isChartsPage() && (!isPublicPage() && (!isAuthenticated || hideMainPage()))">
   <!-- <div class="app-content"> -->
-    <router-outlet></router-outlet>
+  <router-outlet></router-outlet>
   <!-- </div> -->
 </ng-container>
 
@@ -9,10 +9,20 @@
   *ngIf="!isChartsPage() && (isPublicPage() || (isAuthenticated && !hideMainPage()))">
 
   <app-navbar></app-navbar>
-
   <div class="app-content">
     <router-outlet></router-outlet>
   </div>
+  <!-- <div class="app-content">
+
+    <div
+      class="zoom-wrapper"
+      (pinch)="onPinch($event)"
+      (pinchend)="onPinchEnd()"
+      (wheel)="onWheel($event)"
+      [style.transform]="'scale(' + zoom + ')'">
+      <router-outlet></router-outlet>
+    </div>
+  </div> -->
 
 </ng-container>
 
@@ -21,7 +31,7 @@
   <app-navbar></app-navbar>
   <charts-views></charts-views>
   <!-- <div class="app-content"> -->
-    <router-outlet></router-outlet>
+  <router-outlet></router-outlet>
   <!-- </div> -->
 </ng-container>
 

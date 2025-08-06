@@ -135,6 +135,10 @@ input:-webkit-autofill {
 }
 
 
+.fa-eye, .fa-eye-slash {
+  color: black!important;
+}
+
 
 /* Responsive Design */
 @media (max-width: 600px) {

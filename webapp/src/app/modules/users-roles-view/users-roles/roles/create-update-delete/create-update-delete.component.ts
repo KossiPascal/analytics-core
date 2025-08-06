@@ -41,6 +41,9 @@ export class CreateUpdateDeleteShowRoleComponent implements OnInit {
   APP_LOGO: string = '';
 
 
+
+  visibleSection: string = 'info';
+
  constructor(private api: ApiService, private userCtx: UserContextService, private mService: ModalService, private cst: ConstanteService) {
      this.APP_LOGO = this.cst.APP_LOGO;
  
@@ -54,6 +57,10 @@ export class CreateUpdateDeleteShowRoleComponent implements OnInit {
       }
       this.roleForm = this.createFormGroup(this.DATAS.role);
    }
+  }
+
+  toggleSection(section: string) {
+    this.visibleSection = this.visibleSection === section ? '' : section;
   }
 
   isValidForm(): boolean {

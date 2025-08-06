@@ -1,7 +1,9 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { LoginComponent } from './login/login.component';
+import { ChangeDefaultPasswordComponent } from './change-default-password/change-default-password.component';
 import { LogoutAccessGuard } from '@kossi-src/app/guards/logout-access-guard';
+import { LoginAccessGuard } from '@kossi-src/app/guards/login-access-guard';
 
 
 const routes: Routes = [
@@ -14,6 +16,16 @@ const routes: Routes = [
       href: 'auths/login',
       title: 'User login',
       access: ['_public']
+    },
+  },
+  {
+    path: 'change-default-password',
+    component: ChangeDefaultPasswordComponent,
+    canActivate: [LoginAccessGuard],
+    data: {
+      href: 'auths/change-default-password',
+      title: 'Change Default Password',
+      access: ['must_change_default_password']
     },
   },
 ];

@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 // import axios from 'axios';
-import { RETRY_MILLIS } from '../shared/functions';
+import { generateStartEndDate, RETRY_MILLIS } from '../shared/functions';
 import { FamilyPlanningReport, HouseholdRecapReport, ChwsRecoReport, MorbidityReport, PromotionReport, PcimneNewbornReport, RecoMegSituationReport } from '@kossi-models/reports';
 import { IndexedDbService } from './indexed-db.service';
 import { ApiService } from './api.service';
 import { Observable, catchError, map, of, switchMap } from 'rxjs';
-import { RecoChartPerformanceDashboard, RecoPerformanceDashboard, RecoVaccinationDashboard, RecoVaccinationDashboardDbOutput } from '@kossi-models/dashboards';
+import { ActiveRecoDashboard, RecoPerformanceDashboard, RecoPerformanceDashboardFullYearDbOutput, RecoTasksStateDashboard, RecoVaccinationDashboard, RecoVaccinationDashboardDbOutput } from '@kossi-models/dashboards';
+import { RecoDataMapsDbOutput } from '@kossi-models/maps';
 
 @Injectable({
   providedIn: 'root'
@@ -25,16 +26,24 @@ export class DbSyncService {
       const d4 = await this.SyncMorbidityReports({ months, year, recos }).toPromise();
       const d5 = await this.SyncHouseholdRecapReports({ months, year, recos }).toPromise();
       const d6 = await this.SyncPcimneNewbornReports({ months, year, recos }).toPromise();
-      const d7 = await this.SyncRecoVaccinationDashboards({ months, year, recos }).toPromise();
-      const d8 = await this.SyncRecoPerformanceDashboards({ months, year, recos }).toPromise();
-      // const d9 = await this.SyncRecoChartPerformanceDashboards({ year, recos }).toPromise();
-      const d9 = true;
-      const d10 = await this.SyncRecoMegSituationReports({ months, year, recos }).toPromise();
+      const d7 = await this.SyncRecoMegSituationReports({ months, year, recos }).toPromise();
+
+      const d8 = await this.SyncRecoVaccinationNotDoneDashboards({ months, year, recos }).toPromise();
+      const d9 = await this.SyncRecoVaccinationPartialDoneDashboards({ months, year, recos }).toPromise();
+      const d10 = await this.SyncRecoVaccinationAllDoneDashboards({ months, year, recos }).toPromise();
+      const d11 = await this.SyncRecoPerformanceDashboards({ months, year, recos }).toPromise();
+      // const d12 = await this.SyncRecoChartPerformanceDashboards({ year, recos }).toPromise();
+      const d13 = await this.SyncActiveRecoDashboards({ year, recos }).toPromise();
+
+      const d14 = await this.SyncRecoDataMaps({ months, year, recos }).toPromise();
+
+      const start_end_date = generateStartEndDate(months, year);
+      const d15 = await this.SyncRecoTasksStateDashboards({ ...start_end_date, recos }).toPromise();
 
 
       console.info('Successfully synced to local!');
 
-      return d1 === true && d2 === true && d3 === true && d4 === true && d5 === true && d6 === true && d7 === true && d8 === true && d9 === true && d10 === true;
+      return d1 === true && d2 === true && d3 === true && d4 === true && d5 === true && d6 === true && d7 === true && d8 === true && d9 === true && d10 === true && d11 === true && d13 === true && d14 === true && d15 === true;
     } catch (err) {
       console.error('Error initialising watching for db changes (changes.service.ts: 108)', err);
       console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
@@ -42,6 +51,7 @@ export class DbSyncService {
       return false;
     }
   }
+
 
   SyncPromotionReports({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
     return this.api.GetPromotionReports({ months, year, recos, sync: true }).pipe(
@@ -207,43 +217,91 @@ export class DbSyncService {
   }
 
   // ##################### DASHBOARDS #####################
-  SyncRecoVaccinationDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
-    return this.api.GetRecoVaccinationDashboards({ months, year, recos, sync: true }).pipe(
+  SyncRecoVaccinationNotDoneDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
+    return this.api.GetRecoVaccinationNotDoneDashboards({ months, year, recos, sync: true }).pipe(
       switchMap(async (res$: { status: number, data: RecoVaccinationDashboardDbOutput[] }) => {
         if (res$.status !== 200) {
-          console.error('❌ Error while syncing RecoVaccinationDashboard:');
+          console.error('❌ Error while syncing RecoVaccinationNotDoneDashboards:');
           console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
-          setTimeout(() => this.SyncRecoVaccinationDashboards({ months, year, recos }), RETRY_MILLIS);
+          setTimeout(() => this.SyncRecoVaccinationNotDoneDashboards({ months, year, recos }), RETRY_MILLIS);
           return false;
         }
         if (res$.data.length > 0) {
-          await this.indexdb.saveMany<RecoVaccinationDashboardDbOutput>({ dbName: 'reco_vaccination_dashboard', datas: res$.data, callback: () => this.SyncRecoVaccinationDashboards({ months, year, recos }) });
+          await this.indexdb.saveMany<RecoVaccinationDashboardDbOutput>({ dbName: 'reco_vaccine_not_done_dashboard', datas: res$.data, callback: () => this.SyncRecoVaccinationNotDoneDashboards({ months, year, recos }) });
         }
         return true;
       }),
       catchError((err: any) => {
-        console.error('❌ Error while syncing RecoVaccinationDashboard:', err);
+        console.error('❌ Error while syncing RecoVaccinationNotDoneDashboards:', err);
         console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
-        setTimeout(() => this.SyncRecoVaccinationDashboards({ months, year, recos }), RETRY_MILLIS);
+        setTimeout(() => this.SyncRecoVaccinationNotDoneDashboards({ months, year, recos }), RETRY_MILLIS);
         return of(false);
       })
     );
   }
 
+  SyncRecoVaccinationPartialDoneDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
+    return this.api.GetRecoVaccinationPartialDoneDashboards({ months, year, recos, sync: true }).pipe(
+      switchMap(async (res$: { status: number, data: RecoVaccinationDashboardDbOutput[] }) => {
+        if (res$.status !== 200) {
+          console.error('❌ Error while syncing RecoVaccinationPartialDoneDashboards:');
+          console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+          setTimeout(() => this.SyncRecoVaccinationPartialDoneDashboards({ months, year, recos }), RETRY_MILLIS);
+          return false;
+        }
+        if (res$.data.length > 0) {
+          await this.indexdb.saveMany<RecoVaccinationDashboardDbOutput>({ dbName: 'reco_vaccine_partial_done_dashboard', datas: res$.data, callback: () => this.SyncRecoVaccinationPartialDoneDashboards({ months, year, recos }) });
+        }
+        return true;
+      }),
+      catchError((err: any) => {
+        console.error('❌ Error while syncing RecoVaccinationPartialDoneDashboards:', err);
+        console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+        setTimeout(() => this.SyncRecoVaccinationPartialDoneDashboards({ months, year, recos }), RETRY_MILLIS);
+        return of(false);
+      })
+    );
+  }
+
+  SyncRecoVaccinationAllDoneDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
+    return this.api.GetRecoVaccinationAllDoneDashboards({ months, year, recos, sync: true }).pipe(
+      switchMap(async (res$: { status: number, data: RecoVaccinationDashboardDbOutput[] }) => {
+        if (res$.status !== 200) {
+          console.error('❌ Error while syncing RecoVaccinationAllDoneDashboards:');
+          console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+          setTimeout(() => this.SyncRecoVaccinationAllDoneDashboards({ months, year, recos }), RETRY_MILLIS);
+          return false;
+        }
+        if (res$.data.length > 0) {
+          await this.indexdb.saveMany<RecoVaccinationDashboardDbOutput>({ dbName: 'reco_vaccine_all_done_dashboard', datas: res$.data, callback: () => this.SyncRecoVaccinationAllDoneDashboards({ months, year, recos }) });
+        }
+        return true;
+      }),
+      catchError((err: any) => {
+        console.error('❌ Error while syncing RecoVaccinationAllDoneDashboards:', err);
+        console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+        setTimeout(() => this.SyncRecoVaccinationAllDoneDashboards({ months, year, recos }), RETRY_MILLIS);
+        return of(false);
+      })
+    );
+  }
+
+
+
   SyncRecoPerformanceDashboards({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
     return this.api.GetRecoPerformanceDashboards({ months, year, recos, sync: true }).pipe(
-      switchMap(async (res$: { status: number, data: RecoPerformanceDashboard[], chart: RecoChartPerformanceDashboard[] }) => {
+      switchMap(async (res$: { status: number, data: RecoPerformanceDashboard[], yearData: RecoPerformanceDashboardFullYearDbOutput[] }) => {
         if (res$.status !== 200) {
           console.error('❌ Error while syncing RecoPerformanceDashboard:');
           console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
           setTimeout(() => this.SyncRecoPerformanceDashboards({ months, year, recos }), RETRY_MILLIS);
           return false;
         }
-        if (res$.data.length > 0) {
+        if (res$.data && res$.data.length > 0) {
           await this.indexdb.saveMany<RecoPerformanceDashboard>({ dbName: 'reco_performance_dashboard', datas: res$.data, callback: () => this.SyncRecoPerformanceDashboards({ months, year, recos }) });
         }
-        if (res$.data.length > 0) {
-          await this.indexdb.saveMany<RecoChartPerformanceDashboard>({ dbName: 'reco_chart_performance_dashboard', datas: res$.data, callback: () => this.SyncRecoPerformanceDashboards({ months, year, recos }) });
+        if (res$.data && res$.yearData.length > 0) {
+          await this.indexdb.saveMany<RecoPerformanceDashboardFullYearDbOutput>({ dbName: 'reco_full_year_performance_dashboard', datas: res$.yearData, callback: () => this.SyncRecoPerformanceDashboards({ months, year, recos }) });
         }
         return true;
       }),
@@ -278,4 +336,77 @@ export class DbSyncService {
   //     })
   //   );
   // }
+
+
+  SyncActiveRecoDashboards({ year, recos }: { year: number, recos: string[] }): Observable<boolean> {
+    return this.api.GetActiveRecoDashboards({ year, recos, sync: true }).pipe(
+      switchMap(async (res$: { status: number, data: ActiveRecoDashboard[] }) => {
+        if (res$.status !== 200) {
+          console.error('❌ Error while syncing ActiveRecoDashboards:');
+          console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+          setTimeout(() => this.SyncActiveRecoDashboards({ year, recos }), RETRY_MILLIS);
+          return false;
+        }
+        if (res$.data.length > 0) {
+          await this.indexdb.saveMany<ActiveRecoDashboard>({ dbName: 'active_reco_dashboard', datas: res$.data, callback: () => this.SyncActiveRecoDashboards({ year, recos }) });
+        }
+        return true;
+      }),
+      catchError((err: any) => {
+        console.error('❌ Error while syncing ActiveRecoDashboards:', err);
+        console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+        setTimeout(() => this.SyncActiveRecoDashboards({ year, recos }), RETRY_MILLIS);
+        return of(false);
+      })
+    );
+  }
+
+  SyncRecoTasksStateDashboards({ start_date, end_date, recos }: { start_date: string, end_date: string, recos: string[] }): Observable<boolean> {
+    return this.api.GetRecoTasksStateDashboards({ start_date, end_date, recos, sync: true }).pipe(
+      switchMap(async (res$: { status: number, data: RecoTasksStateDashboard[] }) => {
+        if (res$.status !== 200) {
+          console.error('❌ Error while syncing RecoTasksStateDashboards:');
+          console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+          setTimeout(() => this.SyncRecoTasksStateDashboards({ start_date, end_date, recos }), RETRY_MILLIS);
+          return false;
+        }
+        if (res$.data.length > 0) {
+          await this.indexdb.saveMany<RecoTasksStateDashboard>({ dbName: 'reco_tasks_state_dashboard', datas: res$.data, callback: () => this.SyncRecoTasksStateDashboards({ start_date, end_date, recos }) });
+        }
+        return true;
+      }),
+      catchError((err: any) => {
+        console.error('❌ Error while syncing RecoTasksStateDashboards:', err);
+        console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+        setTimeout(() => this.SyncRecoTasksStateDashboards({ start_date, end_date, recos }), RETRY_MILLIS);
+        return of(false);
+      })
+    );
+  }
+
+
+  // ##################### MAPS #####################
+  SyncRecoDataMaps({ months, year, recos }: { months: string[], year: number, recos: string[] }): Observable<boolean> {
+    return this.api.GetRecoDataMaps({ months, year, recos, sync: true }).pipe(
+      switchMap(async (res$: { status: number, data: RecoDataMapsDbOutput[] }) => {
+        if (res$.status !== 200) {
+          console.error('❌ Error while syncing RecoDataMaps:');
+          console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+          setTimeout(() => this.SyncRecoDataMaps({ months, year, recos }), RETRY_MILLIS);
+          return false;
+        }
+        if (res$.data.length > 0) {
+          await this.indexdb.saveMany<RecoDataMapsDbOutput>({ dbName: 'reco_data_maps', datas: res$.data, callback: () => this.SyncRecoDataMaps({ months, year, recos }) });
+        }
+        return true;
+      }),
+      catchError((err: any) => {
+        console.error('❌ Error while syncing RecoDataMaps:', err);
+        console.log(`🔄 Retrying in ${RETRY_MILLIS / 1000} seconds...`);
+        setTimeout(() => this.SyncRecoDataMaps({ months, year, recos }), RETRY_MILLIS);
+        return of(false);
+      })
+    );
+  }
+
 }

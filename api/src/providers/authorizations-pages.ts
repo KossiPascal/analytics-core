@@ -5,6 +5,8 @@ export const _public = '_public';
 
 export const can_view_reports = 'can_view_reports';
 export const can_view_dashboards = 'can_view_dashboards';
+export const can_view_maps = 'can_view_maps';
+
 export const can_manage_data = 'can_manage_data';
 export const must_change_default_password = 'must_change_default_password';
 
@@ -38,6 +40,7 @@ export const can_view_notifications = 'can_view_notifications';
 export const AUTHORIZATIONS_LIST: string[] = [
     can_view_reports,
     can_view_dashboards,
+    can_view_maps,
     can_logout,
 
     can_manage_data,
@@ -74,6 +77,7 @@ export const AUTHORIZATIONS_LIST: string[] = [
 //         canUseOfflineMode: isSuperUser ? false : userAuthorizations.includes(can_use_offline_mode),
 //         canViewReports: isSuperUser ? true : userAuthorizations.includes(can_view_reports),
 //         canViewDashboards: isSuperUser ? true : userAuthorizations.includes(can_view_dashboards),
+//         canViewMaps: isSuperUser ? true : userAuthorizations.includes(can_view_maps),
 //         canManageData: isSuperUser ? true : userAuthorizations.includes(can_manage_data),
 //         canCreateUser: isSuperUser ? true : userAuthorizations.includes(can_create_user),
 //         canUpdateUser: isSuperUser ? true : userAuthorizations.includes(can_update_user),
@@ -109,40 +113,45 @@ export function roleAuthorizations(userAuthorizations: string[], routes: Routes[
     const isSuperUser = combinedAuthorizations.includes('_superuser');
     return {
         isSuperUser,
-        canUseOfflineMode: isSuperUser ? false : combinedAuthorizations.includes('can_use_offline_mode'),
-        canViewReports: combinedAuthorizations.includes(can_view_reports) || isSuperUser,
-        canViewDashboards: combinedAuthorizations.includes(can_view_dashboards) || isSuperUser,
-        canManageData: combinedAuthorizations.includes(can_manage_data) || isSuperUser,
-        canCreateUser: combinedAuthorizations.includes(can_create_user) || isSuperUser,
-        canUpdateUser: combinedAuthorizations.includes(can_update_user) || isSuperUser,
-        canDeleteUser: combinedAuthorizations.includes(can_delete_user) || isSuperUser,
-        canCreateRole: combinedAuthorizations.includes(can_create_role) || isSuperUser,
-        canUpdateRole: combinedAuthorizations.includes(can_update_role) || isSuperUser,
-        canDeleteRole: combinedAuthorizations.includes(can_delete_role) || isSuperUser,
-        canLogout: combinedAuthorizations.includes(can_logout) || isSuperUser,
-        mustChangeDefaultPassword: combinedAuthorizations.includes(must_change_default_password) || isSuperUser,
-        canValidateData: combinedAuthorizations.includes(can_validate_data) || isSuperUser,
-        canSendDataToDhis2: combinedAuthorizations.includes(can_send_data_to_dhis2) || isSuperUser,
-        canViewUsers: combinedAuthorizations.includes(can_view_users) || isSuperUser,
-        canViewRoles: combinedAuthorizations.includes(can_view_roles) || isSuperUser,
-        canDownloadData: combinedAuthorizations.includes(can_download_data) || isSuperUser,
-        canSendSms: combinedAuthorizations.includes(can_send_sms) || isSuperUser,
-        canUpdateProfile: combinedAuthorizations.includes(can_update_profile) || isSuperUser,
-        canUpdatePassword: combinedAuthorizations.includes(can_update_password) || isSuperUser,
-        canUpdateLanguage: combinedAuthorizations.includes(can_update_language) || isSuperUser,
-        canViewNotifications: combinedAuthorizations.includes(can_view_notifications) || isSuperUser,
+        canViewReports: isSuperUser ? true : combinedAuthorizations.includes(can_view_reports),
+        canViewDashboards: isSuperUser ? true : combinedAuthorizations.includes(can_view_dashboards),
+        canViewMaps: isSuperUser ? true : combinedAuthorizations.includes(can_view_maps),
+        canManageData: isSuperUser ? true : combinedAuthorizations.includes(can_manage_data),
+        canCreateUser: isSuperUser ? true : combinedAuthorizations.includes(can_create_user),
+        canUpdateUser: isSuperUser ? true : combinedAuthorizations.includes(can_update_user),
+        canDeleteUser: isSuperUser ? true : combinedAuthorizations.includes(can_delete_user),
+        canCreateRole: isSuperUser ? true : combinedAuthorizations.includes(can_create_role),
+        canUpdateRole: isSuperUser ? true : combinedAuthorizations.includes(can_update_role),
+        canDeleteRole: isSuperUser ? true : combinedAuthorizations.includes(can_delete_role),
+        canLogout: isSuperUser ? true : combinedAuthorizations.includes(can_logout),
+        canValidateData: isSuperUser ? true : combinedAuthorizations.includes(can_validate_data),
+        canSendDataToDhis2: isSuperUser ? true : combinedAuthorizations.includes(can_send_data_to_dhis2),
+        canViewUsers: isSuperUser ? true : combinedAuthorizations.includes(can_view_users),
+        canViewRoles: isSuperUser ? true : combinedAuthorizations.includes(can_view_roles),
+        canDownloadData: isSuperUser ? true : combinedAuthorizations.includes(can_download_data),
+        canSendSms: isSuperUser ? true : combinedAuthorizations.includes(can_send_sms),
+        canUpdateProfile: isSuperUser ? true : combinedAuthorizations.includes(can_update_profile),
+        canUpdatePassword: isSuperUser ? true : combinedAuthorizations.includes(can_update_password),
+        canUpdateLanguage: isSuperUser ? true : combinedAuthorizations.includes(can_update_language),
+        canViewNotifications: isSuperUser ? true : combinedAuthorizations.includes(can_view_notifications),
+        mustChangeDefaultPassword: isSuperUser ? true : combinedAuthorizations.includes(must_change_default_password),
+
+        canUseOfflineMode: isSuperUser ? false : combinedAuthorizations.includes(can_use_offline_mode),
     };
 }
 
 
-export const dashboardsRoute = { path: "dashboards", label: 'DASHBOARDS', authorizations: [can_view_dashboards] };
-export const reportsRoute = { path: "reports", label: "RAPPORTS", authorizations: [can_view_reports] };
-export const usersRoute = { path: "users", label: 'USERS', authorizations: [_public, can_view_users] };
-export const managementsRoute = { path: "managements", label: 'MANAGEMENT', authorizations: [can_manage_data] };
-export const administrationRoute = { path: "administration", label: 'ADMINISTRATION', authorizations: [is_administration] };
-export const documentationsRoute = { path: "documentations", label: 'Documentations', authorizations: [_public] };
+export const mapsRoute = { path: "dashboards", label: 'DASHBOARDS', authorizations: [can_view_maps, must_change_default_password] };
+export const dashboardsRoute = { path: "dashboards", label: 'DASHBOARDS', authorizations: [can_view_dashboards, must_change_default_password] };
+export const reportsRoute = { path: "reports", label: "RAPPORTS", authorizations: [can_view_reports, must_change_default_password] };
+export const usersRoute = { path: "users", label: 'USERS', authorizations: [can_view_users, must_change_default_password] };
+export const managementsRoute = { path: "managements", label: 'MANAGEMENT', authorizations: [can_manage_data, must_change_default_password] };
+export const administrationRoute = { path: "administration", label: 'ADMINISTRATION', authorizations: [is_administration, must_change_default_password] };
+export const documentationsRoute = { path: "documentations", label: 'Documentations', authorizations: [_public, must_change_default_password] };
 
 export const ROUTES_LIST: Routes[] = [
+    mapsRoute,
+    dashboardsRoute,
     dashboardsRoute,
     reportsRoute,
     managementsRoute,

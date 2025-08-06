@@ -28,6 +28,58 @@ export async function getCouchDBRepository(): Promise<Repository<CouchDB>> {
   return Connection.getRepository(CouchDB);
 }
 
+@Entity({ name: 'couchdb_users' })
+export class CouchDBUsers {
+  //@PrimaryColumn('uuid')
+  @PrimaryColumn({ type: 'text' })
+  id!: string;
+
+  @Column({ type: 'jsonb', nullable: false })
+  doc!: Record<string, any>;
+}
+export async function getCouchDBUsersRepository(): Promise<Repository<CouchDBUsers>> {
+  return Connection.getRepository(CouchDBUsers);
+}
+
+@Entity({ name: 'couchdb_logs' })
+export class CouchDBLogs {
+  //@PrimaryColumn('uuid')
+  @PrimaryColumn({ type: 'text' })
+  id!: string;
+
+  @Column({ type: 'jsonb', nullable: false })
+  doc!: Record<string, any>;
+}
+export async function getCouchDBLogsRepository(): Promise<Repository<CouchDBLogs>> {
+  return Connection.getRepository(CouchDBLogs);
+}
+
+@Entity({ name: 'couchdb_metas' })
+export class CouchDBMetas {
+  //@PrimaryColumn('uuid')
+  @PrimaryColumn({ type: 'text' })
+  id!: string;
+
+  @Column({ type: 'jsonb', nullable: false })
+  doc!: Record<string, any>;
+}
+export async function getCouchDBMetasRepository(): Promise<Repository<CouchDBMetas>> {
+  return Connection.getRepository(CouchDBMetas);
+}
+
+@Entity({ name: 'couchdb_sentinel' })
+export class CouchDBSentinel {
+  //@PrimaryColumn('uuid')
+  @PrimaryColumn({ type: 'text' })
+  id!: string;
+
+  @Column({ type: 'jsonb', nullable: false })
+  doc!: Record<string, any>;
+}
+export async function getCouchDBSentinelRepository(): Promise<Repository<CouchDBSentinel>> {
+  return Connection.getRepository(CouchDBSentinel);
+}
+
 
 @Entity({ name: 'couchdb_log' })
 export class CouchDbLog {
@@ -35,7 +87,7 @@ export class CouchDbLog {
     @PrimaryGeneratedColumn()
     id!: number
 
-    @Column({ unique: true, type: 'text', nullable: true })
+    @Column({ type: 'text', nullable: true })
     log!: string
 }
 export async function getCouchDbLogRepository(): Promise<Repository<CouchDbLog>> {

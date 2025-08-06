@@ -1,6 +1,5 @@
 
-<app-google-loader
-[isLoading]="REPORTS_HEADER.ON_FETCHING.HOUSE_HOLD_RECAP == true"></app-google-loader>
+<app-google-loader [isLoading]="IS_FILTER_LOADING"></app-google-loader>
 
 <ng-container *ngIf="DATA_FETCHED && DATA_FETCHED.length > 0">
 
@@ -29,9 +28,9 @@
           <th scope="col">Nom Ménage</th>
           <th style="width: 10%;" scope="col">Total membres ménages</th>
           <th style="width: 10%;" scope="col">Total femmes 15-49 ans</th>
-          <th style="width: 10%;" scope="col">Total enfants moins de 5 ans</th>
           <th style="width: 10%;" scope="col">Total enfants de 0-11 mois</th>
           <th style="width: 10%;" scope="col">Total enfants de 12-59 mois</th>
+          <th style="width: 10%;" scope="col">Total enfants moins de 5 ans</th>
           <th style="width: 10%;" scope="col">Latrine fonctionnelle</th>
           <th style="width: 10%;" scope="col">Accès à l'eau potable</th>
         </tr>
@@ -41,12 +40,10 @@
         <tr>
           <td class="h-total" colspan="2" scope="row">TOTAL</td>
           <td class="h-total">{{ shawValue(t.total_household_members) }}</td>
-          <td class="h-total">{{ shawValue(t.total_women_15_50_years) }}</td>
-          <td class="h-total">{{ shawValue(t.total_children_under_5_years)
-            }}</td>
+          <td class="h-total">{{ shawValue(t.total_adult_women_15_50_years) }}</td>
           <td class="h-total">{{ shawValue(t.total_children_0_12_months) }}</td>
-          <td class="h-total">{{ shawValue(t.total_children_12_60_months)
-            }}</td>
+          <td class="h-total">{{ shawValue(t.total_children_12_60_months) }}</td>
+          <td class="h-total">{{ shawValue(t.total_children_under_5_years) }}</td>
           <td class="h-total">{{ shawValue(t.has_functional_latrine) }}</td>
           <td class="h-total">{{ shawValue(t.has_drinking_water_access) }}</td>
         </tr>
@@ -55,17 +52,15 @@
         <tr *ngFor="let hr of PAGINATION_DATA; let i=index">
           <!-- <td scope="row">{{ hr.index }}</td> -->
           <!-- <td scope="row">{{ i + 1 }}</td> -->
-          <td>{{ shawValue(hr.household_code) }}</td>
-          <td>{{ shawValue(hr.household_name) }}</td>
+          <td>{{ shawValue(hr.family_code) }}</td>
+          <td>{{ shawValue(hr.family_name) }}</td>
           <td>{{ shawValue(hr.total_household_members) }}</td>
-          <td>{{ shawValue(hr.total_women_15_50_years) }}</td>
-          <td>{{ shawValue(hr.total_children_under_5_years) }}</td>
+          <td>{{ shawValue(hr.total_adult_women_15_50_years) }}</td>
           <td>{{ shawValue(hr.total_children_0_12_months) }}</td>
           <td>{{ shawValue(hr.total_children_12_60_months) }}</td>
-          <td>{{ shawValue(hr.has_functional_latrine === true ? 'OUI' : '')
-            }}</td>
-          <td>{{ shawValue(hr.has_drinking_water_access === true ? 'OUI' : '')
-            }}</td>
+          <td>{{ shawValue(hr.total_children_under_5_years) }}</td>
+          <td>{{ shawValue(hr.has_functional_latrine === true ? 'OUI' : '') }}</td>
+          <td>{{ shawValue(hr.has_drinking_water_access === true ? 'OUI' : '') }}</td>
         </tr>
       </tbody>
     </table>

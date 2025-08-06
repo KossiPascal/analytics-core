@@ -6,6 +6,8 @@ import http from "http";
 import axios from 'axios';
 import { APP_ENV } from '../providers/constantes';
 import { Express } from 'express';
+import os from 'os';
+
 
 const { NODE_ENV, CHT_USER, CHT_PASS, CHT_PROD_HOST, CHT_DEV_HOST, CHT_PROTOCOL, CHT_PORT } = APP_ENV;
 
@@ -28,6 +30,40 @@ export async function AxioFetchCouchDbData(viewName: string, { username, passwor
     })
 }
 
+async function getPublicIP(): Promise<any> {
+    try {
+        const res = await axios.get('https://api.ipify.org?format=json');
+        // console.log("🌐 Public IP:", res.data.ip);
+        return res.data.ip;
+    } catch (err) {
+        // console.error("❌ Failed to fetch public IP:", err);
+        return;
+    }
+
+    // https.get('https://api.ipify.org?format=json', (resp) => {
+    //     let data = '';
+    //     resp.on('data', (chunk) => (data += chunk));
+    //     resp.on('end', () => {
+    //         console.log('🌍 IP publique du serveur :', JSON.parse(data).ip);
+    //     });
+    // });
+
+}
+
+function getPrivateIP(): string[] {
+    const interfaces = os.networkInterfaces();
+    const results: string[] = [];
+
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name] || []) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                results.push(iface.address);
+            }
+        }
+    }
+    // console.log("📡 IP(s) privée(s) :", results);
+    return results;
+}
 
 function CouchDbFetchDataOptions(params: CouchDbFetchData,) {
     var dbCibleUrl = `/medic/_design/medic-client/_view/${params.viewName}`;
@@ -51,7 +87,7 @@ function CouchDbFetchDataOptions(params: CouchDbFetchData,) {
     return getHttpsOptions(options);
 }
 
-export function isvalidCta<T>(data:T|any):boolean{
+export function isvalidCta<T>(data: T | any): boolean {
     try {
         const ok1 = data?.cta_nn !== undefined && data?.cta_nn !== null && parseInt(`${data?.cta_nn}`) > 0;
         const ok2 = data?.cta_pe !== undefined && data?.cta_pe !== null && parseInt(`${data?.cta_pe}`) > 0;
@@ -63,16 +99,16 @@ export function isvalidCta<T>(data:T|any):boolean{
     }
 }
 
-export function sumAllCta<T>(data:T|any): number {
+export function sumAllCta<T>(data: T | any): number {
     try {
         const ok1 = data?.cta_nn !== undefined && data?.cta_nn !== null && parseInt(`${data?.cta_nn}`) > 0;
         const ok2 = data?.cta_pe !== undefined && data?.cta_pe !== null && parseInt(`${data?.cta_pe}`) > 0;
         const ok3 = data?.cta_ge !== undefined && data?.cta_ge !== null && parseInt(`${data?.cta_ge}`) > 0;
         const ok4 = data?.cta_ad !== undefined && data?.cta_ad !== null && parseInt(`${data?.cta_ad}`) > 0;
         return (
-            (ok1 ? parseInt(`${data?.cta_nn}`) : 0) + 
-            (ok2 ? parseInt(`${data?.cta_pe}`) : 0) + 
-            (ok3 ? parseInt(`${data?.cta_ge}`) : 0) + 
+            (ok1 ? parseInt(`${data?.cta_nn}`) : 0) +
+            (ok2 ? parseInt(`${data?.cta_pe}`) : 0) +
+            (ok3 ? parseInt(`${data?.cta_ge}`) : 0) +
             (ok4 ? parseInt(`${data?.cta_ad}`) : 0)
         );
     } catch (error) {
@@ -80,7 +116,7 @@ export function sumAllCta<T>(data:T|any): number {
     }
 }
 
-export function getPreviousMonthYear(month:string, year:number) {
+export function getPreviousMonthYear(month: string, year: number) {
     const m = parseInt(month);
     const previousMonth = m === 1 ? 12 : m - 1;
     const previousYear = m === 1 ? (year - 1) : year;
@@ -234,8 +270,8 @@ export function ServerStart(data: {
     //     }
     // };
 
-    const server = data.isSecure 
-        ? https.createServer(data.credential ?? {}, data.server) 
+    const server = data.isSecure
+        ? https.createServer(data.credential ?? {}, data.server)
         : http.createServer(data.server);
     // var io = require('socket.io')(server, {});
     if (data.access_all_host) {

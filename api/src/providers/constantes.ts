@@ -8,6 +8,8 @@ export const PROJECT_PARENT_FOLDER = dirname(PROJECT_FOLDER);
 export const ENV_FOLDER = `${PROJECT_PARENT_FOLDER}/ssl/analytics`;
 export const JSON_DB_PATH = `${PROJECT_FOLDER}/json-db-folder`;
 
+export const MIGRATIONS_FOLDER = `${SRC_FOLDER}/migrations`;
+
 config({ path: `${SRC_FOLDER}/.env` });
 config({ path: `${API_FOLDER}/.env` });
 config({ path: `${PROJECT_FOLDER}/.env` });

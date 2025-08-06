@@ -22,10 +22,11 @@ import { Observable, Subject, takeUntil } from 'rxjs';
 })
 export class ReportsViewComponent implements OnDestroy {
   CHANGE_STATE: any = null;
+  USER!: User|null
+  isOnline: boolean;
+
   private form!: FormGroup<any>;
-
   private destroy$ = new Subject<void>();
-
 
   REPORTS_HEADER: ReportsHealth = {
     ON_FETCHING: {},
@@ -47,11 +48,6 @@ export class ReportsViewComponent implements OnDestroy {
     RECO_MEG_QUANTITIES: undefined,
   }
 
-  USER!: User|null
-
-
-  isOnline: boolean;
-
   constructor(
     private api: ApiService,
     private db: DbSyncService,
@@ -63,12 +59,12 @@ export class ReportsViewComponent implements OnDestroy {
   ) {
 
     this.isOnline = window.navigator.onLine;
-    this.conn.getOnlineStatus().subscribe(isOnline => this.isOnline = isOnline);
+    this.conn.onlineStatus$.subscribe(isOnline => this.isOnline = isOnline);
     this.initializeComponent();
 
     initTabsLinkView();
 
-    this.conn.getOnlineStatus().pipe(takeUntil(this.destroy$)).subscribe(isOnline => {
+    this.conn.onlineStatus$.pipe(takeUntil(this.destroy$)).subscribe(isOnline => {
       this.isOnline = isOnline;
     });
 
@@ -79,7 +75,6 @@ export class ReportsViewComponent implements OnDestroy {
     // this.fGroup.dhis2FormGroup$.pipe(takeUntil(this.destroy$)).subscribe(dhis2FormGroup => {
     //   if (dhis2FormGroup) this.dhis2Form = dhis2FormGroup;
     // });
-
 
     this.fGroup.REPORTS_HEADER$.pipe(takeUntil(this.destroy$)).subscribe(dataSaved => {
       if (dataSaved) {
@@ -109,7 +104,6 @@ export class ReportsViewComponent implements OnDestroy {
     this.destroy$.complete();
   }
 
-
   private SET_REPORTS_HEADER() {
     this.fGroup.SET_REPORTS_HEADER(this.REPORTS_HEADER);
     this.CHANGE_STATE = new Date();
@@ -119,7 +113,6 @@ export class ReportsViewComponent implements OnDestroy {
     (this.REPORTS_HEADER as any)[field][reportKey] = value;
     this.SET_REPORTS_HEADER();
   }
-
 
   // private getDhis2Params(cibleData: any) {
   //   const mth = this.form.value.months;

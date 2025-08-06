@@ -26,7 +26,7 @@ export class LogoutAccessGuard implements CanActivate, OnDestroy {
     private constants: ConstanteService,
     private titleService: Title,
     private router: Router,
-    private authService: AuthService
+    private auth: AuthService
   ) {}
 
   async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
@@ -39,13 +39,13 @@ export class LogoutAccessGuard implements CanActivate, OnDestroy {
 
     if (isLoggedIn) {
       // User is logged in but tries to access a public page
-      await this.authService.GoToDefaultPage();
+      await this.auth.goToDefaultPage();
       return false;
     }
 
     if (!this.publicAccessPages.includes(requestedPath)) {
       // Accessing a non-public page while logged out
-      await this.authService.GoToDefaultPage();
+      await this.auth.goToDefaultPage();
       return false;
     }
 

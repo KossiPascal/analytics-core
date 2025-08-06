@@ -7,7 +7,7 @@ export interface PregnantDataView {
     year?: number
     month?: string
     sex?:'M'|'F'|null
-    date_of_birth?: string
+    birth_date?: string
     age_in_years?:number
     age_in_months?:number
     age_in_days?:number

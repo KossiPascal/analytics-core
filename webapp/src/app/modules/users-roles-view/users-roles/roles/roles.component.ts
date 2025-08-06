@@ -25,6 +25,8 @@ export class RolesComponent implements OnInit {
 
   USER!: User | null;
 
+  visibleSection: string = 'info';
+
   constructor(private userCtx: UserContextService, private api: ApiService, private snackbar: SnackbarService, private mService: ModalService, private cst: ConstanteService) {
     this.initializeComponent();
   }
@@ -34,6 +36,10 @@ export class RolesComponent implements OnInit {
     this.USER = await this.userCtx.currentUser();
   }
 
+
+  toggleSection(section: string) {
+    this.visibleSection = this.visibleSection === section ? '' : section;
+  }
 
   ngOnInit(): void {
     this.GetRoles();

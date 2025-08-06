@@ -18,3 +18,17 @@
   .user-orgunits {
       max-height: 300px !important;
   }
+
+  .section {
+    padding: 1rem;
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+    background: #f9f9f9;
+  }
+  
+  h2 {
+    cursor: pointer;
+    background: #eee;
+    padding: 0.5rem;
+    margin: 0;
+  }

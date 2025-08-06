@@ -37,7 +37,7 @@ export class ModalLayoutComponent implements OnChanges {
 
   constructor(public modalService: ModalService) { }
 
-  
+
   ngOnChanges(changes: SimpleChanges) {
     if (changes['processing']) {
       this.stateChange = new Date();

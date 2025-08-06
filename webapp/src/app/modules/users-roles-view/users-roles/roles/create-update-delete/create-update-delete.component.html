@@ -42,41 +42,41 @@
       <span *ngIf="message && message!=''"  style="color: rgb(183, 0, 0);">{{message}}</span> 
     </div>
 
-    <h1>{{isProcessing}}</h1>
-
     <div class="user-container">
       <form [formGroup]="roleForm" class="form-horizontal" autocomplete="off" novalidate>
-      <div class="row">
-        <div class="input-group col-md-6">
-            <span class="input-group-icon"><i class="fas fa-user"></i></span>
-            <input type="text" placeholder="Name" formControlName="name">
-        </div>
-      </div>
-
-      <br>
-
-      <div class="section-title">Pages d'accès à celui qui aura ce role</div>
-      <div class="role-routes">
         <div class="row">
-          <div *ngFor="let route of DATAS.routes; let index = index;" class="custom-checkbox col-md-4">
-            <input type="checkbox" id="add-remove-routes-{{ route.label }}" [checked]="containsRoute(route)" (click)="addOrRemoveRoute(route)">
-            <label for="add-remove-routes-{{ route.label }}">{{ route.label }}</label>
+          <div class="input-group col-md-6">
+              <span class="input-group-icon"><i class="fas fa-user"></i></span>
+              <input type="text" placeholder="Nom du role" formControlName="name">
           </div>
         </div>
-      </div>
 
-  
-      <br>
-
-      <div class="section-title">Authorizations d'actions pour ce role</div>
-      <div class="role-authorizations">
-        <div class="row">
-            <div *ngFor="let auton of DATAS.authorizations; let index = index;"  class="custom-checkbox col-md-4">
-              <input type="checkbox" [checked]="containsAutorization(auton)" id="add-remove-autorization-{{ auton }}" (click)="addOrRemoveAutorization(auton)">
-              <label for="add-remove-autorization-{{ auton }}">{{ auton }}</label>
+        <br>
+        <h2 (click)="toggleSection('route')">1️⃣ Pages d'accès à celui qui aura ce role</h2>
+          <div *ngIf="visibleSection === 'route'" class="section">
+            <div class="role-routes">
+              <div class="row">
+                <div *ngFor="let route of DATAS.routes; let index = index;" class="custom-checkbox col-md-4">
+                  <input type="checkbox" id="add-remove-routes-{{ route.label }}" [checked]="containsRoute(route)" (click)="addOrRemoveRoute(route)">
+                  <label for="add-remove-routes-{{ route.label }}">{{ route.label }}</label>
+                </div>
+              </div>
             </div>
-        </div>
-      </div>
+          </div>
+        
+        <br>
+        <h2 (click)="toggleSection('authorization')">2️⃣ Informations utilisateur</h2>
+          <div *ngIf="visibleSection === 'authorization'" class="section">
+            <div class="section-title">Authorizations d'actions pour ce role</div>
+            <div class="role-authorizations">
+              <div class="row">
+                  <div *ngFor="let auton of DATAS.authorizations; let index = index;"  class="custom-checkbox col-md-4">
+                    <input type="checkbox" [checked]="containsAutorization(auton)" id="add-remove-autorization-{{ auton }}" (click)="addOrRemoveAutorization(auton)">
+                    <label for="add-remove-autorization-{{ auton }}">{{ auton }}</label>
+                  </div>
+              </div>
+            </div>
+          </div>
     </form>
     </div>
 

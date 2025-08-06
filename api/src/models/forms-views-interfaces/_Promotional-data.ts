@@ -1,6 +1,5 @@
 
 export interface PromotionalDataView {
-
     id: string
     rev: string
     form: string
@@ -13,8 +12,8 @@ export interface PromotionalDataView {
     is_talk_method: boolean | null
     is_interpersonal_talk_method: boolean | null
 
-    activity_domain: string[] | null
-    theme: string | null
+    activity_domains: string[] | null
+    activity_themes: string[] | null
 
     activity_location: string | null
     women_number: number | null

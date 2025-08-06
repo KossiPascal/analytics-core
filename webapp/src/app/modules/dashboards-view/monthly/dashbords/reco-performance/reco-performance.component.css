@@ -1,0 +1,112 @@
+
+.bg-chart {
+  /* background-color: rgb(209, 243, 255) !important; */
+  background-color: azure;
+  border: 1px solid rgb(209, 243, 255) !important;
+  width: auto;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  justify-items: center;
+  height: 120px;
+}
+
+.bg-chart i{
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.bg-chart h3{
+  font-size: 25px;
+  color: darkblue !important;
+  margin-bottom: 10px;
+}
+
+.bg-chart h6{
+  font-size: 18px;
+  color: rgb(121, 121, 121) !important;
+}
+
+
+/* Style the chart container */
+div {
+  padding: 10px;
+  background-color: #f7f7f7;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+
+
+@media (max-width: 991px) {
+  * {
+      font-size: 13px !important;
+  }
+}
+
+
+
+
+
+/* CUSTOM MODAL */
+
+/* Style général pour la modale */
+.custom-modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+/* Contenu de la modale */
+.custom-modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 2rem;
+  border-radius: 12px;
+  width: auto;
+  /* max-width: 1000px; */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Bouton fermer (croix) */
+.custom-close-btn {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #999;
+  cursor: pointer;
+}
+
+.custom-close-btn:hover {
+  color: #333;
+}
+
+/* Bouton d'action */
+.custom-action-btn {
+  background-color: #1e88e5;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.custom-action-btn:hover {
+  background-color: #1565c0;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

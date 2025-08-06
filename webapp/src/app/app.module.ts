@@ -77,9 +77,8 @@ export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) 
     LocalSyncIndicatorComponent,
     SmsComponent,
     UserProfileComponent,
-
     CreateUpdateDeleteShowUserComponent,
-    CreateUpdateDeleteShowRoleComponent,
+    CreateUpdateDeleteShowRoleComponent
   ],
   imports: [
     BrowserModule,
@@ -101,6 +100,7 @@ export function HttpLoaderFactory(httpClient: HttpClient, cst:ConstanteService) 
       registrationStrategy: 'registerWhenStable:30000'
     }),
   ],
+  exports: [],
   schemas: [CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: TokenExpiredInterceptor, multi: true },

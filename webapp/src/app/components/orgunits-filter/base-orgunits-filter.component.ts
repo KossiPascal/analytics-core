@@ -30,6 +30,13 @@ export abstract class BaseOrgunitsFilterComponent<T> implements OnInit, OnChange
 
   protected form!: FormGroup;
 
+  protected showMultipleSelectionMonth:boolean = true;
+  protected showMonthsSelection:boolean = true;
+  protected showYearsSelection:boolean = true;
+
+  custumMonths = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+  
+
   REPORTS_DATA: ReportsData = {
     MONTHLY_ACTIVITY: undefined,
     FAMILY_PLANNING: undefined,
@@ -277,7 +284,7 @@ export abstract class BaseOrgunitsFilterComponent<T> implements OnInit, OnChange
   hospitalsGenerate() {
     this.setOrgUnitsValues({ hospital: true, district_quartier: true, recos: true });
     const value = this.getVal('commune');
-    if (notNull(value && this.Hospitals$.length > 0)) {
+    if (notNull(value) && this.Hospitals$.length > 0) {
       if (this.Communes$.length > 0) {
         this.hospitals = this.Hospitals$.filter(d => value.includes(d.commune_id));
       } else {
@@ -447,7 +454,7 @@ export abstract class BaseOrgunitsFilterComponent<T> implements OnInit, OnChange
   private CreateFormGroup(): FormGroup {
     const form: any = {
       year: new FormControl(this.year$, [Validators.required]),
-      months: new FormControl([this.month$.id], [Validators.required]),
+      months: new FormControl(this.showMonthsSelection ? [this.month$.id] : this.custumMonths, [Validators.required]),
     };
     if (this.Countries$.length > 1) form['country'] = new FormControl('', [Validators.required]);
     if (this.Regions$.length > 1) form['region'] = new FormControl('', [Validators.required]);

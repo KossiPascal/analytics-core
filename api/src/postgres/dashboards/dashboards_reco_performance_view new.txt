@@ -1,0 +1,143 @@
+CREATE MATERIALIZED VIEW IF NOT EXISTS dashboards_reco_performance_view AS 
+    WITH colors AS (
+        SELECT generate_random_colors(
+            COALESCE((SELECT COUNT(id) FROM reco_view), 1) * 30
+        ) AS color
+    )
+
+    SELECT 
+        CONCAT(a.month, '-', a.year, '-', a.reco_id) AS id,
+        a.month AS month,
+        a.year AS year,
+        a.reco_id AS reco_id,
+        
+        (COUNT(f.id) FILTER (WHERE f.id IS NOT NULL AND f.reported_date <= (DATE_TRUNC('month', TO_DATE(a.year || '-' || a.month || '-01', 'YYYY-MM-DD')) + INTERVAL '1 month' - INTERVAL '1 microsecond')))::BIGINT AS household_count,
+        
+        (COUNT(p.id) FILTER (WHERE p.id IS NOT NULL AND p.reported_date <= (DATE_TRUNC('month', TO_DATE(a.year || '-' || a.month || '-01', 'YYYY-MM-DD')) + INTERVAL '1 month' - INTERVAL '1 microsecond'))) AS patient_count,
+        
+        (COUNT(p.id) FILTER (WHERE p.id IS NOT NULL AND calculate_age_in('months', p.birth_date::DATE, NULL, a.month::TEXT, a.year::INT) < 2))::BIGINT AS newborn_less_02_months_count,
+        
+        (COUNT(p.id) FILTER (WHERE p.id IS NOT NULL AND calculate_age_in('months', p.birth_date::DATE, NULL, a.month::TEXT, a.year::INT) BETWEEN 2 AND 60))::BIGINT AS child_02_to_60_months_count,
+        
+        (COUNT(p.id) FILTER (WHERE p.id IS NOT NULL AND calculate_age_in('months', p.birth_date::DATE, NULL, a.month::TEXT, a.year::INT) BETWEEN 60 AND 180))::BIGINT AS child_05_to_14_years_count,
+        
+        (COUNT(p.id) FILTER (WHERE p.id IS NOT NULL AND calculate_age_in('years', p.birth_date::DATE, NULL, a.month::TEXT, a.year::INT) >= 15))::BIGINT AS adult_over_14_years_count,
+        
+        (
+            (COUNT(adv.id) FILTER (WHERE adv.id IS NOT NULL AND adv.consultation_followup = 'consultation')) +
+            (COUNT(fpv.id) FILTER (WHERE fpv.id IS NOT NULL AND fpv.consultation_followup = 'consultation')) +
+            (COUNT(ndv.id) FILTER (WHERE ndv.id IS NOT NULL AND ndv.consultation_followup = 'consultation')) +
+            (COUNT(pdv.id) FILTER (WHERE pdv.id IS NOT NULL AND pdv.consultation_followup = 'consultation')) +
+            (COUNT(gdv.id) FILTER (WHERE gdv.id IS NOT NULL AND gdv.consultation_followup = 'consultation')) 
+        ) AS consultation_count,
+        
+        (
+            (COUNT(adv.id) FILTER (WHERE adv.id IS NOT NULL AND adv.consultation_followup <> 'consultation')) +
+            (COUNT(fpv.id) FILTER (WHERE fpv.id IS NOT NULL AND fpv.consultation_followup <> 'consultation')) +
+            (COUNT(ndv.id) FILTER (WHERE ndv.id IS NOT NULL AND ndv.consultation_followup <> 'consultation')) +
+            (COUNT(pdv.id) FILTER (WHERE pdv.id IS NOT NULL AND pdv.consultation_followup <> 'consultation')) +
+            (COUNT(gdv.id) FILTER (WHERE gdv.id IS NOT NULL AND gdv.consultation_followup <> 'consultation'))
+        ) AS followup_count,
+        
+        (
+
+            (COUNT(adv.id) FILTER (WHERE adv.id IS NOT NULL))
+            + (COUNT(fpv.id) FILTER (WHERE fpv.id IS NOT NULL))
+            + (COUNT(ndv.id) FILTER (WHERE ndv.id IS NOT NULL))
+            + (COUNT(pdv.id) FILTER (WHERE pdv.id IS NOT NULL))
+            + (COUNT(gdv.id) FILTER (WHERE gdv.id IS NOT NULL))
+            + (COUNT(ddv.id) FILTER (WHERE ddv.id IS NOT NULL))
+            + (COUNT(rdv.id) FILTER (WHERE rdv.id IS NOT NULL))
+            + (COUNT(thv.id) FILTER (WHERE thv.id IS NOT NULL))
+            + (COUNT(edv.id) FILTER (WHERE edv.id IS NOT NULL))
+            + (COUNT(mdv.id) FILTER (WHERE mdv.id IS NOT NULL))
+        ) AS all_actions_count,
+
+
+        jsonb_build_object(
+            'title', 'TOUTES LES ACTIONS DU RECO',
+            'type', 'line',
+            'absisseLabels', ARRAY['ACTIONS A DOMICILE'],
+            'datasets', jsonb_build_array(
+                jsonb_build_object(
+                    'label', a.reco_id,
+                    'backgroundColor', (SELECT color FROM colors LIMIT 1)[1],
+                    'borderColor', (SELECT color FROM colors LIMIT 1)[1],
+                    'data', ARRAY[
+                                (COUNT(adv.id) FILTER (WHERE adv.id IS NOT NULL))
+                                + (COUNT(fpv.id) FILTER (WHERE fpv.id IS NOT NULL))
+                                + (COUNT(ndv.id) FILTER (WHERE ndv.id IS NOT NULL))
+                                + (COUNT(pdv.id) FILTER (WHERE pdv.id IS NOT NULL))
+                                + (COUNT(gdv.id) FILTER (WHERE gdv.id IS NOT NULL))
+                                + (COUNT(ddv.id) FILTER (WHERE ddv.id IS NOT NULL))
+                                + (COUNT(rdv.id) FILTER (WHERE rdv.id IS NOT NULL))
+                                + (COUNT(thv.id) FILTER (WHERE thv.id IS NOT NULL))
+                                + (COUNT(edv.id) FILTER (WHERE edv.id IS NOT NULL))
+                                + (COUNT(mdv.id) FILTER (WHERE mdv.id IS NOT NULL))
+                    ]
+                )
+            )
+        ) AS linechart,
+
+        jsonb_build_object(
+            'title', 'TENDANCES DES ACTIVITE DU RECO',
+            'type', 'bar',
+            'absisseLabels', ARRAY['Adult', 'PF', 'Nouveau Né', 'Pcime', 'Enceinte', 'Accouchement', 'Suivi Référence', 'Décès', 'Evenements', 'Activités Promotionnelles'],
+            'datasets', jsonb_build_array(
+                jsonb_build_object(
+                    'label', a.reco_id,
+                    'backgroundColor', (SELECT color FROM colors LIMIT 1)[1],
+                    'borderColor', (SELECT color FROM colors LIMIT 1)[1],
+                    'data', ARRAY[
+                        COUNT(adv.id) FILTER (WHERE adv.id IS NOT NULL),
+                        (COUNT(fpv.id) FILTER (WHERE fpv.id IS NOT NULL)),
+                        (COUNT(ndv.id) FILTER (WHERE ndv.id IS NOT NULL)),
+                        (COUNT(pdv.id) FILTER (WHERE pdv.id IS NOT NULL)),
+                        (COUNT(gdv.id) FILTER (WHERE gdv.id IS NOT NULL)),
+                        (COUNT(ddv.id) FILTER (WHERE ddv.id IS NOT NULL)),
+                        (COUNT(rdv.id) FILTER (WHERE rdv.id IS NOT NULL)),
+                        (COUNT(thv.id) FILTER (WHERE thv.id IS NOT NULL)),
+                        (COUNT(edv.id) FILTER (WHERE edv.id IS NOT NULL)),
+                        (COUNT(mdv.id) FILTER (WHERE mdv.id IS NOT NULL))
+                    ]
+                )
+            )
+        ) AS barchart,
+        
+        jsonb_build_object('id', MAX(r.id), 'name', MAX(r.name), 'phone', MAX(r.phone)) AS reco,
+        jsonb_build_object('id', MAX(c.id), 'name', MAX(c.name)) AS country,
+        jsonb_build_object('id', MAX(g.id), 'name', MAX(g.name)) AS region,
+        jsonb_build_object('id', MAX(pr.id), 'name', MAX(pr.name)) AS prefecture,
+        jsonb_build_object('id', MAX(m.id), 'name', MAX(m.name)) AS commune,
+        jsonb_build_object('id', MAX(h.id), 'name', MAX(h.name)) AS hospital,
+        jsonb_build_object('id', MAX(d.id), 'name', MAX(d.name)) AS district_quartier,
+        jsonb_build_object('id', MAX(v.id), 'name', MAX(v.name)) AS village_secteur
+
+    FROM year_month_reco_grid_view a
+    
+        JOIN reco_view r ON r.id = a.reco_id
+        
+        LEFT JOIN adult_data_view adv ON adv.month = a.month AND adv.year = a.year AND adv.reco_id = a.reco_id 
+        LEFT JOIN family_planning_data_view fpv ON fpv.month = a.month AND fpv.year = a.year AND fpv.reco_id = a.reco_id 
+        LEFT JOIN newborn_data_view ndv ON ndv.month = a.month AND ndv.year = a.year AND ndv.reco_id = a.reco_id 
+        LEFT JOIN pcimne_data_view pdv ON pdv.month = a.month AND pdv.year = a.year AND pdv.reco_id = a.reco_id 
+        LEFT JOIN pregnant_data_view gdv ON gdv.month = a.month AND gdv.year = a.year AND gdv.reco_id = a.reco_id 
+        LEFT JOIN delivery_data_view ddv ON ddv.month = a.month AND ddv.year = a.year AND ddv.reco_id = a.reco_id 
+        LEFT JOIN referal_data_view rdv ON rdv.month = a.month AND rdv.year = a.year AND rdv.reco_id = a.reco_id 
+        LEFT JOIN death_data_view thv ON thv.month = a.month AND thv.year = a.year AND thv.reco_id = a.reco_id 
+        LEFT JOIN events_data_view edv ON edv.month = a.month AND edv.year = a.year AND edv.reco_id = a.reco_id 
+        LEFT JOIN promotional_data_view mdv ON mdv.month = a.month AND mdv.year = a.year AND mdv.reco_id = a.reco_id 
+
+        LEFT JOIN patient_view p ON p.reco_id = a.reco_id
+        LEFT JOIN family_view f ON f.reco_id = a.reco_id
+        
+
+        LEFT JOIN country_view c ON r.country_id = c.id 
+        LEFT JOIN region_view g ON r.region_id = g.id 
+        LEFT JOIN prefecture_view pr ON r.prefecture_id = pr.id 
+        LEFT JOIN commune_view m ON r.commune_id = m.id 
+        LEFT JOIN hospital_view h ON r.hospital_id = h.id 
+        LEFT JOIN district_quartier_view d ON r.district_quartier_id = d.id 
+        LEFT JOIN village_secteur_view v ON r.village_secteur_id = v.id 
+
+    GROUP BY a.reco_id, a.month, a.year;

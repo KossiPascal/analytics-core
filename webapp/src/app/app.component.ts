@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LocalSyncService } from '@kossi-services/local-sync.service';
 import { PrivacyPoliciesService } from '@kossi-services/privacy-policies.service';
@@ -11,7 +11,7 @@ import { UserContextService } from '@kossi-services/user-context.service';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnInit{
 
   private initialisationComplete: boolean = false;
   private setupPromise: any;
@@ -20,7 +20,7 @@ export class AppComponent {
 
   YEAR:number = new Date().getFullYear();
   
- 
+
   constructor(
     private userCtx: UserContextService, 
     private lSync:LocalSyncService,
@@ -30,6 +30,12 @@ export class AppComponent {
     private usw: UpdateServiceWorkerService,
   ) {
     this.initializeComponent();
+  }
+  ngOnInit(): void {
+    // const isAndroid = /android/i.test(navigator.userAgent);
+    // if (isAndroid) {
+    //   document.body.classList.add('no-pull-to-refresh');
+    // }
   }
 
   private async initializeComponent(){
@@ -58,6 +64,36 @@ export class AppComponent {
   }
 
 
+
+  zoom = 1;
+  baseScale = 1;
+
+  // Touch pinch
+  onPinch(event: any) {
+    this.zoom = this.baseScale * event.scale;
+  }
+
+  onPinchEnd() {
+    this.baseScale = this.zoom;
+  }
+
+  // PC trackpad pinch (interpreted as ctrl+wheel)
+  @HostListener('wheel', ['$event'])
+  onWheel(event: WheelEvent) {
+    if (event.ctrlKey) {
+      event.preventDefault();
+
+      const scaleStep = 0.05;
+      if (event.deltaY < 0) {
+        this.zoom += scaleStep;
+      } else {
+        this.zoom = Math.max(0.1, this.zoom - scaleStep);
+      }
+      this.baseScale = this.zoom;
+    }
+  }
+
+
   private setupDb() {
     // if (this.dbSyncService.isEnabled()) {
     //   setTimeout(() => this.dbSyncService.sync(), 10 * 1000);
@@ -76,7 +112,7 @@ export class AppComponent {
 
   hideMainPage(): boolean {
     const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    return s.includes('errors') || s.includes('auths/login');
+    return s.includes('errors') || s.includes('auths/login') || s.includes('auths/change-default-password');
   }
 
   isPublicPage(): boolean {

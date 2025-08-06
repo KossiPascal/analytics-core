@@ -45,7 +45,7 @@ export class NavbarComponent {
     this.isAuthenticated = await this.userCtx.isLoggedIn(this.USER)
 
     this.isOnline = window.navigator.onLine;
-    this.conn.getOnlineStatus().subscribe(isOnline => this.isOnline = isOnline);
+    this.conn.onlineStatus$.subscribe(isOnline => this.isOnline = isOnline);
 
     this.initNavBar();
   }
@@ -55,14 +55,19 @@ export class NavbarComponent {
 
     const routes = [
       { name: 'Rapports', link: '/reports', dataName: 'Rapports', icon: 'fas fa-chart-line' },
-      { name: 'Tableau de bord', link: '/dashboards', dataName: 'Dashboards', icon: 'fas fa-chart-bar' },
-      { name: 'Synchronisation', link: '/managements', dataName: 'Synchronisation', icon: 'fas fa-cogs' },
+      
+      { name: 'Dashboards Mensuels', link: '/dashboards/monthly', dataName: 'Dashboards Mensuels', icon: 'fas fa-chart-bar' },
+      { name: 'Dashboards Dynamique', link: '/dashboards/realtime', dataName: 'Dashboards Dynamique', icon: 'fas fa-chart-bar' },
+      
+      { name: 'Geolocalisation (Maps)', link: '/maps', dataName: 'Maps', icon: 'fas fa-map' }, //map-location
+      { name: 'Managements', link: '/managements', dataName: 'Synchronisation', icon: 'fas fa-cogs' },
       { name: 'Utilisateurs', link: '/users', dataName: 'Utilisateurs', icon: 'fas fa-users-cog' },
       { name: 'Administration', link: '/administration', dataName: 'Administration', icon: 'fas fa-shield-alt' },
       { name: 'Charts', link: '/charts', dataName: 'Charts', icon: 'fas fa-chart-line' },
       { name: 'XlsForms', link: '/xlsform', dataName: 'xlsform', icon: 'fas fa-comments' },
       { name: 'Renderer Form', link: '/rendererform', dataName: 'xlsform', icon: 'fas fa-comments' },
       { name: 'Documentations', link: '/documentations', dataName: 'Publics', icon: 'fas fa-file-alt' },
+      
       // <i class="fas fa-user-cog"></i>
       // <i class="fas fa-user-shield"></i>
       // <i class="fas fa-bell"></i>
@@ -70,12 +75,11 @@ export class NavbarComponent {
       // <i class="fas fa-user"></i>
       // <i class="fas fa-calendar-alt"></i>
     ];
+
     if (this.USER?.role.isSuperUser == true) {
       outputRoutes = routes;
     } else {
-
       const mappedRoutes = (this.USER?.routes ?? []).map(rt => `/${rt.path}`)
-
       for (const route of routes) {
         if (mappedRoutes.includes(route.link)) {
           outputRoutes.push(route);
@@ -168,8 +172,8 @@ export class NavbarComponent {
         let found = false;
 
         $(".menu-item").each((index: number, element: HTMLElement) => {
-          const itemName = $(element).data("name").toLowerCase();
-          if (itemName.includes(searchValue)) {
+          const itemName = $(element).data("name")?.toLowerCase();
+          if (itemName?.includes(searchValue)) {
             $(element).show();
             found = true;
           } else {

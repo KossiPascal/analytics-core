@@ -6,10 +6,7 @@ import { Routes, FullRolesUtils } from "./User";
 let Connection: DataSource = AppDataSource.manager.connection;
 
 @Entity("roles", {
-    orderBy: {
-        name: "ASC",
-        id: "DESC"
-    }
+    orderBy: { name: "ASC", id: "DESC" }
 })
 export class Roles {
     constructor() { };

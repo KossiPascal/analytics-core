@@ -1,0 +1,89 @@
+CREATE MATERIALIZED VIEW IF NOT EXISTS reports_promotional_activities_view AS
+    SELECT 
+        CONCAT(a.month, '-', a.year, '-', a.reco_id) AS id,
+        a.month,
+        a.year,
+        a.reco_id,
+
+        build_promotional_json('sante mère/nouveau-né/enfant', 'is_maternel_childhealth_domain', a.reco_id, a.month, a.year) AS maternel_childhealth_domain,
+        build_promotional_json('Education', 'is_education_domain', a.reco_id, a.month, a.year) AS education_domain,
+        build_promotional_json('Violences basées sur le genre', 'is_gbv_domain', a.reco_id, a.month, a.year) AS gbv_domain,
+        build_promotional_json('Nutrition', 'is_nutrition_domain', a.reco_id, a.month, a.year) AS nutrition_domain,
+        build_promotional_json('Eau-hygiène et assainissemen', 'is_water_hygiene_domain', a.reco_id, a.month, a.year) AS water_hygiene_domain,
+        build_promotional_json('Lutte contre la maladie', 'is_ist_vih_domain', a.reco_id, a.month, a.year) AS ist_vih_domain,
+        build_promotional_json('Lutte contre la maladie', 'is_disease_control_domain', a.reco_id, a.month, a.year) AS disease_control_domain,
+        build_promotional_json('Autre Domaine', 'is_others_domain', a.reco_id, a.month, a.year) AS others_domain,
+        build_promotional_json('Consultation prénatale', 'is_prenatal_consultation_theme', a.reco_id, a.month, a.year) AS prenatal_consultation_theme,
+        build_promotional_json('Accouchement assisté par un personnel qualifié', 'is_birth_attended_theme', a.reco_id, a.month, a.year) AS birth_attended_theme,
+        build_promotional_json('Accouchement', 'is_delivery_theme', a.reco_id, a.month, a.year) AS delivery_theme,
+        build_promotional_json('Enrégistrement d''enfant', 'is_birth_registration_theme', a.reco_id, a.month, a.year) AS birth_registration_theme,
+        build_promotional_json('Suivi post natal', 'is_post_natal_theme', a.reco_id, a.month, a.year) AS post_natal_theme,
+        build_promotional_json('Soins après avortement', 'is_post_abortion_theme', a.reco_id, a.month, a.year) AS post_abortion_theme,
+        build_promotional_json('Fistule obstétricale', 'is_obstetric_fistula_theme', a.reco_id, a.month, a.year) AS obstetric_fistula_theme,
+        build_promotional_json('Planification familiale (PF)', 'is_family_planning_theme', a.reco_id, a.month, a.year) AS family_planning_theme,
+        build_promotional_json('Contraceptifs oraux', 'is_oral_contraceptive_theme', a.reco_id, a.month, a.year) AS oral_contraceptive_theme,
+        build_promotional_json('Vaccination', 'is_vaccination_theme', a.reco_id, a.month, a.year) AS vaccination_theme,
+        build_promotional_json('Prise en charge du nouveau-né à domicile', 'is_newborn_care_home_theme', a.reco_id, a.month, a.year) AS newborn_care_home_theme,
+        build_promotional_json('Prise en charge intégrée des cas de maladies à domicile', 'is_care_home_illness_case_theme', a.reco_id, a.month, a.year) AS care_home_illness_case_theme,
+        build_promotional_json('Soins pour le développement de l’enfant', 'is_child_development_care_theme', a.reco_id, a.month, a.year) AS child_development_care_theme,
+        build_promotional_json('Maltraitance des enfants', 'is_advice_for_child_development_theme', a.reco_id, a.month, a.year) AS advice_for_child_development_theme,
+        build_promotional_json('Conseils à la famille sur les problèmes en matière de soins pour le développement de l’enfant', 'is_child_abuse_theme', a.reco_id, a.month, a.year) AS child_abuse_theme,
+        build_promotional_json('Mutilation Genitale Feminine MGF et le rejet de filles non excise', 'is_female_genital_mutilation_theme', a.reco_id, a.month, a.year) AS female_genital_mutilation_theme,
+        build_promotional_json('Allaitement maternel exclusif', 'is_exclusive_breastfeeding_theme', a.reco_id, a.month, a.year) AS exclusive_breastfeeding_theme,
+        build_promotional_json('Supplémentation en vitamine A', 'is_vitamin_a_supp_theme', a.reco_id, a.month, a.year) AS vitamin_a_supp_theme,
+        build_promotional_json('Alimentation de complément', 'is_suppl_feeding_theme', a.reco_id, a.month, a.year) AS suppl_feeding_theme,
+        build_promotional_json('Malnutrition', 'is_malnutrition_theme', a.reco_id, a.month, a.year) AS malnutrition_theme,
+        build_promotional_json('Lutte contre la carence en iode', 'is_combating_iodine_theme', a.reco_id, a.month, a.year) AS combating_iodine_theme,
+        build_promotional_json('Lavage des mains', 'is_hand_washing_theme', a.reco_id, a.month, a.year) AS hand_washing_theme,
+        build_promotional_json('Assainissement total piloté par la communauté (ATPCtpc)', 'is_community_led_theme', a.reco_id, a.month, a.year) AS community_led_theme,
+        build_promotional_json('Tuberculose', 'is_tuberculosis_theme', a.reco_id, a.month, a.year) AS tuberculosis_theme,
+        build_promotional_json('Lèpre', 'is_leprosy_theme', a.reco_id, a.month, a.year) AS leprosy_theme,
+        build_promotional_json('Ulcère de Buruli', 'is_buruli_ulcer_theme', a.reco_id, a.month, a.year) AS buruli_ulcer_theme,
+        build_promotional_json('Onchocercose', 'is_onchocerciasis_theme', a.reco_id, a.month, a.year) AS onchocerciasis_theme,
+        build_promotional_json('Bilharziose ou schistosomiase', 'is_bilharzia_theme', a.reco_id, a.month, a.year) AS bilharzia_theme,
+        build_promotional_json('Déparasitage de masse', 'is_mass_deworming_theme', a.reco_id, a.month, a.year) AS mass_deworming_theme,
+        build_promotional_json('Trypanosomiase humaine africaine (THA)', 'is_human_african_trypanosomiasis_theme', a.reco_id, a.month, a.year) AS human_african_trypanosomiasis_theme,
+        build_promotional_json('Filariose lymphatique', 'is_lymphatic_theme', a.reco_id, a.month, a.year) AS lymphatic_theme,
+        build_promotional_json('Trachome', 'is_trachoma_theme', a.reco_id, a.month, a.year) AS trachoma_theme,
+        build_promotional_json('IST-VIH/SIDA et les hépatites', 'is_sti_and_hepatitis_theme', a.reco_id, a.month, a.year) AS sti_and_hepatitis_theme,
+        build_promotional_json('Hypertension artérielle', 'is_hypertension_theme', a.reco_id, a.month, a.year) AS hypertension_theme,
+        build_promotional_json('Diabète', 'is_diabetes_theme', a.reco_id, a.month, a.year) AS diabetes_theme,
+        build_promotional_json('Cancers', 'is_cancers_theme', a.reco_id, a.month, a.year) AS cancers_theme,
+        build_promotional_json('Drépanocytose', 'is_sickle_cell_disease_theme', a.reco_id, a.month, a.year) AS sickle_cell_disease_theme,
+        build_promotional_json('Paludisme', 'is_malaria_theme', a.reco_id, a.month, a.year) AS malaria_theme,
+        build_promotional_json('Diarrhée simple', 'is_diarrhea_theme', a.reco_id, a.month, a.year) AS diarrhea_theme,
+        build_promotional_json('Diarrhée sanglante', 'is_bloody_diarrhea_theme', a.reco_id, a.month, a.year) AS bloody_diarrhea_theme,
+        build_promotional_json('Pneumonie', 'is_pneumonia_theme', a.reco_id, a.month, a.year) AS pneumonia_theme,
+        build_promotional_json('Fièvre jaune', 'is_yellow_fever_theme', a.reco_id, a.month, a.year) AS yellow_fever_theme,
+        build_promotional_json('Choléra', 'is_cholera_theme', a.reco_id, a.month, a.year) AS cholera_theme,
+        build_promotional_json('Tetanos', 'is_tetanus_theme', a.reco_id, a.month, a.year) AS tetanus_theme,
+        build_promotional_json('Maladies Virales', 'is_viral_diseases_theme', a.reco_id, a.month, a.year) AS viral_diseases_theme,
+        build_promotional_json('Méningite', 'is_meningitis_theme', a.reco_id, a.month, a.year) AS meningitis_theme,
+        build_promotional_json('PFA', 'is_pfa_theme', a.reco_id, a.month, a.year) AS pfa_theme,
+        build_promotional_json('Perte urinaire', 'is_urine_loss_theme', a.reco_id, a.month, a.year) AS urine_loss_theme,
+        build_promotional_json('Pression artérielle', 'is_blood_pressure_theme', a.reco_id, a.month, a.year) AS blood_pressure_theme,
+        build_promotional_json('VIH', 'is_hiv_theme', a.reco_id, a.month, a.year) AS hiv_theme,
+        build_promotional_json('Autres Infections Sexuellements Transtissibles', 'is_ist_theme', a.reco_id, a.month, a.year) AS ist_theme,
+        build_promotional_json('Autres maladies', 'is_other_theme', a.reco_id, a.month, a.year) AS others_theme,
+        
+        jsonb_build_object('id', MAX(r.id), 'name', MAX(r.name), 'phone', MAX(r.phone)) AS reco,
+        jsonb_build_object('id', MAX(c.id), 'name', MAX(c.name)) AS country,
+        jsonb_build_object('id', MAX(g.id), 'name', MAX(g.name)) AS region,
+        jsonb_build_object('id', MAX(p.id), 'name', MAX(p.name)) AS prefecture,
+        jsonb_build_object('id', MAX(m.id), 'name', MAX(m.name)) AS commune,
+        jsonb_build_object('id', MAX(h.id), 'name', MAX(h.name)) AS hospital,
+        jsonb_build_object('id', MAX(d.id), 'name', MAX(d.name)) AS district_quartier,
+        jsonb_build_object('id', MAX(v.id), 'name', MAX(v.name)) AS village_secteur
+
+    FROM year_month_reco_grid_view a
+    
+        JOIN reco_view r ON r.id = a.reco_id
+        LEFT JOIN country_view c ON r.country_id = c.id 
+        LEFT JOIN region_view g ON r.region_id = g.id 
+        LEFT JOIN prefecture_view p ON r.prefecture_id = p.id 
+        LEFT JOIN commune_view m ON r.commune_id = m.id 
+        LEFT JOIN hospital_view h ON r.hospital_id = h.id 
+        LEFT JOIN district_quartier_view d ON r.district_quartier_id = d.id 
+        LEFT JOIN village_secteur_view v ON r.village_secteur_id = v.id 
+
+    GROUP BY a.reco_id, a.month, a.year;

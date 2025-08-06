@@ -38,7 +38,7 @@
     <div *ngIf="COMPONENT_TYPE == 'update_password'" class="card">
       <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
         <label>Mot de passe actuelle:</label>
-        <input type="password" formControlName="currentPassword" />
+        <input type="password" formControlName="oldPassword" />
   
         <label>Nouveau mot de passe:</label>
         <input type="password" formControlName="newPassword" />

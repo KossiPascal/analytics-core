@@ -1,0 +1,45 @@
+
+<h2>📈 Gestions des vues SQL et migrations</h2>
+<br>
+
+<button style="font-size: 20px;" (click)="runAllMigrationsAvailable()">Excécuter toutes les migrations</button>
+<br>
+<br>
+
+<ng-container *ngIf="MIGRATIONS_LIST as migrations">
+  
+<!-- 
+GET_ERROR : {{ GET_ERROR }}
+<br>
+RUNED_ERROR : {{ RUNED_ERROR }} -->
+
+<div class="table-responsive">
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <!-- <th scope="col">Time</th> -->
+        <!-- <th scope="col">Path</th> -->
+        <th scope="col">Resultat</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+
+        <tr *ngFor="let m of migrations">
+            <td class="" >{{ m.name }}</td>
+            <!-- <td class="" >{{ m.time }}</td> -->
+            <!-- <td class="" >{{ m.path }}</td> -->
+            <td class="" >
+                <ng-container *ngIf="isSuccess(m.name) as sm">
+                    {{ sm == 'ok' ? '&#10003;' : sm == 'no' ? '&times;' : '' }}
+                </ng-container>
+            </td>
+            <td class="" >
+                <button (click)="runOneMigrationAvailable(m.name)">Excécuter</button>
+            </td>
+        </tr>
+    </tbody>
+  </table>
+</div>
+</ng-container>
