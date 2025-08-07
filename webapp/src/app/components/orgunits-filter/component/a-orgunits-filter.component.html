@@ -7,7 +7,7 @@
       <span *ngIf="ON_ALL_FETCHING" class="fas fa-1x fa-sync-alt fa-spin"></span>
     </button>
 
-    <button *ngIf="CAN_ALL_VALIDATE_REPORTS" style="width: auto!important;" [disabled]="ON_ALL_VALIDATION || ON_ALL_CANCEL_VALIDATION || ON_ALL_DHIS2_SENDING || IS_ALL_ON_DHIS2"
+    <button *ngIf="showReportsButton && CAN_ALL_VALIDATE_REPORTS" style="width: auto!important;" [disabled]="ON_ALL_VALIDATION || ON_ALL_CANCEL_VALIDATION || ON_ALL_DHIS2_SENDING || IS_ALL_ON_DHIS2"
       (click)="IS_ALL_REPPORTS_VALIDATED ? CancelAllValidation($event) : ValidateAllReports($event)"
       class="submitBtn btn {{ IS_ALL_REPPORTS_VALIDATED ? 'btn-info' : 'btn-warning' }}">
       <span *ngIf="(ON_ALL_DHIS2_SENDING || IS_ALL_ON_DHIS2)">{{ 'Rapport déja validé' }}</span>
@@ -18,7 +18,7 @@
       <span *ngIf="ON_ALL_VALIDATION || ON_ALL_CANCEL_VALIDATION" class="fas fa-1x fa-sync-alt fa-spin"></span>
     </button>
 
-    <button *ngIf="CAN_ALL_VALIDATE_REPORTS && CAN_SEND_TO_DHIS2" [disabled]="ON_ALL_DHIS2_SENDING || IS_ALL_ON_DHIS2"
+    <button *ngIf="showReportsButton && CAN_ALL_VALIDATE_REPORTS && CAN_SEND_TO_DHIS2" [disabled]="ON_ALL_DHIS2_SENDING || IS_ALL_ON_DHIS2"
       style="width: auto;" class="btn btn-warning" (click)="openAllSendReportsToDhis2Modal($event)">
       {{ IS_ALL_ON_DHIS2 ? 'Déja envoyé au DHIS2' : 'Tout Envoyer Au DHIS2' }}
       <span *ngIf="ON_ALL_DHIS2_SENDING" class="fas fa-1x fa-sync-alt fa-spin"></span>

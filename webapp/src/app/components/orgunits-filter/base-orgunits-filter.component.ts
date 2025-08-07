@@ -33,6 +33,7 @@ export abstract class BaseOrgunitsFilterComponent<T> implements OnInit, OnChange
   protected showMultipleSelectionMonth:boolean = true;
   protected showMonthsSelection:boolean = true;
   protected showYearsSelection:boolean = true;
+  protected showReportsButton:boolean = true;
 
   custumMonths = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
   

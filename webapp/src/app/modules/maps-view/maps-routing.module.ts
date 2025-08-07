@@ -12,8 +12,7 @@ const routes: Routes = [
     data: {
       href: 'maps',
       title: 'RECO MAPS',
-      access: []
-      // access: ['can_view_maps']
+      access: ['can_view_maps']
     },
   },
 ];

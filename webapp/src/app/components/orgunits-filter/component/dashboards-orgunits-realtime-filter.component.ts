@@ -16,6 +16,7 @@ export class DashboardsOrgunitsRealtimeFilterComponent extends BaseOrgunitsFilte
   override showMultipleSelectionMonth = false;
   override showMonthsSelection = false;
   override showYearsSelection = false;
+  override showReportsButton = false;
   
 
   constructor(userCtx: UserContextService, fGroup: FormGroupService, mService: ModalService, snackbar: SnackbarService) {

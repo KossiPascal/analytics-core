@@ -3,17 +3,16 @@ import { Routes, TokenUser, Users, generateSelectedUserOrgUnitsAndContact, getUs
 import { httpHeaders, notEmpty } from '../functions/functions';
 import { Roles, getRolesRepository } from '../entities/Roles';
 import crypto from 'crypto';
-import { ROUTES_LIST, _superuser, can_view_reports, can_logout, can_manage_data, can_view_dashboards, must_change_default_password, can_delete_role, can_delete_user, can_update_role, can_update_user, can_create_user, can_create_role, can_view_roles, can_view_users, AUTHORIZATIONS_LIST, dashboardsRoute, reportsRoute, usersRoute, can_use_offline_mode, roleAuthorizations, _public, can_update_password, can_update_profile, can_view_maps } from '../providers/authorizations-pages';
+import { ROUTES_LIST, _superuser, can_view_reports, can_logout, can_manage_data, can_view_dashboards, must_change_default_password, can_delete_role, can_delete_user, can_update_role, can_update_user, can_create_user, can_create_role, can_view_roles, can_view_users, AUTHORIZATIONS_LIST, dashboardsMonthlyRoute, dashboardsRealtimeRoute, mapsRoute, reportsRoute, usersRoute, can_use_offline_mode, roleAuthorizations, _public, can_update_password, can_update_profile, can_view_maps } from '../providers/authorizations-pages';
 import { COUNTRIES_CUSTOM_QUERY, REGIONS_CUSTOM_QUERY, PREFECTURES_CUSTOM_QUERY, COMMUNES_CUSTOM_QUERY, HOSPITALS_CUSTOM_QUERY, DISTRICTS_QUARTIERS_CUSTOM_QUERY, VILLAGES_SECTEURS_CUSTOM_QUERY, CHWS_CUSTOM_QUERY, RECOS_CUSTOM_QUERY, COMMUNES_MANAGER_CUSTOM_QUERY, COUNTRIES_MANAGER_CUSTOM_QUERY, HOSPITALS_MANAGER_CUSTOM_QUERY, PREFECTURES_MANAGER_CUSTOM_QUERY, REGIONS_MANAGER_CUSTOM_QUERY } from './ORGUNITS/org-units-custom';
 import { APP_ENV } from '../providers/constantes';
 import request from 'request';
 import * as jwt from 'jsonwebtoken';
-import { RecosMap, ChwsMap, VillageSecteursMap, DistrictQuartiersMap, HospitalsMap, CommunesMap, PrefecturesMap, RegionsMap, CountryMap, GetCountryMap, GetRegionsMap, GetPrefecturesMap, GetCommunesMap, GetHospitalsMap, GetDistrictQuartiersMap, GetVillageSecteursMap, GetChwsMap, GetRecosMap } from '../models/org-units/orgunits-map';
+import { RecosMap, ChwsMap, VillageSecteursMap, DistrictQuartiersMap, HospitalsMap, CommunesMap, PrefecturesMap, RegionsMap, CountryMap } from '../models/org-units/orgunits-map';
 import { RecoCustomQuery, ChwCustomQuery, VillageSecteurCustomQuery, DistrictQuartierCustomQuery, HospitalCustomQuery, CommuneCustomQuery, PrefectureCustomQuery, RegionCustomQuery, CountryCustomQuery } from '../models/org-units/orgunits-query';
 import { TransformChwsRecoReports, TransformFamilyPlanningReports, TransformHouseholdRecapReports, TransformMorbidityReports, TransformPcimneNewbornReports, TransformPromotionReports, TransformRecoMegSituationReports } from './REPORTS/transform-reports';
 import { TransformRecoVaccinationDashboard, TransformRecoPerformanceDashboard, TransformActiveRecoDashboard, TransformRecoTasksStateDashboard } from './DASHBOARDS/transform-dashboards';
 import { TransformRecoDataMaps } from './MAPS/transform-maps';
-
 
 
 // import uuidv4 from 'uuid';
@@ -84,12 +83,10 @@ export class AuthUserController {
 
         if (existingRoles === 0) {
 
-            const recoRoutes = [reportsRoute, dashboardsRoute];
-            const managersRoutes = [reportsRoute, dashboardsRoute];
-            const adminRoutes = [reportsRoute, dashboardsRoute];
+            const recoRoutes = [reportsRoute, dashboardsMonthlyRoute, dashboardsRealtimeRoute];
+            const managersRoutes = [reportsRoute, dashboardsMonthlyRoute, dashboardsRealtimeRoute, mapsRoute];
+            const adminRoutes = [reportsRoute, dashboardsMonthlyRoute, dashboardsRealtimeRoute, mapsRoute];
             const usersManagerRoutes = [usersRoute];
-
-
 
             const recoAuthorizations = [_public, can_view_reports, can_view_dashboards, can_use_offline_mode, can_logout];
             const managersAuthorizations = [_public, can_view_reports, can_view_dashboards, can_view_maps, can_manage_data, can_logout, can_update_profile, can_update_password, must_change_default_password];

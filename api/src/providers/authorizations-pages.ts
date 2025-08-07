@@ -141,8 +141,11 @@ export function roleAuthorizations(userAuthorizations: string[], routes: Routes[
 }
 
 
-export const mapsRoute = { path: "dashboards", label: 'DASHBOARDS', authorizations: [can_view_maps, must_change_default_password] };
-export const dashboardsRoute = { path: "dashboards", label: 'DASHBOARDS', authorizations: [can_view_dashboards, must_change_default_password] };
+export const mapsRoute = { path: "maps", label: 'GEO MAPS', authorizations: [can_view_maps, must_change_default_password] };
+
+export const dashboardsMonthlyRoute = { path: "dashboards/monthly", label: 'DASHBOARDS MONTHLY', authorizations: [can_view_dashboards, must_change_default_password] };
+export const dashboardsRealtimeRoute = { path: "dashboards/realtime", label: 'DASHBOARDS REALTIME', authorizations: [can_view_dashboards, must_change_default_password] };
+
 export const reportsRoute = { path: "reports", label: "RAPPORTS", authorizations: [can_view_reports, must_change_default_password] };
 export const usersRoute = { path: "users", label: 'USERS', authorizations: [can_view_users, must_change_default_password] };
 export const managementsRoute = { path: "managements", label: 'MANAGEMENT', authorizations: [can_manage_data, must_change_default_password] };
@@ -151,8 +154,8 @@ export const documentationsRoute = { path: "documentations", label: 'Documentati
 
 export const ROUTES_LIST: Routes[] = [
     mapsRoute,
-    dashboardsRoute,
-    dashboardsRoute,
+    dashboardsMonthlyRoute,
+    dashboardsRealtimeRoute,
     reportsRoute,
     managementsRoute,
     usersRoute,

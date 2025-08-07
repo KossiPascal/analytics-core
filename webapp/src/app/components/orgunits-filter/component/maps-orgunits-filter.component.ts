@@ -14,7 +14,8 @@ import { BaseOrgunitsFilterComponent } from '../base-orgunits-filter.component';
 export class MapsOrgunitsFilterComponent extends BaseOrgunitsFilterComponent<any> {
 
   override showMultipleSelectionMonth = false;
-  
+  override showReportsButton = false;
+
   constructor(userCtx: UserContextService, fGroup: FormGroupService, mService: ModalService, snackbar: SnackbarService) {
     super(
       userCtx,
