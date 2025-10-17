@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "private": true,
-  "repository": "https://github.com/KossiPascal/analytics-core",
+  "repository": "https://github.com/KossiPascal/atlas-kanban",
   "engines": {
     "node": ">=20.11.0",
     "npm": ">=10.2.4"
@@ -13,27 +13,15 @@
   ],
   "funding": {
     "type": "github",
-    "url": "https://github.com/KossiPascal/analytics-core"
+    "url": "https://github.com/KossiPascal/atlas-kanban"
   },
   "scripts": {
-    "build-watch": "cd webapp && npm run simple-build -- --watch=true & node ./scripts/watch.js",
-    "dev-api": "nodemon --watch 'api' --watch 'views/*.json' --watch 'shared-libs/**/*.ts' api/src/server.ts -- --allow-cors --max-old-space-size=4096",
-    "dev-new-api": "nodemon --watch 'new-api' --watch 'views/*.json' --watch 'shared-libs/**/*.ts' new-api/src/server.ts -- --allow-cors",
-    "dev-sentinel": "nodemon --watch 'sentinel' --watch 'views/*.json' --watch 'shared-libs/**/*.ts' sentinel/src/server.ts",
-    "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status && git push -u origin main && git status",
+    "start": "npm run clean & npm run start-api",
     "clean": "npm cache clean --force",
-    "install-app": "npm install",
     "install-api": "cd api && npm install",
-    "install-new-api": "cd new-api && npm install",
-    "install-webapp": "cd webapp && npm install",
-    "install-sentinel": "cd sentinel && npm install",
-    "server-install": "npm run install-app & npm run install-api & npm run install-sentinel",
-    "install-all": "npm run install-app & npm run install-api & npm run install-webapp & npm run install-sentinel",
-    "start": "npm run clean & npm run dev-api & npm run dev-sentinel",
-    "new-start": "npm run clean & npm run dev-new-api & npm run dev-sentinel",
-    "update-service-worker": "node scripts/cli updateServiceWorker",
-    "copy-ngsw": "./scripts/copy-ngsw.sh",
-    "reload": "cp test.ts sentinel/src"
+    "start-api": "cd api && npm run start",
+    "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status && git push -u origin main && git status",
+    "install-webapp": "cd webapp && npm install"
   },
   "author": "Kossi TSOLEGNAGBO",
   "license": "ISC",

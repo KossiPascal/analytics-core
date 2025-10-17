@@ -1,50 +1,63 @@
-<div class="login-body">
-  <!-- Country logo and name at the top-left -->
-  <div class="country-logo">
-    <img src="{{COUNTRY_LOGO}}" alt="Country Logo">
-    <div>
-      <div class="country-name">TABLEAU DE BORD DE KENDEYA</div>
-      <div class="country-subname">Bienvenue dans Kendeya Dashboards</div>
-    </div>
-  </div>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <h2>Welcome Back 👋</h2>
+    <p class="subtitle">Login to access your dashboard</p>
 
+    <form [formGroup]="form" (ngSubmit)="loginWith('email')">
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" required>
+        <mat-error *ngIf="form.get('email')?.hasError('required')">Email is required</mat-error>
+        <mat-error *ngIf="form.get('email')?.hasError('email')">Invalid email</mat-error>
+      </mat-form-field>
 
-  <!-- Login Form Section -->
-  <div class="login-form">
-    <!-- App Logo -->
-    <div class="login-header">
-      <img src="{{APP_LOGO}}" alt="App Logo">
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" required>
+        <mat-error *ngIf="form.get('password')?.hasError('required')">Password is required</mat-error>
+        <mat-error *ngIf="form.get('password')?.hasError('minlength')">Minimum 6 characters</mat-error>
+      </mat-form-field>
 
-      <p class="login-title">Connexion</p>
-    </div>
-
-    <form [formGroup]="loginForm" (ngSubmit)="login()" autocomplete="off" novalidate>
-      <h6 *ngIf="message">{{ message }}</h6>
-
-      <div class="input-group">
-        <span class="input-group-icon"><i class="fas fa-user"></i></span>
-        <input type="text" id="username" formControlName="credential" placeholder="Username" autocomplete="off"
-          autocorrect="off" spellcheck="false" autocapitalize="none" required>
-      </div>
-
-      <br>
-      <div class="input-group">
-        <span class="input-group-icon"><i class="fas fa-lock"></i></span>
-        <input [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password" placeholder="Mot de passe"
-          autocomplete="new-password" autocorrect="off" spellcheck="false" autocapitalize="none" required>
-          <i (click)="togglePasswordVisibility()" class="{{ showPassword ? 'fas fa-eye' : 'fas fa-eye-slash' }}"></i>
-      </div>
-
-      <button [disabled]="!loginForm.valid || isLoading" type="submit" class="login-button">
-        Se connecter
-        <span *ngIf="isLoading" class="fas fa-1x fa-sync-alt fa-spin"></span>
+      <button
+        mat-raised-button
+        color="primary"
+        type="submit"
+        [disabled]="loading || form.invalid"
+        [attr.aria-busy]="loading"
+        [attr.aria-disabled]="loading"
+      >
+        <ng-container *ngIf="!loading">Login</ng-container>
+        <ng-container *ngIf="loading">
+          <mat-progress-spinner
+            diameter="20"
+            mode="indeterminate"
+            color="accent">
+          </mat-progress-spinner>
+          <span class="loading-text">Logging in...</span>
+        </ng-container>
       </button>
-
-      <br><br>
-      <br><br>
-
-      <a class="documentations" href="/documentations" target="_blank" rel="noopener noreferrer">Documentations</a>
-
     </form>
+
+    <div class="oauth-buttons" *ngIf="!loading">
+      <button mat-stroked-button color="accent" (click)="loginWith('google')">
+        <i class="fa-brands fa-google"></i> Login with Google
+      </button>
+      <button mat-stroked-button color="warn" (click)="loginWith('microsoft')">
+        <i class="fa-brands fa-microsoft"></i> Login with Microsoft
+      </button>
+    </div>
+
+    <div class="links" *ngIf="!loading">
+      <a routerLink="/auths/forgot-password">Forgot password?</a>
+      <p>Don't have an account? <a routerLink="/auths/register">Register</a></p>
+    </div>
+
+    <!-- Overlay loader when authenticating -->
+    <div class="overlay" *ngIf="loading">
+      <div class="loader">
+        <div class="spinner"></div>
+        <p>Authenticating...</p>
+      </div>
+    </div>
   </div>
 </div>

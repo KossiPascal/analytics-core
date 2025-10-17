@@ -1,14 +1,12 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
-import { AuthService } from '@kossi-services/auth.service';
-import { UserContextService } from '@kossi-services/user-context.service';
 
 @Component({
   standalone: false,
   selector: 'app-error-page',
   templateUrl: './error-page.component.html',
-  styleUrls: ['./error-page.component.css']
+  styleUrls: ['./error-page.component.scss']
 })
 export class ErrorPageComponent {
   code!: string;
@@ -20,8 +18,6 @@ export class ErrorPageComponent {
   constructor(
     private route: ActivatedRoute,
     private location: Location,
-    private auth: AuthService,
-    private userCtx: UserContextService
   ) {
     this.initialize();
   }
@@ -44,7 +40,7 @@ export class ErrorPageComponent {
     this.showGoToHome = this.code === '401'; // activer bouton "accueil" pour 401 uniquement
 
     if (this.showGoToHome) {
-      this.defaultPage = await this.userCtx.defaultPage();
+      // this.defaultPage = await this.userCtx.defaultPage();
     }
   }
 
@@ -54,7 +50,7 @@ export class ErrorPageComponent {
   }
 
   logout(): void {
-    this.auth.logout();
+    // this.auth.logout();
   }
 
   goToHome(): void {

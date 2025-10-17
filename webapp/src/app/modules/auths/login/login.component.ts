@@ -1,133 +1,61 @@
-import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { LOCAL_REPPORTS_DB_NAME, LOCAL_DASHBOARDS_DB_NAME, DatabaseName } from '@kossi-models/db';
-import { AuthResponse } from '@kossi-models/user-role';
-import { AuthService } from '@kossi-services/auth.service';
-import { ConstanteService } from '@kossi-services/constantes.service';
-import { IndexedDbService } from '@kossi-services/indexed-db.service';
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { AuthService } from '@kba-services/auths.service';
+import { firstValueFrom } from 'rxjs';
+import { User } from '@angular/fire/auth';
+
 
 @Component({
   standalone: false,
   selector: 'app-login',
-  templateUrl: `./login.component.html`,
-  styleUrls: ['./login.component.css'],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss']
 })
-export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
-  message!: string;
+export class LoginComponent {
+  form: FormGroup;
+  loading = false;
+  error: string | null = null;
 
-  isLoading: boolean = false;
-
-  APP_LOGO!: string;
-  COUNTRY_LOGO!: string;
-  APP_NAME!: string;
-
-  showPassword: boolean = false;
-
-  constructor(private cst: ConstanteService, private auth: AuthService, private indexdb: IndexedDbService) {
-    this.APP_LOGO = this.cst.APP_LOGO;
-    this.COUNTRY_LOGO = this.cst.COUNTRY_LOGO;
-    this.APP_NAME = this.cst.APP_TITLE;
-  }
-
-  ngOnInit(): void {
-    // this.auth.isAlreadyLogin;
-    this.loginForm = this.createFormGroup();
-  }
-
-  createFormGroup(): FormGroup {
-    return new FormGroup({
-      credential: new FormControl("", [
-        Validators.required,
-        Validators.minLength(3),
-      ]),
-      password: new FormControl("", [
-        Validators.required,
-        Validators.minLength(8),
-      ]),
-      // rememberMe: new FormControl(false, []),
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router, private snack: MatSnackBar) {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
+  async loginWith(type: 'email' | 'google' | 'microsoft') {
+    if (this.loading) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
+    this.loading = true;
 
-  togglePasswordVisibility(): void {
-    this.showPassword = !this.showPassword;
-  }
+    try {
+      let user: User | null = null;
 
-  login(): void {
-    this.isLoading = true;
-    const { credential, password } = this.loginForm.value;
-    // Appel à la méthode de connexion
-    this.auth.login({ credential, password }).subscribe({
-      next: async (res:AuthResponse) => {
-
-        const username = await this.indexdb.getOne<{ id: string; data: any }>('user_info', 'username');
-
-        if (!username || username.data !== credential) {
-          const dbsName = [...LOCAL_REPPORTS_DB_NAME, ...LOCAL_DASHBOARDS_DB_NAME];
-          for (const name of dbsName) {
-            await this.indexdb.deleteAllFromDB({ dbName: name });
-          }
-
-          await this.indexdb.update<{ id: string; data: any }>({ dbName: 'user_info', newData: { id: 'username', data: credential } }).then(() => {});
-        }
-
-        this.isLoading = false;
-
-        if (res.mustChangeDefaultPassword) {
-          location.href = 'auths/change-default-password';
-          return;
-        }
-
-        console.log(res)
-
-        location.href = 'reports';
-        return;
-      },
-      error: (err: any) => {
-        // Gestion des erreurs
-        this.isLoading = false;
-        this.message = err?.message || 'Erreur lors de la connexion';
+      if (type == 'email') {
+        const { email, password } = this.form.value;
+        user = await firstValueFrom(this.auth.loginWithEmail(email, password));
+      } else if (type == 'google') {
+        user = await firstValueFrom(this.auth.loginWithGoogle());
+      } else if (type == 'microsoft') {
+        user = await firstValueFrom(this.auth.loginWithMicrosoft());
       }
-    });
+
+      if (user) {
+        this.snack.open('Login successful!', 'Close', { duration: 3000 });
+        this.router.navigate(['/tasks']);
+      } else {
+        this.snack.open('Login failed', 'Close', { duration: 5000 });
+      }
+    } catch (err: any) {
+      this.snack.open(err?.message || 'Login failed', 'Close', { duration: 5000 });
+    } finally {
+      this.loading = false;
+    }
   }
-
-  // loginUser(): any {
-  //   this.isLoading = true;
-  //   this.auth.login(this.loginForm.value);
-
-  //   if error
-  //   this.message = res.message;
-  //   this.isLoading = false;
-
-
-  //   return this.api.login()
-  //     .subscribe(async (res: { status: number, token: any, orgunits: any, persons: any, message: any }) => {
-        
-        
-        
-        
-  //       if (res.status === 200) {
-  //         if (res.token && res.orgunits && res.persons) {
-            
-  //           const userData = Object.entries(res).map(([key, value]) => ({ id: key === 'token' ? 'user' : key, data: value }));
-
-  //           await this.indexdb.saveMany<{ id: string, data: string }>({ dbName: 'token', datas: userData });
-
-  //           location.href = 'dashboards';
-  //         }
-  //       } else {
-          
-  //       }
-       
-  //       return;
-  //     }, (err: any) => {
-  //       // this.message = err;
-  //       this.message = 'Erreur de connexion';
-  //       console.log(err);
-  //       this.isLoading = false;
-  //       return;
-  //     });
-  // }
 }

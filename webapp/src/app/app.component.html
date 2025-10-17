@@ -1,39 +1,28 @@
-<ng-container
-  *ngIf="!isChartsPage() && (!isPublicPage() && (!isAuthenticated || hideMainPage()))">
-  <!-- <div class="app-content"> -->
-  <router-outlet></router-outlet>
-  <!-- </div> -->
-</ng-container>
+<!-- <router-outlet></router-outlet> -->
 
-<ng-container
-  *ngIf="!isChartsPage() && (isPublicPage() || (isAuthenticated && !hideMainPage()))">
-
-  <app-navbar></app-navbar>
-  <div class="app-content">
-    <router-outlet></router-outlet>
-  </div>
-  <!-- <div class="app-content">
-
-    <div
-      class="zoom-wrapper"
-      (pinch)="onPinch($event)"
-      (pinchend)="onPinchEnd()"
-      (wheel)="onWheel($event)"
-      [style.transform]="'scale(' + zoom + ')'">
-      <router-outlet></router-outlet>
+<main class="app-shell">
+  <header class="topbar" *ngIf="user">
+    <div class="left">
+      <h1 class="brand">Atlas Tech <span class="muted">• Kanban</span></h1>
+      <nav class="tabs">
+        <button class="tab">Overview</button>
+        <button routerLink="/tasks" class="tab active">Tasks</button>
+        <button class="tab">Notes</button>
+        <button class="tab">Questions</button>
+      </nav>
     </div>
-  </div> -->
+    <div class="right">
+      <button class="btn-ghost">Board <i class="ri-dashboard-line"></i></button>
+      
+      <button (click)="logout()" class="btn-ghost">
+        {{ user.displayName?.split(' ')?.[0] ?? user.email?.split('.')?.[0] ?? 'Logout' }}
+         <i class="fas fa-sign-out-alt"></i>
+        <!-- Logout <i class="fa-solid fa-right-from-bracket"></i> -->
+      </button>
+    </div>
+  </header>
 
-</ng-container>
-
-<ng-container *ngIf="isChartsPage()">
-
-  <app-navbar></app-navbar>
-  <charts-views></charts-views>
-  <!-- <div class="app-content"> -->
-  <router-outlet></router-outlet>
-  <!-- </div> -->
-</ng-container>
-
-<app-snackbar></app-snackbar>
-<device-detection></device-detection>
+  <section class="content">
+     <router-outlet></router-outlet>
+  </section>
+</main>

@@ -1,152 +1,114 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ApiDbService } from '@kba-services/apis/api-db.service';
+import { SocketService } from '@kba-services/socket.service';
+import { TokenRefreshService } from '@kba-services/token-refresh.service';
+import { UserContextService } from '@kba-services/user.context.service';
+import { User } from '@angular/fire/auth';
+import { Subscription } from 'rxjs';
+import { AuthService } from '@kba-services/auths.service';
 import { Router } from '@angular/router';
-import { LocalSyncService } from '@kossi-services/local-sync.service';
-import { PrivacyPoliciesService } from '@kossi-services/privacy-policies.service';
-import { UpdateServiceWorkerService } from '@kossi-services/update-service-worker.service';
-import { UserContextService } from '@kossi-services/user-context.service';
 
 @Component({
   standalone: false,
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit{
+export class AppComponent implements OnInit, OnDestroy {
+  private readonly MAX_RETRIES = 1;
+  private sub?: Subscription;
 
-  private initialisationComplete: boolean = false;
-  private setupPromise: any;
-
-  isAuthenticated!:boolean;
-
-  YEAR:number = new Date().getFullYear();
-  
+  user: User | null = null;
 
   constructor(
-    private userCtx: UserContextService, 
-    private lSync:LocalSyncService,
+    private userCtx: UserContextService,
+    private socket: SocketService,
+    private tokenRefresher: TokenRefreshService,
+    private api: ApiDbService,
+    private authService: AuthService,
+    private router: Router
+  ) { }
 
-    private router: Router,
-    private privacyPoliciesService: PrivacyPoliciesService,
-    private usw: UpdateServiceWorkerService,
-  ) {
-    this.initializeComponent();
-  }
-  ngOnInit(): void {
-    // const isAndroid = /android/i.test(navigator.userAgent);
-    // if (isAndroid) {
-    //   document.body.classList.add('no-pull-to-refresh');
-    // }
-  }
+  async ngOnInit() {
+    // start token refresher/service if you have one (optional)
+    this.tokenRefresher.start();
 
-  private async initializeComponent(){
-    // window.addEventListener('online', () => this.lSync. initializeSync());
-    // window.addEventListener('offline', () => this.lSync.setStatus('offline'));
+    // attend l'initialisation Firebase (réhydratation)
+    await this.userCtx.ensureInitialized();
 
-    this.isAuthenticated = await this.userCtx.isLoggedIn();
-    await this.lSync.initializeSync()
+    // maintenant user$ émettra la valeur actuelle et les suivants
+    this.sub = this.userCtx.user$.subscribe(async (user) => {
+      this.user = user;
 
-
-    if (![4200, '4200'].includes(location.port)) {
-      this.usw.registerServiceWorker();
-      this.setupDb();
-      this.setupPromise = Promise.resolve()
-        .then(() => this.checkPrivacyPolicy())
-        .catch(err => {
-          this.initialisationComplete = true;
-          console.error('Error during initialisation', err);
-          this.router.navigate(['/errors', '503']);
-        });
-      this.usw.watchForChanges();
-      this.requestPersistentStorage();
-      // this.sw.checkForUpdates();
-    }
-
-  }
-
-
-
-  zoom = 1;
-  baseScale = 1;
-
-  // Touch pinch
-  onPinch(event: any) {
-    this.zoom = this.baseScale * event.scale;
-  }
-
-  onPinchEnd() {
-    this.baseScale = this.zoom;
-  }
-
-  // PC trackpad pinch (interpreted as ctrl+wheel)
-  @HostListener('wheel', ['$event'])
-  onWheel(event: WheelEvent) {
-    if (event.ctrlKey) {
-      event.preventDefault();
-
-      const scaleStep = 0.05;
-      if (event.deltaY < 0) {
-        this.zoom += scaleStep;
+      console.log(this.user)
+      if (user) {
+        try {
+          await this.socket.connect();
+          // lancer init sync uniquement si user présent
+          this.initializeComponent();
+        } catch (err) {
+          console.error('[AppInit] Socket connection failed', err);
+        }
       } else {
-        this.zoom = Math.max(0.1, this.zoom - scaleStep);
+        this.socket.disconnect();
       }
-      this.baseScale = this.zoom;
+    });
+  }
+
+  ngOnDestroy() {
+    this.socket.disconnect();
+    this.sub?.unsubscribe();
+  }
+
+  private async initializeComponent(retryCount: number = 0): Promise<void> {
+    if (!this.user) return;
+
+    if (location.port !== '4200') {
+      console.log('[AppInit] Running outside dev environment');
+    }
+
+    try {
+      const syncedToServer = await this.api.syncToServer('tasks');
+
+      if (syncedToServer) {
+        const syncedTasksFromServer = await this.api.syncFromServer('tasks');
+        if (!syncedTasksFromServer) {
+          return this.retryOrStop('syncTasksFromServer failed', retryCount);
+        }
+
+        const syncedUsersFromServer = await this.api.syncFromServer('users', false, true);
+        if (!syncedUsersFromServer) {
+          return this.retryOrStop('syncUsersFromServer failed', retryCount);
+        }
+      } else {
+        return this.retryOrStop('syncToServer failed', retryCount);
+      }
+
+    } catch (error) {
+      console.error('[AppInit] Initialization error:', error);
+      return this.retryOrStop('exception during sync', retryCount);
     }
   }
 
-
-  private setupDb() {
-    // if (this.dbSyncService.isEnabled()) {
-    //   setTimeout(() => this.dbSyncService.sync(), 10 * 1000);
-    // } else {
-    //   console.debug('You have administrative privileges; not replicating');
-    // }
-
-    // if (1==1) {
-    //   this.showSessionExpired();
-    //   setTimeout(() => {
-    //     console.info('Redirect to login after 1 minute of inactivity');
-    //     this.sessionService.navigateToLogin();
-    //   }, 60000);
-    // }
-  }
-
-  hideMainPage(): boolean {
-    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    return s.includes('errors') || s.includes('auths/login') || s.includes('auths/change-default-password');
-  }
-
-  isPublicPage(): boolean {
-    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    return s.includes('public') || s.includes('publics');
-  }
-
-  isChartsPage(): boolean {
-    const s = window.location.pathname.replace(/^\/+|\/+$/g, '');
-    return s.includes('charts') || s.includes('/charts');
-  }
-
-  private requestPersistentStorage() {
-    if (navigator.storage && navigator.storage.persist) {
-      navigator.storage
-        .persist()
-        .then(granted => {
-          if (granted) {
-            console.info('Persistent storage granted: storage will not be cleared except by explicit user action');
-          } else {
-            console.info('Persistent storage denied: storage may be cleared by the UA under storage pressure.');
-          }
-        });
+  private async retryOrStop(reason: string, retryCount: number): Promise<void> {
+    if (retryCount < this.MAX_RETRIES) {
+      console.warn(`[AppInit] Retry (${retryCount + 1}/${this.MAX_RETRIES}) due to: ${reason}`);
+      return this.initializeComponent(retryCount + 1);
+    } else {
+      console.error(`[AppInit] Aborted after ${this.MAX_RETRIES} retries. Last reason: ${reason}`);
     }
   }
 
-
-  private checkPrivacyPolicy() {
-    return this.privacyPoliciesService
-      .hasAccepted()
-      .then(({ privacyPolicy, accepted }: any = {}) => {
-      })
-      .catch(err => console.error('Failed to load privacy policy', err));
+  async logout() {
+    const confirmed = confirm('Are you sure you want to log out?');
+    if (confirmed) {
+      try {
+        await this.authService.logout();
+        await this.router.navigate(['/auths/login']);
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    }
   }
 
 }
-

@@ -42,3 +42,5 @@ testem.log
 Thumbs.db
 
 to_delete
+
+./env.ts
