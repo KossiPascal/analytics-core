@@ -1,0 +1,320 @@
+/* ============================================================================
+   CHART CONTAINER STYLES
+   ============================================================================ */
+
+.chartContainer {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartHeader {
+  margin-bottom: 1rem;
+}
+
+.chartTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.chartSubtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0.25rem 0 0;
+  line-height: 1.4;
+}
+
+.chartWrapper {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(2px);
+  z-index: 10;
+  border-radius: 0.5rem;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   NO DATA STATE
+   ============================================================================ */
+
+.noData {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #64748b);
+  gap: 0.5rem;
+}
+
+.noDataIcon {
+  opacity: 0.5;
+}
+
+.noDataText {
+  font-size: 0.875rem;
+}
+
+/* ============================================================================
+   CUSTOM TOOLTIP
+   ============================================================================ */
+
+.customTooltip {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  padding: 0.75rem 1rem;
+  min-width: 150px;
+}
+
+.tooltipLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.tooltipItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}
+
+.tooltipItemLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.tooltipItemDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.tooltipItemValue {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+/* ============================================================================
+   CUSTOM LEGEND
+   ============================================================================ */
+
+.customLegend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.legendItem:hover {
+  background: var(--bg-hover, #f8fafc);
+}
+
+.legendItemInactive {
+  opacity: 0.4;
+}
+
+.legendItemIcon {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legendItemIconLine {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.legendItemIconCircle {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legendItemText {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #64748b);
+}
+
+/* ============================================================================
+   PIE CHART LABELS
+   ============================================================================ */
+
+.pieLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  fill: var(--text-primary, #1e293b);
+}
+
+.pieLabelLine {
+  stroke: var(--text-secondary, #64748b);
+  stroke-width: 1;
+}
+
+/* ============================================================================
+   ACTIVE DOT
+   ============================================================================ */
+
+.activeDot {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 640px) {
+  .customLegend {
+    gap: 0.5rem;
+  }
+
+  .legendItem {
+    padding: 0.125rem 0.25rem;
+  }
+
+  .legendItemText {
+    font-size: 0.6875rem;
+  }
+
+  .customTooltip {
+    padding: 0.5rem 0.75rem;
+    min-width: 120px;
+  }
+}
+
+/* ============================================================================
+   TREEMAP SPECIFIC
+   ============================================================================ */
+
+.treemapCell {
+  transition: opacity 0.2s;
+}
+
+.treemapCell:hover {
+  opacity: 0.85;
+}
+
+.treemapLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  fill: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================================
+   FUNNEL SPECIFIC
+   ============================================================================ */
+
+.funnelLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ============================================================================
+   DARK MODE SUPPORT
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  .chartTitle {
+    color: #f1f5f9;
+  }
+
+  .chartSubtitle {
+    color: #94a3b8;
+  }
+
+  .customTooltip {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  .tooltipLabel {
+    color: #f1f5f9;
+    border-color: #334155;
+  }
+
+  .tooltipItemLabel {
+    color: #94a3b8;
+  }
+
+  .tooltipItemValue {
+    color: #f1f5f9;
+  }
+
+  .legendItemText {
+    color: #94a3b8;
+  }
+
+  .legendItem:hover {
+    background: #334155;
+  }
+
+  .loadingOverlay {
+    background: rgba(15, 23, 42, 0.8);
+  }
+
+  .noData {
+    color: #94a3b8;
+  }
+}

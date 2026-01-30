@@ -10,7 +10,6 @@
     "copy": "rm -rf ../backend/web/* && cp -r ./dist/* ../backend/web/",
     "watch": "concurrently \"vite build --watch\" \"chokidar dist -c 'npm run copy'\"",
     "watch2": "vite build --watch & chokidar dist -c \"npm run copy\"",
-    "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status && git push -u origin main && git status",
     "preview": "vite preview --port 4173",
     "lint": "eslint ."
   },

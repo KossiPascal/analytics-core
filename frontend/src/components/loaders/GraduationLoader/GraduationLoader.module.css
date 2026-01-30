@@ -1,0 +1,176 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  min-height: 200px;
+}
+
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.graduation {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.cap {
+  position: relative;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.capTop {
+  width: 50px;
+  height: 8px;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  margin: 0 auto;
+  transform: rotate(-5deg);
+  position: relative;
+  z-index: 2;
+}
+
+.capTop::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: #f59e0b;
+  border-radius: 50%;
+}
+
+.capBase {
+  width: 35px;
+  height: 20px;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  margin: -2px auto 0;
+  border-radius: 0 0 8px 8px;
+}
+
+.tassel {
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  width: 3px;
+  height: 25px;
+  background: #f59e0b;
+  transform-origin: top;
+  animation: swing 1s ease-in-out infinite;
+}
+
+.tassel::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: #f59e0b;
+  border-radius: 0 0 4px 4px;
+}
+
+.books {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 15px;
+}
+
+.book {
+  width: 12px;
+  height: 20px;
+  border-radius: 2px;
+  animation: bookPop 0.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.1s);
+}
+
+.book:nth-child(1) {
+  background: #ef4444;
+}
+
+.book:nth-child(2) {
+  background: #22c55e;
+}
+
+.book:nth-child(3) {
+  background: #3b82f6;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dots span {
+  width: 8px;
+  height: 8px;
+  background-color: var(--primary-color, #3b82f6);
+  border-radius: 50%;
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.dots span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.message {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #64748b);
+  text-align: center;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes swing {
+  0%, 100% {
+    transform: rotate(-15deg);
+  }
+  50% {
+    transform: rotate(15deg);
+  }
+}
+
+@keyframes bookPop {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.1);
+  }
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

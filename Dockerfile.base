@@ -58,8 +58,8 @@ ENV PIP_RETRIES=5
 # Copy healthcheck script
 # ============================
 # USER root
-COPY base-healthcheck.sh /app/base-healthcheck.sh
-RUN chmod +x /app/base-healthcheck.sh
+# COPY base-healthcheck.sh /app/base-healthcheck.sh
+# RUN chmod +x /app/base-healthcheck.sh
 
 # # ============================
 # # Create non-root user

@@ -1,0 +1,454 @@
+/* Tabs Container */
+.tabsContainer {
+  margin-bottom: 1.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: #f1f5f9;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #334155;
+}
+
+.tabActive {
+  background: white;
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+}
+
+.tabLabel {
+  display: inline;
+}
+
+/* Tab Content */
+.tabContent {
+  min-height: 400px;
+}
+
+/* Grid Cards */
+.gridCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Guide Card */
+.guideCard {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.guideCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.guideIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: #eff6ff;
+  border-radius: 0.75rem;
+  color: #3b82f6;
+  margin-bottom: 1rem;
+}
+
+.guideTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem;
+}
+
+.guideDescription {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.downloadBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+/* APKs Container */
+.apksContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.apksInfo {
+  text-align: center;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  color: #3b82f6;
+}
+
+.apksInfo h3 {
+  font-size: 1.5rem;
+  margin: 1rem 0 0.5rem;
+  color: #1e293b;
+}
+
+.apksInfo p {
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* APKs List */
+.apksList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.apkCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.apkCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.apkProd {
+  border-left: 4px solid #22c55e;
+}
+
+.apkDev {
+  border-left: 4px solid #f59e0b;
+}
+
+.apkInfo {
+  flex: 1;
+}
+
+.apkHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.apkHeader h4 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #1e293b;
+}
+
+.apkVersion {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.apkInfo p {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.apkMeta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* APKs Note */
+.apksNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #fef3c7;
+  border-radius: 0.5rem;
+  color: #92400e;
+}
+
+.apksNote p {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Training Container */
+.trainingContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.trainingCard {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.trainingCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.trainingHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  color: #3b82f6;
+}
+
+.trainingHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #1e293b;
+}
+
+.trainingDuration {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.trainingDescription {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.trainingTopics {
+  margin-bottom: 1.5rem;
+}
+
+.trainingTopics h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.trainingTopics ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trainingTopics li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.trainingTopics li svg {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.trainingActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Help Container */
+.helpContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.helpSection {
+  margin-bottom: 2rem;
+}
+
+.helpSection:last-child {
+  margin-bottom: 0;
+}
+
+.helpSection h3 {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* FAQ List */
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.faqItem {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.faqItem summary {
+  padding: 1rem;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.2s;
+  list-style: none;
+}
+
+.faqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.faqItem summary::before {
+  content: '+';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+  background: #f1f5f9;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.faqItem[open] summary::before {
+  content: '−';
+  background: #3b82f6;
+  color: white;
+}
+
+.faqItem summary:hover {
+  background: #f8fafc;
+}
+
+.faqItem p {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  padding-left: calc(1rem + 20px + 0.75rem);
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* Contact Info */
+.contactInfo {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+}
+
+.contactInfo p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.contactInfo p:first-child {
+  margin-top: 0;
+}
+
+.contactInfo p:last-child {
+  margin-bottom: 0;
+}
+
+.contactInfo strong {
+  color: #334155;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tabs {
+    justify-content: flex-start;
+    gap: 0.25rem;
+  }
+
+  .tab {
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+  }
+
+  .tabLabel {
+    display: none;
+  }
+
+  .gridCards {
+    grid-template-columns: 1fr;
+  }
+
+  .apkCard {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .apkCard button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .trainingActions {
+    flex-direction: column;
+  }
+
+  .trainingActions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 769px) {
+  .tabLabel {
+    display: inline;
+  }
+}

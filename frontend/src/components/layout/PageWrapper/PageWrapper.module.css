@@ -1,0 +1,26 @@
+.wrapper {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.noPadding .content {
+  padding: 0;
+}
+
+.fullWidth {
+  max-width: 100%;
+}
+
+/* Content */
+.content {
+  width: 100%;
+  padding: var(--spacing-4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content {
+    padding: var(--spacing-3);
+  }
+}

@@ -1,0 +1,322 @@
+{
+  "users": [
+    {
+      "id": "user-001",
+      "username": "admin",
+      "password": "admin123",
+      "fullname": "Administrateur Systeme",
+      "email": "admin@kendeya.com",
+      "phone": "+224620000001",
+      "routes": [
+        { "path": "/dashboards", "label": "Tableaux de bord", "authorizations": ["view_dashboards"] },
+        { "path": "/reports", "label": "Rapports", "authorizations": ["view_reports"] },
+        { "path": "/maps", "label": "Cartes", "authorizations": ["view_maps"] },
+        { "path": "/users", "label": "Utilisateurs", "authorizations": ["view_users"] },
+        { "path": "/roles", "label": "Roles", "authorizations": ["view_roles"] },
+        { "path": "/admin", "label": "Administration", "authorizations": ["admin"] }
+      ],
+      "authorizations": [
+        "view_dashboards", "view_reports", "view_maps", "view_users", "view_roles",
+        "create_user", "update_user", "delete_user", "create_role", "update_role",
+        "delete_role", "manage_data", "validate_data", "send_dhis2", "download_data",
+        "send_sms", "admin"
+      ],
+      "exp": 1768300800,
+      "iat": 1736764800,
+      "rolesIds": [1],
+      "rolesNames": ["Super Administrateur"],
+      "roles": [
+        {
+          "id": 1,
+          "name": "Super Administrateur",
+          "authorizations": ["*"],
+          "routes": ["*"],
+          "isDeleted": false,
+          "deletedAt": null
+        }
+      ],
+      "countries": [
+        { "id": "country-001", "external_id": "GN", "name": "Guinee" }
+      ],
+      "regions": [
+        { "id": "region-001", "external_id": "CKY", "name": "Conakry", "country_id": "country-001" },
+        { "id": "region-002", "external_id": "KND", "name": "Kindia", "country_id": "country-001" }
+      ],
+      "prefectures": [
+        { "id": "pref-001", "external_id": "CKY-P", "name": "Conakry Prefecture", "country_id": "country-001", "region_id": "region-001" },
+        { "id": "pref-002", "external_id": "KND-P", "name": "Kindia Prefecture", "country_id": "country-001", "region_id": "region-002" }
+      ],
+      "communes": [
+        { "id": "comm-001", "external_id": "MTR", "name": "Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001" },
+        { "id": "comm-002", "external_id": "RTM", "name": "Ratoma", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001" }
+      ],
+      "hospitals": [
+        { "id": "hosp-001", "external_id": "CS-MTR", "name": "CS Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001" },
+        { "id": "hosp-002", "external_id": "CS-RTM", "name": "CS Ratoma", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-002" }
+      ],
+      "districtQuartiers": [
+        { "id": "dq-001", "external_id": "DQ-001", "name": "Quartier 1", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001" }
+      ],
+      "villageSecteurs": [
+        { "id": "vs-001", "external_id": "VS-001", "name": "Secteur A", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001", "district_quartier_id": "dq-001" }
+      ],
+      "chws": [
+        { "id": "chw-001", "external_id": "CHW-001", "name": "Agent Sante 1", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001", "district_quartier_id": "dq-001" }
+      ],
+      "recos": [
+        { "id": "reco-001", "external_id": "RECO-001", "name": "RECO Amadou", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001", "district_quartier_id": "dq-001", "village_secteur_id": "vs-001" }
+      ],
+      "role": {
+        "isSuperUser": true,
+        "canUseOfflineMode": true,
+        "canViewMaps": true,
+        "canViewReports": true,
+        "canViewDashboards": true,
+        "canManageData": true,
+        "canCreateUser": true,
+        "canUpdateUser": true,
+        "canDeleteUser": true,
+        "canCreateRole": true,
+        "canUpdateRole": true,
+        "canDeleteRole": true,
+        "canValidateData": true,
+        "canSendDataToDhis2": true,
+        "canViewUsers": true,
+        "canViewRoles": true,
+        "canDownloadData": true,
+        "canSendSms": true,
+        "canLogout": true,
+        "canUpdateProfile": true,
+        "canUpdatePassword": true,
+        "canUpdateLanguage": true,
+        "canViewNotifications": true,
+        "mustChangeDefaultPassword": false
+      },
+      "isActive": true,
+      "userLogo": "",
+      "mustLogin": false,
+      "mustChangeDefaultPassword": false,
+      "hasChangedDefaultPassword": true,
+      "isDeleted": false,
+      "deletedAt": null
+    },
+    {
+      "id": "user-002",
+      "username": "viewer",
+      "password": "viewer123",
+      "fullname": "Utilisateur Consultation",
+      "email": "viewer@kendeya.com",
+      "phone": "+224620000002",
+      "routes": [
+        { "path": "/dashboards", "label": "Tableaux de bord", "authorizations": ["view_dashboards"] },
+        { "path": "/reports", "label": "Rapports", "authorizations": ["view_reports"] },
+        { "path": "/maps", "label": "Cartes", "authorizations": ["view_maps"] }
+      ],
+      "authorizations": ["view_dashboards", "view_reports", "view_maps", "download_data"],
+      "exp": 1768300800,
+      "iat": 1736764800,
+      "rolesIds": [2],
+      "rolesNames": ["Consultant"],
+      "roles": [
+        {
+          "id": 2,
+          "name": "Consultant",
+          "authorizations": ["view_dashboards", "view_reports", "view_maps", "download_data"],
+          "routes": ["/dashboards", "/reports", "/maps"],
+          "isDeleted": false,
+          "deletedAt": null
+        }
+      ],
+      "countries": [
+        { "id": "country-001", "external_id": "GN", "name": "Guinee" }
+      ],
+      "regions": [
+        { "id": "region-001", "external_id": "CKY", "name": "Conakry", "country_id": "country-001" }
+      ],
+      "prefectures": [
+        { "id": "pref-001", "external_id": "CKY-P", "name": "Conakry Prefecture", "country_id": "country-001", "region_id": "region-001" }
+      ],
+      "communes": [
+        { "id": "comm-001", "external_id": "MTR", "name": "Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001" }
+      ],
+      "hospitals": [
+        { "id": "hosp-001", "external_id": "CS-MTR", "name": "CS Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001" }
+      ],
+      "districtQuartiers": [],
+      "villageSecteurs": [],
+      "chws": [],
+      "recos": [],
+      "role": {
+        "isSuperUser": false,
+        "canUseOfflineMode": false,
+        "canViewMaps": true,
+        "canViewReports": true,
+        "canViewDashboards": true,
+        "canManageData": false,
+        "canCreateUser": false,
+        "canUpdateUser": false,
+        "canDeleteUser": false,
+        "canCreateRole": false,
+        "canUpdateRole": false,
+        "canDeleteRole": false,
+        "canValidateData": false,
+        "canSendDataToDhis2": false,
+        "canViewUsers": false,
+        "canViewRoles": false,
+        "canDownloadData": true,
+        "canSendSms": false,
+        "canLogout": true,
+        "canUpdateProfile": true,
+        "canUpdatePassword": true,
+        "canUpdateLanguage": true,
+        "canViewNotifications": true,
+        "mustChangeDefaultPassword": false
+      },
+      "isActive": true,
+      "userLogo": "",
+      "mustLogin": false,
+      "mustChangeDefaultPassword": false,
+      "hasChangedDefaultPassword": true,
+      "isDeleted": false,
+      "deletedAt": null
+    },
+    {
+      "id": "user-003",
+      "username": "manager",
+      "password": "manager123",
+      "fullname": "Gestionnaire Donnees",
+      "email": "manager@kendeya.com",
+      "phone": "+224620000003",
+      "routes": [
+        { "path": "/dashboards", "label": "Tableaux de bord", "authorizations": ["view_dashboards"] },
+        { "path": "/reports", "label": "Rapports", "authorizations": ["view_reports"] },
+        { "path": "/maps", "label": "Cartes", "authorizations": ["view_maps"] },
+        { "path": "/users", "label": "Utilisateurs", "authorizations": ["view_users"] }
+      ],
+      "authorizations": [
+        "view_dashboards", "view_reports", "view_maps", "view_users",
+        "manage_data", "validate_data", "download_data"
+      ],
+      "exp": 1768300800,
+      "iat": 1736764800,
+      "rolesIds": [3],
+      "rolesNames": ["Gestionnaire"],
+      "roles": [
+        {
+          "id": 3,
+          "name": "Gestionnaire",
+          "authorizations": ["view_dashboards", "view_reports", "view_maps", "view_users", "manage_data", "validate_data", "download_data"],
+          "routes": ["/dashboards", "/reports", "/maps", "/users"],
+          "isDeleted": false,
+          "deletedAt": null
+        }
+      ],
+      "countries": [
+        { "id": "country-001", "external_id": "GN", "name": "Guinee" }
+      ],
+      "regions": [
+        { "id": "region-001", "external_id": "CKY", "name": "Conakry", "country_id": "country-001" },
+        { "id": "region-002", "external_id": "KND", "name": "Kindia", "country_id": "country-001" }
+      ],
+      "prefectures": [
+        { "id": "pref-001", "external_id": "CKY-P", "name": "Conakry Prefecture", "country_id": "country-001", "region_id": "region-001" },
+        { "id": "pref-002", "external_id": "KND-P", "name": "Kindia Prefecture", "country_id": "country-001", "region_id": "region-002" }
+      ],
+      "communes": [
+        { "id": "comm-001", "external_id": "MTR", "name": "Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001" },
+        { "id": "comm-002", "external_id": "RTM", "name": "Ratoma", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001" }
+      ],
+      "hospitals": [
+        { "id": "hosp-001", "external_id": "CS-MTR", "name": "CS Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001" },
+        { "id": "hosp-002", "external_id": "CS-RTM", "name": "CS Ratoma", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-002" }
+      ],
+      "districtQuartiers": [
+        { "id": "dq-001", "external_id": "DQ-001", "name": "Quartier 1", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001" }
+      ],
+      "villageSecteurs": [
+        { "id": "vs-001", "external_id": "VS-001", "name": "Secteur A", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001", "district_quartier_id": "dq-001" }
+      ],
+      "chws": [],
+      "recos": [],
+      "role": {
+        "isSuperUser": false,
+        "canUseOfflineMode": true,
+        "canViewMaps": true,
+        "canViewReports": true,
+        "canViewDashboards": true,
+        "canManageData": true,
+        "canCreateUser": false,
+        "canUpdateUser": false,
+        "canDeleteUser": false,
+        "canCreateRole": false,
+        "canUpdateRole": false,
+        "canDeleteRole": false,
+        "canValidateData": true,
+        "canSendDataToDhis2": false,
+        "canViewUsers": true,
+        "canViewRoles": false,
+        "canDownloadData": true,
+        "canSendSms": false,
+        "canLogout": true,
+        "canUpdateProfile": true,
+        "canUpdatePassword": true,
+        "canUpdateLanguage": true,
+        "canViewNotifications": true,
+        "mustChangeDefaultPassword": false
+      },
+      "isActive": true,
+      "userLogo": "",
+      "mustLogin": false,
+      "mustChangeDefaultPassword": false,
+      "hasChangedDefaultPassword": true,
+      "isDeleted": false,
+      "deletedAt": null
+    }
+  ],
+  "tokens": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTAwMSIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlcyI6WyJTdXBlciBBZG1pbmlzdHJhdGV1ciJdLCJpYXQiOjE3MzY3NjQ4MDAsImV4cCI6MTc2ODMwMDgwMH0.mock_signature",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTAwMSIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzM2NzY0ODAwLCJleHAiOjE3NjgzMDA4MDB9.mock_refresh_signature",
+    "expiresIn": 31536000
+  },
+  "orgunits": {
+    "countries": [
+      { "id": "country-001", "external_id": "GN", "name": "Guinee" }
+    ],
+    "regions": [
+      { "id": "region-001", "external_id": "CKY", "name": "Conakry", "country_id": "country-001" },
+      { "id": "region-002", "external_id": "KND", "name": "Kindia", "country_id": "country-001" }
+    ],
+    "prefectures": [
+      { "id": "pref-001", "external_id": "CKY-P", "name": "Conakry Prefecture", "country_id": "country-001", "region_id": "region-001" },
+      { "id": "pref-002", "external_id": "KND-P", "name": "Kindia Prefecture", "country_id": "country-001", "region_id": "region-002" }
+    ],
+    "communes": [
+      { "id": "comm-001", "external_id": "MTR", "name": "Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001" },
+      { "id": "comm-002", "external_id": "RTM", "name": "Ratoma", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001" }
+    ],
+    "hospitals": [
+      { "id": "hosp-001", "external_id": "CS-MTR", "name": "CS Matoto", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001" },
+      { "id": "hosp-002", "external_id": "CS-RTM", "name": "CS Ratoma", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-002" }
+    ],
+    "districtQuartiers": [
+      { "id": "dq-001", "external_id": "DQ-001", "name": "Quartier 1", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001" }
+    ],
+    "villageSecteurs": [
+      { "id": "vs-001", "external_id": "VS-001", "name": "Secteur A", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001", "district_quartier_id": "dq-001" }
+    ],
+    "chws": [
+      { "id": "chw-001", "external_id": "CHW-001", "name": "Agent Sante 1", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001", "district_quartier_id": "dq-001" }
+    ],
+    "recos": [
+      { "id": "reco-001", "external_id": "RECO-001", "name": "RECO Amadou", "country_id": "country-001", "region_id": "region-001", "prefecture_id": "pref-001", "commune_id": "comm-001", "hospital_id": "hosp-001", "district_quartier_id": "dq-001", "village_secteur_id": "vs-001" }
+    ]
+  },
+  "persons": {
+    "chws": [
+      { "id": "chw-001", "name": "Agent Sante 1", "phone": "+224620001001" }
+    ],
+    "recos": [
+      { "id": "reco-001", "name": "RECO Amadou", "phone": "+224620002001" }
+    ]
+  }
+}

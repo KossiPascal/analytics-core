@@ -1,0 +1,21 @@
+{
+  "name": "analytics-core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status && git push -u origin main && git status",
+    "test": "echo \"Error: no test specified\" && exit 1"
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KossiPascal/analytics-core.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/KossiPascal/analytics-core/issues"
+  },
+  "homepage": "https://github.com/KossiPascal/analytics-core#readme"
+}
