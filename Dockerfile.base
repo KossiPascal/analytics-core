@@ -1,0 +1,68 @@
+# ============================
+# Base Python Image
+# ============================
+FROM python:3.11.8-slim
+
+LABEL maintainer="analytics-core"
+LABEL stage="base"
+
+# ============================
+# System dependencies
+# ============================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    gcc \
+    libpq-dev \
+    libffi-dev \
+    libssl-dev \
+    curl \
+    netcat-openbsd \
+    postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
+
+
+# ============================
+# Environnement virtuel
+# ============================
+RUN python3 -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
+# ============================
+# Upgrade pip and setuptools
+# ============================
+RUN pip install --upgrade pip setuptools wheel
+
+# ============================
+# App directory
+# ============================
+WORKDIR /app
+
+# ============================
+# Install Python dependencies
+# ============================
+COPY requirements.txt .
+RUN pip install --no-cache-dir --default-timeout=200 --retries=5 -r requirements.txt
+
+# ============================
+# Environment variables
+# ============================
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_DEFAULT_TIMEOUT=200
+ENV PIP_RETRIES=5
+
+# ============================
+# Copy healthcheck script
+# ============================
+# USER root
+COPY base-healthcheck.sh /app/base-healthcheck.sh
+RUN chmod +x /app/base-healthcheck.sh
+
+# # ============================
+# # Create non-root user
+# # ============================
+# RUN useradd -m appuser
+# USER appuser

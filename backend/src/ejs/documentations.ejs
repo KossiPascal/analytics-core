@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Documentation officielle de l’API Vaccination" />
+  <title>API – Documentation officielle</title>
+
+  <style>
+    :root {
+      --primary: #0066cc;
+      --bg-light: #f5f7fa;
+      --border: #e0e0e0;
+      --text: #333;
+      --code-bg: #f0f0f0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.7;
+      margin: 0;
+      background: #fff;
+      color: var(--text);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 32px;
+    }
+
+    header,
+    footer {
+      background: var(--bg-light);
+      padding: 24px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 34px;
+      color: var(--primary);
+    }
+
+    h2 {
+      margin-top: 48px;
+      font-size: 26px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      margin-top: 32px;
+      font-size: 20px;
+      color: #444;
+    }
+
+    p {
+      margin: 12px 0;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    thead th {
+      background-color: var(--bg-light);
+      font-weight: 600;
+    }
+
+    code {
+      background: var(--code-bg);
+      padding: 4px 6px;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #000;
+    }
+
+    pre {
+      background: #1e1e1e;
+      color: #f8f8f2;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    footer p {
+      font-size: 14px;
+      margin: 6px 0;
+      color: #555;
+    }
+
+    @media (max-width: 768px) {
+      main {
+        padding: 20px;
+      }
+
+      header h1 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>API – Documentation officielle</h1>
+</header>
+
+<main>
+
+  <section>
+    <h2>1. Endpoints disponibles</h2>
+    <ul>
+      <li><strong>GET</strong> <code>/api/documentations</code> — Documentation de l’API</li>
+      <li><strong>GET</strong> <code>/api/vaccine</code> — Données de suivi de vaccination</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Sécurité</h2>
+    <ul>
+      <li>Toutes les routes <code>/api/*</code> sont protégées</li>
+      <li><strong>HTTPS obligatoire</strong> lorsque <code>IS_SECURE_MODE=true</code></li>
+      <li>Clé API requise via le paramètre <code>api_access_key</code></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. Paramètres communs</h2>
+
+    <table aria-label="Paramètres communs">
+      <thead>
+        <tr>
+          <th>Paramètre</th>
+          <th>Type</th>
+          <th>Requis</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>api_access_key</td>
+          <td>string</td>
+          <td>Oui</td>
+          <td>Clé d’accès API valide</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. Endpoint : <code>/api/vaccine</code></h2>
+
+    <h3>Paramètres spécifiques</h3>
+
+    <table aria-label="Paramètres spécifiques vaccine">
+      <thead>
+        <tr>
+          <th>Paramètre</th>
+          <th>Type</th>
+          <th>Requis</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>state</td>
+          <td>string</td>
+          <td>Oui</td>
+          <td>
+            Valeurs possibles :
+            <ul>
+              <li><code>not_done</code> : Liste des enfants avec un statut vaccinal non à jour</li>
+              <li><code>all_done</code> : Liste des enfants avec un statut vaccinal à jour</li>
+              <li><code>partial_done</code> : Liste des enfants avec un statut vaccinal partiellement à jour</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td>year</td>
+          <td>number</td>
+          <td>Oui</td>
+          <td>Année sur 4 chiffres (ex : 2025)</td>
+        </tr>
+        <tr>
+          <td>recos</td>
+          <td>string</td>
+          <td>Oui</td>
+          <td>
+            <ul>
+              <li>Liste d’identifiants RECO séparés par des virgules</li>
+              <li>Valeurs spéciales : <code>*</code>, <code>all</code></li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td>months</td>
+          <td>string</td>
+          <td>Oui</td>
+          <td>
+            <ul>
+              <li>Mois au format <code>MM</code> séparés par des virgules</li>
+              <li>Valeurs spéciales : <code>*</code>, <code>all</code></li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. Exemple de requête</h2>
+
+    <p><strong>Formats disponibles :</strong></p>
+    <ul>
+      <li>JSON : <code>/api/vaccine</code> ou <code>/api/vaccine.json</code></li>
+      <li>CSV : <code>/api/vaccine.csv</code></li>
+    </ul>
+
+    <pre><code>GET /api/vaccine?api_access_key=XXXX&state=not_done&year=2025&recos=RECO_ID_1,RECO_ID_2&months=01,02,03</code></pre>
+  </section>
+
+  <section>
+    <h2>6. Réponses possibles</h2>
+
+    <ul>
+      <li>Données JSON de vaccination selon le paramètre <code>state</code></li>
+      <li>Erreur JSON si paramètres invalides</li>
+      <li><code>401 Unauthorized</code> si la clé API est invalide</li>
+    </ul>
+
+    <h3>Exemple de réponse JSON</h3>
+
+    <pre><code>{
+  "id": "01-2026-03ad56a2-c08f-4d3c-b23a-f74fddd32338",
+  "month": "01",
+  "year": 2026,
+  "reco_id": "03ad56a2-c08f-4d3c-b23a-f74fddd32338",
+  "children_vaccines": [ ... ],
+  "reco": { "name": "RECO Layba CONDE" },
+  "country": { "name": "Guinée" }
+}</code></pre>
+
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2024 – API Documentation</p>
+  <p>Made with ❤️ by <strong>Kossi TSOLEGNAGBO</strong></p>
+</footer>
+
+</body>
+</html>

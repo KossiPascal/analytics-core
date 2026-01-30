@@ -1,0 +1,79 @@
+{
+  "from": "orders",
+
+  "joins": [
+    {
+      "table": "customers",
+      "type": "inner",
+      "on": {
+        "left": "orders.customer_id",
+        "right": "customers.id"
+      }
+    },
+    {
+      "table": "countries",
+      "type": "left",
+      "on": {
+        "left": "customers.country_id",
+        "right": "countries.id"
+      }
+    }
+  ],
+
+  "select": ["countries.name", "orders.order_date", "total_amount", "order_count"],
+
+  "aggregations": {
+    "total_amount": "sum",
+    "order_count": "count"
+  },
+
+  "filters": [
+    {
+      "field": "orders.order_date",
+      "op": "between",
+      "value": ["2024-01-01", "2024-12-31"]
+    },
+    {
+      "field": "customers.status",
+      "op": "=",
+      "value": "active"
+    },
+    {
+      "field": "countries.name",
+      "op": "in",
+      "value": ["France", "Germany", "Spain"]
+    },
+    {
+      "field": "orders.channel",
+      "op": "like",
+      "value": "%online%"
+    }
+  ],
+
+  "group_by": [
+    "countries.name",
+    "orders.order_date"
+  ],
+
+  "having": [
+    {
+      "field": "total_amount",
+      "op": ">=",
+      "value": 10000
+    }
+  ],
+
+  "order_by": [
+    {
+      "field": "total_amount",
+      "direction": "desc"
+    },
+    {
+      "field": "orders.order_date",
+      "direction": "asc"
+    }
+  ],
+
+  "limit": 100,
+  "offset": 0
+}
