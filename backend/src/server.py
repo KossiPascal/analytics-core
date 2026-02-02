@@ -153,9 +153,19 @@ def create_app():
     def serve_frontend(path):
         if path.startswith("api"):
             return jsonify({"error": "Not found"}), 404
+
         file_path = Path(app.static_folder) / path
+
+        # Si le fichier existe, le servir directement
         if path and file_path.exists():
             return send_from_directory(app.static_folder, path)
+
+        # Pour les assets (css, js, images, fonts), renvoyer 404 si non trouvé
+        asset_extensions = ('.css', '.js', '.map', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot')
+        if path and (path.startswith('assets/') or path.endswith(asset_extensions)):
+            return jsonify({"error": "Asset not found"}), 404
+
+        # Pour les autres routes (SPA), renvoyer index.html
         return send_from_directory(app.static_folder, "index.html")
 
     # HEALTHCHECK

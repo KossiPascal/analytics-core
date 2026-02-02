@@ -387,7 +387,7 @@
   border-radius: var(--qb-radius-lg);
   box-shadow: var(--qb-shadow-sm);
   margin-bottom: 16px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--qb-border);
   transition: var(--qb-transition);
 }
@@ -657,7 +657,384 @@
 }
 
 /* ============================================================================
-   TABLE SELECTOR
+   DATA SOURCES
+   ============================================================================ */
+
+.dataSourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.dataSourceCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--qb-bg-card);
+  border: 2px solid var(--qb-border);
+  border-radius: var(--qb-radius-lg);
+  cursor: grab;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: visible;
+}
+
+.dataSourceCard:hover {
+  border-color: var(--qb-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--qb-shadow);
+}
+
+.dataSourceCard:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+.dataSourceCardDragging {
+  opacity: 0.5;
+  border-color: var(--qb-primary);
+  box-shadow: var(--qb-shadow-lg);
+}
+
+.dataSourceIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--qb-primary) 0%, var(--qb-secondary) 100%);
+  border-radius: var(--qb-radius);
+  color: white;
+}
+
+.dataSourceIconTable {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.dataSourceIconView {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.dataSourceIconMaterialized {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.dataSourceName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--qb-text);
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dataSourceType {
+  font-size: 0.6875rem;
+  color: var(--qb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dataSourceMenu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.dataSourceMenuButton {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--qb-text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: var(--qb-transition-fast);
+  padding: 0;
+}
+
+.dataSourceMenuButton:hover {
+  color: var(--qb-primary);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dataSourceMenuList {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+  padding: 6px;
+  background: var(--qb-bg-card);
+  border: 1px solid var(--qb-border);
+  border-radius: var(--qb-radius);
+  box-shadow: var(--qb-shadow-lg);
+  z-index: 1000;
+}
+
+.dataSourceMenuItem {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  color: var(--qb-text);
+  cursor: pointer;
+  transition: var(--qb-transition-fast);
+}
+
+.dataSourceMenuItem:hover {
+  background: var(--qb-bg-hover);
+}
+
+/* Source Type Filter */
+.sourceTypeFilter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.sourceTypeBtn {
+  padding: 6px 14px;
+  border: 1px solid var(--qb-border);
+  border-radius: 20px;
+  background: var(--qb-bg-card);
+  color: var(--qb-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--qb-transition-fast);
+}
+
+.sourceTypeBtn:hover {
+  border-color: var(--qb-primary);
+  color: var(--qb-primary);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.sourceTypeBtnActive {
+  background: linear-gradient(135deg, var(--qb-primary) 0%, var(--qb-secondary) 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.sourceTypeBtnActive:hover {
+  background: linear-gradient(135deg, var(--qb-primary-dark) 0%, #5558e3 100%);
+  color: white;
+  border-color: transparent;
+}
+
+/* Selected Source Card */
+.dataSourceCardSelected {
+  border-color: var(--qb-primary);
+  background: rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.dataSourceCardSelected::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 10px;
+  height: 10px;
+  background: var(--qb-primary);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* Selected Source Header in Sidebar */
+.selectedSourceHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+  border-bottom: 1px solid var(--qb-border);
+}
+
+.selectedSourceInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.selectedSourceIcon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--qb-primary) 0%, var(--qb-secondary) 100%);
+  border-radius: var(--qb-radius-sm);
+  color: white;
+}
+
+.selectedSourceText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selectedSourceLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--qb-text);
+}
+
+.selectedSourceType {
+  font-size: 0.6875rem;
+  color: var(--qb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selectedSourceClear {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--qb-text-light);
+  cursor: pointer;
+  border-radius: var(--qb-radius-sm);
+  transition: var(--qb-transition);
+}
+
+.selectedSourceClear:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--qb-danger);
+}
+
+/* FROM Drop Zone */
+.fromDropZone {
+  min-height: 80px;
+  border: 2px dashed var(--qb-border);
+  border-radius: var(--qb-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  background: var(--qb-bg);
+}
+
+.fromDropZone:hover {
+  border-color: var(--qb-primary);
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.fromDropZoneActive {
+  border-color: var(--qb-primary);
+  background: rgba(59, 130, 246, 0.08);
+  border-style: solid;
+}
+
+.fromDropZoneText {
+  color: var(--qb-text-muted);
+  font-size: 0.875rem;
+}
+
+.fromDropZoneIcon {
+  color: var(--qb-text-light);
+}
+
+.fromSelectedTable {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+  border: 2px solid var(--qb-primary);
+  border-radius: var(--qb-radius-lg);
+  animation: fadeInScale 0.3s ease;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fromSelectedIcon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--qb-primary) 0%, var(--qb-secondary) 100%);
+  border-radius: var(--qb-radius);
+  color: white;
+}
+
+.fromSelectedInfo {
+  flex: 1;
+}
+
+.fromSelectedName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--qb-text);
+}
+
+.fromSelectedId {
+  font-size: 0.75rem;
+  color: var(--qb-text-muted);
+  margin-top: 2px;
+}
+
+.fromSelectedRemove {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--qb-text-light);
+  cursor: pointer;
+  border-radius: var(--qb-radius);
+  transition: var(--qb-transition);
+}
+
+.fromSelectedRemove:hover {
+  background: var(--qb-danger);
+  color: white;
+}
+
+/* ============================================================================
+   TABLE SELECTOR (Legacy - kept for compatibility)
    ============================================================================ */
 
 .tableSelector {
@@ -709,39 +1086,43 @@
 
 .tableOptionMenu {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .tableOptionMenuButton {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid var(--qb-border);
-  background: var(--qb-bg-card);
-  color: var(--qb-text);
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--qb-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: var(--qb-transition-fast);
-  box-shadow: var(--qb-shadow-sm);
+  padding: 0;
 }
 
 .tableOptionMenuButton:hover {
-  border-color: var(--qb-primary);
-  background: var(--qb-primary);
-  color: white;
-  box-shadow: var(--qb-shadow);
+  color: var(--qb-primary);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.tableOptionMenuButton:active {
+  color: var(--qb-primary-dark);
 }
 
 .tableOptionMenuList {
   position: absolute;
-  top: 32px;
+  bottom: 100%;
   right: 0;
+  margin-bottom: 4px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -750,8 +1131,8 @@
   background: var(--qb-bg-card);
   border: 1px solid var(--qb-border);
   border-radius: var(--qb-radius);
-  box-shadow: var(--qb-shadow);
-  z-index: 10;
+  box-shadow: var(--qb-shadow-lg);
+  z-index: 1000;
 }
 
 .tableOptionMenuItem {

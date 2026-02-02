@@ -20,7 +20,7 @@ import DropZone from './DropZone';
 import SelectedField from './SelectedField';
 import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
-import styles from '../styles/QueryBuilder.module.css';
+import styles from '../QueryBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
@@ -50,6 +50,15 @@ const AGGREGATION_OPTIONS: { value: AggregationType; label: string }[] = [
   { value: 'distinct', label: 'DISTINCT' },
 ];
 
+type SourceType = 'all' | 'table' | 'view' | 'materialized_view';
+
+const SOURCE_TYPE_FILTERS: { value: SourceType; label: string }[] = [
+  { value: 'all', label: 'Tout' },
+  { value: 'table', label: 'Tables' },
+  { value: 'view', label: 'Vues' },
+  { value: 'materialized_view', label: 'Vues mat.' },
+];
+
 const generateAlias = (label: string): string => {
   return label
     .toLowerCase()
@@ -69,6 +78,44 @@ const Icons = {
       <rect x="2" y="2" width="12" height="12" rx="2" />
       <line x1="2" y1="6" x2="14" y2="6" />
       <line x1="6" y1="6" x2="6" y2="14" />
+    </svg>
+  ),
+  tableLarge: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="2" y="2" width="16" height="16" rx="2" />
+      <line x1="2" y1="7" x2="18" y2="7" />
+      <line x1="7" y1="7" x2="7" y2="18" />
+    </svg>
+  ),
+  view: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="10" cy="10" r="3" />
+      <path d="M2 10C4 6 7 4 10 4C13 4 16 6 18 10C16 14 13 16 10 16C7 16 4 14 2 10Z" />
+    </svg>
+  ),
+  materializedView: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="3" y="3" width="14" height="14" rx="2" />
+      <path d="M7 10L9 12L13 8" />
+    </svg>
+  ),
+  database: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <ellipse cx="8" cy="4" rx="5" ry="2" />
+      <path d="M3 4V12C3 13.1 5.24 14 8 14C10.76 14 13 13.1 13 12V4" />
+      <path d="M3 8C3 9.1 5.24 10 8 10C10.76 10 13 9.1 13 8" />
+    </svg>
+  ),
+  dropHere: (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="3" y="3" width="18" height="18" rx="3" strokeDasharray="4 2" />
+      <path d="M12 8V16M8 12H16" />
+    </svg>
+  ),
+  customMetric: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 5V8L10 10" />
     </svg>
   ),
   select: (
@@ -120,10 +167,10 @@ const Icons = {
     </svg>
   ),
   more: (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-      <circle cx="3.5" cy="8" r="1.5" />
-      <circle cx="8" cy="8" r="1.5" />
-      <circle cx="12.5" cy="8" r="1.5" />
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor">
+      <circle cx="9" cy="4" r="1.8" />
+      <circle cx="9" cy="9" r="1.8" />
+      <circle cx="9" cy="14" r="1.8" />
     </svg>
   ),
 };
@@ -158,6 +205,8 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
   const [tableMenuOpenId, setTableMenuOpenId] = useState<string | null>(null);
   const [definitionTableId, setDefinitionTableId] = useState<string | null>(null);
   const [metricsTableId, setMetricsTableId] = useState<string | null>(null);
+  const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>('all');
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tableMenuOpenId) return;
@@ -182,9 +231,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
       if (selection?.metric && !baseMetricIds.has(dimension.id)) {
         additionalMetrics.push({
           id: dimension.id,
-          label: dimension.label,
+          label: selection.metricLabel || dimension.label,
           table: dimension.table,
-          defaultAgg: dimension.type === 'number' ? 'sum' : 'count',
+          defaultAgg: selection.aggregationType || (dimension.type === 'number' ? 'sum' : 'count'),
           returnType: 'number',
         });
       }
@@ -284,6 +333,51 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     [availableDimensions, availableMetrics]
   );
 
+  // Custom metrics (created by user via definitions modal)
+  const customMetrics = useMemo(() => {
+    const baseMetricIds = new Set(model.metrics.map((m) => m.id));
+    return availableMetrics.filter((m) => !baseMetricIds.has(m.id));
+  }, [model.metrics, availableMetrics]);
+
+  // Base metrics (original metrics from model)
+  const baseMetrics = useMemo(() => {
+    const baseMetricIds = new Set(model.metrics.map((m) => m.id));
+    return availableMetrics.filter((m) => baseMetricIds.has(m.id));
+  }, [model.metrics, availableMetrics]);
+
+  // Filter sources by type
+  const filteredSources = useMemo(() => {
+    if (sourceTypeFilter === 'all') return model.tables;
+    return model.tables.filter((table) => {
+      const tableType = (table as { type?: string }).type || 'table';
+      return tableType === sourceTypeFilter;
+    });
+  }, [model.tables, sourceTypeFilter]);
+
+  // Dimensions filtered by selected source
+  const sidebarDimensions = useMemo(() => {
+    if (!selectedSourceId) return availableDimensions;
+    return availableDimensions.filter((d) => d.table === selectedSourceId);
+  }, [availableDimensions, selectedSourceId]);
+
+  // Base metrics filtered by selected source
+  const sidebarBaseMetrics = useMemo(() => {
+    if (!selectedSourceId) return baseMetrics;
+    return baseMetrics.filter((m) => m.table === selectedSourceId);
+  }, [baseMetrics, selectedSourceId]);
+
+  // Custom metrics filtered by selected source
+  const sidebarCustomMetrics = useMemo(() => {
+    if (!selectedSourceId) return customMetrics;
+    return customMetrics.filter((m) => m.table === selectedSourceId);
+  }, [customMetrics, selectedSourceId]);
+
+  // Selected source info
+  const selectedSource = useMemo(
+    () => model.tables.find((t) => t.id === selectedSourceId) ?? null,
+    [model.tables, selectedSourceId]
+  );
+
   const definitionTable = useMemo(
     () => model.tables.find((table) => table.id === definitionTableId) ?? null,
     [definitionTableId, model.tables]
@@ -345,9 +439,12 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
       <main className={styles.main}>
         {/* Sidebar - Field Palette */}
         <FieldPalette
-          dimensions={availableDimensions}
-          metrics={availableMetrics}
+          dimensions={sidebarDimensions}
+          metrics={sidebarBaseMetrics}
+          customMetrics={sidebarCustomMetrics}
           onFieldClick={handleFieldClick}
+          selectedSource={selectedSource}
+          onClearSelection={() => setSelectedSourceId(null)}
         />
 
         {/* Workspace */}
@@ -365,81 +462,187 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
               </div>
             )}
 
-            {/* FROM - Table Selection */}
+            {/* Sources de données */}
+            <CollapsibleSection
+              title="Sources de données"
+              icon={Icons.database}
+              iconClassName={styles.sectionIconFrom}
+              defaultOpen={true}
+            >
+              {/* Filtre par type */}
+              <div className={styles.sourceTypeFilter}>
+                {SOURCE_TYPE_FILTERS.map((filter) => (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    className={`${styles.sourceTypeBtn} ${sourceTypeFilter === filter.value ? styles.sourceTypeBtnActive : ''}`}
+                    onClick={() => setSourceTypeFilter(filter.value)}
+                  >
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className={styles.dataSourcesGrid}>
+                {filteredSources.map((table) => {
+                  const tableType = (table as { type?: string }).type || 'table';
+                  const isSelected = selectedSourceId === table.id;
+                  const iconClass = tableType === 'view'
+                    ? styles.dataSourceIconView
+                    : tableType === 'materialized_view'
+                      ? styles.dataSourceIconMaterialized
+                      : styles.dataSourceIconTable;
+                  const icon = tableType === 'view'
+                    ? Icons.view
+                    : tableType === 'materialized_view'
+                      ? Icons.materializedView
+                      : Icons.tableLarge;
+                  const typeLabel = tableType === 'view'
+                    ? 'Vue'
+                    : tableType === 'materialized_view'
+                      ? 'Vue mat.'
+                      : 'Table';
+
+                  return (
+                    <div
+                      key={table.id}
+                      className={`${styles.dataSourceCard} ${isSelected ? styles.dataSourceCardSelected : ''}`}
+                      draggable={!readOnly}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('application/json', JSON.stringify({ type: 'table', id: table.id }));
+                        e.currentTarget.classList.add(styles.dataSourceCardDragging);
+                      }}
+                      onDragEnd={(e) => {
+                        e.currentTarget.classList.remove(styles.dataSourceCardDragging);
+                      }}
+                      onClick={() => {
+                        if (readOnly) return;
+                        // Clic = sélectionner la source pour afficher ses champs dans la sidebar
+                        setSelectedSourceId((prev) => (prev === table.id ? null : table.id));
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className={`${styles.dataSourceIcon} ${iconClass}`}>
+                        {icon}
+                      </div>
+                      <span className={styles.dataSourceName}>{table.label}</span>
+                      <span className={styles.dataSourceType}>{typeLabel}</span>
+                      <div
+                        className={styles.dataSourceMenu}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          className={styles.dataSourceMenuButton}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setTableMenuOpenId((prev) => (prev === table.id ? null : table.id));
+                          }}
+                          aria-label={`Options pour ${table.label}`}
+                        >
+                          {Icons.more}
+                        </button>
+                        {tableMenuOpenId === table.id && (
+                          <div className={styles.dataSourceMenuList} role="menu">
+                            <button
+                              type="button"
+                              className={styles.dataSourceMenuItem}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setDefinitionTableId(table.id);
+                                setTableMenuOpenId(null);
+                              }}
+                              role="menuitem"
+                            >
+                              Définitions
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.dataSourceMenuItem}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setMetricsTableId(table.id);
+                                setTableMenuOpenId(null);
+                              }}
+                              role="menuitem"
+                            >
+                              Métriques
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {filteredSources.length === 0 && (
+                <div className={styles.emptyState} style={{ padding: '20px' }}>
+                  <div className={styles.emptyStateText}>Aucune source de ce type</div>
+                </div>
+              )}
+            </CollapsibleSection>
+
+            {/* FROM - Table sélectionnée */}
             <CollapsibleSection
               title="Table source (FROM)"
               icon={Icons.table}
               iconClassName={styles.sectionIconFrom}
               defaultOpen={true}
             >
-              <div className={styles.tableSelector}>
-                {model.tables.map((table) => (
-                  <div
-                    key={table.id}
-                    className={`${styles.tableOption} ${state.from === table.id ? styles.tableOptionSelected : ''}`}
-                    onClick={() => !readOnly && setFrom(table.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        !readOnly && setFrom(table.id);
-                      }
-                    }}
-                  >
-                    <div className={styles.tableOptionIcon}>
-                      {Icons.table}
-                    </div>
-                    <span className={styles.tableOptionName}>{table.label}</span>
-                    <div
-                      className={styles.tableOptionMenu}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        className={styles.tableOptionMenuButton}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setTableMenuOpenId((prev) => (prev === table.id ? null : table.id));
-                        }}
-                        aria-label={`Options pour ${table.label}`}
-                        aria-haspopup="menu"
-                        aria-expanded={tableMenuOpenId === table.id}
-                      >
-                        {Icons.more}
-                      </button>
-                      {tableMenuOpenId === table.id && (
-                        <div className={styles.tableOptionMenuList} role="menu">
-                          <button
-                            type="button"
-                            className={styles.tableOptionMenuItem}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setDefinitionTableId(table.id);
-                              setTableMenuOpenId(null);
-                            }}
-                            role="menuitem"
-                          >
-                            Définitions
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.tableOptionMenuItem}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setMetricsTableId(table.id);
-                              setTableMenuOpenId(null);
-                            }}
-                            role="menuitem"
-                          >
-                            Métriques
-                          </button>
-                        </div>
-                      )}
-                    </div>
+              {state.from ? (
+                <div className={styles.fromSelectedTable}>
+                  <div className={styles.fromSelectedIcon}>
+                    {Icons.tableLarge}
                   </div>
-                ))}
-              </div>
+                  <div className={styles.fromSelectedInfo}>
+                    <div className={styles.fromSelectedName}>
+                      {model.tables.find((t) => t.id === state.from)?.label || state.from}
+                    </div>
+                    <div className={styles.fromSelectedId}>{state.from}</div>
+                  </div>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className={styles.fromSelectedRemove}
+                      onClick={() => setFrom('')}
+                      title="Retirer la table"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 4L4 12M4 4L12 12" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div
+                  className={`${styles.fromDropZone}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add(styles.fromDropZoneActive);
+                  }}
+                  onDragLeave={(e) => {
+                    e.currentTarget.classList.remove(styles.fromDropZoneActive);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove(styles.fromDropZoneActive);
+                    try {
+                      const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                      if (data.type === 'table' && data.id) {
+                        setFrom(data.id);
+                      }
+                    } catch (err) {
+                      // Ignore invalid data
+                    }
+                  }}
+                >
+                  <span className={styles.fromDropZoneIcon}>{Icons.dropHere}</span>
+                  <span className={styles.fromDropZoneText}>
+                    Glissez une source de données ici
+                  </span>
+                </div>
+              )}
             </CollapsibleSection>
 
             {/* SELECT - Fields */}
