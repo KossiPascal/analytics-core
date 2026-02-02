@@ -97,7 +97,7 @@ export const ROUTES_ITEMS: RouteItem[] = [
 
   // QUERY BUILDER
   {
-    path: ROUTES.queryBuilder.root(),
+    path: ROUTES.builder.root(),
     label: "Query Builder",
     access: "authenticated",
     icon: <Shield size={20} />,
@@ -105,7 +105,8 @@ export const ROUTES_ITEMS: RouteItem[] = [
     showInSideNav: true,
     permissions:['_admin'],
     children: [
-      {label: "SQL Builder", path: ROUTES.queryBuilder.sqlBuilder(), component: PAGES.QueryBuilderPage, icon: <Shield size={20} />, permissions:['_admin']},
+      {label: "SQL Builder", path: ROUTES.builder.sqlBuilder(), component: PAGES.SqlBuilderPage, icon: <Shield size={20} />, permissions:['_admin']},
+      {label: "Query Builder", path: ROUTES.builder.queryBuilder(), component: PAGES.QueryBuilderPage, icon: <Shield size={20} />, permissions:['_admin']},
     ]
   },
 
@@ -175,7 +176,6 @@ const RouteElement: React.FC<{ config: RouteConfig }> = ({ config }) => {
 export const AppRoutes: React.FC = () => {
   const location = useLocation();
   const ROUTE_CONFIG: RouteConfig[] = generateRouteConfig(ROUTES_ITEMS);
-  console.log(ROUTE_CONFIG)
   return (
     <AnimatePresence mode="wait">
       <Suspense fallback={<SuspenseLoader />}>

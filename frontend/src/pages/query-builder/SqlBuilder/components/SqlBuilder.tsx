@@ -1,18 +1,11 @@
 /**
- * QueryBuilder Component
+ * SqlBuilder Component
  * Composant principal du Query Builder
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import type {
-  AnalyticsModel,
-  QueryBuilderProps,
-  DimensionDef,
-  MetricDef,
-  JoinType,
-  OrderDirection,
-} from '../models';
-import { useQueryBuilder } from '../../../contexts/OLD/useQueryBuilder';
+import type { AnalyticsModel, SqlBuilderProps, DimensionDef, MetricDef, JoinType, OrderDirection } from '../models';
+import { useSqlBuilder } from '@contexts/OLD/useSqlBuilder';
 import { ALLOWED_JOIN_TYPES, JOIN_TYPE_LABELS, DEFAULT_LIMIT } from '../models';
 import FieldPalette from './FieldPalette';
 import CollapsibleSection from './CollapsibleSection';
@@ -20,7 +13,7 @@ import DropZone from './DropZone';
 import SelectedField from './SelectedField';
 import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
-import styles from '@pages/query-builder/QueryBuilder.module.css';
+import styles from '@pages/query-builder/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================
 // ICONS
@@ -88,7 +81,7 @@ const Icons = {
 // COMPONENT
 // ============================================================================
 
-export const QueryBuilder: React.FC<QueryBuilderProps> = ({
+export const SqlBuilder: React.FC<SqlBuilderProps> = ({
   model,
   initialQuery,
   onQueryChange,
@@ -126,7 +119,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     setOffset,
     reset,
     autoGroupBy,
-  } = useQueryBuilder(model, initialQuery);
+  } = useSqlBuilder(model, initialQuery);
 
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -608,4 +601,4 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
   );
 };
 
-export default QueryBuilder;
+export default SqlBuilder;

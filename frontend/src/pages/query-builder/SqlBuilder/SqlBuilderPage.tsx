@@ -1,10 +1,10 @@
 /**
- * QueryBuilderPage
+ * SqlBuilderPage
  * Page principale du Query Builder avec modèle de données de démonstration
  */
 
 import React, { useCallback } from 'react';
-import { QueryBuilder } from './components';
+import { SqlBuilder } from './components/SqlBuilder';
 import type { AnalyticsModel, QueryJSON } from './models';
 
 // ============================================================================
@@ -392,24 +392,24 @@ const DEMO_MODEL: AnalyticsModel = {
 // PAGE COMPONENT
 // ============================================================================
 
-export const QueryBuilderPage: React.FC = () => {
+export const SqlBuilderPage: React.FC = () => {
   const handleQueryChange = useCallback((query: QueryJSON) => {
-    console.log('[QueryBuilder] Query changed:', query);
+    console.log('[SqlBuilder] Query changed:', query);
   }, []);
 
   const handleRun = useCallback((query: QueryJSON) => {
-    console.log('[QueryBuilder] Running query:', query);
+    console.log('[SqlBuilder] Running query:', query);
     // Here you would typically send the query to your API
     alert('Query exécutée!\n\n' + JSON.stringify(query, null, 2));
   }, []);
 
   const handleSave = useCallback((query: QueryJSON, name: string) => {
-    console.log('[QueryBuilder] Saving query:', name, query);
+    console.log('[SqlBuilder] Saving query:', name, query);
     // Here you would typically save the query to your backend
   }, []);
 
   return (
-    <QueryBuilder
+    <SqlBuilder
       model={DEMO_MODEL}
       onQueryChange={handleQueryChange}
       onRun={handleRun}
@@ -418,4 +418,4 @@ export const QueryBuilderPage: React.FC = () => {
   );
 };
 
-export default QueryBuilderPage;
+export default SqlBuilderPage;

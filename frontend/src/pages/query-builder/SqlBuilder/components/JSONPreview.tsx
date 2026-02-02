@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { QueryJSON } from '../models';
-import styles from '@pages/query-builder/QueryBuilder.module.css';
+import styles from '@pages/query-builder/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================
 // TYPES
