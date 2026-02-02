@@ -354,23 +354,38 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     });
   }, [model.tables, sourceTypeFilter]);
 
-  // Dimensions filtered by selected source
+  // All dimensions from model (not filtered by FROM)
+  const allModelDimensions = useMemo(() => {
+    return effectiveModel.dimensions;
+  }, [effectiveModel.dimensions]);
+
+  // All metrics from model (not filtered by FROM)
+  const allModelMetrics = useMemo(() => {
+    return effectiveModel.metrics;
+  }, [effectiveModel.metrics]);
+
+  // Base metric IDs from original model
+  const baseMetricIds = useMemo(() => new Set(model.metrics.map((m) => m.id)), [model.metrics]);
+
+  // Dimensions filtered by selected source (using full model, not FROM-filtered)
   const sidebarDimensions = useMemo(() => {
-    if (!selectedSourceId) return availableDimensions;
-    return availableDimensions.filter((d) => d.table === selectedSourceId);
-  }, [availableDimensions, selectedSourceId]);
+    if (!selectedSourceId) return allModelDimensions;
+    return allModelDimensions.filter((d) => d.table === selectedSourceId);
+  }, [allModelDimensions, selectedSourceId]);
 
-  // Base metrics filtered by selected source
+  // Base metrics filtered by selected source (using full model)
   const sidebarBaseMetrics = useMemo(() => {
-    if (!selectedSourceId) return baseMetrics;
-    return baseMetrics.filter((m) => m.table === selectedSourceId);
-  }, [baseMetrics, selectedSourceId]);
+    const allBaseMetrics = allModelMetrics.filter((m) => baseMetricIds.has(m.id));
+    if (!selectedSourceId) return allBaseMetrics;
+    return allBaseMetrics.filter((m) => m.table === selectedSourceId);
+  }, [allModelMetrics, baseMetricIds, selectedSourceId]);
 
-  // Custom metrics filtered by selected source
+  // Custom metrics filtered by selected source (using full model)
   const sidebarCustomMetrics = useMemo(() => {
-    if (!selectedSourceId) return customMetrics;
-    return customMetrics.filter((m) => m.table === selectedSourceId);
-  }, [customMetrics, selectedSourceId]);
+    const allCustomMetrics = allModelMetrics.filter((m) => !baseMetricIds.has(m.id));
+    if (!selectedSourceId) return allCustomMetrics;
+    return allCustomMetrics.filter((m) => m.table === selectedSourceId);
+  }, [allModelMetrics, baseMetricIds, selectedSourceId]);
 
   // Selected source info
   const selectedSource = useMemo(
