@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navbar, Sidebar } from '@components/layout';
 import { PageLoader } from '@components/loaders';
-import { AppRoutes } from '@/routes';
-import { useStore } from '@store';
+import { AppRoutes } from '@routes/index';
+// import { useStore } from '@/stores/OLD';
+import { useAuth } from "@/contexts/AuthContext";
 import '@assets/css/global.css';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Create QueryClient for React Query
 const queryClient = new QueryClient({
@@ -19,16 +20,16 @@ const queryClient = new QueryClient({
 });
 
 function AppContent() {
-  const { isAuthenticated, user, isGlobalLoading } = useStore();
+  const { isAuthenticated, user, loading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
-    useStore.getState().logout();
+    logout();
   };
 
   // Show page loader during global loading
-  if (isGlobalLoading) {
+  if (loading) {
     return <PageLoader />;
   }
 
@@ -41,7 +42,7 @@ function AppContent() {
             isMenuOpen={sidebarOpen}
             onMenuClick={() => setSidebarOpen(!sidebarOpen)}
             userName={user?.fullname || 'Utilisateur'}
-            userRole={user?.roles?.[0]?.name || 'Admin'}
+            // userRole={user?.roles?.[0]?.name || 'Admin'}
             onLogout={handleLogout}
           />
           <Sidebar
@@ -49,32 +50,26 @@ function AppContent() {
             isCollapsed={sidebarCollapsed}
             onClose={() => setSidebarOpen(false)}
             userName={user?.fullname || 'Utilisateur'}
-            userRole={user?.roles?.[0]?.name || 'Admin'}
+            // userRole={user?.roles?.[0]?.name || 'Admin'}
             onLogout={handleLogout}
           />
         </>
       )}
 
       {/* Main content */}
-      <main
-        className={
-          isAuthenticated
-            ? `main-content ${sidebarOpen ? 'with-sidebar' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`
-            : ''
-        }
-      >
+      <main className={isAuthenticated ? `main-content ${sidebarOpen ? 'with-sidebar' : ''} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}` : ''}>
         <AppRoutes />
       </main>
     </div>
   );
 }
 
-function App() {
+const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <AuthProvider>
+          <AppContent />
+      </AuthProvider >
     </QueryClientProvider>
   );
 }

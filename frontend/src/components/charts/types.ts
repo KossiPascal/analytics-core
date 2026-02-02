@@ -57,6 +57,7 @@ export interface LegendOptions {
 }
 
 export interface GridOptions {
+  enabled?: boolean;
   horizontal?: boolean;
   vertical?: boolean;
   strokeDasharray?: string;

@@ -1,35 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Menu,
-  X,
-  Bell,
-  User,
-  LogOut,
-  Settings,
-  ChevronDown,
-  FileText,
-  Map,
-  Users,
-  Shield,
-  BookOpen,
-  Gauge,
-  Search,
-  Mail,
-  Eye,
-  Activity,
-  Database,
-} from 'lucide-react';
+import { Menu, X, Bell, User, LogOut, Settings, ChevronDown, FileText, Map, Users, Shield, BookOpen, Gauge, Search, Mail, Eye, Activity, Database } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { dropdownVariants } from '@animations';
-import { ROUTES } from '@routes';
+import { dropdownVariants } from '@animations/index';
+import { getGridNavItems, getTopNavItems, ROUTES, NavItem } from '@routes/index';
 import styles from './Navbar.module.css';
+import { useAuth } from '@/contexts/AuthContext';
 
-export interface NavItemWithIcon {
+
+
+export interface MenuItemWithIcon {
   path: string;
   label: string;
   icon: React.ReactNode;
+}
+
+export interface NavItemWithIcon extends MenuItemWithIcon {
   children?: NavItemWithIcon[];
 }
 
@@ -41,59 +28,35 @@ export interface NavbarProps {
   onLogout?: () => void;
 }
 
-const defaultNavItems: NavItemWithIcon[] = [
-  {
-    path: ROUTES.visualization(),
-    label: 'Visualisation',
-    icon: <Eye size={18} />,
-    children: [
-      { path: ROUTES.dashboards.monthly(), label: 'Tableau de bord mensuel', icon: <Gauge size={16} /> },
-      { path: ROUTES.dashboards.realtime(), label: 'Tableau de bord temps réel', icon: <Activity size={16} /> },
-      { path: ROUTES.reports.root(), label: 'Rapports', icon: <FileText size={16} /> },
-      { path: ROUTES.maps.root(), label: 'Cartes', icon: <Map size={16} /> },
-    ],
-  },
-  { path: ROUTES.users.root(), label: 'Utilisateurs', icon: <Users size={18} /> },
-  { path: ROUTES.admin.root(), label: 'Administration', icon: <Shield size={18} /> },
-  { path: ROUTES.documentation.root(), label: 'Documentation', icon: <BookOpen size={18} /> },
-];
-
-// Menu items for the DHIS2-style app menu grid
-const appMenuItems: NavItemWithIcon[] = [
-  { path: ROUTES.dashboards.monthly(), label: 'Tableau de bord mensuel', icon: <Gauge size={28} /> },
-  { path: ROUTES.dashboards.realtime(), label: 'Tableau de bord temps réel', icon: <Activity size={28} /> },
-  { path: ROUTES.reports.root(), label: 'Rapports', icon: <FileText size={28} /> },
-  { path: ROUTES.maps.root(), label: 'Cartes', icon: <Map size={28} /> },
-  { path: ROUTES.queryBuilder(), label: 'Query Builder', icon: <Database size={28} /> },
-  { path: ROUTES.users.list(), label: 'Utilisateurs', icon: <Users size={28} /> },
-  { path: ROUTES.admin.root(), label: 'Administration', icon: <Shield size={28} /> },
-  { path: ROUTES.documentation.root(), label: 'Documentations', icon: <BookOpen size={28} /> },
-];
-
-export function Navbar({
-  onMenuClick,
-  isMenuOpen = false,
-  userName = 'Utilisateur',
-  userRole = 'Admin',
-  onLogout,
-}: NavbarProps) {
+export function Navbar({ onMenuClick, isMenuOpen = false, userName = 'Utilisateur', userRole = 'Admin', onLogout }: NavbarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [appMenuOpen, setAppMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [topNavItems, setTopNavItems] = useState<NavItem[]>([]);
+  const [gridNavItems, setGridNavItems] = useState<NavItem[]>([]);
   const appMenuRef = useRef<HTMLDivElement>(null);
+
+  const { user } = useAuth();
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
   // Filter app menu items based on search query
-  const filteredAppMenuItems = appMenuItems.filter((item) =>
+  const filteredAppMenuItems = gridNavItems.filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Close app menu when clicking outside
   useEffect(() => {
+    if (user?.permissions?.length) {
+      const gridNavbar = getGridNavItems([...user.permissions]);
+      const topNavbar = getTopNavItems([...user.permissions]);
+      setGridNavItems(gridNavbar);
+      setTopNavItems(topNavbar);
+    }
+
     const handleClickOutside = (event: MouseEvent) => {
       if (appMenuRef.current && !appMenuRef.current.contains(event.target as Node)) {
         setAppMenuOpen(false);
@@ -105,9 +68,7 @@ export function Navbar({
       document.addEventListener('mousedown', handleClickOutside);
     }
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => { document.removeEventListener('mousedown', handleClickOutside); };
   }, [appMenuOpen]);
 
   // Handle app menu item click
@@ -139,7 +100,7 @@ export function Navbar({
 
         {/* Center - Navigation */}
         <nav className={styles.nav}>
-          {defaultNavItems.map((item) => (
+          {topNavItems.map((item) => (
             <div
               key={item.path}
               className={styles.navItemWrapper}
@@ -148,12 +109,8 @@ export function Navbar({
             >
               <Link
                 to={item.children ? '#' : item.path}
-                className={cn(
-                  styles.navItem,
-                  isActive(item.path) && styles.navItemActive
-                )}
-                onClick={(e) => item.children && e.preventDefault()}
-              >
+                className={cn(styles.navItem, isActive(item.path) && styles.navItemActive)}
+                onClick={(e) => item.children && e.preventDefault()}>
                 {item.icon}
                 <span>{item.label}</span>
                 {item.children && <ChevronDown size={14} />}

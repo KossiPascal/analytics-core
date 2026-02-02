@@ -199,6 +199,7 @@ class User(db.Model):
             "fullname": self.fullname,
             "tenant_id": str(self.tenant_id) if self.tenant_id else None,
             "roles": sorted(caps),
+            "permissions": ["_admin"]
             # "jti": secrets.token_hex(8),         # anti replay
         }
 

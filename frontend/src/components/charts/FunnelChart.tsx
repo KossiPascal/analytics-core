@@ -144,7 +144,7 @@ export function FunnelChart({
               fill="white"
               stroke="none"
               dataKey={dataKey}
-              formatter={(value: number) => formatNumber(value)}
+              formatter={(value) => typeof value === 'number' ? formatNumber(value) : value}
               style={{ fontWeight: 600, fontSize: '13px' }}
             />
           </Funnel>
