@@ -173,6 +173,26 @@ const Icons = {
       <circle cx="9" cy="14" r="1.8" />
     </svg>
   ),
+  entities: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="1" y="1" width="6" height="6" rx="1" />
+      <rect x="9" y="1" width="6" height="6" rx="1" />
+      <rect x="1" y="9" width="6" height="6" rx="1" />
+      <rect x="9" y="9" width="6" height="6" rx="1" />
+    </svg>
+  ),
+  databaseLarge: (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <ellipse cx="10" cy="5" rx="6" ry="2.5" />
+      <path d="M4 5V15C4 16.4 6.69 17.5 10 17.5C13.31 17.5 16 16.4 16 15V5" />
+      <path d="M4 10C4 11.4 6.69 12.5 10 12.5C13.31 12.5 16 11.4 16 10" />
+    </svg>
+  ),
+  check: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M2 7L5.5 10.5L12 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };
 
 // ============================================================================
@@ -207,6 +227,11 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
   const [metricsTableId, setMetricsTableId] = useState<string | null>(null);
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>('all');
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [selectedDatabaseIds, setSelectedDatabaseIds] = useState<Set<string>>(() => {
+    // Select all databases by default
+    const allDbIds = model.databases?.map((db) => db.id) || [];
+    return new Set(allDbIds);
+  });
 
   useEffect(() => {
     if (!tableMenuOpenId) return;
@@ -345,14 +370,68 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     return availableMetrics.filter((m) => baseMetricIds.has(m.id));
   }, [model.metrics, availableMetrics]);
 
-  // Filter sources by type
-  const filteredSources = useMemo(() => {
-    if (sourceTypeFilter === 'all') return model.tables;
-    return model.tables.filter((table) => {
-      const tableType = (table as { type?: string }).type || 'table';
-      return tableType === sourceTypeFilter;
+  // Check if multiple databases are selected
+  const hasMultipleDatabases = useMemo(() => {
+    return (model.databases?.length || 0) > 1 && selectedDatabaseIds.size > 1;
+  }, [model.databases, selectedDatabaseIds]);
+
+  // Get database label by ID
+  const getDatabaseLabel = useCallback((databaseId: string | undefined) => {
+    if (!databaseId || !model.databases) return null;
+    return model.databases.find((db) => db.id === databaseId)?.label || null;
+  }, [model.databases]);
+
+  // Toggle database selection
+  const toggleDatabase = useCallback((databaseId: string) => {
+    setSelectedDatabaseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(databaseId)) {
+        // Don't allow deselecting the last database
+        if (next.size > 1) {
+          next.delete(databaseId);
+        }
+      } else {
+        next.add(databaseId);
+      }
+      return next;
     });
-  }, [model.tables, sourceTypeFilter]);
+  }, []);
+
+  // Select/deselect all databases
+  const toggleAllDatabases = useCallback(() => {
+    if (!model.databases) return;
+    const allDbIds = model.databases.map((db) => db.id);
+    setSelectedDatabaseIds((prev) => {
+      if (prev.size === allDbIds.length) {
+        // If all selected, select only first
+        return new Set([allDbIds[0]]);
+      }
+      return new Set(allDbIds);
+    });
+  }, [model.databases]);
+
+  // Filter entities (tables/views) by type AND selected databases
+  const filteredEntities = useMemo(() => {
+    let filtered = model.tables;
+
+    // Filter by selected databases
+    if (model.databases && model.databases.length > 0) {
+      filtered = filtered.filter((table) => {
+        const tableDb = (table as { database?: string }).database;
+        return !tableDb || selectedDatabaseIds.has(tableDb);
+      });
+    }
+
+    // Filter by entity type
+    if (sourceTypeFilter !== 'all') {
+      filtered = filtered.filter((table) => {
+        const tableType = (table as { type?: string }).type || 'table';
+        return tableType === sourceTypeFilter;
+      });
+    }
+
+    return filtered;
+  }, [model.tables, model.databases, selectedDatabaseIds, sourceTypeFilter]);
 
   // All dimensions from model (not filtered by FROM)
   const allModelDimensions = useMemo(() => {
@@ -477,11 +556,61 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
               </div>
             )}
 
-            {/* Sources de données */}
+            {/* Bases de données - Only show if there are databases defined */}
+            {model.databases && model.databases.length > 0 && (
+              <CollapsibleSection
+                title="Bases de données"
+                icon={Icons.database}
+                iconClassName={styles.sectionIconDatabase}
+                badge={selectedDatabaseIds.size}
+                defaultOpen={true}
+              >
+                <div className={styles.databaseGrid}>
+                  {model.databases.map((database) => {
+                    const isSelected = selectedDatabaseIds.has(database.id);
+                    return (
+                      <div
+                        key={database.id}
+                        className={`${styles.databaseCard} ${isSelected ? styles.databaseCardSelected : ''}`}
+                        onClick={() => !readOnly && toggleDatabase(database.id)}
+                        role="checkbox"
+                        aria-checked={isSelected}
+                        tabIndex={0}
+                      >
+                        <div className={styles.databaseCardCheck}>
+                          {isSelected && Icons.check}
+                        </div>
+                        <div className={styles.databaseCardIcon}>
+                          {Icons.databaseLarge}
+                        </div>
+                        <div className={styles.databaseCardInfo}>
+                          <span className={styles.databaseCardName}>{database.label}</span>
+                          {database.type && (
+                            <span className={styles.databaseCardType}>{database.type}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {model.databases.length > 1 && (
+                  <button
+                    type="button"
+                    className={styles.selectAllBtn}
+                    onClick={() => !readOnly && toggleAllDatabases()}
+                  >
+                    {selectedDatabaseIds.size === model.databases.length ? 'Désélectionner tout' : 'Sélectionner tout'}
+                  </button>
+                )}
+              </CollapsibleSection>
+            )}
+
+            {/* Entités (Tables, Vues, Vues Matérialisées) */}
             <CollapsibleSection
-              title="Sources de données"
-              icon={Icons.database}
-              iconClassName={styles.sectionIconFrom}
+              title="Entités"
+              icon={Icons.entities}
+              iconClassName={styles.sectionIconEntities}
+              badge={filteredEntities.length}
               defaultOpen={true}
             >
               {/* Filtre par type */}
@@ -499,8 +628,10 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
               </div>
 
               <div className={styles.dataSourcesGrid}>
-                {filteredSources.map((table) => {
+                {filteredEntities.map((table) => {
                   const tableType = (table as { type?: string }).type || 'table';
+                  const tableDatabase = (table as { database?: string }).database;
+                  const databaseLabel = getDatabaseLabel(tableDatabase);
                   const isSelected = selectedSourceId === table.id;
                   const iconClass = tableType === 'view'
                     ? styles.dataSourceIconView
@@ -542,6 +673,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
                         {icon}
                       </div>
                       <span className={styles.dataSourceName}>{table.label}</span>
+                      {hasMultipleDatabases && databaseLabel && (
+                        <span className={styles.dataSourceDatabase}>{databaseLabel}</span>
+                      )}
                       <span className={styles.dataSourceType}>{typeLabel}</span>
                       <div
                         className={styles.dataSourceMenu}
@@ -591,9 +725,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
                   );
                 })}
               </div>
-              {filteredSources.length === 0 && (
+              {filteredEntities.length === 0 && (
                 <div className={styles.emptyState} style={{ padding: '20px' }}>
-                  <div className={styles.emptyStateText}>Aucune source de ce type</div>
+                  <div className={styles.emptyStateText}>Aucune entité de ce type</div>
                 </div>
               )}
             </CollapsibleSection>

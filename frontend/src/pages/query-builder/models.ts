@@ -18,12 +18,25 @@ export type LogicalOperator = 'AND' | 'OR';
 // FIELD DEFINITIONS
 // ============================================================================
 
+export type EntityType = 'table' | 'view' | 'materialized_view';
+
+export interface DatabaseDef {
+  id: string;
+  label: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  type?: 'postgresql' | 'mysql' | 'mssql' | 'oracle' | 'sqlite' | 'other';
+}
+
 export interface TableDef {
   id: string;
   label: string;
   description?: string;
   icon?: string;
   color?: string;
+  database?: string; // ID of the database this table belongs to
+  type?: EntityType; // table, view, or materialized_view
 }
 
 export interface DimensionDef {
@@ -144,6 +157,7 @@ export interface QueryJSON {
 // ============================================================================
 
 export interface AnalyticsModel {
+  databases?: DatabaseDef[];
   tables: TableDef[];
   dimensions: DimensionDef[];
   metrics: MetricDef[];
