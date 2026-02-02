@@ -3,17 +3,15 @@
  * Composant principal du Query Builder
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   AnalyticsModel,
   QueryBuilderProps,
   DimensionDef,
   MetricDef,
-  JoinType,
-  OrderDirection,
 } from '../types';
 import { useQueryBuilder } from '../hooks/useQueryBuilder';
-import { ALLOWED_JOIN_TYPES, JOIN_TYPE_LABELS, DEFAULT_LIMIT } from '../types';
+import { ALLOWED_JOIN_TYPES } from '../types';
 import FieldPalette from './FieldPalette';
 import CollapsibleSection from './CollapsibleSection';
 import DropZone from './DropZone';
@@ -21,6 +19,7 @@ import SelectedField from './SelectedField';
 import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
 import styles from '../styles/QueryBuilder.module.css';
+import { Modal } from '@components/ui/Modal/Modal';
 
 // ============================================================================
 // ICONS
@@ -82,6 +81,13 @@ const Icons = {
       <path d="M2 2V5.5H5.5" />
     </svg>
   ),
+  more: (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <circle cx="3.5" cy="8" r="1.5" />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="12.5" cy="8" r="1.5" />
+    </svg>
+  ),
 };
 
 // ============================================================================
@@ -97,6 +103,65 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
   readOnly = false,
   compact = false,
 }) => {
+  const [definitionSelections, setDefinitionSelections] = useState<Record<string, Record<string, {
+    dimension: boolean;
+    metric: boolean;
+  }>>(() => {
+    const initial: Record<string, Record<string, { dimension: boolean; metric: boolean }>> = {};
+    model.tables.forEach((table) => {
+      initial[table.id] = {};
+    });
+    model.dimensions.forEach((dimension) => {
+      if (!initial[dimension.table]) {
+        initial[dimension.table] = {};
+      }
+      initial[dimension.table][dimension.id] = { dimension: true, metric: false };
+    });
+    return initial;
+  });
+
+  const [tableMenuOpenId, setTableMenuOpenId] = useState<string | null>(null);
+  const [definitionTableId, setDefinitionTableId] = useState<string | null>(null);
+  const [metricsTableId, setMetricsTableId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!tableMenuOpenId) return;
+    const handleClick = () => {
+      setTableMenuOpenId(null);
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [tableMenuOpenId]);
+
+  const effectiveModel = useMemo<AnalyticsModel>(() => {
+    const filteredDimensions = model.dimensions.filter((dimension) => {
+      const selection = definitionSelections[dimension.table]?.[dimension.id];
+      return selection ? selection.dimension : true;
+    });
+
+    const baseMetricIds = new Set(model.metrics.map((metric) => metric.id));
+    const additionalMetrics: MetricDef[] = [];
+
+    model.dimensions.forEach((dimension) => {
+      const selection = definitionSelections[dimension.table]?.[dimension.id];
+      if (selection?.metric && !baseMetricIds.has(dimension.id)) {
+        additionalMetrics.push({
+          id: dimension.id,
+          label: dimension.label,
+          table: dimension.table,
+          defaultAgg: dimension.type === 'number' ? 'sum' : 'count',
+          returnType: 'number',
+        });
+      }
+    });
+
+    return {
+      ...model,
+      dimensions: filteredDimensions,
+      metrics: [...model.metrics, ...additionalMetrics],
+    };
+  }, [model, definitionSelections]);
+
   const {
     state,
     validation,
@@ -126,10 +191,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     setOffset,
     reset,
     autoGroupBy,
-  } = useQueryBuilder(model, initialQuery);
+  } = useQueryBuilder(effectiveModel, initialQuery);
 
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Build JSON and SQL
   const queryJSON = useMemo(() => buildJSON(), [buildJSON]);
@@ -184,6 +248,27 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     () => [...availableDimensions, ...availableMetrics],
     [availableDimensions, availableMetrics]
   );
+
+  const definitionTable = useMemo(
+    () => model.tables.find((table) => table.id === definitionTableId) ?? null,
+    [definitionTableId, model.tables]
+  );
+  const metricsTable = useMemo(
+    () => model.tables.find((table) => table.id === metricsTableId) ?? null,
+    [metricsTableId, model.tables]
+  );
+
+  const definitionAttributes = useMemo(() => {
+    if (!definitionTableId) return [];
+    return model.dimensions.filter((dimension) => dimension.table === definitionTableId);
+  }, [definitionTableId, model.dimensions]);
+
+  const metricsForTable = useMemo(() => {
+    if (!metricsTableId) return [];
+    return effectiveModel.metrics.filter((metric) => metric.table === metricsTableId);
+  }, [effectiveModel.metrics, metricsTableId]);
+
+  const baseDimensionIds = useMemo(() => new Set(model.dimensions.map((dimension) => dimension.id)), [model.dimensions]);
 
   return (
     <div className={styles.container}>
@@ -271,6 +356,52 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
                       {Icons.table}
                     </div>
                     <span className={styles.tableOptionName}>{table.label}</span>
+                    <div
+                      className={styles.tableOptionMenu}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        className={styles.tableOptionMenuButton}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setTableMenuOpenId((prev) => (prev === table.id ? null : table.id));
+                        }}
+                        aria-label={`Options pour ${table.label}`}
+                        aria-haspopup="menu"
+                        aria-expanded={tableMenuOpenId === table.id}
+                      >
+                        {Icons.more}
+                      </button>
+                      {tableMenuOpenId === table.id && (
+                        <div className={styles.tableOptionMenuList} role="menu">
+                          <button
+                            type="button"
+                            className={styles.tableOptionMenuItem}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDefinitionTableId(table.id);
+                              setTableMenuOpenId(null);
+                            }}
+                            role="menuitem"
+                          >
+                            Définitions
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.tableOptionMenuItem}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setMetricsTableId(table.id);
+                              setTableMenuOpenId(null);
+                            }}
+                            role="menuitem"
+                          >
+                            Métriques
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -604,6 +735,164 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
         {/* Preview Panel */}
         <JSONPreview json={queryJSON} sql={querySQL} />
       </main>
+
+      <Modal
+        isOpen={Boolean(definitionTableId)}
+        onClose={() => setDefinitionTableId(null)}
+        title={definitionTable ? `Définitions - ${definitionTable.label}` : 'Définitions'}
+        size="lg"
+        footer={(
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              onClick={() => setDefinitionTableId(null)}
+            >
+              Fermer
+            </button>
+          </div>
+        )}
+      >
+        {definitionAttributes.length === 0 ? (
+          <div className={styles.modalEmptyState}>
+            Aucun attribut disponible pour cette table.
+          </div>
+        ) : (
+          <div className={styles.definitionTableWrapper}>
+            <table className={styles.definitionTable}>
+              <thead>
+                <tr>
+                  <th>Attribut</th>
+                  <th>Dimension</th>
+                  <th>Métrique</th>
+                </tr>
+              </thead>
+              <tbody>
+                {definitionAttributes.map((attribute) => {
+                  const selection = definitionSelections[attribute.table]?.[attribute.id] ?? {
+                    dimension: true,
+                    metric: false,
+                  };
+                  return (
+                    <tr key={attribute.id}>
+                      <td>
+                        <div className={styles.definitionAttribute}>
+                          <span className={styles.definitionAttributeLabel}>{attribute.label}</span>
+                          <span className={styles.definitionAttributeId}>{attribute.id}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <label className={styles.definitionCheckbox}>
+                          <input
+                            type="checkbox"
+                            checked={selection.dimension}
+                            disabled={readOnly}
+                            onChange={(event) => {
+                              const checked = event.target.checked;
+                              setDefinitionSelections((prev) => ({
+                                ...prev,
+                                [attribute.table]: {
+                                  ...prev[attribute.table],
+                                  [attribute.id]: {
+                                    ...prev[attribute.table]?.[attribute.id],
+                                    dimension: checked,
+                                  },
+                                },
+                              }));
+                            }}
+                          />
+                          <span>Dimension</span>
+                        </label>
+                      </td>
+                      <td>
+                        <label className={styles.definitionCheckbox}>
+                          <input
+                            type="checkbox"
+                            checked={selection.metric}
+                            disabled={readOnly}
+                            onChange={(event) => {
+                              const checked = event.target.checked;
+                              setDefinitionSelections((prev) => ({
+                                ...prev,
+                                [attribute.table]: {
+                                  ...prev[attribute.table],
+                                  [attribute.id]: {
+                                    ...prev[attribute.table]?.[attribute.id],
+                                    metric: checked,
+                                  },
+                                },
+                              }));
+                            }}
+                          />
+                          <span>Métrique</span>
+                        </label>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(metricsTableId)}
+        onClose={() => setMetricsTableId(null)}
+        title={metricsTable ? `Métriques - ${metricsTable.label}` : 'Métriques'}
+        size="lg"
+        footer={(
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              onClick={() => setMetricsTableId(null)}
+            >
+              Fermer
+            </button>
+          </div>
+        )}
+      >
+        {metricsForTable.length === 0 ? (
+          <div className={styles.modalEmptyState}>
+            Aucune métrique configurée pour cette table.
+          </div>
+        ) : (
+          <div className={styles.definitionTableWrapper}>
+            <table className={styles.definitionTable}>
+              <thead>
+                <tr>
+                  <th>Métrique</th>
+                  <th>Agrégation</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metricsForTable.map((metric) => (
+                  <tr key={metric.id}>
+                    <td>
+                      <div className={styles.definitionAttribute}>
+                        <span className={styles.definitionAttributeLabel}>{metric.label}</span>
+                        <span className={styles.definitionAttributeId}>{metric.id}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={styles.metricAgg}>
+                        {metric.defaultAgg ? metric.defaultAgg.toUpperCase() : 'AUTO'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={styles.metricSource}>
+                        {baseDimensionIds.has(metric.id) ? 'Attribut' : 'Métrique'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
