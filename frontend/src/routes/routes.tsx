@@ -23,7 +23,8 @@ export const ROUTES_ITEMS: RouteItem[] = [
     permissions:['_admin']
   },
 
-  // AUTH
+  // 
+  
   {
     path: ROUTES.auth.login(),
     component: PAGES.LoginPage,
