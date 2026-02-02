@@ -1,11 +1,11 @@
 /**
- * useQueryBuilder Hook
+ * useSqlBuilder Hook
  * Gère l'état complet du Query Builder
  */
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type {
-  QueryBuilderState,
+  SqlBuilderState,
   QueryJSON,
   SelectField,
   JoinField,
@@ -21,7 +21,7 @@ import type {
   OrderDirection,
   DimensionDef,
   MetricDef,
-} from '../../pages/query-builder/models';
+} from '../../pages/query-builder/SqlBuilder/models';
 import {
   MAX_SELECT,
   MAX_JOINS,
@@ -35,7 +35,7 @@ import {
   ALLOWED_JOIN_TYPES,
   ALLOWED_FILTER_OPS,
   ALLOWED_ORDER,
-} from '../../pages/query-builder/models';
+} from '../../pages/query-builder/SqlBuilder/models';
 
 // ============================================================================
 // ID GENERATOR (replaces uuid)
@@ -54,7 +54,7 @@ const uuidv4 = generateId;
 // INITIAL STATE
 // ============================================================================
 
-const createInitialState = (): QueryBuilderState => ({
+const createInitialState = (): SqlBuilderState => ({
   from: '',
   fromLabel: '',
   select: [],
@@ -86,11 +86,11 @@ function validateAlias(alias: string): boolean {
 // HOOK
 // ============================================================================
 
-export function useQueryBuilder(
+export function useSqlBuilder(
   model: AnalyticsModel,
-  initialQuery?: Partial<QueryBuilderState>
+  initialQuery?: Partial<SqlBuilderState>
 ) {
-  const [state, setState] = useState<QueryBuilderState>(() => ({
+  const [state, setState] = useState<SqlBuilderState>(() => ({
     ...createInitialState(),
     ...initialQuery,
   }));
@@ -692,4 +692,4 @@ export function useQueryBuilder(
   };
 }
 
-export type UseQueryBuilderReturn = ReturnType<typeof useQueryBuilder>;
+export type UseSqlBuilderReturn = ReturnType<typeof useSqlBuilder>;

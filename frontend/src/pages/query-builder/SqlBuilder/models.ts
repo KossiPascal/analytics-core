@@ -167,7 +167,7 @@ export interface AnalyticsModel {
 // QUERY BUILDER STATE
 // ============================================================================
 
-export interface QueryBuilderState {
+export interface SqlBuilderState {
   from: string;
   fromLabel: string;
   select: SelectField[];
@@ -215,9 +215,9 @@ export interface DragItem {
 // COMPONENT PROPS
 // ============================================================================
 
-export interface QueryBuilderProps {
+export interface SqlBuilderProps {
   model: AnalyticsModel;
-  initialQuery?: Partial<QueryBuilderState>;
+  initialQuery?: Partial<SqlBuilderState>;
   onQueryChange?: (query: QueryJSON) => void;
   onRun?: (query: QueryJSON) => void;
   onSave?: (query: QueryJSON, name: string) => void;

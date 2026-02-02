@@ -1,18 +1,19 @@
 /**
- * QueryBuilder Component
+ * SqlBuilder Component
  * Composant principal du Query Builder
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   AnalyticsModel,
-  QueryBuilderProps,
+  SqlBuilderProps,
   DimensionDef,
   MetricDef,
   JoinType,
   OrderDirection,
 } from '../models';
-import { useQueryBuilder } from '../../../contexts/OLD/useQueryBuilder';
+import { useSqlBuilder } from '../../../../contexts/OLD/useSqlBuilder';
+
 import { ALLOWED_JOIN_TYPES, JOIN_TYPE_LABELS, DEFAULT_LIMIT } from '../models';
 import FieldPalette from './FieldPalette';
 import CollapsibleSection from './CollapsibleSection';
@@ -20,7 +21,7 @@ import DropZone from './DropZone';
 import SelectedField from './SelectedField';
 import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
-import styles from '../QueryBuilder.module.css';
+import styles from '../SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
@@ -67,6 +68,7 @@ const generateAlias = (label: string): string => {
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_|_$/g, '');
 };
+
 
 // ============================================================================
 // ICONS
@@ -199,7 +201,7 @@ const Icons = {
 // COMPONENT
 // ============================================================================
 
-export const QueryBuilder: React.FC<QueryBuilderProps> = ({
+export const SqlBuilder: React.FC<SqlBuilderProps> = ({
   model,
   initialQuery,
   onQueryChange,
@@ -300,7 +302,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     setOffset,
     reset,
     autoGroupBy,
-  } = useQueryBuilder(effectiveModel, initialQuery);
+  } = useSqlBuilder(effectiveModel, initialQuery);
 
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -1420,4 +1422,4 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
   );
 };
 
-export default QueryBuilder;
+export default SqlBuilder;

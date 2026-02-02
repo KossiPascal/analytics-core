@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import type { DimensionDef, MetricDef } from '../models';
 import DraggableField from './DraggableField';
-import styles from '@pages/query-builder/QueryBuilder.module.css';
+import styles from '@pages/query-builder/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================
 // TYPES

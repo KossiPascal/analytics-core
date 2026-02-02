@@ -3,8 +3,7 @@
  */
 
 // Components
-export { QueryBuilder } from './components';
-export type { QueryBuilderProps } from './models';
+export type { SqlBuilderProps } from './SqlBuilder/models';
 
 // Types
 export type {
@@ -13,7 +12,7 @@ export type {
   DimensionDef,
   MetricDef,
   QueryJSON,
-  QueryBuilderState,
+  SqlBuilderState,
   SelectField,
   FilterField,
   JoinField,
@@ -27,7 +26,7 @@ export type {
   FilterOp,
   OrderDirection,
   LogicalOperator,
-} from './models';
+} from './SqlBuilder/models';
 
 // Constants
 export {
@@ -46,11 +45,11 @@ export {
   MAX_ORDER_BY,
   MAX_LIMIT,
   DEFAULT_LIMIT,
-} from './models';
+} from './SqlBuilder/models';
 
 // Hooks
-export { useQueryBuilder } from '../../contexts/OLD/useQueryBuilder';
-export type { UseQueryBuilderReturn } from '../../contexts/OLD/useQueryBuilder';
+export { useSqlBuilder } from '../../contexts/OLD/useSqlBuilder';
+export type { UseSqlBuilderReturn } from '../../contexts/OLD/useSqlBuilder';
 
 // Page
-export { QueryBuilderPage } from './QueryBuilderPage';
+export { SqlBuilderPage } from './SqlBuilder/SqlBuilderPage';

@@ -8,6 +8,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 interface AuthContextType {
   user: PayloadUser | null;
   isAuthenticated: boolean;
+  isSuperAdmin: boolean;
+  isAdmin: boolean;
   loading: boolean;
   error: string | null;
   login: (username: string, password: string, callback?: () => Promise<void>) => Promise<void>;
@@ -68,6 +70,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     loading: store.loading,
     error: store.error,
     isAuthenticated: !!store.user,
+    isSuperAdmin: (store.user?.permissions??[]).includes('_admin'),
+    isAdmin: (store.user?.permissions??[]).includes('_admin'),
     login,
     logout,
     restore,

@@ -2,17 +2,12 @@
  * FilterBuilder Component
  * Constructeur de filtres avec opérateurs et valeurs
  */
-
 import React from 'react';
-import type { FilterField, FilterOp, LogicalOperator, DimensionDef, MetricDef, ColumnType } from '../models';
 import {
-  FILTER_OP_LABELS,
-  ALLOWED_FILTER_OPS_NUMERIC,
-  ALLOWED_FILTER_OPS_STRING,
-  ALLOWED_FILTER_OPS_DATE,
-  ALLOWED_FILTER_OPS,
+  FilterField, FilterOp, LogicalOperator, DimensionDef, MetricDef, ColumnType,
+  FILTER_OP_LABELS, ALLOWED_FILTER_OPS_NUMERIC, ALLOWED_FILTER_OPS_STRING, ALLOWED_FILTER_OPS_DATE, ALLOWED_FILTER_OPS,
 } from '../models';
-import styles from '@pages/query-builder/QueryBuilder.module.css';
+import styles from '@pages/query-builder/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================
 // TYPES

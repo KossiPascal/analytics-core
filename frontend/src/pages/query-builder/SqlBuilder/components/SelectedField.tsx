@@ -6,7 +6,7 @@
 import React, { useState, useRef } from 'react';
 import type { SelectField, AggType } from '../models';
 import { ALLOWED_AGGS, AGG_LABELS } from '../models';
-import styles from '@pages/query-builder/QueryBuilder.module.css';
+import styles from '@pages/query-builder/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================
 // TYPES

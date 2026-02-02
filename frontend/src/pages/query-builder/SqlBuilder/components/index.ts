@@ -2,7 +2,7 @@
  * Query Builder Components Index
  */
 
-export { QueryBuilder, default as QueryBuilderDefault } from './QueryBuilder';
+export { SqlBuilder, default as SqlBuilderDefault } from './SqlBuilder';
 export { DraggableField } from './DraggableField';
 export { DropZone } from './DropZone';
 export { SelectedField } from './SelectedField';

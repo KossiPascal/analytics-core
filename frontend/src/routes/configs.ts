@@ -21,7 +21,8 @@ export const PAGES = {
     MapsPage: lazy(() => import('@pages/maps/MapsPage')),
 
     // Query Builder page
-    QueryBuilderPage: lazy(() => import('@pages/query-builder/QueryBuilderPage')) as any,
+    SqlBuilderPage: lazy(() => import('@/pages/query-builder/SqlBuilder/SqlBuilderPage')) as any,
+    QueryBuilderPage: lazy(() => import('@/pages/query-builder/QueryBuilder/QueryBuilderPage')) as any,
 
     // Users pages
     UsersPage: lazy(() => import('@pages/users/UsersPage')),
@@ -59,9 +60,10 @@ export const ROUTES = {
     visualization: () => '/visualization',
 
     // QUERY BUILDER
-    queryBuilder: {
+    builder: {
         root: () => '/query-builder',
         sqlBuilder: () => '/sql-builder',
+        queryBuilder: () => '/query-builder',
     },
 
     // AUTHENTICATION

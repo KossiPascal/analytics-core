@@ -4,8 +4,8 @@
  */
 
 import React, { useRef } from 'react';
-import type { DimensionDef, MetricDef, ColumnType } from '../models';
-import styles from '@pages/query-builder/QueryBuilder.module.css';
+import styles from '@pages/query-builder/SqlBuilder/SqlBuilder.module.css';
+import { ColumnType, DimensionDef, MetricDef } from '../models';
 
 // ============================================================================
 // TYPES
