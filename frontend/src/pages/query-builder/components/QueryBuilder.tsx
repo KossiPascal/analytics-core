@@ -556,54 +556,68 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
               </div>
             )}
 
-            {/* Bases de données - Only show if there are databases defined */}
-            {model.databases && model.databases.length > 0 && (
-              <CollapsibleSection
-                title="Bases de données"
-                icon={Icons.database}
-                iconClassName={styles.sectionIconDatabase}
-                badge={selectedDatabaseIds.size}
-                defaultOpen={true}
-              >
-                <div className={styles.databaseGrid}>
-                  {model.databases.map((database) => {
-                    const isSelected = selectedDatabaseIds.has(database.id);
-                    return (
-                      <div
-                        key={database.id}
-                        className={`${styles.databaseCard} ${isSelected ? styles.databaseCardSelected : ''}`}
-                        onClick={() => !readOnly && toggleDatabase(database.id)}
-                        role="checkbox"
-                        aria-checked={isSelected}
-                        tabIndex={0}
-                      >
-                        <div className={styles.databaseCardCheck}>
-                          {isSelected && Icons.check}
+            {/* Bases de données */}
+            <CollapsibleSection
+              title="Bases de données"
+              icon={Icons.database}
+              iconClassName={styles.sectionIconDatabase}
+              badge={model.databases && model.databases.length > 0 ? selectedDatabaseIds.size : undefined}
+              defaultOpen={true}
+            >
+              {model.databases && model.databases.length > 0 ? (
+                <>
+                  <div className={styles.databaseGrid}>
+                    {model.databases.map((database) => {
+                      const isSelected = selectedDatabaseIds.has(database.id);
+                      return (
+                        <div
+                          key={database.id}
+                          className={`${styles.databaseCard} ${isSelected ? styles.databaseCardSelected : ''}`}
+                          onClick={() => !readOnly && toggleDatabase(database.id)}
+                          role="checkbox"
+                          aria-checked={isSelected}
+                          tabIndex={0}
+                        >
+                          <div className={styles.databaseCardCheck}>
+                            {isSelected && Icons.check}
+                          </div>
+                          <div className={styles.databaseCardIcon}>
+                            {Icons.databaseLarge}
+                          </div>
+                          <div className={styles.databaseCardInfo}>
+                            <span className={styles.databaseCardName}>{database.label}</span>
+                            {database.type && (
+                              <span className={styles.databaseCardType}>{database.type}</span>
+                            )}
+                          </div>
                         </div>
-                        <div className={styles.databaseCardIcon}>
-                          {Icons.databaseLarge}
-                        </div>
-                        <div className={styles.databaseCardInfo}>
-                          <span className={styles.databaseCardName}>{database.label}</span>
-                          {database.type && (
-                            <span className={styles.databaseCardType}>{database.type}</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                  {model.databases.length > 1 && (
+                    <button
+                      type="button"
+                      className={styles.selectAllBtn}
+                      onClick={() => !readOnly && toggleAllDatabases()}
+                    >
+                      {selectedDatabaseIds.size === model.databases.length ? 'Désélectionner tout' : 'Sélectionner tout'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className={styles.databaseEmptyState}>
+                  <div className={styles.databaseEmptyIcon}>
+                    {Icons.databaseLarge}
+                  </div>
+                  <div className={styles.databaseEmptyText}>
+                    Aucune base de données configurée
+                  </div>
+                  <div className={styles.databaseEmptyHint}>
+                    Les bases de données seront affichées ici une fois connectées
+                  </div>
                 </div>
-                {model.databases.length > 1 && (
-                  <button
-                    type="button"
-                    className={styles.selectAllBtn}
-                    onClick={() => !readOnly && toggleAllDatabases()}
-                  >
-                    {selectedDatabaseIds.size === model.databases.length ? 'Désélectionner tout' : 'Sélectionner tout'}
-                  </button>
-                )}
-              </CollapsibleSection>
-            )}
+              )}
+            </CollapsibleSection>
 
             {/* Entités (Tables, Vues, Vues Matérialisées) */}
             <CollapsibleSection
