@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { pageVariants } from '@animations';
+import { pageVariants } from '@animations/index';
 import { cn } from '@utils/cn';
 import { PageHeader } from '../PageHeader';
 import styles from './PageWrapper.module.css';

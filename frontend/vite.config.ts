@@ -35,7 +35,8 @@ export default defineConfig({
       includeAssets: ["favicon.svg", "favicon.ico", "robots.txt", "icons/*.png", "offline.html"],
       srcDir: "src/pwa",
       filename: "service-worker.js", // obligatoire
-      registerType: "autoUpdate", // 🔁 auto check updates
+      registerType: "prompt", // 🔥 PAS autoUpdate
+      // registerType: "autoUpdate", // 🔁 auto check updates
       devOptions: {
         enabled: (process.env.APP_ENV ?? "development") === "development", // PWA actif même en dev
       },
@@ -168,16 +169,17 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "src"),
       '@components': path.resolve(__dirname, './src/components'),
-      '@features': path.resolve(__dirname, './src/features'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@contexts': path.resolve(__dirname, './src/contexts'),
+      '@controllers': path.resolve(__dirname, './src/controllers'),
       '@services': path.resolve(__dirname, './src/services'),
-      '@store': path.resolve(__dirname, './src/store'),
+      '@stores': path.resolve(__dirname, './src/stores'),
       '@utils': path.resolve(__dirname, './src/utils'),
       '@models': path.resolve(__dirname, './src/models'),
       '@assets': path.resolve(__dirname, './assets'),
-      '@animations': path.resolve(__dirname, './src/animations'),
+      '@animations/index': path.resolve(__dirname, './src/animations'),
       '@config': path.resolve(__dirname, './src/config'),
-      '@routes': path.resolve(__dirname, './src/routes'),
+      '@routes/index': path.resolve(__dirname, './src/routes'),
     }
   },
 

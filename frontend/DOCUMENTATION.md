@@ -507,7 +507,7 @@ export const useStore = create<AppStore>()(
       // onRehydrateStorage : Appelé quand les données sont rechargées
       onRehydrateStorage: () => (state) => {
         // Recharger les données de test si configuré
-        if (state && state.user && USE_LOCAL_DATA) {
+        if (state && state.user) {
           state.updateUser({
             countries: COUNTRIES,
             regions: REGIONS,
@@ -550,7 +550,7 @@ export const useUI = () =>
 ```typescript
 // store/slices/authSlice.ts
 import type { StateCreator } from 'zustand';
-import type { User } from '@/models';
+import type { User } from '@models/old';
 
 export interface AuthSlice {
   // État
@@ -850,23 +850,23 @@ import { lazy } from 'react';
 
 // lazy() : Charge le composant uniquement quand nécessaire
 // Cela réduit la taille du bundle initial
-export const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'));
-export const ChangePasswordPage = lazy(() => import('@features/auth/pages/ChangePasswordPage'));
-export const MonthlyDashboardPage = lazy(() => import('@features/dashboards/pages/MonthlyDashboard'));
-export const RealtimeDashboardPage = lazy(() => import('@features/dashboards/pages/RealtimeDashboard'));
-export const ReportsPage = lazy(() => import('@features/reports/pages/ReportsPage'));
-export const MapsPage = lazy(() => import('@features/maps/pages/MapsPage'));
-export const UsersPage = lazy(() => import('@features/users/pages/UsersPage'));
-export const RolesPage = lazy(() => import('@features/users/pages/RolesPage'));
-export const PermissionsPage = lazy(() => import('@features/users/pages/PermissionsPage'));
-export const OrganizationsPage = lazy(() => import('@features/users/pages/OrganizationsPage'));
-export const AdminPage = lazy(() => import('@features/admin/pages/AdminPage'));
-export const ManagementsPage = lazy(() => import('@features/managements/pages/ManagementsPage'));
-export const SettingsPage = lazy(() => import('@features/settings/pages/SettingsPage'));
-export const DocumentationPage = lazy(() => import('@features/documentation/pages/DocumentationPage'));
-export const NotFoundPage = lazy(() => import('@features/errors/pages/NotFoundPage'));
-export const UnauthorizedPage = lazy(() => import('@features/errors/pages/UnauthorizedPage'));
-export const ServerErrorPage = lazy(() => import('@features/errors/pages/ServerErrorPage'));
+export const LoginPage = lazy(() => import('@pages/auths/pages/LoginPage'));
+export const ChangePasswordPage = lazy(() => import('@pages/auths/pages/ChangePasswordPage'));
+export const MonthlyDashboardPage = lazy(() => import('@pages/dashboards/pages/MonthlyDashboard'));
+export const RealtimeDashboardPage = lazy(() => import('@pages/dashboards/pages/RealtimeDashboard'));
+export const ReportsPage = lazy(() => import('@pages/reports/pages/ReportsPage'));
+export const MapsPage = lazy(() => import('@pages/maps/pages/MapsPage'));
+export const UsersPage = lazy(() => import('@pages/users/pages/UsersPage'));
+export const RolesPage = lazy(() => import('@pages/users/pages/RolesPage'));
+export const PermissionsPage = lazy(() => import('@pages/users/pages/PermissionsPage'));
+export const OrganizationsPage = lazy(() => import('@pages/users/pages/OrganizationsPage'));
+export const AdminPage = lazy(() => import('@pages/admin/pages/AdminPage'));
+export const ManagementsPage = lazy(() => import('@pages/managements/pages/ManagementsPage'));
+export const SettingsPage = lazy(() => import('@pages/settings/pages/SettingsPage'));
+export const DocumentationPage = lazy(() => import('@pages/documentation/pages/DocumentationPage'));
+export const NotFoundPage = lazy(() => import('@pages/errors/pages/NotFoundPage'));
+export const UnauthorizedPage = lazy(() => import('@pages/errors/pages/UnauthorizedPage'));
+export const ServerErrorPage = lazy(() => import('@pages/errors/pages/ServerErrorPage'));
 ```
 
 ### Tableau des Routes
@@ -1032,8 +1032,8 @@ export default function LoginPage() {
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@store';
-import { authService } from '../services/auth.service';
-import type { LoginCredentials, ChangePasswordPayload } from '@/models';
+import { authService } from '@services/auth.service';
+import type { LoginCredentials, ChangePasswordPayload } from '@models/old';
 
 export function useAuthActions() {
   const navigate = useNavigate();
@@ -1715,8 +1715,8 @@ export const Dhis2Api = {
 ```typescript
 // hooks/useDashboard.ts
 import { useCallback } from 'react';
-import { useDashboardStore } from '../stores/dashboard.store';
-import { DashboardsApi } from '../services/api/api.service';
+import { useDashboardStore } from '@stores/dashboard.store';
+import { DashboardsApi } from '@services/api/api.service';
 import { useNotification } from './useNotification';
 
 export function useDashboard() {
@@ -1835,7 +1835,7 @@ export function useDashboard() {
 ```typescript
 // hooks/useNotification.ts
 import { useCallback } from 'react';
-import { useNotificationStore } from '../stores/notification.store';
+import { useNotificationStore } from '@stores/notification.store';
 
 export function useNotification() {
   const { addNotification, removeNotification, clearAll } = useNotificationStore();
@@ -2407,7 +2407,7 @@ import { RecoPerformanceTable } from '../components/RecoPerformanceTable';
 import { ActiveRecoTable } from '../components/ActiveRecoTable';
 import { TasksStateTable } from '../components/TasksStateTable';
 import { MonthYearFilter, OrgUnitsFilter } from '@components/filters';
-import { useDashboard } from '@hooks/useDashboard';
+import { useDashboard } from '@contexts/useDashboard';
 import { useStore } from '@store';
 import { pageAnimations } from '@animations/page';
 import styles from './MonthlyDashboard.module.css';
@@ -2609,7 +2609,7 @@ export const listItem: Variants = {
 
 ```tsx
 import { motion } from 'framer-motion';
-import { pageAnimations, staggerContainer, listItem } from '@animations';
+import { pageAnimations, staggerContainer, listItem } from '@animations/index';
 
 // Animation de page
 function MyPage() {
@@ -2662,14 +2662,14 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
-      '@features': path.resolve(__dirname, './src/features'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@contexts': path.resolve(__dirname, './src/contexts'),
       '@services': path.resolve(__dirname, './src/services'),
       '@store': path.resolve(__dirname, './src/store'),
       '@utils': path.resolve(__dirname, './src/utils'),
       '@types': path.resolve(__dirname, './src/types'),
       '@assets': path.resolve(__dirname, './src/assets'),
-      '@animations': path.resolve(__dirname, './src/animations'),
+      '@animations/index': path.resolve(__dirname, './src/animations'),
       '@config': path.resolve(__dirname, './src/config'),
     },
   },
@@ -2723,8 +2723,8 @@ export default defineConfig({
     "paths": {
       "@/*": ["src/*"],
       "@components/*": ["src/components/*"],
-      "@features/*": ["src/features/*"],
-      "@hooks/*": ["src/hooks/*"],
+      "@pages/*": ["src/pages/*"],
+      "@contexts/*": ["src/contexts/*"],
       "@services/*": ["src/services/*"],
       "@store/*": ["src/store/*"],
       "@utils/*": ["src/utils/*"],
@@ -2853,7 +2853,7 @@ Cette application est construite sur une architecture moderne et modulaire :
 2. Étudier les composants UI de base (`src/components/ui`)
 3. Analyser un hook personnalisé (`src/hooks`)
 4. Suivre le flux d'authentification
-5. Explorer une feature complète (ex: `src/features/dashboards`)
+5. Explorer une feature complète (ex: `src/pages/dashboards`)
 
 ### Commandes Utiles
 

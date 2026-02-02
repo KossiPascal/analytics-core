@@ -1,11 +1,11 @@
 services:
   analytics-core-base:
     build:
-      context: .
+      context: ${PROJECT_DIR:-.}
       dockerfile: Dockerfile.base
     image: analytics-core-base:latest
     container_name: analytics-core-base
-    env_file: ${PROJECT_ENV_PATH:-..}/.env
+    env_file: .env
     restart: "no"
     # # Comme ce service est juste pour builder l'image, on peut le faire terminer immédiatement
     # command: ["echo", "analytics-core-base built successfully"]
@@ -26,7 +26,7 @@ services:
   analytics-core-init:
     image: alpine:latest
     container_name: analytics-core-init
-    env_file: ${PROJECT_ENV_PATH:-..}/.env
+    env_file: .env
     command: >
       sh -c "
         mkdir -p /data/postgres /data/pgadmin /data/cloudbeaver /data/logs &&
@@ -52,7 +52,7 @@ services:
       - ${PROJECT_DATA_DIR:-../analytics-data}/pgadmin:/data/pgadmin
       - ${PROJECT_DATA_DIR:-../analytics-data}/cloudbeaver:/data/cloudbeaver
       - ${PROJECT_DATA_DIR:-../analytics-data}/logs:/data/logs
-      - ./configs/nginx/certs:/etc/letsencrypt
+      - ${PROJECT_DIR:-.}/configs/nginx/certs:/etc/letsencrypt
     restart: "no"
     depends_on:
       analytics-core-base:
@@ -82,15 +82,15 @@ services:
     container_name: analytics-core-postgres
     shm_size: '2g'
     restart: unless-stopped
-    env_file: ${PROJECT_ENV_PATH:-..}/.env
+    env_file: .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
     volumes:
       - ${PROJECT_DATA_DIR:-../analytics-data}/postgres:/var/lib/postgresql/data
-      - ./configs/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
-      - ./configs/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ${PROJECT_DIR:-.}/configs/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ${PROJECT_DIR:-.}/configs/postgres/init:/docker-entrypoint-initdb.d:ro
     command: >
       postgres
       -c listen_addresses='*'
@@ -110,12 +110,12 @@ services:
   # Backend API
   analytics-core-backend:
     build:
-      context: .
+      context: ${PROJECT_DIR:-.}
       dockerfile: backend/Dockerfile
     image: analytics-core-backend:latest
     container_name: analytics-core-backend
     restart: unless-stopped
-    env_file: ${PROJECT_ENV_PATH:-..}/.env
+    env_file: .env
     # user: "1000:1000"
     environment:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
@@ -133,7 +133,7 @@ services:
       DOCKERIZED: true
     volumes:
       - ${PROJECT_DATA_DIR:-../analytics-data}/logs/backend:/app/backend/logs
-      - ./backend/migrations:/app/backend/migrations:ro
+      - ${PROJECT_DIR:-.}/backend/migrations:/app/backend/migrations:ro
     depends_on:
       analytics-core-postgres:
         condition: service_healthy
@@ -148,11 +148,11 @@ services:
   # AI Service
   analytics-core-ai:
     build:
-      context: .
+      context: ${PROJECT_DIR:-.}
       dockerfile: ai/Dockerfile
     image: analytics-core-ai:latest
     container_name: analytics-core-ai
-    env_file: ${PROJECT_ENV_PATH:-..}/.env
+    env_file: .env
     restart: unless-stopped
     # user: "1000:1000"
     environment:
@@ -186,7 +186,7 @@ services:
     image: dpage/pgadmin4:latest
     container_name: analytics-core-pgadmin
     restart: unless-stopped
-    env_file: ${PROJECT_ENV_PATH:-..}/.env
+    env_file: .env
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?PGADMIN_DEFAULT_EMAIL must be set}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD must be set}
@@ -218,7 +218,7 @@ services:
     image: dbeaver/cloudbeaver:latest
     container_name: analytics-core-cloudbeaver
     restart: unless-stopped
-    env_file: ${PROJECT_ENV_PATH:-..}/.env
+    env_file: .env
     environment:
       CB_SERVER_NAME: ${DBEAVER_SERVER_NAME:-ANALYTICS CloudBeaver}
       CB_ADMIN_NAME: ${DBEAVER_ADMIN_NAME:?DBEAVER_ADMIN_NAME must be set}
@@ -254,8 +254,8 @@ services:
       - "${NGINX_HTTP_PORT:-80}:80"
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
-      - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./configs/nginx/certs/default:/etc/letsencrypt
+      - ${PROJECT_DIR:-.}/configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${PROJECT_DIR:-.}/configs/nginx/certs/default:/etc/letsencrypt
     depends_on:
       analytics-core-backend:
         condition: service_healthy
@@ -278,9 +278,9 @@ services:
   # certbot:
   #   image: certbot/certbot
   #   container_name: analytics-core-certbot
-  #   env_file: ${PROJECT_ENV_PATH:-..}/.env
+  #   env_file: .env
   #   volumes:
-  #     - ./configs/nginx/certs:/etc/letsencrypt
+  #     - ${PROJECT_DIR:-.}/configs/nginx/certs:/etc/letsencrypt
   #   entrypoint: >
   #     sh -c "
   #       mkdir -p /etc/letsencrypt/live/default &&

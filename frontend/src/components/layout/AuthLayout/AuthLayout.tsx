@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { motion } from 'framer-motion';
-import { pageBlurFadeVariants } from '@animations';
+import { pageBlurFadeVariants } from '@animations/index';
 import { cn } from '@utils/cn';
 import styles from './AuthLayout.module.css';
 

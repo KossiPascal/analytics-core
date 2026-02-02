@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,9 +18,10 @@ import {
   Eye,
 } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { collapseVariants, sidebarItemTextVariants } from '@animations';
-import { ROUTES } from '@routes';
+import { collapseVariants, sidebarItemTextVariants } from '@animations/index';
+import { getSideNavItems, ROUTES, NavItem } from '@routes/index';
 import styles from './Sidebar.module.css';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface SidebarItem {
   path: string;
@@ -41,45 +42,25 @@ export interface SidebarProps {
   onLogout?: () => void;
 }
 
-const sidebarItems: SidebarItem[] = [
-  {
-    path: ROUTES.visualization(),
-    label: 'Visualisation',
-    icon: <Eye size={20} />,
-    children: [
-      { path: ROUTES.dashboards.monthly(), label: 'Tableau de bord mensuel', icon: <Gauge size={18} /> },
-      { path: ROUTES.dashboards.realtime(), label: 'Tableau de bord temps réel', icon: <Activity size={18} /> },
-      { path: ROUTES.reports.root(), label: 'Rapports', icon: <FileText size={18} /> },
-      { path: ROUTES.maps.root(), label: 'Cartes', icon: <Map size={18} /> },
-    ],
-  },
-  {
-    path: ROUTES.users.root(),
-    label: 'Utilisateurs',
-    icon: <Users size={20} />,
-    children: [
-      { path: ROUTES.users.list(), label: 'Liste', icon: <Users size={18} /> },
-      { path: ROUTES.users.organizations(), label: 'Organisations', icon: <Building2 size={18} /> },
-      { path: ROUTES.users.permissions(), label: 'Permissions', icon: <ShieldCheck size={18} /> },
-      { path: ROUTES.users.roles(), label: 'Rôles', icon: <Shield size={18} /> },
-    ],
-  },
-  { path: ROUTES.admin.root(), label: 'Administration', icon: <Shield size={20} /> },
-  { path: ROUTES.documentation.root(), label: 'Documentation', icon: <BookOpen size={20} /> },
-];
-
 export function Sidebar({ isOpen, isCollapsed = false, onClose, userName = 'Utilisateur', userRole = 'Admin', onLogout }: SidebarProps) {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [sideNavItems, setSideNavItems] = useState<NavItem[]>([]);
+
+  const { user } = useAuth();
 
   const toggleExpand = (path: string) => {
-    setExpandedItems((prev) =>
-      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
-    );
+    setExpandedItems((prev) => prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]);
   };
-
   const isActive = (path: string) => location.pathname.startsWith(path);
   const isExpanded = (path: string) => expandedItems.includes(path);
+
+  useEffect(() => {
+    if (user?.permissions?.length) {
+      const navItems = getSideNavItems([...user.permissions]);
+      setSideNavItems(navItems)
+    }
+  }, []);
 
   // User menu items (mobile only)
   const userMenuItems: SidebarItem[] = [
@@ -142,7 +123,7 @@ export function Sidebar({ isOpen, isCollapsed = false, onClose, userName = 'Util
           </div>
 
           {/* Main Navigation */}
-          {sidebarItems.map((item) => (
+          {sideNavItems.map((item) => (
             <div key={item.path} className={styles.navGroup}>
               {item.children ? (
                 <>

@@ -12,7 +12,7 @@ import type {
   ChwsMap,
   RecosMap,
   LocationInfo,
-} from '@/types/org-unit.types';
+} from '@/models/OLD/old/org-unit.types';
 import type {
   RecoPerformanceDashboard,
   RecoPerformanceDashboardDbOutput,
@@ -23,7 +23,7 @@ import type {
   ActiveRecoUtils,
   RecoTasksStateDashboard,
   RecoTasksStateFamilies,
-} from '@/types/dashboard.types';
+} from '@/models/OLD/old/dashboard.types';
 import type {
   FamilyPlanningReport,
   MorbidityReport,
@@ -35,8 +35,8 @@ import type {
   FP_Utils,
   MorbidityUtils,
   DomainsThemesUtils,
-} from '@/types/reports.types';
-import type { Roles, Routes } from '@/types/auth.types';
+} from '@/models/OLD/old/reports.types';
+import type { Roles, Routes } from '@/models/OLD/old/auth.types';
 
 // ============================================================================
 // DATABASE INSTANCE
