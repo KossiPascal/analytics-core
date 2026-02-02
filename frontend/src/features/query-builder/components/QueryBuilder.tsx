@@ -21,6 +21,15 @@ import JSONPreview from './JSONPreview';
 import styles from '../styles/QueryBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
 
+type DefinitionSelections = {
+  [tableId: string]: {
+    [attributeId: string]: {
+      dimension: boolean;
+      metric: boolean;
+    };
+  };
+};
+
 // ============================================================================
 // ICONS
 // ============================================================================
@@ -103,11 +112,8 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
   readOnly = false,
   compact = false,
 }) => {
-  const [definitionSelections, setDefinitionSelections] = useState<Record<string, Record<string, {
-    dimension: boolean;
-    metric: boolean;
-  }>>(() => {
-    const initial: Record<string, Record<string, { dimension: boolean; metric: boolean }>> = {};
+  const [definitionSelections, setDefinitionSelections] = useState<DefinitionSelections>(() => {
+    const initial: DefinitionSelections = {};
     model.tables.forEach((table) => {
       initial[table.id] = {};
     });
@@ -133,7 +139,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
     return () => document.removeEventListener('click', handleClick);
   }, [tableMenuOpenId]);
 
-  const effectiveModel = useMemo<AnalyticsModel>(() => {
+  const effectiveModel = useMemo(() => {
     const filteredDimensions = model.dimensions.filter((dimension) => {
       const selection = definitionSelections[dimension.table]?.[dimension.id];
       return selection ? selection.dimension : true;
