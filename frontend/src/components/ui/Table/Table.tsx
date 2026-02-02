@@ -2,7 +2,7 @@ import { type ReactNode, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { listItemVariants, staggerContainerVariants } from '@animations';
+import { listItemVariants, staggerContainerVariants } from '@animations/index';
 import styles from './Table.module.css';
 
 export interface Column<T> {

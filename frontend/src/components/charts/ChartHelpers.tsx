@@ -8,18 +8,25 @@ import styles from './charts.module.css';
 // CUSTOM TOOLTIP
 // ============================================================================
 
-interface CustomTooltipProps extends TooltipProps<ValueType, NameType> {
-  formatter?: (value: number, name: string) => string;
-  labelFormatter?: (label: string) => string;
-}
+type SafeFormatter = (value: number, name: string) => string;
+type SafeLabelFormatter = (label: string) => string;
 
-export function CustomTooltip({
-  active,
-  payload,
-  label,
-  formatter,
-  labelFormatter,
-}: CustomTooltipProps) {
+
+export type CustomTooltipProps = {
+  active?: boolean;
+  payload?: Array<{
+    value?: number | string;
+    name?: string;
+    color?: string;
+    payload?: any;
+  }>;
+  label?: string | number;
+  formatter?: SafeFormatter;
+  labelFormatter?: SafeLabelFormatter;
+};
+
+export function CustomTooltip(props: CustomTooltipProps) {
+  const { active, payload, label, formatter, labelFormatter } = props;
   if (!active || !payload || payload.length === 0) {
     return null;
   }

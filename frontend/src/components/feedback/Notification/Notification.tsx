@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNotification } from '../../../hooks/useNotification';
+import { useNotification } from '@/contexts/OLD/useNotification';
 import styles from './Notification.module.css';
 
 export function NotificationContainer() {

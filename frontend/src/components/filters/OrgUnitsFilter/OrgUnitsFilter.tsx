@@ -9,8 +9,8 @@ import type {
   VillageSecteursMap,
   ChwsMap,
   RecosMap,
-} from '@/types';
-import { useAuth } from '@store';
+} from '@/models/OLD/old';
+import { useAuth } from '@/stores/OLD';
 import { notNull } from '@/utils/date';
 import styles from './OrgUnitsFilter.module.css';
 

@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { AreaChartProps } from './types';
+import type { AreaChartProps, ChartSeries } from './types';
 import {
   CHART_COLORS,
   DEFAULT_MARGIN,
@@ -25,6 +25,7 @@ import {
   ChartContainer,
   useHiddenSeries,
 } from './ChartHelpers';
+import { RechartsClickEvent } from '@/models/OLD/old/recharts.types';
 
 export function AreaChart({
   data,
@@ -72,7 +73,7 @@ export function AreaChart({
       dataKey: key,
       name: key,
       color: getChartColor(index, colors),
-    }));
+    })) as ChartSeries[];
   }, [data, series, xAxis.dataKey, colors]);
 
   const noData = !data || data.length === 0;
@@ -91,7 +92,7 @@ export function AreaChart({
         <RechartsAreaChart
           data={data}
           margin={margin}
-          onClick={(e) => e?.activePayload && onClick?.(e.activePayload[0].payload, e.activeTooltipIndex || 0)}
+          onClick={(e:RechartsClickEvent) => e?.activePayload && onClick?.(e.activePayload[0].payload, Number(e.activeTooltipIndex ?? 0))}
         >
           {gradientFill && (
             <defs>

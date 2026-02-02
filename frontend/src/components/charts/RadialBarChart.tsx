@@ -119,7 +119,7 @@ export function RadialBarChart({
           <RadialBar
             dataKey={dataKey}
             background={background ? { fill: CHART_COLORS.background.muted } : undefined}
-            clockWise={clockWise}
+            // clockWise={clockWise}
             label={renderCustomLabel}
             onClick={(entry, index) => onClick?.(entry, index)}
             isAnimationActive={animation.enabled !== false}

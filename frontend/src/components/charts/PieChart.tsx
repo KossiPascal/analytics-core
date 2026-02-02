@@ -213,7 +213,7 @@ export function PieChart({
             paddingAngle={paddingAngle}
             startAngle={startAngle}
             endAngle={endAngle}
-            activeIndex={activeIndex}
+            // activeIndex={activeIndex}
             activeShape={renderActiveShape}
             onMouseEnter={onPieEnter}
             onMouseLeave={onPieLeave}

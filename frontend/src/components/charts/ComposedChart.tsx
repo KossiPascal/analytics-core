@@ -11,7 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { ComposedChartProps } from './types';
+import type { ChartSeries, ComposedChartProps } from './types';
 import {
   CHART_COLORS,
   DEFAULT_MARGIN,
@@ -27,6 +27,7 @@ import {
   ChartContainer,
   useHiddenSeries,
 } from './ChartHelpers';
+import { RechartsClickEvent } from '@/models/OLD/old/recharts.types';
 
 export function ComposedChart({
   data,
@@ -75,7 +76,7 @@ export function ComposedChart({
       name: key,
       color: getChartColor(index, colors),
       type: index === 0 ? 'bar' : 'line' as 'bar' | 'line' | 'area',
-    }));
+    })) as ChartSeries[];
   }, [data, series, xAxis.dataKey, colors]);
 
   const noData = !data || data.length === 0;
@@ -105,7 +106,7 @@ export function ComposedChart({
         <RechartsComposedChart
           data={data}
           margin={margin}
-          onClick={(e) => e?.activePayload && onClick?.(e.activePayload[0].payload, e.activeTooltipIndex || 0)}
+          onClick={(e:RechartsClickEvent) => e?.activePayload && onClick?.(e.activePayload[0].payload, Number(e.activeTooltipIndex ?? 0))}
         >
           <defs>
             {areaSeries.map((s, index) => {

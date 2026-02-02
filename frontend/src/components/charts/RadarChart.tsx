@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import type { RadarChartProps } from './types';
+import type { ChartSeries, RadarChartProps } from './types';
 import {
   CHART_COLORS,
   DEFAULT_ANIMATION,
@@ -59,7 +59,7 @@ export function RadarChart({
       dataKey: key,
       name: key,
       color: getChartColor(index, colors),
-    }));
+    })) as ChartSeries[];
   }, [data, series, polarAngleAxisKey, colors]);
 
   const noData = !data || data.length === 0;
