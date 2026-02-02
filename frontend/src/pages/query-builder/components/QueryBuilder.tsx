@@ -23,13 +23,40 @@ import JSONPreview from './JSONPreview';
 import styles from '../styles/QueryBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
 
+type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
+
+type AttributeDefinition = {
+  dimension: boolean;
+  metric: boolean;
+  dimensionLabel?: string;
+  dimensionAlias?: string;
+  metricLabel?: string;
+  metricAlias?: string;
+  aggregationType?: AggregationType;
+};
+
 type DefinitionSelections = {
   [tableId: string]: {
-    [attributeId: string]: {
-      dimension: boolean;
-      metric: boolean;
-    };
+    [attributeId: string]: AttributeDefinition;
   };
+};
+
+const AGGREGATION_OPTIONS: { value: AggregationType; label: string }[] = [
+  { value: 'count', label: 'COUNT' },
+  { value: 'sum', label: 'SUM' },
+  { value: 'avg', label: 'AVG' },
+  { value: 'min', label: 'MIN' },
+  { value: 'max', label: 'MAX' },
+  { value: 'distinct', label: 'DISTINCT' },
+];
+
+const generateAlias = (label: string): string => {
+  return label
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
 };
 
 // ============================================================================
@@ -781,59 +808,181 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({
                     dimension: true,
                     metric: false,
                   };
+                  const typeLabels: Record<string, string> = {
+                    string: 'Texte',
+                    number: 'Nombre',
+                    date: 'Date',
+                    boolean: 'Booléen',
+                  };
                   return (
                     <tr key={attribute.id}>
                       <td>
                         <div className={styles.definitionAttribute}>
                           <span className={styles.definitionAttributeLabel}>{attribute.label}</span>
                           <span className={styles.definitionAttributeId}>{attribute.id}</span>
+                          <span className={styles.definitionAttributeType}>
+                            Type: {typeLabels[attribute.type] || attribute.type}
+                          </span>
                         </div>
                       </td>
                       <td>
-                        <label className={styles.definitionCheckbox}>
-                          <input
-                            type="checkbox"
-                            checked={selection.dimension}
-                            disabled={readOnly}
-                            onChange={(event) => {
-                              const checked = event.target.checked;
-                              setDefinitionSelections((prev) => ({
-                                ...prev,
-                                [attribute.table]: {
-                                  ...prev[attribute.table],
-                                  [attribute.id]: {
-                                    ...prev[attribute.table]?.[attribute.id],
-                                    dimension: checked,
+                        <div className={styles.definitionCell}>
+                          <label className={styles.definitionCheckbox}>
+                            <input
+                              type="checkbox"
+                              checked={selection.dimension}
+                              disabled={readOnly}
+                              onChange={(event) => {
+                                const checked = event.target.checked;
+                                const currentLabel = selection.dimensionLabel || attribute.label;
+                                setDefinitionSelections((prev) => ({
+                                  ...prev,
+                                  [attribute.table]: {
+                                    ...prev[attribute.table],
+                                    [attribute.id]: {
+                                      ...prev[attribute.table]?.[attribute.id],
+                                      dimension: checked,
+                                      dimensionLabel: checked ? currentLabel : undefined,
+                                      dimensionAlias: checked ? generateAlias(currentLabel) : undefined,
+                                    },
                                   },
-                                },
-                              }));
-                            }}
-                          />
-                          <span>Dimension</span>
-                        </label>
+                                }));
+                              }}
+                            />
+                            <span>Dimension</span>
+                          </label>
+                          {selection.dimension && (
+                            <div className={styles.definitionFields}>
+                              <div className={styles.definitionFieldGroup}>
+                                <label className={styles.definitionFieldLabel}>Libellé</label>
+                                <input
+                                  type="text"
+                                  className={styles.definitionInput}
+                                  value={selection.dimensionLabel || attribute.label}
+                                  disabled={readOnly}
+                                  onChange={(event) => {
+                                    const newLabel = event.target.value;
+                                    setDefinitionSelections((prev) => ({
+                                      ...prev,
+                                      [attribute.table]: {
+                                        ...prev[attribute.table],
+                                        [attribute.id]: {
+                                          ...prev[attribute.table]?.[attribute.id],
+                                          dimensionLabel: newLabel,
+                                          dimensionAlias: generateAlias(newLabel),
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                              </div>
+                              <div className={styles.definitionFieldGroup}>
+                                <label className={styles.definitionFieldLabel}>Alias</label>
+                                <input
+                                  type="text"
+                                  className={styles.definitionInputDisabled}
+                                  value={selection.dimensionAlias || generateAlias(selection.dimensionLabel || attribute.label)}
+                                  disabled
+                                  readOnly
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td>
-                        <label className={styles.definitionCheckbox}>
-                          <input
-                            type="checkbox"
-                            checked={selection.metric}
-                            disabled={readOnly}
-                            onChange={(event) => {
-                              const checked = event.target.checked;
-                              setDefinitionSelections((prev) => ({
-                                ...prev,
-                                [attribute.table]: {
-                                  ...prev[attribute.table],
-                                  [attribute.id]: {
-                                    ...prev[attribute.table]?.[attribute.id],
-                                    metric: checked,
+                        <div className={styles.definitionCell}>
+                          <label className={styles.definitionCheckbox}>
+                            <input
+                              type="checkbox"
+                              checked={selection.metric}
+                              disabled={readOnly}
+                              onChange={(event) => {
+                                const checked = event.target.checked;
+                                const currentLabel = selection.metricLabel || attribute.label;
+                                const defaultAgg: AggregationType = attribute.type === 'number' ? 'sum' : 'count';
+                                setDefinitionSelections((prev) => ({
+                                  ...prev,
+                                  [attribute.table]: {
+                                    ...prev[attribute.table],
+                                    [attribute.id]: {
+                                      ...prev[attribute.table]?.[attribute.id],
+                                      metric: checked,
+                                      metricLabel: checked ? currentLabel : undefined,
+                                      metricAlias: checked ? generateAlias(currentLabel) : undefined,
+                                      aggregationType: checked ? (prev[attribute.table]?.[attribute.id]?.aggregationType || defaultAgg) : undefined,
+                                    },
                                   },
-                                },
-                              }));
-                            }}
-                          />
-                          <span>Métrique</span>
-                        </label>
+                                }));
+                              }}
+                            />
+                            <span>Métrique</span>
+                          </label>
+                          {selection.metric && (
+                            <div className={styles.definitionFields}>
+                              <div className={styles.definitionFieldGroup}>
+                                <label className={styles.definitionFieldLabel}>Libellé</label>
+                                <input
+                                  type="text"
+                                  className={styles.definitionInput}
+                                  value={selection.metricLabel || attribute.label}
+                                  disabled={readOnly}
+                                  onChange={(event) => {
+                                    const newLabel = event.target.value;
+                                    setDefinitionSelections((prev) => ({
+                                      ...prev,
+                                      [attribute.table]: {
+                                        ...prev[attribute.table],
+                                        [attribute.id]: {
+                                          ...prev[attribute.table]?.[attribute.id],
+                                          metricLabel: newLabel,
+                                          metricAlias: generateAlias(newLabel),
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                />
+                              </div>
+                              <div className={styles.definitionFieldGroup}>
+                                <label className={styles.definitionFieldLabel}>Alias</label>
+                                <input
+                                  type="text"
+                                  className={styles.definitionInputDisabled}
+                                  value={selection.metricAlias || generateAlias(selection.metricLabel || attribute.label)}
+                                  disabled
+                                  readOnly
+                                />
+                              </div>
+                              <div className={styles.definitionFieldGroup}>
+                                <label className={styles.definitionFieldLabel}>Agrégation</label>
+                                <select
+                                  className={styles.definitionSelect}
+                                  value={selection.aggregationType || (attribute.type === 'number' ? 'sum' : 'count')}
+                                  disabled={readOnly}
+                                  onChange={(event) => {
+                                    const aggType = event.target.value as AggregationType;
+                                    setDefinitionSelections((prev) => ({
+                                      ...prev,
+                                      [attribute.table]: {
+                                        ...prev[attribute.table],
+                                        [attribute.id]: {
+                                          ...prev[attribute.table]?.[attribute.id],
+                                          aggregationType: aggType,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                >
+                                  {AGGREGATION_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

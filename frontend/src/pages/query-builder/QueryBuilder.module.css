@@ -720,20 +720,22 @@
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--qb-text-muted);
+  border: 1px solid var(--qb-border);
+  background: var(--qb-bg-card);
+  color: var(--qb-text);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: var(--qb-transition-fast);
+  box-shadow: var(--qb-shadow-sm);
 }
 
 .tableOptionMenuButton:hover {
-  border-color: var(--qb-border);
-  background: var(--qb-bg-hover);
-  color: var(--qb-text);
+  border-color: var(--qb-primary);
+  background: var(--qb-primary);
+  color: white;
+  box-shadow: var(--qb-shadow);
 }
 
 .tableOptionMenuList {
@@ -814,6 +816,19 @@
   color: var(--qb-text-light);
 }
 
+.definitionAttributeType {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  margin-top: 4px;
+  border-radius: 4px;
+  background: var(--qb-bg);
+  color: var(--qb-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border: 1px solid var(--qb-border);
+}
+
 .definitionCheckbox {
   display: inline-flex;
   align-items: center;
@@ -826,6 +841,80 @@
   width: 16px;
   height: 16px;
   accent-color: var(--qb-primary);
+}
+
+.definitionCell {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.definitionFields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--qb-bg);
+  border-radius: var(--qb-radius);
+  border: 1px solid var(--qb-border);
+}
+
+.definitionFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.definitionFieldLabel {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--qb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.definitionInput {
+  padding: 8px 10px;
+  border: 1px solid var(--qb-border);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8125rem;
+  background: var(--qb-bg-card);
+  transition: var(--qb-transition);
+  min-width: 160px;
+}
+
+.definitionInput:focus {
+  outline: none;
+  border-color: var(--qb-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.definitionInputDisabled {
+  padding: 8px 10px;
+  border: 1px solid var(--qb-border);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8125rem;
+  background: var(--qb-bg);
+  color: var(--qb-text-muted);
+  min-width: 160px;
+  cursor: not-allowed;
+}
+
+.definitionSelect {
+  padding: 8px 10px;
+  border: 1px solid var(--qb-border);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8125rem;
+  background: var(--qb-bg-card);
+  transition: var(--qb-transition);
+  min-width: 160px;
+  cursor: pointer;
+}
+
+.definitionSelect:focus {
+  outline: none;
+  border-color: var(--qb-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .modalFooter {
