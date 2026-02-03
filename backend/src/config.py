@@ -49,20 +49,14 @@ class Config:
     REFRESH_RATE_LIMIT_MAX = int(os.getenv("REFRESH_RATE_LIMIT_MAX", 10))
     REFRESH_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("REFRESH_RATE_LIMIT_WINDOW_SECONDS", 60))
 
-<<<<<<< HEAD
-    POSTGRES_HOST = os.getenv('POSTGRES_HOST') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_HOST', 'localhost')
-    POSTGRES_PORT = os.getenv('POSTGRES_PORT', "5432") if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PORT', "5432")
-    POSTGRES_DB = os.getenv('POSTGRES_DB') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_DB', 'analytics_core_db')
-    POSTGRES_USER = os.getenv('POSTGRES_USER') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_USER', 'analitic_user')
-    POSTGRES_PASSWORD = quote_plus(os.getenv('POSTGRES_PASSWORD',"no_password") if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PASSWORD', 'Pa$$w0rd_2026'))
-=======
+
     POSTGRES_HOST = os.getenv('POSTGRES_HOST') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_HOST')
     POSTGRES_PORT = os.getenv('POSTGRES_PORT', "5432") if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PORT')
     POSTGRES_DB = os.getenv('POSTGRES_DB') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_DB')
     POSTGRES_USER = os.getenv('POSTGRES_USER') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_USER')
     POSTGRES_PASSWORD_RAW = os.getenv('POSTGRES_PASSWORD') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PASSWORD')
     POSTGRES_PASSWORD = quote_plus(POSTGRES_PASSWORD_RAW)
->>>>>>> dev
+
     POSTGRES_NETWORK = os.getenv('POSTGRES_NETWORK')
 
     SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", "false") == 'true'
