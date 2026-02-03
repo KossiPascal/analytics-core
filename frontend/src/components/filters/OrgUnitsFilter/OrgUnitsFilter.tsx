@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { Modal, Button } from '@components/ui';
 import type {
   CountryMap,
   RegionsMap,
@@ -29,8 +30,8 @@ export interface OrgUnitSelection {
 }
 
 export interface FilterFormData {
-  start_date: string; // Format: YYYY-MM-DD
-  end_date: string;   // Format: YYYY-MM-DD
+  start_date: string;
+  end_date: string;
   country?: string[];
   region?: string[];
   prefecture?: string[];
@@ -51,22 +52,18 @@ interface OrgUnitsFilterProps {
   onClose?: () => void;
 }
 
-// Helper function to get default start date (21st of previous month)
 function getDefaultStartDate(): string {
   const now = new Date();
-  // Go to previous month
   const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 21);
   return formatDateToISO(prevMonth);
 }
 
-// Helper function to get default end date (20th of current month)
 function getDefaultEndDate(): string {
   const now = new Date();
   const endDate = new Date(now.getFullYear(), now.getMonth(), 20);
   return formatDateToISO(endDate);
 }
 
-// Format date to YYYY-MM-DD (for input type="date")
 function formatDateToISO(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -78,14 +75,12 @@ export function OrgUnitsFilter({
   onChange,
   showRecoLevel = true,
   showDateSelection = true,
-  className = '',
   isOpen = false,
   onClose,
 }: OrgUnitsFilterProps) {
   const { user } = useAuth();
   const isInitialized = useRef(false);
 
-  // Static data from user (source data - never changes)
   const Countries$ = useMemo(() => user?.countries ?? [], [user?.countries]);
   const Regions$ = useMemo(() => user?.regions ?? [], [user?.regions]);
   const Prefectures$ = useMemo(() => user?.prefectures ?? [], [user?.prefectures]);
@@ -95,11 +90,9 @@ export function OrgUnitsFilter({
   const Chws$ = useMemo(() => user?.chws ?? [], [user?.chws]);
   const Recos$ = useMemo(() => user?.recos ?? [], [user?.recos]);
 
-  // Date values - default: 21/previous month to 20/current month
   const [startDate, setStartDate] = useState(() => getDefaultStartDate());
   const [endDate, setEndDate] = useState(() => getDefaultEndDate());
 
-  // Filtered org units state (cascading filtered data)
   const [countries, setCountries] = useState<CountryMap[]>([]);
   const [regions, setRegions] = useState<RegionsMap[]>([]);
   const [prefectures, setPrefectures] = useState<PrefecturesMap[]>([]);
@@ -108,7 +101,6 @@ export function OrgUnitsFilter({
   const [districtQuartiers, setDistrictQuartiers] = useState<DistrictQuartiersMap[]>([]);
   const [recos, setRecos] = useState<RecosMap[]>([]);
 
-  // Form values state for org units
   const [formValues, setFormValues] = useState<Record<string, string[]>>({
     country: [],
     region: [],
@@ -119,7 +111,6 @@ export function OrgUnitsFilter({
     recos: [],
   });
 
-  // Helper functions
   const getVal = useCallback((field: string): string[] => {
     return formValues[field] || [];
   }, [formValues]);
@@ -128,12 +119,8 @@ export function OrgUnitsFilter({
     setFormValues(prev => ({ ...prev, [field]: values }));
   }, []);
 
-  // ============ CASCADE GENERATION FUNCTIONS ============
-  // These mirror the Angular logic exactly - synchronous cascade
-
   const recosGenerate = useCallback((currentDistrictQuartiers: DistrictQuartiersMap[], districtQuartierIds: string[]) => {
     let filteredRecos: RecosMap[];
-
     if (notNull(districtQuartierIds) && Recos$.length > 0) {
       if (currentDistrictQuartiers.length > 0) {
         filteredRecos = Recos$.filter(d => districtQuartierIds.includes(d.district_quartier_id));
@@ -143,14 +130,12 @@ export function OrgUnitsFilter({
     } else {
       filteredRecos = Recos$;
     }
-
     setRecos(filteredRecos);
     return filteredRecos.map(r => r.id);
   }, [Recos$]);
 
   const districtsGenerate = useCallback((currentHospitals: HospitalsMap[], hospitalIds: string[]) => {
     let filteredDistricts: DistrictQuartiersMap[];
-
     if (notNull(hospitalIds) && DistrictQuartiers$.length > 0) {
       if (currentHospitals.length > 0) {
         filteredDistricts = DistrictQuartiers$.filter(d => hospitalIds.includes(d.hospital_id));
@@ -160,17 +145,14 @@ export function OrgUnitsFilter({
     } else {
       filteredDistricts = [];
     }
-
     setDistrictQuartiers(filteredDistricts);
     const districtIds = filteredDistricts.map(r => r.id);
     const recoIds = recosGenerate(filteredDistricts, districtIds);
-
     return { districtIds, recoIds };
   }, [DistrictQuartiers$, recosGenerate]);
 
   const hospitalsGenerate = useCallback((currentCommunes: CommunesMap[], communeIds: string[]) => {
     let filteredHospitals: HospitalsMap[];
-
     if (notNull(communeIds) && Hospitals$.length > 0) {
       if (currentCommunes.length > 0) {
         filteredHospitals = Hospitals$.filter(d => communeIds.includes(d.commune_id));
@@ -180,17 +162,14 @@ export function OrgUnitsFilter({
     } else {
       filteredHospitals = [];
     }
-
     setHospitals(filteredHospitals);
     const hospitalIds = filteredHospitals.map(r => r.id);
     const { districtIds, recoIds } = districtsGenerate(filteredHospitals, hospitalIds);
-
     return { hospitalIds, districtIds, recoIds };
   }, [Hospitals$, districtsGenerate]);
 
   const communesGenerate = useCallback((currentPrefectures: PrefecturesMap[], prefectureIds: string[]) => {
     let filteredCommunes: CommunesMap[];
-
     if (notNull(prefectureIds) && Communes$.length > 0) {
       if (currentPrefectures.length > 0) {
         filteredCommunes = Communes$.filter(d => prefectureIds.includes(d.prefecture_id));
@@ -200,17 +179,14 @@ export function OrgUnitsFilter({
     } else {
       filteredCommunes = [];
     }
-
     setCommunes(filteredCommunes);
     const communeIds = filteredCommunes.map(r => r.id);
     const { hospitalIds, districtIds, recoIds } = hospitalsGenerate(filteredCommunes, communeIds);
-
     return { communeIds, hospitalIds, districtIds, recoIds };
   }, [Communes$, hospitalsGenerate]);
 
   const prefecturesGenerate = useCallback((currentRegions: RegionsMap[], regionIds: string[]) => {
     let filteredPrefectures: PrefecturesMap[];
-
     if (notNull(regionIds) && Prefectures$.length > 0) {
       if (currentRegions.length > 0) {
         filteredPrefectures = Prefectures$.filter(d => regionIds.includes(d.region_id));
@@ -220,17 +196,14 @@ export function OrgUnitsFilter({
     } else {
       filteredPrefectures = [];
     }
-
     setPrefectures(filteredPrefectures);
     const prefectureIds = filteredPrefectures.map(r => r.id);
     const { communeIds, hospitalIds, districtIds, recoIds } = communesGenerate(filteredPrefectures, prefectureIds);
-
     return { prefectureIds, communeIds, hospitalIds, districtIds, recoIds };
   }, [Prefectures$, communesGenerate]);
 
   const regionsGenerate = useCallback((currentCountries: CountryMap[], countryIds: string[]) => {
     let filteredRegions: RegionsMap[];
-
     if (notNull(countryIds) && Regions$.length > 0) {
       if (currentCountries.length > 0) {
         filteredRegions = Regions$.filter(d => countryIds.includes(d.country_id));
@@ -240,11 +213,9 @@ export function OrgUnitsFilter({
     } else {
       filteredRegions = [];
     }
-
     setRegions(filteredRegions);
     const regionIds = filteredRegions.map(r => r.id);
     const { prefectureIds, communeIds, hospitalIds, districtIds, recoIds } = prefecturesGenerate(filteredRegions, regionIds);
-
     return { regionIds, prefectureIds, communeIds, hospitalIds, districtIds, recoIds };
   }, [Regions$, prefecturesGenerate]);
 
@@ -253,8 +224,6 @@ export function OrgUnitsFilter({
     setCountries(filteredCountries);
     const countryIds = filteredCountries.map(c => c.id);
     const { regionIds, prefectureIds, communeIds, hospitalIds, districtIds, recoIds } = regionsGenerate(filteredCountries, countryIds);
-
-    // Update all form values at once
     setFormValues(prev => ({
       ...prev,
       country: countryIds,
@@ -267,7 +236,6 @@ export function OrgUnitsFilter({
     }));
   }, [Countries$, regionsGenerate]);
 
-  // Initialize when data is available
   useEffect(() => {
     if (!isInitialized.current && Countries$.length > 0) {
       isInitialized.current = true;
@@ -275,18 +243,13 @@ export function OrgUnitsFilter({
     }
   }, [Countries$, countriesGenerate]);
 
-  // ============ EVENT HANDLERS ============
-
-  // Handle country selection change
   const handleCountryChange = useCallback((newCountryIds: string[]) => {
     const currentCountries = Countries$.filter(c => newCountryIds.includes(c.id));
     setCountries(currentCountries.length > 0 ? currentCountries : Countries$);
-
     const { regionIds, prefectureIds, communeIds, hospitalIds, districtIds, recoIds } = regionsGenerate(
       currentCountries.length > 0 ? currentCountries : Countries$,
       newCountryIds
     );
-
     setFormValues(prev => ({
       ...prev,
       country: newCountryIds,
@@ -299,10 +262,8 @@ export function OrgUnitsFilter({
     }));
   }, [Countries$, regionsGenerate]);
 
-  // Handle region selection change
   const handleRegionChange = useCallback((newRegionIds: string[]) => {
     const { prefectureIds, communeIds, hospitalIds, districtIds, recoIds } = prefecturesGenerate(regions, newRegionIds);
-
     setFormValues(prev => ({
       ...prev,
       region: newRegionIds,
@@ -314,10 +275,8 @@ export function OrgUnitsFilter({
     }));
   }, [regions, prefecturesGenerate]);
 
-  // Handle prefecture selection change
   const handlePrefectureChange = useCallback((newPrefectureIds: string[]) => {
     const { communeIds, hospitalIds, districtIds, recoIds } = communesGenerate(prefectures, newPrefectureIds);
-
     setFormValues(prev => ({
       ...prev,
       prefecture: newPrefectureIds,
@@ -328,10 +287,8 @@ export function OrgUnitsFilter({
     }));
   }, [prefectures, communesGenerate]);
 
-  // Handle commune selection change
   const handleCommuneChange = useCallback((newCommuneIds: string[]) => {
     const { hospitalIds, districtIds, recoIds } = hospitalsGenerate(communes, newCommuneIds);
-
     setFormValues(prev => ({
       ...prev,
       commune: newCommuneIds,
@@ -341,10 +298,8 @@ export function OrgUnitsFilter({
     }));
   }, [communes, hospitalsGenerate]);
 
-  // Handle hospital selection change
   const handleHospitalChange = useCallback((newHospitalIds: string[]) => {
     const { districtIds, recoIds } = districtsGenerate(hospitals, newHospitalIds);
-
     setFormValues(prev => ({
       ...prev,
       hospital: newHospitalIds,
@@ -353,10 +308,8 @@ export function OrgUnitsFilter({
     }));
   }, [hospitals, districtsGenerate]);
 
-  // Handle district quartier selection change
   const handleDistrictQuartierChange = useCallback((newDistrictIds: string[]) => {
     const recoIds = recosGenerate(districtQuartiers, newDistrictIds);
-
     setFormValues(prev => ({
       ...prev,
       district_quartier: newDistrictIds,
@@ -364,43 +317,25 @@ export function OrgUnitsFilter({
     }));
   }, [districtQuartiers, recosGenerate]);
 
-  // Handle recos selection change
   const handleRecosChange = useCallback((newRecoIds: string[]) => {
     setMultipleValues('recos', newRecoIds);
   }, [setMultipleValues]);
 
-  // Select all handlers
   const selectAll = useCallback((
     cible: 'country' | 'region' | 'prefecture' | 'commune' | 'hospital' | 'district_quartier' | 'recos',
     checked: boolean
   ) => {
-    if (cible === 'country') {
-      const ids = checked ? countries.map(r => r.id) : [];
-      handleCountryChange(ids);
-    } else if (cible === 'region') {
-      const ids = checked ? regions.map(r => r.id) : [];
-      handleRegionChange(ids);
-    } else if (cible === 'prefecture') {
-      const ids = checked ? prefectures.map(r => r.id) : [];
-      handlePrefectureChange(ids);
-    } else if (cible === 'commune') {
-      const ids = checked ? communes.map(r => r.id) : [];
-      handleCommuneChange(ids);
-    } else if (cible === 'hospital') {
-      const ids = checked ? hospitals.map(r => r.id) : [];
-      handleHospitalChange(ids);
-    } else if (cible === 'district_quartier') {
-      const ids = checked ? districtQuartiers.map(r => r.id) : [];
-      handleDistrictQuartierChange(ids);
-    } else if (cible === 'recos') {
-      const ids = checked ? recos.map(r => r.id) : [];
-      handleRecosChange(ids);
-    }
+    if (cible === 'country') handleCountryChange(checked ? countries.map(r => r.id) : []);
+    else if (cible === 'region') handleRegionChange(checked ? regions.map(r => r.id) : []);
+    else if (cible === 'prefecture') handlePrefectureChange(checked ? prefectures.map(r => r.id) : []);
+    else if (cible === 'commune') handleCommuneChange(checked ? communes.map(r => r.id) : []);
+    else if (cible === 'hospital') handleHospitalChange(checked ? hospitals.map(r => r.id) : []);
+    else if (cible === 'district_quartier') handleDistrictQuartierChange(checked ? districtQuartiers.map(r => r.id) : []);
+    else if (cible === 'recos') handleRecosChange(checked ? recos.map(r => r.id) : []);
   }, [countries, regions, prefectures, communes, hospitals, districtQuartiers, recos,
       handleCountryChange, handleRegionChange, handlePrefectureChange, handleCommuneChange,
       handleHospitalChange, handleDistrictQuartierChange, handleRecosChange]);
 
-  // Check if all are selected
   const isChecked = useCallback((cible: string): boolean => {
     const value = getVal(cible);
     if (cible === 'country') return notNull(value) && value.length === countries.length && countries.length > 0;
@@ -413,13 +348,11 @@ export function OrgUnitsFilter({
     return false;
   }, [getVal, countries, regions, prefectures, communes, hospitals, districtQuartiers, recos]);
 
-  // Get selected count
   const selectedLength = useCallback((cible: string): number => {
     const val = getVal(cible);
     return notNull(val) ? val.length : 0;
   }, [getVal]);
 
-  // Get ORG_UNITS object
   const getOrgUnits = useCallback((): OrgUnitSelection => {
     const selectedRecos = recos.filter(r => getVal('recos').includes(r.id));
     return {
@@ -437,10 +370,8 @@ export function OrgUnitsFilter({
     };
   }, [countries, regions, prefectures, communes, hospitals, districtQuartiers, recos, Chws$, Recos$, getVal]);
 
-  // Handle form submit
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-
     const formData: FilterFormData = {
       start_date: startDate,
       end_date: endDate,
@@ -453,26 +384,9 @@ export function OrgUnitsFilter({
       recos: getVal('recos'),
       org_units: getOrgUnits(),
     };
-
     onChange?.(formData);
     onClose?.();
   }, [getVal, getOrgUnits, startDate, endDate, onChange, onClose]);
-
-  // Handle close modal
-  const handleClose = useCallback(() => {
-    onClose?.();
-  }, [onClose]);
-
-  // Keyboard handler for Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        handleClose();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleClose]);
 
   const toggleValue = useCallback((
     cible: 'country' | 'region' | 'prefecture' | 'commune' | 'hospital' | 'district_quartier' | 'recos',
@@ -480,7 +394,6 @@ export function OrgUnitsFilter({
   ) => {
     const current = getVal(cible);
     const next = current.includes(id) ? current.filter(val => val !== id) : [...current, id];
-
     if (cible === 'country') handleCountryChange(next);
     if (cible === 'region') handleRegionChange(next);
     if (cible === 'prefecture') handlePrefectureChange(next);
@@ -488,309 +401,106 @@ export function OrgUnitsFilter({
     if (cible === 'hospital') handleHospitalChange(next);
     if (cible === 'district_quartier') handleDistrictQuartierChange(next);
     if (cible === 'recos') handleRecosChange(next);
-  }, [
-    getVal,
-    handleCountryChange,
-    handleRegionChange,
-    handlePrefectureChange,
-    handleCommuneChange,
-    handleHospitalChange,
-    handleDistrictQuartierChange,
-    handleRecosChange,
-  ]);
+  }, [getVal, handleCountryChange, handleRegionChange, handlePrefectureChange, handleCommuneChange,
+      handleHospitalChange, handleDistrictQuartierChange, handleRecosChange]);
 
-  if (!isOpen) return null;
-
-  return (
-    <>
-      <div className={styles.overlay} onClick={handleClose} />
-      <div className={`${styles.modal} ${className}`}>
-        <div className={styles.modalHeader}>
-          <span className={styles.close} onClick={handleClose}>&times;</span>
-          <h2>Filtrer les donnees</h2>
-        </div>
-        <div className={styles.modalContent}>
-          <form onSubmit={handleSubmit} noValidate>
-            {/* Countries - Show if: Countries$.length > 1 && countries.length === 0 || countries.length > 1 */}
-            {((Countries$.length > 1 && countries.length === 0) || countries.length > 1) && (
-              <div className={styles.formGroup}>
-                <label htmlFor="country">
-                  Pays : ({selectedLength('country')})
-                  <input
-                    id="all-country"
-                    type="checkbox"
-                    checked={isChecked('country')}
-                    onChange={(e) => selectAll('country', e.target.checked)}
-                  />
-                </label>
-                <div className={styles.optionsContainer}>
-                  <div className={styles.optionsGrid}>
-                    {countries.map(c => {
-                      const isSelected = getVal('country').includes(c.id);
-                      return (
-                        <label
-                          key={c.id}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleValue('country', c.id)}
-                          />
-                          <span>{c.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Regions */}
-            {((Regions$.length > 1 && regions.length === 0) || regions.length > 1) && (
-              <div className={styles.formGroup}>
-                <label htmlFor="region">
-                  Regions : ({selectedLength('region')})
-                  <input
-                    id="all-region"
-                    type="checkbox"
-                    checked={isChecked('region')}
-                    onChange={(e) => selectAll('region', e.target.checked)}
-                  />
-                </label>
-                <div className={styles.optionsContainer}>
-                  <div className={styles.optionsGrid}>
-                    {regions.map(r => {
-                      const isSelected = getVal('region').includes(r.id);
-                      return (
-                        <label
-                          key={r.id}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleValue('region', r.id)}
-                          />
-                          <span>{r.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Prefectures */}
-            {((Prefectures$.length > 1 && prefectures.length === 0) || prefectures.length > 1) && (
-              <div className={styles.formGroup}>
-                <label htmlFor="prefecture">
-                  Prefectures : ({selectedLength('prefecture')})
-                  <input
-                    id="all-prefecture"
-                    type="checkbox"
-                    checked={isChecked('prefecture')}
-                    onChange={(e) => selectAll('prefecture', e.target.checked)}
-                  />
-                </label>
-                <div className={styles.optionsContainer}>
-                  <div className={styles.optionsGrid}>
-                    {prefectures.map(p => {
-                      const isSelected = getVal('prefecture').includes(p.id);
-                      return (
-                        <label
-                          key={p.id}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleValue('prefecture', p.id)}
-                          />
-                          <span>{p.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Communes */}
-            {((Communes$.length > 1 && communes.length === 0) || communes.length > 1) && (
-              <div className={styles.formGroup}>
-                <label htmlFor="commune">
-                  Communes : ({selectedLength('commune')})
-                  <input
-                    id="all-commune"
-                    type="checkbox"
-                    checked={isChecked('commune')}
-                    onChange={(e) => selectAll('commune', e.target.checked)}
-                  />
-                </label>
-                <div className={styles.optionsContainer}>
-                  <div className={styles.optionsGrid}>
-                    {communes.map(c => {
-                      const isSelected = getVal('commune').includes(c.id);
-                      return (
-                        <label
-                          key={c.id}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleValue('commune', c.id)}
-                          />
-                          <span>{c.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Hospitals */}
-            {((Hospitals$.length > 1 && hospitals.length === 0) || hospitals.length > 1) && (
-              <div className={styles.formGroup}>
-                <label htmlFor="hospital">
-                  Centre de sante : ({selectedLength('hospital')})
-                  <input
-                    id="all-hospital"
-                    type="checkbox"
-                    checked={isChecked('hospital')}
-                    onChange={(e) => selectAll('hospital', e.target.checked)}
-                  />
-                </label>
-                <div className={styles.optionsContainer}>
-                  <div className={styles.optionsGrid}>
-                    {hospitals.map(h => {
-                      const isSelected = getVal('hospital').includes(h.id);
-                      return (
-                        <label
-                          key={h.id}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleValue('hospital', h.id)}
-                          />
-                          <span>{h.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* District Quartiers */}
-            {((DistrictQuartiers$.length > 1 && districtQuartiers.length === 0) || districtQuartiers.length > 1) && (
-              <div className={styles.formGroup}>
-                <label htmlFor="district_quartier">
-                  Districts/Quartiers : ({selectedLength('district_quartier')})
-                  <input
-                    id="all-district_quartier"
-                    type="checkbox"
-                    checked={isChecked('district_quartier')}
-                    onChange={(e) => selectAll('district_quartier', e.target.checked)}
-                  />
-                </label>
-                <div className={styles.optionsContainer}>
-                  <div className={styles.optionsGrid}>
-                    {districtQuartiers.map(d => {
-                      const isSelected = getVal('district_quartier').includes(d.id);
-                      return (
-                        <label
-                          key={d.id}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleValue('district_quartier', d.id)}
-                          />
-                          <span>{d.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Recos */}
-            {showRecoLevel && ((Recos$.length > 1 && recos.length === 0) || recos.length > 1) && (
-              <div className={styles.formGroup}>
-                <label htmlFor="recos">
-                  Recos : ({selectedLength('recos')})
-                  <input
-                    id="all-recos"
-                    type="checkbox"
-                    checked={isChecked('recos')}
-                    onChange={(e) => selectAll('recos', e.target.checked)}
-                  />
-                </label>
-                <div className={styles.optionsContainer}>
-                  <div className={styles.optionsGrid}>
-                    {recos.map(r => {
-                      const isSelected = getVal('recos').includes(r.id);
-                      return (
-                        <label
-                          key={r.id}
-                          className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleValue('recos', r.id)}
-                          />
-                          <span>{r.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Date de debut */}
-            {showDateSelection && (
-              <div className={styles.formGroup}>
-                <label htmlFor="start_date">Date de debut :</label>
+  const renderFilterGroup = (
+    label: string,
+    cible: 'country' | 'region' | 'prefecture' | 'commune' | 'hospital' | 'district_quartier' | 'recos',
+    items: { id: string; name: string }[]
+  ) => (
+    <div className={styles.formGroup}>
+      <label>
+        {label} : ({selectedLength(cible)})
+        <input
+          type="checkbox"
+          checked={isChecked(cible)}
+          onChange={(e) => selectAll(cible, e.target.checked)}
+        />
+      </label>
+      <div className={styles.optionsContainer}>
+        <div className={styles.optionsGrid}>
+          {items.map(item => {
+            const isSelected = getVal(cible).includes(item.id);
+            return (
+              <label
+                key={item.id}
+                className={`${styles.optionItem} ${isSelected ? styles.optionItemSelected : ''}`}
+              >
                 <input
-                  id="start_date"
-                  type="date"
-                  className={styles.formControl}
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleValue(cible, item.id)}
                 />
-              </div>
-            )}
-
-            {/* Date de fin */}
-            {showDateSelection && (
-              <div className={styles.formGroup}>
-                <label htmlFor="end_date">Date de fin :</label>
-                <input
-                  id="end_date"
-                  type="date"
-                  className={styles.formControl}
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            )}
-
-            <button type="submit" className={`${styles.btn} ${styles.btnPrimary} ${styles.modalValidate}`}>
-              Appliquer le filtre
-            </button>
-          </form>
+                <span>{item.name}</span>
+              </label>
+            );
+          })}
         </div>
       </div>
-    </>
+    </div>
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose || (() => {})}
+      title="Filtrer les données"
+      size="lg"
+      footer={
+        <Button variant="primary" onClick={handleSubmit}>
+          Appliquer le filtre
+        </Button>
+      }
+    >
+      <form onSubmit={handleSubmit} noValidate className={styles.form}>
+        {((Countries$.length > 1 && countries.length === 0) || countries.length > 1) &&
+          renderFilterGroup('Pays', 'country', countries)}
+
+        {((Regions$.length > 1 && regions.length === 0) || regions.length > 1) &&
+          renderFilterGroup('Regions', 'region', regions)}
+
+        {((Prefectures$.length > 1 && prefectures.length === 0) || prefectures.length > 1) &&
+          renderFilterGroup('Prefectures', 'prefecture', prefectures)}
+
+        {((Communes$.length > 1 && communes.length === 0) || communes.length > 1) &&
+          renderFilterGroup('Communes', 'commune', communes)}
+
+        {((Hospitals$.length > 1 && hospitals.length === 0) || hospitals.length > 1) &&
+          renderFilterGroup('Centre de sante', 'hospital', hospitals)}
+
+        {((DistrictQuartiers$.length > 1 && districtQuartiers.length === 0) || districtQuartiers.length > 1) &&
+          renderFilterGroup('Districts/Quartiers', 'district_quartier', districtQuartiers)}
+
+        {showRecoLevel && ((Recos$.length > 1 && recos.length === 0) || recos.length > 1) &&
+          renderFilterGroup('Recos', 'recos', recos)}
+
+        {showDateSelection && (
+          <>
+            <div className={styles.formGroup}>
+              <label htmlFor="start_date">Date de debut :</label>
+              <input
+                id="start_date"
+                type="date"
+                className={styles.formControl}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="end_date">Date de fin :</label>
+              <input
+                id="end_date"
+                type="date"
+                className={styles.formControl}
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </>
+        )}
+      </form>
+    </Modal>
   );
 }
 

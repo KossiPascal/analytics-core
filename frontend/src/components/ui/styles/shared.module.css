@@ -1,6 +1,6 @@
 /* ==========================================
-   SHARED STYLES - Users Module
-   Styles communs pour les pages du module users
+   SHARED STYLES - Global UI Components
+   Styles partagés pour tout le projet frontend
    ========================================== */
 
 /* ===================
@@ -12,9 +12,34 @@
   align-items: center;
 }
 
-.tableContainer {
-  overflow-x: auto;
+.flexRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
+
+.flexColumn {
+  display: flex;
+  flex-direction: column;
+}
+
+.flexCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flexBetween {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gap1 { gap: 0.25rem; }
+.gap2 { gap: 0.5rem; }
+.gap3 { gap: 0.75rem; }
+.gap4 { gap: 1rem; }
+.gap6 { gap: 1.5rem; }
 
 /* ===================
    LOADING & EMPTY STATES
@@ -35,8 +60,13 @@
 }
 
 /* ===================
-   TABLE STYLES
+   TABLE STYLES (Simple)
+   Pour les tables sans le composant Table UI
    =================== */
+.tableContainer {
+  overflow-x: auto;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -63,7 +93,7 @@
 }
 
 /* ===================
-   ACTION BUTTONS
+   ACTION BUTTONS (Table cells)
    =================== */
 .actionsCell {
   display: flex;
@@ -94,56 +124,7 @@
 }
 
 /* ===================
-   BADGES
-   =================== */
-.badge {
-  display: inline-flex;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.badgeSuccess {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-}
-
-.badgeDanger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-}
-
-.badgePrimary {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.permBadge {
-  display: inline-flex;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.crudBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-}
-
-/* ===================
-   MODAL STYLES
+   MODAL FOOTER (common pattern)
    =================== */
 .modalFooter {
   display: flex;
@@ -190,7 +171,9 @@
   color: var(--text-secondary, #64748b);
 }
 
-.formInput {
+.formInput,
+.formTextarea,
+.formSelect {
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 0.5rem;
@@ -200,10 +183,18 @@
   color: var(--text-primary, #1e293b);
 }
 
-.formInput:focus {
+.formInput:focus,
+.formTextarea:focus,
+.formSelect:focus {
   outline: none;
   border-color: var(--primary, #3b82f6);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
 .checkboxGrid {
@@ -229,9 +220,113 @@
 /* ===================
    LIST STYLES
    =================== */
-.permissionsList,
-.crudList {
+.list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
+}
+
+/* ===================
+   CARD STYLES (Simple)
+   Pour les cards sans le composant Card UI
+   =================== */
+.card {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+.cardTitle svg {
+  color: var(--primary, #3b82f6);
+}
+
+/* ===================
+   BUTTON GROUPS
+   =================== */
+.buttonGroup {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ===================
+   ALERT STYLES
+   =================== */
+.alert {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.alertWarning {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.alertDanger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+.alertSuccess {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.alertInfo {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+/* ===================
+   RESPONSIVE
+   =================== */
+@media (max-width: 640px) {
+  .card {
+    padding: 1rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .buttonGroup {
+    width: 100%;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+
+  .checkboxGrid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -29,3 +29,17 @@ export type { SkeletonProps } from './Skeleton';
 // Table
 export { Table } from './Table';
 export type { TableProps, Column } from './Table';
+
+// Badge
+export {
+  Badge,
+  BadgeSuccess,
+  BadgeDanger,
+  BadgeWarning,
+  BadgeInfo,
+  StatusBadge,
+  CrudBadge,
+  PermissionBadge,
+  RoleBadge,
+} from './Badge';
+export type { BadgeProps, BadgeVariant, BadgeSize } from './Badge';

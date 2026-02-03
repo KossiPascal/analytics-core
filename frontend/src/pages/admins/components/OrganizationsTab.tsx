@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui';
+import { Modal, Button, StatusBadge } from '@components/ui';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { OrganizationsApi } from '@/services/OLD/old/api.service';
 import { Building2, Save, Edit2, Trash2, RefreshCw, Plus } from 'lucide-react';
@@ -185,11 +184,7 @@ export function OrganizationsTab() {
                     <td>{org.name}</td>
                     <td>{org.description || '-'}</td>
                     <td>
-                      <span
-                        className={`${styles.badge} ${org.isActive ? styles.badgeSuccess : styles.badgeDanger}`}
-                      >
-                        {org.isActive ? 'Actif' : 'Inactif'}
-                      </span>
+                      <StatusBadge isActive={org.isActive} />
                     </td>
                     <td>
                       <div className={styles.actionsCell}>

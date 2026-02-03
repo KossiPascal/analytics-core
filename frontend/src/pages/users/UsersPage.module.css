@@ -1,6 +1,7 @@
 /* ==========================================
    USERS PAGE STYLES
-   Styles spécifiques à la page UsersPage avec onglets
+   Styles spécifiques aux onglets de la page UsersPage
+   Les styles communs sont dans @components/ui/styles/shared.module.css
    ========================================== */
 
 /* ===================
@@ -52,32 +53,4 @@
 
 .tabContent {
   padding-top: 1rem;
-}
-
-/* ===================
-   TAB PANEL HEADER
-   =================== */
-.panelHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.panelTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #1e293b);
-}
-
-/* ===================
-   USERS TAB SPECIFIC
-   =================== */
-.rolesBadge {
-  display: inline-flex;
-  padding: 0.125rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
 }

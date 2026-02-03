@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PageWrapper } from '@components/layout';
-import { Card, CardBody, Button } from '@components/ui';
-import { Modal } from '@components/ui/Modal/Modal';
+import { Card, CardBody, Button, Modal, StatusBadge, CrudBadge, PermissionBadge, RoleBadge } from '@components/ui';
 import { UserModal } from './components/UserModal';
 import { useUsers } from '@/contexts/OLD/useUsers';
 import { useNotification } from '@/contexts/OLD/useNotification';
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react';
 import type { User } from '@/models/OLD/old/auth.types';
 import styles from './UsersPage.module.css';
-import shared from './styles/shared.module.css';
+import shared from '@components/ui/styles/shared.module.css';
 
 // Types
 interface Role {
@@ -387,9 +386,7 @@ export default function UsersPage() {
     if (perm.canDelete) badges.push({ label: 'D', title: 'Supprimer' });
 
     return badges.map((b) => (
-      <span key={b.label} className={shared.crudBadge} title={b.title}>
-        {b.label}
-      </span>
+      <CrudBadge key={b.label} label={b.label} title={b.title} />
     ));
   };
 
@@ -453,14 +450,10 @@ export default function UsersPage() {
                   <td>{user.fullname || '-'}</td>
                   <td>{user.email || '-'}</td>
                   <td>
-                    <span className={styles.rolesBadge}>{getUserRoleNames(user)}</span>
+                    <RoleBadge>{getUserRoleNames(user)}</RoleBadge>
                   </td>
                   <td>
-                    <span
-                      className={`${shared.badge} ${user.isActive ? shared.badgeSuccess : shared.badgeDanger}`}
-                    >
-                      {user.isActive ? 'Actif' : 'Inactif'}
-                    </span>
+                    <StatusBadge isActive={user.isActive} />
                   </td>
                   <td>
                     <div className={shared.actionsCell}>
@@ -522,14 +515,14 @@ export default function UsersPage() {
                   <td>{role.name}</td>
                   <td>{role.organization || '-'}</td>
                   <td>
-                    <div className={shared.permissionsList}>
+                    <div className={shared.list}>
                       {role.authorizations?.slice(0, 3).map((perm) => (
-                        <span key={perm} className={shared.permBadge}>
+                        <PermissionBadge key={perm}>
                           {AVAILABLE_PERMISSIONS.find((p) => p.value === perm)?.label || perm}
-                        </span>
+                        </PermissionBadge>
                       ))}
                       {role.authorizations?.length > 3 && (
-                        <span className={shared.permBadge}>+{role.authorizations.length - 3}</span>
+                        <PermissionBadge>+{role.authorizations.length - 3}</PermissionBadge>
                       )}
                     </div>
                   </td>
@@ -593,7 +586,7 @@ export default function UsersPage() {
                   <td>{perm.name}</td>
                   <td>{perm.description || '-'}</td>
                   <td>
-                    <div className={shared.crudList}>{renderCrudBadges(perm)}</div>
+                    <div className={shared.list}>{renderCrudBadges(perm)}</div>
                   </td>
                   <td>
                     <div className={shared.actionsCell}>
