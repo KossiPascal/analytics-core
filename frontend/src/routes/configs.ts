@@ -26,7 +26,6 @@ export const PAGES = {
 
     // Users pages
     UsersPage: lazy(() => import('@pages/users/UsersPage')),
-    OrganizationsPage: lazy(() => import('@pages/users/OrganizationsPage')),
 
     // Admin pages
     AdminPage: lazy(() => import('@/pages/admins/AdminPage')),

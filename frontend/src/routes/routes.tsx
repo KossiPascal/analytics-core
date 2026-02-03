@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from "react";
-import { Home, FileText, Map, Users, Building2, Shield, BookOpen, Gauge, Activity, Eye, ChevronRight, User, Settings, LogOut } from 'lucide-react';
+import { Home, FileText, Map, Users, Shield, BookOpen, Gauge, Activity, Eye, ChevronRight, User, Settings, LogOut } from 'lucide-react';
 import { generateRouteConfig, generateNavItems, type RouteConfig, generateGridNavItems, RouteItem, NavItem, slugify } from './utils';
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
@@ -67,16 +67,13 @@ export const ROUTES_ITEMS: RouteItem[] = [
   // Utilisateurs
   {
     label: 'Utilisateurs',
-    path: ROUTES.users.root(),
+    path: ROUTES.users.list(),
+    component: PAGES.UsersPage,
     icon: <Users size={20} />,
     access: "authenticated",
     showInGridpNav: true,
     showInSideNav: true,
     permissions:['_admin', '_superadmin'],
-    children: [
-      { path: ROUTES.users.list(), component: PAGES.UsersPage, label: 'Gestion', icon: <Users size={18} />, permissions:['_admin', '_superadmin'] },
-      { path: ROUTES.users.organizations(), component: PAGES.OrganizationsPage, label: 'Organisations', icon: <Building2 size={18} />, permissions:['_admin', '_superadmin'] },
-    ],
   },
   {
     label: 'Administration',

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { PageWrapper } from '@components/layout';
-import { Card, CardBody, CardHeader, Button } from '@components/ui';
 import { Modal } from '@components/ui/Modal/Modal';
+import { Button } from '@components/ui';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { OrganizationsApi } from '@/services/OLD/old/api.service';
-import { Building2, Save, Edit2, Trash2, RefreshCw } from 'lucide-react';
-import shared from './styles/shared.module.css';
+import { Building2, Save, Edit2, Trash2, RefreshCw, Plus } from 'lucide-react';
+import styles from '../AdminPage.module.css';
 
 interface Organization {
   id: string;
@@ -16,7 +15,7 @@ interface Organization {
   isActive: boolean;
 }
 
-export default function OrganizationsPage() {
+export function OrganizationsTab() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -128,85 +127,95 @@ export default function OrganizationsPage() {
   };
 
   return (
-    <PageWrapper
-      title="Gestion des organisations"
-      subtitle="Créer et gérer les organisations"
-      actions={
-        <div className={shared.headerActions}>
-          <Button variant="ghost" size="sm" onClick={fetchOrganizations} disabled={isLoading}>
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-          </Button>
-          <Button leftIcon={<Building2 size={18} />} onClick={handleCreate}>
-            Nouvelle organisation
-          </Button>
+    <>
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <h3 className={styles.cardTitle}>
+            <Building2 size={20} />
+            Gestion des organisations
+          </h3>
+          <div className={styles.buttonGroup}>
+            <button
+              className={`${styles.btn} ${styles.btnOutline} ${styles.btnSmall}`}
+              onClick={fetchOrganizations}
+              disabled={isLoading}
+            >
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+              Actualiser
+            </button>
+            <button
+              className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSmall}`}
+              onClick={handleCreate}
+            >
+              <Plus size={16} />
+              Nouvelle organisation
+            </button>
+          </div>
         </div>
-      }
-    >
-      <Card>
-        <CardHeader title="Liste des organisations" />
-        <CardBody>
-          {isLoading ? (
-            <div className={shared.loading}>
-              <RefreshCw size={24} className="animate-spin" />
-              <p>Chargement...</p>
-            </div>
-          ) : organizations.length === 0 ? (
-            <div className={shared.emptyState}>
-              <Building2 size={48} />
-              <p>Aucune organisation</p>
-              <Button variant="primary" onClick={handleCreate}>
-                Créer une organisation
-              </Button>
-            </div>
-          ) : (
-            <div className={shared.tableContainer}>
-              <table className={shared.table}>
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Description</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {organizations.map((org) => (
-                    <tr key={org.id}>
-                      <td>{org.name}</td>
-                      <td>{org.description || '-'}</td>
-                      <td>
-                        <span
-                          className={`${shared.badge} ${org.isActive ? shared.badgeSuccess : shared.badgeDanger}`}
+
+        {isLoading ? (
+          <div className={styles.loading}>
+            <RefreshCw size={24} className="animate-spin" />
+          </div>
+        ) : organizations.length === 0 ? (
+          <div className={styles.emptyState}>
+            <Building2 size={48} />
+            <p>Aucune organisation</p>
+            <button
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              onClick={handleCreate}
+            >
+              Créer une organisation
+            </button>
+          </div>
+        ) : (
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Description</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {organizations.map((org) => (
+                  <tr key={org.id}>
+                    <td>{org.name}</td>
+                    <td>{org.description || '-'}</td>
+                    <td>
+                      <span
+                        className={`${styles.badge} ${org.isActive ? styles.badgeSuccess : styles.badgeDanger}`}
+                      >
+                        {org.isActive ? 'Actif' : 'Inactif'}
+                      </span>
+                    </td>
+                    <td>
+                      <div className={styles.actionsCell}>
+                        <button
+                          className={styles.actionBtn}
+                          onClick={() => handleEdit(org)}
+                          title="Modifier"
                         >
-                          {org.isActive ? 'Actif' : 'Inactif'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className={shared.actionsCell}>
-                          <button
-                            className={shared.actionBtn}
-                            onClick={() => handleEdit(org)}
-                            title="Modifier"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            className={`${shared.actionBtn} ${shared.actionBtnDanger}`}
-                            onClick={() => handleDeleteClick(org)}
-                            title="Supprimer"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardBody>
-      </Card>
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                          onClick={() => handleDeleteClick(org)}
+                          title="Supprimer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Create/Edit Modal */}
       <Modal
@@ -215,7 +224,7 @@ export default function OrganizationsPage() {
         title={isEditMode ? "Modifier l'organisation" : 'Nouvelle organisation'}
         size="sm"
         footer={
-          <div className={shared.modalFooter}>
+          <div className={styles.buttonGroup}>
             <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Annuler
             </Button>
@@ -226,14 +235,14 @@ export default function OrganizationsPage() {
           </div>
         }
       >
-        <form className={shared.form} onSubmit={handleSave}>
-          <div className={shared.formGroup}>
-            <label className={shared.formLabel} htmlFor="orgName">
+        <form className={styles.form} onSubmit={handleSave}>
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel} htmlFor="orgName">
               Nom de l'organisation
             </label>
             <input
               id="orgName"
-              className={shared.formInput}
+              className={styles.formInput}
               placeholder="Ex: Kendeya Analytics"
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
@@ -241,13 +250,13 @@ export default function OrganizationsPage() {
               autoFocus
             />
           </div>
-          <div className={shared.formGroup}>
-            <label className={shared.formLabel} htmlFor="orgDescription">
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel} htmlFor="orgDescription">
               Description (optionnel)
             </label>
             <textarea
               id="orgDescription"
-              className={shared.formInput}
+              className={styles.formInput}
               placeholder="Description de l'organisation"
               value={orgDescription}
               onChange={(e) => setOrgDescription(e.target.value)}
@@ -264,7 +273,7 @@ export default function OrganizationsPage() {
         title="Confirmer la suppression"
         size="sm"
         footer={
-          <div className={shared.modalFooter}>
+          <div className={styles.buttonGroup}>
             <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
               Annuler
             </Button>
@@ -275,14 +284,14 @@ export default function OrganizationsPage() {
           </div>
         }
       >
-        <div className={shared.deleteWarning}>
-          <Trash2 size={24} />
+        <div className={styles.emptyState} style={{ padding: '1rem' }}>
+          <Trash2 size={24} style={{ color: '#dc2626', marginBottom: '0.5rem' }} />
           <p>
             Êtes-vous sûr de vouloir supprimer l'organisation <strong>{selectedOrg?.name}</strong> ?
           </p>
-          <p className={shared.warningText}>Cette action est irréversible.</p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Cette action est irréversible.</p>
         </div>
       </Modal>
-    </PageWrapper>
+    </>
   );
 }
