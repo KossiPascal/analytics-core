@@ -1,355 +1,384 @@
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Database, Plug, ShieldCheck, ShieldAlert, Server, KeyRound } from 'lucide-react';
+import {
+  FaDatabase, FaServer, FaUser, FaLock, FaKey,
+  FaSave, FaVial, FaTrash, FaEdit, FaShieldAlt,
+  FaCheckCircle, FaExclamationTriangle
+} from "react-icons/fa";
 import { Card, CardHeader, CardBody } from '@components/ui';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
-import { AdminApi } from '@/services/OLD/old/api.service';
+import { connService as API, DbConnectionParams, type TestType } from '@/services/connection.service';
 import styles from '@pages/admins/AdminPage.module.css';
+import { DbConnectionForm } from '@/services/connection.service';
 
-type DbType = 'postgres' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'couchdb' | 'mongodb' | 'oracle' | 'other';
-
-interface DbConnectionForm {
-  connectionName: string;
-  databaseName: string;
-  username: string;
-  password: string;
-  host: string;
-  port: string;
-  type: DbType;
-  sshEnabled: boolean;
-  sshHost: string;
-  sshPort: string;
-  sshUser: string;
-  sshPassword: string;
-  sshKey: string;
+interface SelectModel {
+  value: any;
+  label: string;
 }
 
-const DEFAULT_FORM: DbConnectionForm = {
-  connectionName: '',
-  databaseName: '',
-  username: '',
-  password: '',
-  host: '',
-  port: '',
+const DB_TYPES: SelectModel[] = [
+  { value: 'postgres', label: 'PostgreSQL' },
+  { value: 'mysql', label: 'MySQL' },
+  { value: 'mariadb', label: 'MariaDB' },
+  { value: 'mssql', label: 'SQL Server' },
+  { value: 'oracle', label: 'Oracle' },
+  { value: 'mongodb', label: 'MongoDB' },
+  { value: 'couchdb', label: 'CouchDB' },
+  { value: 'sqlite', label: 'SQLite' },
+  { value: 'other', label: 'Autre' },
+]
+
+const DEFAULT_FORM = Object.freeze<DbConnectionForm>({
   type: 'postgres',
-  sshEnabled: false,
-  sshHost: '',
-  sshPort: '22',
-  sshUser: '',
-  sshPassword: '',
-  sshKey: '',
-};
+  name: "",
+  host: "",
+  port: 5432,
+  dbname: "",
+  username: "",
+  password: "",
+  ssh_enabled: false,
+  ssh_host: "",
+  ssh_port: 22,
+  ssh_user: "",
+  ssh_password: "",
+  ssh_key: "",
+  ssh_key_pass: ""
+});
+
+
+interface FieldParams {
+  label: string;
+  name: keyof DbConnectionForm;
+  placeholder?: string;
+  required?: boolean;
+  list?: SelectModel[]
+  icon?: React.ReactNode;
+  type?: 'text' | 'textarea' | 'number' | 'password' | 'checkbox' | 'select';
+  cols?: number | undefined
+  rows?: number | undefined
+  simple?: boolean
+}
+
+const convertToConnParams = (form: DbConnectionForm): DbConnectionParams => {
+  return {
+    id: form.id,
+    type: form.type,
+    name: form.name,
+    dbname: form.dbname,
+    username: form.username,
+    password: form.password,
+    host: form.host,
+    port: form.port,
+    ssh: form.ssh_enabled
+      ? {
+        host: form.ssh_host,
+        port: form.ssh_port,
+        username: form.ssh_user,
+        password: form.ssh_password,
+        key: form.ssh_key,
+      }
+      : null,
+  }
+}
+
+const convertToConnForm = (param: DbConnectionParams): DbConnectionForm => {
+  return {
+    id: param.id,
+    type: param.type,
+    name: param.name,
+    dbname: param.dbname,
+    username: param.username,
+    password: param.password,
+    host: param.host,
+    port: param.port,
+    ssh_enabled: !!param.ssh,
+    ssh_host: param.ssh?.host,
+    ssh_port: param.ssh?.port,
+    ssh_user: param.ssh?.username,
+    ssh_password: param.ssh?.password,
+    ssh_key: param.ssh?.key,
+    ssh_key_pass: param.ssh?.key_pass,
+  }
+}
 
 export function DatabaseConnectionTab() {
   const [form, setForm] = useState<DbConnectionForm>(DEFAULT_FORM);
-  const [isTesting, setIsTesting] = useState(false);
-  const [lastStatus, setLastStatus] = useState<'success' | 'error' | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [response, setResponse] = useState<{ type: "success" | "error", msg: string } | null>(null);
+  const [list, setList] = useState<DbConnectionForm[]>([]);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const { showSuccess, showError } = useNotification();
 
   const isValid = useMemo(() => {
-    return (
-      form.databaseName.trim().length > 0 &&
-      form.host.trim().length > 0 &&
-      form.port.trim().length > 0 &&
-      form.username.trim().length > 0 &&
-      form.type.trim().length > 0
-    );
+    if (!form.name?.trim() || !form.host?.trim() || !form.dbname?.trim() || !form.username?.trim() || !form.type?.trim().length) {
+      showError("Veuillez renseigner tous les champs obligatoires.");
+      return false;
+    }
+    if (form.port <= 0) {
+      showError("Invalid database port");
+      return false;
+    }
+    if (form.ssh_enabled && (!form.ssh_host || !form.ssh_user)) {
+      showError("SSH host and user required");
+      return false;
+    }
+    return true;
   }, [form]);
 
   const updateField = (key: keyof DbConnectionForm, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleTest = async () => {
-    if (!isValid) {
-      showError('Veuillez renseigner tous les champs obligatoires.');
-      return;
-    }
-
-    setIsTesting(true);
-    setLastStatus(null);
+  const refresh = async () => {
     try {
-      const response = await AdminApi.testDatabaseConnection({
-        connectionName: form.connectionName,
-        databaseName: form.databaseName,
-        username: form.username,
-        password: form.password,
-        host: form.host,
-        port: form.port,
-        type: form.type,
-        ssh: form.sshEnabled
-          ? {
-              host: form.sshHost,
-              port: form.sshPort,
-              username: form.sshUser,
-              password: form.sshPassword,
-              key: form.sshKey,
-            }
-          : null,
-      });
-
-      if (response?.status === 200) {
-        const message = (response.data as { message?: string } | undefined)?.message;
-        showSuccess(message || 'Connexion réussie.');
-        setLastStatus('success');
-      } else {
-        showError('Échec du test de connexion.');
-        setLastStatus('error');
-      }
-    } catch (error) {
-      showError('Échec du test de connexion.');
-      setLastStatus('error');
-    } finally {
-      setIsTesting(false);
+      const { data } = await API.list();
+      setList(data);
+    } catch {
+      setResponse({ type: "error", msg: "Failed to load connections" });
     }
   };
 
+  const save = async () => {
+    if (!isValid) return;
+    setLoading(true);
+    setResponse(null);
+
+    try {
+      const data = convertToConnParams(form);
+      editId ? await API.update(editId, data) : await API.create(data);
+
+      setForm(DEFAULT_FORM);
+      setEditId(null);
+      refresh();
+      setResponse({ type: "success", msg: "Connection saved successfully" });
+    } catch (e: any) {
+      setResponse({ type: "error", msg: e?.response?.data?.error || "Save failed" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const edit = (conn: DbConnectionParams) => {
+    setEditId(conn.id ?? null);
+    setForm({ ...DEFAULT_FORM, ...convertToConnForm(conn) });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const remove = async (id: string) => {
+    if (!window.confirm("Delete this connection?")) return;
+    await API.delete(id);
+    refresh();
+  };
+
+  const handleTest = async (type: TestType) => {
+    if (!isValid) return;
+
+    setTesting(true);
+    setResponse(null);
+    showSuccess(null)
+    try {
+      const dataToTest = convertToConnParams(form);
+      const res: any = await API.test(type, dataToTest);
+
+      if (res?.status === 200) {
+        const message = res.data?.message || "Connection réussie";
+        setResponse({ type: "success", msg: message });
+        showSuccess(message)
+      } else {
+        setResponse({ type: "error", msg: "Échec du test de connexion." });
+      }
+    } catch (e: any) {
+      setResponse({ type: "error", msg: e?.response?.data?.error || "Échec du test de connexion." });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const Field = memo<FieldParams>(function Field({ label, name, type = "text", list = undefined, placeholder = undefined, rows = undefined, cols = undefined, required = false, icon = null, simple = false }) {
+
+    const value = (form as any)?.[name] ?? "";
+    const fieldLabel = <label className={styles.formLabel} htmlFor={"host" + name}>{label}</label>;
+
+    let InputElement = <></>;
+
+    if (type === 'textarea') {
+      InputElement = (
+        <>
+          {fieldLabel}
+          <textarea id={"host_" + name} name={name} value={value} placeholder={placeholder} className={styles.formInput} required={required} rows={rows} cols={cols} onChange={(e) => updateField(name, e.target.value)} />
+        </>
+      );
+    } else if (type === 'checkbox') {
+      InputElement = (
+        <label className={styles.checkbox}>
+          <input type="checkbox" checked={value} onChange={(e) => updateField(name, e.target.checked)} />
+          <span>{label}</span>
+        </label>
+      );
+    } else if (type === 'select') {
+      InputElement = (
+        <>
+          {fieldLabel}
+          <select id={"host_" + name} className={styles.formSelect} value={value} onChange={(e) => updateField(name, e.target.value)}>
+            {list && list.map((l) => (<option key={'select_' + l.value} value={l.value}>{l.label}</option>))}
+          </select>
+        </>
+      );
+    } else {
+      InputElement = (
+        <>
+          {fieldLabel}
+          <input id={"host_" + name} name={name} type={type} value={value} placeholder={placeholder} className={styles.formInput} required={required} onChange={(e) => updateField(name, e.target.value)} />
+        </>
+      );
+    }
+
+    /* ---------- SIMPLE MODE ---------- */
+    if (simple) return InputElement;
+
+    /* ---------- FULL MODE ---------- */
+    return (
+      <div className={styles.formGroup}>
+        {InputElement}
+      </div>
+    );
+  });
+
+  const alertStyle = { margin: 0, fontSize: '0.875rem' }
+
   return (
-    <Card>
-      <CardHeader
-        title={
-          <div className={styles.cardTitle}>
-            <Database size={20} />
-            Connexion à une base de données
-          </div>
-        }
-        action={
-          <div className={styles.buttonGroup}>
-            <Button variant="primary" size="sm" onClick={handleTest} disabled={isTesting}>
-              {isTesting ? (
-                <>
-                  <Plug size={16} className="animate-spin" />
-                  Test en cours...
-                </>
-              ) : (
-                <>
-                  <Plug size={16} />
-                  Tester la connexion
-                </>
+    <div className="page">
+      <h1 className="title"><FaDatabase /> PostgreSQL Connections</h1>
+
+      <div className="card">
+        <Card>
+          <CardHeader
+            title={
+              <div className={styles.cardTitle}>
+                <Database size={20} />
+                Connexion à une base de données
+              </div>
+            }
+            action={
+              <div className={styles.buttonGroup}>
+                <Button variant="primary" size="sm" onClick={() => handleTest('test-ssh')} disabled={testing}>
+                  {testing ? (<><Plug size={16} className="animate-spin" />Test SSH en cours...</>) :
+                    (<><Plug size={16} />Tester le tunel ssh</>)}
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')} disabled={testing}>
+                  {testing ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
+                    (<><Plug size={16} />Tester la connexion</>)}
+                </Button>
+              </div>
+            }
+          />
+          <CardBody>
+            <div className={styles.form}>
+              <div className={styles.grid + ' ' + styles.grid2}>
+                <Field name="name" label={"Connexion"} icon={<FaDatabase />} placeholder="Ex: Production PostgreSQL" />
+                <Field name="dbname" label={"Nom de la base"} icon={<Database />} placeholder="Ex: kendeya_prod" />
+              </div>
+
+              <div className={styles.grid + ' ' + styles.grid3}>
+                <Field name="type" type={"select"} list={DB_TYPES} label={"Type"} icon={<Database />} placeholder="Ex: postgres" required={true} />
+                <Field name="host" label={"URL / Hôte"} icon={<FaServer />} placeholder="Ex: 10.0.0.12 ou db.example.com" required={true} />
+                <Field name="port" type={'number'} label={"Port"} icon={<Database />} placeholder="Ex: 5432" />
+              </div>
+
+              <div className={styles.grid + ' ' + styles.grid3}>
+                <Field name="username" label={"Utilisateur"} icon={<FaUser />} placeholder="Ex: admin" required={true} />
+                <Field name="password" type='password' label={"Mot de passe"} icon={<FaLock />} placeholder="••••••••" />
+              </div>
+
+              <Field name="ssh_enabled" type={"checkbox"} label={"Utiliser un tunnel SSH"} icon={<FaShieldAlt />} />
+
+              {form.ssh_enabled && (
+                <div className={styles.grid + ' ' + styles.grid3}>
+                  <h3>🔐 SSH Configuration</h3>
+
+                  <Field name="ssh_host" label={"Hôte SSH"} icon={<FaServer />} placeholder="Ex: ssh.example.com" required={true} />
+                  <Field name="ssh_port" type={'number'} label={"Port SSH"} icon={<Database />} placeholder="Ex: 22" />
+
+                  <Field name="ssh_user" label={"Utilisateur SSH"} icon={<FaUser />} placeholder="Ex: ubuntu" required={true} />
+                  <Field name="ssh_password" type='password' label={"Mot de passe SSH"} icon={<FaLock />} placeholder="••••••••" />
+
+                  <Field name="ssh_key" type={'textarea'} label={"Clé privée SSH"} icon={<FaKey />} placeholder="Coller la clé privée ici" rows={4} />
+                  <Field name="ssh_key_pass" type='password' label={"PassPhrase Clé privée SSH"} icon={<FaKey />} placeholder="••••••••" />
+                </div>
               )}
-            </Button>
-          </div>
-        }
-      />
-      <CardBody>
-        <div className={styles.form}>
-          <div className={styles.grid + ' ' + styles.grid2}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="connectionName">Connexion</label>
-              <input
-                id="connectionName"
-                className={styles.formInput}
-                placeholder="Ex: Production PostgreSQL"
-                value={form.connectionName}
-                onChange={(e) => updateField('connectionName', e.target.value)}
-              />
-            </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="databaseName">Nom de la base</label>
-              <input
-                id="databaseName"
-                className={styles.formInput}
-                placeholder="Ex: kendeya_prod"
-                value={form.databaseName}
-                onChange={(e) => updateField('databaseName', e.target.value)}
-                required
-              />
-            </div>
-          </div>
+              {response?.type === 'success' && (
+                <div className={`${styles.alert} ${styles.alertSuccess}`}>
+                  <ShieldCheck size={20} />
+                  <div>
+                    <strong>Connexion validée</strong>
+                    <p style={alertStyle}>
+                      Les paramètres semblent corrects. Vous pouvez utiliser cette connexion.
+                    </p>
+                  </div>
+                </div>
+              )}
 
-          <div className={styles.grid + ' ' + styles.grid3}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="dbType">Type</label>
-              <select
-                id="dbType"
-                className={styles.formSelect}
-                value={form.type}
-                onChange={(e) => updateField('type', e.target.value as DbType)}
-              >
-                <option value="postgres">PostgreSQL</option>
-                <option value="mysql">MySQL</option>
-                <option value="mariadb">MariaDB</option>
-                <option value="mssql">SQL Server</option>
-                <option value="oracle">Oracle</option>
-                <option value="mongodb">MongoDB</option>
-                <option value="couchdb">CouchDB</option>
-                <option value="sqlite">SQLite</option>
-                <option value="other">Autre</option>
-              </select>
-            </div>
+              {response?.type === 'error' && (
+                <div className={`${styles.alert} ${styles.alertDanger}`}>
+                  <ShieldAlert size={20} />
+                  <div>
+                    <strong>Connexion échouée</strong>
+                    <p style={alertStyle}>
+                      Vérifiez l'URL, le port, les identifiants et les paramètres SSH.
+                    </p>
+                  </div>
+                </div>
+              )}
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="host">URL / Hôte</label>
-              <input
-                id="host"
-                className={styles.formInput}
-                placeholder="Ex: 10.0.0.12 ou db.example.com"
-                value={form.host}
-                onChange={(e) => updateField('host', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="port">Port</label>
-              <input
-                id="port"
-                className={styles.formInput}
-                placeholder="5432"
-                value={form.port}
-                onChange={(e) => updateField('port', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className={styles.grid + ' ' + styles.grid3}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="username">Utilisateur</label>
-              <input
-                id="username"
-                className={styles.formInput}
-                placeholder="Ex: admin"
-                value={form.username}
-                onChange={(e) => updateField('username', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel} htmlFor="password">Mot de passe</label>
-              <input
-                id="password"
-                type="password"
-                className={styles.formInput}
-                placeholder="••••••••"
-                value={form.password}
-                onChange={(e) => updateField('password', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={form.sshEnabled}
-                onChange={(e) => updateField('sshEnabled', e.target.checked)}
-              />
-              <span>Utiliser un tunnel SSH</span>
-            </label>
-          </div>
-
-          {form.sshEnabled && (
-            <div className={styles.grid + ' ' + styles.grid3}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel} htmlFor="sshHost">Hôte SSH</label>
-                <input
-                  id="sshHost"
-                  className={styles.formInput}
-                  placeholder="Ex: ssh.example.com"
-                  value={form.sshHost}
-                  onChange={(e) => updateField('sshHost', e.target.value)}
-                />
+              <div className={`${styles.alert} ${styles.alertInfo}`}>
+                <Server size={20} />
+                <div>
+                  <strong>Conseil</strong>
+                  <p style={alertStyle}>
+                    Assurez-vous que la base est accessible depuis le serveur et que les ports sont ouverts.
+                  </p>
+                </div>
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel} htmlFor="sshPort">Port SSH</label>
-                <input
-                  id="sshPort"
-                  className={styles.formInput}
-                  placeholder="22"
-                  value={form.sshPort}
-                  onChange={(e) => updateField('sshPort', e.target.value)}
-                />
-              </div>
+              <div className={styles.buttonGroup}>
+                <Button variant="outline" size="sm" onClick={() => setForm(DEFAULT_FORM)} disabled={testing}>
+                  <KeyRound size={16} />
+                  Réinitialiser
+                </Button>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel} htmlFor="sshUser">Utilisateur SSH</label>
-                <input
-                  id="sshUser"
-                  className={styles.formInput}
-                  placeholder="Ex: ubuntu"
-                  value={form.sshUser}
-                  onChange={(e) => updateField('sshUser', e.target.value)}
-                />
-              </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel} htmlFor="sshPassword">Mot de passe SSH</label>
-                <input
-                  id="sshPassword"
-                  type="password"
-                  className={styles.formInput}
-                  placeholder="••••••••"
-                  value={form.sshPassword}
-                  onChange={(e) => updateField('sshPassword', e.target.value)}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel} htmlFor="sshKey">Clé privée SSH</label>
-                <textarea
-                  id="sshKey"
-                  className={styles.formInput}
-                  placeholder="Coller la clé privée ici"
-                  rows={4}
-                  value={form.sshKey}
-                  onChange={(e) => updateField('sshKey', e.target.value)}
-                />
+                <Button isLoading={loading} onClick={() => save()} color="success">
+                  <FaSave />
+                  {editId ? "Update" : "Save"}
+                </Button>
               </div>
             </div>
-          )}
+          </CardBody>
+        </Card>
+      </div>
 
-          {lastStatus === 'success' && (
-            <div className={`${styles.alert} ${styles.alertSuccess}`}>
-              <ShieldCheck size={20} />
-              <div>
-                <strong>Connexion validée</strong>
-                <p style={{ margin: 0, fontSize: '0.875rem' }}>
-                  Les paramètres semblent corrects. Vous pouvez utiliser cette connexion.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {lastStatus === 'error' && (
-            <div className={`${styles.alert} ${styles.alertDanger}`}>
-              <ShieldAlert size={20} />
-              <div>
-                <strong>Connexion échouée</strong>
-                <p style={{ margin: 0, fontSize: '0.875rem' }}>
-                  Vérifiez l\'URL, le port, les identifiants et les paramètres SSH.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className={`${styles.alert} ${styles.alertInfo}`}>
-            <Server size={20} />
+      <div className="list">
+        {list.map(c => (
+          <div key={c.id} className="item">
             <div>
-              <strong>Conseil</strong>
-              <p style={{ margin: 0, fontSize: '0.875rem' }}>
-                Assurez-vous que la base est accessible depuis le serveur et que les ports sont ouverts.
-              </p>
+              <strong>{c.name}</strong><br />
+              <small>{c.host}:{c.port}</small>
+            </div>
+            <div>
+              <Button variant="outline" size="sm" onClick={() => edit(c)} disabled={testing}>
+                <FaEdit size={16} />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => remove(c.id!)} disabled={testing}>
+                <FaTrash size={16} />
+              </Button>
             </div>
           </div>
-
-          <div className={styles.buttonGroup}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setForm(DEFAULT_FORM)}
-              disabled={isTesting}
-            >
-              <KeyRound size={16} />
-              Réinitialiser
-            </Button>
-          </div>
-        </div>
-      </CardBody>
-    </Card>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -41,18 +41,28 @@ class Config:
     AUTH_SET_COOKIE = os.getenv("AUTH_SET_COOKIE", "true") == 'true'
     
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change_this_secret_in_prod")
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    JWT_SECURITY_SALT = os.getenv("JWT_SECURITY_SALT", 'JWT_SECURITY_SALT')
     ACCESS_TOKEN_EXPIRES_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRES_MINUTES", 15))  # 15 min default
     REFRESH_TOKEN_EXPIRES_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRES_DAYS", 7))  # 7 days
 
     REFRESH_RATE_LIMIT_MAX = int(os.getenv("REFRESH_RATE_LIMIT_MAX", 10))
     REFRESH_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("REFRESH_RATE_LIMIT_WINDOW_SECONDS", 60))
 
+<<<<<<< HEAD
     POSTGRES_HOST = os.getenv('POSTGRES_HOST') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_HOST', 'localhost')
     POSTGRES_PORT = os.getenv('POSTGRES_PORT', "5432") if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PORT', "5432")
     POSTGRES_DB = os.getenv('POSTGRES_DB') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_DB', 'analytics_core_db')
     POSTGRES_USER = os.getenv('POSTGRES_USER') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_USER', 'analitic_user')
     POSTGRES_PASSWORD = quote_plus(os.getenv('POSTGRES_PASSWORD',"no_password") if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PASSWORD', 'Pa$$w0rd_2026'))
+=======
+    POSTGRES_HOST = os.getenv('POSTGRES_HOST') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_HOST')
+    POSTGRES_PORT = os.getenv('POSTGRES_PORT', "5432") if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PORT')
+    POSTGRES_DB = os.getenv('POSTGRES_DB') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_DB')
+    POSTGRES_USER = os.getenv('POSTGRES_USER') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_USER')
+    POSTGRES_PASSWORD_RAW = os.getenv('POSTGRES_PASSWORD') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PASSWORD')
+    POSTGRES_PASSWORD = quote_plus(POSTGRES_PASSWORD_RAW)
+>>>>>>> dev
     POSTGRES_NETWORK = os.getenv('POSTGRES_NETWORK')
 
     SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", "false") == 'true'
@@ -90,6 +100,7 @@ class Config:
         "POSTGRES_HOST",
         "POSTGRES_PORT",
         "POSTGRES_DB",
+        "JWT_SECRET_KEY"
     ]
 
     AUTO_SYNC_COUCHDB_TO_POSTGRES = os.getenv("AUTO_SYNC_COUCHDB_TO_POSTGRES", "false") == 'true'
@@ -100,4 +111,10 @@ class Config:
         if missing:
             raise RuntimeError(f"Missing environment variables: {[BASE_DIR / ".env", ROOT_DIR / ".env"]}")
 
+    FERNET_KEY = "n5o7c1Gv4eG2B0Zy3kR9Rk1o0Jr7GZ5nFvK1JtF8y3Q=" #"XqMZpZ7n1tN8h2B7r6S3gPZcL0FZpAqX9JY7mH3D5Q8="
 
+        # Langues autorisées
+    MAX_ALLOWED_ROWS = 50000          # sécurité maximale
+    STATEMENT_TIMEOUT_MS = 15_000     # 15s
+    DEFAULT_NON_ADMIN_MAX_ROWS = 1000 # limite pour non-admins
+    ALLOWED_LANGUAGES = {"python", "sql", "json", "js", "javascript"}

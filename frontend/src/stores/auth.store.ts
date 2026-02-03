@@ -118,7 +118,7 @@ export const useAuthStore = create<AuthState>()(
         const user = get().user;
         if (!user) return false;
         const userPermissions = new Set(user.permissions ?? []);
-        if (userPermissions.has('_admin')) return true;
+        if (userPermissions.has('_admin') || userPermissions.has('_superadmin')) return true;
         const required = Array.isArray(perms) ? perms : [perms];
         if (all) return required.every(p => userPermissions.has(p));
         return required.some(p => userPermissions.has(p));

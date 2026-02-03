@@ -611,19 +611,20 @@ const _RealAdminApi = {
   },
 
   testDatabaseConnection: async (params: {
-    connectionName?: string;
-    databaseName: string;
-    username: string;
-    password?: string;
-    host: string;
-    port: string;
     type: string;
+    name: string;
+    host: string;
+    username: string;
+    dbname: string;
+    port: number;
+    password?: string;
     ssh?: {
-      host?: string;
-      port?: string;
-      username?: string;
+      host: string;
+      port: number;
+      username: string;
       password?: string;
       key?: string;
+      key_pass?: string;
     } | null;
   }) => {
     const response = await axiosInstance.post<ApiResponse>('/database/connection/test', withUserId(params));

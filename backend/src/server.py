@@ -17,7 +17,7 @@ from models.auth import User
 # Custom imports
 from config import Config
 from database.extensions import db
-from routes import auth, visualization
+from routes import auth, visualization, connections, scripts
 from routes.admin import permissions, roles, tenants, users
 from helpers.logger import get_logger
 from threading import Thread
@@ -123,7 +123,7 @@ def create_app():
 
     # REGISTER BLUEPRINTS
 
-    blueprints = [auth, permissions, roles, tenants, users, visualization ]
+    blueprints = [auth, connections, scripts, permissions, roles, tenants, users, visualization ]
     for b in blueprints:
         app.register_blueprint(b.bp if hasattr(b, "bp") else b)
 

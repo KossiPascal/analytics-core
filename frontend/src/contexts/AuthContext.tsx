@@ -1,90 +1,97 @@
-import React, { createContext, useContext, ReactNode } from "react";
-import { PayloadUser, LoginResponse } from "@/models/auth.model";
+import React, { useEffect, createContext, useContext, ReactNode } from "react";
+import { PayloadUser } from "@/models/auth.model";
 import { useAuthStore } from "@/stores/auth.store";
 import { DEFAULT_AUTHENTICATED_ROUTE, ROUTES } from "@/routes";
 import { useLocation, useNavigate } from "react-router-dom";
 
+// auth.sync.tsx
+import { tokenProvider } from "@/apis/token.provider";
 
 interface AuthContextType {
-  user: PayloadUser | null;
-  isAuthenticated: boolean;
-  isSuperAdmin: boolean;
-  isAdmin: boolean;
-  loading: boolean;
-  error: string | null;
-  login: (username: string, password: string, callback?: () => Promise<void>) => Promise<void>;
-  logout: (callback?: () => void) => Promise<void>;
-  restore: (callback?: () => void) => Promise<void>;
-  refresh: (callback?: () => void) => Promise<void>;
-  changePassword: (oldPass: string, newPass: string, callback?: () => Promise<void>) => Promise<void>;
-  hasPermission: (perms: string | string[], all?: boolean) => boolean;
+    user: PayloadUser | null;
+    isAuthenticated: boolean;
+    isSuperAdmin: boolean;
+    isAdmin: boolean;
+    loading: boolean;
+    error: string | null;
+    login: (username: string, password: string, callback?: () => Promise<void>) => Promise<void>;
+    logout: (callback?: () => void) => Promise<void>;
+    restore: (callback?: () => void) => Promise<void>;
+    refresh: (callback?: () => void) => Promise<void>;
+    changePassword: (oldPass: string, newPass: string, callback?: () => Promise<void>) => Promise<void>;
+    hasPermission: (perms: string | string[], all?: boolean) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const store = useAuthStore();
-  const location = useLocation();
-  const navigate = useNavigate();
+    const store = useAuthStore();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const token = useAuthStore((s) => s.getToken());
 
-  const login = async (username: string, password: string, callback?: () => Promise<void>) => {
-    await store.login(username, password, async () => {
-      if (callback) await callback();
+    useEffect(() => {
+        tokenProvider.set(token ?? null);
+    }, [token]);
 
-      // 📍 Redirection après login
-      const redirectTo = (location.state as { from?: Location })?.from?.pathname || ROUTES.dashboards.root();
+    const login = async (username: string, password: string, callback?: () => Promise<void>) => {
+        await store.login(username, password, async () => {
+            if (callback) await callback();
 
-      if (store.user?.mustChangeDefaultPassword) {
-        navigate(ROUTES.auth.changePassword());
-      } else {
-        navigate(DEFAULT_AUTHENTICATED_ROUTE);
-      }
-    });
-  };
+            // 📍 Redirection après login
+            const redirectTo = (location.state as { from?: Location })?.from?.pathname || ROUTES.dashboards.root();
 
-  const logout = async (callback?: () => void) => {
-    await store.logout(() => {
-      callback?.();
-      navigate(ROUTES.auth.login());
-    });
-  };
+            if (store.user?.mustChangeDefaultPassword) {
+                navigate(ROUTES.auth.changePassword());
+            } else {
+                navigate(DEFAULT_AUTHENTICATED_ROUTE);
+            }
+        });
+    };
 
-  const changePassword = async (oldPass: string, newPass: string, callback?: () => Promise<void>) => {
-    await store.changePassword(oldPass, newPass, async () => {
-      if (callback) await callback();
-      if (store.user?.mustChangeDefaultPassword) {
-        navigate(ROUTES.auth.changePassword());
-      } else {
-        navigate(DEFAULT_AUTHENTICATED_ROUTE);
-      }
-    });
-  };
+    const logout = async (callback?: () => void) => {
+        await store.logout(() => {
+            callback?.();
+            navigate(ROUTES.auth.login());
+        });
+    };
 
-  const restore = async (callback?: () => void) => await store.restore(callback);
-  const refresh = async (callback?: () => void) => await store.refresh(callback);
+    const changePassword = async (oldPass: string, newPass: string, callback?: () => Promise<void>) => {
+        await store.changePassword(oldPass, newPass, async () => {
+            if (callback) await callback();
+            if (store.user?.mustChangeDefaultPassword) {
+                navigate(ROUTES.auth.changePassword());
+            } else {
+                navigate(DEFAULT_AUTHENTICATED_ROUTE);
+            }
+        });
+    };
 
-  const hasPermission = (perms: string | string[], all: boolean = false) => store.hasPermission(perms, all);
+    const restore = async (callback?: () => void) => await store.restore(callback);
+    const refresh = async (callback?: () => void) => await store.refresh(callback);
 
-  const contextValue: AuthContextType = {
-    user: store.user,
-    loading: store.loading,
-    error: store.error,
-    isAuthenticated: !!store.user,
-    isSuperAdmin: (store.user?.permissions??[]).includes('_admin'),
-    isAdmin: (store.user?.permissions??[]).includes('_admin'),
-    login,
-    logout,
-    restore,
-    refresh,
-    changePassword,
-    hasPermission,
-  };
+    const hasPermission = (perms: string | string[], all: boolean = false) => store.hasPermission(perms, all);
 
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+    const contextValue: AuthContextType = {
+        user: store.user,
+        loading: store.loading,
+        error: store.error,
+        isAuthenticated: !!store.user,
+        isSuperAdmin: (store.user?.permissions ?? []).includes('_superadmin'),
+        isAdmin: (store.user?.permissions ?? []).includes('_admin') || (store.user?.permissions ?? []).includes('_superadmin'),
+        login,
+        logout,
+        restore,
+        refresh,
+        changePassword,
+        hasPermission,
+    };
+
+    return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) throw new Error("useAuth must be used within AuthProvider");
+    return context;
 };

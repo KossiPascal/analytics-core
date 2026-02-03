@@ -3,12 +3,12 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify, g
 from database.extensions import db
 from models.visualization import Visualization,VisualizationExecutionLog,VisualizationShare
-from helpers.auth import require_auth
+from security.access_decorators import require_auth
 from helpers.logger import get_logger
 
 logger = get_logger(__name__)
 
-bp = Blueprint("visualization", __name__, url_prefix="/api/visualizations")
+bp = Blueprint("visualizations", __name__, url_prefix="/api/visualizations")
 
 
 def serialize(v: Visualization):
@@ -20,7 +20,6 @@ def serialize(v: Visualization):
         "created_by": str(v.created_by) if v.created_by else None,
         "created_at": v.created_at.isoformat() if v.created_at else None,
     }
-
 
 def full_serialize(v: Visualization):
     base = {
@@ -46,7 +45,6 @@ def full_serialize(v: Visualization):
     return base
 
 
-
 # ✅ CREATE Visualization
 @bp.post("/")
 @require_auth
@@ -64,9 +62,9 @@ def create_visualization():
             name=data.get("name"),
             type=vtype,
             description=data.get("description"),
-            config=data.get("config"),
-            filters=data.get("filters"),
-            layout=data.get("layout"),
+            config=data.get("config", {}),
+            filters=data.get("filters", {}),
+            layout=data.get("layout", {}),
             status=data.get("status", "draft"),
             created_by=g.current_user["id"],
         )
@@ -81,7 +79,6 @@ def create_visualization():
         logger.exception("Create visualization failed")
         return jsonify({"error": str(e)}), 500
 
-
 # 📄 GET ONE
 @bp.get("/<uuid:vid>")
 @require_auth
@@ -90,7 +87,6 @@ def get_visualization(vid):
     if not v:
         return jsonify({"error": "Visualization not found"}), 404
     return jsonify(full_serialize(v)), 200
-
 
 # 📚 LIST Visualization
 @bp.get("/")
@@ -123,7 +119,6 @@ def list_visualizations():
         "pages": paginated.pages
     }), 200
 
-
 # ✏️ UPDATE
 @bp.put("/<uuid:vid>")
 @require_auth
@@ -133,18 +128,12 @@ def update_visualization(vid):
         return jsonify({"error": "Visualization not found"}), 404
 
     data = request.get_json() or {}
-
-    for field in [
-        "name", "description", "config",
-        "filters", "layout", "status",
-        "generated_data"
-    ]:
+    for field in ["name", "description", "config","filters", "layout", "status", "generated_data"]:
         if field in data and hasattr(v, field):
             setattr(v, field, data[field])
 
     db.session.commit()
     return jsonify({"message": "Visualization updated"}), 200
-
 
 # 🗑 DELETE + BULK DELETE
 @bp.delete("/<uuid:vid>")
@@ -157,7 +146,6 @@ def delete_visualization(vid):
     db.session.delete(v)
     db.session.commit()
     return jsonify({"message": "Deleted"}), 200
-
 
 @bp.post("/bulk-delete")
 @require_auth
@@ -172,7 +160,6 @@ def bulk_delete():
 
     db.session.commit()
     return jsonify({"message": f"{len(objs)} deleted"}), 200
-
 
 # 🧾 EXECUTION LOGS Visualization
 @bp.post("/<uuid:vid>/execution-log")
@@ -203,7 +190,6 @@ def create_execution_log(vid):
     db.session.commit()
     return jsonify({"message": "Execution logged"}), 201
 
-
 # 📜 LIST EXECUTION LOGS
 @bp.get("/<uuid:vid>/execution-log")
 @require_auth
@@ -223,23 +209,23 @@ def list_execution_logs(vid):
         } for l in logs]
     }), 200
 
-
-
 # 🌍 SHARE Visualization
-@bp.post("/share")
+@bp.post("/<uuid:vid>/share")
 @require_auth
 def share_visualization():
     vid = request.json.get("visualization_id")
     token = str(uuid.uuid4())
-
-    share = VisualizationShare(
-        visualization_id=vid,
-        public_token=token
-    )
+    share = VisualizationShare(visualization_id=vid,public_token=token)
 
     db.session.add(share)
     db.session.commit()
 
-    return jsonify({
-        "share_url": f"/public/visualization/{token}"
-    }), 201
+    return jsonify({ "share_url": f"/public/visualization/{token}" }), 201
+
+# @bp.route("/<uuid:vid>/publish", methods=["POST"])
+# @require_auth
+# def publish_visualization(vid):
+#     viz = Visualization.query.get_or_404(vid)
+#     viz.publish()
+#     db.session.commit()
+#     return jsonify({"id": str(viz.id), "status": viz.status})

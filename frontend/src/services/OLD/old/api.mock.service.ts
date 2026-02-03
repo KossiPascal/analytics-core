@@ -716,16 +716,16 @@ export const AdminApiMock = {
   },
 
   testDatabaseConnection: async (_params: {
-    connectionName?: string;
-    databaseName: string;
+    name?: string;
+    dbname: string;
     username: string;
     password?: string;
     host: string;
-    port: string;
+    port: number;
     type: string;
     ssh?: {
       host?: string;
-      port?: string;
+      port?: number;
       username?: string;
       password?: string;
       key?: string;

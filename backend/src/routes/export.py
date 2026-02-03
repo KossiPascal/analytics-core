@@ -1,11 +1,13 @@
-from flask import Blueprint, send_file
-import pandas as pd
+from flask import Blueprint, send_file,jsonify, request
 from io import BytesIO
+from security.access_decorators import require_auth
+import pandas as pd
 import pdfkit
 
 bp = Blueprint("export", __name__)
 
 @bp.post("/export/excel")
+@require_auth
 def export_excel():
     df = pd.DataFrame(request.json["data"])
     output = BytesIO()
@@ -14,6 +16,7 @@ def export_excel():
     return send_file(output, download_name="dashboard.xlsx")
 
 @bp.post("/export/pdf")
+@require_auth
 def export_pdf():
     html = request.json["html"]
     pdf = pdfkit.from_string(html, False)

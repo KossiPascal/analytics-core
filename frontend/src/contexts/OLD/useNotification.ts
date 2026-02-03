@@ -14,7 +14,8 @@ export function useNotification() {
   );
 
   const showSuccess = useCallback(
-    (message: string, duration?: number) => {
+    (message: string|null, duration?: number) => {
+      if(!message) return;
       show(message, 'success', duration);
     },
     [show]

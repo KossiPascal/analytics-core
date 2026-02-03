@@ -21,7 +21,7 @@ import type {
   OrderDirection,
   DimensionDef,
   MetricDef,
-} from '../../pages/query-builder/SqlBuilder/models';
+} from '../../pages/queries/SqlBuilder/models';
 import {
   MAX_SELECT,
   MAX_JOINS,
@@ -35,7 +35,7 @@ import {
   ALLOWED_JOIN_TYPES,
   ALLOWED_FILTER_OPS,
   ALLOWED_ORDER,
-} from '../../pages/query-builder/SqlBuilder/models';
+} from '../../pages/queries/SqlBuilder/models';
 
 // ============================================================================
 // ID GENERATOR (replaces uuid)
