@@ -5,7 +5,7 @@ import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { OrganizationsApi } from '@/services/OLD/old/api.service';
 import { Building2, Save, Edit2, Trash2, RefreshCw } from 'lucide-react';
-import styles from './OrganizationsPage.module.css';
+import shared from './styles/shared.module.css';
 
 interface Organization {
   id: string;
@@ -35,7 +35,7 @@ export default function OrganizationsPage() {
       if (response?.status === 200) {
         setOrganizations((response.data as Organization[]) || []);
       }
-    } catch (error) {
+    } catch {
       showError('Erreur lors du chargement des organisations');
     } finally {
       setIsLoading(false);
@@ -70,7 +70,7 @@ export default function OrganizationsPage() {
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!orgName.trim()) {
-      showError('Le nom de l\'organisation est requis.');
+      showError("Le nom de l'organisation est requis.");
       return;
     }
 
@@ -102,7 +102,7 @@ export default function OrganizationsPage() {
           showError('Erreur lors de la création');
         }
       }
-    } catch (error) {
+    } catch {
       showError('Erreur lors de la sauvegarde');
     } finally {
       setIsSaving(false);
@@ -122,7 +122,7 @@ export default function OrganizationsPage() {
       } else {
         showError('Erreur lors de la suppression');
       }
-    } catch (error) {
+    } catch {
       showError('Erreur lors de la suppression');
     }
   };
@@ -132,7 +132,7 @@ export default function OrganizationsPage() {
       title="Gestion des organisations"
       subtitle="Créer et gérer les organisations"
       actions={
-        <div className={styles.headerActions}>
+        <div className={shared.headerActions}>
           <Button variant="ghost" size="sm" onClick={fetchOrganizations} disabled={isLoading}>
             <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
           </Button>
@@ -146,12 +146,12 @@ export default function OrganizationsPage() {
         <CardHeader title="Liste des organisations" />
         <CardBody>
           {isLoading ? (
-            <div className={styles.loading}>
+            <div className={shared.loading}>
               <RefreshCw size={24} className="animate-spin" />
               <p>Chargement...</p>
             </div>
           ) : organizations.length === 0 ? (
-            <div className={styles.emptyState}>
+            <div className={shared.emptyState}>
               <Building2 size={48} />
               <p>Aucune organisation</p>
               <Button variant="primary" onClick={handleCreate}>
@@ -159,8 +159,8 @@ export default function OrganizationsPage() {
               </Button>
             </div>
           ) : (
-            <div className={styles.tableContainer}>
-              <table className={styles.table}>
+            <div className={shared.tableContainer}>
+              <table className={shared.table}>
                 <thead>
                   <tr>
                     <th>Nom</th>
@@ -175,21 +175,23 @@ export default function OrganizationsPage() {
                       <td>{org.name}</td>
                       <td>{org.description || '-'}</td>
                       <td>
-                        <span className={`${styles.badge} ${org.isActive ? styles.badgeSuccess : styles.badgeDanger}`}>
+                        <span
+                          className={`${shared.badge} ${org.isActive ? shared.badgeSuccess : shared.badgeDanger}`}
+                        >
                           {org.isActive ? 'Actif' : 'Inactif'}
                         </span>
                       </td>
                       <td>
-                        <div className={styles.actionsCell}>
+                        <div className={shared.actionsCell}>
                           <button
-                            className={styles.actionBtn}
+                            className={shared.actionBtn}
                             onClick={() => handleEdit(org)}
                             title="Modifier"
                           >
                             <Edit2 size={16} />
                           </button>
                           <button
-                            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                            className={`${shared.actionBtn} ${shared.actionBtnDanger}`}
                             onClick={() => handleDeleteClick(org)}
                             title="Supprimer"
                           >
@@ -210,10 +212,10 @@ export default function OrganizationsPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={isEditMode ? 'Modifier l\'organisation' : 'Nouvelle organisation'}
+        title={isEditMode ? "Modifier l'organisation" : 'Nouvelle organisation'}
         size="sm"
         footer={
-          <div className={styles.modalFooter}>
+          <div className={shared.modalFooter}>
             <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Annuler
             </Button>
@@ -224,31 +226,31 @@ export default function OrganizationsPage() {
           </div>
         }
       >
-        <form className={styles.form} onSubmit={handleSave}>
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel} htmlFor="orgName">
+        <form className={shared.form} onSubmit={handleSave}>
+          <div className={shared.formGroup}>
+            <label className={shared.formLabel} htmlFor="orgName">
               Nom de l'organisation
             </label>
             <input
               id="orgName"
-              className={styles.formInput}
+              className={shared.formInput}
               placeholder="Ex: Kendeya Analytics"
               value={orgName}
-              onChange={(event) => setOrgName(event.target.value)}
+              onChange={(e) => setOrgName(e.target.value)}
               required
               autoFocus
             />
           </div>
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel} htmlFor="orgDescription">
+          <div className={shared.formGroup}>
+            <label className={shared.formLabel} htmlFor="orgDescription">
               Description (optionnel)
             </label>
             <textarea
               id="orgDescription"
-              className={styles.formInput}
+              className={shared.formInput}
               placeholder="Description de l'organisation"
               value={orgDescription}
-              onChange={(event) => setOrgDescription(event.target.value)}
+              onChange={(e) => setOrgDescription(e.target.value)}
               rows={3}
             />
           </div>
@@ -262,7 +264,7 @@ export default function OrganizationsPage() {
         title="Confirmer la suppression"
         size="sm"
         footer={
-          <div className={styles.modalFooter}>
+          <div className={shared.modalFooter}>
             <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
               Annuler
             </Button>
@@ -273,10 +275,12 @@ export default function OrganizationsPage() {
           </div>
         }
       >
-        <div className={styles.deleteWarning}>
+        <div className={shared.deleteWarning}>
           <Trash2 size={24} />
-          <p>Êtes-vous sûr de vouloir supprimer l'organisation <strong>{selectedOrg?.name}</strong> ?</p>
-          <p className={styles.warningText}>Cette action est irréversible.</p>
+          <p>
+            Êtes-vous sûr de vouloir supprimer l'organisation <strong>{selectedOrg?.name}</strong> ?
+          </p>
+          <p className={shared.warningText}>Cette action est irréversible.</p>
         </div>
       </Modal>
     </PageWrapper>
