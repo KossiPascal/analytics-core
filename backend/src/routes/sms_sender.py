@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from helpers.logger import get_logger
-from security.access_decorators import require_auth
+from security.access_security import require_auth
 from config import Config
 
 logger = get_logger(__name__)

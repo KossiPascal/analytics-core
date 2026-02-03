@@ -33,7 +33,7 @@ const DB_TYPES: SelectModel[] = [
 const DEFAULT_FORM = Object.freeze<DbConnectionForm>({
   type: 'postgres',
   name: "",
-  host: "",
+  host: "localhost",
   port: 5432,
   dbname: "",
   username: "",
@@ -178,7 +178,6 @@ export const DatabaseConnectionTab:React.FC<{showTitle?:boolean}>=({showTitle=tr
   const [editId, setEditId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { showSuccess, showError } = useNotification();
-
   const isValid = useMemo(() => {
     if (!form.name?.trim() || !form.host?.trim() || !form.dbname?.trim() || !form.username?.trim() || !form.type?.trim().length) {
       showError("Veuillez renseigner tous les champs obligatoires.");
@@ -194,6 +193,7 @@ export const DatabaseConnectionTab:React.FC<{showTitle?:boolean}>=({showTitle=tr
     }
     return true;
   }, [form]);
+  
 
   const updateField = useCallback((key: keyof DbConnectionForm, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -264,8 +264,6 @@ export const DatabaseConnectionTab:React.FC<{showTitle?:boolean}>=({showTitle=tr
     }
   };
 
-
-
   const alertStyle = { margin: 0, fontSize: '0.875rem' }
 
   return (
@@ -279,6 +277,7 @@ export const DatabaseConnectionTab:React.FC<{showTitle?:boolean}>=({showTitle=tr
               <FaDatabase size={20} />
               Connexion à une base de données
             </div>)
+
           }
           action={
             <div className={styles.buttonGroup}>
@@ -313,16 +312,13 @@ export const DatabaseConnectionTab:React.FC<{showTitle?:boolean}>=({showTitle=tr
 
             <Field name="ssh_enabled" value={form.ssh_enabled} onChange={updateField} type={"checkbox"} label={"🔐 Utiliser un tunnel SSH"} icon={<FaShieldAlt />} />
 
-
             {form.ssh_enabled && (
               <div className={styles.grid + ' ' + styles.grid3}>
                 {/* <h3>SSH Configuration</h3> */}
                 <Field name="ssh_host" value={form.ssh_host} onChange={updateField} label={"Hôte SSH"} icon={<FaServer />} placeholder="Ex: ssh.example.com" required={true} />
                 <Field name="ssh_port" value={form.ssh_port} onChange={updateField} type={'number'} label={"Port SSH"} icon={<FaDatabase />} placeholder="Ex: 22" />
-
                 <Field name="ssh_user" value={form.ssh_user} onChange={updateField} label={"Utilisateur SSH"} icon={<FaUser />} placeholder="Ex: ubuntu" required={true} />
                 <Field name="ssh_password" value={form.ssh_password} onChange={updateField} type='password' label={"Mot de passe SSH"} icon={<FaLock />} placeholder="••••••••" />
-
                 <Field name="ssh_key" value={form.ssh_key} onChange={updateField} type={'textarea'} label={"Clé privée SSH"} icon={<FaKey />} placeholder="Coller la clé privée ici" rows={4} />
                 <Field name="ssh_key_pass" value={form.ssh_key_pass} onChange={updateField} type='password' label={"PassPhrase Clé privée SSH"} icon={<FaKey />} placeholder="••••••••" />
               </div>

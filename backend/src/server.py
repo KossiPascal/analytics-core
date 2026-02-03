@@ -1,3 +1,7 @@
+import warnings
+from cryptography.utils import CryptographyDeprecationWarning
+warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
+
 import os
 import urllib3
 import asyncio
@@ -22,7 +26,7 @@ from routes.admin import permissions, roles, tenants, users
 from helpers.logger import get_logger
 from threading import Thread
 from couch2pg.main import sync_couchdb_to_postgres
-from middlewares.api_security import api_security
+from security.api_security import api_security
 
 # Disable SSL warnings for self-signed certs
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -285,3 +289,8 @@ if __name__ == "__main__":
     except Exception as e:
         logger.critical("Fatal error on startup", exc_info=True)
         raise e
+    
+
+
+# ssh-keygen -t rsa -b 4096 -C "analytics-platform"
+# ssh-copy-id -i ~/.ssh/id_ed25519.pub user@ssh.example.com

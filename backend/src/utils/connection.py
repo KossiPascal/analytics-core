@@ -107,6 +107,8 @@ def create_ssh_tunnel(tunnel_conf: Dict[str, Any]) -> SSHTunnelForwarder:
         ssh_kwargs["ssh_pkey"] = pkey
         if pkey_password:
             ssh_kwargs["ssh_key_password"] = pkey_password
+            ssh_kwargs["ssh_private_key_password"] = pkey_password
+            
 
         logger.info("Using SSH private key authentication")
 
@@ -296,7 +298,7 @@ def run_query(conn: Dict[str, Any], sql: str, params: Optional[Dict[str, Any]] =
 #         "dbname": "mydb",
 #         "username": "postgres",
 #         "password": encrypt("mypassword"),
-#         "use_ssh": False
+#         "ssh_enabled": False
 #     }
 
 #     # Example query
