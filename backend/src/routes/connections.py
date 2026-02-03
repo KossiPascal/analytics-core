@@ -3,6 +3,7 @@ from psycopg2.extras import DictCursor
 from security.access_security import require_auth
 from models.connection import DataConnection, DbConnection
 from database.extensions import db, get_connection
+from interfaces.connections import DbConnectionParams, DbConnectionForm, convert_to_conn_params, convert_to_conn_form
 from config import Config
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy import text
@@ -47,7 +48,7 @@ def build_conf(data):
         "username": data.get("username"),
         "password": decrypt(data.get("password")),
 
-        "use_ssh": bool(data.get("use_ssh", False)),
+        "ssh_enabled": bool(data.get("ssh_enabled", False)),
         "ssh_host": data.get("ssh_host"),
         "ssh_port": int(data.get("ssh_port", 22)),
         "ssh_user": data.get("ssh_user"),
@@ -65,7 +66,7 @@ def extract_conf(data):
         "username": data.get("username"),
         "password": encrypt(data["password"]) if data.get("password") else None,
 
-        "use_ssh": bool(data.get("use_ssh", False)),
+        "ssh_enabled": bool(data.get("ssh_enabled", False)),
         "ssh_host": data.get("ssh_host"),
         "ssh_port": int(data.get("ssh_port", 22)),
         "ssh_user": data.get("ssh_user"),
@@ -80,9 +81,10 @@ def extract_conf(data):
 @require_auth
 def list_connections():
     try:
+        connections:list[DbConnection] = DbConnection.query.all()
         results = [
             c.to_dict_safe()
-            for c in DbConnection.query.all()
+            for c in connections
         ]
         return jsonify(results)
     except SQLAlchemyError as e:
@@ -93,7 +95,9 @@ def list_connections():
 @bp.post("")
 @require_auth
 def add_connection():
-    data = request.get_json(silent=True)
+    payload:DbConnectionParams = request.get_json(silent=True)
+
+    data = convert_to_conn_form(payload) if payload else None
     if not data:
         return error_response("Invalid JSON body")
 
@@ -111,7 +115,7 @@ def add_connection():
             username=data["username"],
             password=encrypt(data["password"]) if data.get("password") else None,
 
-            use_ssh=bool(data.get("use_ssh", False)),
+            ssh_enabled=bool(data.get("ssh_enabled", False)),
 
             ssh_host=data.get("ssh_host"),
             ssh_port=int(data["ssh_port"]) if data.get("ssh_port") else 22,
@@ -135,7 +139,9 @@ def add_connection():
 @bp.put("/<int:conn_id>")
 @require_auth
 def update_connection(conn_id):
-    data = request.get_json(silent=True)
+    payload:DbConnectionParams = request.get_json(silent=True)
+
+    data = convert_to_conn_form(payload) if payload else None
     if not data:
         return error_response("Invalid JSON body")
 
@@ -159,8 +165,8 @@ def update_connection(conn_id):
             conn.password = encrypt(data["password"]) if data["password"] else None
 
         # SSH toggle
-        if "use_ssh" in data:
-            conn.use_ssh = bool(data["use_ssh"])
+        if "ssh_enabled" in data:
+            conn.ssh_enabled = bool(data["ssh_enabled"])
 
         # SSH config
         if "ssh_host" in data:
@@ -228,8 +234,11 @@ def cleanup_tunnels():
 @bp.post("/test-ssh")
 @require_auth
 def test_ssh():
-    data = request.get_json(silent=True)
-    if not data or not data.get("use_ssh"):
+    payload:DbConnectionParams = request.get_json(silent=True)
+
+    data = convert_to_conn_form(payload) if payload else None
+
+    if not data or not data.get("ssh_enabled"):
         return error_response("SSH not enabled for this connection")
 
     required = ["ssh_host", "ssh_user"]
@@ -253,20 +262,21 @@ def test_ssh():
 @require_auth
 def test_ssh_db():
     """ Test SSH tunnel + PostgreSQL connection. """
-    data = request.get_json(silent=True)
-    connId = data.get("connId")
+    payload:DbConnectionParams = request.get_json(silent=True)
+    connId = payload.get("connId") if payload else None
+    data = convert_to_conn_form(payload) if payload else None
     if connId:
         try:
-            connData = DbConnection.query.filter_by(id=connId).first()
-            if connData:
-                data = build_conf(connData.to_full_dict())
+            if not data:
+                connData:DbConnection = DbConnection.query.filter_by(id=connId).first()
+                data = build_conf(connData.to_full_dict()) if connData else None
         except Exception as e:
             return error_response(f"Data getting failed ({e})", 404, str(e))
         
     if not data:
         return error_response("Invalid JSON body")
 
-    use_ssh = bool(data.get("use_ssh", False))
+    ssh_enabled = bool(data.get("ssh_enabled", False))
     tunnel = None
     
     # Validate DB fields
@@ -276,7 +286,7 @@ def test_ssh_db():
         return error_response(f"Missing DB fields: {', '.join(missing_db)}")
 
     # Validate SSH fields
-    if use_ssh:
+    if ssh_enabled:
         required_ssh = ["ssh_host", "ssh_port", "ssh_user"]
         missing_ssh = [k for k in required_ssh if not data.get(k)]
         if missing_ssh:
@@ -285,7 +295,7 @@ def test_ssh_db():
     try:
         conf = extract_conf(data)
         try:
-            if use_ssh:
+            if ssh_enabled:
                 # --- SSH TUNNEL ---
                 logger.info(f"Starting SSH tunnel to {conf['ssh_host']}:{conf['ssh_port']}...")
                 tunnel = create_ssh_tunnel(tunnel_conf=conf)
@@ -297,7 +307,7 @@ def test_ssh_db():
             engine = get_engine(conf)
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-            return jsonify({"status": "Database connection OK", "ssh": use_ssh, "database": "connected"})
+            return jsonify({"status": "Database connection OK", "ssh": ssh_enabled, "database": "connected"})
         except Exception as e:
             logger.exception("Connection test failed")
             return error_response(f"Database connection failed ({e})", 500, str(e))

@@ -1,3 +1,7 @@
+import warnings
+from cryptography.utils import CryptographyDeprecationWarning
+warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
+
 import os
 import urllib3
 import asyncio
@@ -275,3 +279,8 @@ if __name__ == "__main__":
     except Exception as e:
         logger.critical("Fatal error on startup", exc_info=True)
         raise e
+    
+
+
+# ssh-keygen -t rsa -b 4096 -C "analytics-platform"
+# ssh-copy-id -i ~/.ssh/id_ed25519.pub user@ssh.example.com
