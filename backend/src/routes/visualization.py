@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify, g
 from database.extensions import db
 from models.visualization import Visualization,VisualizationExecutionLog,VisualizationShare
-from security.access_decorators import require_auth
+from security.access_security import require_auth
 from helpers.logger import get_logger
 
 logger = get_logger(__name__)

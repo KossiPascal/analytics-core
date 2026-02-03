@@ -4,7 +4,7 @@ import re
 class SQLCompileError(RuntimeError):
     pass
 
-class UltimateSQLCompiler:
+class SQLCompiler:
     """
     Ultimate SQL Compiler pour JSON query validé
     --------------------------------------------

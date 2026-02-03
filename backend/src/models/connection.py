@@ -24,7 +24,7 @@ class DbConnection(db.Model):
     username = db.Column(db.String(255), nullable=False)
     password = db.Column(db.Text, nullable=False)
     # SSH
-    use_ssh = db.Column(db.Boolean, default=False)
+    ssh_enabled = db.Column(db.Boolean, default=False)
     ssh_host = db.Column(db.String(255))
     ssh_port = db.Column(db.Integer, default=22)
     ssh_user = db.Column(db.String(255))
@@ -34,14 +34,14 @@ class DbConnection(db.Model):
     ssh_key_pass = db.Column(db.Text)
 
     # --- Constructeur ---
-    def __init__(self, name: str,host: str,port: int,db: str,user: str,pwd: str,use_ssh: bool,ssh_host: str,ssh_port: int,ssh_user: str,ssh_pwd: str,ssh_pk: str,ssh_pkp: str):
+    def __init__(self, name: str,host: str,port: int,db: str,user: str,pwd: str,ssh_enabled: bool,ssh_host: str,ssh_port: int,ssh_user: str,ssh_pwd: str,ssh_pk: str,ssh_pkp: str):
         self.name = name
         self.host = host
         self.port = port
         self.dbname = db
         self.username = user
         self.password = pwd
-        self.use_ssh = use_ssh
+        self.ssh_enabled = ssh_enabled
         self.ssh_host = ssh_host
         self.ssh_port = ssh_port
         self.ssh_user = ssh_user
@@ -57,7 +57,7 @@ class DbConnection(db.Model):
             "port": self.port,
             "dbname": self.dbname,
             "username": self.username,
-            "use_ssh": self.use_ssh,
+            "ssh_enabled": self.ssh_enabled,
             "ssh_host": self.ssh_host,
             "ssh_port": self.ssh_port,
             "ssh_user": self.ssh_user,
@@ -72,7 +72,7 @@ class DbConnection(db.Model):
             "dbname": self.dbname,
             "username": self.username,
             "password": self.password,
-            "use_ssh": self.use_ssh,
+            "ssh_enabled": self.ssh_enabled,
             "ssh_host": self.ssh_host,
             "ssh_port": self.ssh_port,
             "ssh_user": self.ssh_user,
