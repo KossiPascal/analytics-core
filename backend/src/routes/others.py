@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request
-from app import db
+from security.access_decorators import require_auth
 from models import User, Product
 from crud_service import CRUDService
 
@@ -13,6 +13,7 @@ product_service = CRUDService(Product)
 
 @app.route("/api/users/", methods=["GET", "POST"])
 @app.route("/api/users/<int:item_id>/", methods=["GET", "PUT", "DELETE"])
+@require_auth
 def users(item_id=None):
     if request.method == "GET":
         return user_service.get_one(item_id) if item_id else user_service.get_all()
@@ -25,6 +26,7 @@ def users(item_id=None):
 
 @app.route("/api/products/", methods=["GET", "POST"])
 @app.route("/api/products/<int:item_id>/", methods=["GET", "PUT", "DELETE"])
+@require_auth
 def products(item_id=None):
     if request.method == "GET":
         return product_service.get_one(item_id) if item_id else product_service.get_all()

@@ -149,6 +149,7 @@ export default defineConfig({
     "import.meta.env.VITE_APP_NAME": JSON.stringify(process.env.APP_NAME ?? "ANALYTICS APP"),
     "import.meta.env.VITE_APP_SUBNAME": JSON.stringify(process.env.APP_SUBNAME ?? "ANALYTICS APP"),
     "import.meta.env.VITE_APP_VERSION": JSON.stringify(process.env.APP_VERSION ?? "1"),
+    "import.meta.env.VITE_APP_SECRET": JSON.stringify(process.env.JWT_SECRET_KEY ?? "1"),
 
     "import.meta.env.VITE_API_URL": JSON.stringify(process.env.API_URL),
     "import.meta.env.VITE_TIMEOUT": JSON.stringify(process.env.TIMEOUT ?? "60")
@@ -171,7 +172,7 @@ export default defineConfig({
       '@components': path.resolve(__dirname, './src/components'),
       '@pages': path.resolve(__dirname, './src/pages'),
       '@contexts': path.resolve(__dirname, './src/contexts'),
-      '@controllers': path.resolve(__dirname, './src/controllers'),
+      '@providers': path.resolve(__dirname, './src/providers'),
       '@services': path.resolve(__dirname, './src/services'),
       '@stores': path.resolve(__dirname, './src/stores'),
       '@utils': path.resolve(__dirname, './src/utils'),

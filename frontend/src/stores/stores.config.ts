@@ -91,12 +91,13 @@ interface OnlineOrOfflineProp<T> {
 }
 export async function onlineOrOffline<T>({ online, offline }: OnlineOrOfflineProp<T>): Promise<T> {
     if (networkManager.isOnline()) {
-        try {
-            return await online();
-        } catch (e) {
-            // fallback offline si API down
-            return offline();
-        }
+        return await online();
+        // try {
+        //     return await online();
+        // } catch (e) {
+        //     // fallback offline si API down
+        //     return offline();
+        // }
     }
     return offline();
 }

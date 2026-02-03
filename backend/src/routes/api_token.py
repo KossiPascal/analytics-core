@@ -11,7 +11,7 @@ logger = __import__('logging').getLogger(__name__)
 # -----------------------------
 # Flask Blueprint / Controller
 # -----------------------------
-api_bp = Blueprint("api_tokens", __name__, url_prefix="/api_tokens")
+api_bp = Blueprint("tokens", __name__, url_prefix="/api/tokens")
 
 
 @api_bp.route("/access_keys", methods=["POST"])

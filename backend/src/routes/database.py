@@ -7,17 +7,15 @@ from models.database import AuditHistory
 from database.extensions import db
 from config import Config
 from models.couchdb import CouchDBUsers  # your CouchDB ORM model
-from helpers.auth import require_auth
+from security.access_decorators import require_auth
 from helpers.logger import get_logger
 
 logger = get_logger(__name__)
 
-bp = Blueprint("database", __name__, url_prefix="/api/database")
+bp = Blueprint("databases", __name__, url_prefix="/api/databases")
 
 
-# -----------------------------
 # Utility Functions
-# -----------------------------
 def http_headers():
     return {"Content-Type": "application/json"}
 
@@ -68,7 +66,8 @@ def drop_or_truncate(entities: list, action: str, user: str, procide: bool):
 # -----------------------------
 # Routes
 # -----------------------------
-@bp.route("/database/entities", methods=["GET"])
+@bp.route("/entities", methods=["GET"])
+@require_auth
 def database_entities_list():
     try:
         entities = db.inspect(db.engine).get_table_names()
@@ -76,7 +75,8 @@ def database_entities_list():
     except Exception as e:
         return jsonify({"status": 500, "data": str(e)})
 
-@bp.route("/database/delete", methods=["POST"])
+@bp.route("/delete", methods=["POST"])
+@require_auth
 def delete_all_data():
     data = request.json
     procide = data.get("procide")
@@ -87,6 +87,7 @@ def delete_all_data():
     return jsonify(result), result["status"]
 
 @bp.route("/couchdb/get-data", methods=["POST"])
+@require_auth
 def get_reco_data():
     body = request.json
     cible = body.get("cible")
@@ -127,6 +128,7 @@ def get_reco_data():
         return jsonify({"status": 201, "data": f"Error: {str(e)}"}), 201
 
 @bp.route("/couchdb/delete", methods=["POST"])
+@require_auth
 def delete_from_couchdb():
     body = request.json
     to_delete = body.get("data_to_delete", [])
