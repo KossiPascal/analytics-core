@@ -4,4 +4,11 @@ src/dynamic_couchdb copy.py
 src/dynamic_couchdb.py
 src/DynamicDataPlatform.py
 
+web
+
+# Python cache
 __pycache__
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
