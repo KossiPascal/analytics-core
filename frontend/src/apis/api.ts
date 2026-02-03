@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-
+import { tokenProvider } from "@/apis/token.provider";
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 const TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT ?? 120) * 1000;
 
@@ -69,23 +69,42 @@ async function handleRequest<T>(fn: () => Promise<T>): Promise<ApiResponse<T>> {
  * @param useFetch - si true, utilise fetch sinon axios
  */
 export function createApi<UseFetch extends boolean = false>(useFetch?: UseFetch): ApiMethods<UseFetch> {
+
   const axiosInstance: AxiosInstance = axios.create({
     baseURL: API_URL,
     timeout: TIMEOUT,
-    headers: { "Content-Type": "application/json" },
   });
+
+  // 🔐 Interceptor → token toujours à jour
+  axiosInstance.interceptors.request.use((config:any) => {
+    const token = tokenProvider.get();
+
+    config.headers = {
+    "Content-Type": "application/json",
+      ...config.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    return config;
+  });
+
+
 
   /**
    * Wrapper Fetch universel
    */
   async function fetchRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TIMEOUT);
+    const token = tokenProvider.get();
 
     const headers: HeadersInit = {
       "Content-Type": "application/json",
       ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TIMEOUT);
+
 
     try {
       const res = await fetch(`${API_URL}${url}`, { ...options, headers, signal: controller.signal });
@@ -104,8 +123,8 @@ export function createApi<UseFetch extends boolean = false>(useFetch?: UseFetch)
 
   const api: ApiMethods<UseFetch> = {
     get: async <T = any>(url: string, options?: UseFetch extends true ? RequestInit : AxiosRequestConfig): Promise<ApiResponse<T>> =>
-      handleRequest(() => useFetch ? fetchRequest(url, { method: "GET", ...options } as RequestInit) : 
-    axiosInstance.get<T>(url, options as AxiosRequestConfig).then(res => res.data)),
+      handleRequest(() => useFetch ? fetchRequest(url, { method: "GET", ...options } as RequestInit) :
+        axiosInstance.get<T>(url, options as AxiosRequestConfig).then(res => res.data)),
 
     post: async <T = any>(url: string, data?: any, options?: UseFetch extends true ? RequestInit : AxiosRequestConfig): Promise<ApiResponse<T>> =>
       handleRequest(() => useFetch ? fetchRequest(url, { method: "POST", body: JSON.stringify(data), ...options } as RequestInit) : axiosInstance.post<T>(url, data, options as AxiosRequestConfig).then(res => res.data)),

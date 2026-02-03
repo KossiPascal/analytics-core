@@ -8,7 +8,7 @@ def get_public_ip():
     except Exception:
         return None
 
-def get_private_ips():
+def get_ips():
     ips = []
     for iface in netifaces.interfaces():
         addrs = netifaces.ifaddresses(iface)

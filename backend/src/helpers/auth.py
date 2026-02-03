@@ -5,7 +5,7 @@ import time
 import secrets
 from config import Config
 from functools import wraps
-from database.extensions import db
+from database.extensions import db, tokenManagement
 from helpers.hasher import hash_token
 from datetime import datetime, timedelta
 from typing import Tuple, Optional, Dict
@@ -89,44 +89,3 @@ def revoke_refresh_token(rt_obj: RefreshToken) -> None:
     rt_obj.revoked = True
     db.session.add(rt_obj)
     db.session.commit()
-
-# Decorator to protect routes (uses JWT access token)
-def require_auth(f=None, *, roles: Optional[list[str]] = None):
-    """ Usage: @require_auth -> any logged-in user | @require_auth(roles=["admin"]) -> only roles allowed"""
-    def decorator(func):
-        @wraps(func)
-        def wrapped(*args, **kwargs):
-            # 1. Read Authorization header
-            auth_header = request.headers.get("Authorization", "")
-            if not auth_header.startswith("Bearer "):
-                return jsonify({"error": "Missing Authorization header"}), 401
-
-            token = auth_header.split(" ", 1)[1]
-
-             # 2. Decode JWT
-            try:
-                payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
-            except jwt.ExpiredSignatureError:
-                return jsonify({"error": "Access token expired"}), 401
-            except jwt.InvalidTokenError:
-                return jsonify({"error": "Invalid access token"}), 401
-
-            username = payload.get("username")
-            if not username:
-                return jsonify({"error": "Invalid token payload"}), 401
-
-            # 3. Validate user exists in PostgreSQL
-            user: User = User.query.filter_by(username=username).first()
-            if not user:
-                return jsonify({"error": "User not found"}), 401
-
-            # 4. Validate role if required
-            if roles and user.role not in roles:
-                return jsonify({"error": "Forbidden"}), 403
-
-            # 5. Attach user context to g
-            g.current_user = user.to_dict_safe()
-
-            return func(*args, **kwargs)
-        return wrapped
-    return decorator if f is None else decorator(f)
