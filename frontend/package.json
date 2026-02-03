@@ -7,7 +7,7 @@
     "dev": "vite --host",
     "build": "tsc && vite build",
     "postbuild": "npm run copy",
-    "copy": "rm -rf ../backend/web/* && cp -r ./dist/* ../backend/web/",
+    "copy": "rm -rf ../backend/web && mkdir -p ../backend/web && cp -r ./dist/* ../backend/web/",
     "watch": "concurrently \"vite build --watch\" \"chokidar dist -c 'npm run copy'\"",
     "watch2": "vite build --watch & chokidar dist -c \"npm run copy\"",
     "preview": "vite preview --port 4173",

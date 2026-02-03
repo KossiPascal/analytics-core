@@ -3,8 +3,8 @@ src/dynamic_couchdb copy 3.py
 src/dynamic_couchdb copy.py
 src/dynamic_couchdb.py
 src/DynamicDataPlatform.py
-
 web
+backend/logs/
 
 # Python cache
 __pycache__
@@ -12,3 +12,4 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
