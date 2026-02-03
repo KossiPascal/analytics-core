@@ -20,7 +20,7 @@ export const ROUTES_ITEMS: RouteItem[] = [
     label: "Accueil - Visualisations",
     access: "authenticated",
     icon: <Home size={20} />,
-    permissions:['_admin']
+    permissions:['_admin', '_superadmin']
   },
 
   // 
@@ -30,7 +30,7 @@ export const ROUTES_ITEMS: RouteItem[] = [
     component: PAGES.LoginPage,
     label: "Connexion",
     icon: <Home size={20} />,
-    permissions:['_admin']
+    permissions:['_admin', '_superadmin']
   },
 
   // Visualisation
@@ -43,7 +43,7 @@ export const ROUTES_ITEMS: RouteItem[] = [
     showInGridpNav: true,
     showInTopNav: true,
     showInSideNav: true,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
   },
 
   // Visualisation
@@ -55,12 +55,12 @@ export const ROUTES_ITEMS: RouteItem[] = [
     showInGridpNav: true,
     showInTopNav: true,
     showInSideNav: true,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
     children: [
-      { path: ROUTES.dashboards.monthly(), label: 'Tableau de bord mensuel', component: PAGES.MonthlyDashboardPage, icon: <Gauge size={18} />,permissions:['_admin'] },
-      { path: ROUTES.dashboards.realtime(), label: 'Tableau de bord temps réel', component: PAGES.RealtimeDashboardPage, icon: <Activity size={18} />,permissions:['_admin'] },
-      // { path: ROUTES.reports.root(), label: 'Rapports', component: PAGES.ReportsPage, icon: <FileText size={18} />,permissions:['_admin'] },
-      // { path: ROUTES.maps.root(), label: 'Cartes', component: PAGES.MapsPage, icon: <Map size={18} />,permissions:['_admin'] },
+      { path: ROUTES.dashboards.monthly(), label: 'Tableau de bord mensuel', component: PAGES.MonthlyDashboardPage, icon: <Gauge size={18} />,permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.dashboards.realtime(), label: 'Tableau de bord temps réel', component: PAGES.RealtimeDashboardPage, icon: <Activity size={18} />,permissions:['_admin', '_superadmin'] },
+      // { path: ROUTES.reports.root(), label: 'Rapports', component: PAGES.ReportsPage, icon: <FileText size={18} />,permissions:['_admin', '_superadmin'] },
+      // { path: ROUTES.maps.root(), label: 'Cartes', component: PAGES.MapsPage, icon: <Map size={18} />,permissions:['_admin', '_superadmin'] },
     ],
   },
 
@@ -72,12 +72,12 @@ export const ROUTES_ITEMS: RouteItem[] = [
     access: "authenticated",
     showInGridpNav: true,
     showInSideNav: true,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
     children: [
-      { path: ROUTES.users.list(), component: PAGES.UsersPage, label: 'Liste', icon: <Users size={18} />, permissions:['_admin'] },
-      { path: ROUTES.users.organizations(), component: PAGES.OrganizationsPage, label: 'Organisations', icon: <Building2 size={18} />, permissions:['_admin'] },
-      { path: ROUTES.users.permissions(), component: PAGES.PermissionsPage, label: 'Permissions', icon: <ShieldCheck size={18} />, permissions:['_admin'] },
-      { path: ROUTES.users.roles(), component: PAGES.RolesPage, label: 'Rôles', icon: <Shield size={18} />, permissions:['_admin'] },
+      { path: ROUTES.users.list(), component: PAGES.UsersPage, label: 'Liste', icon: <Users size={18} />, permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.users.organizations(), component: PAGES.OrganizationsPage, label: 'Organisations', icon: <Building2 size={18} />, permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.users.permissions(), component: PAGES.PermissionsPage, label: 'Permissions', icon: <ShieldCheck size={18} />, permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.users.roles(), component: PAGES.RolesPage, label: 'Rôles', icon: <Shield size={18} />, permissions:['_admin', '_superadmin'] },
     ],
   },
   {
@@ -88,25 +88,26 @@ export const ROUTES_ITEMS: RouteItem[] = [
     showInGridpNav: true,
     showInTopNav: true,
     showInSideNav: true,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
     children: [
-      { path: ROUTES.admin.root(), component: PAGES.AdminPage, label: 'Configurations', icon: <Shield size={18} />, permissions:['_admin'] },
-      { path: ROUTES.admin.section('configurations'), component: PAGES.AdminPage, label: 'Configurations', icon: <Shield size={18} />, permissions:['_admin'] },
-      { path: ROUTES.admin.section('managements'), component: PAGES.AdminPage, label: 'Managements', icon: <Shield size={18} />, permissions:['_admin'] },
+      { path: ROUTES.admin.root(), component: PAGES.AdminPage, label: 'Configurations', icon: <Shield size={18} />, permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.admin.section('configurations'), component: PAGES.AdminPage, label: 'Configurations', icon: <Shield size={18} />, permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.admin.section('managements'), component: PAGES.AdminPage, label: 'Managements', icon: <Shield size={18} />, permissions:['_admin', '_superadmin'] },
     ],
   },
 
   // QUERY BUILDER
   {
-    path: ROUTES.queryBuilder.root(),
+    path: ROUTES.builder.root(),
     label: "Query Builder",
     access: "authenticated",
     icon: <Shield size={20} />,
     showInGridpNav: true,
     showInSideNav: true,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
     children: [
-      {label: "SQL Builder", path: ROUTES.queryBuilder.sqlBuilder(), component: PAGES.QueryBuilderPage, icon: <Shield size={20} />, permissions:['_admin']},
+      {label: "SQL Builder", path: ROUTES.builder.sqlBuilder(), component: PAGES.SqlBuilderPage, icon: <Shield size={20} />, permissions:['_admin', '_superadmin']},
+      {label: "Query Builder", path: ROUTES.builder.queryBuilder(), component: PAGES.QueryBuilderPage, icon: <Shield size={20} />, permissions:['_admin', '_superadmin']},
     ]
   },
 
@@ -119,7 +120,7 @@ export const ROUTES_ITEMS: RouteItem[] = [
     icon: <Shield size={20} />,
     showInGridpNav: true,
     showInSideNav: true,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
   },
 
   {
@@ -130,7 +131,7 @@ export const ROUTES_ITEMS: RouteItem[] = [
     icon: <BookOpen size={20} />,
     showInGridpNav: true,
     showInSideNav: true,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
   },
 
   // ERRORS
@@ -139,11 +140,11 @@ export const ROUTES_ITEMS: RouteItem[] = [
     component: PAGES.UnauthorizedPage,
     label: "Non autorisé",
     icon: <BookOpen size={20} />,
-    permissions:['_admin'],
+    permissions:['_admin', '_superadmin'],
     children: [
-      { path: ROUTES.errors.unauthorized(), component: PAGES.UnauthorizedPage, label: "Non autorisé", icon: <BookOpen size={20} />, permissions:['_admin'] },
-      { path: ROUTES.errors.serverError(), component: PAGES.ServerErrorPage, label: "Erreur serveur", icon: <BookOpen size={20} />, permissions:['_admin'] },
-      { path: ROUTES.errors.notFound(), component: PAGES.NotFoundPage, label: "Page non trouvée", icon: <BookOpen size={20} />, permissions:['_admin'] },
+      { path: ROUTES.errors.unauthorized(), component: PAGES.UnauthorizedPage, label: "Non autorisé", icon: <BookOpen size={20} />, permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.errors.serverError(), component: PAGES.ServerErrorPage, label: "Erreur serveur", icon: <BookOpen size={20} />, permissions:['_admin', '_superadmin'] },
+      { path: ROUTES.errors.notFound(), component: PAGES.NotFoundPage, label: "Page non trouvée", icon: <BookOpen size={20} />, permissions:['_admin', '_superadmin'] },
     ]
   },
 ];
@@ -176,7 +177,6 @@ const RouteElement: React.FC<{ config: RouteConfig }> = ({ config }) => {
 export const AppRoutes: React.FC = () => {
   const location = useLocation();
   const ROUTE_CONFIG: RouteConfig[] = generateRouteConfig(ROUTES_ITEMS);
-  console.log(ROUTE_CONFIG)
   return (
     <AnimatePresence mode="wait">
       <Suspense fallback={<SuspenseLoader />}>

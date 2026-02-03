@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status && git push -u origin main && git status",
+    "send-git": "git status && git add . && git status && git commit -m \"Initial Commit\" && git status &&  main && git status",
     "test": "echo \"Error: no test specified\" && exit 1"
 
   },

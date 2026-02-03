@@ -10,7 +10,8 @@ from sqlalchemy.exc import IntegrityError
 from models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g, current_app
 from helpers.hasher import hash_password, verify_password, hash_token
-from helpers.auth import create_token,create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,require_auth,check_rate_limit
+from helpers.auth import create_token,create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,check_rate_limit
+from security.access_decorators import require_auth
 
 logger = get_logger(__name__)
 
@@ -176,6 +177,7 @@ def update_password():
 
 # ===================== REFRESH TOKEN =====================
 @bp.post("/refresh")
+@require_auth
 def refresh():
     """
     Rotate refresh token and return new access + refresh token.
@@ -231,7 +233,6 @@ def refresh():
     except Exception as e:
         logger.exception("Unhandled error during refresh")
         return jsonify({"error": "Internal error", "details": str(e)}), 500
-
 
 # ===================== LOGOUT =====================
 @bp.post("/logout")

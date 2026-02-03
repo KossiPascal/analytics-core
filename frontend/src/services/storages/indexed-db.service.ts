@@ -3,7 +3,7 @@ import { openDB, IDBPDatabase } from 'idb';
 const DB_VERSION = 1;
 const DB_NAME = 'app-db';
 const RETRY_MILLIS = 5000;
-const STORES = {AUTH: 'auth',USERS: 'users',TOKENS: 'tokens'} as const;
+const STORES = {AUTH: 'auth',USERS: 'users',TOKENS: 'tokens', QUERY_BUILDER:'query_builder'} as const;
 type StoreName = typeof STORES[keyof typeof STORES];
 
 type DbCallback<T = any> = {

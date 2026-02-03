@@ -6,6 +6,8 @@
     "no-inline-styles": "off",
     "axe/forms": "off",
     "axe/aria": "off",
-    "axe/name-role-value": "off"
+    "axe/name-role-value": "off",
+    "button-type": "off",
+    "axe/keyboard": "off"
   }
 }

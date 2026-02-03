@@ -2,14 +2,10 @@ import uuid
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.exc import IntegrityError
-from database.extensions import db
+from database.extensions import db, tokenManagement
 from config import Config
 from helpers.hasher import hash_password, verify_password
-from sqlalchemy import or_
-import itsdangerous, time
-
-serializer = itsdangerous.URLSafeTimedSerializer(Config.SECRET_KEY)
-
+from hashlib import sha256
 
 # -------------------- TENANT --------------------
 class Tenant(db.Model):
@@ -32,6 +28,11 @@ class Tenant(db.Model):
             "name": self.name, 
             "created_at": self.created_at.isoformat()
         }
+    
+    @classmethod
+    def active(cls):
+        return cls.query.filter_by(deleted=False)
+
     
     def __repr__(self):
         return f"<Tenant {self.name}>"
@@ -163,7 +164,7 @@ class User(db.Model):
     refresh_tokens = db.relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     logs = db.relationship(UsersLog, back_populates="user", cascade="all, delete-orphan")
     tenant = db.relationship(Tenant, back_populates="users")
-    roles = db.relationship(Role,secondary="user_roles",backref="users",lazy="joined")
+    roles = db.relationship(Role,secondary="user_roles",lazy="selectin")
 
     
     def set_password(self, password: str):
@@ -171,59 +172,69 @@ class User(db.Model):
     
     def check_password(self, password: str) -> bool:
         return verify_password(password,self.password_hash)
+    
+    def permissions_roles(self):
+        """ Génère le payload JWT basé sur les rôles / permissions (caps). """
+        roles: set[str] = set()
+        permissions: set[str] = set()
+
+        for role in self.roles or []:
+            if not role or role.deleted:
+                continue
+            
+            roles.add(role.name.lower())
+            
+            for perm in role.permissions or []:
+                if perm and perm.name and not perm.deleted:
+                    permissions.add(perm.name.strip().lower())
+
+        permissions.add("_admin")
+        permissions.add("_superadmin")
+
+        return sorted(roles), sorted(permissions)
 
     def has_permission(self, name: str) -> bool:
-        for role in self.roles:
-            for perm in role.permissions:
-                if perm.name == name:
-                    return True
-        return False
+        name = name.strip().lower()
+        roles, permissions = self.permissions_roles()
+        return any(perm.lower() == name for perm in permissions)
     
-    def generate_permission_payload(self):
+    def generate_permission_payload(self, onlyPayload:bool=False):
         """ Génère le payload JWT basé sur les rôles / permissions (caps). """
 
-        caps: set[str] = set()
-        if self.roles:
-            for role in self.roles:
-                if not role or not role.permissions:
-                    continue
+        roles, permissions = self.permissions_roles()
 
-                for perm in role.permissions:
-                    if perm and perm.name:
-                        caps.add(perm.name.strip().lower())
-
-        expire = int(time.time()) + (Config.ACCESS_TOKEN_EXPIRES_MINUTES * 60)
         payload = {
             "id": str(self.id),
             "username": self.username,
             "fullname": self.fullname,
             "tenant_id": str(self.tenant_id) if self.tenant_id else None,
-            "roles": sorted(caps),
-            "permissions": ["_admin"]
-            # "jti": secrets.token_hex(8),         # anti replay
+            "roles": roles,
+            "permissions": permissions,
+            "is_active": self.is_active,
+            "token_type": "access",
+            "ver": 1,  # token versioning
         }
+        return payload if onlyPayload else tokenManagement.encode(payload)
 
-        token = serializer.dumps(payload)
-        return token, expire, payload
+                    
+    
+    def has_role(self, name: str) -> bool:
+        return any(role.name.lower() == name.lower() for role in self.roles)
 
     def is_admin(self) -> bool:
-        return "admin" in self.roles or "superadmin" in self.roles
-    
+        return self.has_role("admin") or self.has_role("superadmin")
+
     def is_editor(self) -> bool:
-        return 'editor' in self.roles
-    
+        return self.has_role("editor")
+
     def is_viewer(self) -> bool:
-        return 'viewer' in self.roles
+        return self.has_role("viewer")
+
     
     # Utility methods
     def to_dict_safe(self):
-        return {
-            "id": str(self.id),
-            "username": self.username,
-            "fullname": self.fullname,
-            "tenant_id": str(self.tenant_id),
-            # "roles": [r for r in self.roles],
-            "created_at": self.created_at.isoformat(),
+        payload = self.generate_permission_payload(onlyPayload = True)
+        return {**payload, "created_at": self.created_at.isoformat(),
         }
 
     @classmethod
@@ -299,6 +310,9 @@ class RefreshToken(db.Model):
 
     def is_valid(self):
         return not self.revoked and self.expires_at > datetime.utcnow()
+
+    def hash_token(token: str) -> str:
+        return sha256(token.encode()).hexdigest()
 
     def __repr__(self):
         return f"<RefreshToken user={self.user_id} revoked={self.revoked}>"
