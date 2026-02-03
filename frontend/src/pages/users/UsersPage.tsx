@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PageWrapper } from '@components/layout';
 import { Card, CardBody, Button, Modal, StatusBadge, CrudBadge, PermissionBadge, RoleBadge } from '@components/ui';
+import { FormInput, FormTextarea, FormCheckbox } from '@/components/forms';
 import { UserModal } from './components/UserModal';
 import { useUsers } from '@/contexts/OLD/useUsers';
 import { useNotification } from '@/contexts/OLD/useNotification';
-import { AuthApi, PermissionsApi, OrganizationsApi } from '@/services/OLD/old/api.service';
+import { AuthApi, PermissionsApi } from '@/services/OLD/old/api.service';
 import {
   Users,
   Shield,
@@ -39,11 +40,6 @@ interface Permission {
   canDelete: boolean;
   createdAt: string;
   updatedAt: string;
-}
-
-interface Organization {
-  id: string;
-  name: string;
 }
 
 type TabType = 'users' | 'roles' | 'permissions';
@@ -86,14 +82,12 @@ export default function UsersPage() {
 
   // Roles state
   const [roles, setRoles] = useState<Role[]>([]);
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isRolesLoading, setIsRolesLoading] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [isDeleteRoleModalOpen, setIsDeleteRoleModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [isRoleEditMode, setIsRoleEditMode] = useState(false);
   const [roleName, setRoleName] = useState('');
-  const [roleOrganization, setRoleOrganization] = useState('');
   const [selectedRolePermissions, setSelectedRolePermissions] = useState<string[]>([]);
   const [isRoleSaving, setIsRoleSaving] = useState(false);
 
@@ -118,6 +112,15 @@ export default function UsersPage() {
   const isUserSaving = status.saving === 'loading';
   const isUserDeleting = status.deleting === 'loading';
 
+  // Form validation
+  const isRoleFormValid = useMemo(() => {
+    return roleName.trim().length > 0;
+  }, [roleName]);
+
+  const isPermFormValid = useMemo(() => {
+    return permissionName.trim().length > 0;
+  }, [permissionName]);
+
   // Fetch functions
   const fetchRoles = async () => {
     setIsRolesLoading(true);
@@ -130,17 +133,6 @@ export default function UsersPage() {
       showError('Erreur lors du chargement des rôles');
     } finally {
       setIsRolesLoading(false);
-    }
-  };
-
-  const fetchOrganizations = async () => {
-    try {
-      const response = await OrganizationsApi.getOrganizations();
-      if (response?.status === 200) {
-        setOrganizations((response.data as Organization[]) || []);
-      }
-    } catch {
-      console.error('Erreur lors du chargement des organisations');
     }
   };
 
@@ -161,7 +153,6 @@ export default function UsersPage() {
   useEffect(() => {
     initializeData();
     fetchRoles();
-    fetchOrganizations();
     fetchPermissions();
   }, []);
 
@@ -195,7 +186,6 @@ export default function UsersPage() {
     setIsRoleEditMode(false);
     setSelectedRole(null);
     setRoleName('');
-    setRoleOrganization('');
     setSelectedRolePermissions([]);
     setIsRoleModalOpen(true);
   };
@@ -204,7 +194,6 @@ export default function UsersPage() {
     setIsRoleEditMode(true);
     setSelectedRole(role);
     setRoleName(role.name);
-    setRoleOrganization(role.organization || '');
     setSelectedRolePermissions(role.authorizations || []);
     setIsRoleModalOpen(true);
   };
@@ -227,7 +216,6 @@ export default function UsersPage() {
         const response = await AuthApi.updateRole({
           id: selectedRole.id,
           name: roleName,
-          organization: roleOrganization,
           authorizations: selectedRolePermissions,
         });
         if (response?.status === 200) {
@@ -240,7 +228,6 @@ export default function UsersPage() {
       } else {
         const response = await AuthApi.createRole({
           name: roleName,
-          organization: roleOrganization,
           authorizations: selectedRolePermissions,
         });
         if (response?.status === 200) {
@@ -714,7 +701,7 @@ export default function UsersPage() {
             <Button variant="outline" size="sm" onClick={() => setIsRoleModalOpen(false)}>
               Annuler
             </Button>
-            <Button variant="primary" size="sm" onClick={handleSaveRole} disabled={isRoleSaving}>
+            <Button variant="primary" size="sm" onClick={handleSaveRole} disabled={!isRoleFormValid || isRoleSaving}>
               <Save size={16} />
               {isRoleSaving ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
@@ -722,52 +709,25 @@ export default function UsersPage() {
         }
       >
         <form className={shared.form} onSubmit={handleSaveRole}>
-          <div className={shared.formGroup}>
-            <label className={shared.formLabel} htmlFor="roleName">
-              Nom du rôle
-            </label>
-            <input
-              id="roleName"
-              className={shared.formInput}
-              placeholder="Ex: Administrateur"
-              value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className={shared.formGroup}>
-            <label className={shared.formLabel} htmlFor="organization">
-              Organisation
-            </label>
-            <select
-              id="organization"
-              className={shared.formInput}
-              value={roleOrganization}
-              onChange={(e) => setRoleOrganization(e.target.value)}
-            >
-              <option value="">Sélectionner une organisation</option>
-              {organizations.map((org) => (
-                <option key={org.id} value={org.name}>
-                  {org.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <FormInput
+            label="Nom du rôle"
+            placeholder="Ex: Administrateur"
+            value={roleName}
+            onChange={(e) => setRoleName(e.target.value)}
+            required
+            leftIcon={<Shield size={18} />}
+          />
 
           <div className={shared.formGroup}>
             <label className={shared.formLabel}>Permissions</label>
             <div className={shared.checkboxGrid}>
               {AVAILABLE_PERMISSIONS.map((perm) => (
-                <label key={perm.value} className={shared.checkbox}>
-                  <input
-                    type="checkbox"
-                    checked={selectedRolePermissions.includes(perm.value)}
-                    onChange={() => toggleRolePermission(perm.value)}
-                  />
-                  <span>{perm.label}</span>
-                </label>
+                <FormCheckbox
+                  key={perm.value}
+                  label={perm.label}
+                  checked={selectedRolePermissions.includes(perm.value)}
+                  onChange={() => toggleRolePermission(perm.value)}
+                />
               ))}
             </div>
           </div>
@@ -811,7 +771,7 @@ export default function UsersPage() {
             <Button variant="outline" size="sm" onClick={() => setIsPermModalOpen(false)}>
               Annuler
             </Button>
-            <Button variant="primary" size="sm" onClick={handleSavePerm} disabled={isPermSaving}>
+            <Button variant="primary" size="sm" onClick={handleSavePerm} disabled={!isPermFormValid || isPermSaving}>
               <Save size={16} />
               {isPermSaving ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
@@ -819,70 +779,47 @@ export default function UsersPage() {
         }
       >
         <form className={shared.form} onSubmit={handleSavePerm}>
-          <div className={shared.formGroup}>
-            <label className={shared.formLabel} htmlFor="permissionName">
-              Nom de la permission
-            </label>
-            <input
-              id="permissionName"
-              className={shared.formInput}
-              placeholder="Ex: manage_users"
-              value={permissionName}
-              onChange={(e) => setPermissionName(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
+          <FormInput
+            label="Nom de la permission"
+            placeholder="Ex: manage_users"
+            value={permissionName}
+            onChange={(e) => setPermissionName(e.target.value)}
+            required
+            leftIcon={<ShieldCheck size={18} />}
+          />
 
-          <div className={shared.formGroup}>
-            <label className={shared.formLabel} htmlFor="permissionDescription">
-              Description (optionnel)
-            </label>
-            <textarea
-              id="permissionDescription"
-              className={shared.formInput}
-              placeholder="Description de la permission"
-              value={permissionDescription}
-              onChange={(e) => setPermissionDescription(e.target.value)}
-              rows={2}
-            />
-          </div>
+          <FormTextarea
+            label="Description"
+            hint="Optionnel"
+            placeholder="Description de la permission"
+            value={permissionDescription}
+            onChange={(e) => setPermissionDescription(e.target.value)}
+            rows={2}
+          />
 
           <div className={shared.formGroup}>
             <label className={shared.formLabel}>Accès (CRUD)</label>
             <div className={shared.checkboxGrid}>
-              <label className={shared.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={canCreate}
-                  onChange={(e) => setCanCreate(e.target.checked)}
-                />
-                <span>Créer</span>
-              </label>
-              <label className={shared.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={canRead}
-                  onChange={(e) => setCanRead(e.target.checked)}
-                />
-                <span>Lire</span>
-              </label>
-              <label className={shared.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={canUpdate}
-                  onChange={(e) => setCanUpdate(e.target.checked)}
-                />
-                <span>Mettre à jour</span>
-              </label>
-              <label className={shared.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={canDelete}
-                  onChange={(e) => setCanDelete(e.target.checked)}
-                />
-                <span>Supprimer</span>
-              </label>
+              <FormCheckbox
+                label="Créer"
+                checked={canCreate}
+                onChange={(e) => setCanCreate(e.target.checked)}
+              />
+              <FormCheckbox
+                label="Lire"
+                checked={canRead}
+                onChange={(e) => setCanRead(e.target.checked)}
+              />
+              <FormCheckbox
+                label="Mettre à jour"
+                checked={canUpdate}
+                onChange={(e) => setCanUpdate(e.target.checked)}
+              />
+              <FormCheckbox
+                label="Supprimer"
+                checked={canDelete}
+                onChange={(e) => setCanDelete(e.target.checked)}
+              />
             </div>
           </div>
         </form>

@@ -20,6 +20,7 @@ export interface UserFormData {
   username: string;
   fullname: string;
   email: string;
+  phone?: string;
   password?: string;
   isActive: boolean;
   roles: number[];

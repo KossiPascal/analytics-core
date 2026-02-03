@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@components/ui/Button/Button';
 import { FormInput, FormSwitch, FormCheckbox } from '@/components/forms';
-import { Save, X, ChevronDown, ChevronRight, Check, User as UserIcon, Mail, Lock } from 'lucide-react';
+import { Save, X, ChevronDown, ChevronRight, Check, User as UserIcon, Mail, Lock, Phone } from 'lucide-react';
 import type { User, Roles } from '@/models/OLD/old/auth.types';
 import type {
   CountryMap,
@@ -44,6 +44,7 @@ export function UserModal({
   const [username, setUsername] = useState('');
   const [fullname, setFullname] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -73,6 +74,7 @@ export function UserModal({
         setUsername(user.username || '');
         setFullname(user.fullname || '');
         setEmail(user.email || '');
+        setPhone((user as any).phone || '');
         setIsActive(user.isActive ?? true);
         setSelectedRoles(user.rolesIds || []);
         setSelectedCountries(user.countries || []);
@@ -86,6 +88,7 @@ export function UserModal({
         setUsername('');
         setFullname('');
         setEmail('');
+        setPhone('');
         setIsActive(true);
         setSelectedRoles([]);
         setSelectedCountries([]);
@@ -386,6 +389,7 @@ export function UserModal({
       username: user?.username || username,
       fullname,
       email,
+      phone,
       password: password.trim() || undefined,
       isActive,
       roles: selectedRoles,
@@ -451,30 +455,42 @@ export function UserModal({
           </button>
           {expandedSections.info && (
             <div className={styles.sectionContent}>
-              <FormInput
-                label="Nom d'utilisateur"
-                required={!isEditMode}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Nom d'utilisateur"
-                disabled={isEditMode}
-                leftIcon={<UserIcon size={18} />}
-              />
-              <FormInput
-                label="Nom complet"
-                value={fullname}
-                onChange={(e) => setFullname(e.target.value)}
-                placeholder="Nom complet"
-                leftIcon={<UserIcon size={18} />}
-              />
-              <FormInput
-                type="email"
-                label="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-                leftIcon={<Mail size={18} />}
-              />
+              <div className={styles.formRow}>
+                <FormInput
+                  label="Nom d'utilisateur"
+                  required={!isEditMode}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Nom d'utilisateur"
+                  disabled={isEditMode}
+                  leftIcon={<UserIcon size={18} />}
+                />
+                <FormInput
+                  label="Nom complet"
+                  value={fullname}
+                  onChange={(e) => setFullname(e.target.value)}
+                  placeholder="Nom complet"
+                  leftIcon={<UserIcon size={18} />}
+                />
+              </div>
+              <div className={styles.formRow}>
+                <FormInput
+                  type="email"
+                  label="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email"
+                  leftIcon={<Mail size={18} />}
+                />
+                <FormInput
+                  type="tel"
+                  label="Téléphone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Numéro de téléphone"
+                  leftIcon={<Phone size={18} />}
+                />
+              </div>
               <div className={styles.formRow}>
                 <FormInput
                   type="password"
