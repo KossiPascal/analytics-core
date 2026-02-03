@@ -11,7 +11,7 @@ from models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g, current_app
 from helpers.hasher import hash_password, verify_password, hash_token
 from helpers.auth import create_token,create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,check_rate_limit
-from backend.src.security.access_security import require_auth
+from security.access_security import require_auth
 
 logger = get_logger(__name__)
 

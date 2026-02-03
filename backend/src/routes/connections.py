@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import DictCursor
-from backend.src.security.access_security import require_auth
+from security.access_security import require_auth
 from models.connection import DataConnection, DbConnection
 from database.extensions import db, get_connection
 from config import Config

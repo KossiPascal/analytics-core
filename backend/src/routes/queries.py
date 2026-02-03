@@ -1,6 +1,6 @@
 # backend/src/routes/api.py
 from flask import Blueprint, jsonify, request
-from backend.src.security.access_security import require_auth
+from security.access_security import require_auth
 from database.extensions import db
 from models.visualization import Query
 import uuid
