@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request
-from security.access_decorators import require_auth
+from backend.src.security.access_security import require_auth
 from models import User, Product
 from crud_service import CRUDService
 

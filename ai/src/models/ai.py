@@ -1,5 +1,5 @@
 from sqlalchemy.dialects.postgresql import UUID
-from database.extensions import db
+from database import db
 
 
 class Policy(db.Model):

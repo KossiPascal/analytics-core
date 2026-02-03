@@ -7,7 +7,7 @@ from models.database import AuditHistory
 from database.extensions import db
 from config import Config
 from models.couchdb import CouchDBUsers  # your CouchDB ORM model
-from security.access_decorators import require_auth
+from backend.src.security.access_security import require_auth
 from helpers.logger import get_logger
 
 logger = get_logger(__name__)

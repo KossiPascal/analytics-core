@@ -22,7 +22,7 @@ from routes.admin import permissions, roles, tenants, users
 from helpers.logger import get_logger
 from threading import Thread
 from couch2pg.main import sync_couchdb_to_postgres
-from middlewares.api_security import api_security
+from backend.src.security.api_security import api_security
 
 # Disable SSL warnings for self-signed certs
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
