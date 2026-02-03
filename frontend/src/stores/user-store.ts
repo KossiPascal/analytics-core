@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 // import { userService } from '@services/user.service';
-import { encryptedStorage, RETRY_MILLIS, networkManager } from '@/stores/stores.config';
+import { encryptedStorage } from '@/stores/stores.config';
 import { PayloadUser } from '@/models/auth.model';
+import { extractErrorMessage } from '@/utils/error.utils';
 
 const userService:any = {} as any
 
@@ -31,9 +32,9 @@ export const useAuthStore = create<UserState>()(
         try {
           const allUsers = await userService.getAll();
           set({ users: allUsers, loading: false });
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error('Erreur loadUsers:', err);
-          set({ error: err.message ?? 'Erreur chargement users', loading: false });
+          set({ error: extractErrorMessage(err, 'Erreur chargement users'), loading: false });
         }
       },
 

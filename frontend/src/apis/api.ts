@@ -37,9 +37,12 @@ type ApiMethods<UseFetch extends boolean> = {
   head: <T = any>(url: string, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
 };
 
+import { extractErrorMessage } from '@/utils/error.utils';
+
 /**
  * Wrapper universel pour toutes les requêtes Axios ou Fetch
  */
+
 async function handleRequest<T>(fn: () => Promise<T>): Promise<ApiResponse<T>> {
   try {
     const data = await fn();
@@ -48,17 +51,23 @@ async function handleRequest<T>(fn: () => Promise<T>): Promise<ApiResponse<T>> {
     // Axios error
     if (err.isAxiosError) {
       if (err.response) {
+        const message = extractErrorMessage(err.response.data, err.message || 'Request failed');
         throw {
           status: err.response.status,
           success: false,
-          message: err.response.data || err.message,
+          message,
           headers: err.response.headers,
         };
       } else if (err.request) {
-        throw { status: err.status, success: false, message: err.data || err.message || "No response received" };
+        const message = extractErrorMessage(err.data, err.message || "No response received");
+        throw { status: err.status, success: false, message };
       }
     } else if (err instanceof Error && err.name === "AbortError") {
-      throw { status: 0, success: false, error: err.message || err || "Request timeout" };
+      throw { status: 0, success: false, message: err.message || "Request timeout" };
+    }
+    // S'assurer que l'erreur a toujours un message string
+    if (err && typeof err === 'object' && !err.message) {
+      err.message = extractErrorMessage(err, 'An error occurred');
     }
     throw err;
   }
@@ -113,7 +122,12 @@ export function createApi<UseFetch extends boolean = false>(useFetch?: UseFetch)
       const contentType = res.headers.get("content-type");
       const data = contentType?.includes("application/json") ? await res.json() : await res.text();
 
-      if (!res.ok) throw { status: res.status, data, message: data?.error || res.statusText };
+      if (!res.ok) {
+        const message = typeof data === 'string' ? data :
+          (data?.error && typeof data.error === 'string' ? data.error :
+          (data?.message && typeof data.message === 'string' ? data.message : res.statusText));
+        throw { status: res.status, data, message };
+      }
       return data;
     } catch (err) {
       clearTimeout(timeout);

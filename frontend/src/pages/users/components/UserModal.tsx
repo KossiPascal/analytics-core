@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@components/ui/Button/Button';
-import { Input } from '@components/ui/Input/Input';
-import { Save, X, Eye, EyeOff, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { FormInput, FormSwitch, FormCheckbox } from '@/components/forms';
+import { Save, X, ChevronDown, ChevronRight, Check, User as UserIcon, Mail, Lock } from 'lucide-react';
 import type { User, Roles } from '@/models/OLD/old/auth.types';
 import type {
   CountryMap,
@@ -47,7 +47,6 @@ export function UserModal({
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState<number[]>([]);
   const [message, setMessage] = useState('');
 
@@ -331,6 +330,23 @@ export function UserModal({
     selectedVillageSecteurs,
   ]);
 
+  // Form validity check for button disable
+  const isFormValid = useMemo(() => {
+    // Username is required for new users
+    if (!isEditMode && !username.trim()) return false;
+    // Password is required for new users
+    if (!isEditMode && (!password.trim() || password.length < 8)) return false;
+    // Password confirmation must match
+    if (!isEditMode && password !== passwordConfirm) return false;
+    // If editing and password is set, confirmation must match
+    if (isEditMode && password && password !== passwordConfirm) return false;
+    // At least one role must be selected
+    if (selectedRoles.length === 0) return false;
+    // At least one org unit must be selected
+    if (orgUnitsIsEmpty) return false;
+    return true;
+  }, [isEditMode, username, password, passwordConfirm, selectedRoles, orgUnitsIsEmpty]);
+
   const handleSubmit = async () => {
     setMessage('');
 
@@ -435,71 +451,59 @@ export function UserModal({
           </button>
           {expandedSections.info && (
             <div className={styles.sectionContent}>
-              <div className={styles.formGroup}>
-                <label>Nom d'utilisateur *</label>
-                <Input
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Nom d'utilisateur"
-                  disabled={isEditMode}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Nom complet</label>
-                <Input
-                  value={fullname}
-                  onChange={(e) => setFullname(e.target.value)}
-                  placeholder="Nom complet"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Email</label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                />
-              </div>
+              <FormInput
+                label="Nom d'utilisateur"
+                required={!isEditMode}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Nom d'utilisateur"
+                disabled={isEditMode}
+                leftIcon={<UserIcon size={18} />}
+              />
+              <FormInput
+                label="Nom complet"
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
+                placeholder="Nom complet"
+                leftIcon={<UserIcon size={18} />}
+              />
+              <FormInput
+                type="email"
+                label="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                leftIcon={<Mail size={18} />}
+              />
               <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Mot de passe {!isEditMode && '*'}</label>
-                  <div className={styles.passwordInput}>
-                    <Input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mot de passe"
-                    />
-                    <button
-                      type="button"
-                      className={styles.passwordToggle}
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Confirmer {!isEditMode && '*'}</label>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    value={passwordConfirm}
-                    onChange={(e) => setPasswordConfirm(e.target.value)}
-                    placeholder="Confirmer le mot de passe"
-                  />
-                </div>
+                <FormInput
+                  type="password"
+                  label="Mot de passe"
+                  required={!isEditMode}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mot de passe"
+                  leftIcon={<Lock size={18} />}
+                  hint={!isEditMode ? 'Minimum 8 caractères' : 'Laissez vide pour ne pas modifier'}
+                  error={!isEditMode && password.length > 0 && password.length < 8 ? 'Minimum 8 caractères' : undefined}
+                />
+                <FormInput
+                  type="password"
+                  label="Confirmer"
+                  required={!isEditMode}
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  placeholder="Confirmer le mot de passe"
+                  leftIcon={<Lock size={18} />}
+                  error={passwordConfirm && password !== passwordConfirm ? 'Les mots de passe ne correspondent pas' : undefined}
+                />
               </div>
-              <div className={styles.checkboxGroup}>
-                <label className={styles.checkbox}>
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                  />
-                  <span>Utilisateur actif</span>
-                </label>
-              </div>
+              <FormSwitch
+                label="Utilisateur actif"
+                description="Décochez pour désactiver temporairement l'accès"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+              />
             </div>
           )}
         </div>
@@ -518,14 +522,12 @@ export function UserModal({
             <div className={styles.sectionContent}>
               <div className={styles.rolesList}>
                 {roles.map((role) => (
-                  <label key={role.id} className={styles.roleItem}>
-                    <input
-                      type="checkbox"
-                      checked={selectedRoles.includes(role.id)}
-                      onChange={() => toggleRole(role.id)}
-                    />
-                    <span>{role.name}</span>
-                  </label>
+                  <FormCheckbox
+                    key={role.id}
+                    label={role.name}
+                    checked={selectedRoles.includes(role.id)}
+                    onChange={() => toggleRole(role.id)}
+                  />
                 ))}
               </div>
             </div>
@@ -633,7 +635,7 @@ export function UserModal({
             <X size={18} />
             Annuler
           </Button>
-          <Button onClick={handleSubmit} isLoading={isLoading}>
+          <Button onClick={handleSubmit} isLoading={isLoading} disabled={!isFormValid || isLoading}>
             <Save size={18} />
             {isEditMode ? 'Modifier' : 'Enregistrer'}
           </Button>

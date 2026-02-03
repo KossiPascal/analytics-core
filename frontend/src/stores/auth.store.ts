@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { authService } from '@services/auth.service';
 import { encryptedStorage, RETRY_MILLIS, networkManager } from '@/stores/stores.config';
 import { LoginResponse, PayloadUser } from '@/models/auth.model';
+import { extractErrorMessage } from '@/utils/error.utils';
 
 
 
@@ -43,8 +44,8 @@ export const useAuthStore = create<AuthState>()(
           if (expiresIn > 0) setTimeout(() => get().refresh(callback), expiresIn);
 
           if (callback) callback();
-        } catch (err: any) {
-          set({ error: err.message ?? 'Login failed', loading: false });
+        } catch (err: unknown) {
+          set({ error: extractErrorMessage(err, 'Échec de connexion'), loading: false });
           if (callback) setTimeout(callback, RETRY_MILLIS);
         }
       },
@@ -61,8 +62,8 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
           if (callback) callback();
-        } catch (err: any) {
-          set({ error: err.message ?? 'Restore failed', loading: false });
+        } catch (err: unknown) {
+          set({ error: extractErrorMessage(err, 'Échec de restauration'), loading: false });
           if (callback) setTimeout(callback, RETRY_MILLIS);
         }
       },
@@ -92,8 +93,8 @@ export const useAuthStore = create<AuthState>()(
           if (expiresIn > 0) setTimeout(() => get().refresh(callback), expiresIn);
 
           if (callback) callback();
-        } catch (err: any) {
-          set({ error: err.message ?? 'Refresh failed', user: null, token: null, loading: false });
+        } catch (err: unknown) {
+          set({ error: extractErrorMessage(err, 'Échec du rafraîchissement'), user: null, token: null, loading: false });
           if (callback) setTimeout(callback, RETRY_MILLIS);
         }
       },
@@ -105,8 +106,8 @@ export const useAuthStore = create<AuthState>()(
           if (!get().token) throw new Error('User not authenticated');
           await authService.changePassword(get().token!, oldPass, newPass);
           if (callback) callback();
-        } catch (err: any) {
-          set({ error: err.message ?? 'Change password failed' });
+        } catch (err: unknown) {
+          set({ error: extractErrorMessage(err, 'Échec du changement de mot de passe') });
           if (callback) setTimeout(callback, RETRY_MILLIS);
         } finally {
           set({ loading: false });
@@ -131,6 +132,11 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-store',
       storage: encryptedStorage,
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        // Exclure loading et error de la persistence
+      }),
     }
   )
 );

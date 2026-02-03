@@ -4,10 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
 import { Lock, KeyRound, Check } from 'lucide-react';
 import { AuthLayout } from '@components/layout';
-import { Input, Button } from '@components/ui';
+import { Button } from '@components/ui';
+import { FormInput } from '@/components/forms';
 import { changePasswordFormSchema, type ChangePasswordFormData, getPasswordStrength } from '@utils/validators';
 import { useAuthActions } from '@/contexts/OLD/useAuth';
-// import { useStore } from '@/stores/OLD';
 import { useAuth } from "@/contexts/AuthContext";
 import styles from './ChangePasswordPage.module.css';
 
@@ -20,9 +20,10 @@ export default function ChangePasswordPage() {
     register,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordFormSchema),
+    mode: "onChange",
     defaultValues: {
       currentPassword: '',
       newPassword: '',
@@ -60,25 +61,27 @@ export default function ChangePasswordPage() {
         )}
 
         {/* Current Password */}
-        <Input
+        <FormInput
           type="password"
           label="Mot de passe actuel"
           placeholder="Entrez votre mot de passe actuel"
           leftIcon={<Lock size={18} />}
           error={errors.currentPassword?.message}
           autoComplete="current-password"
+          required
           {...register('currentPassword')}
         />
 
         {/* New Password */}
         <div className={styles.passwordField}>
-          <Input
+          <FormInput
             type="password"
             label="Nouveau mot de passe"
             placeholder="Entrez votre nouveau mot de passe"
             leftIcon={<KeyRound size={18} />}
             error={errors.newPassword?.message}
             autoComplete="new-password"
+            required
             {...register('newPassword')}
           />
 
@@ -105,13 +108,14 @@ export default function ChangePasswordPage() {
         </div>
 
         {/* Confirm Password */}
-        <Input
+        <FormInput
           type="password"
           label="Confirmer le mot de passe"
           placeholder="Confirmez votre nouveau mot de passe"
           leftIcon={<KeyRound size={18} />}
           error={errors.confirmPassword?.message}
           autoComplete="new-password"
+          required
           {...register('confirmPassword')}
         />
 
@@ -142,6 +146,7 @@ export default function ChangePasswordPage() {
           type="submit"
           isFullWidth
           isLoading={loading}
+          disabled={!isValid || loading}
           rightIcon={<Check size={18} />}
         >
           Changer le mot de passe

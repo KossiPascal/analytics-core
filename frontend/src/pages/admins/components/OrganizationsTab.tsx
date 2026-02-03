@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Modal, Button, StatusBadge } from '@components/ui';
+import { FormInput, FormTextarea } from '@/components/forms';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { OrganizationsApi } from '@/services/OLD/old/api.service';
 import { Building2, Save, Edit2, Trash2, RefreshCw, Plus } from 'lucide-react';
@@ -25,6 +26,11 @@ export function OrganizationsTab() {
   const [orgDescription, setOrgDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const { showError, showSuccess } = useNotification();
+
+  // Form validation
+  const isFormValid = useMemo(() => {
+    return orgName.trim().length > 0;
+  }, [orgName]);
 
   const fetchOrganizations = async () => {
     setIsLoading(true);
@@ -223,7 +229,7 @@ export function OrganizationsTab() {
             <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Annuler
             </Button>
-            <Button variant="primary" size="sm" onClick={handleSave} disabled={isSaving}>
+            <Button variant="primary" size="sm" onClick={handleSave} disabled={!isFormValid || isSaving}>
               <Save size={16} />
               {isSaving ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
@@ -231,33 +237,22 @@ export function OrganizationsTab() {
         }
       >
         <form className={styles.form} onSubmit={handleSave}>
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel} htmlFor="orgName">
-              Nom de l'organisation
-            </label>
-            <input
-              id="orgName"
-              className={styles.formInput}
-              placeholder="Ex: Kendeya Analytics"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel} htmlFor="orgDescription">
-              Description (optionnel)
-            </label>
-            <textarea
-              id="orgDescription"
-              className={styles.formInput}
-              placeholder="Description de l'organisation"
-              value={orgDescription}
-              onChange={(e) => setOrgDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
+          <FormInput
+            label="Nom de l'organisation"
+            placeholder="Ex: Kendeya Analytics"
+            value={orgName}
+            onChange={(e) => setOrgName(e.target.value)}
+            required
+            leftIcon={<Building2 size={18} />}
+          />
+          <FormTextarea
+            label="Description"
+            hint="Optionnel"
+            placeholder="Description de l'organisation"
+            value={orgDescription}
+            onChange={(e) => setOrgDescription(e.target.value)}
+            rows={3}
+          />
         </form>
       </Modal>
 

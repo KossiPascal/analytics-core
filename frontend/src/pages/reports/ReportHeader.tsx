@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ReportType } from '@/models/OLD/old/reports.types';
 import type { ReportStatus } from '@stores/OLD/reports.store';
+import { FormSwitch } from '@/components/forms';
 import styles from './ReportHeader.module.css';
 
 interface ReportHeaderProps {
@@ -41,16 +42,13 @@ export function ReportHeader({
       <h2 className={styles.title}>{reportTitle}</h2>
 
       <div className={styles.actions}>
-        {/* Hide Zero Checkbox */}
-        <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={hideZero}
-            onChange={handleHideZeroChange}
-            className={styles.checkbox}
-          />
-          <span>Masquer les zeros</span>
-        </label>
+        {/* Hide Zero Toggle */}
+        <FormSwitch
+          label="Masquer les zéros"
+          size="sm"
+          checked={hideZero}
+          onChange={handleHideZeroChange}
+        />
 
         {/* Export Button */}
         {onExport && (

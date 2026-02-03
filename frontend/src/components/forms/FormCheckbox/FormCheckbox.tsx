@@ -1,0 +1,60 @@
+import { InputHTMLAttributes, forwardRef } from 'react';
+import { Check } from 'lucide-react';
+import styles from '../styles/forms.module.css';
+
+export interface FormCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  /** Label du checkbox */
+  label?: string;
+  /** Message d'erreur */
+  error?: string;
+  /** Classes CSS additionnelles */
+  wrapperClassName?: string;
+}
+
+export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
+  (
+    {
+      label,
+      error,
+      checked,
+      disabled,
+      className = '',
+      wrapperClassName = '',
+      id,
+      ...props
+    },
+    ref
+  ) => {
+    const inputId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+
+    return (
+      <div className={wrapperClassName}>
+        <label
+          htmlFor={inputId}
+          className={`${styles.checkboxWrapper} ${disabled ? styles.disabled : ''} ${className}`}
+        >
+          <input
+            ref={ref}
+            id={inputId}
+            type="checkbox"
+            checked={checked}
+            disabled={disabled}
+            className={styles.checkboxInput}
+            {...props}
+          />
+          <span className={`${styles.checkboxBox} ${checked ? styles.checked : ''}`}>
+            <Check size={14} strokeWidth={3} />
+          </span>
+          {label && <span className={styles.checkboxLabel}>{label}</span>}
+        </label>
+        {error && (
+          <span className={styles.errorMessage} style={{ marginTop: '0.25rem', marginLeft: '2.25rem' }}>
+            {error}
+          </span>
+        )}
+      </div>
+    );
+  }
+);
+
+FormCheckbox.displayName = 'FormCheckbox';

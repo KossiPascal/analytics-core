@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { encryptedStorage, RETRY_MILLIS, networkManager } from '@/stores/stores.config';
 import { qbService, Script } from '@/services/scripts.service';
+import { extractErrorMessage } from '@/utils/error.utils';
 
 const getTheme = () => {
   const savedTheme = localStorage.getItem("theme");
@@ -77,8 +78,8 @@ interface ScriptState {
   validate: () => boolean;
 }
 
-const makeError = (error: any, custom: string) => {
-  return error.response?.data?.error || error.data?.error || error.error || custom;
+const makeError = (error: unknown, custom: string): string => {
+  return extractErrorMessage(error, custom);
 }
 
 export const scriptStore = create<ScriptState>((set, get) => ({
