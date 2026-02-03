@@ -7,6 +7,7 @@ import {
   FilterField, FilterOp, LogicalOperator, DimensionDef, MetricDef, ColumnType,
   FILTER_OP_LABELS, ALLOWED_FILTER_OPS_NUMERIC, ALLOWED_FILTER_OPS_STRING, ALLOWED_FILTER_OPS_DATE, ALLOWED_FILTER_OPS,
 } from '../models';
+import { FormDatePicker, FormInput, FormSelect } from '@/components/forms';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================
@@ -60,9 +61,7 @@ const ValueInput: React.FC<ValueInputProps> = ({ filter, fieldType, onChange }) 
   // IN / NOT IN - comma separated values
   if (filter.op === 'in' || filter.op === 'not_in') {
     return (
-      <input
-        type="text"
-        className={styles.filterInput}
+      <FormInput
         placeholder="Valeurs séparées par des virgules"
         value={Array.isArray(filter.value) ? filter.value.join(', ') : ''}
         onChange={(e) => {
@@ -78,36 +77,52 @@ const ValueInput: React.FC<ValueInputProps> = ({ filter, fieldType, onChange }) 
     const [start, end] = Array.isArray(filter.value) ? filter.value : ['', ''];
     return (
       <div style={{ display: 'flex', gap: '8px', flex: 1 }}>
-        <input
-          type={fieldType === 'date' ? 'date' : fieldType === 'number' ? 'number' : 'text'}
-          className={styles.filterInput}
-          placeholder="Début"
-          value={start || ''}
-          onChange={(e) => onChange([e.target.value, end])}
-          style={{ flex: 1 }}
-        />
+        {fieldType === 'date' ? (
+          <FormDatePicker
+            value={start || ''}
+            onChange={(e) => onChange([e.target.value, end])}
+          />
+        ) : (
+          <FormInput
+            type={fieldType === 'number' ? 'number' : 'text'}
+            placeholder="Début"
+            value={start || ''}
+            onChange={(e) => onChange([e.target.value, end])}
+          />
+        )}
         <span style={{ alignSelf: 'center', color: 'var(--qb-text-muted)' }}>et</span>
-        <input
-          type={fieldType === 'date' ? 'date' : fieldType === 'number' ? 'number' : 'text'}
-          className={styles.filterInput}
-          placeholder="Fin"
-          value={end || ''}
-          onChange={(e) => onChange([start, e.target.value])}
-          style={{ flex: 1 }}
-        />
+        {fieldType === 'date' ? (
+          <FormDatePicker
+            value={end || ''}
+            onChange={(e) => onChange([start, e.target.value])}
+          />
+        ) : (
+          <FormInput
+            type={fieldType === 'number' ? 'number' : 'text'}
+            placeholder="Fin"
+            value={end || ''}
+            onChange={(e) => onChange([start, e.target.value])}
+          />
+        )}
       </div>
     );
   }
 
   // Default single value input
   return (
-    <input
-      type={fieldType === 'date' ? 'date' : fieldType === 'number' ? 'number' : 'text'}
-      className={styles.filterInput}
-      placeholder="Valeur"
-      value={(filter.value as string) || ''}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    fieldType === 'date' ? (
+      <FormDatePicker
+        value={(filter.value as string) || ''}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    ) : (
+      <FormInput
+        type={fieldType === 'number' ? 'number' : 'text'}
+        placeholder="Valeur"
+        value={(filter.value as string) || ''}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    )
   );
 };
 
@@ -162,31 +177,25 @@ const FilterItem: React.FC<FilterItemProps> = ({
       {/* Filter content */}
       <div className={styles.filterField}>
         {/* Field selector */}
-        <select
-          className={styles.filterSelect}
+        <FormSelect
           value={filter.field}
-          onChange={(e) => onUpdate({ field: e.target.value, value: '' })}
-        >
-          <option value="">Sélectionner un champ</option>
-          {availableFields.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.label}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => onUpdate({ field: value, value: '' })}
+          placeholder="Sélectionner un champ"
+          options={availableFields.map((f) => ({
+            value: f.id,
+            label: f.label,
+          }))}
+        />
 
         {/* Operator selector */}
-        <select
-          className={styles.filterSelect}
+        <FormSelect
           value={filter.op}
-          onChange={(e) => onUpdate({ op: e.target.value as FilterOp, value: '' })}
-        >
-          {availableOps.map((op) => (
-            <option key={op} value={op}>
-              {FILTER_OP_LABELS[op]}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => onUpdate({ op: value as FilterOp, value: '' })}
+          options={availableOps.map((op) => ({
+            value: op,
+            label: FILTER_OP_LABELS[op],
+          }))}
+        />
 
         {/* Value input */}
         <ValueInput
@@ -261,23 +270,19 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({
               borderRadius: 'var(--qb-radius)',
             }}
           >
-            <select
-              className={styles.filterSelect}
-              autoFocus
-              onChange={(e) => {
-                if (e.target.value) {
-                  handleAddFilter(e.target.value);
+            <FormSelect
+              value=""
+              onChange={(value) => {
+                if (value) {
+                  handleAddFilter(value);
                 }
               }}
-              style={{ flex: 1 }}
-            >
-              <option value="">Choisir un champ...</option>
-              {availableFields.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
+              placeholder="Choisir un champ..."
+              options={availableFields.map((f) => ({
+                value: f.id,
+                label: f.label,
+              }))}
+            />
             <button
               type="button"
               className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}

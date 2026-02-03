@@ -262,8 +262,9 @@
 }
 
 .fieldGroupContentVisible {
-  max-height: 500px;
+  max-height: 240px;
   opacity: 1;
+  overflow-y: auto;
 }
 
 /* ============================================================================
@@ -1472,6 +1473,55 @@
   background: var(--qb-bg);
   color: var(--qb-text-muted);
   text-align: center;
+}
+
+.connectionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.connectionGrid2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.connectionGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .connectionGrid2,
+  .connectionGrid3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.connectionSection {
+  padding: 16px;
+  border: 1px solid var(--qb-border);
+  border-radius: var(--qb-radius);
+  background: var(--qb-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.connectionSectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--qb-text);
+}
+
+.connectionError {
+  padding: 12px;
+  border-radius: var(--qb-radius);
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  font-size: 0.875rem;
 }
 
 .metricAgg {

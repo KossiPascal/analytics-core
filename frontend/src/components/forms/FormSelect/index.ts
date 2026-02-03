@@ -1,2 +1,5 @@
-export { FormSelect } from './FormSelect';
-export type { FormSelectProps, SelectOption } from './FormSelect';
+export { FormSelect, type FormSelectProps, type SelectOption } from './FormSelect';
+
+export { FormMultiSelect, type FormMultiSelectProps, type MultiSelectOption } from './FormMultiSelect';
+
+

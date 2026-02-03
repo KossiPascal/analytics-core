@@ -15,6 +15,8 @@ import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
+import { Button } from '@/components/ui';
+import { DatabaseConnectionTab } from '@/pages/admins/components';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
 
@@ -98,6 +100,12 @@ const Icons = {
       <ellipse cx="8" cy="4" rx="5" ry="2" />
       <path d="M3 4V12C3 13.1 5.24 14 8 14C10.76 14 13 13.1 13 12V4" />
       <path d="M3 8C3 9.1 5.24 10 8 10C10.76 10 13 9.1 13 8" />
+    </svg>
+  ),
+  add: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M7 2V12" strokeLinecap="round" />
+      <path d="M2 7H12" strokeLinecap="round" />
     </svg>
   ),
   dropHere: (
@@ -226,6 +234,8 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     const allDbIds = model.databases?.map((db) => db.id) || [];
     return new Set(allDbIds);
   });
+
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
 
   useEffect(() => {
     if (!tableMenuOpenId) return;
@@ -557,6 +567,16 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
               iconClassName={styles.sectionIconDatabase}
               badge={model.databases && model.databases.length > 0 ? selectedDatabaseIds.size : undefined}
               defaultOpen={true}
+              actions={(
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={Icons.add}
+                  onClick={() => setIsConnectionModalOpen(true)}
+                >
+                  Ajouter
+                </Button>
+              )}
             >
               {model.databases && model.databases.length > 0 ? (
                 <>
@@ -1130,6 +1150,26 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
         {/* Preview Panel */}
         <JSONPreview json={queryJSON} sql={querySQL} />
       </main>
+
+
+      <Modal
+        isOpen={isConnectionModalOpen}
+        onClose={() => setIsConnectionModalOpen(false)}
+        title="Ajouter une connexion"
+        size="lg"
+      // footer={(
+      //   <div className={styles.modalFooter}>
+      //     <Button variant="outline" onClick={() => setIsConnectionModalOpen(false)}>
+      //       Annuler
+      //     </Button>
+      //     <Button isLoading={connectionLoading} onClick={handleSaveConnection} disabled={!isConnectionValid || connectionLoading}>
+      //       Enregistrer
+      //     </Button>
+      //   </div>
+      // )}
+      >
+        <DatabaseConnectionTab showTitle={false}/>
+      </Modal>
 
       <Modal
         isOpen={Boolean(definitionTableId)}

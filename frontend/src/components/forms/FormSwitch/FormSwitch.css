@@ -1,0 +1,111 @@
+/* ===================
+   SWITCH STYLES
+   =================== */
+.switchWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switchTrack {
+  position: relative;
+  width: 3rem;
+  height: 1.5rem;
+  background: var(--form-bg);
+  border-radius: 9999px;
+  box-shadow:
+    inset 2px 2px 4px var(--form-shadow-dark),
+    inset -2px -2px 4px var(--form-shadow-light);
+  transition: all 0.3s;
+}
+
+.switchTrack.checked {
+  background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
+}
+
+.switchThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--form-bg-light);
+  border-radius: 50%;
+  box-shadow:
+    2px 2px 4px var(--form-shadow-dark),
+    -1px -1px 3px var(--form-shadow-light);
+  transition: all 0.3s;
+}
+
+.switchTrack.checked .switchThumb {
+  left: calc(100% - 1.25rem - 2px);
+  background: white;
+}
+
+.switchLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.switchInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switchInput:checked + .switchThumb {
+  left: calc(100% - 1.25rem - 2px);
+  background: white;
+}
+
+.switchTrack:has(.switchInput:checked) {
+  background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
+}
+
+.switchContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.switchText {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--form-text);
+}
+
+.switchDescription {
+  font-size: 0.75rem;
+  color: var(--form-text-muted);
+}
+
+/* Switch sizes */
+.switchSm {
+  width: 2.25rem;
+  height: 1.125rem;
+}
+
+.switchSm .switchThumb {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.switchMd {
+  width: 3rem;
+  height: 1.5rem;
+}
+
+.switchLg {
+  width: 3.75rem;
+  height: 1.875rem;
+}
+
+.switchLg .switchThumb {
+  width: 1.5rem;
+  height: 1.5rem;
+}

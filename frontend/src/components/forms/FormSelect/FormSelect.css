@@ -1,0 +1,156 @@
+/* ===================
+   SELECT STYLES
+   =================== */
+.selectWrapper {
+  position: relative;
+}
+
+.selectTrigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.500rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--form-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.selectTrigger.hasIconLeft {
+  padding-left: 2.75rem;
+}
+
+.selectPlaceholder {
+  color: var(--form-text-muted);
+}
+
+.selectArrow {
+  display: flex;
+  align-items: center;
+  color: var(--form-primary);
+  transition: transform 0.2s;
+}
+
+.selectArrow.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown */
+.selectDropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  background: var(--form-bg-light);
+  border-radius: var(--form-border-radius);
+  box-shadow:
+    5px 5px 15px var(--form-shadow-dark),
+    -5px -5px 15px var(--form-shadow-light);
+  z-index: 100;
+  padding: 0.5rem;
+}
+
+.selectSearch {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--form-text);
+  background: var(--form-bg);
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  box-shadow:
+    inset 2px 2px 4px var(--form-shadow-dark),
+    inset -2px -2px 4px var(--form-shadow-light);
+}
+
+.selectOption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--form-text);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.selectOption:hover {
+  background: var(--form-bg);
+  box-shadow:
+    inset 1px 1px 2px var(--form-shadow-dark),
+    inset -1px -1px 2px var(--form-shadow-light);
+}
+
+.selectOption.selected {
+  background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
+  color: white;
+  box-shadow:
+    2px 2px 5px var(--form-shadow-dark),
+    -2px -2px 5px var(--form-shadow-light);
+}
+
+.selectOptionIcon {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+}
+
+.selectNoResults {
+  padding: 1rem;
+  text-align: center;
+  color: var(--form-text-muted);
+  font-size: 0.875rem;
+}
+
+/* Multi select tags */
+.multiSelectTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  flex: 1;
+  min-height: 1.5rem;
+}
+
+.multiSelectTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: white;
+  background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
+  border-radius: 9999px;
+  box-shadow:
+    1px 1px 3px var(--form-shadow-dark),
+    -1px -1px 3px var(--form-shadow-light);
+}
+
+.multiSelectTagRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.multiSelectTagRemove:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.multiSelectPlaceholder {
+  color: var(--form-text-muted);
+  font-size: 0.9375rem;
+}

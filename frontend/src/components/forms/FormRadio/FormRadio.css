@@ -1,0 +1,128 @@
+/* ===================
+   RADIO STYLES
+   =================== */
+.radioWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.radioCircle {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--form-bg-light);
+  border-radius: 50%;
+  box-shadow:
+    inset 2px 2px 4px var(--form-shadow-dark),
+    inset -2px -2px 4px var(--form-shadow-light),
+    2px 2px 5px var(--form-shadow-dark),
+    -2px -2px 5px var(--form-shadow-light);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radioCircle::after {
+  content: '';
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s;
+}
+
+.radioCircle.checked::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.radioInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radioLabel {
+  font-size: 0.9375rem;
+  color: var(--form-text);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.radioBox {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  background: var(--form-bg-light);
+  border-radius: 50%;
+  box-shadow:
+    inset 2px 2px 4px var(--form-shadow-dark),
+    inset -2px -2px 4px var(--form-shadow-light),
+    2px 2px 5px var(--form-shadow-dark),
+    -2px -2px 5px var(--form-shadow-light);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radioInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.radioDot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s;
+}
+
+.radioInput:checked + .radioDot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.radioContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.radioText {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--form-text);
+}
+
+.radioDescription {
+  font-size: 0.75rem;
+  color: var(--form-text-muted);
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.radioGroupHorizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}

@@ -3,6 +3,7 @@ import { Pencil, Trash2, Search, Copy, Check } from "lucide-react";
 import { scriptStore } from "@/stores/scripts.store";
 import { useAuth } from "@contexts/AuthContext";
 import { Script } from "@/services/scripts.service";
+import { FormInput } from "@/components/forms";
 
 export default function SavedScriptList() {
   const { loading, scripts, copiedId, search, error, fetchAll, remove, select, copy, setSearch, clearError } = scriptStore();
@@ -76,10 +77,13 @@ export default function SavedScriptList() {
       </h3>
 
       {/* SEARCH */}
-      <div className="relative mb-3">
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Rechercher par nom ou langage..."
-          className="w-full border rounded-lg px-3 py-2 pl-10 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
+      <div className="mb-3">
+        <FormInput
+          placeholder="Rechercher par nom ou langage..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          leftIcon={<Search size={18} />}
+        />
       </div>
 
       {/* ERROR */}

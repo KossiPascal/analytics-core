@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import styles from '../styles/forms.module.css';
+import './FormGroup.css';
 
 export interface FormGroupProps {
   /** Nombre de colonnes (2, 3 ou 4) */

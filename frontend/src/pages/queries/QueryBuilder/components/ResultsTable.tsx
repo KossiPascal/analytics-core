@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Paper } from "@mui/material";
+import { FormCheckbox } from "@/components/forms";
 import { scriptStore } from "@/stores/scripts.store";
 
 export default function ResultsTable() {
@@ -124,17 +125,12 @@ export default function ResultsTable() {
   return (
     <div className="mt-4 border rounded shadow-sm p-2 overflow-auto" style={{ maxHeight: "500px" }}>
       {isTabular && (
-        <div className="mb-2 flex items-center space-x-2">
-          <input
-            type="checkbox"
+        <div className="mb-2">
+          <FormCheckbox
+            label="Afficher la table de résultats"
             checked={show_result_table}
             onChange={toggleShowResultTable}
-            id="showResultTable"
-            className="w-4 h-4"
           />
-          <label htmlFor="showResultTable" className="text-sm text-gray-700">
-            Afficher la table de résultats
-          </label>
         </div>
       )}
 

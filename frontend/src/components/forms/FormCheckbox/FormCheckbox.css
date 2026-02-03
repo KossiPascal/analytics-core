@@ -1,0 +1,59 @@
+/* ===================
+   CHECKBOX STYLES
+   =================== */
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxBox {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--form-bg-light);
+  border-radius: 6px;
+  box-shadow:
+    inset 2px 2px 4px var(--form-shadow-dark),
+    inset -2px -2px 4px var(--form-shadow-light),
+    2px 2px 5px var(--form-shadow-dark),
+    -2px -2px 5px var(--form-shadow-light);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkboxBox.checked {
+  background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
+  box-shadow:
+    inset 1px 1px 2px rgba(0, 0, 0, 0.2),
+    2px 2px 5px var(--form-shadow-dark),
+    -2px -2px 5px var(--form-shadow-light);
+}
+
+.checkboxBox svg {
+  color: white;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s;
+}
+
+.checkboxBox.checked svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkboxInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkboxLabel {
+  font-size: 0.9375rem;
+  color: var(--form-text);
+}

@@ -2,6 +2,7 @@ import { InputHTMLAttributes, forwardRef } from 'react';
 import { Calendar } from 'lucide-react';
 import { FormField } from '../FormField';
 import styles from '../styles/forms.module.css';
+import './FormDatePicker.css';
 
 export interface FormDatePickerProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   /** Label du champ */

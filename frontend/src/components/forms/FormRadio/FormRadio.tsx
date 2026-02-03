@@ -1,5 +1,7 @@
 import { InputHTMLAttributes, forwardRef, ReactNode } from 'react';
 import styles from '../styles/forms.module.css';
+import './FormRadio.css';
+
 
 export interface RadioOption {
   value: string;

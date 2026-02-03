@@ -1,0 +1,65 @@
+/* ===================
+   TEXTAREA STYLES
+   =================== */
+.textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 0.875rem 1rem;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: var(--form-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  border-radius: var(--form-border-radius);
+  resize: vertical;
+}
+
+.textarea::placeholder {
+  color: var(--form-text-muted);
+}
+
+/* ===================
+   TEXTAREA WRAPPER
+   =================== */
+.textareaWrapper {
+  position: relative;
+  background: var(--form-bg-light);
+  border-radius: var(--form-border-radius);
+  box-shadow:
+    inset 2px 2px 5px var(--form-shadow-dark),
+    inset -3px -3px 7px var(--form-shadow-light),
+    3px 3px 8px var(--form-shadow-dark),
+    -3px -3px 8px var(--form-shadow-light);
+  transition: all 0.3s ease;
+}
+
+.textareaWrapper:hover {
+  box-shadow:
+    inset 1px 1px 3px var(--form-shadow-dark),
+    inset -2px -2px 5px var(--form-shadow-light),
+    4px 4px 10px var(--form-shadow-dark),
+    -4px -4px 10px var(--form-shadow-light);
+}
+
+.textareaWrapper:focus-within {
+  box-shadow:
+    inset 3px 3px 6px var(--form-shadow-dark),
+    inset -4px -4px 8px var(--form-shadow-light),
+    2px 2px 6px var(--form-shadow-dark),
+    -2px -2px 6px var(--form-shadow-light);
+}
+
+.textareaWrapper.hasError {
+  box-shadow:
+    inset 2px 2px 5px rgba(220, 38, 38, 0.2),
+    inset -3px -3px 7px var(--form-shadow-light),
+    3px 3px 8px var(--form-shadow-dark),
+    -3px -3px 8px var(--form-shadow-light),
+    0 0 0 2px rgba(220, 38, 38, 0.3);
+}
+
+.textareaWrapper.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

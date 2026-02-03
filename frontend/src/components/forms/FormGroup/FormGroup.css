@@ -1,0 +1,27 @@
+/* ===================
+   FORM GROUP
+   =================== */
+.formGroup {
+  display: grid;
+  gap: 1rem;
+}
+
+.formGroupRow {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.formGroupCol3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.formGroupCol4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 768px) {
+  .formGroupRow,
+  .formGroupCol3,
+  .formGroupCol4 {
+    grid-template-columns: 1fr;
+  }
+}

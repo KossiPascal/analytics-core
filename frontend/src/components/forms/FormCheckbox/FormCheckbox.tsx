@@ -1,6 +1,7 @@
 import { InputHTMLAttributes, forwardRef } from 'react';
 import { Check } from 'lucide-react';
 import styles from '../styles/forms.module.css';
+import './FormCheckbox.css';
 
 export interface FormCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   /** Label du checkbox */

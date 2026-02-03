@@ -238,3 +238,17 @@
     --border-dark: #475569;
   }
 }
+
+:root{
+   --form-bg: #e8eef5;
+  --form-bg-light: #f5f8fc;
+  --form-shadow-light: #ffffff;
+  --form-shadow-dark: #c5ccd6;
+  --form-primary: #3b7ddd;
+  --form-primary-dark: #2563eb;
+  --form-text: #1e3a5f;
+  --form-text-muted: #64748b;
+  --form-error: #dc2626;
+  --form-success: #16a34a;
+  --form-border-radius: 12px;
+}

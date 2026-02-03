@@ -1,0 +1,23 @@
+/* ===================
+   DATE PICKER STYLES
+   =================== */
+.dateInput {
+  width: 100%;
+  padding: 0.875rem 2.75rem 0.875rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--form-text);
+  background: transparent;
+  border: none;
+  outline: none;
+  border-radius: var(--form-border-radius);
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+

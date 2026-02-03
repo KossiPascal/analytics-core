@@ -2,6 +2,7 @@ import { InputHTMLAttributes, ReactNode, useState, forwardRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { FormField } from '../FormField';
 import styles from '../styles/forms.module.css';
+import './FormInput.css';
 
 export interface FormInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** Label du champ */

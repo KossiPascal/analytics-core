@@ -4,10 +4,11 @@ import { scriptStore } from "@/stores/scripts.store";
 import CodeEditorButtons from "./CodeEditorButtons";
 
 import { useAuth } from "@contexts/AuthContext";
+import { FormField, FormInput, FormSelect } from "@/components/forms";
 
 export default function CodeEditor() {
   const { languages, script, language, setScript, updateField, loading, error, theme, defaultScript } = scriptStore();
-  const { isAdmin, isSuperAdmin } = useAuth();
+  const { isSuperAdmin } = useAuth();
 
   const editorRef = useRef(null);
   const [editorHeight, setEditorHeight] = useState(300);
@@ -46,8 +47,6 @@ export default function CodeEditor() {
     updateHeight();
   };
 
-  const disabledClass = isLocked ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "";
-
   const maxHeight = Math.min(1000, window.innerHeight - 200);
   /* ---------------- RENDER ---------------- */
   return (
@@ -59,52 +58,50 @@ export default function CodeEditor() {
       <div className="flex gap-3 flex-wrap items-center">
         {/* Script Name */}
         {isSuperAdmin && (
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-500">Nom du script:</label>
-            <input
-              type="text"
+          <div className="min-w-[260px]">
+            <FormInput
+              label="Nom du script"
               value={script?.name || ""}
               onChange={(e) => {
                 if (isLocked) return;
                 updateField("name", e.target.value);
               }}
               placeholder="Entrez le nom du script"
-              readOnly={isLocked}
               disabled={isLocked}
-              className={`border rounded p-1 flex-1 text-sm ${disabledClass}`}
             />
           </div>
         )}
 
         {/* Language selector */}
         {isSuperAdmin && (
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-500">Langage:</label>
-            <select
+          <div className="min-w-[220px]">
+            <FormSelect
+              label="Langage"
               value={script?.language || language}
-              onChange={(e) => {
+              onChange={(value) => {
                 if (isLocked) return;
-                updateField("language", e.target.value);
+                updateField("language", value);
               }}
               disabled={isLocked}
-              className={`border rounded p-1 flex-1 text-sm ${disabledClass}`}
-            >
-              {languages.map((lang) => (<option key={lang.id} value={lang.id}>{lang.name}</option>))}
-            </select>
+              options={languages.map((lang) => ({
+                value: lang.id,
+                label: lang.name,
+              }))}
+            />
           </div>
         )}
 
         {/* HEIGHT CONTROL */}
-        <div className="flex items-center space-x-2">
-          <label className="text-sm text-gray-500">Hauteur :</label>
-          <input
-            type="range"
-            min="200"
-            max={maxHeight}
-            value={editorHeight}
-            onChange={(e) => setEditorHeight(Number(e.target.value))}
-          />
-          <span className="text-sm text-gray-600">{editorHeight}px</span>
+        <div className="min-w-[220px]">
+          <FormField label={`Hauteur (${editorHeight}px)`}>
+            <input
+              type="range"
+              min="200"
+              max={maxHeight}
+              value={editorHeight}
+              onChange={(e) => setEditorHeight(Number(e.target.value))}
+            />
+          </FormField>
         </div>
       </div>
 

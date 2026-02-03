@@ -1,5 +1,6 @@
 import { InputHTMLAttributes, forwardRef } from 'react';
 import styles from '../styles/forms.module.css';
+import './FormSwitch.css';
 
 export interface FormSwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Label du switch */

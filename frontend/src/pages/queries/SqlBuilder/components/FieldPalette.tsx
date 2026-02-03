@@ -6,6 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import type { DimensionDef, MetricDef } from '../models';
 import DraggableField from './DraggableField';
+import { FormInput } from '@/components/forms';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================
@@ -40,7 +41,9 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
   onClearSelection,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [attributesOpen, setAttributesOpen] = useState(true);
   const [dimensionsOpen, setDimensionsOpen] = useState(true);
+  const [customDimensionsOpen, setCustomDimensionsOpen] = useState(true);
   const [metricsOpen, setMetricsOpen] = useState(true);
   const [customMetricsOpen, setCustomMetricsOpen] = useState(true);
 
@@ -78,29 +81,17 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
     );
   }, [customMetrics, searchTerm]);
 
-  // Group dimensions by table
-  const dimensionsByTable = useMemo(() => {
-    const grouped: Record<string, DimensionDef[]> = {};
-    filteredDimensions.forEach((d) => {
-      if (!grouped[d.table]) {
-        grouped[d.table] = [];
-      }
-      grouped[d.table].push(d);
-    });
-    return grouped;
-  }, [filteredDimensions]);
+  const attributeDimensions = useMemo(
+    () => filteredDimensions.filter((d) => !d.groupable),
+    [filteredDimensions]
+  );
 
-  // Group metrics by table
-  const metricsByTable = useMemo(() => {
-    const grouped: Record<string, MetricDef[]> = {};
-    filteredMetrics.forEach((m) => {
-      if (!grouped[m.table]) {
-        grouped[m.table] = [];
-      }
-      grouped[m.table].push(m);
-    });
-    return grouped;
-  }, [filteredMetrics]);
+  const groupableDimensions = useMemo(
+    () => filteredDimensions.filter((d) => d.groupable),
+    [filteredDimensions]
+  );
+
+  const customDimensions: DimensionDef[] = [];
 
   return (
     <div className={styles.sidebar}>
@@ -139,31 +130,75 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
 
       {/* Search */}
       <div className={styles.sidebarHeader}>
-        <div className={styles.searchBox}>
-          <svg
-            className={styles.searchIcon}
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <circle cx="6" cy="6" r="4" />
-            <path d="M9 9L13 13" />
-          </svg>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Rechercher un champ..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <FormInput
+          placeholder="Rechercher un champ..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       {/* Fields */}
       <div className={styles.sidebarContent}>
+        {/* Attribut */}
+        <div className={styles.fieldGroup}>
+          <div
+            className={styles.fieldGroupHeader}
+            onClick={() => setAttributesOpen(!attributesOpen)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setAttributesOpen(!attributesOpen);
+              }
+            }}
+          >
+            <div className={styles.fieldGroupTitle}>
+              <div className={`${styles.fieldGroupIcon} ${styles.fieldGroupIconDimension}`}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                  <rect x="1" y="1" width="4" height="4" rx="1" />
+                  <rect x="7" y="1" width="4" height="4" rx="1" />
+                  <rect x="1" y="7" width="4" height="4" rx="1" />
+                  <rect x="7" y="7" width="4" height="4" rx="1" />
+                </svg>
+              </div>
+              <span>Attribut ({attributeDimensions.length})</span>
+            </div>
+            <svg
+              className={`${styles.fieldGroupChevron} ${attributesOpen ? styles.fieldGroupChevronOpen : ''}`}
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M3 4.5L6 7.5L9 4.5" />
+            </svg>
+          </div>
+          <div
+            className={`${styles.fieldGroupContent} ${
+              attributesOpen ? styles.fieldGroupContentVisible : styles.fieldGroupContentHidden
+            }`}
+          >
+            <div className={styles.fieldList}>
+              {attributeDimensions.map((dimension) => (
+                <DraggableField
+                  key={dimension.id}
+                  field={dimension}
+                  type="dimension"
+                  onClick={onFieldClick}
+                />
+              ))}
+              {attributeDimensions.length === 0 && (
+                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--qb-text-muted)', fontSize: '0.8125rem' }}>
+                  Aucun attribut trouvé
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Dimensions */}
         <div className={styles.fieldGroup}>
           <div
@@ -187,7 +222,7 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
                   <rect x="7" y="7" width="4" height="4" rx="1" />
                 </svg>
               </div>
-              <span>Dimensions ({filteredDimensions.length})</span>
+              <span>Dimention ({groupableDimensions.length})</span>
             </div>
             <svg
               className={`${styles.fieldGroupChevron} ${dimensionsOpen ? styles.fieldGroupChevronOpen : ''}`}
@@ -207,7 +242,7 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
             }`}
           >
             <div className={styles.fieldList}>
-              {filteredDimensions.map((dimension) => (
+              {groupableDimensions.map((dimension) => (
                 <DraggableField
                   key={dimension.id}
                   field={dimension}
@@ -215,9 +250,67 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
                   onClick={onFieldClick}
                 />
               ))}
-              {filteredDimensions.length === 0 && (
+              {groupableDimensions.length === 0 && (
                 <div style={{ padding: '12px', textAlign: 'center', color: 'var(--qb-text-muted)', fontSize: '0.8125rem' }}>
                   Aucune dimension trouvée
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Mes dimenttions */}
+        <div className={styles.fieldGroup}>
+          <div
+            className={styles.fieldGroupHeader}
+            onClick={() => setCustomDimensionsOpen(!customDimensionsOpen)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setCustomDimensionsOpen(!customDimensionsOpen);
+              }
+            }}
+          >
+            <div className={styles.fieldGroupTitle}>
+              <div className={`${styles.fieldGroupIcon}`} style={{ background: '#fef3c7', color: '#d97706' }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="6" cy="6" r="4" />
+                  <path d="M6 4V6L7.5 7.5" />
+                </svg>
+              </div>
+              <span>Mes dimenttions ({customDimensions.length})</span>
+            </div>
+            <svg
+              className={`${styles.fieldGroupChevron} ${customDimensionsOpen ? styles.fieldGroupChevronOpen : ''}`}
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M3 4.5L6 7.5L9 4.5" />
+            </svg>
+          </div>
+          <div
+            className={`${styles.fieldGroupContent} ${
+              customDimensionsOpen ? styles.fieldGroupContentVisible : styles.fieldGroupContentHidden
+            }`}
+          >
+            <div className={styles.fieldList}>
+              {customDimensions.map((dimension) => (
+                <DraggableField
+                  key={`custom-dimension-${dimension.id}`}
+                  field={dimension}
+                  type="dimension"
+                  onClick={onFieldClick}
+                />
+              ))}
+              {customDimensions.length === 0 && (
+                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--qb-text-muted)', fontSize: '0.8125rem' }}>
+                  Aucune dimension personnalisée
                 </div>
               )}
             </div>
@@ -245,7 +338,7 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
                   <circle cx="11" cy="2" r="1" fill="currentColor" />
                 </svg>
               </div>
-              <span>Métriques ({filteredMetrics.length})</span>
+              <span>Metriques ({filteredMetrics.length})</span>
             </div>
             <svg
               className={`${styles.fieldGroupChevron} ${metricsOpen ? styles.fieldGroupChevronOpen : ''}`}
@@ -283,59 +376,62 @@ export const FieldPalette: React.FC<FieldPaletteProps> = ({
         </div>
 
         {/* Mes Métriques (Custom) */}
-        {customMetrics.length > 0 && (
-          <div className={styles.fieldGroup}>
-            <div
-              className={styles.fieldGroupHeader}
-              onClick={() => setCustomMetricsOpen(!customMetricsOpen)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setCustomMetricsOpen(!customMetricsOpen);
-                }
-              }}
-            >
-              <div className={styles.fieldGroupTitle}>
-                <div className={`${styles.fieldGroupIcon}`} style={{ background: '#fef3c7', color: '#d97706' }}>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="6" cy="6" r="4" />
-                    <path d="M6 4V6L7.5 7.5" />
-                  </svg>
-                </div>
-                <span>Mes métriques ({filteredCustomMetrics.length})</span>
+        <div className={styles.fieldGroup}>
+          <div
+            className={styles.fieldGroupHeader}
+            onClick={() => setCustomMetricsOpen(!customMetricsOpen)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setCustomMetricsOpen(!customMetricsOpen);
+              }
+            }}
+          >
+            <div className={styles.fieldGroupTitle}>
+              <div className={`${styles.fieldGroupIcon}`} style={{ background: '#fef3c7', color: '#d97706' }}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="6" cy="6" r="4" />
+                  <path d="M6 4V6L7.5 7.5" />
+                </svg>
               </div>
-              <svg
-                className={`${styles.fieldGroupChevron} ${customMetricsOpen ? styles.fieldGroupChevronOpen : ''}`}
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M3 4.5L6 7.5L9 4.5" />
-              </svg>
+              <span>Mes metriques ({filteredCustomMetrics.length})</span>
             </div>
-            <div
-              className={`${styles.fieldGroupContent} ${
-                customMetricsOpen ? styles.fieldGroupContentVisible : styles.fieldGroupContentHidden
-              }`}
+            <svg
+              className={`${styles.fieldGroupChevron} ${customMetricsOpen ? styles.fieldGroupChevronOpen : ''}`}
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
             >
-              <div className={styles.fieldList}>
-                {filteredCustomMetrics.map((metric) => (
-                  <DraggableField
-                    key={`custom-${metric.id}`}
-                    field={metric}
-                    type="metric"
-                    onClick={onFieldClick}
-                  />
-                ))}
-              </div>
+              <path d="M3 4.5L6 7.5L9 4.5" />
+            </svg>
+          </div>
+          <div
+            className={`${styles.fieldGroupContent} ${
+              customMetricsOpen ? styles.fieldGroupContentVisible : styles.fieldGroupContentHidden
+            }`}
+          >
+            <div className={styles.fieldList}>
+              {filteredCustomMetrics.map((metric) => (
+                <DraggableField
+                  key={`custom-${metric.id}`}
+                  field={metric}
+                  type="metric"
+                  onClick={onFieldClick}
+                />
+              ))}
+              {filteredCustomMetrics.length === 0 && (
+                <div style={{ padding: '12px', textAlign: 'center', color: 'var(--qb-text-muted)', fontSize: '0.8125rem' }}>
+                  Aucune métrique personnalisée
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

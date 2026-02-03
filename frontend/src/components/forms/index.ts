@@ -14,12 +14,10 @@ export { FormTextarea } from './FormTextarea';
 export type { FormTextareaProps } from './FormTextarea';
 
 // Select with autocomplete/search
-export { FormSelect } from './FormSelect';
-export type { FormSelectProps, SelectOption } from './FormSelect';
+export { FormSelect, type FormSelectProps, type SelectOption } from './FormSelect';
 
 // Multi-select with tags
-export { FormMultiSelect } from './FormMultiSelect';
-export type { FormMultiSelectProps, MultiSelectOption } from './FormMultiSelect';
+export { FormMultiSelect, type FormMultiSelectProps, type MultiSelectOption } from './FormSelect';
 
 // Checkbox
 export { FormCheckbox } from './FormCheckbox';
