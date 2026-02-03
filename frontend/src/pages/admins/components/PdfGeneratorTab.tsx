@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody } from '@components/ui';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
+import { FormCheckbox, FormSelect } from '@/components/forms';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface PdfTemplate {
@@ -158,53 +159,43 @@ export function PdfGeneratorTab() {
             </div>
 
             <div className={`${styles.grid} ${styles.grid2}`}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Orientation</label>
-                <select
-                  className={styles.formSelect}
-                  value={config.pageOrientation}
-                  onChange={(e) =>
-                    setConfig({ ...config, pageOrientation: e.target.value as 'portrait' | 'landscape' })
-                  }
-                >
-                  <option value="portrait">Portrait</option>
-                  <option value="landscape">Paysage</option>
-                </select>
-              </div>
+              <FormSelect
+                label="Orientation"
+                value={config.pageOrientation}
+                options={[
+                  { value: 'portrait', label: 'Portrait' },
+                  { value: 'landscape', label: 'Paysage' },
+                ]}
+                onChange={(value) =>
+                  setConfig({ ...config, pageOrientation: value as 'portrait' | 'landscape' })
+                }
+              />
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Taille du papier</label>
-                <select
-                  className={styles.formSelect}
-                  value={config.paperSize}
-                  onChange={(e) => setConfig({ ...config, paperSize: e.target.value })}
-                >
-                  <option value="A4">A4</option>
-                  <option value="A3">A3</option>
-                  <option value="Letter">Letter</option>
-                  <option value="Legal">Legal</option>
-                </select>
-              </div>
+              <FormSelect
+                label="Taille du papier"
+                value={config.paperSize}
+                options={[
+                  { value: 'A4', label: 'A4' },
+                  { value: 'A3', label: 'A3' },
+                  { value: 'Letter', label: 'Letter' },
+                  { value: 'Legal', label: 'Legal' },
+                ]}
+                onChange={(value) => setConfig({ ...config, paperSize: value })}
+              />
             </div>
 
             <div style={{ marginTop: '1rem', display: 'flex', gap: '1.5rem' }}>
-              <label className={styles.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={config.includeCharts}
-                  onChange={(e) => setConfig({ ...config, includeCharts: e.target.checked })}
-                />
-                <span>Inclure les graphiques</span>
-              </label>
+              <FormCheckbox
+                label="Inclure les graphiques"
+                checked={config.includeCharts}
+                onChange={(e) => setConfig({ ...config, includeCharts: e.target.checked })}
+              />
 
-              <label className={styles.checkbox}>
-                <input
-                  type="checkbox"
-                  checked={config.includeTables}
-                  onChange={(e) => setConfig({ ...config, includeTables: e.target.checked })}
-                />
-                <span>Inclure les tableaux</span>
-              </label>
+              <FormCheckbox
+                label="Inclure les tableaux"
+                checked={config.includeTables}
+                onChange={(e) => setConfig({ ...config, includeTables: e.target.checked })}
+              />
             </div>
           </div>
 

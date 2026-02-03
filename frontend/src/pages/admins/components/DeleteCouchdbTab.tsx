@@ -5,6 +5,7 @@ import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi, OrgUnitsApi } from '@/services/OLD/old/api.service';
+import { FormCheckbox, FormDatePicker, FormMultiSelect, FormSelect } from '@/components/forms';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface DataToDelete {
@@ -216,85 +217,57 @@ export function DeleteCouchdbTab() {
         {/* Filters */}
         <div className={styles.form}>
           <div className={`${styles.grid} ${styles.grid2}`}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Date de début *</label>
-              <input
-                type="date"
-                className={styles.formInput}
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Date de fin *</label>
-              <input
-                type="date"
-                className={styles.formInput}
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
+            <FormDatePicker
+              label="Date de début"
+              required
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+            <FormDatePicker
+              label="Date de fin"
+              required
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
           </div>
 
           <div className={`${styles.grid} ${styles.grid2}`}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Type de données *</label>
-              <select
-                className={styles.formSelect}
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-              >
-                <option value="">Sélectionner un type</option>
-                {DATA_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Districts/Quartiers *</label>
-              <select
-                className={styles.formSelect}
-                multiple
-                value={selectedDistrictQuartiers}
-                onChange={(e) =>
-                  setSelectedDistrictQuartiers(
-                    Array.from(e.target.selectedOptions, (opt) => opt.value)
-                  )
-                }
-                style={{ minHeight: '100px' }}
-              >
-                {districtQuartiers.map((dq) => (
-                  <option key={dq.id} value={dq.id}>
-                    {dq.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <FormSelect
+              label="Type de données"
+              required
+              value={selectedType}
+              placeholder="Sélectionner un type"
+              options={DATA_TYPES.map((type) => ({
+                value: type.value,
+                label: type.label,
+              }))}
+              onChange={(value) => setSelectedType(value)}
+            />
+            <FormMultiSelect
+              label="Districts/Quartiers"
+              required
+              value={selectedDistrictQuartiers}
+              options={districtQuartiers.map((dq) => ({
+                value: dq.id,
+                label: dq.name,
+              }))}
+              onChange={(values) => setSelectedDistrictQuartiers(values)}
+              placeholder="Sélectionner des districts/quartiers"
+            />
           </div>
 
           {cibles.length > 0 && (
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                Cibles * ({selectedType === 'chws-data' ? 'ASC' : 'RECO'})
-              </label>
-              <select
-                className={styles.formSelect}
-                multiple
-                value={selectedCibles}
-                onChange={(e) =>
-                  setSelectedCibles(Array.from(e.target.selectedOptions, (opt) => opt.value))
-                }
-                style={{ minHeight: '120px' }}
-              >
-                {cibles.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <FormMultiSelect
+              label={`Cibles (${selectedType === 'chws-data' ? 'ASC' : 'RECO'})`}
+              required
+              value={selectedCibles}
+              options={cibles.map((c) => ({
+                value: c.id,
+                label: c.name,
+              }))}
+              onChange={(values) => setSelectedCibles(values)}
+              placeholder="Sélectionner des cibles"
+            />
           )}
 
           <Button variant="primary" onClick={searchData} disabled={isSearching || isLoading}>
@@ -352,8 +325,7 @@ export function DeleteCouchdbTab() {
                   {foundData.slice(0, 100).map((item) => (
                     <tr key={item.id}>
                       <td>
-                        <input
-                          type="checkbox"
+                        <FormCheckbox
                           checked={selectedData.has(item.id)}
                           onChange={() => toggleSelectItem(item.id)}
                         />

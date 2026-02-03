@@ -11,6 +11,7 @@ import { useNotification } from '@/contexts/OLD/useNotification';
 import { connService as API, DbConnectionParams, type TestType } from '@/services/connection.service';
 import styles from '@pages/admins/AdminPage.module.css';
 import { DbConnectionForm } from '@/services/connection.service';
+import { FormCheckbox, FormInput, FormSelect, FormTextarea } from '@/components/forms';
 
 interface SelectModel {
   value: any;
@@ -199,39 +200,54 @@ export function DatabaseConnectionTab() {
   const Field = memo<FieldParams>(function Field({ label, name, type = "text", list = undefined, placeholder = undefined, rows = undefined, cols = undefined, required = false, icon = null, simple = false }) {
 
     const value = (form as any)?.[name] ?? "";
-    const fieldLabel = <label className={styles.formLabel} htmlFor={"host" + name}>{label}</label>;
 
     let InputElement = <></>;
 
     if (type === 'textarea') {
       InputElement = (
-        <>
-          {fieldLabel}
-          <textarea id={"host_" + name} name={name} value={value} placeholder={placeholder} className={styles.formInput} required={required} rows={rows} cols={cols} onChange={(e) => updateField(name, e.target.value)} />
-        </>
+        <FormTextarea
+          label={label}
+          required={required}
+          rows={rows}
+          cols={cols}
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => updateField(name, e.target.value)}
+        />
       );
     } else if (type === 'checkbox') {
       InputElement = (
-        <label className={styles.checkbox}>
-          <input type="checkbox" checked={value} onChange={(e) => updateField(name, e.target.checked)} />
-          <span>{label}</span>
-        </label>
+        <FormCheckbox
+          label={label}
+          checked={Boolean(value)}
+          onChange={(e) => updateField(name, e.target.checked)}
+        />
       );
     } else if (type === 'select') {
       InputElement = (
-        <>
-          {fieldLabel}
-          <select id={"host_" + name} className={styles.formSelect} value={value} onChange={(e) => updateField(name, e.target.value)}>
-            {list && list.map((l) => (<option key={'select_' + l.value} value={l.value}>{l.label}</option>))}
-          </select>
-        </>
+        <FormSelect
+          label={label}
+          required={required}
+          leftIcon={icon}
+          options={(list || []).map((item) => ({
+            value: String(item.value),
+            label: item.label,
+          }))}
+          value={String(value ?? '')}
+          onChange={(val) => updateField(name, val)}
+        />
       );
     } else {
       InputElement = (
-        <>
-          {fieldLabel}
-          <input id={"host_" + name} name={name} type={type} value={value} placeholder={placeholder} className={styles.formInput} required={required} onChange={(e) => updateField(name, e.target.value)} />
-        </>
+        <FormInput
+          label={label}
+          required={required}
+          type={type === 'number' ? 'number' : type}
+          value={value}
+          placeholder={placeholder}
+          leftIcon={icon}
+          onChange={(e) => updateField(name, e.target.value)}
+        />
       );
     }
 

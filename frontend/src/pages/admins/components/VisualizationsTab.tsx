@@ -41,6 +41,7 @@ import {
   type ChartType,
   type ChartDataItem,
 } from '@components/charts';
+import { FormCheckbox, FormInput } from '@/components/forms';
 import styles from '@pages/admins/AdminPage.module.css';
 
 // ============================================================================
@@ -208,18 +209,25 @@ function DimensionSelector({
       {isExpanded && (
         <div className={vizStyles.dimensionContent}>
           <div className={vizStyles.dimensionSearch}>
-            <Search size={16} />
-            <input
-              type="text"
-              placeholder={searchPlaceholder}
+            <FormInput
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={searchPlaceholder}
+              leftIcon={<Search size={16} />}
+              rightIcon={
+                searchTerm ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className={vizStyles.dimensionSearchClear}
+                    aria-label="Effacer la recherche"
+                  >
+                    <X size={14} />
+                  </button>
+                ) : undefined
+              }
+              wrapperClassName={vizStyles.dimensionSearchInput}
             />
-            {searchTerm && (
-              <button type="button" onClick={() => setSearchTerm('')}>
-                <X size={14} />
-              </button>
-            )}
           </div>
 
           <div className={vizStyles.dimensionActions}>
@@ -233,17 +241,13 @@ function DimensionSelector({
 
           <div className={vizStyles.dimensionItems}>
             {filteredItems.map((item) => (
-              <label key={item.id} className={vizStyles.dimensionItem}>
-                <input
-                  type="checkbox"
-                  checked={selectedItems.includes(item.id)}
-                  onChange={() => handleToggleItem(item.id)}
-                />
-                <span className={vizStyles.itemName}>{item.name}</span>
-                {item.code && (
-                  <span className={vizStyles.itemCode}>{item.code}</span>
-                )}
-              </label>
+              <FormCheckbox
+                key={item.id}
+                label={item.code ? `${item.name} (${item.code})` : item.name}
+                checked={selectedItems.includes(item.id)}
+                onChange={() => handleToggleItem(item.id)}
+                wrapperClassName={vizStyles.dimensionItem}
+              />
             ))}
             {filteredItems.length === 0 && (
               <div className={vizStyles.noResults}>Aucun résultat</div>
@@ -327,6 +331,8 @@ const vizStyles: Record<string, string> = {
   countBadge: 'viz-count-badge',
   dimensionContent: 'viz-dimension-content',
   dimensionSearch: 'viz-dimension-search',
+  dimensionSearchInput: 'viz-dimension-search-input',
+  dimensionSearchClear: 'viz-dimension-search-clear',
   dimensionActions: 'viz-dimension-actions',
   dimensionItems: 'viz-dimension-items',
   dimensionItem: 'viz-dimension-item',
@@ -888,38 +894,25 @@ export function VisualizationsTab() {
         }
 
         .viz-dimension-search {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 0.75rem;
-          border: 1px solid #e2e8f0;
-          border-radius: 0.375rem;
-          background: white;
           margin-bottom: 0.75rem;
         }
 
-        .viz-dimension-search svg {
-          color: #94a3b8;
-          flex-shrink: 0;
+        .viz-dimension-search-input {
+          width: 100%;
         }
 
-        .viz-dimension-search input {
-          flex: 1;
-          border: none;
-          outline: none;
-          font-size: 0.875rem;
-          background: transparent;
-        }
-
-        .viz-dimension-search button {
+        .viz-dimension-search-clear {
           padding: 0.125rem;
           border: none;
           background: transparent;
           cursor: pointer;
           color: #94a3b8;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        .viz-dimension-search button:hover {
+        .viz-dimension-search-clear:hover {
           color: #64748b;
         }
 
@@ -962,12 +955,6 @@ export function VisualizationsTab() {
 
         .viz-dimension-item:hover {
           background: #f8fafc;
-        }
-
-        .viz-dimension-item input {
-          width: 16px;
-          height: 16px;
-          cursor: pointer;
         }
 
         .viz-item-name {
@@ -1170,26 +1157,18 @@ export function VisualizationsTab() {
 
           <div className={styles.form}>
             <div className={`${styles.grid} ${styles.grid2}`}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Nom de la visualisation</label>
-                <input
-                  type="text"
-                  className={styles.formInput}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Entrez un nom..."
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Description (optionnel)</label>
-                <input
-                  type="text"
-                  className={styles.formInput}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Décrivez votre visualisation..."
-                />
-              </div>
+              <FormInput
+                label="Nom de la visualisation"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Entrez un nom..."
+              />
+              <FormInput
+                label="Description (optionnel)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Décrivez votre visualisation..."
+              />
             </div>
           </div>
         </div>
@@ -1369,68 +1348,47 @@ export function VisualizationsTab() {
               </div>
               <div className="viz-options-panel">
                 <div className="viz-option-row">
-                  <label>
-                    Titre:
-                    <input
-                      type="text"
-                      value={options.title || ''}
-                      onChange={(e) => setOptions({ ...options, title: e.target.value })}
-                      placeholder="Titre du graphique"
-                    />
-                  </label>
+                  <FormInput
+                    label="Titre"
+                    value={options.title || ''}
+                    onChange={(e) => setOptions({ ...options, title: e.target.value })}
+                    placeholder="Titre du graphique"
+                  />
                 </div>
                 <div className="viz-option-row">
-                  <label>
-                    Sous-titre:
-                    <input
-                      type="text"
-                      value={options.subtitle || ''}
-                      onChange={(e) => setOptions({ ...options, subtitle: e.target.value })}
-                      placeholder="Sous-titre du graphique"
-                    />
-                  </label>
+                  <FormInput
+                    label="Sous-titre"
+                    value={options.subtitle || ''}
+                    onChange={(e) => setOptions({ ...options, subtitle: e.target.value })}
+                    placeholder="Sous-titre du graphique"
+                  />
                 </div>
                 <div className="viz-option-row">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={options.showLegend}
-                      onChange={(e) => setOptions({ ...options, showLegend: e.target.checked })}
-                    />
-                    Afficher la légende
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={options.showTooltip}
-                      onChange={(e) => setOptions({ ...options, showTooltip: e.target.checked })}
-                    />
-                    Afficher l'infobulle
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={options.showGrid}
-                      onChange={(e) => setOptions({ ...options, showGrid: e.target.checked })}
-                    />
-                    Afficher la grille
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={options.stacked}
-                      onChange={(e) => setOptions({ ...options, stacked: e.target.checked })}
-                    />
-                    Empilé
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={options.animation}
-                      onChange={(e) => setOptions({ ...options, animation: e.target.checked })}
-                    />
-                    Animation
-                  </label>
+                  <FormCheckbox
+                    label="Afficher la légende"
+                    checked={options.showLegend}
+                    onChange={(e) => setOptions({ ...options, showLegend: e.target.checked })}
+                  />
+                  <FormCheckbox
+                    label="Afficher l'infobulle"
+                    checked={options.showTooltip}
+                    onChange={(e) => setOptions({ ...options, showTooltip: e.target.checked })}
+                  />
+                  <FormCheckbox
+                    label="Afficher la grille"
+                    checked={options.showGrid}
+                    onChange={(e) => setOptions({ ...options, showGrid: e.target.checked })}
+                  />
+                  <FormCheckbox
+                    label="Empilé"
+                    checked={options.stacked}
+                    onChange={(e) => setOptions({ ...options, stacked: e.target.checked })}
+                  />
+                  <FormCheckbox
+                    label="Animation"
+                    checked={options.animation}
+                    onChange={(e) => setOptions({ ...options, animation: e.target.checked })}
+                  />
                 </div>
               </div>
             </div>

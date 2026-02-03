@@ -5,6 +5,7 @@ import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
+import { FormCheckbox, FormInput } from '@/components/forms';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface ApiToken {
@@ -232,38 +233,27 @@ export function ApiAccessTab() {
         title={isEditMode ? 'Modifier API' : 'Nouvelle API'}
       >
         <div className={styles.form}>
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>
-              Token ({formData.token.length}/{DEFAULT_TOKEN_LENGTH} caractères)
-            </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                className={styles.formInput}
-                value={formData.token}
-                onChange={(e) => setFormData({ ...formData, token: e.target.value })}
-                maxLength={DEFAULT_TOKEN_LENGTH}
-                style={{ flex: 1, fontFamily: 'monospace' }}
-              />
-              <Button
-                variant="outline"
-                onClick={() => setFormData({ ...formData, token: generateToken() })}
-                title="Générer un nouveau token"
-              >
-                <RefreshCw size={16} />
-              </Button>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', alignItems: 'end' }}>
+            <FormInput
+              label={`Token (${formData.token.length}/${DEFAULT_TOKEN_LENGTH} caractères)`}
+              value={formData.token}
+              onChange={(e) => setFormData({ ...formData, token: e.target.value })}
+              maxLength={DEFAULT_TOKEN_LENGTH}
+              style={{ fontFamily: 'monospace' }}
+            />
+            <Button
+              variant="outline"
+              onClick={() => setFormData({ ...formData, token: generateToken() })}
+              title="Générer un nouveau token"
+            >
+              <RefreshCw size={16} />
+            </Button>
           </div>
-          <div className={styles.formGroup}>
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              />
-              <span>Actif</span>
-            </label>
-          </div>
+          <FormCheckbox
+            label="Actif"
+            checked={formData.isActive}
+            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+          />
           <div className={styles.buttonGroup}>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Annuler

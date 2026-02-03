@@ -5,6 +5,7 @@ import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
+import { FormCheckbox, FormInput, FormRadioGroup } from '@/components/forms';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface DatabaseEntity {
@@ -135,51 +136,25 @@ export function TruncateDatabaseTab() {
         </div>
 
         {/* Action Selection */}
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Action à effectuer</label>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <label
-              className={styles.checkbox}
-              style={{
-                padding: '0.75rem 1rem',
-                border: `2px solid ${action === 'TRUNCATE' ? '#f59e0b' : '#e2e8f0'}`,
-                borderRadius: '0.5rem',
-                backgroundColor: action === 'TRUNCATE' ? '#fef3c7' : 'transparent',
-              }}
-            >
-              <input
-                type="radio"
-                name="action"
-                value="TRUNCATE"
-                checked={action === 'TRUNCATE'}
-                onChange={() => setAction('TRUNCATE')}
-              />
-              <span>
-                <strong>TRUNCATE</strong> - Vider les tables
-              </span>
-            </label>
-            <label
-              className={styles.checkbox}
-              style={{
-                padding: '0.75rem 1rem',
-                border: `2px solid ${action === 'DROP' ? '#ef4444' : '#e2e8f0'}`,
-                borderRadius: '0.5rem',
-                backgroundColor: action === 'DROP' ? '#fee2e2' : 'transparent',
-              }}
-            >
-              <input
-                type="radio"
-                name="action"
-                value="DROP"
-                checked={action === 'DROP'}
-                onChange={() => setAction('DROP')}
-              />
-              <span>
-                <strong>DROP</strong> - Supprimer les tables
-              </span>
-            </label>
-          </div>
-        </div>
+        <FormRadioGroup
+          label="Action à effectuer"
+          name="action"
+          value={action}
+          onChange={(value) => setAction(value as ActionType)}
+          orientation="horizontal"
+          options={[
+            {
+              value: 'TRUNCATE',
+              label: 'TRUNCATE',
+              description: 'Vider les tables',
+            },
+            {
+              value: 'DROP',
+              label: 'DROP',
+              description: 'Supprimer les tables',
+            },
+          ]}
+        />
 
         {/* Entity Selection */}
         <div className={styles.formGroup}>
@@ -230,9 +205,8 @@ export function TruncateDatabaseTab() {
               }}
             >
               {entities.map((entity) => (
-                <label
+                <div
                   key={entity.name}
-                  className={styles.checkbox}
                   style={{
                     padding: '0.5rem 0.75rem',
                     borderRadius: '0.375rem',
@@ -240,13 +214,12 @@ export function TruncateDatabaseTab() {
                     border: `1px solid ${selectedEntities.has(entity.name) ? '#ef4444' : 'transparent'}`,
                   }}
                 >
-                  <input
-                    type="checkbox"
+                  <FormCheckbox
+                    label={entity.name}
                     checked={selectedEntities.has(entity.name)}
                     onChange={() => toggleSelectEntity(entity.name)}
                   />
-                  <span style={{ fontSize: '0.875rem' }}>{entity.name}</span>
-                </label>
+                </div>
               ))}
             </div>
           )}
@@ -313,21 +286,12 @@ export function TruncateDatabaseTab() {
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>
-              Tapez <strong>{CONFIRM_TEXT}</strong> pour confirmer
-            </label>
-            <input
-              type="text"
-              className={styles.formInput}
-              value={confirmText}
-              onChange={(e) => setConfirmText(e.target.value)}
-              placeholder={CONFIRM_TEXT}
-              style={{
-                borderColor: confirmText === CONFIRM_TEXT ? '#22c55e' : undefined,
-              }}
-            />
-          </div>
+          <FormInput
+            label={`Tapez ${CONFIRM_TEXT} pour confirmer`}
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder={CONFIRM_TEXT}
+          />
 
           <div className={styles.buttonGroup}>
             <Button variant="outline" onClick={() => setIsConfirmModalOpen(false)}>

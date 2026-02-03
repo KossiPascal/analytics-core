@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody } from '@components/ui';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
+import { FormField, FormInput } from '@/components/forms';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface SignatureData {
@@ -234,42 +235,38 @@ export function SignatureTab() {
 
             {/* Drawing Options */}
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
-              <div className={styles.formGroup} style={{ marginBottom: 0 }}>
-                <label className={styles.formLabel} style={{ marginBottom: '0.25rem' }}>Couleur</label>
-                <input
-                  type="color"
-                  value={strokeColor}
-                  onChange={(e) => setStrokeColor(e.target.value)}
-                  style={{ width: '40px', height: '32px', cursor: 'pointer' }}
-                />
+              <div style={{ flex: '0 0 auto' }}>
+                <FormField label="Couleur">
+                  <input
+                    type="color"
+                    value={strokeColor}
+                    onChange={(e) => setStrokeColor(e.target.value)}
+                    style={{ width: '40px', height: '32px', cursor: 'pointer' }}
+                  />
+                </FormField>
               </div>
-              <div className={styles.formGroup} style={{ marginBottom: 0, flex: 1 }}>
-                <label className={styles.formLabel} style={{ marginBottom: '0.25rem' }}>
-                  Épaisseur ({strokeWidth}px)
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={strokeWidth}
-                  onChange={(e) => setStrokeWidth(Number(e.target.value))}
-                  style={{ width: '100%' }}
-                />
+              <div style={{ flex: 1 }}>
+                <FormField label={`Épaisseur (${strokeWidth}px)`}>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={strokeWidth}
+                    onChange={(e) => setStrokeWidth(Number(e.target.value))}
+                    style={{ width: '100%' }}
+                  />
+                </FormField>
               </div>
             </div>
 
             {/* Save Form */}
             <div style={{ marginTop: '1rem' }}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Nom de la signature</label>
-                <input
-                  type="text"
-                  className={styles.formInput}
-                  value={signatureName}
-                  onChange={(e) => setSignatureName(e.target.value)}
-                  placeholder="Ex: Signature Dr. Diallo"
-                />
-              </div>
+              <FormInput
+                label="Nom de la signature"
+                value={signatureName}
+                onChange={(e) => setSignatureName(e.target.value)}
+                placeholder="Ex: Signature Dr. Diallo"
+              />
               <div className={styles.buttonGroup}>
                 <Button variant="outline" onClick={clearCanvas}>
                   <Trash2 size={16} />
