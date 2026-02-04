@@ -68,7 +68,7 @@ def extract_conf(data):
 
         "ssh_enabled": bool(data.get("ssh_enabled", False)),
         "ssh_host": data.get("ssh_host"),
-        "ssh_port": int(data.get("ssh_port", 22)),
+        "ssh_port": int(data.get("ssh_port") or 22),
         "ssh_user": data.get("ssh_user"),
         "ssh_password": encrypt(data["ssh_password"]) if data.get("ssh_password") else None,
         "ssh_key": encrypt(data["ssh_key"]) if data.get("ssh_key") else None,
