@@ -230,6 +230,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
 
   const [tableMenuOpenId, setTableMenuOpenId] = useState<string | null>(null);
   const [definitionTableId, setDefinitionTableId] = useState<string | null>(null);
+  const [dimensionsTableId, setDimensionsTableId] = useState<string | null>(null);
   const [metricsTableId, setMetricsTableId] = useState<string | null>(null);
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>('all');
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
@@ -494,6 +495,10 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     () => model.tables.find((table) => table.id === metricsTableId) ?? null,
     [metricsTableId, model.tables]
   );
+  const dimensionsTable = useMemo(
+    () => model.tables.find((table) => table.id === dimensionsTableId) ?? null,
+    [dimensionsTableId, model.tables]
+  );
 
   const definitionAttributes = useMemo(() => {
     if (!definitionTableId) return [];
@@ -504,6 +509,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     if (!metricsTableId) return [];
     return effectiveModel.metrics.filter((metric) => metric.table === metricsTableId);
   }, [effectiveModel.metrics, metricsTableId]);
+
+  const dimensionsForTable = useMemo(() => {
+    if (!dimensionsTableId) return [];
+    return effectiveModel.dimensions.filter((dim) => dim.table === dimensionsTableId);
+  }, [effectiveModel.dimensions, dimensionsTableId]);
 
   const baseDimensionIds = useMemo(() => new Set(model.dimensions.map((dimension) => dimension.id)), [model.dimensions]);
 
@@ -749,12 +759,24 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                               className={styles.dataSourceMenuItem}
                               onClick={(event) => {
                                 event.stopPropagation();
+                                setDimensionsTableId(table.id);
+                                setTableMenuOpenId(null);
+                              }}
+                              role="menuitem"
+                            >
+                              Liste des dimensions
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.dataSourceMenuItem}
+                              onClick={(event) => {
+                                event.stopPropagation();
                                 setMetricsTableId(table.id);
                                 setTableMenuOpenId(null);
                               }}
                               role="menuitem"
                             >
-                              Métriques
+                              Liste des métriques
                             </button>
                           </div>
                         )}
@@ -1428,6 +1450,73 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                             </span>
                           )}
                         </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(dimensionsTableId)}
+        onClose={() => setDimensionsTableId(null)}
+        title={dimensionsTable ? `Dimensions - ${dimensionsTable.label}` : 'Dimensions'}
+        size="lg"
+        footer={(
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              onClick={() => setDimensionsTableId(null)}
+            >
+              Fermer
+            </button>
+          </div>
+        )}
+      >
+        {dimensionsForTable.length === 0 ? (
+          <div className={styles.modalEmptyState}>
+            Aucune dimension configurée pour cette table.
+          </div>
+        ) : (
+          <div className={styles.definitionTableWrapper}>
+            <table className={styles.definitionTable}>
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Type</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dimensionsForTable.map((dim) => {
+                  const typeLabels: Record<string, string> = {
+                    string: 'Texte',
+                    number: 'Nombre',
+                    date: 'Date',
+                    boolean: 'Booléen',
+                  };
+                  const isCustom = dim.id.includes('__dim__');
+                  return (
+                    <tr key={dim.id}>
+                      <td>
+                        <div className={styles.definitionAttribute}>
+                          <span className={styles.definitionAttributeLabel}>{dim.label}</span>
+                          <span className={styles.definitionAttributeId}>{dim.id}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={styles.definitionAttributeType}>
+                          {typeLabels[dim.type] || dim.type}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={isCustom ? styles.metricAgg : styles.metricSource}>
+                          {isCustom ? 'Personnalisée' : 'Base'}
+                        </span>
                       </td>
                     </tr>
                   );
