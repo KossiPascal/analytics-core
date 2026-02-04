@@ -1596,39 +1596,50 @@
 }
 
 .definitionActionBtn {
-  width: 28px;
-  height: 28px;
-  display: flex;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--qb-text-muted);
+  border: 1px solid var(--qb-border);
+  background: var(--qb-bg-card);
+  color: #475569;
   cursor: pointer;
   border-radius: var(--qb-radius-sm);
   transition: var(--qb-transition);
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .definitionActionBtn:hover {
   background: var(--qb-bg-hover);
   color: var(--qb-primary);
+  border-color: var(--qb-primary);
 }
 
 .definitionActionBtn:disabled {
-  opacity: 1;
-  color: var(--qb-text-muted);
+  opacity: 0.4;
+  color: var(--qb-text-light);
   cursor: not-allowed;
+  border-color: var(--qb-border);
 }
 
 .definitionActionBtnDisabled {
-  opacity: 0.6;
+  opacity: 0.35;
   cursor: not-allowed;
   pointer-events: none;
 }
 
 .definitionActionBtn svg {
   display: block;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
   stroke: currentColor;
+  fill: none;
 }
 
 .definitionEditRow :global(.formField) {
@@ -1647,11 +1658,13 @@
 .definitionActionBtnDanger:hover {
   background: rgba(239, 68, 68, 0.1);
   color: var(--qb-danger);
+  border-color: var(--qb-danger);
 }
 
 .definitionActionBtnSuccess:hover {
   background: rgba(16, 185, 129, 0.1);
   color: var(--qb-success);
+  border-color: var(--qb-success);
 }
 
 .definitionUniqueBadgeActive {

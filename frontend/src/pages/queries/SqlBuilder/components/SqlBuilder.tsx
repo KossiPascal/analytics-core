@@ -1563,8 +1563,8 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             <table className={styles.definitionTable}>
               <thead>
                 <tr>
-                  <th>Dimension</th>
-                  <th>Type</th>
+                  <th>Attribut</th>
+                  <th>Libellé</th>
                   <th>Alias</th>
                   <th>Unique</th>
                   <th>Actions</th>
@@ -1572,19 +1572,14 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
               </thead>
               <tbody>
                 {dimensionsForTable.map((dim) => {
-                  const typeLabels: Record<string, string> = {
-                    string: 'Texte',
-                    number: 'Nombre',
-                    date: 'Date',
-                    boolean: 'Booléen',
-                  };
                   const customInfo = getCustomDimensionEntry(dim);
-                  const isCustom = Boolean(customInfo);
                   const isEditing = editingDimId === dim.id;
                   const isEditable = Boolean(customInfo);
                   const uniqueValue = customInfo?.entry.unique ?? false;
                   const aliasValue = customInfo?.entry.alias ?? '—';
-                  const editAlias = customInfo
+                  const attributeName = customInfo?.attribute?.label ?? dim.label;
+                  const labelValue = customInfo?.entry.label ?? dim.label;
+                  const editAlias = isEditing && customInfo
                     ? buildAlias(
                       customInfo.table?.id || dim.table,
                       customInfo.attribute?.id || customInfo.parsed.attributeId,
@@ -1594,30 +1589,21 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                   return (
                     <tr key={dim.id} className={isEditing ? styles.definitionEditRow : undefined}>
                       <td>
-                        <div className={styles.definitionAttribute}>
-                          {isEditing ? (
-                            <FormInput
-                              value={editDimData.label}
-                              onChange={(event) => setEditDimData((prev) => ({ ...prev, label: event.target.value }))}
-                              placeholder="Libellé"
-                            />
-                          ) : (
-                            <span className={styles.definitionAttributeLabel}>{dim.label}</span>
-                          )}
-                          <span className={styles.definitionAttributeId}>{dim.id}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={styles.definitionAttributeType}>
-                          {typeLabels[dim.type] || dim.type}
-                        </span>
+                        <span className={styles.definitionAttributeLabel}>{attributeName}</span>
                       </td>
                       <td>
                         {isEditing ? (
-                          <span className={styles.definitionEntryAlias}>{editAlias}</span>
+                          <FormInput
+                            value={editDimData.label}
+                            onChange={(event) => setEditDimData((prev) => ({ ...prev, label: event.target.value }))}
+                            placeholder="Libellé"
+                          />
                         ) : (
-                          <span className={styles.definitionEntryAlias}>{aliasValue}</span>
+                          <span>{labelValue}</span>
                         )}
+                      </td>
+                      <td>
+                        <span className={styles.definitionEntryAlias}>{isEditing ? editAlias : aliasValue}</span>
                       </td>
                       <td>
                         {isEditing ? (
@@ -1785,9 +1771,10 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             <table className={styles.definitionTable}>
               <thead>
                 <tr>
-                  <th>Métrique</th>
-                  <th>Agrégation</th>
+                  <th>Attribut</th>
+                  <th>Libellé</th>
                   <th>Alias</th>
+                  <th>Formule</th>
                   <th>Unique</th>
                   <th>Actions</th>
                 </tr>
@@ -1795,13 +1782,14 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
               <tbody>
                 {metricsForTable.map((metric) => {
                   const customInfo = getCustomMetricEntry(metric);
-                  const isCustom = Boolean(customInfo);
                   const isEditing = editingMetId === metric.id;
                   const isEditable = Boolean(customInfo);
                   const uniqueValue = customInfo?.entry.unique ?? false;
                   const aliasValue = customInfo?.entry.alias ?? '—';
+                  const attributeName = customInfo?.attribute?.label ?? metric.label;
+                  const labelValue = customInfo?.entry.label ?? metric.label;
                   const formulaValue = customInfo?.entry.formula || (metric.defaultAgg ? metric.defaultAgg.toUpperCase() : 'AUTO');
-                  const editAlias = customInfo
+                  const editAlias = isEditing && customInfo
                     ? buildAlias(
                       customInfo.table?.id || metric.table,
                       customInfo.attribute?.id || customInfo.parsed.attributeId,
@@ -1814,18 +1802,21 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                   return (
                     <tr key={metric.id} className={isEditing ? styles.definitionEditRow : undefined}>
                       <td>
-                        <div className={styles.definitionAttribute}>
-                          {isEditing ? (
-                            <FormInput
-                              value={editMetData.label}
-                              onChange={(event) => setEditMetData((prev) => ({ ...prev, label: event.target.value }))}
-                              placeholder="Libellé"
-                            />
-                          ) : (
-                            <span className={styles.definitionAttributeLabel}>{metric.label}</span>
-                          )}
-                          <span className={styles.definitionAttributeId}>{metric.id}</span>
-                        </div>
+                        <span className={styles.definitionAttributeLabel}>{attributeName}</span>
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <FormInput
+                            value={editMetData.label}
+                            onChange={(event) => setEditMetData((prev) => ({ ...prev, label: event.target.value }))}
+                            placeholder="Libellé"
+                          />
+                        ) : (
+                          <span>{labelValue}</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={styles.definitionEntryAlias}>{isEditing ? editAlias : aliasValue}</span>
                       </td>
                       <td>
                         {isEditing ? (
@@ -1839,13 +1830,6 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                           <span className={styles.metricAgg}>
                             {formulaValue}
                           </span>
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <span className={styles.definitionEntryAlias}>{editAlias}</span>
-                        ) : (
-                          <span className={styles.definitionEntryAlias}>{aliasValue}</span>
                         )}
                       </td>
                       <td>
