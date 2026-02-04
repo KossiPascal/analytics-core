@@ -1589,6 +1589,97 @@
   padding: 12px;
 }
 
+.definitionActionIcons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.definitionActionBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--qb-text-light);
+  cursor: pointer;
+  border-radius: var(--qb-radius-sm);
+  transition: var(--qb-transition);
+}
+
+.definitionActionBtn:hover {
+  background: var(--qb-bg-hover);
+  color: var(--qb-primary);
+}
+
+.definitionActionBtnDanger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--qb-danger);
+}
+
+.definitionActionBtnSuccess:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--qb-success);
+}
+
+.definitionUniqueBadgeActive {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.definitionUniqueBadgeInactive {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--qb-bg);
+  color: var(--qb-text-light);
+}
+
+.definitionEditRow {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.definitionEditInput {
+  padding: 6px 8px;
+  border: 1px solid var(--qb-border-focus);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8125rem;
+  background: var(--qb-bg-card);
+  width: 100%;
+  min-width: 120px;
+}
+
+.definitionEditInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.definitionEditSelect {
+  padding: 6px 8px;
+  border: 1px solid var(--qb-border-focus);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8125rem;
+  background: var(--qb-bg-card);
+  min-width: 100px;
+  cursor: pointer;
+}
+
+.definitionEditSelect:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
 .modalFooter {
   display: flex;
   justify-content: flex-end;

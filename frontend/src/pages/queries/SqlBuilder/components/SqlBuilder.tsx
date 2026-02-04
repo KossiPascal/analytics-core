@@ -18,7 +18,7 @@ import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@/components/ui';
 import { DatabaseConnectionTab } from '@/pages/admins/components';
 import { FormRadioGroup } from '@/components/forms';
-import { DefinitionItemForm, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
+import { DefinitionItemForm, buildAlias, FORMULA_OPTIONS, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
 
@@ -174,6 +174,28 @@ const Icons = {
       <circle cx="9" cy="14" r="1.8" />
     </svg>
   ),
+  edit: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  save: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M2 7L5.5 10.5L12 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  close: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
+    </svg>
+  ),
+  trash: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M3 4H11" strokeLinecap="round" />
+      <path d="M5 4V2.8H9V4" strokeLinecap="round" />
+      <path d="M4 4L4.7 11.2H9.3L10 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
   entities: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="1" y="1" width="6" height="6" rx="1" />
@@ -232,6 +254,10 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
   const [definitionTableId, setDefinitionTableId] = useState<string | null>(null);
   const [dimensionsTableId, setDimensionsTableId] = useState<string | null>(null);
   const [metricsTableId, setMetricsTableId] = useState<string | null>(null);
+  const [editingDimId, setEditingDimId] = useState<string | null>(null);
+  const [editDimData, setEditDimData] = useState<{ label: string; unique: boolean }>({ label: '', unique: false });
+  const [editingMetId, setEditingMetId] = useState<string | null>(null);
+  const [editMetData, setEditMetData] = useState<{ label: string; formula: string; unique: boolean }>({ label: '', formula: '', unique: false });
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>('all');
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [selectedDatabaseIds, setSelectedDatabaseIds] = useState<Set<string>>(() => {
@@ -265,6 +291,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             ...baseDim,
             id: `${attrId}__dim__${dim.id}`,
             label: dim.label,
+            defaultAgg: dim.unique ? 'distinct' : undefined,
           });
         });
 
@@ -274,6 +301,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             label: met.label,
             table: tableId,
             returnType: 'number',
+            defaultAgg: met.unique ? 'distinct' : (met.formula?.toLowerCase() as AggregationType | undefined),
           });
         });
       });
@@ -515,7 +543,39 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     return effectiveModel.dimensions.filter((dim) => dim.table === dimensionsTableId);
   }, [effectiveModel.dimensions, dimensionsTableId]);
 
-  const baseDimensionIds = useMemo(() => new Set(model.dimensions.map((dimension) => dimension.id)), [model.dimensions]);
+  const parseCustomDimensionId = (id: string) => {
+    const parts = id.split('__dim__');
+    if (parts.length !== 2) return null;
+    return { attributeId: parts[0], entryId: parts[1] };
+  };
+
+  const parseCustomMetricId = (id: string) => {
+    const parts = id.split('__met__');
+    if (parts.length !== 2) return null;
+    return { attributeId: parts[0], entryId: parts[1] };
+  };
+
+  const getCustomDimensionEntry = (dim: DimensionDef) => {
+    const parsed = parseCustomDimensionId(dim.id);
+    if (!parsed) return null;
+    const selection = definitionSelections[dim.table]?.[parsed.attributeId];
+    const entry = selection?.dimensions.find((d) => d.id === parsed.entryId) ?? null;
+    if (!entry) return null;
+    const attribute = model.dimensions.find((d) => d.id === parsed.attributeId) ?? null;
+    const table = model.tables.find((t) => t.id === dim.table) ?? null;
+    return { parsed, entry, attribute, table };
+  };
+
+  const getCustomMetricEntry = (metric: MetricDef) => {
+    const parsed = parseCustomMetricId(metric.id);
+    if (!parsed) return null;
+    const selection = definitionSelections[metric.table]?.[parsed.attributeId];
+    const entry = selection?.metrics.find((m) => m.id === parsed.entryId) ?? null;
+    if (!entry) return null;
+    const attribute = model.dimensions.find((d) => d.id === parsed.attributeId) ?? null;
+    const table = model.tables.find((t) => t.id === metric.table) ?? null;
+    return { parsed, entry, attribute, table };
+  };
 
   return (
     <div className={styles.container}>
@@ -1317,6 +1377,9 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                           {selection.selectedAction && (
                             <DefinitionItemForm
                               type={selection.selectedAction}
+                              tableName={definitionTable?.id || attribute.table}
+                              attributeColumnName={attribute.id}
+                              attributeId={attribute.id}
                               onAdd={(entry) => {
                                 setDefinitionSelections((prev) => {
                                   const current = prev[attribute.table]?.[attribute.id] ?? {
@@ -1363,6 +1426,9 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                   <div className={styles.definitionEntryInfo}>
                                     <span className={styles.definitionEntryLabel}>{dim.label}</span>
                                     <span className={styles.definitionEntryAlias}>{dim.alias}</span>
+                                    <span className={dim.unique ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                                      {dim.unique ? 'Unique' : 'Standard'}
+                                    </span>
                                   </div>
                                   <button
                                     type="button"
@@ -1410,6 +1476,9 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                     {met.formula && (
                                       <span className={styles.definitionEntryFormula}>{met.formula}</span>
                                     )}
+                                    <span className={met.unique ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                                      {met.unique ? 'Unique' : 'Standard'}
+                                    </span>
                                   </div>
                                   <button
                                     type="button"
@@ -1462,7 +1531,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
 
       <Modal
         isOpen={Boolean(dimensionsTableId)}
-        onClose={() => setDimensionsTableId(null)}
+        onClose={() => {
+          setDimensionsTableId(null);
+          setEditingDimId(null);
+          setEditDimData({ label: '', unique: false });
+        }}
         title={dimensionsTable ? `Dimensions - ${dimensionsTable.label}` : 'Dimensions'}
         size="lg"
         footer={(
@@ -1470,7 +1543,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             <button
               type="button"
               className={`${styles.btn} ${styles.btnSecondary}`}
-              onClick={() => setDimensionsTableId(null)}
+              onClick={() => {
+                setDimensionsTableId(null);
+                setEditingDimId(null);
+                setEditDimData({ label: '', unique: false });
+              }}
             >
               Fermer
             </button>
@@ -1488,7 +1565,9 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                 <tr>
                   <th>Dimension</th>
                   <th>Type</th>
-                  <th>Source</th>
+                  <th>Alias</th>
+                  <th>Unique</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1499,12 +1578,33 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                     date: 'Date',
                     boolean: 'Booléen',
                   };
-                  const isCustom = dim.id.includes('__dim__');
+                  const customInfo = getCustomDimensionEntry(dim);
+                  const isCustom = Boolean(customInfo);
+                  const isEditing = editingDimId === dim.id;
+                  const uniqueValue = customInfo?.entry.unique ?? false;
+                  const aliasValue = customInfo?.entry.alias ?? '—';
+                  const editAlias = customInfo
+                    ? buildAlias(
+                      customInfo.table?.id || dim.table,
+                      customInfo.attribute?.id || customInfo.parsed.attributeId,
+                      editDimData.unique
+                    )
+                    : aliasValue;
                   return (
-                    <tr key={dim.id}>
+                    <tr key={dim.id} className={isEditing ? styles.definitionEditRow : undefined}>
                       <td>
                         <div className={styles.definitionAttribute}>
-                          <span className={styles.definitionAttributeLabel}>{dim.label}</span>
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              className={styles.definitionEditInput}
+                              value={editDimData.label}
+                              onChange={(event) => setEditDimData((prev) => ({ ...prev, label: event.target.value }))}
+                              placeholder="Libellé"
+                            />
+                          ) : (
+                            <span className={styles.definitionAttributeLabel}>{dim.label}</span>
+                          )}
                           <span className={styles.definitionAttributeId}>{dim.id}</span>
                         </div>
                       </td>
@@ -1514,9 +1614,136 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         </span>
                       </td>
                       <td>
-                        <span className={isCustom ? styles.metricAgg : styles.metricSource}>
-                          {isCustom ? 'Personnalisée' : 'Base'}
-                        </span>
+                        {isEditing ? (
+                          <span className={styles.definitionEntryAlias}>{editAlias}</span>
+                        ) : (
+                          <span className={styles.definitionEntryAlias}>{aliasValue}</span>
+                        )}
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <label className={styles.definitionCheckbox}>
+                            <input
+                              type="checkbox"
+                              checked={editDimData.unique}
+                              onChange={(event) => setEditDimData((prev) => ({ ...prev, unique: event.target.checked }))}
+                            />
+                            Unique
+                          </label>
+                        ) : (
+                          <span className={uniqueValue ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                            {uniqueValue ? 'Unique' : 'Standard'}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {customInfo ? (
+                          <div className={styles.definitionActionIcons}>
+                            {isEditing ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
+                                  onClick={() => {
+                                    const nextLabel = editDimData.label.trim();
+                                    if (!nextLabel) return;
+                                    const nextAlias = buildAlias(
+                                      customInfo.table?.id || dim.table,
+                                      customInfo.attribute?.id || customInfo.parsed.attributeId,
+                                      editDimData.unique
+                                    );
+                                    setDefinitionSelections((prev) => ({
+                                      ...prev,
+                                      [dim.table]: {
+                                        ...prev[dim.table],
+                                        [customInfo.parsed.attributeId]: {
+                                          ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
+                                            attributeLabel: null,
+                                            selectedAction: null,
+                                            dimensions: [],
+                                            metrics: [],
+                                          }),
+                                          dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).map((entry) =>
+                                            entry.id === customInfo.parsed.entryId
+                                              ? {
+                                                ...entry,
+                                                label: nextLabel,
+                                                name: nextLabel,
+                                                unique: editDimData.unique,
+                                                alias: nextAlias,
+                                              }
+                                              : entry
+                                          ),
+                                        },
+                                      },
+                                    }));
+                                    setEditingDimId(null);
+                                  }}
+                                  title="Enregistrer"
+                                >
+                                  {Icons.save}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.definitionActionBtn}
+                                  onClick={() => {
+                                    setEditingDimId(null);
+                                    setEditDimData({ label: '', unique: false });
+                                  }}
+                                  title="Annuler"
+                                >
+                                  {Icons.close}
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className={styles.definitionActionBtn}
+                                  onClick={() => {
+                                    setEditingDimId(dim.id);
+                                    setEditDimData({ label: customInfo.entry.label, unique: customInfo.entry.unique });
+                                  }}
+                                  title="Modifier"
+                                >
+                                  {Icons.edit}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger}`}
+                                  onClick={() => {
+                                    setDefinitionSelections((prev) => ({
+                                      ...prev,
+                                      [dim.table]: {
+                                        ...prev[dim.table],
+                                        [customInfo.parsed.attributeId]: {
+                                          ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
+                                            attributeLabel: null,
+                                            selectedAction: null,
+                                            dimensions: [],
+                                            metrics: [],
+                                          }),
+                                          dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).filter(
+                                            (entry) => entry.id !== customInfo.parsed.entryId
+                                          ),
+                                        },
+                                      },
+                                    }));
+                                    if (editingDimId === dim.id) {
+                                      setEditingDimId(null);
+                                      setEditDimData({ label: '', unique: false });
+                                    }
+                                  }}
+                                  title="Supprimer"
+                                >
+                                  {Icons.trash}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <span className={styles.definitionAttributeId}>—</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -1529,7 +1756,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
 
       <Modal
         isOpen={Boolean(metricsTableId)}
-        onClose={() => setMetricsTableId(null)}
+        onClose={() => {
+          setMetricsTableId(null);
+          setEditingMetId(null);
+          setEditMetData({ label: '', formula: '', unique: false });
+        }}
         title={metricsTable ? `Métriques - ${metricsTable.label}` : 'Métriques'}
         size="lg"
         footer={(
@@ -1537,7 +1768,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             <button
               type="button"
               className={`${styles.btn} ${styles.btnSecondary}`}
-              onClick={() => setMetricsTableId(null)}
+              onClick={() => {
+                setMetricsTableId(null);
+                setEditingMetId(null);
+                setEditMetData({ label: '', formula: '', unique: false });
+              }}
             >
               Fermer
             </button>
@@ -1555,30 +1790,209 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                 <tr>
                   <th>Métrique</th>
                   <th>Agrégation</th>
-                  <th>Source</th>
+                  <th>Alias</th>
+                  <th>Unique</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {metricsForTable.map((metric) => (
-                  <tr key={metric.id}>
-                    <td>
-                      <div className={styles.definitionAttribute}>
-                        <span className={styles.definitionAttributeLabel}>{metric.label}</span>
-                        <span className={styles.definitionAttributeId}>{metric.id}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={styles.metricAgg}>
-                        {metric.defaultAgg ? metric.defaultAgg.toUpperCase() : 'AUTO'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={styles.metricSource}>
-                        {baseDimensionIds.has(metric.id) ? 'Attribut' : 'Métrique'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {metricsForTable.map((metric) => {
+                  const customInfo = getCustomMetricEntry(metric);
+                  const isCustom = Boolean(customInfo);
+                  const isEditing = editingMetId === metric.id;
+                  const uniqueValue = customInfo?.entry.unique ?? false;
+                  const aliasValue = customInfo?.entry.alias ?? '—';
+                  const formulaValue = customInfo?.entry.formula || (metric.defaultAgg ? metric.defaultAgg.toUpperCase() : 'AUTO');
+                  const editAlias = customInfo
+                    ? buildAlias(
+                      customInfo.table?.id || metric.table,
+                      customInfo.attribute?.id || customInfo.parsed.attributeId,
+                      editMetData.unique,
+                      editMetData.formula
+                    )
+                    : aliasValue;
+                  const canSave = editMetData.label.trim().length > 0 && editMetData.formula.length > 0;
+
+                  return (
+                    <tr key={metric.id} className={isEditing ? styles.definitionEditRow : undefined}>
+                      <td>
+                        <div className={styles.definitionAttribute}>
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              className={styles.definitionEditInput}
+                              value={editMetData.label}
+                              onChange={(event) => setEditMetData((prev) => ({ ...prev, label: event.target.value }))}
+                              placeholder="Libellé"
+                            />
+                          ) : (
+                            <span className={styles.definitionAttributeLabel}>{metric.label}</span>
+                          )}
+                          <span className={styles.definitionAttributeId}>{metric.id}</span>
+                        </div>
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <select
+                            className={styles.definitionEditSelect}
+                            value={editMetData.formula}
+                            onChange={(event) => setEditMetData((prev) => ({ ...prev, formula: event.target.value }))}
+                          >
+                            <option value="">Sélectionner</option>
+                            {FORMULA_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className={styles.metricAgg}>
+                            {formulaValue}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <span className={styles.definitionEntryAlias}>{editAlias}</span>
+                        ) : (
+                          <span className={styles.definitionEntryAlias}>{aliasValue}</span>
+                        )}
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <label className={styles.definitionCheckbox}>
+                            <input
+                              type="checkbox"
+                              checked={editMetData.unique}
+                              onChange={(event) => setEditMetData((prev) => ({ ...prev, unique: event.target.checked }))}
+                            />
+                            Unique
+                          </label>
+                        ) : (
+                          <span className={uniqueValue ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                            {uniqueValue ? 'Unique' : 'Standard'}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {customInfo ? (
+                          <div className={styles.definitionActionIcons}>
+                            {isEditing ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
+                                  onClick={() => {
+                                    if (!canSave) return;
+                                    const nextLabel = editMetData.label.trim();
+                                    const nextAlias = buildAlias(
+                                      customInfo.table?.id || metric.table,
+                                      customInfo.attribute?.id || customInfo.parsed.attributeId,
+                                      editMetData.unique,
+                                      editMetData.formula
+                                    );
+                                    setDefinitionSelections((prev) => ({
+                                      ...prev,
+                                      [metric.table]: {
+                                        ...prev[metric.table],
+                                        [customInfo.parsed.attributeId]: {
+                                          ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
+                                            attributeLabel: null,
+                                            selectedAction: null,
+                                            dimensions: [],
+                                            metrics: [],
+                                          }),
+                                          metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).map((entry) =>
+                                            entry.id === customInfo.parsed.entryId
+                                              ? {
+                                                ...entry,
+                                                label: nextLabel,
+                                                name: nextLabel,
+                                                unique: editMetData.unique,
+                                                formula: editMetData.formula,
+                                                alias: nextAlias,
+                                              }
+                                              : entry
+                                          ),
+                                        },
+                                      },
+                                    }));
+                                    setEditingMetId(null);
+                                  }}
+                                  title="Enregistrer"
+                                  disabled={!canSave}
+                                >
+                                  {Icons.save}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.definitionActionBtn}
+                                  onClick={() => {
+                                    setEditingMetId(null);
+                                    setEditMetData({ label: '', formula: '', unique: false });
+                                  }}
+                                  title="Annuler"
+                                >
+                                  {Icons.close}
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className={styles.definitionActionBtn}
+                                  onClick={() => {
+                                    setEditingMetId(metric.id);
+                                    setEditMetData({
+                                      label: customInfo.entry.label,
+                                      formula: customInfo.entry.formula,
+                                      unique: customInfo.entry.unique,
+                                    });
+                                  }}
+                                  title="Modifier"
+                                >
+                                  {Icons.edit}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger}`}
+                                  onClick={() => {
+                                    setDefinitionSelections((prev) => ({
+                                      ...prev,
+                                      [metric.table]: {
+                                        ...prev[metric.table],
+                                        [customInfo.parsed.attributeId]: {
+                                          ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
+                                            attributeLabel: null,
+                                            selectedAction: null,
+                                            dimensions: [],
+                                            metrics: [],
+                                          }),
+                                          metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).filter(
+                                            (entry) => entry.id !== customInfo.parsed.entryId
+                                          ),
+                                        },
+                                      },
+                                    }));
+                                    if (editingMetId === metric.id) {
+                                      setEditingMetId(null);
+                                      setEditMetData({ label: '', formula: '', unique: false });
+                                    }
+                                  }}
+                                  title="Supprimer"
+                                >
+                                  {Icons.trash}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <span className={styles.definitionAttributeId}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

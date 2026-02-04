@@ -48,6 +48,7 @@ export interface DimensionDef {
   groupable: boolean;
   filterable: boolean;
   icon?: string;
+  defaultAgg?: AggType;
 }
 
 export interface MetricDef {

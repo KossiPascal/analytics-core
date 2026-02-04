@@ -451,12 +451,13 @@ export function useSqlBuilder(
       ? model.metrics.find((m) => m.id === field)
       : model.dimensions.find((d) => d.id === field);
 
+    const dimensionAgg = !isMetric && fieldDef ? (fieldDef as DimensionDef).defaultAgg : undefined;
     const newField: SelectField = {
       id: uuidv4(),
       field,
       label: fieldDef?.label || field,
       isMetric,
-      agg: isMetric ? (fieldDef as MetricDef)?.defaultAgg || 'sum' : undefined,
+      agg: isMetric ? (fieldDef as MetricDef)?.defaultAgg || 'sum' : dimensionAgg,
     };
     setState((prev) => ({ ...prev, select: [...prev.select, newField] }));
   }, [state.select.length, model.dimensions, model.metrics]);
