@@ -18,6 +18,7 @@ import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@/components/ui';
 import { DatabaseConnectionTab } from '@/pages/admins/components';
 import { FormRadioGroup, FormInput, FormSelect, FormCheckbox } from '@/components/forms';
+import { RemoveIcon } from '@/components/ui/icons';
 import { DefinitionItemForm, buildAlias, FORMULA_OPTIONS, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max';
@@ -876,9 +877,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       onClick={() => setFrom('')}
                       title="Retirer la table"
                     >
-                      <svg width="5" height="5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 4L4 12M4 4L12 12" strokeLinecap="round" />
-                      </svg>
+                      <RemoveIcon size={10} variant="cross" />
                     </button>
                   )}
                 </div>
@@ -974,9 +973,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                           className={styles.filterRemove}
                           onClick={() => !readOnly && removeJoin(join.id)}
                         >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
-                          </svg>
+                          <RemoveIcon size={14} variant="trash" />
                         </button>
                       </div>
                       <div style={{ marginBottom: '8px' }}>
@@ -1074,9 +1071,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         className={styles.selectedFieldRemove}
                         onClick={() => !readOnly && removeGroupBy(g.id)}
                       >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                          <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
+                        <RemoveIcon size={12} variant="trash" />
                       </button>
                     </div>
                   ))}
@@ -1167,9 +1162,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         className={styles.filterRemove}
                         onClick={() => !readOnly && removeOrderBy(o.id)}
                       >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
-                        </svg>
+                        <RemoveIcon size={14} variant="trash" />
                       </button>
                     </div>
                   ))}
@@ -1421,7 +1414,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                   </div>
                                   <button
                                     type="button"
-                                    className={styles.definitionEntryRemove}
+                                    
                                     onClick={() => {
                                       setDefinitionSelections((prev) => ({
                                         ...prev,
@@ -1443,9 +1436,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                     }}
                                     title="Supprimer"
                                   >
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
-                                    </svg>
+                                    <RemoveIcon size={14} variant="trash" />
                                   </button>
                                 </div>
                               ))}
@@ -1471,7 +1462,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                   </div>
                                   <button
                                     type="button"
-                                    className={styles.definitionEntryRemove}
+                                    
                                     onClick={() => {
                                       setDefinitionSelections((prev) => ({
                                         ...prev,
@@ -1493,9 +1484,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                     }}
                                     title="Supprimer"
                                   >
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                                      <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
-                                    </svg>
+                                    <RemoveIcon size={14} variant="trash" />
                                   </button>
                                 </div>
                               ))}
