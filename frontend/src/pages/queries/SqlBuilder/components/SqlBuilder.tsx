@@ -20,7 +20,7 @@ import { DatabaseConnectionTab } from '@/pages/admins/components';
 import { FormRadioGroup, FormInput, FormSelect, FormCheckbox } from '@/components/forms';
 import { DefinitionItemForm, buildAlias, FORMULA_OPTIONS, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
-type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
+type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max';
 
 type AttributeDefinition = {
   attributeLabel: string | null;
@@ -41,7 +41,6 @@ const AGGREGATION_OPTIONS: { value: AggregationType; label: string }[] = [
   { value: 'avg', label: 'AVG' },
   { value: 'min', label: 'MIN' },
   { value: 'max', label: 'MAX' },
-  { value: 'distinct', label: 'DISTINCT' },
 ];
 
 type SourceType = 'all' | 'table' | 'view' | 'materialized_view';
@@ -877,7 +876,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       onClick={() => setFrom('')}
                       title="Retirer la table"
                     >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg width="5" height="5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 4L4 12M4 4L12 12" strokeLinecap="round" />
                       </svg>
                     </button>
@@ -932,7 +931,6 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                     key={field.id}
                     field={field}
                     index={index}
-                    onUpdate={(updates) => updateSelect(field.id, updates)}
                     onRemove={() => removeSelect(field.id)}
                     onDragStart={() => setDragOverIndex(null)}
                     onDragEnd={() => setDragOverIndex(null)}
@@ -982,40 +980,35 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         </button>
                       </div>
                       <div style={{ marginBottom: '8px' }}>
-                        <select
-                          className={styles.filterSelect}
+                        <FormSelect
                           value={join.table}
-                          onChange={(e) => !readOnly && updateJoin(join.id, { table: e.target.value })}
-                          style={{ width: '100%' }}
-                        >
-                          <option value="">Sélectionner une table</option>
-                          {availableTables.map((t) => (
-                            <option key={t.id} value={t.id}>{t.label}</option>
-                          ))}
-                        </select>
+                          onChange={(value) => !readOnly && updateJoin(join.id, { table: value })}
+                          options={[
+                            ...(join.table && !availableTables.some((t) => t.id === join.table)
+                              ? effectiveModel.tables.filter((t) => t.id === join.table).map((t) => ({ value: t.id, label: t.label }))
+                              : []),
+                            ...availableTables.map((t) => ({ value: t.id, label: t.label })),
+                          ]}
+                          placeholder="Sélectionner une table"
+                          disabled={readOnly}
+                        />
                       </div>
                       <div className={styles.joinCondition}>
-                        <select
-                          className={styles.filterSelect}
+                        <FormSelect
                           value={join.on.left}
-                          onChange={(e) => !readOnly && updateJoin(join.id, { on: { ...join.on, left: e.target.value } })}
-                        >
-                          <option value="">Champ source</option>
-                          {allFields.map((f) => (
-                            <option key={f.id} value={f.id}>{f.label}</option>
-                          ))}
-                        </select>
+                          onChange={(value) => !readOnly && updateJoin(join.id, { on: { ...join.on, left: value } })}
+                          options={allFields.map((f) => ({ value: f.id, label: f.label }))}
+                          placeholder="Champ source"
+                          disabled={readOnly}
+                        />
                         <span className={styles.joinConditionEquals}>=</span>
-                        <select
-                          className={styles.filterSelect}
+                        <FormSelect
                           value={join.on.right}
-                          onChange={(e) => !readOnly && updateJoin(join.id, { on: { ...join.on, right: e.target.value } })}
-                        >
-                          <option value="">Champ cible</option>
-                          {allFields.map((f) => (
-                            <option key={f.id} value={f.id}>{f.label}</option>
-                          ))}
-                        </select>
+                          onChange={(value) => !readOnly && updateJoin(join.id, { on: { ...join.on, right: value } })}
+                          options={allFields.map((f) => ({ value: f.id, label: f.label }))}
+                          placeholder="Champ cible"
+                          disabled={readOnly}
+                        />
                       </div>
                     </div>
                   ))}
@@ -1094,22 +1087,19 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                 </div>
               )}
               <div style={{ marginTop: '12px' }}>
-                <select
-                  className={styles.filterSelect}
+                <FormSelect
                   value=""
-                  onChange={(e) => {
-                    if (e.target.value && !readOnly) {
-                      addGroupBy(e.target.value);
+                  onChange={(value) => {
+                    if (value && !readOnly) {
+                      addGroupBy(value);
                     }
                   }}
-                >
-                  <option value="">+ Ajouter un champ</option>
-                  {availableDimensions
+                  options={availableDimensions
                     .filter((d) => d.groupable && !state.groupBy.some((g) => g.field === d.id))
-                    .map((d) => (
-                      <option key={d.id} value={d.id}>{d.label}</option>
-                    ))}
-                </select>
+                    .map((d) => ({ value: d.id, label: d.label }))}
+                  placeholder="+ Ajouter un champ"
+                  disabled={readOnly}
+                />
               </div>
             </CollapsibleSection>
 
@@ -1186,20 +1176,17 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                 </div>
               )}
               <div style={{ marginTop: state.orderBy.length > 0 ? '12px' : 0 }}>
-                <select
-                  className={styles.filterSelect}
+                <FormSelect
                   value=""
-                  onChange={(e) => {
-                    if (e.target.value && !readOnly) {
-                      addOrderBy(e.target.value);
+                  onChange={(value) => {
+                    if (value && !readOnly) {
+                      addOrderBy(value);
                     }
                   }}
-                >
-                  <option value="">+ Ajouter un tri</option>
-                  {allFields.map((f) => (
-                    <option key={f.id} value={f.id}>{f.label}</option>
-                  ))}
-                </select>
+                  options={allFields.map((f) => ({ value: f.id, label: f.label }))}
+                  placeholder="+ Ajouter un tri"
+                  disabled={readOnly}
+                />
               </div>
             </CollapsibleSection>
 
@@ -1212,26 +1199,28 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             >
               <div className={styles.limitOffset}>
                 <div className={styles.limitField}>
-                  <label className={styles.limitLabel}>LIMIT</label>
-                  <input
+                  <FormInput
                     type="number"
-                    className={styles.limitInput}
+                    label="LIMIT"
+                    layout="inline"
                     value={state.limit ?? ''}
                     onChange={(e) => !readOnly && setLimit(e.target.value ? parseInt(e.target.value, 10) : undefined)}
                     min={1}
                     max={100000}
                     placeholder="100"
+                    disabled={readOnly}
                   />
                 </div>
                 <div className={styles.limitField}>
-                  <label className={styles.limitLabel}>OFFSET</label>
-                  <input
+                  <FormInput
                     type="number"
-                    className={styles.limitInput}
+                    label="OFFSET"
+                    layout="inline"
                     value={state.offset ?? ''}
                     onChange={(e) => !readOnly && setOffset(e.target.value ? parseInt(e.target.value, 10) : undefined)}
                     min={0}
                     placeholder="0"
+                    disabled={readOnly}
                   />
                 </div>
               </div>
