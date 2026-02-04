@@ -17,17 +17,16 @@ import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@/components/ui';
 import { DatabaseConnectionTab } from '@/pages/admins/components';
+import { FormRadioGroup } from '@/components/forms';
+import { DefinitionItemForm, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
 
 type AttributeDefinition = {
-  dimension: boolean;
-  metric: boolean;
-  dimensionLabel?: string;
-  dimensionAlias?: string;
-  metricLabel?: string;
-  metricAlias?: string;
-  aggregationType?: AggregationType;
+  attributeLabel: string | null;
+  selectedAction: 'dimension' | 'metric' | null;
+  dimensions: DimensionEntry[];
+  metrics: MetricEntry[];
 };
 
 type DefinitionSelections = {
@@ -219,7 +218,12 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
       if (!initial[dimension.table]) {
         initial[dimension.table] = {};
       }
-      initial[dimension.table][dimension.id] = { dimension: true, metric: false };
+      initial[dimension.table][dimension.id] = {
+        attributeLabel: null,
+        selectedAction: null,
+        dimensions: [],
+        metrics: [],
+      };
     });
     return initial;
   });
@@ -247,30 +251,36 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
   }, [tableMenuOpenId]);
 
   const effectiveModel = useMemo(() => {
-    const filteredDimensions = model.dimensions.filter((dimension) => {
-      const selection = definitionSelections[dimension.table]?.[dimension.id];
-      return selection ? selection.dimension : true;
-    });
-
-    const baseMetricIds = new Set(model.metrics.map((metric) => metric.id));
+    const additionalDimensions: DimensionDef[] = [];
     const additionalMetrics: MetricDef[] = [];
 
-    model.dimensions.forEach((dimension) => {
-      const selection = definitionSelections[dimension.table]?.[dimension.id];
-      if (selection?.metric && !baseMetricIds.has(dimension.id)) {
-        additionalMetrics.push({
-          id: dimension.id,
-          label: selection.metricLabel || dimension.label,
-          table: dimension.table,
-          defaultAgg: selection.aggregationType || (dimension.type === 'number' ? 'sum' : 'count'),
-          returnType: 'number',
+    Object.entries(definitionSelections).forEach(([tableId, attrs]) => {
+      Object.entries(attrs).forEach(([attrId, config]) => {
+        const baseDim = model.dimensions.find((d) => d.id === attrId);
+        if (!baseDim) return;
+
+        config.dimensions.forEach((dim) => {
+          additionalDimensions.push({
+            ...baseDim,
+            id: `${attrId}__dim__${dim.id}`,
+            label: dim.label,
+          });
         });
-      }
+
+        config.metrics.forEach((met) => {
+          additionalMetrics.push({
+            id: `${attrId}__met__${met.id}`,
+            label: met.label,
+            table: tableId,
+            returnType: 'number',
+          });
+        });
+      });
     });
 
     return {
       ...model,
-      dimensions: filteredDimensions,
+      dimensions: [...model.dimensions, ...additionalDimensions],
       metrics: [...model.metrics, ...additionalMetrics],
     };
   }, [model, definitionSelections]);
@@ -1175,7 +1185,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
         isOpen={Boolean(definitionTableId)}
         onClose={() => setDefinitionTableId(null)}
         title={definitionTable ? `Définitions - ${definitionTable.label}` : 'Définitions'}
-        size="lg"
+        size="xl"
         footer={(
           <div className={styles.modalFooter}>
             <button
@@ -1198,15 +1208,17 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
               <thead>
                 <tr>
                   <th>Attribut</th>
-                  <th>Dimension</th>
-                  <th>Métrique</th>
+                  <th>Actions</th>
+                  <th>Formulaire</th>
                 </tr>
               </thead>
               <tbody>
                 {definitionAttributes.map((attribute) => {
                   const selection = definitionSelections[attribute.table]?.[attribute.id] ?? {
-                    dimension: true,
-                    metric: false,
+                    attributeLabel: null,
+                    selectedAction: null,
+                    dimensions: [],
+                    metrics: [],
                   };
                   const typeLabels: Record<string, string> = {
                     string: 'Texte',
@@ -1218,7 +1230,30 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                     <tr key={attribute.id}>
                       <td>
                         <div className={styles.definitionAttribute}>
-                          <span className={styles.definitionAttributeLabel}>{attribute.label}</span>
+                          <input
+                            type="text"
+                            className={styles.definitionAttributeLabelInput}
+                            value={selection.attributeLabel ?? attribute.label}
+                            disabled={readOnly}
+                            onChange={(e) => {
+                              setDefinitionSelections((prev) => ({
+                                ...prev,
+                                [attribute.table]: {
+                                  ...prev[attribute.table],
+                                  [attribute.id]: {
+                                    ...(prev[attribute.table]?.[attribute.id] ?? {
+                                      attributeLabel: null,
+                                      selectedAction: null,
+                                      dimensions: [],
+                                      metrics: [],
+                                    }),
+                                    attributeLabel: e.target.value,
+                                  },
+                                },
+                              }));
+                            }}
+                            placeholder={attribute.label}
+                          />
                           <span className={styles.definitionAttributeId}>{attribute.id}</span>
                           <span className={styles.definitionAttributeType}>
                             Type: {typeLabels[attribute.type] || attribute.type}
@@ -1226,161 +1261,171 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         </div>
                       </td>
                       <td>
-                        <div className={styles.definitionCell}>
-                          <label className={styles.definitionCheckbox}>
-                            <input
-                              type="checkbox"
-                              checked={selection.dimension}
-                              disabled={readOnly}
-                              onChange={(event) => {
-                                const checked = event.target.checked;
-                                const currentLabel = selection.dimensionLabel || attribute.label;
-                                setDefinitionSelections((prev) => ({
-                                  ...prev,
-                                  [attribute.table]: {
-                                    ...prev[attribute.table],
-                                    [attribute.id]: {
-                                      ...prev[attribute.table]?.[attribute.id],
-                                      dimension: checked,
-                                      dimensionLabel: checked ? currentLabel : undefined,
-                                      dimensionAlias: checked ? generateAlias(currentLabel) : undefined,
-                                    },
-                                  },
-                                }));
-                              }}
-                            />
-                            <span>Dimension</span>
-                          </label>
-                          {selection.dimension && (
-                            <div className={styles.definitionFields}>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Libellé</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInput}
-                                  value={selection.dimensionLabel || attribute.label}
-                                  disabled={readOnly}
-                                  onChange={(event) => {
-                                    const newLabel = event.target.value;
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [attribute.table]: {
-                                        ...prev[attribute.table],
-                                        [attribute.id]: {
-                                          ...prev[attribute.table]?.[attribute.id],
-                                          dimensionLabel: newLabel,
-                                          dimensionAlias: generateAlias(newLabel),
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                />
-                              </div>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Alias</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInputDisabled}
-                                  value={selection.dimensionAlias || generateAlias(selection.dimensionLabel || attribute.label)}
-                                  disabled
-                                  readOnly
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                        <FormRadioGroup
+                          name={`action-${attribute.id}`}
+                          options={[
+                            { value: 'dimension', label: 'Ajouter dimension' },
+                            { value: 'metric', label: 'Ajouter métrique' },
+                          ]}
+                          value={selection.selectedAction || ''}
+                          onChange={(value) => {
+                            if (readOnly) return;
+                            setDefinitionSelections((prev) => ({
+                              ...prev,
+                              [attribute.table]: {
+                                ...prev[attribute.table],
+                                [attribute.id]: {
+                                  ...(prev[attribute.table]?.[attribute.id] ?? {
+                                    attributeLabel: null,
+                                    selectedAction: null,
+                                    dimensions: [],
+                                    metrics: [],
+                                  }),
+                                  selectedAction: value as 'dimension' | 'metric',
+                                },
+                              },
+                            }));
+                          }}
+                          orientation="vertical"
+                          disabled={readOnly}
+                        />
                       </td>
                       <td>
-                        <div className={styles.definitionCell}>
-                          <label className={styles.definitionCheckbox}>
-                            <input
-                              type="checkbox"
-                              checked={selection.metric}
-                              disabled={readOnly}
-                              onChange={(event) => {
-                                const checked = event.target.checked;
-                                const currentLabel = selection.metricLabel || attribute.label;
-                                const defaultAgg: AggregationType = attribute.type === 'number' ? 'sum' : 'count';
-                                setDefinitionSelections((prev) => ({
-                                  ...prev,
-                                  [attribute.table]: {
-                                    ...prev[attribute.table],
-                                    [attribute.id]: {
-                                      ...prev[attribute.table]?.[attribute.id],
-                                      metric: checked,
-                                      metricLabel: checked ? currentLabel : undefined,
-                                      metricAlias: checked ? generateAlias(currentLabel) : undefined,
-                                      aggregationType: checked ? (prev[attribute.table]?.[attribute.id]?.aggregationType || defaultAgg) : undefined,
-                                    },
-                                  },
-                                }));
+                        <div className={styles.definitionFormColumn}>
+                          {selection.selectedAction && (
+                            <DefinitionItemForm
+                              type={selection.selectedAction}
+                              onAdd={(entry) => {
+                                setDefinitionSelections((prev) => {
+                                  const current = prev[attribute.table]?.[attribute.id] ?? {
+                                    attributeLabel: null,
+                                    selectedAction: selection.selectedAction,
+                                    dimensions: [],
+                                    metrics: [],
+                                  };
+                                  if (selection.selectedAction === 'dimension') {
+                                    return {
+                                      ...prev,
+                                      [attribute.table]: {
+                                        ...prev[attribute.table],
+                                        [attribute.id]: {
+                                          ...current,
+                                          dimensions: [...current.dimensions, entry as DimensionEntry],
+                                        },
+                                      },
+                                    };
+                                  } else {
+                                    return {
+                                      ...prev,
+                                      [attribute.table]: {
+                                        ...prev[attribute.table],
+                                        [attribute.id]: {
+                                          ...current,
+                                          metrics: [...current.metrics, entry as MetricEntry],
+                                        },
+                                      },
+                                    };
+                                  }
+                                });
                               }}
                             />
-                            <span>Métrique</span>
-                          </label>
-                          {selection.metric && (
-                            <div className={styles.definitionFields}>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Libellé</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInput}
-                                  value={selection.metricLabel || attribute.label}
-                                  disabled={readOnly}
-                                  onChange={(event) => {
-                                    const newLabel = event.target.value;
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [attribute.table]: {
-                                        ...prev[attribute.table],
-                                        [attribute.id]: {
-                                          ...prev[attribute.table]?.[attribute.id],
-                                          metricLabel: newLabel,
-                                          metricAlias: generateAlias(newLabel),
+                          )}
+
+                          {selection.dimensions.length > 0 && (
+                            <div className={styles.definitionEntryList}>
+                              <div className={styles.definitionEntryListTitle}>
+                                Dimensions ({selection.dimensions.length})
+                              </div>
+                              {selection.dimensions.map((dim) => (
+                                <div key={dim.id} className={styles.definitionEntry}>
+                                  <div className={styles.definitionEntryInfo}>
+                                    <span className={styles.definitionEntryLabel}>{dim.label}</span>
+                                    <span className={styles.definitionEntryAlias}>{dim.alias}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className={styles.definitionEntryRemove}
+                                    onClick={() => {
+                                      setDefinitionSelections((prev) => ({
+                                        ...prev,
+                                        [attribute.table]: {
+                                          ...prev[attribute.table],
+                                          [attribute.id]: {
+                                            ...(prev[attribute.table]?.[attribute.id] ?? {
+                                              attributeLabel: null,
+                                              selectedAction: null,
+                                              dimensions: [],
+                                              metrics: [],
+                                            }),
+                                            dimensions: (prev[attribute.table]?.[attribute.id]?.dimensions ?? []).filter(
+                                              (d) => d.id !== dim.id
+                                            ),
+                                          },
                                         },
-                                      },
-                                    }));
-                                  }}
-                                />
-                              </div>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Alias</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInputDisabled}
-                                  value={selection.metricAlias || generateAlias(selection.metricLabel || attribute.label)}
-                                  disabled
-                                  readOnly
-                                />
-                              </div>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Agrégation</label>
-                                <select
-                                  className={styles.definitionSelect}
-                                  value={selection.aggregationType || (attribute.type === 'number' ? 'sum' : 'count')}
-                                  disabled={readOnly}
-                                  onChange={(event) => {
-                                    const aggType = event.target.value as AggregationType;
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [attribute.table]: {
-                                        ...prev[attribute.table],
-                                        [attribute.id]: {
-                                          ...prev[attribute.table]?.[attribute.id],
-                                          aggregationType: aggType,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                >
-                                  {AGGREGATION_OPTIONS.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                      {opt.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+                                      }));
+                                    }}
+                                    title="Supprimer"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ))}
                             </div>
+                          )}
+
+                          {selection.metrics.length > 0 && (
+                            <div className={styles.definitionEntryList}>
+                              <div className={styles.definitionEntryListTitle}>
+                                Métriques ({selection.metrics.length})
+                              </div>
+                              {selection.metrics.map((met) => (
+                                <div key={met.id} className={styles.definitionEntry}>
+                                  <div className={styles.definitionEntryInfo}>
+                                    <span className={styles.definitionEntryLabel}>{met.label}</span>
+                                    <span className={styles.definitionEntryAlias}>{met.alias}</span>
+                                    {met.formula && (
+                                      <span className={styles.definitionEntryFormula}>{met.formula}</span>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className={styles.definitionEntryRemove}
+                                    onClick={() => {
+                                      setDefinitionSelections((prev) => ({
+                                        ...prev,
+                                        [attribute.table]: {
+                                          ...prev[attribute.table],
+                                          [attribute.id]: {
+                                            ...(prev[attribute.table]?.[attribute.id] ?? {
+                                              attributeLabel: null,
+                                              selectedAction: null,
+                                              dimensions: [],
+                                              metrics: [],
+                                            }),
+                                            metrics: (prev[attribute.table]?.[attribute.id]?.metrics ?? []).filter(
+                                              (m) => m.id !== met.id
+                                            ),
+                                          },
+                                        },
+                                      }));
+                                    }}
+                                    title="Supprimer"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {!selection.selectedAction && selection.dimensions.length === 0 && selection.metrics.length === 0 && (
+                            <span className={styles.definitionFormPlaceholder}>
+                              Sélectionnez une action pour afficher le formulaire
+                            </span>
                           )}
                         </div>
                       </td>

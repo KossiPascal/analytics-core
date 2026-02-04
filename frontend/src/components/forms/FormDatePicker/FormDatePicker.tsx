@@ -15,6 +15,8 @@ export interface FormDatePickerProps extends Omit<InputHTMLAttributes<HTMLInputE
   hint?: string;
   /** Classes CSS additionnelles pour le wrapper */
   wrapperClassName?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export const FormDatePicker = forwardRef<HTMLInputElement, FormDatePickerProps>(
@@ -27,6 +29,7 @@ export const FormDatePicker = forwardRef<HTMLInputElement, FormDatePickerProps>(
       disabled,
       className = '',
       wrapperClassName = '',
+      layout = 'vertical',
       id,
       ...props
     },
@@ -50,6 +53,7 @@ export const FormDatePicker = forwardRef<HTMLInputElement, FormDatePickerProps>(
         error={error}
         hint={hint}
         htmlFor={inputId}
+        layout={layout}
       >
         <div className={wrapperClasses}>
           <input

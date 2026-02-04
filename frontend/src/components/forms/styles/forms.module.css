@@ -39,6 +39,26 @@
   margin-bottom: 1rem;
 }
 
+.formFieldInline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.formFieldInline > .label {
+  flex-shrink: 0;
+  min-width: max-content;
+  margin-bottom: 0;
+}
+
+.formFieldInlineContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
 .label {
   font-size: 0.875rem;
   font-weight: 600;

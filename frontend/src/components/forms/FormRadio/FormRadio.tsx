@@ -46,6 +46,8 @@ export interface FormRadioGroupProps {
   disabled?: boolean;
   /** Classes CSS additionnelles */
   className?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export const FormRadio = forwardRef<HTMLInputElement, FormRadioProps>(
@@ -105,6 +107,7 @@ export function FormRadioGroup({
   orientation = 'vertical',
   disabled,
   className = '',
+  layout = 'vertical',
 }: FormRadioGroupProps) {
   const groupClasses = [
     styles.radioGroup,
@@ -114,45 +117,54 @@ export function FormRadioGroup({
     .filter(Boolean)
     .join(' ');
 
+  const fieldClasses = [
+    styles.formField,
+    layout === 'inline' && styles.formFieldInline,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={styles.formField}>
+    <div className={fieldClasses}>
       {label && (
         <span className={styles.label}>
           {label}
           {required && <span className={styles.required}>*</span>}
         </span>
       )}
-      <div className={groupClasses} role="radiogroup">
-        {options.map((option) => (
-          <div
-            key={option.value}
-            className={`${styles.radioWrapper} ${(disabled || option.disabled) ? styles.disabled : ''}`}
-          >
-            <label className={styles.radioLabel}>
-              <div className={styles.radioBox}>
-                <input
-                  type="radio"
-                  name={name}
-                  value={option.value}
-                  checked={value === option.value}
-                  onChange={() => onChange?.(option.value)}
-                  disabled={disabled || option.disabled}
-                  className={styles.radioInput}
-                />
-                <span className={styles.radioDot} />
-              </div>
-              <div className={styles.radioContent}>
-                <span className={styles.radioText}>{option.label}</span>
-                {option.description && (
-                  <span className={styles.radioDescription}>{option.description}</span>
-                )}
-              </div>
-            </label>
-          </div>
-        ))}
+      <div className={layout === 'inline' ? styles.formFieldInlineContent : undefined}>
+        <div className={groupClasses} role="radiogroup">
+          {options.map((option) => (
+            <div
+              key={option.value}
+              className={`${styles.radioWrapper} ${(disabled || option.disabled) ? styles.disabled : ''}`}
+            >
+              <label className={styles.radioLabel}>
+                <div className={styles.radioBox}>
+                  <input
+                    type="radio"
+                    name={name}
+                    value={option.value}
+                    checked={value === option.value}
+                    onChange={() => onChange?.(option.value)}
+                    disabled={disabled || option.disabled}
+                    className={styles.radioInput}
+                  />
+                  <span className={styles.radioDot} />
+                </div>
+                <div className={styles.radioContent}>
+                  <span className={styles.radioText}>{option.label}</span>
+                  {option.description && (
+                    <span className={styles.radioDescription}>{option.description}</span>
+                  )}
+                </div>
+              </label>
+            </div>
+          ))}
+        </div>
+        {hint && !error && <span className={styles.hint}>{hint}</span>}
+        {error && <span className={styles.errorMessage}>{error}</span>}
       </div>
-      {hint && !error && <span className={styles.hint}>{hint}</span>}
-      {error && <span className={styles.errorMessage}>{error}</span>}
     </div>
   );
 }

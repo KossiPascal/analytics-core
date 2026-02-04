@@ -11,6 +11,8 @@ export interface FormSwitchProps extends Omit<InputHTMLAttributes<HTMLInputEleme
   size?: 'sm' | 'md' | 'lg';
   /** Classes CSS additionnelles */
   wrapperClassName?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export const FormSwitch = forwardRef<HTMLInputElement, FormSwitchProps>(

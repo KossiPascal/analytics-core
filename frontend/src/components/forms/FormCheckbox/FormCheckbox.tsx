@@ -10,6 +10,8 @@ export interface FormCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputEle
   error?: string;
   /** Classes CSS additionnelles */
   wrapperClassName?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(

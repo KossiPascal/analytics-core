@@ -41,6 +41,8 @@ export interface FormSelectProps {
   className?: string;
   /** Classes CSS pour le wrapper */
   wrapperClassName?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export function FormSelect({
@@ -59,6 +61,7 @@ export function FormSelect({
   id,
   className = '',
   wrapperClassName = '',
+  layout = 'vertical',
 }: FormSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,6 +134,7 @@ export function FormSelect({
       error={error}
       hint={hint}
       htmlFor={inputId}
+      layout={layout}
     >
       <div className={`${styles.selectWrapper} ${className}`} ref={wrapperRef}>
         <div className={wrapperClasses} onClick={handleToggle}>

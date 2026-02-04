@@ -18,6 +18,8 @@ export interface FormTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaEl
   resize?: 'none' | 'vertical' | 'horizontal' | 'both';
   /** Classes CSS additionnelles pour le wrapper */
   wrapperClassName?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
@@ -32,6 +34,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
       resize = 'vertical',
       className = '',
       wrapperClassName = '',
+      layout = 'vertical',
       id,
       ...props
     },
@@ -55,6 +58,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
         error={error}
         hint={hint}
         htmlFor={inputId}
+        layout={layout}
       >
         <div className={wrapperClasses}>
           <textarea
