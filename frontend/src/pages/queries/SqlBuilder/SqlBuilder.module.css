@@ -1603,7 +1603,7 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--qb-text-light);
+  color: var(--qb-text-muted);
   cursor: pointer;
   border-radius: var(--qb-radius-sm);
   transition: var(--qb-transition);
@@ -1612,6 +1612,36 @@
 .definitionActionBtn:hover {
   background: var(--qb-bg-hover);
   color: var(--qb-primary);
+}
+
+.definitionActionBtn:disabled {
+  opacity: 1;
+  color: var(--qb-text-muted);
+  cursor: not-allowed;
+}
+
+.definitionActionBtnDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.definitionActionBtn svg {
+  display: block;
+  stroke: currentColor;
+}
+
+.definitionEditRow :global(.formField) {
+  margin-bottom: 0;
+  gap: 0.25rem;
+}
+
+.definitionEditRow :global(.formFieldInlineContent) {
+  gap: 0;
+}
+
+.definitionEditRow :global(.selectWrapper) {
+  min-width: 140px;
 }
 
 .definitionActionBtnDanger:hover {

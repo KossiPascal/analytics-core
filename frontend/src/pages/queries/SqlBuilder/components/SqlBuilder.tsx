@@ -17,7 +17,7 @@ import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@/components/ui';
 import { DatabaseConnectionTab } from '@/pages/admins/components';
-import { FormRadioGroup } from '@/components/forms';
+import { FormRadioGroup, FormInput, FormSelect, FormCheckbox } from '@/components/forms';
 import { DefinitionItemForm, buildAlias, FORMULA_OPTIONS, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
@@ -1581,6 +1581,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                   const customInfo = getCustomDimensionEntry(dim);
                   const isCustom = Boolean(customInfo);
                   const isEditing = editingDimId === dim.id;
+                  const isEditable = Boolean(customInfo);
                   const uniqueValue = customInfo?.entry.unique ?? false;
                   const aliasValue = customInfo?.entry.alias ?? '—';
                   const editAlias = customInfo
@@ -1595,9 +1596,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       <td>
                         <div className={styles.definitionAttribute}>
                           {isEditing ? (
-                            <input
-                              type="text"
-                              className={styles.definitionEditInput}
+                            <FormInput
                               value={editDimData.label}
                               onChange={(event) => setEditDimData((prev) => ({ ...prev, label: event.target.value }))}
                               placeholder="Libellé"
@@ -1622,14 +1621,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       </td>
                       <td>
                         {isEditing ? (
-                          <label className={styles.definitionCheckbox}>
-                            <input
-                              type="checkbox"
-                              checked={editDimData.unique}
-                              onChange={(event) => setEditDimData((prev) => ({ ...prev, unique: event.target.checked }))}
-                            />
-                            Unique
-                          </label>
+                          <FormCheckbox
+                            label="Unique"
+                            checked={editDimData.unique}
+                            onChange={(event) => setEditDimData((prev) => ({ ...prev, unique: event.target.checked }))}
+                          />
                         ) : (
                           <span className={uniqueValue ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
                             {uniqueValue ? 'Unique' : 'Standard'}
@@ -1637,113 +1633,114 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         )}
                       </td>
                       <td>
-                        {customInfo ? (
-                          <div className={styles.definitionActionIcons}>
-                            {isEditing ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
-                                  onClick={() => {
-                                    const nextLabel = editDimData.label.trim();
-                                    if (!nextLabel) return;
-                                    const nextAlias = buildAlias(
-                                      customInfo.table?.id || dim.table,
-                                      customInfo.attribute?.id || customInfo.parsed.attributeId,
-                                      editDimData.unique
-                                    );
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [dim.table]: {
-                                        ...prev[dim.table],
-                                        [customInfo.parsed.attributeId]: {
-                                          ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
-                                            attributeLabel: null,
-                                            selectedAction: null,
-                                            dimensions: [],
-                                            metrics: [],
-                                          }),
-                                          dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).map((entry) =>
-                                            entry.id === customInfo.parsed.entryId
-                                              ? {
-                                                ...entry,
-                                                label: nextLabel,
-                                                name: nextLabel,
-                                                unique: editDimData.unique,
-                                                alias: nextAlias,
-                                              }
-                                              : entry
-                                          ),
-                                        },
+                        <div className={styles.definitionActionIcons}>
+                          {isEditing ? (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
+                                onClick={() => {
+                                  const nextLabel = editDimData.label.trim();
+                                  if (!nextLabel || !customInfo) return;
+                                  const nextAlias = buildAlias(
+                                    customInfo.table?.id || dim.table,
+                                    customInfo.attribute?.id || customInfo.parsed.attributeId,
+                                    editDimData.unique
+                                  );
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [dim.table]: {
+                                      ...prev[dim.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).map((entry) =>
+                                          entry.id === customInfo.parsed.entryId
+                                            ? {
+                                              ...entry,
+                                              label: nextLabel,
+                                              name: nextLabel,
+                                              unique: editDimData.unique,
+                                              alias: nextAlias,
+                                            }
+                                            : entry
+                                        ),
                                       },
-                                    }));
-                                    setEditingDimId(null);
-                                  }}
-                                  title="Enregistrer"
-                                >
-                                  {Icons.save}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={styles.definitionActionBtn}
-                                  onClick={() => {
+                                    },
+                                  }));
+                                  setEditingDimId(null);
+                                }}
+                                title="Enregistrer"
+                                disabled={!customInfo}
+                              >
+                                {Icons.save}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.definitionActionBtn}
+                                onClick={() => {
+                                  setEditingDimId(null);
+                                  setEditDimData({ label: '', unique: false });
+                                }}
+                                title="Annuler"
+                              >
+                                {Icons.close}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setEditingDimId(dim.id);
+                                  setEditDimData({ label: customInfo.entry.label, unique: customInfo.entry.unique });
+                                }}
+                                title={customInfo ? 'Modifier' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.edit}
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [dim.table]: {
+                                      ...prev[dim.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).filter(
+                                          (entry) => entry.id !== customInfo.parsed.entryId
+                                        ),
+                                      },
+                                    },
+                                  }));
+                                  if (editingDimId === dim.id) {
                                     setEditingDimId(null);
                                     setEditDimData({ label: '', unique: false });
-                                  }}
-                                  title="Annuler"
-                                >
-                                  {Icons.close}
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  className={styles.definitionActionBtn}
-                                  onClick={() => {
-                                    setEditingDimId(dim.id);
-                                    setEditDimData({ label: customInfo.entry.label, unique: customInfo.entry.unique });
-                                  }}
-                                  title="Modifier"
-                                >
-                                  {Icons.edit}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger}`}
-                                  onClick={() => {
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [dim.table]: {
-                                        ...prev[dim.table],
-                                        [customInfo.parsed.attributeId]: {
-                                          ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
-                                            attributeLabel: null,
-                                            selectedAction: null,
-                                            dimensions: [],
-                                            metrics: [],
-                                          }),
-                                          dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).filter(
-                                            (entry) => entry.id !== customInfo.parsed.entryId
-                                          ),
-                                        },
-                                      },
-                                    }));
-                                    if (editingDimId === dim.id) {
-                                      setEditingDimId(null);
-                                      setEditDimData({ label: '', unique: false });
-                                    }
-                                  }}
-                                  title="Supprimer"
-                                >
-                                  {Icons.trash}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <span className={styles.definitionAttributeId}>—</span>
-                        )}
+                                  }
+                                }}
+                                title={customInfo ? 'Supprimer' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.trash}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1800,6 +1797,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                   const customInfo = getCustomMetricEntry(metric);
                   const isCustom = Boolean(customInfo);
                   const isEditing = editingMetId === metric.id;
+                  const isEditable = Boolean(customInfo);
                   const uniqueValue = customInfo?.entry.unique ?? false;
                   const aliasValue = customInfo?.entry.alias ?? '—';
                   const formulaValue = customInfo?.entry.formula || (metric.defaultAgg ? metric.defaultAgg.toUpperCase() : 'AUTO');
@@ -1818,9 +1816,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       <td>
                         <div className={styles.definitionAttribute}>
                           {isEditing ? (
-                            <input
-                              type="text"
-                              className={styles.definitionEditInput}
+                            <FormInput
                               value={editMetData.label}
                               onChange={(event) => setEditMetData((prev) => ({ ...prev, label: event.target.value }))}
                               placeholder="Libellé"
@@ -1833,18 +1829,12 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       </td>
                       <td>
                         {isEditing ? (
-                          <select
-                            className={styles.definitionEditSelect}
+                          <FormSelect
+                            options={FORMULA_OPTIONS}
                             value={editMetData.formula}
-                            onChange={(event) => setEditMetData((prev) => ({ ...prev, formula: event.target.value }))}
-                          >
-                            <option value="">Sélectionner</option>
-                            {FORMULA_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(value) => setEditMetData((prev) => ({ ...prev, formula: value }))}
+                            placeholder="Sélectionner"
+                          />
                         ) : (
                           <span className={styles.metricAgg}>
                             {formulaValue}
@@ -1860,14 +1850,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       </td>
                       <td>
                         {isEditing ? (
-                          <label className={styles.definitionCheckbox}>
-                            <input
-                              type="checkbox"
-                              checked={editMetData.unique}
-                              onChange={(event) => setEditMetData((prev) => ({ ...prev, unique: event.target.checked }))}
-                            />
-                            Unique
-                          </label>
+                          <FormCheckbox
+                            label="Unique"
+                            checked={editMetData.unique}
+                            onChange={(event) => setEditMetData((prev) => ({ ...prev, unique: event.target.checked }))}
+                          />
                         ) : (
                           <span className={uniqueValue ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
                             {uniqueValue ? 'Unique' : 'Standard'}
@@ -1875,120 +1862,120 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         )}
                       </td>
                       <td>
-                        {customInfo ? (
-                          <div className={styles.definitionActionIcons}>
-                            {isEditing ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
-                                  onClick={() => {
-                                    if (!canSave) return;
-                                    const nextLabel = editMetData.label.trim();
-                                    const nextAlias = buildAlias(
-                                      customInfo.table?.id || metric.table,
-                                      customInfo.attribute?.id || customInfo.parsed.attributeId,
-                                      editMetData.unique,
-                                      editMetData.formula
-                                    );
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [metric.table]: {
-                                        ...prev[metric.table],
-                                        [customInfo.parsed.attributeId]: {
-                                          ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
-                                            attributeLabel: null,
-                                            selectedAction: null,
-                                            dimensions: [],
-                                            metrics: [],
-                                          }),
-                                          metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).map((entry) =>
-                                            entry.id === customInfo.parsed.entryId
-                                              ? {
-                                                ...entry,
-                                                label: nextLabel,
-                                                name: nextLabel,
-                                                unique: editMetData.unique,
-                                                formula: editMetData.formula,
-                                                alias: nextAlias,
-                                              }
-                                              : entry
-                                          ),
-                                        },
+                        <div className={styles.definitionActionIcons}>
+                          {isEditing ? (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
+                                onClick={() => {
+                                  if (!canSave || !customInfo) return;
+                                  const nextLabel = editMetData.label.trim();
+                                  const nextAlias = buildAlias(
+                                    customInfo.table?.id || metric.table,
+                                    customInfo.attribute?.id || customInfo.parsed.attributeId,
+                                    editMetData.unique,
+                                    editMetData.formula
+                                  );
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [metric.table]: {
+                                      ...prev[metric.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).map((entry) =>
+                                          entry.id === customInfo.parsed.entryId
+                                            ? {
+                                              ...entry,
+                                              label: nextLabel,
+                                              name: nextLabel,
+                                              unique: editMetData.unique,
+                                              formula: editMetData.formula,
+                                              alias: nextAlias,
+                                            }
+                                            : entry
+                                        ),
                                       },
-                                    }));
-                                    setEditingMetId(null);
-                                  }}
-                                  title="Enregistrer"
-                                  disabled={!canSave}
-                                >
-                                  {Icons.save}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={styles.definitionActionBtn}
-                                  onClick={() => {
+                                    },
+                                  }));
+                                  setEditingMetId(null);
+                                }}
+                                title="Enregistrer"
+                                disabled={!canSave || !customInfo}
+                              >
+                                {Icons.save}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.definitionActionBtn}
+                                onClick={() => {
+                                  setEditingMetId(null);
+                                  setEditMetData({ label: '', formula: '', unique: false });
+                                }}
+                                title="Annuler"
+                              >
+                                {Icons.close}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setEditingMetId(metric.id);
+                                  setEditMetData({
+                                    label: customInfo.entry.label,
+                                    formula: customInfo.entry.formula,
+                                    unique: customInfo.entry.unique,
+                                  });
+                                }}
+                                title={customInfo ? 'Modifier' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.edit}
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [metric.table]: {
+                                      ...prev[metric.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).filter(
+                                          (entry) => entry.id !== customInfo.parsed.entryId
+                                        ),
+                                      },
+                                    },
+                                  }));
+                                  if (editingMetId === metric.id) {
                                     setEditingMetId(null);
                                     setEditMetData({ label: '', formula: '', unique: false });
-                                  }}
-                                  title="Annuler"
-                                >
-                                  {Icons.close}
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  className={styles.definitionActionBtn}
-                                  onClick={() => {
-                                    setEditingMetId(metric.id);
-                                    setEditMetData({
-                                      label: customInfo.entry.label,
-                                      formula: customInfo.entry.formula,
-                                      unique: customInfo.entry.unique,
-                                    });
-                                  }}
-                                  title="Modifier"
-                                >
-                                  {Icons.edit}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger}`}
-                                  onClick={() => {
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [metric.table]: {
-                                        ...prev[metric.table],
-                                        [customInfo.parsed.attributeId]: {
-                                          ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
-                                            attributeLabel: null,
-                                            selectedAction: null,
-                                            dimensions: [],
-                                            metrics: [],
-                                          }),
-                                          metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).filter(
-                                            (entry) => entry.id !== customInfo.parsed.entryId
-                                          ),
-                                        },
-                                      },
-                                    }));
-                                    if (editingMetId === metric.id) {
-                                      setEditingMetId(null);
-                                      setEditMetData({ label: '', formula: '', unique: false });
-                                    }
-                                  }}
-                                  title="Supprimer"
-                                >
-                                  {Icons.trash}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <span className={styles.definitionAttributeId}>—</span>
-                        )}
+                                  }
+                                }}
+                                title={customInfo ? 'Supprimer' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.trash}
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
