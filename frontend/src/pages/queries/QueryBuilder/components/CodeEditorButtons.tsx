@@ -10,7 +10,11 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import StopIcon from "@mui/icons-material/Stop";
 
-export default function CodeEditorButtons() {
+interface CodeEditorButtonsProps {
+  onExecuteComplete?: () => void;
+}
+
+export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButtonsProps) {
   const { toggleTheme, execute, cancelExecution, resetEditor, save, remove, loading, script, isDirty, canExecute, fetchAll } = scriptStore();
 
   const { isSuperAdmin } = useAuth();
@@ -27,8 +31,11 @@ export default function CodeEditorButtons() {
 
   /* ---------------- HANDLERS SÉCURISÉS ---------------- */
   const safeExecute = useCallback(async () => {
-    if (!loading && canExecute) await execute();
-  }, [loading, canExecute, execute]);
+    if (!loading && canExecute) {
+      await execute();
+      onExecuteComplete?.();
+    }
+  }, [loading, canExecute, execute, onExecuteComplete]);
 
   const safeCancel = useCallback(() => {
     if (loading) cancelExecution();

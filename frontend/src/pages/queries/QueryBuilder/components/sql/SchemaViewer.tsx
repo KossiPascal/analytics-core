@@ -59,10 +59,6 @@ export default function SchemaViewer({ onRunSql }: { onRunSql: any }) {
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200">
-          📊 Schéma PostgreSQL
-        </h3>
-
         <button
           onClick={loadSchema}
           className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-blue-600 

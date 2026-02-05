@@ -14,7 +14,7 @@ import { PageWrapper } from "@/components/layout/PageWrapper/PageWrapper";
 import CodeEditorButtons from "./components/CodeEditorButtons";
 
 export default function QueryBuilderPage() {
-  const { language, setScript, defaultScript, execute, save, remove, resetEditor, result, error } = scriptStore();
+  const { language, setScript, defaultScript } = scriptStore();
   const { isSuperAdmin } = useAuth();
   const isSqlLanguage = language === "sql";
 
@@ -26,34 +26,15 @@ export default function QueryBuilderPage() {
     // setScript(defaultScript());
   }, [setScript]);
 
-  /* ----------------- AUTO-OPEN RESULTS MODAL AFTER EXECUTION ----------------- */
-  useEffect(() => {
-    if (result || error) {
-      setShowResultsModal(true);
-    }
-  }, [result, error]);
-
   /* ----------------- HANDLE RUN SQL FROM SCHEMA ----------------- */
   const handleRunSqlFromSchema = (sql: string) => {
     setScript(defaultScript(sql));
     setShowSchemaModal(false);
   };
 
-  /* ----------------- ACTIONS ----------------- */
-  const handleExecute = () => {
-    execute();
-  };
-
-  const handleSave = () => {
-    save();
-  };
-
-  const handleReset = () => {
-    resetEditor();
-  };
-
-  const handleDelete = () => {
-    remove();
+  /* ----------------- HANDLE EXECUTE COMPLETE ----------------- */
+  const handleExecuteComplete = () => {
+    setShowResultsModal(true);
   };
 
   return (
@@ -93,11 +74,21 @@ export default function QueryBuilderPage() {
             <div className={`${styles.editorSection} ${styles.compactCard}`}>
               <div className={styles.cardHeader}>
                 <div className={styles.cardTitle}>
-                  
                   {/* ACTION BUTTONS */}
-                  <CodeEditorButtons/>
+                  <CodeEditorButtons onExecuteComplete={handleExecuteComplete} />
                 </div>
-                
+
+                {/* SCHEMA BUTTON - aligned right */}
+                {isSqlLanguage && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSchemaModal(true)}
+                  >
+                    <Database size={16} />
+                    Schéma SQL
+                  </Button>
+                )}
               </div>
               <div className={styles.cardBody}>
                 <CodeEditor />
