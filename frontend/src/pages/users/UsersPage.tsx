@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { PageWrapper } from '@components/layout';
-import { Card, CardBody, Button, Modal, StatusBadge, CrudBadge, PermissionBadge, RoleBadge } from '@components/ui';
-import { Table, type Column } from '@components/ui/Table';
+import { Card, CardBody, Button, Modal } from '@components/ui';
 import { FormInput, FormTextarea, FormCheckbox } from '@/components/forms';
 import { UserModal } from './components/UserModal';
+import { UsersTable } from './components/UsersTable';
+import { RolesTable } from './components/RolesTable';
+import { PermissionsTable } from './components/PermissionsTable';
 import { useUsers } from '@/contexts/OLD/useUsers';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AuthApi, PermissionsApi } from '@/services/OLD/old/api.service';
@@ -13,12 +15,10 @@ import {
   ShieldCheck,
   UserPlus,
   ShieldPlus,
-  Edit2,
-  Trash2,
   RefreshCw,
   Save,
+  Trash2,
 } from 'lucide-react';
-import type { User } from '@/models/OLD/old/auth.types';
 import styles from './UsersPage.module.css';
 import shared from '@components/ui/styles/shared.module.css';
 
@@ -366,186 +366,6 @@ export default function UsersPage() {
     }
   };
 
-  const renderCrudBadges = (perm: Permission) => {
-    const badges = [];
-    if (perm.canCreate) badges.push({ label: 'C', title: 'Créer' });
-    if (perm.canRead) badges.push({ label: 'R', title: 'Lire' });
-    if (perm.canUpdate) badges.push({ label: 'U', title: 'Modifier' });
-    if (perm.canDelete) badges.push({ label: 'D', title: 'Supprimer' });
-
-    return badges.map((b) => (
-      <CrudBadge key={b.label} label={b.label} title={b.title} />
-    ));
-  };
-
-  // ==================== TABLE COLUMNS DEFINITIONS ====================
-
-  // Users columns
-  const usersColumns: Column<User>[] = [
-    {
-      key: 'username',
-      header: "Nom d'utilisateur",
-      sortable: true,
-      searchable: true,
-    },
-    {
-      key: 'fullname',
-      header: 'Nom complet',
-      sortable: true,
-      searchable: true,
-      render: (user) => user.fullname || '-',
-    },
-    {
-      key: 'email',
-      header: 'Email',
-      sortable: true,
-      searchable: true,
-      render: (user) => user.email || '-',
-    },
-    {
-      key: 'roles',
-      header: 'Rôles',
-      render: (user) => <RoleBadge>{getUserRoleNames(user)}</RoleBadge>,
-      searchable: false,
-    },
-    {
-      key: 'isActive',
-      header: 'Statut',
-      sortable: true,
-      align: 'center',
-      render: (user) => <StatusBadge isActive={user.isActive} />,
-      searchable: false,
-    },
-    {
-      key: 'id',
-      header: 'Actions',
-      align: 'center',
-      render: (user) => (
-        <div className={shared.actionsCell}>
-          <button
-            className={shared.actionBtn}
-            onClick={() => openUserModal(user)}
-            title="Modifier"
-          >
-            <Edit2 size={16} />
-          </button>
-          <button
-            className={`${shared.actionBtn} ${shared.actionBtnDanger}`}
-            onClick={() => openDeleteUserModal(user)}
-            title="Supprimer"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
-      searchable: false,
-    },
-  ];
-
-  // Roles columns
-  const rolesColumns: Column<Role>[] = [
-    {
-      key: 'name',
-      header: 'Nom',
-      sortable: true,
-      searchable: true,
-    },
-    {
-      key: 'organization',
-      header: 'Organisation',
-      sortable: true,
-      searchable: true,
-      render: (role) => role.organization || '-',
-    },
-    {
-      key: 'authorizations',
-      header: 'Permissions',
-      render: (role) => (
-        <div className={shared.list}>
-          {role.authorizations?.slice(0, 3).map((perm) => (
-            <PermissionBadge key={perm}>
-              {AVAILABLE_PERMISSIONS.find((p) => p.value === perm)?.label || perm}
-            </PermissionBadge>
-          ))}
-          {role.authorizations?.length > 3 && (
-            <PermissionBadge>+{role.authorizations.length - 3}</PermissionBadge>
-          )}
-        </div>
-      ),
-      searchable: false,
-    },
-    {
-      key: 'id',
-      header: 'Actions',
-      align: 'center',
-      render: (role) => (
-        <div className={shared.actionsCell}>
-          <button
-            className={shared.actionBtn}
-            onClick={() => handleEditRole(role)}
-            title="Modifier"
-          >
-            <Edit2 size={16} />
-          </button>
-          <button
-            className={`${shared.actionBtn} ${shared.actionBtnDanger}`}
-            onClick={() => handleDeleteRoleClick(role)}
-            title="Supprimer"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
-      searchable: false,
-    },
-  ];
-
-  // Permissions columns
-  const permissionsColumns: Column<Permission>[] = [
-    {
-      key: 'name',
-      header: 'Nom',
-      sortable: true,
-      searchable: true,
-    },
-    {
-      key: 'description',
-      header: 'Description',
-      sortable: true,
-      searchable: true,
-      render: (perm) => perm.description || '-',
-    },
-    {
-      key: 'canCreate',
-      header: 'CRUD',
-      render: (perm) => <div className={shared.list}>{renderCrudBadges(perm)}</div>,
-      searchable: false,
-    },
-    {
-      key: 'id',
-      header: 'Actions',
-      align: 'center',
-      render: (perm) => (
-        <div className={shared.actionsCell}>
-          <button
-            className={shared.actionBtn}
-            onClick={() => handleEditPerm(perm)}
-            title="Modifier"
-          >
-            <Edit2 size={16} />
-          </button>
-          <button
-            className={`${shared.actionBtn} ${shared.actionBtnDanger}`}
-            onClick={() => handleDeletePermClick(perm)}
-            title="Supprimer"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
-      ),
-      searchable: false,
-    },
-  ];
 
   // Get create button based on active tab
   const getCreateButton = () => {
@@ -573,110 +393,37 @@ export default function UsersPage() {
 
   // Render Users Tab
   const renderUsersTab = () => (
-    <>
-      {users.length === 0 && !isUsersLoading ? (
-        <div className={shared.emptyState}>
-          <UserPlus size={48} />
-          <p>Aucun utilisateur</p>
-          <Button variant="primary" onClick={() => openUserModal(null)}>
-            Créer un utilisateur
-          </Button>
-        </div>
-      ) : (
-        <Table
-          data={users}
-          columns={usersColumns}
-          keyExtractor={(user) => user.id}
-          isLoading={isUsersLoading}
-          emptyMessage="Aucun utilisateur trouvé"
-          features={{
-            search: true,
-            export: true,
-            pagination: true,
-            pageSize: true,
-            animate: true,
-          }}
-          searchPlaceholder="Rechercher un utilisateur..."
-          exportFilename="utilisateurs"
-          exportFormats={['csv', 'excel', 'json']}
-          defaultPageSize={10}
-          pageSizeOptions={[10, 25, 50, 100]}
-          stickyHeader
-        />
-      )}
-    </>
+    <UsersTable
+      users={users}
+      isLoading={isUsersLoading}
+      onEdit={openUserModal}
+      onDelete={openDeleteUserModal}
+      onCreate={() => openUserModal(null)}
+      getUserRoleNames={getUserRoleNames}
+    />
   );
 
   // Render Roles Tab
   const renderRolesTab = () => (
-    <>
-      {roles.length === 0 && !isRolesLoading ? (
-        <div className={shared.emptyState}>
-          <ShieldPlus size={48} />
-          <p>Aucun rôle</p>
-          <Button variant="primary" onClick={handleCreateRole}>
-            Créer un rôle
-          </Button>
-        </div>
-      ) : (
-        <Table
-          data={roles}
-          columns={rolesColumns}
-          keyExtractor={(role) => role.id}
-          isLoading={isRolesLoading}
-          emptyMessage="Aucun rôle trouvé"
-          features={{
-            search: true,
-            export: true,
-            pagination: true,
-            pageSize: true,
-            animate: true,
-          }}
-          searchPlaceholder="Rechercher un rôle..."
-          exportFilename="roles"
-          exportFormats={['csv', 'excel', 'json']}
-          defaultPageSize={10}
-          pageSizeOptions={[10, 25, 50, 100]}
-          stickyHeader
-        />
-      )}
-    </>
+    <RolesTable
+      roles={roles}
+      isLoading={isRolesLoading}
+      onEdit={handleEditRole}
+      onDelete={handleDeleteRoleClick}
+      onCreate={handleCreateRole}
+      availablePermissions={AVAILABLE_PERMISSIONS}
+    />
   );
 
   // Render Permissions Tab
   const renderPermissionsTab = () => (
-    <>
-      {permissions.length === 0 && !isPermissionsLoading ? (
-        <div className={shared.emptyState}>
-          <ShieldCheck size={48} />
-          <p>Aucune permission</p>
-          <Button variant="primary" onClick={handleCreatePerm}>
-            Créer une permission
-          </Button>
-        </div>
-      ) : (
-        <Table
-          data={permissions}
-          columns={permissionsColumns}
-          keyExtractor={(perm) => perm.id}
-          isLoading={isPermissionsLoading}
-          emptyMessage="Aucune permission trouvée"
-          features={{
-            search: true,
-            export: true,
-            pagination: true,
-            pageSize: true,
-            animate: true,
-          }}
-          searchPlaceholder="Rechercher une permission..."
-          exportFilename="permissions"
-          exportFormats={['csv', 'excel', 'json']}
-          defaultPageSize={10}
-          pageSizeOptions={[10, 25, 50, 100]}
-          stickyHeader
-        />
-      )}
-    </>
+    <PermissionsTable
+      permissions={permissions}
+      isLoading={isPermissionsLoading}
+      onEdit={handleEditPerm}
+      onDelete={handleDeletePermClick}
+      onCreate={handleCreatePerm}
+    />
   );
 
   return (

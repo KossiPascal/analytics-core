@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@utils/cn';
 import { listItemVariants, staggerContainerVariants } from '@animations/index';
-import { TableToolbar, Pagination, PageSizeSelector } from './components';
+import { TableToolbar, Pagination, PageSizeSelector, ColumnVisibilityToggle } from './components';
 import type { ExportFormat } from './utils/exportData';
 import styles from './Table.module.css';
 
@@ -23,6 +23,7 @@ export interface TableFeatures {
   pagination?: boolean;
   pageSize?: boolean;
   animate?: boolean;
+  columnVisibility?: boolean;
 }
 
 export interface TableProps<T> {
@@ -76,6 +77,7 @@ export function Table<T extends Record<string, unknown>>({
     pagination: enablePagination = false,
     pageSize: enablePageSize = false,
     animate: enableAnimate = true,
+    columnVisibility: enableColumnVisibility = false,
   } = features;
 
   const [sortConfig, setSortConfig] = useState<{
@@ -85,6 +87,15 @@ export function Table<T extends Record<string, unknown>>({
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(defaultPageSize);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(
+    columns.map((col) => col.key)
+  );
+
+  // Filter columns based on visibility
+  const displayColumns = useMemo(() => {
+    if (!enableColumnVisibility) return columns;
+    return columns.filter((col) => visibleColumns.includes(col.key));
+  }, [columns, visibleColumns, enableColumnVisibility]);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -157,7 +168,7 @@ export function Table<T extends Record<string, unknown>>({
     );
   };
 
-  const showToolbar = enableSearch || enableExport || toolbarLeftSection || toolbarRightSection;
+  const showToolbar = enableSearch || enableExport || enableColumnVisibility || toolbarLeftSection || toolbarRightSection;
 
   return (
     <div className={cn(styles.container, className)}>
@@ -169,11 +180,22 @@ export function Table<T extends Record<string, unknown>>({
           showSearch={enableSearch}
           showExport={enableExport}
           exportData={sortedData}
-          exportColumns={columns}
+          exportColumns={displayColumns}
           exportFilename={exportFilename}
           exportFormats={exportFormats}
           leftSection={toolbarLeftSection}
-          rightSection={toolbarRightSection}
+          rightSection={
+            <>
+              {enableColumnVisibility && (
+                <ColumnVisibilityToggle
+                  columns={columns}
+                  visibleColumns={visibleColumns}
+                  onVisibilityChange={setVisibleColumns}
+                />
+              )}
+              {toolbarRightSection}
+            </>
+          }
         />
       )}
 
@@ -191,7 +213,7 @@ export function Table<T extends Record<string, unknown>>({
         <table className={styles.table}>
         <thead className={cn(styles.thead, stickyHeader && styles.stickyHeader)}>
           <tr>
-            {columns.map((column) => (
+            {displayColumns.map((column) => (
               <th
                 key={column.key}
                 className={cn(
@@ -228,7 +250,7 @@ export function Table<T extends Record<string, unknown>>({
                   animate="animate"
                   exit="exit"
                 >
-                  <td colSpan={columns.length} className={styles.emptyCell}>
+                  <td colSpan={displayColumns.length} className={styles.emptyCell}>
                     {emptyMessage}
                   </td>
                 </motion.tr>
@@ -256,7 +278,7 @@ export function Table<T extends Record<string, unknown>>({
                         isRowClickable ? { backgroundColor: 'var(--bg-tertiary)' } : undefined
                       }
                     >
-                      {columns.map((column) => (
+                      {displayColumns.map((column) => (
                         <td
                           key={column.key}
                           className={cn(styles.td, styles[`align-${column.align || 'left'}`])}

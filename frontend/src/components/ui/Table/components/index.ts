@@ -3,3 +3,4 @@ export { ExportButtons } from './ExportButtons';
 export { PageSizeSelector } from './PageSizeSelector';
 export { Pagination } from './Pagination';
 export { TableToolbar } from './TableToolbar';
+export { ColumnVisibilityToggle } from './ColumnVisibilityToggle';
