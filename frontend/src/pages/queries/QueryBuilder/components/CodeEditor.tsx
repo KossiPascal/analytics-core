@@ -54,9 +54,6 @@ export default function CodeEditor() {
   return (
     <div className={`space-y-4 text-gray-900 dark:text-gray-100`}>
 
-      {/* ACTION BUTTONS */}
-      <CodeEditorButtons />
-
       <div className="flex gap-3 flex-wrap items-center">
         {/* Script Name */}
         {isSuperAdmin && (

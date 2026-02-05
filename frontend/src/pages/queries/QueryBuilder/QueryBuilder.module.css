@@ -2,9 +2,8 @@
 
 .container {
   min-height: calc(100vh - 120px);
-  padding: 0 auto;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 1rem;
+  width: 100%;
 }
 
 .grid {

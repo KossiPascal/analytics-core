@@ -10,6 +10,8 @@ import SchemaViewer from "./components/sql/SchemaViewer";
 import { scriptStore } from "@/stores/scripts.store";
 import { useAuth } from "@contexts/AuthContext";
 import styles from "./QueryBuilder.module.css";
+import { PageWrapper } from "@/components/layout/PageWrapper/PageWrapper";
+import CodeEditorButtons from "./components/CodeEditorButtons";
 
 export default function QueryBuilderPage() {
   const { language, setScript, defaultScript, execute, save, remove, resetEditor, result, error } = scriptStore();
@@ -55,88 +57,77 @@ export default function QueryBuilderPage() {
   };
 
   return (
-    <div className={styles.container}>
-      {/* Header */}
-      <div className={styles.compactCard}>
-        <div className={styles.cardHeader}>
-          <div className={styles.cardTitle}>
-            <div className={styles.cardIcon}>
-              <Code size={16} />
-            </div>
-            <span></span>
-            <span className={`${styles.badge} ${styles.badgeSuccess}`}>
-              <span className={styles.statusDot}></span>
-              Connecté
-            </span>
-          </div>
-          <div className={styles.statusInfo}>
-            <span>db_prod • postgres</span>
-          </div>
-        </div>
-      </div>
+    <PageWrapper
+      title="Query Builder"
+      subtitle="Créer script vos scripts ici"
+    >
+      <div className={styles.container}>
 
-      {/* Main Grid Layout */}
-      <div className={styles.grid}>
-        {/* SIDEBAR - Saved Scripts */}
-        {isSuperAdmin && (
-          <aside className={`${styles.sidebar} ${styles.compactCard}`}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardTitle}>
-                <div className={styles.cardIcon}>
-                  <Database size={16} />
+
+        {/* Main Grid Layout */}
+        <div className={styles.grid}>
+          {/* SIDEBAR - Saved Scripts */}
+          {isSuperAdmin && (
+            <aside className={`${styles.sidebar} ${styles.compactCard}`}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardTitle}>
+                  <div className={styles.cardIcon}>
+                    <Database size={16} />
+                  </div>
+                  <span>Scripts sauvegardés</span>
                 </div>
-                <span>Scripts sauvegardés</span>
+                <Button variant="ghost" size="sm" title="Rafraîchir">
+                  <RefreshCw size={16} />
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" title="Rafraîchir">
-                <RefreshCw size={16} />
-              </Button>
+              <div className={styles.cardBody}>
+                <SavedScriptList />
+              </div>
+            </aside>
+          )}
+
+          {/* MAIN CONTENT */}
+          <main className={styles.mainContent}>
+
+            {/* CODE EDITOR */}
+            <div className={`${styles.editorSection} ${styles.compactCard}`}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardTitle}>
+                  
+                  {/* ACTION BUTTONS */}
+                  <CodeEditorButtons/>
+                </div>
+                
+              </div>
+              <div className={styles.cardBody}>
+                <CodeEditor />
+              </div>
             </div>
-            <div className={styles.cardBody}>
-              <SavedScriptList />
-            </div>
-          </aside>
+          </main>
+        </div>
+
+        {/* SCHEMA VIEWER MODAL */}
+        {isSqlLanguage && (
+          <Modal
+            isOpen={showSchemaModal}
+            onClose={() => setShowSchemaModal(false)}
+            title="📊 Schéma PostgreSQL"
+            size="lg"
+          >
+            <SchemaViewer onRunSql={handleRunSqlFromSchema} />
+          </Modal>
         )}
 
-        {/* MAIN CONTENT */}
-        <main className={styles.mainContent}>
-          
-          {/* CODE EDITOR */}
-          <div className={`${styles.editorSection} ${styles.compactCard}`}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardTitle}>
-                <div className={styles.cardIcon}>⌘</div>
-                <span>Éditeur SQL</span>
-              </div>
-              <span className={styles.badge}>Latence 28ms</span>
-            </div>
-            <div className={styles.cardBody}>
-              <CodeEditor />
-            </div>
-          </div>
-        </main>
-      </div>
-
-      {/* SCHEMA VIEWER MODAL */}
-      {isSqlLanguage && (
+        {/* RESULTS MODAL */}
         <Modal
-          isOpen={showSchemaModal}
-          onClose={() => setShowSchemaModal(false)}
-          title="📊 Schéma PostgreSQL"
-          size="lg"
+          isOpen={showResultsModal}
+          onClose={() => setShowResultsModal(false)}
+          title="📊 Résultats de l'exécution"
+          size="xl"
         >
-          <SchemaViewer onRunSql={handleRunSqlFromSchema} />
+          <ResultsTable />
         </Modal>
-      )}
-
-      {/* RESULTS MODAL */}
-      <Modal
-        isOpen={showResultsModal}
-        onClose={() => setShowResultsModal(false)}
-        title="📊 Résultats de l'exécution"
-        size="xl"
-      >
-        <ResultsTable />
-      </Modal>
-    </div>
+      </div>
+    </PageWrapper>
   );
 }
