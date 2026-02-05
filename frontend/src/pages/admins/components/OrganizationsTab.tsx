@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal, Button, StatusBadge } from '@components/ui';
+import { Table, type Column } from '@components/ui/Table';
 import { FormInput, FormTextarea } from '@/components/forms';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { OrganizationsApi } from '@/services/OLD/old/api.service';
@@ -131,6 +132,54 @@ export function OrganizationsTab() {
     }
   };
 
+  const columns: Column<Organization>[] = [
+    {
+      key: 'name',
+      header: 'Nom',
+      sortable: true,
+      searchable: true,
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      sortable: true,
+      searchable: true,
+      render: (org) => org.description || '-',
+    },
+    {
+      key: 'isActive',
+      header: 'Statut',
+      sortable: true,
+      align: 'center',
+      render: (org) => <StatusBadge isActive={org.isActive} />,
+      searchable: false,
+    },
+    {
+      key: 'id',
+      header: 'Actions',
+      align: 'center',
+      render: (org) => (
+        <div className={styles.actionsCell}>
+          <button
+            className={styles.actionBtn}
+            onClick={() => handleEdit(org)}
+            title="Modifier"
+          >
+            <Edit2 size={16} />
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+            onClick={() => handleDeleteClick(org)}
+            title="Supprimer"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
+      searchable: false,
+    },
+  ];
+
   return (
     <>
       <div className={styles.card}>
@@ -174,47 +223,29 @@ export function OrganizationsTab() {
             </button>
           </div>
         ) : (
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Description</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {organizations.map((org) => (
-                  <tr key={org.id}>
-                    <td>{org.name}</td>
-                    <td>{org.description || '-'}</td>
-                    <td>
-                      <StatusBadge isActive={org.isActive} />
-                    </td>
-                    <td>
-                      <div className={styles.actionsCell}>
-                        <button
-                          className={styles.actionBtn}
-                          onClick={() => handleEdit(org)}
-                          title="Modifier"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                          onClick={() => handleDeleteClick(org)}
-                          title="Supprimer"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            data={organizations as any}
+            columns={columns as any}
+            keyExtractor={(org: any) => org.id as string}
+            isLoading={isLoading}
+            emptyMessage="Aucune organisation trouvée"
+            features={{
+              search: true,
+              export: true,
+              pagination: true,
+              pageSize: true,
+              animate: true,
+              columnVisibility: true,
+              scrollable: true,
+            }}
+            searchPlaceholder="Rechercher une organisation..."
+            exportFilename="organisations"
+            exportFormats={['csv', 'excel', 'json']}
+            defaultPageSize={10}
+            pageSizeOptions={[10, 25, 50, 100]}
+            stickyHeader
+            maxHeight="600px"
+          />
         )}
       </div>
 

@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FormInput } from '@components/forms/FormInput';
 import styles from './SearchBar.module.css';
 
 interface SearchBarProps {
@@ -21,29 +22,31 @@ export const SearchBar = ({
 
   return (
     <div className={`${styles.searchContainer} ${className || ''}`}>
-      <Search className={styles.searchIcon} size={18} />
-      <input
-        type="text"
+      <FormInput
+        type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={styles.searchInput}
+        leftIcon={<Search size={18} />}
+        rightIcon={
+          <AnimatePresence>
+            {value && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                onClick={handleClear}
+                className={styles.clearButton}
+                type="button"
+                aria-label="Effacer la recherche"
+              >
+                <X size={16} />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        }
+        wrapperClassName={styles.searchInputWrapper}
       />
-      <AnimatePresence>
-        {value && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={handleClear}
-            className={styles.clearButton}
-            type="button"
-            aria-label="Effacer la recherche"
-          >
-            <X size={16} />
-          </motion.button>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

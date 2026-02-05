@@ -36,13 +36,6 @@ export function RolesTable({
       searchable: true,
     },
     {
-      key: 'organization',
-      header: 'Organisation',
-      sortable: true,
-      searchable: true,
-      render: (role) => role.organization || '-',
-    },
-    {
       key: 'authorizations',
       header: 'Permissions',
       render: (role) => (
