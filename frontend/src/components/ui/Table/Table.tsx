@@ -24,6 +24,7 @@ export interface TableFeatures {
   pageSize?: boolean;
   animate?: boolean;
   columnVisibility?: boolean;
+  scrollable?: boolean;
 }
 
 export interface TableProps<T> {
@@ -48,6 +49,7 @@ export interface TableProps<T> {
   showFirstLastButtons?: boolean;
   toolbarLeftSection?: ReactNode;
   toolbarRightSection?: ReactNode;
+  maxHeight?: string | number;
 }
 
 export function Table<T extends Record<string, unknown>>({
@@ -70,6 +72,7 @@ export function Table<T extends Record<string, unknown>>({
   showFirstLastButtons = true,
   toolbarLeftSection,
   toolbarRightSection,
+  maxHeight = '600px',
 }: TableProps<T>) {
   const {
     search: enableSearch = false,
@@ -78,6 +81,7 @@ export function Table<T extends Record<string, unknown>>({
     pageSize: enablePageSize = false,
     animate: enableAnimate = true,
     columnVisibility: enableColumnVisibility = false,
+    scrollable: enableScrollable = false,
   } = features;
 
   const [sortConfig, setSortConfig] = useState<{
@@ -199,7 +203,14 @@ export function Table<T extends Record<string, unknown>>({
         />
       )}
 
-      <div className={styles.wrapper}>
+      <div
+        className={styles.wrapper}
+        style={enableScrollable ? {
+          maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+          overflowY: 'auto',
+          overflowX: 'auto',
+        } : undefined}
+      >
         <table className={styles.table}>
         <thead className={cn(styles.thead, stickyHeader && styles.stickyHeader)}>
           <tr>

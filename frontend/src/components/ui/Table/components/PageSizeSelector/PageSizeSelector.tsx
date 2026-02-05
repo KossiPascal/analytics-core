@@ -13,7 +13,7 @@ interface PageSizeSelectorProps {
 export const PageSizeSelector = ({
   pageSize,
   onPageSizeChange,
-  options = [10, 25, 50, 100],
+  options = [10, 25, 50, 100, 300, 500, 1000],
   className,
 }: PageSizeSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
