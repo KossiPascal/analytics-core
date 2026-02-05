@@ -71,79 +71,88 @@ export default function SavedScriptList() {
      RENDER
   ---------------------------------------------------- */
   return (
-    <div className="w-full bg-white dark:bg-gray-900 border rounded-xl shadow p-4">
-      <h3 className="text-lg font-semibold mb-4">
-        Scripts sauvegardés
-      </h3>
-
+    <div className="w-full h-full flex flex-col">
       {/* SEARCH */}
       <div className="mb-3">
         <FormInput
-          placeholder="Rechercher par nom ou langage..."
+          placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          leftIcon={<Search size={18} />}
+          leftIcon={<Search size={16} />}
         />
       </div>
 
       {/* ERROR */}
       {error && (
-        <div className="mb-3 p-3 bg-red-50 text-red-700 rounded">
+        <div className="mb-2 p-2 bg-red-50 text-red-700 text-sm rounded">
           {error}
         </div>
       )}
 
       {/* LOADING */}
       {loading && (
-        <div className="text-center p-4 text-blue-600">
+        <div className="text-center p-4 text-blue-600 text-sm">
           Chargement...
         </div>
       )}
 
       {/* EMPTY */}
       {!loading && filteredScripts.length === 0 && (
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded text-center">
-          Aucun script disponible
+        <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm rounded text-center">
+          Aucun script
         </div>
       )}
 
-      {/* LIST */}
+      {/* LIST - Menu style */}
       {!loading && filteredScripts.length > 0 && (
-        <ul className="space-y-2 max-h-80 overflow-y-auto">
+        <ul className="flex-1 space-y-1 overflow-y-auto">
           {filteredScripts.map((s) => (
-            <li key={s.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg transition">
-              {/* TITLE */}
-              <div className="flex-1 cursor-pointer" onClick={() => handleSelect(s.id)}>
-                <div className="font-medium truncate">{s.id} - {s.name}</div>
-                <div className="text-xs text-gray-500">{s.language.toUpperCase()}</div>
-              </div>
+            <li
+              key={s.id}
+              className="group cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+              onClick={() => handleSelect(s.id)}
+            >
+              <div className="flex items-start justify-between gap-2">
+                {/* TITLE */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{s.name || 'Sans titre'}</div>
+                  <div className="text-xs text-gray-500 uppercase">{s.language}</div>
+                </div>
 
-              {/* ACTIONS */}
-              <div className="flex items-center space-x-2">
-                {canEdit && (
-                  <button onClick={() => handleSelect(s.id)} className="p-1 text-blue-600 hover:text-blue-800" title="Éditer">
-                    <Pencil size={18} />
-                  </button>
-                )}
-
-                {canDelete && (
-                  <button onClick={() => handleDelete(s.id, s.name)} className="p-1 text-red-600 hover:text-red-800 " title="Supprimer">
-                    <Trash2 size={18} />
-                  </button>
-                )}
-
-                <button onClick={() => handleCopy(s)} className={`px-2 py-0.5 rounded text-xs transition ${copiedId === s.id ? "bg-green-200 text-green-800" : "bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:text-gray-200"
-                  }`} title="Copier">
-                  {copiedId === s.id ? (
-                    <span className="flex items-center gap-1">
-                      <Check size={12} /> Copié
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <Copy size={12} /> Copier
-                    </span>
+                {/* ACTIONS - show on hover */}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {canEdit && (
+                    <button
+                      onClick={(e) => {e.stopPropagation(); handleSelect(s.id);}}
+                      className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                      title="Éditer"
+                    >
+                      <Pencil size={14} />
+                    </button>
                   )}
-                </button>
+
+                  <button
+                    onClick={(e) => {e.stopPropagation(); handleCopy(s);}}
+                    className={`p-1 rounded transition ${
+                      copiedId === s.id
+                        ? "text-green-600 bg-green-100"
+                        : "text-gray-600 hover:bg-gray-200"
+                    }`}
+                    title="Copier"
+                  >
+                    {copiedId === s.id ? <Check size={14} /> : <Copy size={14} />}
+                  </button>
+
+                  {canDelete && (
+                    <button
+                      onClick={(e) => {e.stopPropagation(); handleDelete(s.id, s.name);}}
+                      className="p-1 text-red-600 hover:bg-red-100 rounded"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
             </li>
           ))}

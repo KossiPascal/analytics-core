@@ -1,59 +1,142 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Play, Save, RotateCcw, Trash2, Database, Code, RefreshCw } from "lucide-react";
 
+import { Button } from "@components/ui/Button/Button";
+import { Modal } from "@components/ui/Modal/Modal";
 import CodeEditor from "./components/CodeEditor";
 import ResultsTable from "./components/ResultsTable";
 import SavedScriptList from "./components/SavedScriptList";
 import SchemaViewer from "./components/sql/SchemaViewer";
 import { scriptStore } from "@/stores/scripts.store";
 import { useAuth } from "@contexts/AuthContext";
+import styles from "./QueryBuilder.module.css";
 
-export default function QureryBuilderPage() {
-  const { language, setScript, defaultScript } = scriptStore();
-  const { isAdmin, isSuperAdmin } = useAuth();
+export default function QueryBuilderPage() {
+  const { language, setScript, defaultScript, execute, save, remove, resetEditor, result, error } = scriptStore();
+  const { isSuperAdmin } = useAuth();
   const isSqlLanguage = language === "sql";
+
+  const [showSchemaModal, setShowSchemaModal] = useState(false);
+  const [showResultsModal, setShowResultsModal] = useState(false);
 
   /* ----------------- LOAD EMPTY SCRIPT ON START ----------------- */
   useEffect(() => {
     // setScript(defaultScript());
   }, [setScript]);
 
+  /* ----------------- AUTO-OPEN RESULTS MODAL AFTER EXECUTION ----------------- */
+  useEffect(() => {
+    if (result || error) {
+      setShowResultsModal(true);
+    }
+  }, [result, error]);
+
   /* ----------------- HANDLE RUN SQL FROM SCHEMA ----------------- */
-  const handleRunSqlFromSchema = (sql:string) => {
+  const handleRunSqlFromSchema = (sql: string) => {
     setScript(defaultScript(sql));
+    setShowSchemaModal(false);
+  };
+
+  /* ----------------- ACTIONS ----------------- */
+  const handleExecute = () => {
+    execute();
+  };
+
+  const handleSave = () => {
+    save();
+  };
+
+  const handleReset = () => {
+    resetEditor();
+  };
+
+  const handleDelete = () => {
+    remove();
   };
 
   return (
-    <div className="flex flex-col items-center bg-gray-100 dark:bg-gray-900 min-h-screen p-6 space-y-6">
+    <div className={styles.container}>
       {/* Header */}
-      <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 text-center">
-        🖥 PostgreSQL SQL Editor
-      </h1>
-
-      <div className="w-full max-w-6xl space-y-6">
-        {/* CODE EDITOR */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4">
-          <CodeEditor />
-        </div>
-
-        {/* RESULTS TABLE */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4">
-          <ResultsTable />
-        </div>
-
-        {/* SAVED SCRIPTS */}
-        {isSuperAdmin && (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4">
-            <SavedScriptList />
+      <div className={styles.compactCard}>
+        <div className={styles.cardHeader}>
+          <div className={styles.cardTitle}>
+            <div className={styles.cardIcon}>
+              <Code size={16} />
+            </div>
+            <span></span>
+            <span className={`${styles.badge} ${styles.badgeSuccess}`}>
+              <span className={styles.statusDot}></span>
+              Connecté
+            </span>
           </div>
-        )}
-
-        {/* SCHEMA VIEWER */}
-        {isSqlLanguage && (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-4">
-            <SchemaViewer onRunSql={handleRunSqlFromSchema} />
+          <div className={styles.statusInfo}>
+            <span>db_prod • postgres</span>
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Main Grid Layout */}
+      <div className={styles.grid}>
+        {/* SIDEBAR - Saved Scripts */}
+        {isSuperAdmin && (
+          <aside className={`${styles.sidebar} ${styles.compactCard}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitle}>
+                <div className={styles.cardIcon}>
+                  <Database size={16} />
+                </div>
+                <span>Scripts sauvegardés</span>
+              </div>
+              <Button variant="ghost" size="sm" title="Rafraîchir">
+                <RefreshCw size={16} />
+              </Button>
+            </div>
+            <div className={styles.cardBody}>
+              <SavedScriptList />
+            </div>
+          </aside>
+        )}
+
+        {/* MAIN CONTENT */}
+        <main className={styles.mainContent}>
+          
+          {/* CODE EDITOR */}
+          <div className={`${styles.editorSection} ${styles.compactCard}`}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitle}>
+                <div className={styles.cardIcon}>⌘</div>
+                <span>Éditeur SQL</span>
+              </div>
+              <span className={styles.badge}>Latence 28ms</span>
+            </div>
+            <div className={styles.cardBody}>
+              <CodeEditor />
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* SCHEMA VIEWER MODAL */}
+      {isSqlLanguage && (
+        <Modal
+          isOpen={showSchemaModal}
+          onClose={() => setShowSchemaModal(false)}
+          title="📊 Schéma PostgreSQL"
+          size="lg"
+        >
+          <SchemaViewer onRunSql={handleRunSqlFromSchema} />
+        </Modal>
+      )}
+
+      {/* RESULTS MODAL */}
+      <Modal
+        isOpen={showResultsModal}
+        onClose={() => setShowResultsModal(false)}
+        title="📊 Résultats de l'exécution"
+        size="xl"
+      >
+        <ResultsTable />
+      </Modal>
     </div>
   );
 }
