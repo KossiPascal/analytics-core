@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { Download, CheckCircle } from 'lucide-react';
 import type { ReportType } from '@/models/OLD/old/reports.types';

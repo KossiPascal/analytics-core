@@ -5,13 +5,16 @@ import {
   FaSave, FaVial, FaTrash, FaEdit, FaShieldAlt,
   FaCheckCircle, FaExclamationTriangle
 } from "react-icons/fa";
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { connService as API, DbConnectionParams, type TestType } from '@/services/connection.service';
 import styles from '@pages/admins/AdminPage.module.css';
 import { DbConnectionForm } from '@/services/connection.service';
-import { FormCheckbox, FormInput, FormSelect, FormTextarea } from '@/components/forms';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
+import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 
 interface SelectModel {
   value: any;

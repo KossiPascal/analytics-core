@@ -1,6 +1,7 @@
 import { UserPlus, Edit2, Trash2 } from 'lucide-react';
-import { Table, type Column } from '@components/ui/Table';
-import { Button, StatusBadge, RoleBadge } from '@components/ui';
+import { Table, type Column } from '@components/ui/Table/Table';
+import { Button } from '@components/ui/Button/Button';
+import { StatusBadge, RoleBadge } from '@components/ui/Badge/Badge';
 import type { User } from '@/models/OLD/old/auth.types';
 import shared from '@components/ui/styles/shared.module.css';
 

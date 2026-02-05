@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart3, Users, CheckSquare, Eye, AlertCircle } from 'lucide-react';
-import { PageWrapper } from '@components/layout';
+import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { GraduationLoader } from '@components/loaders/GraduationLoader/GraduationLoader';
-import { VisualizationCard } from '@components/visualizations';
+import { VisualizationCard } from '@components/visualizations/VisualizationCard/VisualizationCard';
 import { useDashboard } from '@/contexts/OLD/useDashboard';
 import { useVisualizations } from '@/contexts/OLD/useVisualizations';
 import {

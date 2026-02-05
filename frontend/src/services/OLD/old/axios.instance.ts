@@ -1,6 +1,6 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import { useStore } from '@/stores/OLD';
-import { LOGIN_ROUTE } from '@routes/index';
+import { LOGIN_ROUTE } from '@routes/routes';
 
 // Create axios instance
 const axiosInstance = axios.create({

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { backdropVariants, modalVariants } from '@animations/index';
+import { backdropVariants, modalVariants } from '@animations/modal.variants';
 import styles from './Modal.module.css';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';

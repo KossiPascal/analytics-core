@@ -1,6 +1,7 @@
 import { ShieldCheck, Edit2, Trash2 } from 'lucide-react';
-import { Table, type Column } from '@components/ui/Table';
-import { Button, CrudBadge } from '@components/ui';
+import { Table, type Column } from '@components/ui/Table/Table';
+import { Button } from '@components/ui/Button/Button';
+import { CrudBadge } from '@components/ui/Badge/Badge';
 import shared from '@components/ui/styles/shared.module.css';
 
 interface Permission {

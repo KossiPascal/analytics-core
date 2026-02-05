@@ -1,6 +1,6 @@
 import { Search, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FormInput } from '@components/forms/FormInput';
+import { FormInput } from '@components/forms/FormInput/FormInput';
 import styles from './SearchBar.module.css';
 
 interface SearchBarProps {

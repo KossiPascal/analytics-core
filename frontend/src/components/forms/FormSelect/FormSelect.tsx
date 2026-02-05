@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, ReactNode, useCallback } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
-import { FormField } from '../FormField';
+import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
 
 export interface SelectOption {

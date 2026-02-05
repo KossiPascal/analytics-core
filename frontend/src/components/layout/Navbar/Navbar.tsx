@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Bell, User, LogOut, Settings, ChevronDown, FileText, Map, Users, Shield, BookOpen, Gauge, Search, Mail, Eye, Activity, Database } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { dropdownVariants } from '@animations/index';
-import { getGridNavItems, getTopNavItems, ROUTES, NavItem } from '@routes/index';
+import { dropdownVariants } from '@animations/modal.variants';
+import { getGridNavItems, getTopNavItems, ROUTES, NavItem } from '@routes/routes';
 import styles from './Navbar.module.css';
 import { useAuth } from '@/contexts/AuthContext';
 

@@ -18,13 +18,13 @@ import {
   FileText,
   RefreshCw,
 } from 'lucide-react';
-import { PageWrapper } from '@components/layout';
-import { Card, CardBody } from '@components/ui';
+import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
+import { Card, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { GraduationLoader } from '@components/loaders/GraduationLoader/GraduationLoader';
-import { VisualizationCard } from '@components/visualizations';
+import { VisualizationCard } from '@components/visualizations/VisualizationCard/VisualizationCard';
 import { useVisualizations, type VisualizationWithData } from '@/contexts/OLD/useVisualizations';
-import { ROUTES } from '@routes/index';
+import { ROUTES } from '@routes/configs';
 import styles from './VisualizationHome.module.css';
 
 type ViewMode = 'grid' | 'list';

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Key, Plus, Edit2, Trash2, Copy, Check, RefreshCw } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@components/ui';
-import { Table, type Column } from '@components/ui/Table';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
+import { Table, type Column } from '@components/ui/Table/Table';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
-import { FormCheckbox, FormInput } from '@/components/forms';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface ApiToken {

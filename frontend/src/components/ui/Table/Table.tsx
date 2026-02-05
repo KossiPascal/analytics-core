@@ -2,8 +2,11 @@ import { type ReactNode, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { listItemVariants, staggerContainerVariants } from '@animations/index';
-import { TableToolbar, Pagination, PageSizeSelector, ColumnVisibilityToggle } from './components';
+import { listItemVariants, staggerContainerVariants } from '@animations/list.variants';
+import { TableToolbar } from './components/TableToolbar/TableToolbar';
+import { Pagination } from './components/Pagination/Pagination';
+import { PageSizeSelector } from './components/PageSizeSelector/PageSizeSelector';
+import { ColumnVisibilityToggle } from './components/ColumnVisibilityToggle/ColumnVisibilityToggle';
 import type { ExportFormat } from './utils/exportData';
 import styles from './Table.module.css';
 

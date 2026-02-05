@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/stores/OLD';
 import { authService } from '@/services/OLD/auth.old';
-import { ROUTES, DEFAULT_AUTHENTICATED_ROUTE } from '@routes/index';
+import { ROUTES, DEFAULT_AUTHENTICATED_ROUTE } from '@routes/routes';
 import type { LoginCredentials, ChangePasswordPayload } from '@/models/OLD/old';
 
 export function useAuthActions() {

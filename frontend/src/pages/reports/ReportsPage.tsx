@@ -14,11 +14,11 @@ import {
   Eye,
   AlertCircle,
 } from 'lucide-react';
-import { PageWrapper } from '@components/layout';
-import { Card, CardBody } from '@components/ui';
+import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
+import { Card, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { GraduationLoader } from '@components/loaders/GraduationLoader/GraduationLoader';
-import { VisualizationCard } from '@components/visualizations';
+import { VisualizationCard } from '@components/visualizations/VisualizationCard/VisualizationCard';
 import { useReports } from '@/contexts/OLD/useReports';
 import { useVisualizations } from '@/contexts/OLD/useVisualizations';
 import { ReportFilters } from '@/components/filters/ReportFilters';

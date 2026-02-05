@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { OrgUnitsFilter, type OrgUnitSelection, type FilterFormData } from '../OrgUnitsFilter';
+import { OrgUnitsFilter, type OrgUnitSelection, type FilterFormData } from '../OrgUnitsFilter/OrgUnitsFilter';
 import { Filter, RefreshCw } from 'lucide-react';
 import styles from './ReportFilters.module.css';
 

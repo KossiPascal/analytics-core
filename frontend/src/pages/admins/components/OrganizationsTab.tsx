@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Modal, Button, StatusBadge } from '@components/ui';
-import { Table, type Column } from '@components/ui/Table';
-import { FormInput, FormTextarea } from '@/components/forms';
+import { Modal } from '@components/ui/Modal/Modal';
+import { Button } from '@components/ui/Button/Button';
+import { StatusBadge } from '@components/ui/Badge/Badge';
+import { Table, type Column } from '@components/ui/Table/Table';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { OrganizationsApi } from '@/services/OLD/old/api.service';
 import { Building2, Save, Edit2, Trash2, RefreshCw, Plus } from 'lucide-react';

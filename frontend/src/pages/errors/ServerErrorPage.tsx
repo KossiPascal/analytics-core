@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, RefreshCw } from 'lucide-react';
-import { Button } from '@components/ui';
-import { ROUTES } from '@routes/index';
+import { Button } from '@components/ui/Button/Button';
+import { ROUTES } from '@routes/configs';
 import styles from './ErrorPage.module.css';
 
 export default function ServerErrorPage() {

@@ -11,7 +11,7 @@ import {
   BarChart3,
   Building2,
 } from 'lucide-react';
-import { PageWrapper } from '@components/layout';
+import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { ApiAccessTab } from '@/pages/admins/components/ApiAccessTab';
 import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
 import { DatabaseActionsTab } from '@/pages/admins/components/DatabaseActionsTab';

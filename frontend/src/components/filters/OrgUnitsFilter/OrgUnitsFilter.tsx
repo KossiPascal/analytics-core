@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { Modal, Button } from '@components/ui';
+import { Modal } from '@components/ui/Modal/Modal';
+import { Button } from '@components/ui/Button/Button';
 import type {
   CountryMap,
   RegionsMap,

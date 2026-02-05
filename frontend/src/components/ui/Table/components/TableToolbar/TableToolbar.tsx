@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { SearchBar } from '../SearchBar';
-import { ExportButtons } from '../ExportButtons';
+import { SearchBar } from '../SearchBar/SearchBar';
+import { ExportButtons } from '../ExportButtons/ExportButtons';
 import type { Column } from '../../Table';
 import type { ExportFormat } from '../../utils/exportData';
 import styles from './TableToolbar.module.css';

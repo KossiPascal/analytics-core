@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Database, Trash2, RefreshCw, CheckSquare, Square } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
-import { FormCheckbox, FormInput, FormRadioGroup } from '@/components/forms';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormRadioGroup } from '@/components/forms/FormRadio/FormRadio';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface DatabaseEntity {

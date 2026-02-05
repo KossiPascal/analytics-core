@@ -1,1 +1,0 @@
-export { RolesTable } from './RolesTable';

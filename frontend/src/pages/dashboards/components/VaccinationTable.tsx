@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { Download, Phone, MessageSquare, ChevronDown, ChevronRight } from 'lucide-react';
 import type { RecoVaccinationDashboardDbOutput } from '@/models/OLD/old/dashboard.types';

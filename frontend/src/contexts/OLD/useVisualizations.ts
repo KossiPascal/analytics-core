@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { VisualizationsApi } from '@/services/OLD/old';
-import type { ChartDataItem } from '@components/charts';
+import type { ChartDataItem } from '@components/charts/types';
 
 // ============================================================================
 // TYPES

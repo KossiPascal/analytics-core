@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { Download, ChevronDown, ChevronRight, AlertCircle, User, Users } from 'lucide-react';
 import type { RecoTasksStateDashboard } from '@/models/OLD/old/dashboard.types';
