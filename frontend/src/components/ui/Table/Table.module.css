@@ -1,10 +1,22 @@
+.container {
+  width: 100%;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
 .wrapper {
   position: relative;
   width: 100%;
   overflow-x: auto;
-  background-color: var(--bg-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+}
+
+.pageSizeContainer {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .table {
