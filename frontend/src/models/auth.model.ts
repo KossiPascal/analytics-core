@@ -6,6 +6,15 @@ export interface PayloadUser {
     // roles: string[];
     mustChangeDefaultPassword:boolean
     permissions: string[]
+    // Organization units (optional for filtered access)
+    countries?: any[];
+    regions?: any[];
+    prefectures?: any[];
+    communes?: any[];
+    hospitals?: any[];
+    districtQuartiers?: any[];
+    chws?: any[];
+    recos?: any[];
 }
 
 export interface LoginResponse {

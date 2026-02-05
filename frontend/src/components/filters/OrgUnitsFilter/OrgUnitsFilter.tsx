@@ -11,8 +11,8 @@ import type {
   VillageSecteursMap,
   ChwsMap,
   RecosMap,
-} from '@/models/OLD/old';
-import { useAuth } from '@/stores/OLD';
+} from '@/models/OLD/old/org-unit.types';
+import { useAuth } from '@/contexts/AuthContext';
 import { notNull } from '@/utils/date';
 import styles from './OrgUnitsFilter.module.css';
 

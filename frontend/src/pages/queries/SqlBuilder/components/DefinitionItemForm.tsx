@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { FormInput, FormSelect, FormCheckbox } from '@/components/forms';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 
 export interface DimensionEntry {

@@ -6,12 +6,10 @@ import { GraduationLoader } from '@components/loaders/GraduationLoader/Graduatio
 import { VisualizationCard } from '@components/visualizations/VisualizationCard/VisualizationCard';
 import { useDashboard } from '@/contexts/OLD/useDashboard';
 import { useVisualizations } from '@/contexts/OLD/useVisualizations';
-import {
-  DashboardFilters,
-  RecoPerformanceTable,
-  ActiveRecoTable,
-  TasksStateTable,
-} from '@pages/dashboards/components';
+import { DashboardFilters } from '@/pages/dashboards/components/DashboardFilters';
+import { RecoPerformanceTable } from '@/pages/dashboards/components/RecoPerformanceTable';
+import { ActiveRecoTable } from '@/pages/dashboards/components/ActiveRecoTable';
+import { TasksStateTable } from '@/pages/dashboards/components/TasksStateTable';
 import type { DashboardFilterParams } from '@/stores/OLD/dashboard.store';
 import styles from './MonthlyDashboard.module.css';
 

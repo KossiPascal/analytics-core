@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Card, CardBody } from '@components/ui/Card/Card';
-import { OrgUnitsFilter, type FilterFormData } from '@components/filters/OrgUnitsFilter';
-import { Button } from '@components/ui/Button/Button';
+import { Card, CardBody } from '@/components/ui/Card/Card';
+import { OrgUnitsFilter, type FilterFormData } from '@/components/filters/OrgUnitsFilter/OrgUnitsFilter';
+import { Button } from '@/components/ui/Button/Button';
 import { Search, RefreshCw, X, Filter } from 'lucide-react';
 import styles from './DashboardFilters.module.css';
 

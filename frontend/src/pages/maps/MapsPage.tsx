@@ -23,7 +23,7 @@ import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { MapsApi } from '@/services/OLD/old/api.service';
-import { DashboardFilters } from '@/pages/dashboards/components';
+import { DashboardFilters } from '@/pages/dashboards/components/DashboardFilters';
 import type { DashboardFilterParams } from '@/stores/OLD/dashboard.store';
 import styles from './MapsPage.module.css';
 

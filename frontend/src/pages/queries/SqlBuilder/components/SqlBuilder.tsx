@@ -15,10 +15,13 @@ import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@/components/ui';
-import { DatabaseConnectionTab } from '@/pages/admins/components';
-import { FormRadioGroup, FormInput, FormSelect, FormCheckbox } from '@/components/forms';
-import { RemoveIcon } from '@/components/ui/icons';
+import { Button } from '@/components/ui/Button/Button';
+import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
+import { FormRadio, FormRadioGroup } from '@/components/forms/FormRadio/FormRadio';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { RemoveIcon } from '@/components/ui/icons/RemoveIcon';
 import { DefinitionItemForm, buildAlias, FORMULA_OPTIONS, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max';

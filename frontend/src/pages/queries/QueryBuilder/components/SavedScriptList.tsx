@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useCallback } from "react";
 import { Pencil, Trash2, Search, Copy, Check } from "lucide-react";
 import { scriptStore } from "@/stores/scripts.store";
-import { useAuth } from "@contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Script } from "@/services/scripts.service";
-import { FormInput } from "@/components/forms";
+import { FormInput } from "@/components/forms/FormInput/FormInput";
 
 export default function SavedScriptList() {
   const { loading, scripts, copiedId, search, error, fetchAll, remove, select, copy, setSearch, clearError } = scriptStore();

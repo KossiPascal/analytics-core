@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Navbar } from '@components/layout/Navbar/Navbar';
 import { Sidebar } from '@components/layout/Sidebar/Sidebar';
 import { PageLoader } from '@components/loaders/PageLoader/PageLoader';
-import { AppRoutes } from '@routes/routes';
+import { AppRoutes } from '@/routes';
 // import { useStore } from '@/stores/OLD';
 import { useAuth } from "@/contexts/AuthContext";
 import '@assets/css/global.css';

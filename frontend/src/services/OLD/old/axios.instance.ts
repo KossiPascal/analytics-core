@@ -1,5 +1,5 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
-import { useStore } from '@/stores/OLD';
+import { useStore } from '@/stores/OLD/index';
 import { LOGIN_ROUTE } from '@routes/routes';
 
 // Create axios instance

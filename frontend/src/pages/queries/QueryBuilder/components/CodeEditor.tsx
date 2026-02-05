@@ -3,8 +3,10 @@ import Editor from "@monaco-editor/react";
 import { scriptStore } from "@/stores/scripts.store";
 import CodeEditorButtons from "./CodeEditorButtons";
 
-import { useAuth } from "@contexts/AuthContext";
-import { FormField, FormInput, FormSelect } from "@/components/forms";
+import { useAuth } from "@/contexts/AuthContext";
+import { FormField } from "@/components/forms/FormField/FormField";
+import { FormInput } from "@/components/forms/FormInput/FormInput";
+import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 
 export default function CodeEditor() {
   const { languages, script, language, setScript, updateField, loading, error, theme, defaultScript } = scriptStore();

@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { RemoveIcon } from '@/components/ui/icons';
+import { RemoveIcon } from '@/components/ui/icons/RemoveIcon';
 import type { SelectField } from '../models';
 import { AGG_LABELS } from '../models';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';

@@ -21,7 +21,7 @@ import { GraduationLoader } from '@components/loaders/GraduationLoader/Graduatio
 import { VisualizationCard } from '@components/visualizations/VisualizationCard/VisualizationCard';
 import { useReports } from '@/contexts/OLD/useReports';
 import { useVisualizations } from '@/contexts/OLD/useVisualizations';
-import { ReportFilters } from '@/components/filters/ReportFilters';
+import { ReportFilters } from '@/components/filters/ReportFilters/ReportFilters';
 import { ReportTable } from './components/ReportTable';
 import type { ReportType } from '@/models/OLD/old/reports.types';
 import type { FilterParams } from '@/stores/OLD/reports.store';

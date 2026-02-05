@@ -1,6 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { MONTHS, getCurrentYear, getYears } from '@/models/OLD/old';
+import { currentYear, getYearsList } from '@/utils/date';
 import styles from './MonthYearFilter.module.css';
+
+const MONTHS = [
+  { value: '01', label: 'Janvier' },
+  { value: '02', label: 'Février' },
+  { value: '03', label: 'Mars' },
+  { value: '04', label: 'Avril' },
+  { value: '05', label: 'Mai' },
+  { value: '06', label: 'Juin' },
+  { value: '07', label: 'Juillet' },
+  { value: '08', label: 'Août' },
+  { value: '09', label: 'Septembre' },
+  { value: '10', label: 'Octobre' },
+  { value: '11', label: 'Novembre' },
+  { value: '12', label: 'Décembre' },
+];
 
 interface MonthYearFilterProps {
   onChange: (month: string, year: number) => void;
@@ -22,10 +37,10 @@ export function MonthYearFilter({
     defaultMonth || String(currentDate.getMonth() + 1).padStart(2, '0')
   );
   const [selectedYear, setSelectedYear] = useState<number>(
-    defaultYear || getCurrentYear()
+    defaultYear || currentYear()
   );
 
-  const years = getYears(2020);
+  const years = getYearsList();
 
   // Utiliser useRef pour éviter la boucle infinie causée par onChange non mémoïsé
   const onChangeRef = useRef(onChange);
