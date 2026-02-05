@@ -37,18 +37,6 @@ export const TableToolbar = <T extends Record<string, unknown>>({
   return (
     <div className={`${styles.toolbar} ${className || ''}`}>
       <div className={styles.leftSection}>
-        {leftSection}
-        {showSearch && onSearchChange && (
-          <SearchBar
-            value={searchValue}
-            onChange={onSearchChange}
-            placeholder={searchPlaceholder}
-          />
-        )}
-      </div>
-
-      <div className={styles.rightSection}>
-        {rightSection}
         {showExport && exportData.length > 0 && (
           <ExportButtons
             data={exportData}
@@ -57,6 +45,18 @@ export const TableToolbar = <T extends Record<string, unknown>>({
             formats={exportFormats}
           />
         )}
+        {leftSection}
+      </div>
+
+      <div className={styles.rightSection}>
+        {showSearch && onSearchChange && (
+          <SearchBar
+            value={searchValue}
+            onChange={onSearchChange}
+            placeholder={searchPlaceholder}
+          />
+        )}
+        {rightSection}
       </div>
     </div>
   );

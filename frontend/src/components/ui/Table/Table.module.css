@@ -3,13 +3,14 @@
   background-color: var(--bg-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .wrapper {
   position: relative;
   width: 100%;
   overflow-x: auto;
+  border-radius: var(--radius-lg);
 }
 
 .footer {
