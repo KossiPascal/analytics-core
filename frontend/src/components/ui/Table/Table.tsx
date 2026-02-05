@@ -183,9 +183,9 @@ export function Table<T extends Record<string, unknown>>({
           exportColumns={displayColumns}
           exportFilename={exportFilename}
           exportFormats={exportFormats}
-          leftSection={toolbarLeftSection}
-          rightSection={
+          leftSection={
             <>
+              {toolbarLeftSection}
               {enableColumnVisibility && (
                 <ColumnVisibilityToggle
                   columns={columns}
@@ -193,20 +193,10 @@ export function Table<T extends Record<string, unknown>>({
                   onVisibilityChange={setVisibleColumns}
                 />
               )}
-              {toolbarRightSection}
             </>
           }
+          rightSection={toolbarRightSection}
         />
-      )}
-
-      {enablePageSize && enablePagination && (
-        <div className={styles.pageSizeContainer}>
-          <PageSizeSelector
-            pageSize={pageSize}
-            onPageSizeChange={setPageSize}
-            options={pageSizeOptions}
-          />
-        </div>
       )}
 
       <div className={styles.wrapper}>
@@ -342,13 +332,24 @@ export function Table<T extends Record<string, unknown>>({
         )}
       </div>
 
-      {enablePagination && totalPages > 1 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          showFirstLast={showFirstLastButtons}
-        />
+      {(enablePagination || enablePageSize) && (
+        <div className={styles.footer}>
+          {enablePageSize && (
+            <PageSizeSelector
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              options={pageSizeOptions}
+            />
+          )}
+          {enablePagination && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              showFirstLast={showFirstLastButtons}
+            />
+          )}
+        </div>
       )}
     </div>
   );

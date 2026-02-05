@@ -58,15 +58,14 @@ export const Pagination = ({
     }
   };
 
-  if (totalPages <= 1) return null;
-
   return (
     <div className={`${styles.pagination} ${className || ''}`}>
       <div className={styles.info}>
         Page {currentPage} sur {totalPages}
       </div>
 
-      <div className={styles.controls}>
+      {totalPages > 1 && (
+        <div className={styles.controls}>
         {showFirstLast && (
           <button
             className={styles.button}
@@ -137,7 +136,8 @@ export const Pagination = ({
             <ChevronsRight size={18} />
           </button>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

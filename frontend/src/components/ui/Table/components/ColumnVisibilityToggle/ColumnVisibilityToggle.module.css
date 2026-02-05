@@ -33,7 +33,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 40;
+  z-index: 1000;
 }
 
 .dropdown {
@@ -46,7 +46,7 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  z-index: 50;
+  z-index: 1001;
   overflow: hidden;
 }
 
