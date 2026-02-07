@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Database, RefreshCw, HardDrive, Server, CheckCircle } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';

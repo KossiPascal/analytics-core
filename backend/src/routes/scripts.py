@@ -117,7 +117,7 @@ def get_script(script_id):
         return jsonify({"error": str(e)}), 500
 
 # CRÉER OU METTRE À JOUR UN SCRIPT
-@bp.post("/")
+@bp.post("")
 @bp.put("/<int:script_id>")
 @require_auth()
 def save_script(script_id=None):

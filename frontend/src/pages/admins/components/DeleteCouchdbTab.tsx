@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Trash2, Search, AlertTriangle, RefreshCw, CheckSquare, Square } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi, OrgUnitsApi } from '@/services/OLD/old/api.service';
-import { FormCheckbox, FormDatePicker, FormMultiSelect, FormSelect } from '@/components/forms';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormDatePicker } from '@/components/forms/FormDatePicker/FormDatePicker';
+import { FormMultiSelect } from '@/components/forms/FormSelect/FormMultiSelect';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface DataToDelete {

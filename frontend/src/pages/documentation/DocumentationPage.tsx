@@ -12,8 +12,8 @@ import {
   Video,
   HelpCircle,
 } from 'lucide-react';
-import { PageWrapper } from '@components/layout';
-import { Card, CardBody } from '@components/ui';
+import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
+import { Card, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import styles from './DocumentationPage.module.css';

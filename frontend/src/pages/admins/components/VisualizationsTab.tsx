@@ -35,13 +35,11 @@ import {
   initializeTestData,
   type VisualizationDimensionItem,
 } from '@/utils/TestData';
-import {
-  Chart,
-  CHART_COLORS,
-  type ChartType,
-  type ChartDataItem,
-} from '@components/charts';
-import { FormCheckbox, FormInput } from '@/components/forms';
+import { Chart } from '@components/charts/Chart';
+import { CHART_COLORS } from '@components/charts/theme';
+import type { ChartType, ChartDataItem } from '@components/charts/types';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
 import styles from '@pages/admins/AdminPage.module.css';
 
 // ============================================================================

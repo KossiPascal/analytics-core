@@ -1,5 +1,11 @@
 import { type StateCreator } from 'zustand';
-import type { AlertMessage } from '@/models/OLD/old';
+
+export interface AlertMessage {
+  id: string;
+  type: 'success' | 'error' | 'warning' | 'info';
+  message: string;
+  duration?: number;
+}
 
 export interface UISlice {
   // Sidebar state

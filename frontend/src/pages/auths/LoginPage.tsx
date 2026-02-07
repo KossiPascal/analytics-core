@@ -2,12 +2,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { User, Lock, LogIn } from "lucide-react";
-import { AuthLayout } from "@components/layout";
-import { Button } from "@components/ui";
-import { FormInput } from "@/components/forms";
+import { AuthLayout } from "@components/layout/AuthLayout/AuthLayout";
+import { Button } from "@components/ui/Button/Button";
+import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { loginFormSchema, type LoginFormData } from "@utils/validators";
 import { useAuth } from "@/contexts/AuthContext";
-import { ROUTES } from "@routes/index";
+import { ROUTES } from "@routes/configs";
 
 import styles from "./LoginPage.module.css";
 

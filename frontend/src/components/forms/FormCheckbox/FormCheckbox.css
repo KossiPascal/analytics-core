@@ -11,8 +11,8 @@
 
 .checkboxBox {
   position: relative;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.rem;
+  height: 1rem;
   background: var(--form-bg-light);
   border-radius: 6px;
   box-shadow:

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { Download, CheckCircle, XCircle, MinusCircle } from 'lucide-react';
 import type { ActiveRecoDashboard, ActiveRecoUtils } from '@/models/OLD/old/dashboard.types';

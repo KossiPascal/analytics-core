@@ -18,8 +18,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { collapseVariants, sidebarItemTextVariants } from '@animations/index';
-import { getSideNavItems, ROUTES, NavItem } from '@routes/index';
+import { collapseVariants, sidebarItemTextVariants } from '@animations/shared.variants';
+import { getSideNavItems, ROUTES, NavItem } from '@routes/routes';
 import styles from './Sidebar.module.css';
 import { useAuth } from '@/contexts/AuthContext';
 

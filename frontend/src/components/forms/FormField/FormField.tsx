@@ -17,6 +17,8 @@ export interface FormFieldProps {
   children: ReactNode;
   /** Classes CSS additionnelles */
   className?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export function FormField({
@@ -27,23 +29,34 @@ export function FormField({
   htmlFor,
   children,
   className = '',
+  layout = 'vertical',
 }: FormFieldProps) {
+  const fieldClasses = [
+    styles.formField,
+    layout === 'inline' && styles.formFieldInline,
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={`${styles.formField} ${className}`}>
+    <div className={fieldClasses}>
       {label && (
         <label className={styles.label} htmlFor={htmlFor}>
           {label}
           {required && <span className={styles.required}>*</span>}
         </label>
       )}
-      {children}
-      {hint && !error && <span className={styles.hint}>{hint}</span>}
-      {error && (
-        <span className={styles.errorMessage}>
-          <AlertCircle size={12} />
-          {error}
-        </span>
-      )}
+      <div className={layout === 'inline' ? styles.formFieldInlineContent : undefined}>
+        {children}
+        {hint && !error && <span className={styles.hint}>{hint}</span>}
+        {error && (
+          <span className={styles.errorMessage}>
+            <AlertCircle size={12} />
+            {error}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

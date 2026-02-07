@@ -1,6 +1,6 @@
 import { InputHTMLAttributes, ReactNode, useState, forwardRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { FormField } from '../FormField';
+import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
 import './FormInput.css';
 
@@ -21,6 +21,8 @@ export interface FormInputProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
   /** Classes CSS additionnelles pour le wrapper */
   wrapperClassName?: string;
+  /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
+  layout?: 'vertical' | 'inline';
 }
 
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
@@ -36,6 +38,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
       disabled,
       className = '',
       wrapperClassName = '',
+      layout = 'vertical',
       id,
       ...props
     },
@@ -72,6 +75,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         error={error}
         hint={hint}
         htmlFor={inputId}
+        layout={layout}
       >
         <div className={wrapperClasses}>
           {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}

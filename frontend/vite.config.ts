@@ -178,9 +178,9 @@ export default defineConfig({
       '@utils': path.resolve(__dirname, './src/utils'),
       '@models': path.resolve(__dirname, './src/models'),
       '@assets': path.resolve(__dirname, './assets'),
-      '@animations/index': path.resolve(__dirname, './src/animations'),
+      '@animations': path.resolve(__dirname, './src/animations'),
       '@config': path.resolve(__dirname, './src/config'),
-      '@routes/index': path.resolve(__dirname, './src/routes'),
+      '@routes': path.resolve(__dirname, './src/routes'),
     }
   },
 

@@ -1,10 +1,35 @@
-.wrapper {
-  position: relative;
+.container {
   width: 100%;
-  overflow-x: auto;
   background-color: var(--bg-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  overflow: visible;
+}
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+}
+
+.footer > :last-child {
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .footer {
+    flex-direction: column;
+    gap: var(--spacing-3);
+  }
 }
 
 .table {
@@ -13,26 +38,36 @@
   border-spacing: 0;
 }
 
-/* Header */
+/* Header --primary: #003366;*/
 .thead {
-  background-color: var(--bg-tertiary);
+  background-color: var(--primary) !important;
 }
 
 .stickyHeader {
   position: sticky;
   top: 0;
   z-index: 10;
+  background-color: var(--primary) !important;
 }
 
 .th {
   padding: var(--spacing-3) var(--spacing-4);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--text-secondary);
+  color: var(--text-inverse);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
   border-bottom: 1px solid var(--border-color);
+  background-color: inherit;
+}
+
+.th:first-child {
+  border-top-left-radius: var(--radius-lg);
+}
+
+.th:last-child {
+  border-top-right-radius: var(--radius-lg);
 }
 
 .th.sortable {
@@ -42,7 +77,7 @@
 }
 
 .th.sortable:hover {
-  background-color: var(--border-color);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .thContent {
@@ -54,7 +89,7 @@
 .sortIcon {
   display: flex;
   align-items: center;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Body */
@@ -64,6 +99,7 @@
 
 .tr {
   transition: background-color var(--transition-fast);
+  background-color: transparent;
 }
 
 .tr:not(:last-child) {
@@ -72,6 +108,10 @@
 
 .tr.clickable {
   cursor: pointer;
+}
+
+.tr.clickable:hover {
+  background-color: var(--bg-tertiary);
 }
 
 .tr.selected {
@@ -84,6 +124,7 @@
   font-size: var(--font-size-sm);
   color: var(--text-primary);
   vertical-align: middle;
+  background-color: transparent;
 }
 
 /* Alignment */

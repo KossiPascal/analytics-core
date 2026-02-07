@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '@/stores/OLD';
+import { useStore } from '@/stores/OLD/index';
 import { authService } from '@/services/OLD/auth.old';
-import { ROUTES, DEFAULT_AUTHENTICATED_ROUTE } from '@routes/index';
-import type { LoginCredentials, ChangePasswordPayload } from '@/models/OLD/old';
+import { ROUTES, DEFAULT_AUTHENTICATED_ROUTE } from '@routes/routes';
+import type { LoginCredentials, ChangePasswordPayload } from '@/models/OLD/old/auth.types';
 
 export function useAuthActions() {
   const navigate = useNavigate();

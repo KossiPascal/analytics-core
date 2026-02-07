@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Key, Plus, Edit2, Trash2, Copy, Check, RefreshCw } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
+import { Table, type Column } from '@components/ui/Table/Table';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
-import { FormCheckbox, FormInput } from '@/components/forms';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface ApiToken {
@@ -135,6 +137,63 @@ export function ApiAccessTab() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const columns: Column<ApiToken>[] = [
+    {
+      key: 'token',
+      header: 'Token',
+      sortable: true,
+      searchable: true,
+      render: (api) => (
+        <div className={styles.tokenDisplay}>
+          {api.token.substring(0, 8)}...{api.token.substring(api.token.length - 8)}
+          <button
+            className={styles.actionBtn}
+            onClick={() => copyToClipboard(api.token, api.id)}
+            title="Copier"
+          >
+            {copiedId === api.id ? <Check size={14} /> : <Copy size={14} />}
+          </button>
+        </div>
+      ),
+    },
+    {
+      key: 'isActive',
+      header: 'Statut',
+      sortable: true,
+      align: 'center',
+      render: (api) => (
+        <span className={`${styles.badge} ${api.isActive ? styles.badgeSuccess : styles.badgeDanger}`}>
+          {api.isActive ? 'Actif' : 'Inactif'}
+        </span>
+      ),
+      searchable: false,
+    },
+    {
+      key: 'id',
+      header: 'Actions',
+      align: 'center',
+      render: (api) => (
+        <div className={styles.actionsCell}>
+          <button
+            className={styles.actionBtn}
+            onClick={() => handleEdit(api)}
+            title="Modifier"
+          >
+            <Edit2 size={16} />
+          </button>
+          <button
+            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+            onClick={() => handleDeleteClick(api)}
+            title="Supprimer"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
+      searchable: false,
+    },
+  ];
+
   return (
     <Card>
       <CardHeader
@@ -171,58 +230,29 @@ export function ApiAccessTab() {
             </Button>
           </div>
         ) : (
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Token</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {apis.map((api) => (
-                  <tr key={api.id}>
-                    <td>
-                      <div className={styles.tokenDisplay}>
-                        {api.token.substring(0, 8)}...{api.token.substring(api.token.length - 8)}
-                        <button
-                          className={styles.actionBtn}
-                          onClick={() => copyToClipboard(api.token, api.id)}
-                          title="Copier"
-                        >
-                          {copiedId === api.id ? <Check size={14} /> : <Copy size={14} />}
-                        </button>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`${styles.badge} ${api.isActive ? styles.badgeSuccess : styles.badgeDanger}`}>
-                        {api.isActive ? 'Actif' : 'Inactif'}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={styles.actionsCell}>
-                        <button
-                          className={styles.actionBtn}
-                          onClick={() => handleEdit(api)}
-                          title="Modifier"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                          onClick={() => handleDeleteClick(api)}
-                          title="Supprimer"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            data={apis as any}
+            columns={columns as any}
+            keyExtractor={(api: any) => api.id as string}
+            isLoading={isLoading}
+            emptyMessage="Aucune API trouvée"
+            features={{
+              search: true,
+              export: true,
+              pagination: true,
+              pageSize: true,
+              animate: true,
+              columnVisibility: true,
+              scrollable: true,
+            }}
+            searchPlaceholder="Rechercher un token..."
+            exportFilename="api-tokens"
+            exportFormats={['csv', 'excel', 'json']}
+            defaultPageSize={10}
+            pageSizeOptions={[10, 25, 50, 100]}
+            stickyHeader
+            maxHeight="600px"
+          />
         )}
       </CardBody>
 
