@@ -1,8 +1,8 @@
 import threading
 from functools import wraps
 from flask import request, jsonify
-from models.auth import User,UsersLog
-from config import Config
+from backend.src.models.auth import User,UsersLog
+from backend.src.config import Config
 import user_agents
 
 EXCLUDED_PATHS = {

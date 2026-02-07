@@ -17,6 +17,7 @@ import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnect
 import { DatabaseActionsTab } from '@/pages/admins/components/DatabaseActionsTab';
 import { DeleteCouchdbTab } from '@/pages/admins/components/DeleteCouchdbTab';
 import { OrganizationsTab } from '@/pages/admins/components/OrganizationsTab';
+import { ChtCouchdbRegisterTab } from '@/pages/admins/components/ChtCouchdbRegisterTab';
 import { PdfGeneratorTab } from '@/pages/admins/components/PdfGeneratorTab';
 import { SignatureTab } from '@/pages/admins/components/SignatureTab';
 import { TruncateDatabaseTab } from '@/pages/admins/components/TruncateDatabaseTab';
@@ -24,6 +25,7 @@ import { VisualizationsTab } from '@/pages/admins/components/VisualizationsTab';
 import styles from './AdminPage.module.css';
 
 type AdminTabType =
+  | 'CHT_COUCHDB_REGISTER'
   | 'ORGANIZATIONS'
   | 'API_ACCESS'
   | 'DB_CONNECTION'
@@ -44,6 +46,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { id: 'ORGANIZATIONS', label: 'Organisations', icon: <Building2 size={18} />, color: '#8b5cf6' },
+  { id: 'CHT_COUCHDB_REGISTER', label: 'Déclarer Cht Couchdb', icon: <Building2 size={18} />, color: '#4111afff' },
   { id: 'API_ACCESS', label: "API d'accès", icon: <Key size={18} />, color: '#3b82f6' },
   { id: 'DB_CONNECTION', label: 'Connexion BD', icon: <Plug size={18} />, color: '#0ea5e9' },
   { id: 'DATABASE', label: 'Base de données', icon: <Database size={18} />, color: '#22c55e' },
@@ -66,6 +69,8 @@ export default function AdminPage() {
       switch (currentTab) {
         case 'ORGANIZATIONS':
           return <OrganizationsTab />;
+        case 'CHT_COUCHDB_REGISTER':
+          return <ChtCouchdbRegisterTab />
         case 'API_ACCESS':
           return <ApiAccessTab />;
         case 'DB_CONNECTION':

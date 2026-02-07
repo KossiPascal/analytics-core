@@ -1,2 +1,2 @@
-# from src.server import create_app
-# app = create_app()
+# from ai.src.server import flask_app
+# app = flask_app()

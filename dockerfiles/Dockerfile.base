@@ -47,12 +47,15 @@ RUN pip install --no-cache-dir --default-timeout=200 --retries=5 -r requirements
 # ============================
 # Environment variables
 # ============================
+ENV PYTHONPATH=/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_DEFAULT_TIMEOUT=200
 ENV PIP_RETRIES=5
+ENV APP_ENV=production
+ENV FLASK_APP=wsgi.py
 
 # ============================
 # Copy healthcheck script
@@ -61,8 +64,30 @@ ENV PIP_RETRIES=5
 # COPY base-healthcheck.sh /app/base-healthcheck.sh
 # RUN chmod +x /app/base-healthcheck.sh
 
+# ============================
+# Create non-root user
+# ============================
+RUN useradd -m -u 1000 appuser
+USER appuser
+
+# ============================
+# Dossiers nécessaires
+# ============================
+RUN mkdir -p /app/logs/backend /app/logs/workers /app/logs/ai
+
+RUN mkdir -p /app/shared_libs /app/backend /app/workers /app/ai
+
+
+# Copy backend, workers, ai
+COPY --chown=appuser:appuser shared_libs/ ./shared_libs/
+COPY --chown=appuser:appuser backend/ ./backend/
+COPY --chown=appuser:appuser workers/ ./workers/
+COPY --chown=appuser:appuser ai/ ./ai/
+
+
 # # ============================
-# # Create non-root user
+# # Copier le code backend
 # # ============================
-# RUN useradd -m appuser
-# USER appuser
+# COPY ai/ ./ai/
+# COPY backend/ ./backend/
+# COPY workers/ ./workers/

@@ -1,0 +1,16 @@
+# ============================
+# Backend Dockerfile
+# ============================
+FROM analytics-core-base:latest
+
+
+# ============================
+# Répertoire de travail
+# ============================
+WORKDIR /app/Backend
+
+
+EXPOSE 5000
+
+# Commande de démarrage
+CMD ["gunicorn", "wsgi:app", "--bind", "0.0.0.0:5000", "--workers", "2", "--worker-class", "gthread", "--threads", "4", "--timeout", "120", "--graceful-timeout", "30", "--access-logfile", "-", "--error-logfile", "-"]

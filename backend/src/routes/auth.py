@@ -2,18 +2,18 @@
 import uuid
 import random
 import string
-from config import Config
+from backend.src.config import Config
 from datetime import datetime
-from database.extensions import db
-from helpers.logger import get_logger
+from backend.src.database.extensions import db
+from backend.src.logger import get_backend_logger
 from sqlalchemy.exc import IntegrityError
-from models.auth import User, RefreshToken
+from backend.src.models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g, current_app
-from helpers.hasher import hash_password, verify_password, hash_token
-from helpers.auth import create_token,create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,check_rate_limit
-from security.access_security import require_auth
+from backend.src.helpers.hasher import hash_password, verify_password, hash_token
+from backend.src.helpers.auth import create_token,create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,check_rate_limit
+from backend.src.security.access_security import require_auth
 
-logger = get_logger(__name__)
+logger = get_backend_logger(__name__)
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 

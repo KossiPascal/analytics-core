@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_DIR = BASE_DIR.parent
@@ -98,6 +99,15 @@ class Config:
     ]
 
     AUTO_SYNC_COUCHDB_TO_POSTGRES = os.getenv("AUTO_SYNC_COUCHDB_TO_POSTGRES", "false") == 'true'
+
+
+    # Celery
+    CELERY_NAME = "analytics_core_celery"
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+    CELERY_TIMEZONE = "UTC"
+    CELERY_ENABLE_UTC = True
+
 
     @classmethod
     def validate(cls):

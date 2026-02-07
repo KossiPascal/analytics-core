@@ -2,9 +2,9 @@ import uuid
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.exc import IntegrityError
-from database.extensions import db, tokenManagement
-from config import Config
-from helpers.hasher import hash_password, verify_password
+from backend.src.database.extensions import db, tokenManagement
+from backend.src.config import Config
+from backend.src.helpers.hasher import hash_password, verify_password
 from hashlib import sha256
 
 # -------------------- TENANT --------------------

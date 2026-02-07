@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 from psycopg2.extras import DictCursor
-from security.access_security import require_auth
-from models.connection import DataConnection, DbConnection
-from database.extensions import db, get_connection
-from interfaces.connections import DbConnectionParams, DbConnectionForm, convert_to_conn_params, convert_to_conn_form
-from config import Config
+from backend.src.security.access_security import require_auth
+from backend.src.models.connection import DataConnection, DbConnection
+from backend.src.database.extensions import db, get_connection
+from backend.src.interfaces.connections import DbConnectionParams, DbConnectionForm, convert_to_conn_params, convert_to_conn_form
+from backend.src.config import Config
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from sqlalchemy import text
-from utils.connection import (
+from backend.src.utils.connection import (
     SSHTunnelManager,
     encrypt,
     decrypt,
@@ -18,8 +18,8 @@ from utils.connection import (
     create_ssh_tunnel
 )
 
-from helpers.logger import get_logger
-logger = get_logger(__name__)
+from backend.src.logger import get_backend_logger
+logger = get_backend_logger(__name__)
 
 bp = Blueprint("connections", __name__, url_prefix="/api/connections")
 

@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Tuple, Literal
-from database.migrations.types import BaseViewMigration
+
+from backend.src.database.migrations.types import BaseViewMigration
 # -----------------------
 # EXEMPLE DE VUES
 # -----------------------

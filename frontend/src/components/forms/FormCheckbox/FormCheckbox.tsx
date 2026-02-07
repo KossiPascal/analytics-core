@@ -18,6 +18,7 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
       label,
       error,
       checked,
+      value,
       disabled,
       className = '',
       wrapperClassName = '',
@@ -27,6 +28,8 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
     ref
   ) => {
     const inputId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+
+    const checkedValue = Boolean(checked ?? value);
 
     return (
       <div className={wrapperClassName}>
@@ -38,12 +41,12 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
             ref={ref}
             id={inputId}
             type="checkbox"
-            checked={checked}
+            checked={checkedValue}
             disabled={disabled}
             className={styles.checkboxInput}
             {...props}
           />
-          <span className={`${styles.checkboxBox} ${checked ? styles.checked : ''}`}>
+          <span className={`${styles.checkboxBox} ${checkedValue ? styles.checked : ''}`}>
             <Check size={14} strokeWidth={3} />
           </span>
           {label && <span className={styles.checkboxLabel}>{label}</span>}

@@ -1,11 +1,7 @@
 from typing import Optional
 import uuid
 from datetime import datetime
-from database.extensions import (
-    db, 
-    deserializeContent, 
-    serializeContent, 
-)
+from backend.src.database.extensions import db,  deserializeContent, serializeContent 
 
 
 class Script(db.Model):

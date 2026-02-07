@@ -1,8 +1,8 @@
 # backend/src/routes/api.py
 from flask import Blueprint, jsonify, request
-from security.access_security import require_auth
-from database.extensions import db
-from models.visualization import DataSource
+from backend.src.security.access_security import require_auth
+from backend.src.database.extensions import db
+from backend.src.models.visualization import DataSource
 import uuid
 
 bp = Blueprint("datasources", __name__, url_prefix="/api/datasources")

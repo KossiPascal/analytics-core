@@ -1,83 +1,138 @@
+from typing import Any
+from backend.src.config import Config
 from datetime import datetime
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.dialects.postgresql import JSONB
-from database.extensions import engine
-from database.extensions import db
-# from sqlalchemy import Column, Integer, String, JSON, Text
+from backend.src.database.extensions import db
+from backend.src.logger import get_backend_logger
+from cryptography.fernet import Fernet
+
+logger = get_backend_logger(__name__)
 
 
-SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
-class CouchDBLastSeq(db.Model):
-    __tablename__ = "couchdb_last_seq"
+# 🔐 Crypto utils
+def get_fernet() -> Fernet:
+    return Fernet(Config.FERNET_KEY)
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=False)  # correspond à TypeORM Primarydb.Column
-    seq = db.Column(db.String, nullable=False)
+def encrypt(value: str) -> str:
+    if not value:
+        raise ValueError("Cannot encrypt empty value")
+    return get_fernet().encrypt(value.encode()).decode()
 
-class CouchDB(db.Model):
-    __tablename__ = "couchdb"
+def decrypt(value: str) -> str:
+    if not value:
+        raise ValueError("Cannot decrypt empty value")
+    return get_fernet().decrypt(value.encode()).decode()
 
-    id = db.Column(db.Text, primary_key=True)
-    doc = db.Column(JSONB, nullable=False)
 
-class CouchDBUsers(db.Model):
-    __tablename__ = "couchdb_users"
+DEFAULT_COUCHDB_DBS = [
+    {"id": 1, "local_name": "docs", "host_name": "medic"},
+    {"id": 2, "local_name": "users", "host_name": "_users"},
+    {"id": 3, "local_name": "logs", "host_name": "medic-logs"},
+    {"id": 4, "local_name": "metas", "host_name": "medic-sentinel"},
+    {"id": 5, "local_name": "sentinel", "host_name": "medic-users-meta"},
+]   
 
-    id = db.Column(db.Text, primary_key=True)
-    doc = db.Column(JSONB, nullable=False)
 
-class CouchDBLogs(db.Model):
-    __tablename__ = "couchdb_logs"
 
-    id = db.Column(db.Text, primary_key=True)
-    doc = db.Column(JSONB, nullable=False)
+# CouchDB logical database (list of DBs)
+class CibleDatabase(db.Model):
+    __tablename__ = "couchdb_sync_cibles"
 
-class CouchDBMetas(db.Model):
-    __tablename__ = "couchdb_metas"
+    id = db.Column(db.Integer, primary_key=True)
+    local_name = db.Column(db.String(255), nullable=False, unique=True)
+    host_name = db.Column(db.String(255), nullable=False)
+    type = db.Column(db.String(50), nullable=False, index=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-    id = db.Column(db.Text, primary_key=True)
-    doc = db.Column(JSONB, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    
+    @staticmethod
+    def full_db_names(self):
+        """Return active logical databases"""
+        couchdbs:list[CibleDatabase] = CibleDatabase.query.filter_by(is_active=True).all()
+        return couchdbs
+    
+    @staticmethod
+    def couchdb_names():
+        """Return active CouchDB logical databases"""
+        couchdbs:list[CibleDatabase] = CibleDatabase.query.filter_by(is_active=True, type="couchdb").all()
+        return couchdbs
+    
+    @staticmethod
+    def ensure_default_couchdb_dbs():
+        try:
+            couchdbs:list[CibleDatabase] = CibleDatabase.query.filter_by(type="couchdb").all()
+            existing = { d.local_name for d in couchdbs }
+            if not existing:
+                for dbn in DEFAULT_COUCHDB_DBS:
+                    if dbn["local_name"] :
+                        db.session.add(CibleDatabase(local_name=dbn["local_name"],host_name=dbn["host_name"],type="couchdb",is_active=True))
 
-class CouchDBSentinel(db.Model):
-    __tablename__ = "couchdb_sentinel"
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
+            logger.exception("Failed to ensure default CouchDB DBs")
+            raise
 
-    id = db.Column(db.Text, primary_key=True)
-    doc = db.Column(JSONB, nullable=False)
+    def __repr__(self):
+        return f"<CibleDatabase {self.local_name} ({self.type})>"
 
-class CouchDBLog(db.Model):
-    __tablename__ = "couchdb_log"
+# CouchDB Source Definition
+class CouchdbSource(db.Model):
+    __tablename__ = "couchdb_sources"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    log = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.String, default=datetime.utcnow().isoformat)
+    name = db.Column(db.String(255), unique=True, nullable=False)
+    
+    description = db.Column(db.Text, nullable=True)
 
-class MigrationLog(db.Model):
-    __tablename__ = "migration_log"
+    host = db.Column(db.String(512), nullable=False)
+    base_url = db.Column(db.String(512), nullable=False)
+    port = db.Column(db.Integer, default=5984, nullable=False)
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    log = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.String, default=datetime.utcnow().isoformat)
+    username_enc = db.Column(db.Text, nullable=False)
+    password_enc = db.Column(db.Text, nullable=False)
 
-def get_repository(model):
-    """ Equivalent of TypeORM repository getter """
-    db = SessionLocal()
-    return db, model
+    auto_sync = db.Column(db.Boolean, default=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-class CouchUser:
-    def __init__(
-        self, id: str, rev: str, name: str, type: str,
-        email: str, phone: str, fullname: str, code: str,
-        known: bool | None, contact_id: str, places: list[str], roles: list[str]
-    ):
-        self.id = id
-        self.rev = rev
-        self.name = name
-        self.type = type
-        self.email = email
-        self.phone = phone
-        self.fullname = fullname
-        self.code = code
-        self.known = known
-        self.contact_id = contact_id
-        self.places = places
-        self.roles = roles
+    test_db = db.Column(db.String(255), nullable=False)
+
+    last_sync = db.Column(db.DateTime, nullable=True)
+    last_used_at = db.Column(db.DateTime, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True)
+
+    # Relationships
+    # last_sync_state = db.relationship("SourceLastSyncState", back_populates="source", uselist=False, cascade="all, delete-orphan")
+    # sync_logs = db.relationship("SyncLog", back_populates="source", cascade="all, delete-orphan")
+
+    @property
+    def auth(self) -> tuple[str, str]:
+        return (decrypt(self.username_enc),decrypt(self.password_enc))
+    
+    @staticmethod
+    def sources_list():
+        """Return active CouchDB logical databases"""
+        sources:list[CouchdbSource] = CouchdbSource.query.filter_by(is_active=True, auto_sync=True).all()
+        return sources
+    
+    def __repr__(self):
+        return f"<CouchdbSource(id={self.id}, name={self.name}, test_db={self.test_db})>"
+
+    def to_dict_safe(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "host": self.host,
+            "base_url": self.base_url,
+            "port": self.port,
+            "auto_sync": self.auto_sync,
+            "is_active": self.is_active,
+            "test_db": self.test_db,
+            "last_sync": self.last_sync.isoformat() if self.last_sync else None,
+            "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
+        }

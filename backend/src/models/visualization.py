@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy import CheckConstraint, Enum, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from database.extensions import db
-from models.query.query_validator import QueryValidator
+from backend.src.database.extensions import db
+from backend.src.models.query.query_validator import QueryValidator
 
 class DataSource(db.Model):
     __tablename__ = "data_sources"

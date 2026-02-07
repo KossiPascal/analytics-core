@@ -6,8 +6,8 @@ from decimal import Decimal
 from uuid import UUID
 import re
 
-from helpers.logger import get_logger
-logger = get_logger(__name__)
+from backend.src.logger import get_backend_logger
+logger = get_backend_logger(__name__)
 
 
 def generate_dhis2_dates():

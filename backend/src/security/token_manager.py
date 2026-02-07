@@ -4,7 +4,7 @@ import jwt
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from typing import Any, Dict, Tuple
 
-from config import Config
+from backend.src.config import Config
 
 class TokenManagement:
 

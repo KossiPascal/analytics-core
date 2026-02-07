@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
-from database.extensions import db
-from models.auth import Role, RolePermission, Permission
+from backend.src.database.extensions import db
+from backend.src.models.auth import Role, RolePermission, Permission
 
 bp = Blueprint("roles", __name__, url_prefix="/api/roles")
 

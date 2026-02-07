@@ -1,5 +1,5 @@
 import secrets
-from models.api_token import ApiToken
+from backend.src.models.api_token import ApiToken
 
 logger = __import__('logging').getLogger(__name__)
 

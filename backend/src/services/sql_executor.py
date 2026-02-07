@@ -2,14 +2,14 @@ import time
 import psycopg2
 import psycopg2.extras
 from flask import g
-from models.auth import User
-from database.extensions import isAdmin, isSuperAdmin
-from security.sql_guard import validate_sql
-from security.sql_guard import jsonify_value
+from backend.src.models.auth import User
+from backend.src.database.extensions import isAdmin, isSuperAdmin
+from backend.src.security.sql_guard import validate_sql
+from backend.src.security.sql_guard import jsonify_value
 
-from helpers.logger import get_logger, audit_log
+from backend.src.logger import get_backend_logger, audit_log
 
-logger = get_logger(__name__)
+logger = get_backend_logger(__name__)
 
 
 # ---------------- CONFIG ----------------

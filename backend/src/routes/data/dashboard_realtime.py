@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
-from database.extensions import engine
+from backend.src.database.extensions import engine
 
 # -----------------------------
 # Flask Blueprint / Controller

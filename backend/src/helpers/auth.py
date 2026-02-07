@@ -1,18 +1,20 @@
 # auth.py
 from __future__ import annotations
+import hashlib
 import jwt
 import time
 import secrets
-from config import Config
-from functools import wraps
-from database.extensions import db, tokenManagement
-from helpers.hasher import hash_token
-from datetime import datetime, timedelta
+from backend.src.config import Config
+from backend.src.database.extensions import db
+from backend.src.helpers.hasher import hash_token
+from datetime import datetime, timedelta, timezone
 from typing import Tuple, Optional, Dict
-from flask import request, jsonify, g
-from models.auth import User, RefreshToken
+from backend.src.models.auth import RefreshToken
 from uuid import UUID
+from sqlalchemy.exc import SQLAlchemyError
 
+from backend.src.logger import get_backend_logger
+logger = get_backend_logger(__name__)
 
 rate_limit_store: Dict[str, Tuple[int, int]] = {}  # client_id -> (count, first_ts)
 
@@ -54,9 +56,10 @@ def create_token(payload: dict, expires_minutes: Optional[int] = None) -> Tuple[
 
 def create_refresh_token(expires_days: Optional[int] = None) -> Tuple[str, str, datetime]:
     expires_days = expires_days or Config.REFRESH_TOKEN_EXPIRES_DAYS
-    raw = _generate_refresh_token()
+    # raw = _generate_refresh_token()
+    raw = hashlib.sha256(f"{datetime.now(timezone.utc).timestamp()}-{hashlib.sha256().hexdigest()}".encode()).hexdigest()  # random token
     hashed = hash_token(raw)
-    expires_at = datetime.utcnow() + timedelta(days=expires_days)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
     return raw, hashed, expires_at
 
 def check_rate_limit(client_id: str) -> bool:
@@ -77,15 +80,25 @@ def check_rate_limit(client_id: str) -> bool:
 
 # Utilities: DB helpers (SQLAlchemy)
 def save_refresh_token(user_id: str, hashed_token: str, expires_at: datetime) -> RefreshToken:
-    rt = RefreshToken(user_id=user_id, token=hashed_token, issued_at=datetime.utcnow(), expires_at=expires_at, revoked=False)
-    db.session.add(rt)
-    db.session.commit()
-    return rt
+    """Save a new refresh token in DB."""
+    try:
+        rt = RefreshToken(user_id=user_id, token=hashed_token, expires_at=expires_at, revoked=False)
+        db.session.add(rt)
+        db.session.commit()
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.exception("Failed to save refresh token")
+        raise e
 
 def get_refresh_token(hashed_token: str) -> Optional[RefreshToken]:
     return RefreshToken.query.filter_by(token=hashed_token).first()
 
 def revoke_refresh_token(rt_obj: RefreshToken) -> None:
-    rt_obj.revoked = True
-    db.session.add(rt_obj)
-    db.session.commit()
+    """Revoke an existing refresh token."""
+    try:
+        rt_obj.revoked = True
+        db.session.commit()
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        logger.exception("Failed to revoke refresh token")
+        raise e

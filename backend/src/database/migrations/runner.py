@@ -4,14 +4,13 @@ from datetime import datetime
 from typing import List,Optional,Iterable
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from database.extensions import async_session
-from database.migrations.types import BaseViewMigration, SqlView
-from database.migrations.registration import FormatViewMigration
+from backend.src.database.extensions import AsyncSessionLocal
+from backend.src.database.migrations.types import BaseViewMigration, SqlView
+from backend.src.database.migrations.registration import FormatViewMigration
 from asyncpg.exceptions import UndefinedTableError
-from config import Config
-from helpers.spinner import spinner
+from backend.src.config import Config
+from backend.src.helpers.spinner import spinner
 from sqlalchemy.exc import SQLAlchemyError
-from models.couchdb import MigrationLog
 
 MIGRATION_REGISTRY = FormatViewMigration()
 
@@ -22,16 +21,17 @@ MAX_ITERATIONS = 50
 SLEEP_BETWEEN_ROUNDS = 0.3
 
 async def log_message(message: str):
-    async with async_session() as session:
-        try:
-            log = MigrationLog(log=f"[{datetime.utcnow().isoformat()}] {message}")
-            session.add(log)
-            await session.commit()
-            if Config.IS_DEBUG_MODE:
-                print(f"{message}")
-        except SQLAlchemyError as e:
-            if Config.IS_DEBUG_MODE:
-                print(f"⚠️ Failed to log message: {e}")
+    # async with AsyncSessionLocal() as session:
+    #     try:
+    #         log = MigrationLog(log=f"[{datetime.utcnow().isoformat()}] {message}")
+    #         session.add(log)
+    #         await session.commit()
+    #         if Config.IS_DEBUG_MODE:
+    #             print(f"{message}")
+    #     except SQLAlchemyError as e:
+    #         if Config.IS_DEBUG_MODE:
+    #             print(f"⚠️ Failed to log message: {e}")
+    print(f"{message}")
 
 
 def extract_missing_relation(error: Exception) -> str | None:
@@ -75,7 +75,7 @@ async def init_revision_table(session: Optional[AsyncSession] = None):
     if session:
         await executeSql(session)
     else:
-        async with async_session() as session:
+        async with AsyncSessionLocal() as session:
             await executeSql(session)
 
 async def drop_revision_table(session: Optional[AsyncSession] = None):
@@ -92,7 +92,7 @@ async def drop_revision_table(session: Optional[AsyncSession] = None):
     if session:
         await executeSql(session)
     else:
-        async with async_session() as session:
+        async with AsyncSessionLocal() as session:
             await executeSql(session)
 
 # REVISION UTILITIES
@@ -336,7 +336,7 @@ async def start_view_migrations_job(session: AsyncSession, migrations: List[Base
 
 # ENTRYPOINT
 async def run_view_migrations(recreate: bool = False, refresh: bool = True):
-    async with async_session() as session:
+    async with AsyncSessionLocal() as session:
         # await drop_revision_table(session)
         await init_revision_table(session)
         # stop_event = asyncio.Event()

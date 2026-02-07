@@ -1,21 +1,21 @@
 import os
 import json
-from security.access_security import require_auth
-from config import Config
+from backend.src.security.access_security import require_auth
+from backend.src.config import Config
 from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
 from flask import Blueprint, request, jsonify, g
-from models.script import Script
-from database.extensions import db, isAdmin, isSuperAdmin, serializeContent, get_connection
-from services.sql_executor import run_sql
-from services.js_executor import run_javascript
-from services.python_executor import run_python
-from services.json_executor import validate_json
+from backend.src.models.script import Script
+from backend.src.database.extensions import db, isAdmin, isSuperAdmin, serializeContent, get_connection
+from backend.src.services.sql_executor import run_sql
+from backend.src.services.js_executor import run_javascript
+from backend.src.services.python_executor import run_python
+from backend.src.services.json_executor import validate_json
 from typing import Optional, List
 import time
 
-from helpers.logger import get_logger, audit_log
-logger = get_logger(__name__)
+from backend.src.logger import get_backend_logger, audit_log
+logger = get_backend_logger(__name__)
 
 bp = Blueprint("scripts", __name__, url_prefix="/api/scripts")
 

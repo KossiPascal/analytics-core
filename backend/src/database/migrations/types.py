@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Tuple, Literal
-from database.postgres.sql_loader import get_sql_file_content
 from typing import Literal
+
+from backend.src.database.postgres.sql_loader import get_sql_file_content
 
 IndexTarget = Literal[
     "only_id",
