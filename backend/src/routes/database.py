@@ -1,16 +1,16 @@
+from typing import Any
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
 import requests
-from models.database import AuditHistory
-from database.extensions import db
-from config import Config
-from models.couchdb import CouchDBUsers  # your CouchDB ORM model
-from security.access_security import require_auth
-from helpers.logger import get_logger
+from backend.src.models.database import AuditHistory
+from backend.src.database.extensions import db
+from backend.src.config import Config
+from backend.src.security.access_security import require_auth
+from backend.src.logger import get_backend_logger
 
-logger = get_logger(__name__)
+logger = get_backend_logger(__name__)
 
 bp = Blueprint("databases", __name__, url_prefix="/api/databases")
 
@@ -192,8 +192,9 @@ def update_user_facility():
             return jsonify({"status": 400, "message": "Missing parameters"}), 400
 
         # Fetch user from CouchDB repository
-        user = CouchDBUsers.query.filter_by(type=role, roles=role, code=code, place=parent, contact=contact).first()
+        # user = CouchDBUsers.query.filter_by(type=role, roles=role, code=code, place=parent, contact=contact).first()
 
+        user:Any=None
         if not user:
             return jsonify({"status": 404, "message": "Pas d'ASC trouvé pour procéder à l'opération, Réessayer !"}), 404
 

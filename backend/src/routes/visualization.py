@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
 from flask import Blueprint, request, jsonify, g
-from database.extensions import db
-from models.visualization import Visualization,VisualizationExecutionLog,VisualizationShare
-from security.access_security import require_auth
-from helpers.logger import get_logger
+from backend.src.database.extensions import db
+from backend.src.models.visualization import Visualization,VisualizationExecutionLog,VisualizationShare
+from backend.src.security.access_security import require_auth
+from backend.src.logger import get_backend_logger
 
-logger = get_logger(__name__)
+logger = get_backend_logger(__name__)
 
 bp = Blueprint("visualizations", __name__, url_prefix="/api/visualizations")
 

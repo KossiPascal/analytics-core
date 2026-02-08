@@ -1,0 +1,12 @@
+# ============================
+# Workers Dockerfile
+# ============================
+FROM analytics-core-base:latest
+
+# ============================
+# Répertoire de travail
+# ============================
+WORKDIR /app
+
+
+CMD ["python", "-u", "workers/wsgi.py"]

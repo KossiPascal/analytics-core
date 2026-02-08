@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
-from helpers.logger import get_logger
-from security.access_security import require_auth
-from config import Config
+from backend.src.logger import get_backend_logger
+from backend.src.security.access_security import require_auth
+from backend.src.config import Config
 
-logger = get_logger(__name__)
+logger = get_backend_logger(__name__)
 bp = Blueprint("sms_providers", __name__, url_prefix="/api/sms")
 
 # -------------------------------

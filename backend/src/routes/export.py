@@ -1,6 +1,6 @@
 from flask import Blueprint, send_file,jsonify, request
 from io import BytesIO
-from security.access_security import require_auth
+from backend.src.security.access_security import require_auth
 import pandas as pd
 import pdfkit
 

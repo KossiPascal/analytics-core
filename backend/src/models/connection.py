@@ -1,5 +1,5 @@
 import uuid
-from database.extensions import db
+from backend.src.database.extensions import db
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 class DataConnection(db.Model):

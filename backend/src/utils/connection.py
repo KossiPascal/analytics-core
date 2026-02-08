@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 from sshtunnel import SSHTunnelForwarder
 from urllib.parse import quote_plus
-from config import Config
+from backend.src.config import Config
 from cryptography.fernet import Fernet
 import sqlparse
 from typing import Dict, Any, List, Optional
@@ -11,8 +11,8 @@ import tempfile, os
 import time
 
 
-from helpers.logger import get_logger
-logger = get_logger(__name__)
+from backend.src.logger import get_backend_logger
+logger = get_backend_logger(__name__)
 
 class SSHTunnelManager:
     _tunnels: Dict[str, tuple] = {}

@@ -65,6 +65,15 @@ export function StatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
+// Badge pour les statuts actif/inactif
+export function SyncBadge({ sync }: { sync: boolean }) {
+  return (
+    <Badge variant={sync ? 'success' : 'danger'} size="sm">
+      {sync ? 'SYNC' : ''}
+    </Badge>
+  );
+}
+
 // Badge pour les permissions CRUD
 export function CrudBadge({ label, title }: { label: string; title: string }) {
   return (

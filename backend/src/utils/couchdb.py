@@ -1,7 +1,7 @@
 import base64
 import requests
 from typing import Optional
-from config import Config
+from backend.src.config import Config
 
 def fetch_couchdb_view(
     view_name: str,

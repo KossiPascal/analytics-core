@@ -1,82 +1,37 @@
+# sudo docker compose up -d --scale analytics-core-celery-worker=6
+
+# Network
+networks:
+  analytics-core-net:
+    driver: bridge
+    # external: true
+
+
+# Services
 services:
+
+  # -------------------------
+  # Base builder (optionnel)
+  # -------------------------
   analytics-core-base:
     build:
-      context: ${PROJECT_DIR:-.}
-      dockerfile: Dockerfile.base
+      context: .
+      dockerfile: dockerfiles.Dockerfile.base
     image: analytics-core-base:latest
     container_name: analytics-core-base
-    env_file: .env
     restart: "no"
-    # # Comme ce service est juste pour builder l'image, on peut le faire terminer immédiatement
-    # command: ["echo", "analytics-core-base built successfully"]
-    command: ["tail", "-f", "/dev/null"]   # ← conteneur reste vivant
     networks:
       - analytics-core-net
     healthcheck:
-      # test: ["CMD-SHELL", "[ -d /app ]"]
-      # test: ["CMD-SHELL", "python -c \"import flask\" || exit 1"]
-      # test: ["CMD-SHELL", "python -c \"import sqlalchemy\" || exit 1"]
       test: ["CMD-SHELL", "python --version || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 5s
 
-  # Init (ONE-SHOT)
-  analytics-core-init:
-    image: alpine:latest
-    container_name: analytics-core-init
-    env_file: .env
-    command: >
-      sh -c "
-        mkdir -p /data/postgres /data/pgadmin /data/cloudbeaver /data/logs &&
-
-        chown -R 999:999 /data/postgres &&
-        chmod 700 /data/postgres &&
-
-        chown -R 5050:5050 /data/pgadmin &&
-        chmod 700 /data/pgadmin &&
-
-        chown -R 1000:1000 /data/cloudbeaver &&
-        chmod 700 /data/cloudbeaver &&
-
-        chown -R 1000:1000 /data/logs &&
-        chmod 777 /data/logs &&
-
-        echo 'Init complete.' &&
-        
-        tail -f /dev/null
-      "
-    volumes:
-      - ${PROJECT_DATA_DIR:-../analytics-data}/postgres:/data/postgres
-      - ${PROJECT_DATA_DIR:-../analytics-data}/pgadmin:/data/pgadmin
-      - ${PROJECT_DATA_DIR:-../analytics-data}/cloudbeaver:/data/cloudbeaver
-      - ${PROJECT_DATA_DIR:-../analytics-data}/logs:/data/logs
-      - ${PROJECT_DIR:-.}/configs/nginx/certs:/etc/letsencrypt
-    restart: "no"
-    depends_on:
-      analytics-core-base:
-        condition: service_healthy
-    networks:
-      - analytics-core-net
-    healthcheck:
-      test: >
-        sh -c "
-          [ -d /data/postgres ] &&
-          [ -d /data/pgadmin ] &&
-          [ -d /data/cloudbeaver ] &&
-          [ -d /data/logs ] &&
-          [ $(stat -c %u /data/postgres) -eq 999 ] &&
-          [ $(stat -c %u /data/pgadmin) -eq 5050 ] &&
-          [ $(stat -c %u /data/cloudbeaver) -eq 1000 ] &&
-          [ $(stat -c %u /data/logs) -eq 1000 ]
-        "
-      interval: 5s
-      retries: 3
-      start_period: 1s
-      timeout: 2s
-
+  # -------------------------
   # PostgreSQL
+  # -------------------------
   analytics-core-postgres:
     image: postgres:16
     container_name: analytics-core-postgres
@@ -89,16 +44,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
     volumes:
       - ${PROJECT_DATA_DIR:-../analytics-data}/postgres:/var/lib/postgresql/data
-      - ${PROJECT_DIR:-.}/configs/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
-      - ${PROJECT_DIR:-.}/configs/postgres/init:/docker-entrypoint-initdb.d:ro
-    command: >
-      postgres
-      -c listen_addresses='*'
-      -c hba_file=/etc/postgresql/pg_hba.conf
-    depends_on:
-      analytics-core-init:
-        condition: service_healthy
-        # condition: service_completed_successfully
+      - ./configs/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./configs/postgres/init:/docker-entrypoint-initdb.d:ro
+    command: postgres -c listen_addresses='*' -c hba_file=/etc/postgresql/pg_hba.conf
     networks:
       - analytics-core-net
     healthcheck:
@@ -107,16 +55,17 @@ services:
       timeout: 5s
       retries: 5
 
+  # -------------------------
   # Backend API
+  # -------------------------
   analytics-core-backend:
     build:
-      context: ${PROJECT_DIR:-.}
-      dockerfile: backend/Dockerfile
+      context: .
+      dockerfile: dockerfiles.Dockerfile.backend
     image: analytics-core-backend:latest
     container_name: analytics-core-backend
     restart: unless-stopped
     env_file: .env
-    # user: "1000:1000"
     environment:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       SECRET_KEY: ${SECRET_KEY}
@@ -129,32 +78,73 @@ services:
       NGINX_HTTP_PORT: ${NGINX_HTTP_PORT:-80}
       NGINX_HTTPS_PORT: ${NGINX_HTTPS_PORT:-443}
 
-      LOG_DIR: /logs/backend
       DOCKERIZED: true
     volumes:
-      - ${PROJECT_DATA_DIR:-../analytics-data}/logs/backend:/app/backend/logs
-      - ${PROJECT_DIR:-.}/backend/migrations:/app/backend/migrations:ro
+      - ${PROJECT_DATA_DIR:-../analytics-data}/logs/backend:/logs/backend
+      - ./backend/migrations:/app/backend/migrations:ro
     depends_on:
       analytics-core-postgres:
         condition: service_healthy
     networks:
       - analytics-core-net
+    entrypoint: ["/app/shared_libs/init_logs.sh", "backend", "python", "app.py"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
       interval: 10s
-      timeout: 5s
+      # timeout: 5s
       retries: 5
 
+  # -------------------------
+  # CouchDB Workers
+  # -------------------------
+  analytics-core-workers:
+    build:
+      context: .
+      dockerfile: dockerfiles.Dockerfile.workers
+    image: analytics-core-workers:latest
+    container_name: analytics-core-workers
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DOCKERIZED: true
+      POSTGRES_HOST: ${POSTGRES_HOST:-analytics-core-postgres}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ${PROJECT_DATA_DIR:-../analytics-data}/logs/workers:/logs/workers
+    depends_on:
+      analytics-core-postgres:
+        condition: service_healthy
+    networks:
+      - analytics-core-net
+    deploy:
+      replicas: 6
+    entrypoint: ["/app/shared_libs/init_logs.sh", "workers", "python", "couchdb_worker.py"]
+    healthcheck:
+      test: >
+        sh -c "
+          pgrep -f couchdb_worker.py >/dev/null 2>&1 &&
+          pg_isready -h $${POSTGRES_HOST} -U $${POSTGRES_USER} >/dev/null 2>&1
+          || exit 1
+        "
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+
+  # -------------------------
   # AI Service
+  # -------------------------
   analytics-core-ai:
     build:
-      context: ${PROJECT_DIR:-.}
-      dockerfile: ai/Dockerfile
+      context: .
+      dockerfile: dockerfiles.Dockerfile.ais
     image: analytics-core-ai:latest
     container_name: analytics-core-ai
     env_file: .env
     restart: unless-stopped
-    # user: "1000:1000"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
 
@@ -166,22 +156,24 @@ services:
       NGINX_HTTP_PORT: ${NGINX_HTTP_PORT:-80}
       NGINX_HTTPS_PORT: ${NGINX_HTTPS_PORT:-443}
 
-      LOG_DIR: /logs/ai
       DOCKERIZED: true
     volumes:
-      - ${PROJECT_DATA_DIR:-../analytics-data}/logs/ai:/app/logs
+      - ${PROJECT_DATA_DIR:-../analytics-data}/logs/ai:/logs/ai
     depends_on:
       analytics-core-backend:
         condition: service_healthy
     networks:
       - analytics-core-net
+    entrypoint: ["/app/shared_libs/init_logs.sh", "ai", "python", "ai_service.py"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5001/ai/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # -------------------------
   # PgAdmin
+  # -------------------------
   analytics-core-pgadmin:
     image: dpage/pgadmin4:latest
     container_name: analytics-core-pgadmin
@@ -195,8 +187,6 @@ services:
       PGADMIN_CONFIG_SESSION_EXPIRATION_TIME: 1440
       PGADMIN_CONFIG_MAX_LOGIN_ATTEMPTS: 5
       PGADMIN_CONFIG_SERVER_MODE: "True"
-      # PGADMIN_LISTEN_PORT: 80
-      # PGADMIN_ROOT_PATH: "/pgadmin"
     volumes:
       - ${PROJECT_DATA_DIR:-../analytics-data}/pgadmin:/var/lib/pgadmin
     ports:
@@ -213,7 +203,9 @@ services:
       retries: 5
       start_period: 40s
 
+  # -------------------------
   # CloudBeaver
+  # -------------------------
   analytics-core-cloudbeaver:
     image: dbeaver/cloudbeaver:latest
     container_name: analytics-core-cloudbeaver
@@ -224,11 +216,6 @@ services:
       CB_ADMIN_NAME: ${DBEAVER_ADMIN_NAME:?DBEAVER_ADMIN_NAME must be set}
       CB_ADMIN_PASSWORD: ${DBEAVER_ADMIN_PASSWORD:?DBEAVER_ADMIN_PASSWORD must be set}
       CB_SESSION_EXPIRE_TIME: 1440
-      # CDB_PORT: 8978
-      # CDB_SERVER_ROOT: /cloudbeaver
-      # SERVER_SERVLET_CONTEXT_PATH: /cloudbeaver
-      # CLOUDBEAVER_WEB_ROOT: /cloudbeaver
-      # CLOUDBEAVER_PORT: 8978
     volumes:
       - ${PROJECT_DATA_DIR:-../analytics-data}/cloudbeaver:/opt/cloudbeaver/workspace
     ports:
@@ -245,7 +232,9 @@ services:
       retries: 5
       start_period: 60s
 
-  # NGINX (Reverse Proxy)
+  # -------------------------
+  # NGINX
+  # -------------------------
   analytics-core-nginx:
     image: nginx:alpine
     container_name: analytics-core-nginx
@@ -254,17 +243,13 @@ services:
       - "${NGINX_HTTP_PORT:-80}:80"
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
-      - ${PROJECT_DIR:-.}/configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ${PROJECT_DIR:-.}/configs/nginx/certs/default:/etc/letsencrypt
+      - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./configs/nginx/certs/default:/etc/letsencrypt
     depends_on:
       analytics-core-backend:
         condition: service_healthy
       analytics-core-ai:
         condition: service_healthy
-      # analytics-core-pgadmin:
-      #   condition: service_healthy
-      # analytics-core-cloudbeaver:
-      #   condition: service_healthy
     networks:
       - analytics-core-net
     healthcheck:
@@ -273,33 +258,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
-
-  # # Certbot (auto HTTPS)
-  # certbot:
-  #   image: certbot/certbot
-  #   container_name: analytics-core-certbot
-  #   env_file: .env
-  #   volumes:
-  #     - ${PROJECT_DIR:-.}/configs/nginx/certs:/etc/letsencrypt
-  #   entrypoint: >
-  #     sh -c "
-  #       mkdir -p /etc/letsencrypt/live/default &&
-  #       openssl req -x509 -nodes -days 365 \
-  #         -subj '/CN=localhost' \
-  #         -newkey rsa:2048 \
-  #         -keyout /etc/letsencrypt/live/default/privkey.pem \
-  #         -out /etc/letsencrypt/live/default/fullchain.pem &&
-  #       tail -f /dev/null
-  #     "
-  #   restart: unless-stopped
-  #   networks:
-  #     - analytics-core-net
-
-
-# ============================
-# Network
-# ============================
-networks:
-  analytics-core-net:
-    driver: bridge
-    # external: true

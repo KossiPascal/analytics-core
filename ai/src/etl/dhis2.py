@@ -1,8 +1,8 @@
 import httpx
 import pandas as pd
 from database import db
-from models.health_fact import HealthFact
-from config import Config
+from ai.src.models.health_fact import HealthFact
+from ai.src.config import Config
 
 def load_dhis2():
     r = httpx.get(Config.DHIS2_URL, auth=(Config.DHIS2_USER, Config.DHIS2_PASS))

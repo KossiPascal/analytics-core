@@ -1,6 +1,6 @@
 import pandas as pd
 from database import db
-from models.health_fact import HealthFact
+from ai.src.models.health_fact import HealthFact
 
 def load_excel(path):
     df = pd.read_excel(path)

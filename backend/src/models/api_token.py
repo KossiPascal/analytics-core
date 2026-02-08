@@ -2,10 +2,10 @@ import uuid
 import hashlib
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID
-from database.extensions import db
-from helpers.logger import get_logger
+from backend.src.database.extensions import db
+from backend.src.logger import get_backend_logger
 
-logger = get_logger(__name__)
+logger = get_backend_logger(__name__)
 
 
 class ApiToken(db.Model):

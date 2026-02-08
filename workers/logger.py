@@ -1,0 +1,5 @@
+import logging
+from shared_libs.logger.logger import logger_maker
+
+def get_workers_logger(name: str) -> logging.Logger:
+    return logger_maker("workers", name)

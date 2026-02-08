@@ -1,8 +1,8 @@
 from functools import wraps
 from flask import request, jsonify, redirect
 
-from config import Config
-from models.api_token import ApiToken
+from backend.src.config import Config
+from backend.src.models.api_token import ApiToken
 
 
 BASE_API = "/api"

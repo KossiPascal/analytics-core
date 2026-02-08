@@ -3,9 +3,9 @@ import tempfile
 import json
 import os
 
-from helpers.logger import get_logger, audit_log
+from backend.src.logger import get_backend_logger, audit_log
 
-logger = get_logger(__name__)
+logger = get_backend_logger(__name__)
 
 def run_javascript(content, timeout=3):
     """

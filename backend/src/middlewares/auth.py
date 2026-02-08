@@ -2,8 +2,8 @@ from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import decode_token
 
-from models.auth import User
-from config import Config
+from backend.src.models.auth import User
+from backend.src.config import Config
 
 
 def auth_required():
