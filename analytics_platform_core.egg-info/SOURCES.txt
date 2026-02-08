@@ -68,6 +68,7 @@ workers/logger.py
 workers/wsgi.py
 workers/couchdb/__init__.py
 workers/couchdb/models.py
+workers/couchdb/sync_manager copy.py
 workers/couchdb/sync_manager.py
 workers/couchdb/sync_worker.py
 workers/couchdb/utils.py
