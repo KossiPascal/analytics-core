@@ -22,15 +22,22 @@
 .headerRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 1rem;
+}
+
+.headerControls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .typeSummary {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
 }
 
 .typeLabel {

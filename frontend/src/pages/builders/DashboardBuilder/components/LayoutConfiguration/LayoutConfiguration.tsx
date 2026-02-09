@@ -1,6 +1,7 @@
 import React from 'react';
-import { Filter, Grid3x3 } from 'lucide-react';
+import { Grid3x3 } from 'lucide-react';
 
+import { Tip } from '@components/layout/Tip/Tip';
 import { LayoutDropZone } from '../LayoutDropZone/LayoutDropZone';
 import type { DimensionItem } from '../types';
 import styles from './LayoutConfiguration.module.css';
@@ -30,6 +31,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         <Grid3x3 size={18} />
         Configuration de la mise en page
       </div>
+
       <div className={styles.layoutSection}>
         <LayoutDropZone
           title="Colonnes"
@@ -54,13 +56,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         />
       </div>
 
-      <div className={styles.alertInfo}>
-        <Filter size={18} />
-        <div>
-          <strong>Astuce :</strong> Sélectionnez des éléments dans les dimensions ci-dessus, puis réorganisez-les
-          dans les zones Colonnes, Lignes et Filtres pour personnaliser l'affichage de vos données.
-        </div>
-      </div>
     </div>
   );
 };
