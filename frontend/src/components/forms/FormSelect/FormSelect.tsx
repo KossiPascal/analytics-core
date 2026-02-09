@@ -74,8 +74,8 @@ export function FormSelect({
 
   const filteredOptions = searchTerm
     ? options.filter((opt) =>
-        opt.label.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : options;
 
   const handleToggle = () => {
@@ -118,7 +118,9 @@ export function FormSelect({
     }
   }, [isOpen, searchable]);
 
-  const inputId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+
+  const inputIdRef = useRef(id || `select-${Math.random().toString(36).substr(2, 9)}`);
+  const inputId = inputIdRef.current;
 
   const wrapperClasses = [
     styles.inputWrapper,
@@ -208,9 +210,8 @@ export function FormSelect({
               filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className={`${styles.selectOption} ${
-                    option.value === value ? styles.selected : ''
-                  } ${option.disabled ? styles.disabled : ''}`}
+                  className={`${styles.selectOption} ${option.value === value ? styles.selected : ''
+                    } ${option.disabled ? styles.disabled : ''}`}
                   onClick={() => handleSelect(option)}
                   role="option"
                   aria-selected={option.value === value}

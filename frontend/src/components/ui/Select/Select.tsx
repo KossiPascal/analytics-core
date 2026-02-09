@@ -1,4 +1,4 @@
-import { forwardRef, type SelectHTMLAttributes } from 'react';
+import { forwardRef, useRef, type SelectHTMLAttributes } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, AlertCircle } from 'lucide-react';
 import { cn } from '@utils/cn';
@@ -38,7 +38,9 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     },
     ref
   ) => {
-    const selectId = id || props.name || `select-${Math.random().toString(36).substring(7)}`;
+
+    const inputIdRef = useRef(id || props.name || `select-${Math.random().toString(36).substr(7)}`);
+    const selectId = inputIdRef.current;
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       onChange?.(e.target.value);

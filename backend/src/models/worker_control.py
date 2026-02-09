@@ -9,4 +9,4 @@ class WorkerControl(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), unique=True, nullable=False)  # ex: "couchdb_worker"
     status = Column(String(50), nullable=False, default="run")  # run / stop / pause
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

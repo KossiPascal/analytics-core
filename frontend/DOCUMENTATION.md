@@ -1356,7 +1356,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     ref
   ) => {
     // Générer un ID unique si non fourni
-    const inputId = id || `input-${Math.random().toString(36).slice(2)}`;
+    const inputIdRef = useRef(id || `input-${Math.random().toString(36).substr(2, 9)}`);
+    const inputId = inputIdRef.current;
 
     return (
       <div className={cn(styles.wrapper, isFullWidth && styles.fullWidth)}>

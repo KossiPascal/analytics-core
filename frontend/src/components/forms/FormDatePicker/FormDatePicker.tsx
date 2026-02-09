@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, forwardRef, useRef } from 'react';
 import { Calendar } from 'lucide-react';
 import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
@@ -35,7 +35,9 @@ export const FormDatePicker = forwardRef<HTMLInputElement, FormDatePickerProps>(
     },
     ref
   ) => {
-    const inputId = id || `date-${Math.random().toString(36).substr(2, 9)}`;
+
+    const inputIdRef = useRef(id || `date-${Math.random().toString(36).substr(2, 9)}`);
+    const inputId = inputIdRef.current;
 
     const wrapperClasses = [
       styles.inputWrapper,

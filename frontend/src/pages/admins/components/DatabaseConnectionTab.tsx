@@ -32,7 +32,7 @@ const DEFAULT_FORM = Object.freeze<DbConnection>({
   ssh_password: "",
   ssh_key: "",
   ssh_key_pass: "",
-  auto_sync: true
+  auto_sync: false,
 });
 
 
@@ -60,29 +60,7 @@ const convertToConnParams = (form: DbConnection): DbConnectionParams => {
   }
 }
 
-const convertToConnForm = (param: DbConnectionParams): DbConnection => {
-  return {
-    id: param.id,
-    type: param.type,
-    name: param.name,
-    description: param.description,
-    dbname: param.dbname,
-    username: param.username,
-    password: param.password,
-    host: param.host,
-    port: param.port,
-    ssh_enabled: !!param.ssh,
-    ssh_host: param.ssh?.host,
-    ssh_port: param.ssh?.port,
-    ssh_username: param.ssh?.username,
-    ssh_password: param.ssh?.password,
-    ssh_key: param.ssh?.key,
-    ssh_key_pass: param.ssh?.key_pass,
-    auto_sync: param.auto_sync,
-  }
-}
-
-export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>, onlyCardField?: boolean }> = ({ afterUpsert, onlyCardField }) => {
+export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?: () => Promise<void>, onlyCardField?: boolean }> = ({ showTitle = true, onlyCardField = false, afterUpsert }) => {
   const [form, setForm] = useState<DbConnection>(DEFAULT_FORM);
   const [dbConnections, setDbConnections] = useState<DbConnection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,8 +104,6 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
     }
   };
 
-  const actionMessage = form.id ? (editing ? "Modification ..." : "Modifier") : (saving ? 'Enregistrement...' : 'Enregistrer')
-
   useEffect(() => {
     fetchTypes();
     fetchDbConnections();
@@ -155,7 +131,7 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
         showError("Invalid database port");
         return false;
       }
-      if (form.ssh_enabled && (!form.ssh_host || !form.ssh_username)) {
+      if (form.ssh_enabled && (!form.ssh_host || !form.ssh_port || !form.ssh_username)) {
         showError("SSH host and user required");
         return false;
       }
@@ -167,16 +143,20 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
     setForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  const edit = (conn: DbConnectionParams) => {
+  };
+
   const handleCreate = () => {
     setEditing(false);
     setForm(DEFAULT_FORM);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (org: DbConnection) => {
+  const handleEdit = (conn: DbConnection) => {
     setEditing(true);
-    setForm(org);
+    setForm({ ...DEFAULT_FORM, ...conn });
     setIsModalOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDeleteClick = (org: DbConnection) => {
@@ -269,23 +249,24 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
   const alertStyle = { margin: 0, fontSize: '0.875rem' }
 
 
-  const ConnexionCardField: React.FC<{ showTitle?: boolean }> = ({ showTitle }) => {
+  const ConnexionCardField: React.FC<any> = () => {
     return (
       <>
         {/* <h1 className="title"><Database/>PostgreSQL Connections</h1> */}
 
-        {showTitle && (<CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />Connexion à une base de données</div>} />)}
+        {/* {showTitle && (<CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />Connexion à une base de données</div>} />)} */}
 
         <CardBody>
           <div className={styles.form}>
             <div className={styles.grid + ' ' + styles.grid3}>
               <FormSelect name="type" value={form.type} onChange={(value) => updateField('type', value)} options={dbTypes} leftIcon={<FaDatabase />} label="Type" placeholder="Ex: postgres" required={true} />
-              <FormInput name="name" value={form.name} onChange={(e) => updateField('name', e.target.value)} label={"Nom Connexion"} leftIcon={<FaDatabase />} placeholder="Ex: Production PostgreSQL" />
-              <FormTextarea name="description" label="Description" hint="Optionnel" placeholder="Description ..." value={form.description} onChange={(e) => updateField('description', e.target.value)} leftIcon={<FaKey />} rows={3} />
+              <FormInput name="name" value={form.name} onChange={(e) => updateField('name', e.target.value)} label={"Nom Connexion"} leftIcon={<FaDatabase />} placeholder="Ex: Production PostgreSQL" required={true} />
+              <FormTextarea name="description" label="Description" placeholder="Description ..." value={form.description} onChange={(e) => updateField('description', e.target.value)} leftIcon={<FaKey />} rows={1} cols={1} />
+
             </div>
 
             <div className={styles.grid + ' ' + styles.grid3}>
-              <FormInput name="dbname" value={form.dbname} onChange={(e) => updateField('dbname', e.target.value)} label={"Nom de la base de donnée"} leftIcon={<FaDatabase />} placeholder="Ex: kendeya_prod" />
+              <FormInput name="dbname" value={form.dbname} onChange={(e) => updateField('dbname', e.target.value)} label={"Nom de la base de donnée"} leftIcon={<FaDatabase />} placeholder="Ex: kendeya_prod" required={true} />
               <FormInput name="host" value={form.host} onChange={(e) => updateField('host', e.target.value)} label={"URL / Hôte"} leftIcon={<FaServer />} placeholder="Ex: 10.0.0.12 ou db.example.com" required={true} />
               <FormInput name="port" value={form.port} onChange={(e) => updateField('port', e.target.value)} type={'number'} label={"Port"} leftIcon={<FaDatabase />} placeholder="Ex: 5432" />
             </div>
@@ -302,12 +283,11 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
               <div className={styles.grid + ' ' + styles.grid3}>
                 {/* <h3>SSH Configuration</h3> */}
                 <FormInput name="ssh_host" value={form.ssh_host} onChange={(e) => updateField('ssh_host', e.target.value)} label={"Hôte SSH"} leftIcon={<FaServer />} placeholder="Ex: ssh.example.com" required={true} />
-                <FormInput name="ssh_port" value={form.ssh_port} onChange={(e) => updateField('ssh_port', e.target.value)} type={'number'} label={"Port SSH"} leftIcon={<FaDatabase />} placeholder="Ex: 22" />
+                <FormInput name="ssh_port" value={form.ssh_port} onChange={(e) => updateField('ssh_port', e.target.value)} type={'number'} label={"Port SSH"} leftIcon={<FaDatabase />} placeholder="Ex: 22"  required={true} />
                 <FormInput name="ssh_username" value={form.ssh_username} onChange={(e) => updateField('ssh_username', e.target.value)} label={"Utilisateur SSH"} leftIcon={<FaUser />} placeholder="Ex: ubuntu" required={true} />
                 <FormInput name="ssh_password" value={form.ssh_password} onChange={(e) => updateField('ssh_password', e.target.value)} type='password' label={"Mot de passe SSH"} leftIcon={<FaLock />} placeholder="••••••••" />
-                <FormTextarea name="ssh_key" label="Clé privée SSH" hint="Optionnel" placeholder="Coller la clé privée ici" value={form.ssh_key} onChange={(e) => updateField('ssh_key', e.target.value)} leftIcon={<FaKey />} rows={3} />
+                <FormTextarea name="ssh_key" label="Clé privée SSH" hint="Optionnel" placeholder="Coller la clé privée ici" value={form.ssh_key} onChange={(e) => updateField('ssh_key', e.target.value)} leftIcon={<FaKey />} rows={0} cols={0} />
                 <FormInput name="ssh_key_pass" value={form.ssh_key_pass} onChange={(e) => updateField('ssh_key_pass', e.target.value)} type='password' label={"PassPhrase Clé privée SSH"} leftIcon={<FaKey />} placeholder="••••••••" />
-
               </div>
             )}
 
@@ -346,6 +326,10 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
             </div>
 
             <div className={styles.buttonGroup}>
+              <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
+                Annuler
+              </Button>
+
               <Button disabled={loading || !!testing} variant="outline" size="sm" onClick={() => setForm(DEFAULT_FORM)}>
                 <KeyRound size={16} /> Réinitialiser
               </Button>
@@ -360,8 +344,8 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
                   (<><Database size={16} /> Tester la connexion</>)}
               </Button>
 
-              <Button disabled={!isFormValid || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={(e) => handleSave(e)} color="success">
-                <FaSave /> {actionMessage}
+              <Button disabled={!isFormValid || saving || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={(e) => handleSave(e)} color="success">
+                <FaSave /> {form.id ? (editing ? "Modification ..." : "Modifier") : (saving ? 'Enregistrement...' : 'Enregistrer')}
               </Button>
             </div>
           </div>
@@ -371,94 +355,9 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
   }
 
   if (onlyCardField) {
-    return <ConnexionCardField showTitle={true} />
+    return <ConnexionCardField />
   }
 
-  const ConnexionCardWithCardField: React.FC = () => {
-    return (
-      <Card>
-        <ConnexionCardField />
-      </Card>
-    );
-  }
-
-  const ConnexionCardWithHeader: React.FC = () => {
-    return (
-      <div className={styles.card}>
-        <CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />Connexion à une base de données</div>} />
-        <CardBody>
-          <ConnexionCardField />
-        </CardBody>
-      </div>
-    );
-  }
-
-  const ConnexionCardWithHeaderAndFooter: React.FC = () => {
-    return (
-      <div className={styles.card}>
-        <CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />Connexion à une base de données</div>} />
-        <CardBody>
-          <ConnexionCardField />
-        </CardBody>
-        <div className={styles.cardFooter}>
-          <div className={styles.buttonGroup}>
-            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
-              Annuler
-            </Button>
-
-            <Button disabled={loading || !!testing} variant="outline" size="sm" onClick={() => setForm(DEFAULT_FORM)}>
-              <KeyRound size={16} /> Réinitialiser
-            </Button>
-
-            {form.ssh_enabled && (<Button disabled={!isFormValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
-              {testing === 'test-ssh' ? (<><Plug size={16} className="animate-spin" />Test SSH en cours...</>) :
-                (<><Plug size={16} /> Tester le tunel ssh</>)}
-            </Button>)}
-
-            <Button disabled={!isFormValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
-              {testing === 'test-ssh-db' ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
-                (<><Database size={16} /> Tester la connexion</>)}
-            </Button>
-
-            <Button disabled={!isFormValid || saving || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={(e) => handleSave(e)} color="success">
-              <FaSave /> {actionMessage}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const ConnexionCardWithoutHeaderWithFooter: React.FC = () => {
-    return (
-      <div className={styles.card}>
-        <CardBody>
-          <ConnexionCardField />
-        </CardBody>
-        <div className={styles.cardFooter}>
-          <div className={styles.buttonGroup}>
-            <Button disabled={loading || !!testing} variant="outline" size="sm" onClick={() => setForm(DEFAULT_FORM)}>
-              <KeyRound size={16} /> Réinitialiser
-            </Button>
-
-            {form.ssh_enabled && (<Button disabled={!isFormValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
-              {testing === 'test-ssh' ? (<><Plug size={16} className="animate-spin" />Test SSH en cours...</>) :
-                (<><Plug size={16} /> Tester le tunel ssh</>)}
-            </Button>)}
-
-            <Button disabled={!isFormValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
-              {testing === 'test-ssh-db' ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
-                (<><Database size={16} /> Tester la connexion</>)}
-            </Button>
-
-            <Button disabled={!isFormValid || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={(e) => handleSave(e)} color="success">
-              <FaSave /> {actionMessage}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const ConnexionHeader: React.FC = () => (
     <div className={styles.cardHeader}>
@@ -593,11 +492,12 @@ export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>
               />
             )}
       </div>
-
+<FaDatabase size={20} />Connexion à une base de données
       {/* Create/Edit Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={(editing ? "Modifier la" : "Nouvelle") + " connexion"} size="sm">
 
-        <ConnexionCardWithHeaderAndFooter />
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={<><FaDatabase size={20} /> {editing ? " Modifier la connexion" : " Nouvelle connexion"}</> } size="xl">
+        
+        <ConnexionCardField />
 
       </Modal>
 

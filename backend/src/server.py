@@ -29,9 +29,8 @@ from backend.src.config import Config
 from backend.src.models.auth import User
 from backend.src.security.api_security import api_security
 
-from backend.src.routes import auth, visualization, scripts, couchdb, worker_controller
+from backend.src.routes import auth, connections, visualization, scripts, database, worker_controller
 from backend.src.routes.admin import permissions, roles, tenants, users
-from backend.src.routes.databases import connections, db_types
 
 from backend.src.databases.extensions import db
 
@@ -117,8 +116,8 @@ def create_flask_app(create_default_elements = True) -> Flask:
 
     # Blueprints
     for bp in (
-        auth, connections, couchdb, scripts,db_types,
-        permissions, roles, tenants, users, visualization, worker_controller
+        auth, connections, database, scripts,visualization, worker_controller,
+        permissions, roles, tenants, users, 
     ):
         app.register_blueprint(bp.bp if hasattr(bp, "bp") else bp)
 

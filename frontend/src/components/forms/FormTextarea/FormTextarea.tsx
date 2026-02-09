@@ -1,4 +1,4 @@
-import { ReactNode, TextareaHTMLAttributes, forwardRef } from 'react';
+import { ReactNode, TextareaHTMLAttributes, forwardRef, useRef } from 'react';
 import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
 import './FormTextarea.css';
@@ -14,6 +14,7 @@ export interface FormTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaEl
   hint?: string;
   /** Nombre de lignes visibles */
   rows?: number;
+  cols?: number;
   /** Redimensionnement autorisé */
   resize?: 'none' | 'vertical' | 'horizontal' | 'both';
   /** Classes CSS additionnelles pour le wrapper */
@@ -33,6 +34,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
       hint,
       disabled,
       rows = 4,
+      cols = 4,
       resize = 'vertical',
       className = '',
       wrapperClassName = '',
@@ -42,7 +44,13 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
     },
     ref
   ) => {
-    const inputId = id || `textarea-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const inputIdRef = useRef(id || `textarea-${Math.random().toString(36).substr(2, 9)}`);
+    const inputId = inputIdRef.current;
+
+
+    rows = rows > 0 ? rows : 3;
+    // cols = cols > 0 ? cols : 3;
 
     const wrapperClasses = [
       styles.textareaWrapper,
@@ -55,28 +63,31 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
 
     return (
       <>
-      <FormField
-        label={label}
-        required={required}
-        error={error}
-        hint={hint}
-        htmlFor={inputId}
-        layout={layout}
-      >
-        {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
-        
-        <div className={wrapperClasses}>
-          <textarea
-            ref={ref}
-            id={inputId}
-            rows={rows}
-            disabled={disabled}
-            className={`${styles.textarea} ${className}`}
-            style={{ resize }}
-            {...props}
-          />
-        </div>
-      </FormField>
+        <FormField
+          {...props}
+
+          label={label}
+          required={required}
+          error={error}
+          hint={hint}
+          htmlFor={inputId}
+          layout={layout}
+        >
+          {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
+
+          <div className={wrapperClasses}>
+            <textarea
+              {...props}
+              ref={ref}
+              id={inputId}
+              rows={rows}
+              cols={cols}
+              disabled={disabled}
+              className={`${styles.textarea} ${className}`}
+              style={{ resize }}
+            />
+          </div>
+        </FormField>
       </>
     );
   }

@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes, type ReactNode, useState } from 'react';
+import { forwardRef, type InputHTMLAttributes, type ReactNode, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { cn } from '@utils/cn';
@@ -33,7 +33,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === 'password';
     const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
-    const inputId = id || props.name || `input-${Math.random().toString(36).substring(7)}`;
+
+    const inputIdRef = useRef(id || props.name || `input-${Math.random().toString(36).substr(7)}`);
+    const inputId = inputIdRef.current;
 
     return (
       <motion.div

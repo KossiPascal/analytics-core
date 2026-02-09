@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef, ReactNode } from 'react';
+import { InputHTMLAttributes, forwardRef, ReactNode, useRef } from 'react';
 import styles from '../styles/forms.module.css';
 import './FormRadio.css';
 
@@ -62,7 +62,9 @@ export const FormRadio = forwardRef<HTMLInputElement, FormRadioProps>(
     },
     ref
   ) => {
-    const inputId = id || `radio-${Math.random().toString(36).substr(2, 9)}`;
+
+    const inputIdRef = useRef(id || `radio-${Math.random().toString(36).substr(2, 9)}`);
+    const inputId = inputIdRef.current;
 
     const wrapperClasses = [
       styles.radioWrapper,

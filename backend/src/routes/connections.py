@@ -1,25 +1,21 @@
+from typing import Any, Dict
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from backend.src.databases.extensions import db
-from backend.src.models.connection import DbConnection
+from backend.src.databases.extensions import db, get_json_payload, success_response
+from backend.src.models.connection import ConnectionType, DbConnection, CouchdbSyncCible
 from backend.src.security.access_security import require_auth
 from backend.src.utils.connection import SSHTunnelManager, inspect_full_postgres_schema, inspect_source, get_engine, explore_schema, create_ssh_tunnel
 
 from backend.src.logger import get_backend_logger
 from shared_libs.helpers.utils import encrypt
+from workers.couchdb.models import CreateTableModel
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("connections", __name__, url_prefix="/api/connections")
 
 
 # Helpers
-def error_response(message, status=400, details=None):
-    logger.error(message)
-    payload = {"error": message}
-    if details:
-        payload["details"] = details
-    return jsonify(payload), status
 
 
 @bp.post("/inspect")
@@ -45,7 +41,7 @@ def list_connections():
 @require_auth
 def list_connections_with_details():
     try:
-        connections:list[DbConnection] = DbConnection.query.all()
+        connections:list[DbConnection] = DbConnection.query.filter_by(DbConnection.type_id != "couchdb").all()
         conns = sorted((connections or []), key=lambda c: c.id)
 
         results = []
@@ -70,30 +66,34 @@ def list_connections_with_details():
 @bp.post("")
 @require_auth
 def add_connection():
-    payload = request.get_json(silent=True)
+    payload = request.get_json(silent=True)        
+    
+    if not payload:
+        raise ValueError("payload body must be JSON")
 
     data = DbConnection.to_forms_conf(payload) if payload else None
     if not data:
         return error_response("Invalid JSON body")
 
-    required = ["name", "host", "port", "dbname", "username", "password"]
+    required = ["type", "name", "host", "dbname", "username"]
     missing = [f for f in required if f not in data]
     if missing:
         return error_response(f"Missing fields: {', '.join(missing)}")
-
+    type_id = data.get("type")
     try:
         conn = DbConnection(
-            type_id=data.get("type"), 
+            type_id=type_id, 
             name=data.get("name"), 
             description=data.get("description"), 
             host=data.get("host"),
-            port=int(data.get("port") or 5432),
+            port= int(data.get("port") or (443 if type_id == "couchdb" else 5432)),
             dbname=data.get("dbname"),
             username_enc=encrypt(data["username"]) if data.get("username") else None,
             password_enc=encrypt(data["password"]) if data.get("password") else None,
+            is_active = bool(data.get("is_active") or True),
+            auto_sync = bool(payload.get("auto_sync", False)),
 
             ssh_enabled=bool(data.get("ssh_enabled", False)),
-
             ssh_host=data.get("ssh_host"),
             ssh_port=int(data.get("ssh_port") or 22),
             ssh_username_enc=encrypt(data["ssh_username"]) if data.get("ssh_username") else None,
@@ -104,6 +104,15 @@ def add_connection():
 
         db.session.add(conn)
         db.session.commit()
+
+        if type_id == "couchdb":
+            ModelMgr = CreateTableModel(db, project_name=conn.name, create_table=True)
+            ModelMgr.create_sync_states_table()
+            ModelMgr.create_sync_status_table()
+            for cible in CouchdbSyncCible.couchdb_names():
+                ModelMgr.create_source_table(cible.local_name)
+
+        db.session.close()
 
         logger.info("Connection created: %s", conn.name)
         return jsonify({"id": conn.id}), 201
@@ -338,3 +347,248 @@ def cleanup_tunnels():
             cleaned += 1
     return jsonify({"cleaned": cleaned})
 
+
+
+
+
+
+
+
+# Types of connections (PostgreSQL, MySQL, MongoDB, etc.)
+
+#     // const DB_TYPES: SelectModel[] = [
+#     //   { value: 'postgres', label: 'PostgreSQL' },
+#     //   { value: 'mysql', label: 'MySQL' },
+#     //   { value: 'mariadb', label: 'MariaDB' },
+#     //   { value: 'mssql', label: 'SQL Server' },
+#     //   { value: 'oracle', label: 'Oracle' },
+#     //   { value: 'mongodb', label: 'MongoDB' },
+#     //   { value: 'couchdb', label: 'CouchDB' },
+#     //   { value: 'sqlite', label: 'SQLite' },
+#     //   { value: 'other', label: 'Autre' },
+#     // ]
+
+# Helpers
+def error_response(message, status=400, details=None):
+    logger.error(message)
+    payload = {"error": message}
+    if details:
+        payload["details"] = details
+    return jsonify(payload), status
+
+
+
+@bp.get("/conn-types")
+@require_auth
+def list_types():
+    try:
+        typesList= ConnectionType.ensure_default_type()
+        types = sorted((typesList or []), key=lambda t: t.uid)
+        results = [c.to_public_dict() for c in types]
+        return jsonify(results)
+    except SQLAlchemyError as e:
+        logger.error(f"Failed to list types: {str(e)}")
+        return error_response("Failed to list types", 500, str(e))
+
+# Create types
+@bp.post("/conn-types")
+@require_auth
+def add_types():
+    data = request.get_json(silent=True)
+    if not data:
+        return error_response("Invalid JSON body")
+    try:
+        conn = ConnectionType(
+            id=data.get("id"), 
+            name=data.get("name"), 
+            config=data.get("config"),
+            is_active=data.get("is_active") or True
+        )
+        db.session.add(conn)
+        db.session.commit()
+
+        logger.info("Conn Types created: %s", conn.name)
+        return jsonify({"id": conn.id}), 201
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return error_response("Failed to create conn types", 500, str(e))
+
+@bp.put("/conn-types/<int:conn_id>")
+@require_auth
+def update_types(conn_id):
+    data = request.get_json(silent=True)
+    if not data:
+        return error_response("Invalid JSON body")
+
+    try:
+        conn:ConnectionType = ConnectionType.query.get(conn_id)
+        if not conn:
+            return error_response("types not found", 404)
+
+        if "name" in data:
+            conn.name = data.get("name")
+        if "config" in data:
+            conn.config = data.get("config")
+        if "is_active" in data:
+            conn.is_active = data.get("is_active") or True
+
+        db.session.commit()
+
+        logger.info("types updated: %s", conn.name)
+        return jsonify({"message": "conn types updated"}), 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return error_response("Failed to update conn types", 500, str(e))
+
+# Delete Types
+@bp.delete("/conn-types/<int:conn_id>")
+@require_auth
+def delete_types(conn_id):
+    try:
+        conn:ConnectionType = ConnectionType.query.get(conn_id)
+        if not conn:
+            return error_response(str(e), 404)
+        db.session.delete(conn)
+        db.session.commit()
+        return jsonify({"status": "deleted"})
+    except ValueError as e:
+        return error_response(str(e), 404)
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return error_response("Failed to delete conn types", 500, str(e))
+    
+
+
+
+
+# CouchDB specific routes (sync, upsert, etc.)
+
+# -------------------------------------------------------------------
+# Routes
+# -------------------------------------------------------------------
+@bp.post("/couchdb/connect")
+@require_auth
+def connect_couchdb():
+    # """
+    # Initialize CouchDB database & schema
+    # """
+    # try:
+    #     payload = get_json_payload()
+
+    #     logger.info(f"Initializing CouchDB schema: db={data.name}, auto_sync={data.auto_sync}")
+
+    #     platform.initialiseCouchDbProperties(
+    #         couchdb_base_url=data.base_url, 
+    #         project_name=data.name, 
+    #         auth = (data.username,data.password,) if data.username and data.password else None, 
+    #         auto_sync=data.auto_sync,
+    #         timeout = None
+    #     )
+        
+    #     result, status = platform.initialize_couchdb_schema()
+
+    #     if status != 200:
+    #         return error_response(result, status)
+
+    #     return success_response(result)
+
+    # except ValueError as e:
+    #     return error_response(str(e), 400)
+
+    # except Exception as e:
+    #     logger.error(f"CouchDB connect failed: {str(e)}")
+    #     return error_response(str(e), 500)
+
+    pass
+
+
+@bp.post("/couchdb/upsert")
+@require_auth
+def upsert_couchdb_doc():
+    """
+    Insert or update a document in a CouchDB collection
+    """
+    try:
+        payload = get_json_payload()
+
+        db_name: str | None = payload.get("db_name")
+        collection: str | None = payload.get("collection")
+        doc: Dict[str, Any] | None = payload.get("doc")
+
+
+
+        # project_name: str | None = payload.get("project_name")
+        # couchdb_base_url: str | None = payload.get("couchdb_base_url")
+        # couchdb_user: str | None = payload.get("couchdb_user")
+        # couchdb_pass: str | None = payload.get("couchdb_pass")
+        # auto_sync: bool = bool(payload.get("auto_sync", False))
+
+        # if not all([db_name, collection, doc]):
+        #     return error_response("db_name, collection and doc are required")
+
+        # platform.initialiseCouchDbProperties(
+        #     couchdb_base_url=couchdb_base_url, 
+        #     project_name=project_name, 
+        #     auth = (couchdb_user,couchdb_pass,) if couchdb_user and couchdb_pass else None, 
+        #     auto_sync=auto_sync,
+        #     timeout = None
+        # )
+
+        # logger.info(f"Upsert document: db={db_name}, collection={collection}")
+        # platform.upsert_document(db_name=db_name,collection=collection,document=doc)
+
+        return success_response({"message": "Document upserted successfully"})
+
+    except ValueError as e:
+        return error_response(str(e), 400)
+
+    except Exception as e:
+        logger.error(f"Upsert document failed: {str(e)}")
+        return error_response(str(e), 500)
+
+
+@bp.post("/couchdb/lastseq")
+@require_auth
+def update_couchdb_last_seq():
+    """
+    Update last CouchDB replication sequence
+    """
+    try:
+        payload = get_json_payload()
+
+        db_name: str | None = payload.get("db_name")
+        seq: str | int | None = payload.get("seq")
+
+        # project_name: str | None = payload.get("project_name")
+        # couchdb_base_url: str | None = payload.get("couchdb_base_url")
+        # couchdb_user: str | None = payload.get("couchdb_user")
+        # couchdb_pass: str | None = payload.get("couchdb_pass")
+        # auto_sync: bool = bool(payload.get("auto_sync", False))
+
+        # if not all([db_name, collection, doc]):
+        #     return error_response("db_name, collection and doc are required")
+
+        # platform.initialiseCouchDbProperties(
+        #     couchdb_base_url=couchdb_base_url, 
+        #     project_name=project_name, 
+        #     auth = (couchdb_user,couchdb_pass,) if couchdb_user and couchdb_pass else None, 
+        #     auto_sync=auto_sync,
+        #     timeout = None
+        # )
+
+        # if not db_name or seq is None:
+        #     return error_response("db_name and seq are required")
+
+        # logger.info(f"Updating last_seq: db={db_name}, seq={seq}")
+        # platform.update_last_seq(db_name=db_name,seq=seq)
+
+        return success_response({"message": "Last sequence updated"})
+
+    except ValueError as e:
+        return error_response(str(e), 400)
+
+    except Exception as e:
+        logger.error(f"Update last_seq failed: {str(e)}")
+        return error_response(str(e), 500)

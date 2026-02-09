@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
+import { InputHTMLAttributes, ReactNode, forwardRef, useRef } from 'react';
 import { Check } from 'lucide-react';
 import styles from '../styles/forms.module.css';
 import './FormCheckbox.css';
@@ -32,7 +32,9 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
     },
     ref
   ) => {
-    const inputId = id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const inputIdRef = useRef(id || `checkbox-${Math.random().toString(36).substr(2, 9)}`);
+    const inputId = inputIdRef.current;
 
     const checkedValue = Boolean(checked ?? value);
 

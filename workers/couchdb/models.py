@@ -94,7 +94,7 @@ class CreateTableModel:
             "message": self.db.Column(self.db.Text, nullable=True),
             "action": self.db.Column(self.db.Text, nullable=True),  # INSERT, UPDATE, DELETE, ERROR
             "status": self.db.Column(self.db.String(32), nullable=False),  # STARTED, SUCCESS, ERROR
-            "started_at": self.db.Column(self.db.DateTime(timezone=True), default=datetime.utcnow, nullable=False),
+            "started_at": self.db.Column(self.db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False),
             "finished_at": self.db.Column(self.db.DateTime(timezone=True), nullable=True),
         }
 

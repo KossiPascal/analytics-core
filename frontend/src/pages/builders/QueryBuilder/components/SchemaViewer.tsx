@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { RefreshCw, Table, Eye, Layers3 } from "lucide-react";
-import { connService as API } from "@services/connection.service";
+import { connectionService as API } from "@services/connection.service";
 
 export default function SchemaViewer({ onRunSql }: { onRunSql: (sql: string) => void }) {
   const [tables, setTables] = useState([]);

@@ -18,7 +18,7 @@ from aiohttp import ClientSession, ClientTimeout, BasicAuth, ClientError
 
 from backend.src.config import Config
 from backend.src.databases.extensions import db
-from backend.src.models.couchdb import CibleDatabase, CouchdbSource
+from backend.src.models.connection import CouchdbSyncCible, DbConnection
 from backend.src.models.worker_control import WorkerControl
 from backend.src.server import create_flask_app
 from shared_libs.helpers.utils import sanitize_doc
@@ -164,7 +164,7 @@ async def fetch_changes(client: ClientSession, base_url: str, host_db: str, last
 # -------------------------------
 # SYNC SINGLE DB
 # -------------------------------
-async def sync_db_once(app: Flask, source: dict, cible: CibleDatabase, DataModel: Type[Any], SyncStateModel: Type[Any], SyncStatusModel: Type[Any]) -> dict:
+async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataModel: Type[Any], SyncStateModel: Type[Any], SyncStatusModel: Type[Any]) -> dict:
     """Sync CouchDB → Postgres pour une DB, async & thread-safe."""
     created = updated = deleted = 0
 
@@ -304,7 +304,7 @@ async def sync_db_once(app: Flask, source: dict, cible: CibleDatabase, DataModel
 def start_async_single_source(source_id: int, app: Flask = None) -> dict:
     """Sync CouchDB → Postgres pour une source complète, async & thread-safe."""
     with Session(db.engine) as session:
-        source = session.get(CouchdbSource, source_id)
+        source = session.get(DbConnection, source_id)
         if not source or not source.is_active:
             logger.warning(f"[SYNC] Source {source_id} inactive", extra={"source": source_id})
             # return {"status": "skipped", "reason": "inactive"}
@@ -319,7 +319,7 @@ def start_async_single_source(source_id: int, app: Flask = None) -> dict:
 
     try:
         ModelMgr = CreateTableModel(db, project_name=source_data["name"])
-        CibleDbList = CibleDatabase.couchdb_names()
+        CibleDbList = CouchdbSyncCible.couchdb_names()
         SyncStateModel, _ = ModelMgr.create_sync_states_table()
         SyncStatusModel, _ = ModelMgr.create_sync_status_table()
 
@@ -334,7 +334,7 @@ def start_async_single_source(source_id: int, app: Flask = None) -> dict:
 
         # --- Update last_sync safely ---
         with Session(db.engine) as session:
-            s = session.get(CouchdbSource, source_id)
+            s = session.get(DbConnection, source_id)
             s.last_used_at = datetime.now(timezone.utc)
             s.last_sync = datetime.now(timezone.utc)
             session.commit()
@@ -371,7 +371,7 @@ def run_workers_logger_loop(poll_interval: int = 5):
                         time.sleep(poll_interval)
                         continue
 
-                    source_ids = [s.id for s in session.query(CouchdbSource.id).filter_by(is_active=True).all()]
+                    source_ids = [s.id for s in session.query(DbConnection.id).filter_by(is_active=True).all()]
 
                 if not source_ids:
                     logger.debug("⏸️ No active sources", extra={"worker": WORKER_CONTROL_NAME})

@@ -14,4 +14,4 @@ class AuditHistory(db.Model):
     table_name = db.Column(db.String)
     record_id = db.Column(db.String)
     user = db.Column(db.String)
-    timestamp = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

@@ -15,7 +15,7 @@ class Tenant(db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(255), nullable=False, unique=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     users = db.relationship("User", back_populates="tenant", cascade="all, delete-orphan")
     datasets = db.relationship("Dataset", back_populates="tenant", cascade="all, delete-orphan")
@@ -104,7 +104,7 @@ class UsersLog(db.Model):
     os = db.Column(db.String(100), nullable=True)
     platform = db.Column(db.String(100), nullable=True)
     device = db.Column(db.String(100), nullable=True)
-    timestamp = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     def to_dict(self):
         return {
@@ -157,9 +157,9 @@ class User(db.Model):
     orgunits = db.Column(db.JSON, nullable=True, default=list)  # e.g., [{"id1": [...]}, {"id2": [...]}]
 
     # Audit fields
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     created_by = db.Column(UUID(as_uuid=True), nullable=True)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=datetime.utcnow, nullable=True)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
     updated_by = db.Column(UUID(as_uuid=True), nullable=True)
 
     # Relationships
@@ -305,7 +305,7 @@ class RefreshToken(db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     token = db.Column(db.String(255), unique=True, nullable=False)  # hashed
-    issued_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    issued_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
     revoked = db.Column(db.Boolean, default=False, nullable=False)
 

@@ -16,44 +16,41 @@ function normalizeError(error: any) {
 
 // API Connexions & Query Builder
 export const connectionService = {
-  async list<T=any>() {
+  async list<T = any>() {
     try {
       return await api.get<T[]>(`/connections`);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-  async listWithDetails<T=any>() {
+  async listWithDetails<T = any>() {
     try {
       return await api.get<T[]>(`/connections/with-details`);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-  async create(data: DbConnectionParams) {
+  async create(params: DbConnectionParams) {
     try {
-      return await api.post("/connections", data);
+      return await api.post("/connections", params);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
-  async update(id: number, data: DbConnectionParams) {
+  async update(id: number, params: DbConnectionParams) {
     try {
-      return await api.put(`/connections/${id}`, data);
+      return await api.put(`/connections/${id}`, params);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
-  async patch(id: number, data: DbConnectionParams) {
+  async patch(id: number, params: DbConnectionParams) {
     try {
-      return await api.patch(`/connections/${id}`, data);
+      return await api.patch(`/connections/${id}`, params);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
   async delete(id: number) {
     try {
       return await api.delete(`/connections/${id}`);
@@ -62,51 +59,68 @@ export const connectionService = {
     }
   },
 
+  // couchdb specific methods
+  async connect(params: DbConnectionParams) {
+    try {
+      return await api.post("/connections/couchdb/connect", params);
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+  async couchdbUpsert(db_name: string, collection: string, doc: Record<string, any>) {
+    try {
+      return await api.post("/connections/couchdb/upsert", { db_name, collection, doc });
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+  async couchdbLastseq(db_name: string, seq: string) {
+    try {
+      return await api.post("/connections/couchdb/lastseq", { db_name, seq });
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+
 
   // ---------------------- TYPES ---------------------- 
-  async typesList<T=any>() {
+  async typesList<T = any>() {
     try {
-      return await api.get<T[]>("/conn-types");
+      return await api.get<T[]>("/connections/conn-types");
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
   async typesCreate(data: DbConnectionParams) {
     try {
-      return await api.post("/conn-types", data);
+      return await api.post("/connections/conn-types", data);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
   async typesUpdate(id: string, data: DbConnectionParams) {
     try {
-      return await api.put(`/conn-types/${id}`, data);
+      return await api.put(`/connections/conn-types/${id}`, data);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
   async typesPatch(id: string, data: DbConnectionParams) {
     try {
-      return await api.patch(`/conn-types/${id}`, data);
+      return await api.patch(`/connections/conn-types/${id}`, data);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
   async typesDelete(id: string) {
     try {
-      return await api.delete(`/conn-types/${id}`);
+      return await api.delete(`/connections/conn-types/${id}`);
     } catch (e) {
       throw normalizeError(e);
     }
   },
 
-
   // API Connexions & Query Builder
-
   async test(type: TestType, data: DbConnectionParams) {
     try {
       return await api.post(`/connections/${type}`, data);
@@ -114,7 +128,6 @@ export const connectionService = {
       throw normalizeError(e);
     }
   },
-
   async makeTest(connId: string) {
     try {
       return await api.post(`/connections/test-ssh-db`, { connId });
@@ -122,7 +135,6 @@ export const connectionService = {
       throw normalizeError(e);
     }
   },
-
   async schema(connectionId: string, table?: string) {
     try {
       const addTable = table ? `?table=${encodeURIComponent(table)}` : '';
@@ -131,7 +143,6 @@ export const connectionService = {
       throw normalizeError(e);
     }
   },
-
   async schemaInfo(table?: string) {
     try {
       const addTable = table ? `?table=${encodeURIComponent(table)}` : '';
@@ -140,7 +151,6 @@ export const connectionService = {
       throw normalizeError(e);
     }
   },
-
   async run(payload: any) {
     try {
       return await api.post("/query-builder", payload);

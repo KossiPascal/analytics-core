@@ -19,7 +19,7 @@ class DataSource(db.Model):
     # options = db.Column(db.JSON, default=dict)
 
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     tenant = relationship("Tenant", back_populates="data_sources")
     connections = relationship("DataSourceConnection", cascade="all, delete-orphan")
@@ -56,7 +56,7 @@ class DataSourceCredential(db.Model):
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     datasource_id = db.Column(UUID(as_uuid=True), db.ForeignKey("data_sources.id", ondelete="CASCADE"))
     vault_ref = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class DataSourcePermission(db.Model):
     __tablename__ = "datasource_permissions"
@@ -103,11 +103,11 @@ class Dataset(db.Model):
     # deleted_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
     # deleted_by = relationship("User", foreign_keys=[deleted_by_id])
 
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     created_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
     # created_by = relationship("User", foreign_keys=[created_by_id])
 
-    # updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    # updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     # updated_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
     # updated_by = relationship("User", foreign_keys=[updated_by_id])
 
@@ -186,7 +186,7 @@ class Query(db.Model):
     values = db.Column(db.JSON, nullable=True)
 
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     dataset = relationship("Dataset", back_populates="queries")
     charts = relationship("Chart", back_populates="query", cascade="all, delete-orphan")
@@ -244,7 +244,7 @@ class Chart(db.Model):
     type = db.Column(db.String(50), nullable=False)  # bar, line, pie, table
     options = db.Column(db.JSON, nullable=False, default=dict) # chart config: colors, labels...
 
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     query = relationship("Query", back_populates="charts")
 
@@ -291,11 +291,11 @@ class Visualization(db.Model):
     config = db.Column(db.JSON)
     generated_data = db.Column(db.JSON)
 
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     created_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
     created_by = relationship("User", foreign_keys=[created_by_id])
 
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
     updated_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
     updated_by = relationship("User", foreign_keys=[updated_by_id])
 
@@ -387,7 +387,7 @@ class VisualizationExecutionLog(db.Model):
 
     visualization_id = db.Column(UUID(as_uuid=True),db.ForeignKey("visualizations.id", ondelete="CASCADE"),nullable=False)
     
-    executed_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    executed_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     executed_by = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
 
     status = db.Column(
@@ -440,7 +440,7 @@ class DataLineage(db.Model):
         nullable=False
     )
 
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class AIQueryLog(db.Model):
@@ -455,7 +455,7 @@ class AIQueryLog(db.Model):
     validated = db.Column(db.Boolean, default=False)
     rejected_reason = db.Column(db.Text)
 
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 

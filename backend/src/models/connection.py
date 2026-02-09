@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import time
 from dataclasses import dataclass
 from typing import Dict, Optional, Any
@@ -5,7 +6,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from backend.src.config import Config
 from backend.src.databases.extensions import db
 from backend.src.logger import get_backend_logger
-from shared_libs.helpers.utils import decrypt, encrypt
+from shared_libs.helpers.utils import decrypt, encrypt, normalize_base_url
 
 logger = get_backend_logger(__name__)
 
@@ -64,6 +65,58 @@ DEFAULT_DB_TYPES = [
     {"uid": 8, "id": "sqlite", "name": "SQLite"},
     {"uid": 9, "id": "other", "name": "Autre"},
 ]
+
+DEFAULT_COUCHDB_DBS = [
+    {"id": 1, "local_name": "docs", "host_name": "medic"},
+    {"id": 2, "local_name": "users", "host_name": "_users"},
+    {"id": 3, "local_name": "logs", "host_name": "medic-logs"},
+    {"id": 4, "local_name": "metas", "host_name": "medic-sentinel"},
+    {"id": 5, "local_name": "sentinel", "host_name": "medic-users-meta"},
+]   
+
+# CouchDB logical database (list of DBs)
+class CouchdbSyncCible(db.Model):
+    __tablename__ = "couchdb_sync_cibles"
+
+    id = db.Column(db.Integer, primary_key=True)
+    local_name = db.Column(db.String(255), nullable=False, unique=True)
+    host_name = db.Column(db.String(255), nullable=False)
+    type = db.Column(db.String(50), nullable=False, index=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+    
+    @staticmethod
+    def full_db_names(self):
+        """Return active logical databases"""
+        couchdbs:list[CouchdbSyncCible] = CouchdbSyncCible.query.filter_by(is_active=True).all()
+        return couchdbs
+    
+    @staticmethod
+    def couchdb_names():
+        """Return active CouchDB logical databases"""
+        couchdbs:list[CouchdbSyncCible] = CouchdbSyncCible.query.filter_by(is_active=True, type="couchdb").all()
+        return couchdbs
+    
+    @staticmethod
+    def ensure_default_couchdb_dbs():
+        try:
+            couchdbs:list[CouchdbSyncCible] = CouchdbSyncCible.query.filter_by(type="couchdb").all()
+            existing = { d.local_name for d in couchdbs }
+            if not existing:
+                for dbn in DEFAULT_COUCHDB_DBS:
+                    if dbn["local_name"] :
+                        db.session.add(CouchdbSyncCible(local_name=dbn["local_name"],host_name=dbn["host_name"],type="couchdb",is_active=True))
+
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to ensure default CouchDB DBs: {str(e)}")
+            raise
+
+    def __repr__(self):
+        return f"<CouchdbSyncCible {self.local_name} ({self.type})>"
 
 
 class ConnectionType(db.Model):
@@ -151,10 +204,23 @@ class DbConnection(db.Model):
     ssh_key_enc = db.Column(db.Text)
     ssh_key_pass_enc = db.Column(db.Text)
 
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+    auto_sync = db.Column(db.Boolean, default=False, nullable=False, index=True)
+    
     action = db.Column(db.String(50), unique=True)  # ex: "main"
 
+    last_sync = db.Column(db.DateTime(timezone=True), index=True)
+    last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
+
+    # Relationships
+    # last_sync_state = db.relationship("SourceLastSyncState", back_populates="source", uselist=False, cascade="all, delete-orphan")
+    # sync_logs = db.relationship("SyncLog", back_populates="source", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<DbConnection(id={self.id}, name={self.name}, dbname={self.dbname})>"
 
 
     def to_public_dict(self):
@@ -297,5 +363,43 @@ class DbConnection(db.Model):
             logger.error(f"Failed to ensure default CouchDB DBs: {str(e)}")
             raise
 
+    
+    @property    
+    def base_host(self):
+        return f"{normalize_base_url(self.host)}:{self.port}"
 
+    @property    
+    # self.base_url = 
+    def base_url(self):
+        # username = decrypt(self.username_enc) if self.username_enc else None,
+        # password = decrypt(self.password_enc) if self.password_enc else None,
+        # auth_root = f"{username}:{password}@" if (username and password) else ""
+        # return f"https://{auth_root}{self.base_host.replace('https://','').replace('http://','')}"
 
+        return (f"https://{self.base_host.replace('https://','').replace('http://','')}")
+
+    @property
+    def auth(self) -> tuple[str, str]:
+        return (decrypt(self.username_enc),decrypt(self.password_enc))
+    
+    @staticmethod
+    def sources_list():
+        """Return active CouchDB logical databases"""
+        sources:list[DbConnection] = DbConnection.query.filter_by(is_active=True, auto_sync=True).all()
+        return sources
+    
+
+    def to_dict_safe(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "host": self.host,
+            "base_url": self.base_url,
+            "port": self.port,
+            "auto_sync": self.auto_sync,
+            "is_active": self.is_active,
+            "dbname": self.dbname,
+            "last_sync": self.last_sync.isoformat() if self.last_sync else None,
+            "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
+        }

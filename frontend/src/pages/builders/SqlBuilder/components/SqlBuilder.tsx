@@ -16,7 +16,7 @@ import JSONPreview from './JSONPreview';
 import styles from '@pages/builders/SqlBuilder/SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
-import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab_ZZZZ';
+import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
 import { FormRadio, FormRadioGroup } from '@/components/forms/FormRadio/FormRadio';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
@@ -255,7 +255,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQ
   const [editMetData, setEditMetData] = useState<{ label: string; formula: string; unique: boolean }>({ label: '', formula: '', unique: false });
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>('all');
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
-  const [selectedDatabaseIds, setSelectedDatabaseIds] = useState<Set<string>>(() => {
+  const [selectedDatabaseIds, setSelectedDatabaseIds] = useState<Set<string|number>>(() => {
     // Select all databases by default
     const allDbIds = model.databases?.map((db) => db.id) || [];
     return new Set(allDbIds);
@@ -432,7 +432,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQ
   }, [model.databases]);
 
   // Toggle database selection
-  const toggleDatabase = useCallback((databaseId: string) => {
+  const toggleDatabase = useCallback((databaseId: string|number) => {
     setSelectedDatabaseIds((prev) => {
       const next = new Set(prev);
       if (next.has(databaseId)) {
@@ -1252,7 +1252,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQ
       //   </div>
       // )}
       >
-        <DatabaseConnectionTab showTitle={false} showDbList={false} outOfCard={true} afterUpsert={afterUpsert} />
+        <DatabaseConnectionTab showTitle={false} onlyCardField={true} afterUpsert={afterUpsert} />
       </Modal>
 
       <Modal

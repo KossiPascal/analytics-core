@@ -75,8 +75,8 @@ export function FormMultiSelect({
 
   const filteredOptions = searchTerm
     ? options.filter((opt) =>
-        opt.label.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+    )
     : options;
 
   const handleToggle = () => {
@@ -128,7 +128,8 @@ export function FormMultiSelect({
     }
   }, [isOpen, searchable]);
 
-  const inputId = id || `multiselect-${Math.random().toString(36).substr(2, 9)}`;
+  const inputIdRef = useRef(id || `multiselect-${Math.random().toString(36).substr(2, 9)}`);
+  const inputId = inputIdRef.current;
 
   const wrapperClasses = [
     styles.inputWrapper,
@@ -235,9 +236,8 @@ export function FormMultiSelect({
                 return (
                   <div
                     key={option.value}
-                    className={`${styles.selectOption} ${
-                      isSelected ? styles.selected : ''
-                    } ${option.disabled ? styles.disabled : ''}`}
+                    className={`${styles.selectOption} ${isSelected ? styles.selected : ''
+                      } ${option.disabled ? styles.disabled : ''}`}
                     onClick={() => handleSelect(option)}
                     role="option"
                     aria-selected={isSelected}

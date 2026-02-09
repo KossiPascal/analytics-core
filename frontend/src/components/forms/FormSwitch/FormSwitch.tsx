@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, forwardRef, useRef } from 'react';
 import styles from '../styles/forms.module.css';
 import './FormSwitch.css';
 
@@ -29,7 +29,9 @@ export const FormSwitch = forwardRef<HTMLInputElement, FormSwitchProps>(
     },
     ref
   ) => {
-    const inputId = id || `switch-${Math.random().toString(36).substr(2, 9)}`;
+
+    const inputIdRef = useRef(id || `switch-${Math.random().toString(36).substr(2, 9)}`);
+    const inputId = inputIdRef.current;
 
     const sizeClasses = {
       sm: styles.switchSm,
@@ -50,12 +52,12 @@ export const FormSwitch = forwardRef<HTMLInputElement, FormSwitchProps>(
         <label className={styles.switchLabel} htmlFor={inputId}>
           <div className={`${styles.switchTrack} ${sizeClasses[size]}`}>
             <input
+              {...props}
               ref={ref}
               id={inputId}
               type="checkbox"
               disabled={disabled}
               className={`${styles.switchInput} ${className}`}
-              {...props}
             />
             <span className={styles.switchThumb} />
           </div>

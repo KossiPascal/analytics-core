@@ -3,8 +3,10 @@
    =================== */
 .textarea {
   width: 100%;
-  min-height: 120px;
-  padding: 0.875rem 1rem;
+  min-height: unset;      /* 🔥 clé */
+  height: auto;
+  line-height: 1.3;       /* important */
+  padding: 0.500rem 1rem;
   font-size: 0.9375rem;
   font-family: inherit;
   color: var(--form-text);

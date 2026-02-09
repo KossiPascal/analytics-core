@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, ReactNode, useState, forwardRef } from 'react';
+import { InputHTMLAttributes, ReactNode, useState, forwardRef, useRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
@@ -73,7 +73,8 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
     const isPassword = type === 'password';
     const inputType = isPassword && showPassword ? 'text' : type;
 
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+    const inputIdRef = useRef(id || `input-${Math.random().toString(36).substr(2, 9)}`);
+    const inputId = inputIdRef.current;
 
     const wrapperClasses = [
       styles.inputWrapper,

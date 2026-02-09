@@ -15,7 +15,7 @@ class ApiToken(db.Model):
     # Token hashé (SHA256 hex)
     token_hash = db.Column(db.String(64),unique=True,nullable=False,index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
     revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
 

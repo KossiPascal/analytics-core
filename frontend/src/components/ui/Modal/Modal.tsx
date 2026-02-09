@@ -12,6 +12,7 @@ export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: ReactNode;
+  leftIcon?: ReactNode;
   children: ReactNode;
   size?: ModalSize;
   showCloseButton?: boolean;
@@ -21,7 +22,7 @@ export interface ModalProps {
   className?: string;
 }
 
-export function Modal({isOpen,onClose,title,children,size = 'md',showCloseButton = true,closeOnBackdrop = false,closeOnEscape = false,footer,className}: ModalProps) {
+export function Modal({isOpen,onClose,title,leftIcon,children,size = 'md',showCloseButton = true,closeOnBackdrop = false,closeOnEscape = false,footer,className}: ModalProps) {
   // Handle escape key
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -80,6 +81,7 @@ export function Modal({isOpen,onClose,title,children,size = 'md',showCloseButton
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
+               {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
               {(title || showCloseButton) && (
                 <div className={styles.header}>
                   {title && (

@@ -111,7 +111,7 @@ export type TestType = "test-ssh" | "test-ssh-db"
 export type EntityType = 'table' | 'view' | 'materialized_view';
 
 export interface DatabaseDef {
-  id: string;
+  id: string|number;
   label: string;
   type: DbType;
   description?: string;
