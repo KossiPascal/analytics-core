@@ -1,0 +1,71 @@
+.layoutZone {
+  border: 1px dashed #e2e8f0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.layoutZoneHeader {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.layoutZoneContent {
+  min-height: 80px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.layoutPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 60px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.layoutItem {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  color: #1e40af;
+}
+
+.layoutItem svg {
+  color: #93c5fd;
+  cursor: grab;
+}
+
+.layoutItem span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.removeItemBtn {
+  padding: 0.125rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #93c5fd;
+  display: flex;
+  align-items: center;
+}
+
+.removeItemBtn:hover {
+  color: #ef4444;
+}

@@ -1,0 +1,99 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.typeSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.typeLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.typeOptions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.typeOption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  transition: all 0.2s;
+}
+
+.typeOption:hover {
+  border-color: #3b82f6;
+  background: #f8fbff;
+}
+
+.typeOptionActive {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.typeOptionActive svg {
+  color: #3b82f6;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btnPrimary:hover {
+  background-color: #2563eb;
+}
+
+.btnOutline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: transparent;
+  color: #1e293b;
+}
+
+.btnOutline:hover {
+  background-color: #f1f5f9;
+}

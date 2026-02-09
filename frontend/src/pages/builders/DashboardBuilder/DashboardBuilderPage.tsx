@@ -1,53 +1,41 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BarChart3,
-  LineChart,
-  PieChart,
-  AreaChart,
   Activity,
-  TrendingUp,
+  AreaChart,
+  BarChart3,
   GitBranch,
   Grid3x3,
-  Target,
-  Filter,
-  Calendar,
-  Building2,
-  Database,
-  Plus,
-  Trash2,
-  Save,
-  Eye,
-  RefreshCw,
-  ChevronDown,
-  ChevronRight,
-  Search,
-  X,
-  GripVertical,
-  Settings,
   Layers,
+  LineChart,
+  PieChart,
   Table,
-  FileText,
-  LayoutDashboard,
+  Target,
+  TrendingUp,
 } from 'lucide-react';
+
 import { useNotification } from '@contexts/OLD/useNotification';
-import {
-  db,
-  initializeTestData,
-  type VisualizationDimensionItem,
-} from '@/utils/TestData';
 import { CHART_COLORS } from '@components/charts/theme';
-import type { ChartType, ChartDataItem } from '@components/charts/types';
-import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
-import { FormInput } from '@/components/forms/FormInput/FormInput';
-import { RenderChartPreview } from './components/RenderChartPreview';
-import { DimensionSelector } from './components/DimensionSelector';
-import { LayoutDropZone } from './components/LayoutDropZone';
+import type { ChartDataItem } from '@components/charts/types';
+import { db, initializeTestData, type VisualizationDimensionItem } from '@/utils/TestData';
 
-import type { ChartTypeOption, ChartVariant, DimensionItem, StoredVisualization, VisualizationConfig, VisualizationOptions, VisualizationType } from './components/types';
+import type {
+  ChartTypeOption,
+  ChartVariant,
+  DimensionItem,
+  StoredVisualization,
+  VisualizationConfig,
+  VisualizationOptions,
+  VisualizationType,
+} from './components/types';
+import styles from '@pages/builders/DashboardBuilder/DashboardBuilderPage.module.css';
+import { BuilderHeader } from './components/BuilderHeader/BuilderHeader';
+import { BuilderMainArea } from './components/BuilderMainArea/BuilderMainArea';
+import { BuilderSidebar } from './components/BuilderSidebar/BuilderSidebar';
+import { OptionsModal } from './components/OptionsModal/OptionsModal';
+import { SaveModal } from './components/SaveModal/SaveModal';
+import { SavedVisualizationsModal } from './components/SavedVisualizationsModal/SavedVisualizationsModal';
+import { VisualizationTypeModal } from './components/VisualizationTypeModal/VisualizationTypeModal';
 
-import styles from '@pages/builders/DashboardBuilder/DashboardBuilder.module.css';
-import { vizStyles } from './components/vizStyles';
-import './Viz.css';
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'line', name: 'Ligne', icon: <LineChart size={20} />, description: 'Évolution dans le temps', category: 'trend' },
   { id: 'area', name: 'Zone', icon: <AreaChart size={20} />, description: 'Évolution avec remplissage', category: 'trend' },
@@ -63,47 +51,74 @@ const CHART_TYPES: ChartTypeOption[] = [
   { id: 'table', name: 'Tableau', icon: <Table size={20} />, description: 'Données tabulaires', category: 'other' },
 ];
 
+const DEFAULT_OPTIONS: VisualizationOptions = {
+  showLegend: true,
+  showTooltip: true,
+  showGrid: true,
+  stacked: false,
+  animation: true,
+};
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
-const DashboardBuilderPage: React.FC = () =>{
+interface PreviewSnapshot {
+  chartType: ChartVariant;
+  selectedDataElements: string[];
+  selectedIndicators: string[];
+  selectedPeriods: string[];
+  selectedOrgUnits: string[];
+  options: VisualizationOptions;
+}
+
+const DashboardBuilderPage: React.FC = () => {
   const { showSuccess, showError } = useNotification();
 
-  // State
+  // Modal states
+  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
+  const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isSavedListOpen, setIsSavedListOpen] = useState(false);
+
+  // Visualization metadata
   const [visualizationType, setVisualizationType] = useState<VisualizationType>('dashboard');
   const [chartType, setChartType] = useState<ChartVariant>('bar');
   const [name, setName] = useState('Nouvelle visualisation');
   const [description, setDescription] = useState('');
 
-  // Selected dimensions
+  // Edit mode
+  const [editingVisualizationId, setEditingVisualizationId] = useState<string | null>(null);
+  const isEditing = editingVisualizationId !== null;
+
+  // Dimension selections
   const [selectedDataElements, setSelectedDataElements] = useState<string[]>(['de1', 'de2', 'de3']);
-  const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
+  const [selectedIndicators, setSelectedIndicators] = useState<string[]>(['ind1', 'ind2']);
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>(['LAST_6_MONTHS']);
   const [selectedOrgUnits, setSelectedOrgUnits] = useState<string[]>(['ou1', 'ou2', 'ou3']);
 
   // Layout
   const [columnItems, setColumnItems] = useState<string[]>(['LAST_6_MONTHS']);
-  const [rowItems, setRowItems] = useState<string[]>(['de1', 'de2', 'de3']);
+  const [rowItems, setRowItems] = useState<string[]>(['ind1', 'ind2']);
   const [filterItems, setFilterItems] = useState<string[]>(['ou1']);
 
-  // Dimension data
+  // Data sources
   const [dataElements, setDataElements] = useState<DimensionItem[]>([]);
   const [indicators, setIndicators] = useState<DimensionItem[]>([]);
   const [periods, setPeriods] = useState<DimensionItem[]>([]);
   const [orgUnits, setOrgUnits] = useState<DimensionItem[]>([]);
   const [savedVisualizations, setSavedVisualizations] = useState<StoredVisualization[]>([]);
 
-  // Options
-  const [options, setOptions] = useState<VisualizationOptions>({
-    title: 'Évolution des consultations',
-    subtitle: 'Par type de service',
-    showLegend: true,
-    showTooltip: true,
-    showGrid: true,
-    stacked: false,
-    animation: true,
+  const [options, setOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
+
+  const [previewSnapshot, setPreviewSnapshot] = useState<PreviewSnapshot>({
+    chartType: 'bar',
+    selectedDataElements: ['de1', 'de2', 'de3'],
+    selectedIndicators: ['ind1', 'ind2'],
+    selectedPeriods: ['LAST_6_MONTHS'],
+    selectedOrgUnits: ['ou1', 'ou2', 'ou3'],
+    options: DEFAULT_OPTIONS,
   });
+  const [isPreviewStale, setIsPreviewStale] = useState(false);
+
+  const hasInitializedRef = useRef(false);
+  const previousChartTypeRef = useRef<ChartVariant>(chartType);
 
   const loadSavedVisualizations = useCallback(() => {
     const { items } = db.list<StoredVisualization>('visualizations', {
@@ -128,34 +143,110 @@ const DashboardBuilderPage: React.FC = () =>{
       loadSavedVisualizations();
     } catch (error) {
       console.error('[VisualizationsTab] Failed to load local data', error);
-      showError("Impossible de charger les données locales pour les visualisations.");
+      showError('Impossible de charger les données locales pour les visualisations.');
     }
   }, [loadSavedVisualizations, showError]);
 
-  // Get all items for lookup
-  const allItems = useMemo(() => [
-    ...dataElements,
-    ...indicators,
-    ...periods,
-    ...orgUnits,
-  ], [dataElements, indicators, periods, orgUnits]);
+  // Mark preview as stale on any config change (except chartType which auto-refreshes)
+  useEffect(() => {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      return;
+    }
+    setIsPreviewStale(true);
+  }, [
+    selectedDataElements,
+    selectedIndicators,
+    selectedPeriods,
+    selectedOrgUnits,
+    columnItems,
+    rowItems,
+    filterItems,
+    options,
+  ]);
 
-  const filteredSavedVisualizations = useMemo(
-    () => savedVisualizations.filter((viz) => viz.type === visualizationType),
-    [savedVisualizations, visualizationType]
+  // Auto-refresh preview when chart type changes (from modal)
+  useEffect(() => {
+    if (previousChartTypeRef.current === chartType) {
+      return;
+    }
+    previousChartTypeRef.current = chartType;
+
+    setPreviewSnapshot((prev) => ({
+      ...prev,
+      chartType,
+    }));
+    setIsPreviewStale(false);
+  }, [chartType]);
+
+  // Clean up data elements when switching away from table type
+  useEffect(() => {
+    if (chartType === 'table') {
+      return;
+    }
+
+    if (selectedDataElements.length > 0) {
+      setSelectedDataElements([]);
+    }
+
+    const dataElementIds = new Set(dataElements.map((item) => item.id));
+    setColumnItems((items) => items.filter((item) => !dataElementIds.has(item)));
+    setRowItems((items) => items.filter((item) => !dataElementIds.has(item)));
+    setFilterItems((items) => items.filter((item) => !dataElementIds.has(item)));
+  }, [chartType, dataElements, selectedDataElements.length]);
+
+  const handleRefreshPreview = useCallback(() => {
+    setPreviewSnapshot({
+      chartType,
+      selectedDataElements: [...selectedDataElements],
+      selectedIndicators: [...selectedIndicators],
+      selectedPeriods: [...selectedPeriods],
+      selectedOrgUnits: [...selectedOrgUnits],
+      options: { ...options },
+    });
+    setIsPreviewStale(false);
+  }, [chartType, selectedDataElements, selectedIndicators, selectedPeriods, selectedOrgUnits, options]);
+
+  const availableLayoutItems = useMemo(
+    () =>
+      chartType === 'table'
+        ? [...dataElements, ...indicators, ...periods, ...orgUnits]
+        : [...indicators, ...periods, ...orgUnits],
+    [chartType, dataElements, indicators, periods, orgUnits]
   );
 
-  // Generate preview data based on selections
-  const previewData = useMemo((): ChartDataItem[] => {
-    // Generate mock data based on selected items
-    const dataItems = [...selectedDataElements, ...selectedIndicators];
-    const periods = selectedPeriods.length > 0 ? selectedPeriods : ['THIS_MONTH'];
+  const activePreviewDataIds = useMemo(() => {
+    const fromSelection =
+      previewSnapshot.chartType === 'table'
+        ? [...previewSnapshot.selectedDataElements, ...previewSnapshot.selectedIndicators]
+        : [...previewSnapshot.selectedIndicators];
 
-    if (chartType === 'pie' || chartType === 'donut' || chartType === 'treemap' || chartType === 'funnel' || chartType === 'radialBar') {
-      // For pie-like charts, use data items as categories
-      return dataItems.slice(0, 6).map((itemId, index) => {
-        const item = dataElements.find(d => d.id === itemId) ||
-                     indicators.find(i => i.id === itemId);
+    if (fromSelection.length > 0) {
+      return fromSelection;
+    }
+
+    if (previewSnapshot.chartType === 'table') {
+      return [...dataElements.slice(0, 2).map((item) => item.id), ...indicators.slice(0, 2).map((item) => item.id)];
+    }
+
+    return indicators.slice(0, 4).map((item) => item.id);
+  }, [previewSnapshot, dataElements, indicators]);
+
+  const previewData = useMemo((): ChartDataItem[] => {
+    const periodsForPreview =
+      previewSnapshot.selectedPeriods.length > 0 ? previewSnapshot.selectedPeriods : ['THIS_MONTH'];
+
+    if (
+      previewSnapshot.chartType === 'pie' ||
+      previewSnapshot.chartType === 'donut' ||
+      previewSnapshot.chartType === 'treemap' ||
+      previewSnapshot.chartType === 'funnel' ||
+      previewSnapshot.chartType === 'radialBar'
+    ) {
+      return activePreviewDataIds.slice(0, 6).map((itemId, index) => {
+        const item = dataElements.find((candidate) => candidate.id === itemId) ||
+          indicators.find((candidate) => candidate.id === itemId);
+
         return {
           name: item?.name || itemId,
           value: Math.floor(Math.random() * 500) + 100,
@@ -164,411 +255,219 @@ const DashboardBuilderPage: React.FC = () =>{
       });
     }
 
-    if (chartType === 'radar') {
-      // For radar, use org units as subjects
-      return selectedOrgUnits.slice(0, 5).map((ouId) => {
-        const ou = orgUnits.find(o => o.id === ouId);
-        const entry: ChartDataItem = { subject: ou?.name || ouId };
-        dataItems.slice(0, 3).forEach((dataId) => {
-          const dataItem = dataElements.find(d => d.id === dataId);
+    if (previewSnapshot.chartType === 'radar') {
+      return previewSnapshot.selectedOrgUnits.slice(0, 5).map((orgUnitId) => {
+        const orgUnit = orgUnits.find((item) => item.id === orgUnitId);
+        const entry: ChartDataItem = { subject: orgUnit?.name || orgUnitId };
+
+        activePreviewDataIds.slice(0, 3).forEach((dataId) => {
+          const dataItem = dataElements.find((item) => item.id === dataId) || indicators.find((item) => item.id === dataId);
           entry[dataItem?.name || dataId] = Math.floor(Math.random() * 100) + 20;
         });
+
         return entry;
       });
     }
 
-    if (chartType === 'scatter') {
-      // For scatter, generate x, y pairs
-      return Array.from({ length: 20 }, (_, i) => ({
-        name: `Point ${i + 1}`,
+    if (previewSnapshot.chartType === 'scatter') {
+      return Array.from({ length: Math.max(periodsForPreview.length, 12) }, (_, index) => ({
+        name: `Point ${index + 1}`,
         x: Math.floor(Math.random() * 100),
         y: Math.floor(Math.random() * 100),
         z: Math.floor(Math.random() * 50) + 10,
       }));
     }
 
-    // For line, area, bar, composed charts - time series data
     const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-    return monthNames.slice(0, 6).map((month) => {
+
+    return monthNames.slice(0, Math.max(periodsForPreview.length, 6)).map((month) => {
       const entry: ChartDataItem = { name: month };
-      dataItems.slice(0, 4).forEach((dataId) => {
-        const dataItem = dataElements.find(d => d.id === dataId) ||
-                        indicators.find(i => i.id === dataId);
+
+      activePreviewDataIds.slice(0, 4).forEach((dataId) => {
+        const dataItem = dataElements.find((item) => item.id === dataId) || indicators.find((item) => item.id === dataId);
         entry[dataItem?.name || dataId] = Math.floor(Math.random() * 300) + 50;
       });
+
       return entry;
     });
-  }, [selectedDataElements, selectedIndicators, selectedPeriods, selectedOrgUnits, chartType]);
+  }, [activePreviewDataIds, dataElements, indicators, orgUnits, previewSnapshot]);
 
-  // Generate series config
   const previewSeries = useMemo(() => {
-    const dataItems = [...selectedDataElements, ...selectedIndicators];
-    return dataItems.slice(0, 4).map((dataId, index) => {
-      const item = dataElements.find(d => d.id === dataId) ||
-                   indicators.find(i => i.id === dataId);
+    return activePreviewDataIds.slice(0, 4).map((dataId, index) => {
+      const item = dataElements.find((candidate) => candidate.id === dataId) ||
+        indicators.find((candidate) => candidate.id === dataId);
+
       return {
         dataKey: item?.name || dataId,
         name: item?.name || dataId,
         color: CHART_COLORS.primary[index % CHART_COLORS.primary.length],
-        type: chartType === 'composed' ? (index === 0 ? 'bar' : 'line') as 'bar' | 'line' : undefined,
+        type: previewSnapshot.chartType === 'composed' ? ((index === 0 ? 'bar' : 'line') as 'bar' | 'line') : undefined,
       };
     });
-  }, [selectedDataElements, selectedIndicators, chartType]);
+  }, [activePreviewDataIds, dataElements, indicators, previewSnapshot.chartType]);
 
-  // Handlers
-  const handleSave = useCallback(() => {
-    const config: VisualizationConfig = {
-      name,
-      description,
-      type: visualizationType,
-      chartType,
-      columns: [{ dimension: 'pe', items: columnItems }],
-      rows: [{ dimension: 'dx', items: rowItems }],
-      filters: [{ dimension: 'ou', items: filterItems }],
-      options,
-    };
+  const handleSaveConfirm = useCallback(
+    (saveName: string, saveDescription: string, saveVizType: VisualizationType) => {
+      const config: VisualizationConfig = {
+        name: saveName,
+        description: saveDescription,
+        type: saveVizType,
+        chartType,
+        columns: [{ dimension: 'pe', items: columnItems }],
+        rows: [{ dimension: 'dx', items: rowItems }],
+        filters: [{ dimension: 'ou', items: filterItems }],
+        options,
+      };
 
-    console.log('Saving visualization:', config);
-    const now = new Date().toISOString();
-    const storedVisualization: StoredVisualization = {
-      id: `viz-${Date.now()}`,
-      createdAt: now,
-      updatedAt: now,
-      ...config,
-    };
+      const now = new Date().toISOString();
 
-    try {
-      db.create<StoredVisualization>('visualizations', storedVisualization);
-      setSavedVisualizations((prev) => [storedVisualization, ...prev]);
-    } catch (error) {
-      console.error('[VisualizationsTab] Failed to save visualization', error);
-      showError('Impossible de sauvegarder la visualisation.');
-      return;
+      if (isEditing && editingVisualizationId) {
+        const updatedVisualization: StoredVisualization = {
+          id: editingVisualizationId,
+          createdAt: savedVisualizations.find((v) => v.id === editingVisualizationId)?.createdAt || now,
+          updatedAt: now,
+          ...config,
+        };
+
+        try {
+          db.create<StoredVisualization>('visualizations', updatedVisualization);
+          setSavedVisualizations((previous) =>
+            previous.map((v) => (v.id === editingVisualizationId ? updatedVisualization : v))
+          );
+          setName(saveName);
+          setDescription(saveDescription);
+          setVisualizationType(saveVizType);
+          showSuccess(`Visualisation modifiée : "${saveName}"`);
+        } catch (error) {
+          console.error('[VisualizationsTab] Failed to update visualization', error);
+          showError('Impossible de modifier la visualisation.');
+        }
+      } else {
+        const storedVisualization: StoredVisualization = {
+          id: `viz-${Date.now()}`,
+          createdAt: now,
+          updatedAt: now,
+          ...config,
+        };
+
+        try {
+          db.create<StoredVisualization>('visualizations', storedVisualization);
+          setSavedVisualizations((previous) => [storedVisualization, ...previous]);
+          setName(saveName);
+          setDescription(saveDescription);
+          setVisualizationType(saveVizType);
+          showSuccess(`Visualisation sauvegardée : "${saveName}"`);
+        } catch (error) {
+          console.error('[VisualizationsTab] Failed to save visualization', error);
+          showError('Impossible de sauvegarder la visualisation.');
+        }
+      }
+
+      setIsSaveModalOpen(false);
+    },
+    [chartType, columnItems, rowItems, filterItems, options, isEditing, editingVisualizationId, savedVisualizations, showSuccess, showError]
+  );
+
+  const handleLoadVisualization = useCallback((viz: StoredVisualization) => {
+    setName(viz.name);
+    setDescription(viz.description || '');
+    setVisualizationType(viz.type);
+    setChartType(viz.chartType);
+    setOptions(viz.options);
+    setEditingVisualizationId(viz.id);
+
+    if (viz.columns.length > 0) {
+      setColumnItems(viz.columns[0].items);
     }
-    showSuccess(`Visualisation sauvegardée : "${name}"`);
-  }, [name, description, visualizationType, chartType, columnItems, rowItems, filterItems, options, showSuccess, showError]);
-
-  const handleReset = useCallback(() => {
-    setName('Nouvelle visualisation');
-    setDescription('');
-    setChartType('bar');
-    setSelectedDataElements([]);
-    setSelectedIndicators([]);
-    setSelectedPeriods(['THIS_MONTH']);
-    setSelectedOrgUnits([]);
-    setColumnItems([]);
-    setRowItems([]);
-    setFilterItems([]);
-    setOptions({
-      showLegend: true,
-      showTooltip: true,
-      showGrid: true,
-      stacked: false,
-      animation: true,
-    });
+    if (viz.rows.length > 0) {
+      setRowItems(viz.rows[0].items);
+    }
+    if (viz.filters.length > 0) {
+      setFilterItems(viz.filters[0].items);
+    }
   }, []);
-
-
 
   return (
     <>
+      <div className={styles.container}>
+        <BuilderHeader
+          chartType={chartType}
+          chartTypes={CHART_TYPES}
+          onOpenTypeModal={() => setIsTypeModalOpen(true)}
+        />
 
-      <div className={vizStyles.container}>
-        {/* Header */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>
-              <Layers size={24} />
-              Créateur de visualisation
-            </h2>
-          </div>
+        <div className={styles.content}>
+          <BuilderSidebar
+            chartType={chartType}
+            dataElements={dataElements}
+            indicators={indicators}
+            periods={periods}
+            orgUnits={orgUnits}
+            selectedDataElements={selectedDataElements}
+            selectedIndicators={selectedIndicators}
+            selectedPeriods={selectedPeriods}
+            selectedOrgUnits={selectedOrgUnits}
+            onDataElementsChange={setSelectedDataElements}
+            onIndicatorsChange={setSelectedIndicators}
+            onPeriodsChange={setSelectedPeriods}
+            onOrgUnitsChange={setSelectedOrgUnits}
+          />
 
-          <div className={styles.form}>
-            <div className={`${styles.grid} ${styles.grid2}`}>
-              <FormInput
-                label="Nom de la visualisation"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Entrez un nom..."
-              />
-              <FormInput
-                label="Description (optionnel)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Décrivez votre visualisation..."
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="viz-content">
-          {/* Sidebar */}
-          <div className="viz-sidebar">
-            {/* Visualization Type */}
-            <div className="viz-section">
-              <div className="viz-section-title">
-                <FileText size={18} />
-                Type de visualisation
-              </div>
-              <div className="viz-type-selector">
-                <button
-                  type="button"
-                  className={`viz-type-option ${visualizationType === 'dashboard' ? 'viz-type-option-active' : ''}`}
-                  onClick={() => setVisualizationType('dashboard')}
-                >
-                  <LayoutDashboard size={24} />
-                  <span>Tableau de bord</span>
-                </button>
-                <button
-                  type="button"
-                  className={`viz-type-option ${visualizationType === 'report' ? 'viz-type-option-active' : ''}`}
-                  onClick={() => setVisualizationType('report')}
-                >
-                  <FileText size={24} />
-                  <span>Rapport</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="viz-section">
-              <div className="viz-section-title">
-                <Layers size={18} />
-                Visualisations sauvegardées
-              </div>
-              <div className="viz-saved-list">
-                {filteredSavedVisualizations.length === 0 ? (
-                  <div className="viz-saved-empty">
-                    Aucune visualisation pour ce type.
-                  </div>
-                ) : (
-                  filteredSavedVisualizations.map((viz) => (
-                    <div key={viz.id} className="viz-saved-item">
-                      <div className="viz-saved-item-title">{viz.name}</div>
-                      {viz.description && (
-                        <div className="viz-saved-item-description">{viz.description}</div>
-                      )}
-                      <div className="viz-saved-item-meta">
-                        <span>{viz.chartType}</span>
-                        <span>•</span>
-                        <span>{new Date(viz.updatedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Chart Type */}
-            <div className="viz-section">
-              <div className="viz-section-title">
-                <BarChart3 size={18} />
-                Type de graphique
-              </div>
-              <div className="viz-chart-type-grid">
-                {CHART_TYPES.map((type) => (
-                  <button
-                    key={type.id}
-                    type="button"
-                    className={`viz-chart-type-card ${chartType === type.id ? 'viz-chart-type-card-active' : ''}`}
-                    onClick={() => setChartType(type.id)}
-                    title={type.description}
-                  >
-                    {type.icon}
-                    <span>{type.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Data Dimensions */}
-            <div className="viz-section">
-              <div className="viz-section-title">
-                <Database size={18} />
-                Dimensions de données
-              </div>
-
-              <DimensionSelector
-                title="Éléments de données"
-                icon={<Database size={16} />}
-                items={dataElements}
-                selectedItems={selectedDataElements}
-                onSelectionChange={setSelectedDataElements}
-                searchPlaceholder="Rechercher un élément..."
-              />
-
-              <DimensionSelector
-                title="Indicateurs"
-                icon={<TrendingUp size={16} />}
-                items={indicators}
-                selectedItems={selectedIndicators}
-                onSelectionChange={setSelectedIndicators}
-                searchPlaceholder="Rechercher un indicateur..."
-              />
-
-              <DimensionSelector
-                title="Périodes"
-                icon={<Calendar size={16} />}
-                items={periods}
-                selectedItems={selectedPeriods}
-                onSelectionChange={setSelectedPeriods}
-                searchPlaceholder="Rechercher une période..."
-              />
-
-              <DimensionSelector
-                title="Unités d'organisation"
-                icon={<Building2 size={16} />}
-                items={orgUnits}
-                selectedItems={selectedOrgUnits}
-                onSelectionChange={setSelectedOrgUnits}
-                searchPlaceholder="Rechercher une unité..."
-              />
-            </div>
-          </div>
-
-          {/* Main Area */}
-          <div className="viz-main-area">
-            {/* Layout Configuration */}
-            <div className="viz-section">
-              <div className="viz-section-title">
-                <Grid3x3 size={18} />
-                Configuration de la mise en page
-              </div>
-              <div className="viz-layout-section">
-                <LayoutDropZone
-                  title="Colonnes"
-                  items={columnItems}
-                  allItems={allItems}
-                  onRemove={(id) => setColumnItems(columnItems.filter((i) => i !== id))}
-                  placeholder="Colonnes"
-                />
-                <LayoutDropZone
-                  title="Lignes"
-                  items={rowItems}
-                  allItems={allItems}
-                  onRemove={(id) => setRowItems(rowItems.filter((i) => i !== id))}
-                  placeholder="Lignes"
-                />
-                <LayoutDropZone
-                  title="Filtres"
-                  items={filterItems}
-                  allItems={allItems}
-                  onRemove={(id) => setFilterItems(filterItems.filter((i) => i !== id))}
-                  placeholder="Filtres"
-                />
-              </div>
-
-              <div className={styles.alert + ' ' + styles.alertInfo} style={{ margin: '0 1rem 1rem' }}>
-                <Filter size={18} />
-                <div>
-                  <strong>Astuce :</strong> Sélectionnez des éléments dans les dimensions ci-dessus,
-                  puis réorganisez-les dans les zones Colonnes, Lignes et Filtres pour personnaliser
-                  l'affichage de vos données.
-                </div>
-              </div>
-            </div>
-
-            {/* Options */}
-            <div className="viz-section">
-              <div className="viz-section-title">
-                <Settings size={18} />
-                Options d'affichage
-              </div>
-              <div className="viz-options-panel">
-                <div className="viz-option-row">
-                  <FormInput
-                    label="Titre"
-                    value={options.title || ''}
-                    onChange={(e) => setOptions({ ...options, title: e.target.value })}
-                    placeholder="Titre du graphique"
-                  />
-                </div>
-                <div className="viz-option-row">
-                  <FormInput
-                    label="Sous-titre"
-                    value={options.subtitle || ''}
-                    onChange={(e) => setOptions({ ...options, subtitle: e.target.value })}
-                    placeholder="Sous-titre du graphique"
-                  />
-                </div>
-                <div className="viz-option-row">
-                  <FormCheckbox
-                    label="Afficher la légende"
-                    checked={options.showLegend}
-                    onChange={(e) => setOptions({ ...options, showLegend: e.target.checked })}
-                  />
-                  <FormCheckbox
-                    label="Afficher l'infobulle"
-                    checked={options.showTooltip}
-                    onChange={(e) => setOptions({ ...options, showTooltip: e.target.checked })}
-                  />
-                  <FormCheckbox
-                    label="Afficher la grille"
-                    checked={options.showGrid}
-                    onChange={(e) => setOptions({ ...options, showGrid: e.target.checked })}
-                  />
-                  <FormCheckbox
-                    label="Empilé"
-                    checked={options.stacked}
-                    onChange={(e) => setOptions({ ...options, stacked: e.target.checked })}
-                  />
-                  <FormCheckbox
-                    label="Animation"
-                    checked={options.animation}
-                    onChange={(e) => setOptions({ ...options, animation: e.target.checked })}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Preview */}
-            <div className="viz-preview-section">
-              <div className="viz-preview-header">
-                <h3>
-                  <Eye size={18} />
-                  Aperçu
-                </h3>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnOutline} ${styles.btnSmall}`}
-                  onClick={() => {
-                    // Force re-render with new random data
-                    setSelectedDataElements([...selectedDataElements]);
-                  }}
-                >
-                  <RefreshCw size={16} />
-                  Actualiser
-                </button>
-              </div>
-              <div className="viz-preview-content">
-                <RenderChartPreview chartType={chartType} previewData={previewData} previewSeries={previewSeries} options={options} />
-              </div>
-
-              {/* Actions */}
-              <div className="viz-actions">
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                  onClick={handleSave}
-                >
-                  <Save size={18} />
-                  Sauvegarder
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.btn} ${styles.btnOutline}`}
-                  onClick={handleReset}
-                >
-                  <Trash2 size={18} />
-                  Réinitialiser
-                </button>
-              </div>
-            </div>
-          </div>
+          <BuilderMainArea
+            allItems={availableLayoutItems}
+            columnItems={columnItems}
+            rowItems={rowItems}
+            filterItems={filterItems}
+            onRemoveColumnItem={(id) => setColumnItems(columnItems.filter((item) => item !== id))}
+            onRemoveRowItem={(id) => setRowItems(rowItems.filter((item) => item !== id))}
+            onRemoveFilterItem={(id) => setFilterItems(filterItems.filter((item) => item !== id))}
+            previewOptions={previewSnapshot.options}
+            previewChartType={previewSnapshot.chartType}
+            previewData={previewData}
+            previewSeries={previewSeries}
+            isPreviewStale={isPreviewStale}
+            isEditing={isEditing}
+            onRefreshPreview={handleRefreshPreview}
+            onOpenOptions={() => setIsOptionsModalOpen(true)}
+            onOpenSaved={() => setIsSavedListOpen(true)}
+            onSave={() => setIsSaveModalOpen(true)}
+          />
         </div>
       </div>
+
+      <VisualizationTypeModal
+        isOpen={isTypeModalOpen}
+        chartTypes={CHART_TYPES}
+        selectedChartType={chartType}
+        onClose={() => setIsTypeModalOpen(false)}
+        onSelectChartType={setChartType}
+      />
+
+      <OptionsModal
+        isOpen={isOptionsModalOpen}
+        options={options}
+        onOptionsChange={setOptions}
+        onClose={() => setIsOptionsModalOpen(false)}
+      />
+
+      <SaveModal
+        isOpen={isSaveModalOpen}
+        isEditing={isEditing}
+        initialName={name}
+        initialDescription={description}
+        initialVisualizationType={visualizationType}
+        onClose={() => setIsSaveModalOpen(false)}
+        onConfirm={handleSaveConfirm}
+      />
+
+      <SavedVisualizationsModal
+        isOpen={isSavedListOpen}
+        savedVisualizations={savedVisualizations}
+        onClose={() => setIsSavedListOpen(false)}
+        onSelect={handleLoadVisualization}
+      />
     </>
   );
-}
+};
 
 export default DashboardBuilderPage;

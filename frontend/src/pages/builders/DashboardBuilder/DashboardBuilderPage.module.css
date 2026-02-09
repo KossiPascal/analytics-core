@@ -1,8 +1,24 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.content {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .content {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
 /* Tabs Container */
 .tabsContainer {
   margin-bottom: 1.5rem;
   overflow-x: auto;
-  /* -webkit-overflow-scrolling: touch; */
 }
 
 .tabs {

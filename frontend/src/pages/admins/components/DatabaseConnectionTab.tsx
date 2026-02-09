@@ -259,9 +259,10 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
         <CardBody>
           <div className={styles.form}>
             <div className={styles.grid + ' ' + styles.grid3}>
-              <FormSelect name="type" value={form.type} onChange={(value) => updateField('type', value)} options={dbTypes} leftIcon={<FaDatabase />} label="Type" placeholder="Ex: postgres" required={true} />
+              <FormSelect value={form.type} onChange={(value) => updateField('type', value)} options={dbTypes} leftIcon={<FaDatabase />} label="Type" placeholder="Ex: postgres" required={true} />
               <FormInput name="name" value={form.name} onChange={(e) => updateField('name', e.target.value)} label={"Nom Connexion"} leftIcon={<FaDatabase />} placeholder="Ex: Production PostgreSQL" required={true} />
-              <FormTextarea name="description" label="Description" placeholder="Description ..." value={form.description} onChange={(e) => updateField('description', e.target.value)} leftIcon={<FaKey />} rows={1} cols={1} />
+              <FormTextarea name="description" label="Description" placeholder="Description ..." value={form.description} onChange={(e) => updateField('description', e.target.value)}  rows={1} cols={1} />
+                {/* leftIcon={<FaKey />} */}
 
             </div>
 
@@ -276,9 +277,9 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
               <FormInput name="password" value={form.password} onChange={(e) => updateField('password', e.target.value)} type='password' label={"Mot de passe"} leftIcon={<FaLock />} placeholder="••••••••" />
             </div>
 
-            <FormCheckbox name="ssh_enabled" checked={form.ssh_enabled} onChange={(e) => updateField('ssh_enabled', e.target.value)} label={"🔐 Utiliser un tunnel SSH"} leftIcon={<FaShieldAlt />} />
+            <FormCheckbox name="ssh_enabled" checked={form.ssh_enabled} onChange={(e) => updateField('ssh_enabled', e.target.value)} label={"🔐 Utiliser un tunnel SSH"}  />
 
-
+{/* leftIcon={<FaShieldAlt />} */}
             {form.ssh_enabled && (
               <div className={styles.grid + ' ' + styles.grid3}>
                 {/* <h3>SSH Configuration</h3> */}
@@ -286,7 +287,8 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
                 <FormInput name="ssh_port" value={form.ssh_port} onChange={(e) => updateField('ssh_port', e.target.value)} type={'number'} label={"Port SSH"} leftIcon={<FaDatabase />} placeholder="Ex: 22"  required={true} />
                 <FormInput name="ssh_username" value={form.ssh_username} onChange={(e) => updateField('ssh_username', e.target.value)} label={"Utilisateur SSH"} leftIcon={<FaUser />} placeholder="Ex: ubuntu" required={true} />
                 <FormInput name="ssh_password" value={form.ssh_password} onChange={(e) => updateField('ssh_password', e.target.value)} type='password' label={"Mot de passe SSH"} leftIcon={<FaLock />} placeholder="••••••••" />
-                <FormTextarea name="ssh_key" label="Clé privée SSH" hint="Optionnel" placeholder="Coller la clé privée ici" value={form.ssh_key} onChange={(e) => updateField('ssh_key', e.target.value)} leftIcon={<FaKey />} rows={0} cols={0} />
+                <FormTextarea name="ssh_key" label="Clé privée SSH" hint="Optionnel" placeholder="Coller la clé privée ici" value={form.ssh_key} onChange={(e) => updateField('ssh_key', e.target.value)}  rows={0} cols={0} />
+                  {/* leftIcon={<FaKey />} */}
                 <FormInput name="ssh_key_pass" value={form.ssh_key_pass} onChange={(e) => updateField('ssh_key_pass', e.target.value)} type='password' label={"PassPhrase Clé privée SSH"} leftIcon={<FaKey />} placeholder="••••••••" />
               </div>
             )}
