@@ -13,7 +13,7 @@ import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
-import { DbConnection, DbConnectionParams, type TestType } from '@/pages/queries/SqlBuilder/models';
+import { DbConnection, DbConnectionParams, type TestType } from '@/pages/builders/SqlBuilder/models';
 import { connService as API } from '@/services/connection.service';
 
 interface SelectModel {

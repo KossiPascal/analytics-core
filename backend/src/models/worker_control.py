@@ -1,7 +1,7 @@
 # backend/src/models/worker_control.py
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Integer, DateTime
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 
 class WorkerControl(db.Model):
     __tablename__ = "worker_control"

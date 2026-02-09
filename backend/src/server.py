@@ -33,7 +33,7 @@ from backend.src.routes import auth, visualization, scripts, couchdb, worker_con
 from backend.src.routes.admin import permissions, roles, tenants, users
 from backend.src.routes.databases import connections, db_types
 
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 
 # -----------------------------------------------------------------------------
 # GLOBAL SETUP

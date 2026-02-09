@@ -5,6 +5,8 @@ export const PAGES = {
 
     // Home page
     VisualizationHomePage: lazy(() => import('@pages/visualizations/VisualizationHome')),
+    // VisualizationHomePage: lazy(() => import('@pages/visualizations/visu/VisualizationsTab')),
+
 
     // Auth pages
     LoginPage: lazy(() => import('@pages/auths/LoginPage')),
@@ -21,8 +23,9 @@ export const PAGES = {
     MapsPage: lazy(() => import('@pages/maps/MapsPage')),
 
     // Query Builder page
-    SqlBuilderPage: lazy(() => import('@/pages/queries/SqlBuilder/SqlBuilderPage')) as any,
-    QueryBuilderPage: lazy(() => import('@/pages/queries/QueryBuilder/QueryBuilderPage')) as any,
+    SqlBuilderPage: lazy(() => import('@/pages/builders/SqlBuilder/SqlBuilderPage')) as any,
+    QueryBuilderPage: lazy(() => import('@/pages/builders/QueryBuilder/QueryBuilderPage')) as any,
+    DashboardBuilderPage: lazy(() => import('@/pages/builders/DashboardBuilder/DashboardBuilderPage')) as any,
 
     // Users pages
     UsersPage: lazy(() => import('@pages/users/UsersPage')),
@@ -61,6 +64,7 @@ export const ROUTES = {
         root: () => '/queries',
         sqlBuilder: () => '/sql-builder',
         queryBuilder: () => '/query-builder',
+        dashboardBuilder: () => '/dashboard-builder',
     },
 
     // AUTHENTICATION

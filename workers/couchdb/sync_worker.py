@@ -17,7 +17,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from aiohttp import ClientSession, ClientTimeout, BasicAuth, ClientError
 
 from backend.src.config import Config
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.models.couchdb import CibleDatabase, CouchdbSource
 from backend.src.models.worker_control import WorkerControl
 from backend.src.server import create_flask_app

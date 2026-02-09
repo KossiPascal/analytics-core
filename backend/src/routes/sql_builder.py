@@ -8,7 +8,7 @@ from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
 from flask import Blueprint, request, jsonify, g
 from backend.src.models.script import Script
-from backend.src.database.extensions import db, isAdmin, isSuperAdmin, serializeContent, get_connection
+from backend.src.databases.extensions import db, isAdmin, isSuperAdmin, serializeContent, get_connection
 from backend.src.services.sql_executor import run_sql
 
 from sshtunnel import SSHTunnelForwarder

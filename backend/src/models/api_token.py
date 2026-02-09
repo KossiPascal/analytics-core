@@ -2,7 +2,7 @@ import uuid
 import hashlib
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)

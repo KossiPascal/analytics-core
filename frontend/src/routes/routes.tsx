@@ -103,6 +103,7 @@ export const ROUTES_ITEMS: RouteItem[] = [
     children: [
       {label: "SQL Builder", path: ROUTES.builder.sqlBuilder(), component: PAGES.SqlBuilderPage, icon: <Shield size={20} />, permissions:['_admin', '_superadmin']},
       {label: "Query Builder", path: ROUTES.builder.queryBuilder(), component: PAGES.QueryBuilderPage, icon: <Shield size={20} />, permissions:['_admin', '_superadmin']},
+      {label: "Dashboard Builder", path: ROUTES.builder.dashboardBuilder(), component: PAGES.DashboardBuilderPage, icon: <Shield size={20} />, permissions:['_admin', '_superadmin']},
     ]
   },
 

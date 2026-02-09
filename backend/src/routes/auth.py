@@ -4,7 +4,7 @@ import random
 import string
 from backend.src.config import Config
 from datetime import datetime, timezone
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from sqlalchemy.exc import IntegrityError
 from backend.src.models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g, current_app

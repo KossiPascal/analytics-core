@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.exc import IntegrityError
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.config import Config
 from backend.src.helpers.hasher import hash_password, verify_password
 from hashlib import sha256

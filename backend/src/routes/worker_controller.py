@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.models.worker_control import WorkerControl
 # from workers.couchdb.sync_manager import start_async_single_source
 

@@ -71,7 +71,7 @@ export default function VisualizationHome() {
   }, [visualizations]);
 
   const handleCreateVisualization = () => {
-    navigate(ROUTES.admin.root());
+    navigate(ROUTES.builder.dashboardBuilder());
   };
 
   const handleDelete = (id: string) => {
