@@ -1,0 +1,42 @@
+.visualizationTypeOptions {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.visualizationTypeOption {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #fff;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.visualizationTypeOption:hover {
+  border-color: #3b82f6;
+  background: #f8fbff;
+}
+
+.visualizationTypeOptionActive {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.visualizationTypeOptionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.visualizationTypeOptionDescription {
+  color: #64748b;
+  font-size: 0.8125rem;
+}

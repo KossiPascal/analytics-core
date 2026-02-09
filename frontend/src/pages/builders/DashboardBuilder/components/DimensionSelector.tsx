@@ -1,25 +1,39 @@
-import { FormCheckbox } from "@/components/forms/FormCheckbox/FormCheckbox";
-import { ChevronDown, ChevronRight, FormInput, Search, X } from "lucide-react";
-import { useState, useMemo } from "react";
-import { vizStyles } from "./vizStyles";
-import { DimensionSelectorProps } from "./types";
+import React, { useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight, Search, X } from 'lucide-react';
 
-export const DimensionSelector:React.FC<DimensionSelectorProps> = ({title,icon,items,selectedItems,onSelectionChange,searchPlaceholder = 'Rechercher...'}) => {
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+
+import styles from './DimensionSelector.module.css';
+import type { DimensionSelectorProps } from './types';
+
+export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
+  title,
+  icon,
+  items,
+  selectedItems,
+  onSelectionChange,
+  searchPlaceholder = 'Rechercher...',
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredItems = useMemo(() => {
     if (!searchTerm) return items;
     const term = searchTerm.toLowerCase();
-    return items.filter((item) => item.name.toLowerCase().includes(term) || item.code?.toLowerCase().includes(term));
+
+    return items.filter(
+      (item) => item.name.toLowerCase().includes(term) || item.code?.toLowerCase().includes(term)
+    );
   }, [items, searchTerm]);
 
   const handleToggleItem = (itemId: string) => {
     if (selectedItems.includes(itemId)) {
       onSelectionChange(selectedItems.filter((id) => id !== itemId));
-    } else {
-      onSelectionChange([...selectedItems, itemId]);
+      return;
     }
+
+    onSelectionChange([...selectedItems, itemId]);
   };
 
   const handleSelectAll = () => {
@@ -31,28 +45,20 @@ export const DimensionSelector:React.FC<DimensionSelectorProps> = ({title,icon,i
   };
 
   return (
-    <div className={vizStyles.dimensionSelector}>
-      <button
-        type="button"
-        className={vizStyles.dimensionHeader}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <span className={vizStyles.dimensionIcon}>{icon}</span>
-        <span className={vizStyles.dimensionTitle}>{title}</span>
-        <span className={vizStyles.dimensionCount}>
-          {selectedItems.length > 0 && (
-            <span className={vizStyles.countBadge}>{selectedItems.length}</span>
-          )}
-        </span>
+    <div className={styles.dimensionSelector}>
+      <button type="button" className={styles.dimensionHeader} onClick={() => setIsExpanded(!isExpanded)}>
+        <span className={styles.dimensionIcon}>{icon}</span>
+        <span className={styles.dimensionTitle}>{title}</span>
+        {selectedItems.length > 0 && <span className={styles.countBadge}>{selectedItems.length}</span>}
         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
       </button>
 
       {isExpanded && (
-        <div className={vizStyles.dimensionContent}>
-          <div className={vizStyles.dimensionSearch}>
+        <div className={styles.dimensionContent}>
+          <div className={styles.dimensionSearch}>
             <FormInput
               value={searchTerm}
-              onChange={(e:any) => setSearchTerm(e.target.value)}
+              onChange={(event) => setSearchTerm(event.target.value)}
               placeholder={searchPlaceholder}
               leftIcon={<Search size={16} />}
               rightIcon={
@@ -60,18 +66,18 @@ export const DimensionSelector:React.FC<DimensionSelectorProps> = ({title,icon,i
                   <button
                     type="button"
                     onClick={() => setSearchTerm('')}
-                    className={vizStyles.dimensionSearchClear}
+                    className={styles.dimensionSearchClear}
                     aria-label="Effacer la recherche"
                   >
                     <X size={14} />
                   </button>
                 ) : undefined
               }
-              wrapperClassName={vizStyles.dimensionSearchInput}
+              wrapperClassName={styles.dimensionSearchInput}
             />
           </div>
 
-          <div className={vizStyles.dimensionActions}>
+          <div className={styles.dimensionActions}>
             <button type="button" onClick={handleSelectAll}>
               Tout sélectionner
             </button>
@@ -80,22 +86,20 @@ export const DimensionSelector:React.FC<DimensionSelectorProps> = ({title,icon,i
             </button>
           </div>
 
-          <div className={vizStyles.dimensionItems}>
+          <div className={styles.dimensionItems}>
             {filteredItems.map((item) => (
               <FormCheckbox
                 key={item.id}
                 label={item.code ? `${item.name} (${item.code})` : item.name}
                 checked={selectedItems.includes(item.id)}
                 onChange={() => handleToggleItem(item.id)}
-                wrapperClassName={vizStyles.dimensionItem}
+                wrapperClassName={styles.dimensionItem}
               />
             ))}
-            {filteredItems.length === 0 && (
-              <div className={vizStyles.noResults}>Aucun résultat</div>
-            )}
+            {filteredItems.length === 0 && <div className={styles.noResults}>Aucun résultat</div>}
           </div>
         </div>
       )}
     </div>
   );
-}
+};

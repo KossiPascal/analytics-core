@@ -1,25 +1,33 @@
-import { GripVertical, X } from "lucide-react";
-import { vizStyles } from "./vizStyles";
-import { LayoutDropZoneProps } from "./types";
+import React from 'react';
+import { GripVertical, X } from 'lucide-react';
 
-export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({title,items,allItems,onRemove,placeholder = 'Glissez des éléments ici'}) => {
+import styles from './LayoutDropZone.module.css';
+import type { LayoutDropZoneProps } from './types';
+
+export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({
+  title,
+  items,
+  allItems,
+  onRemove,
+  placeholder = 'Glissez des éléments ici',
+}) => {
   const getItemName = (id: string) => {
-    const item = allItems.find((i) => i.id === id);
+    const item = allItems.find((candidate) => candidate.id === id);
     return item?.name || id;
   };
 
   return (
-    <div className={vizStyles.layoutZone}>
-      <div className={vizStyles.layoutZoneHeader}>{title}</div>
-      <div className={vizStyles.layoutZoneContent}>
+    <div className={styles.layoutZone}>
+      <div className={styles.layoutZoneHeader}>{title}</div>
+      <div className={styles.layoutZoneContent}>
         {items.length === 0 ? (
-          <div className={vizStyles.layoutPlaceholder}>{placeholder}</div>
+          <div className={styles.layoutPlaceholder}>{placeholder}</div>
         ) : (
           items.map((itemId) => (
-            <div key={itemId} className={vizStyles.layoutItem}>
+            <div key={itemId} className={styles.layoutItem}>
               <GripVertical size={14} />
               <span>{getItemName(itemId)}</span>
-              <button type="button" onClick={() => onRemove(itemId)} className={vizStyles.removeItemBtn}>
+              <button type="button" onClick={() => onRemove(itemId)} className={styles.removeItemBtn}>
                 <X size={14} />
               </button>
             </div>
@@ -28,4 +36,4 @@ export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({title,items,allIt
       </div>
     </div>
   );
-}
+};

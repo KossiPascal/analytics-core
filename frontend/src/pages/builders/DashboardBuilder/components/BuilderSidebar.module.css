@@ -1,0 +1,121 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sectionTitle svg {
+  color: #3b82f6;
+}
+
+.savedList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.savedItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.savedItemTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.savedItemDescription {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.savedItemMeta {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.savedEmpty {
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  border: 1px dashed #e2e8f0;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.chartTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.chartTypeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chartTypeCard:hover {
+  border-color: #3b82f6;
+  background: #f8fafc;
+}
+
+.chartTypeCardActive {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.chartTypeCard svg {
+  color: #64748b;
+}
+
+.chartTypeCardActive svg {
+  color: #3b82f6;
+}
+
+.chartTypeCard span {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #64748b;
+  text-align: center;
+}
+
+.chartTypeCardActive span {
+  color: #3b82f6;
+}
