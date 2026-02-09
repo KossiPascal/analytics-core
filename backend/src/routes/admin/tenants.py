@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.models.auth import Tenant
 
 bp = Blueprint("tenants", __name__, url_prefix="/api/tenants")

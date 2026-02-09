@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Dict, Optional, Any
 from sqlalchemy.dialects.postgresql import JSONB
 from backend.src.config import Config
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.logger import get_backend_logger
 from shared_libs.helpers.utils import decrypt, encrypt
 

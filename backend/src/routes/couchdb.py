@@ -5,7 +5,7 @@ from typing import Any, Dict
 from backend.src.models.couchdb import CibleDatabase, CouchdbSource
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
-from backend.src.database.extensions import db, error_response, success_response, get_json_payload, CouchdbSourceMap
+from backend.src.databases.extensions import db, error_response, success_response, get_json_payload, CouchdbSourceMap
 from sqlalchemy.exc import SQLAlchemyError
 
 from shared_libs.helpers.utils import encrypt

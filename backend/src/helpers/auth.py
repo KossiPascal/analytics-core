@@ -7,7 +7,7 @@ from uuid import UUID
 from backend.src.config import Config
 from typing import Tuple, Optional, Dict
 from sqlalchemy.exc import SQLAlchemyError
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.models.auth import RefreshToken
 from backend.src.helpers.hasher import hash_token
 from datetime import datetime, timedelta, timezone

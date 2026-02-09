@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from sqlalchemy import CheckConstraint, Enum, Index, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.models.query.query_validator import QueryValidator
 
 class DataSource(db.Model):

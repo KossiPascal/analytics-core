@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.models.connection import DbConnection
 from backend.src.security.access_security import require_auth
 from backend.src.utils.connection import SSHTunnelManager, inspect_full_postgres_schema, inspect_source, get_engine, explore_schema, create_ssh_tunnel

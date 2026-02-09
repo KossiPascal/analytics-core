@@ -5,7 +5,7 @@ from flask import request, jsonify, g
 from werkzeug.exceptions import Unauthorized, Forbidden
 from backend.src.models.auth import User
 import inspect
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.security.token_manager import TokenManagement
 
 # Decorator to protect routes (uses JWT access token)

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import text
-from backend.src.database.extensions import db  # assuming you have SQLAlchemy db instance
+from backend.src.databases.extensions import db  # assuming you have SQLAlchemy db instance
 
 reco_maps_bp = Blueprint('reco_maps', __name__, url_prefix='/reco-maps')
 

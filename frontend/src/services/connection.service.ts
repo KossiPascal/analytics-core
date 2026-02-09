@@ -1,6 +1,6 @@
 import { api } from '@/apis/api';
 import { PaginationParams, PaginatedResponse } from '@/models/OLD/old';
-import { DbConnectionParams, TestType } from '@/pages/queries/SqlBuilder/models';
+import { DbConnectionParams, TestType } from '@/pages/builders/SqlBuilder/models';
 
 
 // Normalisation des erreurs API

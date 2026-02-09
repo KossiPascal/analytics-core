@@ -1,16 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Key,
-  Plug,
-  Database,
-  Trash2,
-  FileText,
-  PenTool,
-  AlertTriangle,
-  BarChart3,
-  Building2,
-} from 'lucide-react';
+import { Key, Plug, Database, Trash2, FileText, PenTool, AlertTriangle, BarChart3, Building2 } from 'lucide-react';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { ApiAccessTab } from '@/pages/admins/components/ApiAccessTab';
 import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
@@ -21,7 +11,6 @@ import { ChtCouchdbRegisterTab } from '@/pages/admins/components/ChtCouchdbRegis
 import { PdfGeneratorTab } from '@/pages/admins/components/PdfGeneratorTab';
 import { SignatureTab } from '@/pages/admins/components/SignatureTab';
 import { TruncateDatabaseTab } from '@/pages/admins/components/TruncateDatabaseTab';
-import { VisualizationsTab } from '@/pages/admins/components/VisualizationsTab';
 import styles from './AdminPage.module.css';
 
 type AdminTabType =
@@ -31,7 +20,6 @@ type AdminTabType =
   | 'DB_CONNECTION'
   | 'DATABASE'
   | 'DELETE_COUCHDB'
-  | 'VISUALIZATIONS'
   | 'PDF_GENERATOR'
   | 'SIGNATURE'
   | 'TRUNCATE_DATABASE';
@@ -51,7 +39,6 @@ const TABS: Tab[] = [
   { id: 'DB_CONNECTION', label: 'Connexion BD', icon: <Plug size={18} />, color: '#0ea5e9' },
   { id: 'DATABASE', label: 'Base de données', icon: <Database size={18} />, color: '#22c55e' },
   { id: 'DELETE_COUCHDB', label: 'Supprimer CouchDB', icon: <Trash2 size={18} />, color: '#f59e0b', danger: true },
-  { id: 'VISUALIZATIONS', label: 'Visualisations', icon: <BarChart3 size={18} />, color: '#14b8a6' },
   { id: 'PDF_GENERATOR', label: 'Générateur PDF', icon: <FileText size={18} />, color: '#8b5cf6' },
   { id: 'SIGNATURE', label: 'Signature', icon: <PenTool size={18} />, color: '#06b6d4' },
   { id: 'TRUNCATE_DATABASE', label: 'Tronquer BD', icon: <AlertTriangle size={18} />, color: '#ef4444', danger: true },
@@ -79,8 +66,6 @@ export default function AdminPage() {
           return <DatabaseActionsTab />;
         case 'DELETE_COUCHDB':
           return <DeleteCouchdbTab />;
-        case 'VISUALIZATIONS':
-          return <VisualizationsTab />;
         case 'PDF_GENERATOR':
           return <PdfGeneratorTab />;
         case 'SIGNATURE':

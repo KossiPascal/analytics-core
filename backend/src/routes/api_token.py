@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from flask import request, jsonify, Blueprint
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.models.api_token import ApiToken  # the ApiToken model you already defined
 from backend.src.services.api_token import ApiTokenService
 

@@ -1,6 +1,6 @@
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 
 class Validation(db.Model):
     __tablename__ = "validations"
