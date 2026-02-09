@@ -1,8 +1,8 @@
 import React from 'react';
 import { Edit3, Eye, FolderOpen, RefreshCw, Save, Settings } from 'lucide-react';
 
-import { RenderChartPreview } from './RenderChartPreview';
-import type { ChartVariant, VisualizationOptions } from './types';
+import { RenderChartPreview } from '../RenderChartPreview/RenderChartPreview';
+import type { ChartVariant, VisualizationOptions } from '../types';
 import styles from './PreviewSection.module.css';
 
 interface PreviewSectionProps {

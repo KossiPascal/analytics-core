@@ -2,7 +2,7 @@ import React from 'react';
 import { GripVertical, X } from 'lucide-react';
 
 import styles from './LayoutDropZone.module.css';
-import type { LayoutDropZoneProps } from './types';
+import type { LayoutDropZoneProps } from '../types';
 
 export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({
   title,

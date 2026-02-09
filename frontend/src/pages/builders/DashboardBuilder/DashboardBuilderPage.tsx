@@ -28,13 +28,13 @@ import type {
   VisualizationType,
 } from './components/types';
 import styles from '@pages/builders/DashboardBuilder/DashboardBuilderPage.module.css';
-import { BuilderHeader } from './components/BuilderHeader';
-import { BuilderMainArea } from './components/BuilderMainArea';
-import { BuilderSidebar } from './components/BuilderSidebar';
-import { OptionsModal } from './components/OptionsModal';
-import { SaveModal } from './components/SaveModal';
-import { SavedVisualizationsModal } from './components/SavedVisualizationsModal';
-import { VisualizationTypeModal } from './components/VisualizationTypeModal';
+import { BuilderHeader } from './components/BuilderHeader/BuilderHeader';
+import { BuilderMainArea } from './components/BuilderMainArea/BuilderMainArea';
+import { BuilderSidebar } from './components/BuilderSidebar/BuilderSidebar';
+import { OptionsModal } from './components/OptionsModal/OptionsModal';
+import { SaveModal } from './components/SaveModal/SaveModal';
+import { SavedVisualizationsModal } from './components/SavedVisualizationsModal/SavedVisualizationsModal';
+import { VisualizationTypeModal } from './components/VisualizationTypeModal/VisualizationTypeModal';
 
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'line', name: 'Ligne', icon: <LineChart size={20} />, description: 'Évolution dans le temps', category: 'trend' },

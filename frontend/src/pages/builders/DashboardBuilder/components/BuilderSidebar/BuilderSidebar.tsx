@@ -1,8 +1,8 @@
 import React from 'react';
 import { Building2, Calendar, Database, TrendingUp } from 'lucide-react';
 
-import { DimensionSelector } from './DimensionSelector';
-import type { ChartVariant, DimensionItem } from './types';
+import { DimensionSelector } from '../DimensionSelector/DimensionSelector';
+import type { ChartVariant, DimensionItem } from '../types';
 import styles from './BuilderSidebar.module.css';
 
 interface BuilderSidebarProps {

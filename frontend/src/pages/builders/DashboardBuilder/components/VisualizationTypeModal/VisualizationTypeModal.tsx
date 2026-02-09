@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Modal } from '@components/ui/Modal/Modal';
 import styles from './VisualizationTypeModal.module.css';
-import type { ChartTypeOption, ChartVariant } from './types';
+import type { ChartTypeOption, ChartVariant } from '../types';
 
 interface VisualizationTypeModalProps {
   isOpen: boolean;

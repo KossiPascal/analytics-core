@@ -5,7 +5,7 @@ import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 
 import styles from './DimensionSelector.module.css';
-import type { DimensionSelectorProps } from './types';
+import type { DimensionSelectorProps } from '../types';
 
 export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   title,

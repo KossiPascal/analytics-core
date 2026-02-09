@@ -4,7 +4,7 @@ import { FileText, LayoutDashboard, Save, Edit3 } from 'lucide-react';
 import { Modal } from '@components/ui/Modal/Modal';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 
-import type { VisualizationType } from './types';
+import type { VisualizationType } from '../types';
 import styles from './SaveModal.module.css';
 
 interface SaveModalProps {

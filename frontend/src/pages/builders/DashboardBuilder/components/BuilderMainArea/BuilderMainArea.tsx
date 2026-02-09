@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { LayoutConfiguration } from './LayoutConfiguration';
-import { PreviewSection } from './PreviewSection';
-import type { ChartVariant, DimensionItem, VisualizationOptions } from './types';
+import { LayoutConfiguration } from '../LayoutConfiguration/LayoutConfiguration';
+import { PreviewSection } from '../PreviewSection/PreviewSection';
+import type { ChartVariant, DimensionItem, VisualizationOptions } from '../types';
 import styles from './BuilderMainArea.module.css';
 
 interface BuilderMainAreaProps {

@@ -1,9 +1,8 @@
 import React from 'react';
 import { Layers } from 'lucide-react';
 
-import baseStyles from '@pages/builders/DashboardBuilder/DashboardBuilder.module.css';
 import styles from './BuilderHeader.module.css';
-import type { ChartTypeOption, ChartVariant } from './types';
+import type { ChartTypeOption, ChartVariant } from '../types';
 
 interface BuilderHeaderProps {
   chartType: ChartVariant;
@@ -19,9 +18,9 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   const currentType = chartTypes.find((t) => t.id === chartType);
 
   return (
-    <div className={baseStyles.card}>
+    <div className={styles.card}>
       <div className={styles.headerRow}>
-        <h2 className={baseStyles.cardTitle}>
+        <h2 className={styles.cardTitle}>
           <Layers size={24} />
           Créateur de visualisation
         </h2>

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Filter, Grid3x3 } from 'lucide-react';
 
-import { LayoutDropZone } from './LayoutDropZone';
-import type { DimensionItem } from './types';
+import { LayoutDropZone } from '../LayoutDropZone/LayoutDropZone';
+import type { DimensionItem } from '../types';
 import styles from './LayoutConfiguration.module.css';
 
 interface LayoutConfigurationProps {

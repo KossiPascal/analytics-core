@@ -3,7 +3,7 @@ import React from 'react';
 import { Modal } from '@components/ui/Modal/Modal';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 
-import type { VisualizationOptions } from './types';
+import type { VisualizationOptions } from '../types';
 import styles from './OptionsModal.module.css';
 
 interface OptionsModalProps {
