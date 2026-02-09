@@ -6,7 +6,7 @@ import React from 'react';
 import {
   FilterField, FilterOp, LogicalOperator, DimensionDef, MetricDef, ColumnType,
   FILTER_OP_LABELS, ALLOWED_FILTER_OPS_NUMERIC, ALLOWED_FILTER_OPS_STRING, ALLOWED_FILTER_OPS_DATE, ALLOWED_FILTER_OPS,
-} from '../models';
+} from '../../builders.models';
 import { FormDatePicker } from '@/components/forms/FormDatePicker/FormDatePicker';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';

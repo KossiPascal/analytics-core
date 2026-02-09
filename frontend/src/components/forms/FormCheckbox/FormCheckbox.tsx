@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, ReactNode, forwardRef } from 'react';
 import { Check } from 'lucide-react';
 import styles from '../styles/forms.module.css';
 import './FormCheckbox.css';
@@ -12,11 +12,14 @@ export interface FormCheckboxProps extends Omit<InputHTMLAttributes<HTMLInputEle
   wrapperClassName?: string;
   /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
   layout?: 'vertical' | 'inline';
+  
+  leftIcon?: ReactNode;
 }
 
 export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
   (
     {
+      leftIcon,
       label,
       error,
       checked,
@@ -48,8 +51,10 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
             className={styles.checkboxInput}
             {...props}
           />
+          {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
+
           <span className={`${styles.checkboxBox} ${checkedValue ? styles.checked : ''}`}>
-            <Check size={14} strokeWidth={3} />
+             <Check size={14} strokeWidth={3} />
           </span>
           {label && <span className={styles.checkboxLabel}>{label}</span>}
         </label>

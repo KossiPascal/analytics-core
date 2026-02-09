@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import type { DimensionDef, MetricDef } from '../models';
+import type { DimensionDef, MetricDef } from '../../builders.models';
 import DraggableField from './DraggableField';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import styles from '@pages/builders/SqlBuilder/SqlBuilder.module.css';

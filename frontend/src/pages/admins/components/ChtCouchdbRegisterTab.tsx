@@ -13,13 +13,13 @@ import { Modal } from '@/components/ui/Modal/Modal';
 
 
 const DEFAULT_FORM = Object.freeze<ChtCouchdbConnect>({
-  name: 'kendeya',
-  description: 'kendeya host for sync',
-  host: 'kendeya.portal-integratehealth.org',
+  name: '',
+  description: '',
+  host: '',
   port: '',
-  username: 'admin',
-  password: 'IntHea2004',
-  test_db: 'medic',
+  username: '',
+  password: '',
+  dbname: '',
   auto_sync: true
 });
 
@@ -313,8 +313,8 @@ export function ChtCouchdbRegisterTab() {
         <FormInput
           label="Couchdb TestDb"
           placeholder="Ex: kendeya"
-          value={form.test_db}
-          onChange={(e) => updateField('test_db', e.target.value)}
+          value={form.dbname}
+          onChange={(e) => updateField('dbname', e.target.value)}
           leftIcon={<Building2 size={18} />}
         />
 

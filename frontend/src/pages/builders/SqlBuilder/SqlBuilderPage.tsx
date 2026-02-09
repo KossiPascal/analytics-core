@@ -5,7 +5,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { SqlBuilder } from './components/SqlBuilder';
-import type { AnalyticsModel, AttributDef, DatabaseDef, DbConnection, DimensionDef, MetricDef, QueryJSON, TableDef } from './models';
+import type { AnalyticsModel, AttributDef, DatabaseDef, DbConnection, DimensionDef, MetricDef, QueryJSON, TableDef } from '../builders.models';
 import { } from '@/services/connection.service';
 import { connService as API } from '@/services/connection.service';
 import { boolean } from 'zod';

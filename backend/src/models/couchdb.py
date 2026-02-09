@@ -80,7 +80,7 @@ class CouchdbSource(db.Model):
     auto_sync = db.Column(db.Boolean, default=True, nullable=False)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-    test_db = db.Column(db.String(255), nullable=False)
+    dbname = db.Column(db.String(255), nullable=False)
 
     last_sync = db.Column(db.DateTime(timezone=True), nullable=True)
     last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
@@ -103,7 +103,7 @@ class CouchdbSource(db.Model):
         return sources
     
     def __repr__(self):
-        return f"<CouchdbSource(id={self.id}, name={self.name}, test_db={self.test_db})>"
+        return f"<CouchdbSource(id={self.id}, name={self.name}, dbname={self.dbname})>"
 
     def to_dict_safe(self):
         return {
@@ -115,7 +115,7 @@ class CouchdbSource(db.Model):
             "port": self.port,
             "auto_sync": self.auto_sync,
             "is_active": self.is_active,
-            "test_db": self.test_db,
+            "dbname": self.dbname,
             "last_sync": self.last_sync.isoformat() if self.last_sync else None,
             "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
         }

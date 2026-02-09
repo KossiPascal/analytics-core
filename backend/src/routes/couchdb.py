@@ -47,7 +47,7 @@ def add_source():
             port=data.port,
             username_enc=encrypt(data.username),
             password_enc=encrypt(data.password),
-            test_db=data.test_db,
+            dbname=data.dbname,
             auto_sync=data.auto_sync,
             is_active=data.is_active,
         )
@@ -87,7 +87,7 @@ def update_source(source_id):
     #     data.port = dt.port
     #     data.username = dt.username
     #     data.password = dt.password
-    #     data.test_db = dt.test_db
+    #     data.dbname = dt.dbname
     #     data.auto_sync = dt.auto_sync
     #     data.is_active = dt.is_active
 

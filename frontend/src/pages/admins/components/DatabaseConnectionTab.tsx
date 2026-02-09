@@ -1,28 +1,23 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Database, Plug, ShieldCheck, ShieldAlert, Server, KeyRound } from 'lucide-react';
-import {
-  FaDatabase, FaServer, FaUser, FaLock, FaKey,
-  FaSave, FaVial, FaTrash, FaEdit, FaShieldAlt,
-  FaCheckCircle, FaExclamationTriangle
-} from "react-icons/fa";
-import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@components/ui/Button/Button';
-import { useNotification } from '@/contexts/OLD/useNotification';
-import styles from '@pages/admins/AdminPage.module.css';
-import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { StatusBadge } from '@components/ui/Badge/Badge';
+import { Table, type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
-import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
-import { DbConnection, DbConnectionParams, type TestType } from '@/pages/builders/SqlBuilder/models';
-import { connService as API } from '@/services/connection.service';
-
-interface SelectModel {
-  value: any;
-  label: string;
-}
+import { useNotification } from '@/contexts/OLD/useNotification';
+import { connectionService as API } from '@/services/connection.service';
+import { Building2, Save, Edit2, Trash2, RefreshCw, Plus } from 'lucide-react';
+import styles from '../AdminPage.module.css';
+import { DbConnection, DbConnectionParams, TestType } from '@/pages/builders/builders.models';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
+import { ShieldCheck, ShieldAlert, KeyRound, Plug, Database, Server } from 'lucide-react';
+import { FaDatabase, FaServer, FaUser, FaLock, FaShieldAlt, FaKey, FaSave } from 'react-icons/fa';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 
 const DEFAULT_FORM = Object.freeze<DbConnection>({
-  type: 'postgresql',
+  type: '' as any,
   name: "",
   description: "",
   host: "localhost",
@@ -36,23 +31,10 @@ const DEFAULT_FORM = Object.freeze<DbConnection>({
   ssh_username: "",
   ssh_password: "",
   ssh_key: "",
-  ssh_key_pass: ""
+  ssh_key_pass: "",
+  auto_sync: true
 });
 
-interface FieldProps {
-  label: string;
-  name: keyof DbConnection;
-  value: any;
-  onChange: (key: keyof DbConnection, value: any) => void;
-  placeholder?: string;
-  required?: boolean;
-  list?: SelectModel[]
-  icon?: React.ReactNode;
-  type?: 'text' | 'textarea' | 'number' | 'password' | 'checkbox' | 'select';
-  cols?: number | undefined
-  rows?: number | undefined
-  simple?: boolean
-}
 
 const convertToConnParams = (form: DbConnection): DbConnectionParams => {
   return {
@@ -65,6 +47,7 @@ const convertToConnParams = (form: DbConnection): DbConnectionParams => {
     password: form.password,
     host: form.host,
     port: form.port,
+    auto_sync: form.auto_sync,
     ssh: form.ssh_enabled
       ? {
         host: form.ssh_host,
@@ -95,88 +78,28 @@ const convertToConnForm = (param: DbConnectionParams): DbConnection => {
     ssh_password: param.ssh?.password,
     ssh_key: param.ssh?.key,
     ssh_key_pass: param.ssh?.key_pass,
+    auto_sync: param.auto_sync,
   }
 }
 
-const Field = memo<FieldProps>(function Field({ label, name, value, onChange, type = "text", list = undefined, placeholder = undefined, rows = undefined, cols = undefined, required = false, icon = null, simple = false }) {
-
-  value = value ?? "";
-  const id = "host_" + name;
-  let InputElement = <></>;
-
-  if (type === 'textarea') {
-    InputElement = (
-      <FormTextarea
-        label={label}
-        required={required}
-        rows={rows}
-        cols={cols}
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(name, e.target.value)}
-      />
-    );
-  } else if (type === 'checkbox') {
-    InputElement = (
-      <FormCheckbox
-        label={label}
-        checked={Boolean(value)}
-        onChange={(e) => onChange(name, e.target.checked)}
-      />
-    );
-  } else if (type === 'select') {
-    InputElement = (
-      <FormSelect
-        label={label}
-        required={required}
-        leftIcon={icon}
-        options={(list || []).map((item) => ({
-          value: String(item.value),
-          label: item.label,
-        }))}
-        value={String(value ?? '')}
-        onChange={(val) => onChange(name, val)}
-      />
-    );
-  } else {
-    InputElement = (
-      <FormInput
-        label={label}
-        required={required}
-        type={type === 'number' ? 'number' : type}
-        value={value}
-        placeholder={placeholder}
-        leftIcon={icon}
-        onChange={(e) => onChange(name, e.target.value)}
-      />
-    );
-  }
-
-  /* ---------- SIMPLE MODE ---------- */
-  if (simple) return InputElement;
-
-  /* ---------- FULL MODE ---------- */
-  return (
-    <div className={styles.formGroup}>
-      {InputElement}
-    </div>
-  );
-});
-
-export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?: boolean, outOfCard?: boolean, afterUpsert?: () => Promise<void> }> = ({ afterUpsert, showTitle = true, showDbList = true, outOfCard = false }) => {
+export const DatabaseConnectionTab: React.FC<{ afterUpsert?: () => Promise<void>, onlyCardField?: boolean }> = ({ afterUpsert, onlyCardField }) => {
   const [form, setForm] = useState<DbConnection>(DEFAULT_FORM);
-  const [testing, setTesting] = useState<TestType | null>(null);
+  const [dbConnections, setDbConnections] = useState<DbConnection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [dbTypes, setDbTypes] = useState<{ value: any; label: string; }[]>([]);
   const [response, setResponse] = useState<{ type: "success" | "error", msg: string } | null>(null);
-  const [list, setList] = useState<DbConnection[]>([]);
-  const [dbTypes, setDbTypes] = useState<SelectModel[]>([]);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const { showSuccess, showError } = useNotification();
+  const [testing, setTesting] = useState<TestType | null>(null);
+  const { showError, showSuccess } = useNotification();
+
 
   const fetchTypes = async () => {
     setResponse(null);
     try {
-      const { data } = await API.typesList();
+      const { data } = await API.typesList<DbConnection>();
       if (data) {
         const types = (data ?? []).map(d => ({ value: d.id, label: d.name }))
         setDbTypes(types);
@@ -186,84 +109,142 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
     }
   };
 
-  const fetchConnexions = async () => {
-    setResponse(null);
+  const fetchDbConnections = async () => {
     setLoading(true);
     try {
-      const { data } = await API.list<DbConnection>();
-
-      setList(data ?? []);
+      const response = await API.list<DbConnection>();
+      if (response?.status === 200) {
+        setDbConnections(response.data || []);
+      } else {
+        setDbConnections([]);
+        showResError('Erreur lors du chargement des connexions');
+      }
     } catch {
-      setResponse({ type: "error", msg: "Failed to load connections" });
+      showResError('Erreur lors du chargement des connexions');
     } finally {
       setLoading(false);
     }
   };
 
+  const actionMessage = form.id ? (editing ? "Modification ..." : "Modifier") : (saving ? 'Enregistrement...' : 'Enregistrer')
+
   useEffect(() => {
     fetchTypes();
-    fetchConnexions();
+    fetchDbConnections();
   }, []);
 
 
-  const isValid = useMemo(() => {
+  const showResError = useCallback((msg: string) => {
+    setResponse({ type: 'error', msg });
+    showError(msg);
+  }, []);
+
+  const showResSuccess = useCallback((msg: string) => {
+    setResponse({ type: 'success', msg });
+    showSuccess(msg);
+  }, []);
+
+  // Form validation
+  const isFormValid = useMemo(() => {
     if (!form.name?.trim() || !form.host?.trim() || !form.dbname?.trim() || !form.username?.trim() || !form.type?.trim().length) {
       showError("Veuillez renseigner tous les champs obligatoires.");
       return false;
     }
-    if (form.port <= 0) {
-      showError("Invalid database port");
-      return false;
-    }
-    if (form.ssh_enabled && (!form.ssh_host || !form.ssh_username)) {
-      showError("SSH host and user required");
-      return false;
+    if (form.type !== 'couchdb') {
+      if (form.port <= 0) {
+        showError("Invalid database port");
+        return false;
+      }
+      if (form.ssh_enabled && (!form.ssh_host || !form.ssh_username)) {
+        showError("SSH host and user required");
+        return false;
+      }
     }
     return true;
   }, [form]);
-
 
   const updateField = useCallback((key: keyof DbConnection, value: any) => {
     setForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
+  const handleCreate = () => {
+    setEditing(false);
+    setForm(DEFAULT_FORM);
+    setIsModalOpen(true);
+  };
 
-  const save = async () => {
-    if (!isValid) return;
-    setLoading(true);
-    setResponse(null);
+  const handleEdit = (org: DbConnection) => {
+    setEditing(true);
+    setForm(org);
+    setIsModalOpen(true);
+  };
 
+  const handleDeleteClick = (org: DbConnection) => {
+    setForm(org);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleSave = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!isFormValid) {
+      showResError("Des champs requis ne sont pas renseigné.");
+      return;
+    }
+
+    setSaving(true);
     try {
       const data = convertToConnParams(form);
-      editId ? await API.update(editId, data) : await API.create(data);
-
-      setForm(DEFAULT_FORM);
-      setEditId(null);
-      fetchConnexions();
-      afterUpsert?.();
-      setResponse({ type: "success", msg: "Connection saved successfully" });
-    } catch (e: any) {
-      setResponse({ type: "error", msg: e?.response?.data?.error || "Save failed" });
+      if (editing && data.id) {
+        const response = await API.update(data.id, data);
+        if (response?.status === 200) {
+          showResSuccess('mise à jour réussi');
+          setIsModalOpen(false);
+          fetchDbConnections();
+          afterUpsert?.();
+        } else {
+          showResError('Erreur lors de la mise à jour');
+        }
+      } else {
+        const response = await API.create(data);
+        if (response?.status === 200) {
+          showResSuccess('Ajout réussi');
+          setIsModalOpen(false);
+          fetchDbConnections();
+          afterUpsert?.();
+        } else {
+          showResError('Erreur lors de la création');
+        }
+      }
+    } catch {
+      showResError('Erreur lors de la sauvegarde');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  const edit = (conn: DbConnectionParams) => {
-    setEditId(conn.id ?? null);
-    setForm({ ...DEFAULT_FORM, ...convertToConnForm(conn) });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleDelete = async (id: number) => {
+    if (!id) return;
+    if (!window.confirm("Delete this connection?")) return;
+
+    try {
+      const response = await API.delete(id);
+      if (response?.status === 200) {
+        showResSuccess('Connexion supprimée avec succès');
+        setIsDeleteModalOpen(false);
+        setForm(DEFAULT_FORM);
+        fetchDbConnections();
+        afterUpsert?.();
+      } else {
+        showResError('Erreur lors de la suppression');
+      }
+    } catch {
+      showResError('Erreur lors de la suppression');
+    }
   };
 
-  const remove = async (id: string) => {
-    if (!window.confirm("Delete this connection?")) return;
-    await API.delete(id);
-    fetchConnexions();
-    afterUpsert?.();
-  };
 
   const handleTest = async (type: TestType) => {
-    if (!isValid) return;
+    if (!isFormValid) return;
 
     setTesting(type);
     setResponse(null);
@@ -285,10 +266,10 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
       setTesting(null);
     }
   };
-
   const alertStyle = { margin: 0, fontSize: '0.875rem' }
 
-  const ConnexionCardField:React.FC<any> = () => {
+
+  const ConnexionCardField: React.FC<{ showTitle?: boolean }> = ({ showTitle }) => {
     return (
       <>
         {/* <h1 className="title"><Database/>PostgreSQL Connections</h1> */}
@@ -298,33 +279,35 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
         <CardBody>
           <div className={styles.form}>
             <div className={styles.grid + ' ' + styles.grid3}>
-              <Field name="type" value={form.type} onChange={updateField} type={"select"} list={dbTypes} label={"Type"} icon={<FaDatabase />} placeholder="Ex: postgres" required={true} />
-              <Field name="name" value={form.name} onChange={updateField} label={"Nom Connexion"} icon={<FaDatabase />} placeholder="Ex: Production PostgreSQL" />
-              <Field name="dbname" value={form.dbname} onChange={updateField} label={"Nom de la base de donnée"} icon={<FaDatabase />} placeholder="Ex: kendeya_prod" />
+              <FormSelect name="type" value={form.type} onChange={(value) => updateField('type', value)} options={dbTypes} leftIcon={<FaDatabase />} label="Type" placeholder="Ex: postgres" required={true} />
+              <FormInput name="name" value={form.name} onChange={(e) => updateField('name', e.target.value)} label={"Nom Connexion"} leftIcon={<FaDatabase />} placeholder="Ex: Production PostgreSQL" />
+              <FormTextarea name="description" label="Description" hint="Optionnel" placeholder="Description ..." value={form.description} onChange={(e) => updateField('description', e.target.value)} leftIcon={<FaKey />} rows={3} />
+            </div>
+
+            <div className={styles.grid + ' ' + styles.grid3}>
+              <FormInput name="dbname" value={form.dbname} onChange={(e) => updateField('dbname', e.target.value)} label={"Nom de la base de donnée"} leftIcon={<FaDatabase />} placeholder="Ex: kendeya_prod" />
+              <FormInput name="host" value={form.host} onChange={(e) => updateField('host', e.target.value)} label={"URL / Hôte"} leftIcon={<FaServer />} placeholder="Ex: 10.0.0.12 ou db.example.com" required={true} />
+              <FormInput name="port" value={form.port} onChange={(e) => updateField('port', e.target.value)} type={'number'} label={"Port"} leftIcon={<FaDatabase />} placeholder="Ex: 5432" />
             </div>
 
             <div className={styles.grid + ' ' + styles.grid2}>
-              <Field name="host" value={form.host} onChange={updateField} label={"URL / Hôte"} icon={<FaServer />} placeholder="Ex: 10.0.0.12 ou db.example.com" required={true} />
-              <Field name="port" value={form.port} onChange={updateField} type={'number'} label={"Port"} icon={<FaDatabase />} placeholder="Ex: 5432" />
+              <FormInput name="username" value={form.username} onChange={(e) => updateField('username', e.target.value)} label={"Utilisateur"} leftIcon={<FaUser />} placeholder="Ex: admin" required={true} />
+              <FormInput name="password" value={form.password} onChange={(e) => updateField('password', e.target.value)} type='password' label={"Mot de passe"} leftIcon={<FaLock />} placeholder="••••••••" />
             </div>
 
-            <div className={styles.grid + ' ' + styles.grid2}>
-              <Field name="username" value={form.username} onChange={updateField} label={"Utilisateur"} icon={<FaUser />} placeholder="Ex: admin" required={true} />
-              <Field name="password" value={form.password} onChange={updateField} type='password' label={"Mot de passe"} icon={<FaLock />} placeholder="••••••••" />
-            </div>
+            <FormCheckbox name="ssh_enabled" checked={form.ssh_enabled} onChange={(e) => updateField('ssh_enabled', e.target.value)} label={"🔐 Utiliser un tunnel SSH"} leftIcon={<FaShieldAlt />} />
 
-            <Field name="ssh_enabled" value={form.ssh_enabled} onChange={updateField} type={"checkbox"} label={"🔐 Utiliser un tunnel SSH"} icon={<FaShieldAlt />} />
 
             {form.ssh_enabled && (
               <div className={styles.grid + ' ' + styles.grid3}>
                 {/* <h3>SSH Configuration</h3> */}
-                <Field name="ssh_host" value={form.ssh_host} onChange={updateField} label={"Hôte SSH"} icon={<FaServer />} placeholder="Ex: ssh.example.com" required={true} />
-                <Field name="ssh_port" value={form.ssh_port} onChange={updateField} type={'number'} label={"Port SSH"} icon={<FaDatabase />} placeholder="Ex: 22" />
-                <Field name="ssh_username" value={form.ssh_username} onChange={updateField} label={"Utilisateur SSH"} icon={<FaUser />} placeholder="Ex: ubuntu" required={true} />
-                <Field name="ssh_password" value={form.ssh_password} onChange={updateField} type='password' label={"Mot de passe SSH"} icon={<FaLock />} placeholder="••••••••" />
-                <Field name="ssh_key" value={form.ssh_key} onChange={updateField} type={'textarea'} label={"Clé privée SSH"} icon={<FaKey />} placeholder="Coller la clé privée ici" rows={4} />
-                <Field name="ssh_key_pass" value={form.ssh_key_pass} onChange={updateField} type='password' label={"PassPhrase Clé privée SSH"} icon={<FaKey />} placeholder="••••••••" />
-                <Field name="description" value={form.description} onChange={updateField} type={'textarea'} label={"Description"} icon={<FaKey />} placeholder="Description ..." rows={4} />
+                <FormInput name="ssh_host" value={form.ssh_host} onChange={(e) => updateField('ssh_host', e.target.value)} label={"Hôte SSH"} leftIcon={<FaServer />} placeholder="Ex: ssh.example.com" required={true} />
+                <FormInput name="ssh_port" value={form.ssh_port} onChange={(e) => updateField('ssh_port', e.target.value)} type={'number'} label={"Port SSH"} leftIcon={<FaDatabase />} placeholder="Ex: 22" />
+                <FormInput name="ssh_username" value={form.ssh_username} onChange={(e) => updateField('ssh_username', e.target.value)} label={"Utilisateur SSH"} leftIcon={<FaUser />} placeholder="Ex: ubuntu" required={true} />
+                <FormInput name="ssh_password" value={form.ssh_password} onChange={(e) => updateField('ssh_password', e.target.value)} type='password' label={"Mot de passe SSH"} leftIcon={<FaLock />} placeholder="••••••••" />
+                <FormTextarea name="ssh_key" label="Clé privée SSH" hint="Optionnel" placeholder="Coller la clé privée ici" value={form.ssh_key} onChange={(e) => updateField('ssh_key', e.target.value)} leftIcon={<FaKey />} rows={3} />
+                <FormInput name="ssh_key_pass" value={form.ssh_key_pass} onChange={(e) => updateField('ssh_key_pass', e.target.value)} type='password' label={"PassPhrase Clé privée SSH"} leftIcon={<FaKey />} placeholder="••••••••" />
+
               </div>
             )}
 
@@ -367,18 +350,18 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
                 <KeyRound size={16} /> Réinitialiser
               </Button>
 
-              {form.ssh_enabled && (<Button disabled={!isValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
+              {form.ssh_enabled && (<Button disabled={!isFormValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
                 {testing === 'test-ssh' ? (<><Plug size={16} className="animate-spin" />Test SSH en cours...</>) :
                   (<><Plug size={16} /> Tester le tunel ssh</>)}
               </Button>)}
 
-              <Button disabled={!isValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
+              <Button disabled={!isFormValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
                 {testing === 'test-ssh-db' ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
                   (<><Database size={16} /> Tester la connexion</>)}
               </Button>
 
-              <Button disabled={!isValid || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={() => save()} color="success">
-                <FaSave /> {editId ? "Update" : "Save"}
+              <Button disabled={!isFormValid || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={(e) => handleSave(e)} color="success">
+                <FaSave /> {actionMessage}
               </Button>
             </div>
           </div>
@@ -387,30 +370,263 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
     );
   }
 
-  return (
-    <>
-      { outOfCard === true ? (<ConnexionCardField /> ) : (<Card><ConnexionCardField /></Card>) }
+  if (onlyCardField) {
+    return <ConnexionCardField showTitle={true} />
+  }
 
-      {showDbList && (<div className="list">
-        {list.map(c => (
-          <div key={c.id} className="item">
-            <div>
-              <strong>{c.name}</strong><br />
-              <small>{c.host}:{c.port}</small>
-            </div>
-            <div>
-              <Button variant="outline" size="sm" onClick={() => edit(c)} disabled={!!testing}>
-                <FaEdit size={16} />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => remove(c.id!)} disabled={!!testing}>
-                <FaTrash size={16} />
-              </Button>
-            </div>
+  const ConnexionCardWithCardField: React.FC = () => {
+    return (
+      <Card>
+        <ConnexionCardField />
+      </Card>
+    );
+  }
+
+  const ConnexionCardWithHeader: React.FC = () => {
+    return (
+      <div className={styles.card}>
+        <CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />Connexion à une base de données</div>} />
+        <CardBody>
+          <ConnexionCardField />
+        </CardBody>
+      </div>
+    );
+  }
+
+  const ConnexionCardWithHeaderAndFooter: React.FC = () => {
+    return (
+      <div className={styles.card}>
+        <CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />Connexion à une base de données</div>} />
+        <CardBody>
+          <ConnexionCardField />
+        </CardBody>
+        <div className={styles.cardFooter}>
+          <div className={styles.buttonGroup}>
+            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
+              Annuler
+            </Button>
+
+            <Button disabled={loading || !!testing} variant="outline" size="sm" onClick={() => setForm(DEFAULT_FORM)}>
+              <KeyRound size={16} /> Réinitialiser
+            </Button>
+
+            {form.ssh_enabled && (<Button disabled={!isFormValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
+              {testing === 'test-ssh' ? (<><Plug size={16} className="animate-spin" />Test SSH en cours...</>) :
+                (<><Plug size={16} /> Tester le tunel ssh</>)}
+            </Button>)}
+
+            <Button disabled={!isFormValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
+              {testing === 'test-ssh-db' ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
+                (<><Database size={16} /> Tester la connexion</>)}
+            </Button>
+
+            <Button disabled={!isFormValid || saving || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={(e) => handleSave(e)} color="success">
+              <FaSave /> {actionMessage}
+            </Button>
           </div>
-        ))}
-      </div>)}
-    </>
+        </div>
+      </div>
+    );
+  }
+
+  const ConnexionCardWithoutHeaderWithFooter: React.FC = () => {
+    return (
+      <div className={styles.card}>
+        <CardBody>
+          <ConnexionCardField />
+        </CardBody>
+        <div className={styles.cardFooter}>
+          <div className={styles.buttonGroup}>
+            <Button disabled={loading || !!testing} variant="outline" size="sm" onClick={() => setForm(DEFAULT_FORM)}>
+              <KeyRound size={16} /> Réinitialiser
+            </Button>
+
+            {form.ssh_enabled && (<Button disabled={!isFormValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
+              {testing === 'test-ssh' ? (<><Plug size={16} className="animate-spin" />Test SSH en cours...</>) :
+                (<><Plug size={16} /> Tester le tunel ssh</>)}
+            </Button>)}
+
+            <Button disabled={!isFormValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
+              {testing === 'test-ssh-db' ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
+                (<><Database size={16} /> Tester la connexion</>)}
+            </Button>
+
+            <Button disabled={!isFormValid || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={(e) => handleSave(e)} color="success">
+              <FaSave /> {actionMessage}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const ConnexionHeader: React.FC = () => (
+    <div className={styles.cardHeader}>
+      <h3 className={styles.cardTitle}>
+        <Building2 size={20} /> Gestion des DB COnnection
+      </h3>
+      <div className={styles.buttonGroup}>
+        <button className={`${styles.btn} ${styles.btnOutline} ${styles.btnSmall}`} onClick={fetchDbConnections} disabled={loading}>
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Actualiser
+        </button>
+        <button className={`${styles.btn} ${styles.btnPrimary} ${styles.btnSmall}`} onClick={handleCreate}>
+          <Plus size={16} /> Nouvelle connexion
+        </button>
+      </div>
+    </div>
+  );
+
+  const EmptyState: React.FC<any> = () => (
+    <div className={styles.emptyState}>
+      <Building2 size={48} />
+      <p>Aucune connexion à une base de données n'est configurée.</p>
+      <Button className={`${styles.btn} ${styles.btnPrimary}`} variant="primary" onClick={handleCreate}>
+        <Plus size={16} /> Ajouter une connexion
+      </Button>
+    </div>
+  );
+
+  const columns: Column<DbConnection>[] = [
+    {
+      key: 'id',
+      header: 'ID',
+      sortable: true,
+      searchable: false,
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      sortable: true,
+      searchable: true,
+    },
+    {
+      key: 'name',
+      header: 'Nom',
+      sortable: true,
+      searchable: true,
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      sortable: true,
+      searchable: true,
+      render: (org) => org.description || '-',
+    },
+
+    {
+      key: 'host',
+      header: 'Host',
+      sortable: true,
+      searchable: true,
+    },
+
+    {
+      key: 'port',
+      header: 'Port',
+      sortable: true,
+      searchable: true,
+    },
+
+    {
+      key: 'dbname',
+      header: 'DB Name',
+      sortable: true,
+      searchable: true,
+    },
+
+    {
+      key: 'is_active',
+      header: 'Statut',
+      sortable: true,
+      align: 'center',
+      render: (org) => <StatusBadge isActive={org.is_active === true} />,
+      searchable: false,
+    },
+    {
+      key: 'id',
+      header: 'Actions',
+      align: 'center',
+      render: (org) => (
+        <div className={styles.actionsCell}>
+          <button className={styles.actionBtn} onClick={() => handleEdit(org)} title="Modifier">
+            <Edit2 size={16} />
+          </button>
+          <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={() => handleDeleteClick(org)} title="Supprimer">
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
+      searchable: false,
+    },
+  ];
+
+  return (
+    <Card>
+      <div className={styles.card}>
+        <ConnexionHeader />
+
+        {loading ? (<div className={styles.loading}><RefreshCw size={24} className="animate-spin" /></div>) :
+          dbConnections.length === 0 ? (<EmptyState />) :
+            (
+              <Table
+                data={form as any}
+                columns={columns as any}
+                keyExtractor={(org: any) => org.id as string}
+                isLoading={loading}
+                emptyMessage="Aucune données trouvée"
+                features={{
+                  search: true,
+                  export: true,
+                  pagination: true,
+                  pageSize: true,
+                  animate: true,
+                  columnVisibility: true,
+                  scrollable: true,
+                }}
+                searchPlaceholder="Rechercher une connexion..."
+                exportFilename="connexions_export"
+                exportFormats={['csv', 'excel', 'json']}
+                defaultPageSize={10}
+                pageSizeOptions={[10, 25, 50, 100]}
+                stickyHeader
+                maxHeight="600px"
+              />
+            )}
+      </div>
+
+      {/* Create/Edit Modal */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={(editing ? "Modifier la" : "Nouvelle") + " connexion"} size="sm">
+
+        <ConnexionCardWithHeaderAndFooter />
+
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirmer la suppression"
+        size="sm"
+        footer={
+          <div className={styles.buttonGroup}>
+            <Button variant="outline" size="sm" onClick={() => setIsDeleteModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => handleDelete(form.id!)}>
+              <Trash2 size={16} />
+              Supprimer
+            </Button>
+          </div>
+        }
+      >
+        <div className={styles.emptyState} style={{ padding: '1rem' }}>
+          <Trash2 size={24} style={{ color: '#dc2626', marginBottom: '0.5rem' }} />
+          <p>
+            Êtes-vous sûr de vouloir supprimer la connexion <strong>{form.name}</strong> ?
+          </p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Cette action est irréversible.</p>
+        </div>
+      </Modal>
+    </Card>
   );
 }
-
-export default DatabaseConnectionTab;

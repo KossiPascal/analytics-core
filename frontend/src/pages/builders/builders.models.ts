@@ -38,7 +38,7 @@ export interface DbConnectionDetails {
 }
 
 export interface DbConnection {
-  id?: string | null;
+  id?: number | null;
   type: DbType;
   description: string;
   name: string;
@@ -55,10 +55,14 @@ export interface DbConnection {
   ssh_key?: string;
   ssh_key_pass?: string;
   details?: DbConnectionDetails
+  auto_sync: boolean;
+  created_at?: string;
+  updated_at?: string;
+  is_active?: boolean;
 }
 
 export interface DbConnectionParams {
-  id?: string | null;
+  id?: number | null;
   type: DbType;
   name: string;
   description: string;
@@ -67,6 +71,7 @@ export interface DbConnectionParams {
   dbname: string;
   port: number;
   password?: string;
+  auto_sync: boolean;
   ssh?: {
     host?: string;
     port?: number;

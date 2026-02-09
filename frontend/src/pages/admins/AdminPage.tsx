@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Key, Plug, Database, Trash2, FileText, PenTool, AlertTriangle, BarChart3, Building2 } from 'lucide-react';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { ApiAccessTab } from '@/pages/admins/components/ApiAccessTab';
-import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
+import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab_ZZZZ';
 import { DatabaseActionsTab } from '@/pages/admins/components/DatabaseActionsTab';
 import { DeleteCouchdbTab } from '@/pages/admins/components/DeleteCouchdbTab';
 import { OrganizationsTab } from '@/pages/admins/components/OrganizationsTab';

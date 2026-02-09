@@ -5,8 +5,8 @@
 
 import React, { useState } from 'react';
 import { RemoveIcon } from '@/components/ui/icons/RemoveIcon';
-import type { SelectField } from '../models';
-import { AGG_LABELS } from '../models';
+import type { SelectField } from '../../builders.models';
+import { AGG_LABELS } from '../../builders.models';
 import styles from '@pages/builders/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================

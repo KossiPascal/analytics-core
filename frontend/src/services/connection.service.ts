@@ -1,6 +1,6 @@
 import { api } from '@/apis/api';
 import { PaginationParams, PaginatedResponse } from '@/models/OLD/old';
-import { DbConnectionParams, TestType } from '@/pages/builders/SqlBuilder/models';
+import { DbConnectionParams, TestType } from '@/pages/builders/builders.models';
 
 
 // Normalisation des erreurs API
@@ -15,7 +15,7 @@ function normalizeError(error: any) {
 }
 
 // API Connexions & Query Builder
-export const connService = {
+export const connectionService = {
   async list<T=any>() {
     try {
       return await api.get<T[]>(`/connections`);
@@ -38,7 +38,7 @@ export const connService = {
     }
   },
 
-  async update(id: string, data: DbConnectionParams) {
+  async update(id: number, data: DbConnectionParams) {
     try {
       return await api.put(`/connections/${id}`, data);
     } catch (e) {
@@ -46,7 +46,7 @@ export const connService = {
     }
   },
 
-  async patch(id: string, data: DbConnectionParams) {
+  async patch(id: number, data: DbConnectionParams) {
     try {
       return await api.patch(`/connections/${id}`, data);
     } catch (e) {
@@ -54,7 +54,7 @@ export const connService = {
     }
   },
 
-  async delete(id: string) {
+  async delete(id: number) {
     try {
       return await api.delete(`/connections/${id}`);
     } catch (e) {

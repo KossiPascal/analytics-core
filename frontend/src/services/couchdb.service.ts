@@ -8,7 +8,7 @@ export interface ChtCouchdbConnect {
   port: string;
   username: string;
   password: string;
-  test_db: string;
+  dbname: string;
   auto_sync: boolean;
   createdAt?: string;
   updatedAt?: string;

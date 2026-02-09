@@ -3,6 +3,7 @@ import { AlertCircle } from 'lucide-react';
 import styles from '../styles/forms.module.css';
 
 export interface FormFieldProps {
+  name?: string;
   /** Label du champ */
   label?: string;
   /** Champ requis */
@@ -22,6 +23,7 @@ export interface FormFieldProps {
 }
 
 export function FormField({
+  name,
   label,
   required,
   error,

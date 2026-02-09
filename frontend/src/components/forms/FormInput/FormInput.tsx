@@ -3,6 +3,9 @@ import { Eye, EyeOff } from 'lucide-react';
 import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
 import './FormInput.css';
+import { FormCheckbox } from '../FormCheckbox/FormCheckbox';
+import { FormSelect } from '../FormSelect/FormSelect';
+import { FormTextarea } from '../FormTextarea/FormTextarea';
 
 export interface FormInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** Label du champ */
@@ -25,7 +28,29 @@ export interface FormInputProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   layout?: 'vertical' | 'inline';
 }
 
-export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
+
+interface SelectModel {
+  value: any;
+  label: string;
+}
+
+interface FieldProps {
+  label: string;
+  name: string;
+  value: any;
+  onChange: (value: any) => void;
+  placeholder?: string;
+  required?: boolean;
+  list?: SelectModel[]
+  icon?: React.ReactNode;
+  type?: 'text' | 'textarea' | 'number' | 'password' | 'checkbox' | 'select';
+  cols?: number | undefined
+  rows?: number | undefined
+  simple?: boolean
+}
+
+
+const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
   (
     {
       label,
@@ -107,4 +132,73 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
   }
 );
 
+const FormInputMultiple = forwardRef<FieldProps, FieldProps>(function Field({ label, name, value, onChange, type = "text", list = undefined, placeholder = undefined, rows = undefined, cols = undefined, required = false, icon = null, simple = false }) {
+
+  value = value ?? "";
+  const id = "host_" + name;
+  let InputElement = <></>;
+
+  if (type === 'textarea') {
+    InputElement = (
+      <FormTextarea
+        label={label}
+        required={required}
+        rows={rows}
+        cols={cols}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  } else if (type === 'checkbox') {
+    InputElement = (
+      <FormCheckbox
+        label={label}
+        checked={Boolean(value)}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+    );
+  } else if (type === 'select') {
+    InputElement = (
+      <FormSelect
+        label={label}
+        required={required}
+        leftIcon={icon}
+        options={(list || []).map((item) => ({
+          value: String(item.value),
+          label: item.label,
+        }))}
+        value={String(value ?? '')}
+        onChange={(val) => onChange(val)}
+      />
+    );
+  } else {
+    InputElement = (
+      <FormInput
+        label={label}
+        required={required}
+        type={type === 'number' ? 'number' : type}
+        value={value}
+        placeholder={placeholder}
+        leftIcon={icon}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    );
+  }
+
+  /* ---------- SIMPLE MODE ---------- */
+  if (simple) return InputElement;
+
+  /* ---------- FULL MODE ---------- */
+  return (
+    <div className={styles.formGroup}>
+      {InputElement}
+    </div>
+  );
+});
+
 FormInput.displayName = 'FormInput';
+
+FormInputMultiple.displayName = "FormInputMultiple";
+
+export { FormInput, FormInputMultiple };

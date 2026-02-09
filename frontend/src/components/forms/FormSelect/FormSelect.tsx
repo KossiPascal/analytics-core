@@ -11,6 +11,7 @@ export interface SelectOption {
 }
 
 export interface FormSelectProps {
+  name?: string;
   /** Label du champ */
   label?: string;
   /** Champ requis */
@@ -46,6 +47,7 @@ export interface FormSelectProps {
 }
 
 export function FormSelect({
+  name,
   label,
   required,
   error,
@@ -129,6 +131,7 @@ export function FormSelect({
 
   return (
     <FormField
+      name={name}
       label={label}
       required={required}
       error={error}

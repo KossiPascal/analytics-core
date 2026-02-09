@@ -204,7 +204,7 @@ class CouchdbSourceMap:
         self.username: str = payload.get("username")
         self.password: str = payload.get("password")
         self.is_active: str = payload.get("is_active") or True
-        self.test_db: str = payload.get("test_db")
+        self.dbname: str = payload.get("dbname")
         self.auto_sync: bool = bool(payload.get("auto_sync", False))
         
         # auth_root = f"{self.username}:{self.password}@" if (self.username and self.password) else ""

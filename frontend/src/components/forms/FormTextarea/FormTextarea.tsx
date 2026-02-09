@@ -1,4 +1,4 @@
-import { TextareaHTMLAttributes, forwardRef } from 'react';
+import { ReactNode, TextareaHTMLAttributes, forwardRef } from 'react';
 import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
 import './FormTextarea.css';
@@ -20,11 +20,13 @@ export interface FormTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaEl
   wrapperClassName?: string;
   /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
   layout?: 'vertical' | 'inline';
+  leftIcon?: ReactNode;
 }
 
 export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
   (
     {
+      leftIcon,
       label,
       required,
       error,
@@ -52,6 +54,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
       .join(' ');
 
     return (
+      <>
       <FormField
         label={label}
         required={required}
@@ -60,6 +63,8 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
         htmlFor={inputId}
         layout={layout}
       >
+        {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
+        
         <div className={wrapperClasses}>
           <textarea
             ref={ref}
@@ -72,6 +77,7 @@ export const FormTextarea = forwardRef<HTMLTextAreaElement, FormTextareaProps>(
           />
         </div>
       </FormField>
+      </>
     );
   }
 );
