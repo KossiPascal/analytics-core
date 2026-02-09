@@ -1,6 +1,6 @@
 # 6️⃣ ai/memory.py – Historique enrichi
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 class ConversationMemory:
     def __init__(self):

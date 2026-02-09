@@ -112,7 +112,7 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
             conn.rollback()
         except Exception:
             pass
-        logger.exception("Unexpected error executing SQL")
+        logger.error(f"Unexpected error executing SQL: {str(e)}")
         return ({"error": "Internal server error", "details": str(e)}, 500)
 
     finally:

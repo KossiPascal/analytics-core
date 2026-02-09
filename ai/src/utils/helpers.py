@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 def parse_date(date_str):
     return datetime.strptime(date_str, "%Y-%m-%d")

@@ -1,6 +1,6 @@
 import re
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List,Optional,Iterable
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +23,7 @@ SLEEP_BETWEEN_ROUNDS = 0.3
 async def log_message(message: str):
     # async with AsyncSessionLocal() as session:
     #     try:
-    #         log = MigrationLog(log=f"[{datetime.utcnow().isoformat()}] {message}")
+    #         log = MigrationLog(log=f"[{datetime.now(timezone.utc).isoformat()}] {message}")
     #         session.add(log)
     #         await session.commit()
     #         if Config.IS_DEBUG_MODE:

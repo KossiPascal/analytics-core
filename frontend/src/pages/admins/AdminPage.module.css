@@ -2,7 +2,7 @@
 .tabsContainer {
   margin-bottom: 1.5rem;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  /* -webkit-overflow-scrolling: touch; */
 }
 
 .tabs {

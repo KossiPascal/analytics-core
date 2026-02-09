@@ -1,27 +1,10 @@
-from typing import Any
-from backend.src.config import Config
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.src.database.extensions import db
 from backend.src.logger import get_backend_logger
-from cryptography.fernet import Fernet
 
+from shared_libs.helpers.utils import decrypt
 logger = get_backend_logger(__name__)
 
-
-
-# 🔐 Crypto utils
-def get_fernet() -> Fernet:
-    return Fernet(Config.FERNET_KEY)
-
-def encrypt(value: str) -> str:
-    if not value:
-        raise ValueError("Cannot encrypt empty value")
-    return get_fernet().encrypt(value.encode()).decode()
-
-def decrypt(value: str) -> str:
-    if not value:
-        raise ValueError("Cannot decrypt empty value")
-    return get_fernet().decrypt(value.encode()).decode()
 
 
 DEFAULT_COUCHDB_DBS = [
@@ -44,8 +27,8 @@ class CibleDatabase(db.Model):
     type = db.Column(db.String(50), nullable=False, index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=datetime.utcnow)
     
     @staticmethod
     def full_db_names(self):
@@ -70,9 +53,9 @@ class CibleDatabase(db.Model):
                         db.session.add(CibleDatabase(local_name=dbn["local_name"],host_name=dbn["host_name"],type="couchdb",is_active=True))
 
                 db.session.commit()
-        except Exception:
+        except Exception as e:
             db.session.rollback()
-            logger.exception("Failed to ensure default CouchDB DBs")
+            logger.error(f"Failed to ensure default CouchDB DBs: {str(e)}")
             raise
 
     def __repr__(self):
@@ -99,11 +82,11 @@ class CouchdbSource(db.Model):
 
     test_db = db.Column(db.String(255), nullable=False)
 
-    last_sync = db.Column(db.DateTime, nullable=True)
-    last_used_at = db.Column(db.DateTime, nullable=True)
+    last_sync = db.Column(db.DateTime(timezone=True), nullable=True)
+    last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=datetime.utcnow, nullable=True)
 
     # Relationships
     # last_sync_state = db.relationship("SourceLastSyncState", back_populates="source", uselist=False, cascade="all, delete-orphan")

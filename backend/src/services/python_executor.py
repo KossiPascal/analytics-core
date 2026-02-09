@@ -161,7 +161,7 @@ def run_python(code: str, use_temp_file: bool = False):
         }, 422)
 
     except Exception as e:
-        logger.exception("Unhandled execution error")
+        logger.error(f"Unhandled execution error: {str(e)}")
         return ({
             "execution_id": execution_id,
             "status": "error",

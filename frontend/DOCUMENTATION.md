@@ -749,7 +749,7 @@ export function AppRoutes() {
 
           {/* Routes publiques (accessibles sans connexion) */}
           <Route
-            path="/auths/login"
+            path="/auth/login"
             element={
               <PublicRoute>
                 <Pages.LoginPage />
@@ -803,13 +803,13 @@ export function PrivateRoute({ children }: PrivateRouteProps) {
   // Si non connecté → rediriger vers login
   if (!isAuthenticated) {
     // state={{ from: location }} : Sauvegarde l'URL pour y retourner après connexion
-    return <Navigate to="/auths/login" state={{ from: location }} replace />;
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
   // Si doit changer le mot de passe → rediriger vers change-password
   if (user?.mustChangeDefaultPassword &&
-      location.pathname !== '/auths/change-default-password') {
-    return <Navigate to="/auths/change-default-password" replace />;
+      location.pathname !== '/auth/change-default-password') {
+    return <Navigate to="/auth/change-default-password" replace />;
   }
 
   // Sinon, afficher le contenu protégé
@@ -874,8 +874,8 @@ export const ServerErrorPage = lazy(() => import('@pages/errors/pages/ServerErro
 | Route | Composant | Accès | Description |
 |-------|-----------|-------|-------------|
 | `/` | Redirect | - | Redirige vers `/dashboards/monthly` |
-| `/auths/login` | LoginPage | Public | Page de connexion |
-| `/auths/change-default-password` | ChangePasswordPage | Privé | Changement mot de passe |
+| `/auth/login` | LoginPage | Public | Page de connexion |
+| `/auth/change-default-password` | ChangePasswordPage | Privé | Changement mot de passe |
 | `/dashboards/monthly/*` | MonthlyDashboard | Privé | Dashboard mensuel |
 | `/dashboards/realtime/*` | RealtimeDashboard | Privé | Dashboard temps réel |
 | `/reports/*` | ReportsPage | Privé | Rapports |
@@ -1007,7 +1007,7 @@ export default function LoginPage() {
 
         {/* Lien mot de passe oublié */}
         <div className={styles.forgotPassword}>
-          <a href="/auths/forgot-password">Mot de passe oublié ?</a>
+          <a href="/auth/forgot-password">Mot de passe oublié ?</a>
         </div>
 
         {/* Bouton de soumission */}
@@ -1062,7 +1062,7 @@ export function useAuthActions() {
 
         // Redirection selon l'état de l'utilisateur
         if (response.user.mustChangeDefaultPassword) {
-          navigate('/auths/change-default-password');
+          navigate('/auth/change-default-password');
         } else {
           navigate('/reports');
         }
@@ -1092,7 +1092,7 @@ export function useAuthActions() {
     } finally {
       storeLogout();               // Nettoyer le store
       setLoading(false);
-      navigate('/auths/login');    // Redirection vers login
+      navigate('/auth/login');    // Redirection vers login
     }
   }, [navigate, setLoading, storeLogout]);
 

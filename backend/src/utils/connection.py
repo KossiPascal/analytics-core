@@ -1,54 +1,18 @@
+import paramiko
+import tempfile, os
+from backend.src.models.connection import SSHTunnelManager
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 from sshtunnel import SSHTunnelForwarder
 from urllib.parse import quote_plus
-from backend.src.config import Config
-from cryptography.fernet import Fernet
-import sqlparse
 from typing import Dict, Any, List, Optional
-import paramiko
-import tempfile, os
-import time
 
 
 from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
 
-class SSHTunnelManager:
-    _tunnels: Dict[str, tuple] = {}
-    TTL = 300  # 5 minutes
-
-    @classmethod
-    def get(cls, key: str, creator):
-        now = time.time()
-
-        if key in cls._tunnels:
-            tunnel, created_at = cls._tunnels[key]
-            if tunnel.is_active and now - created_at < cls.TTL:
-                return tunnel
-            tunnel.stop()
-
-        tunnel = creator()
-        cls._tunnels[key] = (tunnel, now)
-        return tunnel
 
 
-
-# Encryption utils
-# FERNET_KEY = Fernet.generate_key()
-FERNET_KEY = Config.FERNET_KEY.encode()
-fernet = Fernet(FERNET_KEY)
-
-def encrypt(value: str) -> str:
-    return fernet.encrypt(value.encode()).decode()
-
-def decrypt(value: str) -> str:
-    return fernet.decrypt(value.encode()).decode()
-
-# Allowed aggregations
-ALLOWED_AGGS = {"sum": "SUM", "avg": "AVG", "count": "COUNT", "min": "MIN", "max": "MAX"}
-
-ALLOWED_OPS = {"=", "!=", ">", "<", ">=", "<=", "LIKE", "IN"}
 
 # SSH Tunnel
 def create_ssh_tunnel(tunnel_conf: Dict[str, Any]) -> SSHTunnelForwarder:
@@ -65,7 +29,7 @@ def create_ssh_tunnel(tunnel_conf: Dict[str, Any]) -> SSHTunnelForwarder:
 
     ssh_host = tunnel_conf.get("ssh_host")
     ssh_port = int(tunnel_conf.get("ssh_port", 22))
-    ssh_user = tunnel_conf.get("ssh_user")
+    ssh_username = tunnel_conf.get("ssh_username")
     ssh_password = tunnel_conf.get("ssh_password")
     ssh_key = tunnel_conf.get("ssh_key")
     ssh_key_pass = tunnel_conf.get("ssh_key_pass")
@@ -80,14 +44,14 @@ def create_ssh_tunnel(tunnel_conf: Dict[str, Any]) -> SSHTunnelForwarder:
 
     # Base SSH arguments
     ssh_kwargs = {
-        "ssh_username": ssh_user,
+        "ssh_username": ssh_username,
         "allow_agent": False,
     }
 
     # PRIVATE KEY AUTH
     if ssh_key:
         try:
-            key_data = decrypt(ssh_key)
+            key_data = ssh_key #decrypt(ssh_key)
         except Exception:
             key_data = ssh_key
         key_file = tempfile.NamedTemporaryFile(mode="w",delete=False,prefix="ssh_key_")
@@ -97,7 +61,7 @@ def create_ssh_tunnel(tunnel_conf: Dict[str, Any]) -> SSHTunnelForwarder:
         key_file_path = key_file.name
 
         try:
-            pkey_password = decrypt(ssh_key_pass) if ssh_key_pass else None
+            pkey_password = ssh_key_pass #decrypt(ssh_key_pass) if ssh_key_pass else None
             pkey = paramiko.RSAKey.from_key_file(key_file_path, password=pkey_password)
         except paramiko.PasswordRequiredException:
             raise ValueError("SSH private key passphrase required")
@@ -115,7 +79,7 @@ def create_ssh_tunnel(tunnel_conf: Dict[str, Any]) -> SSHTunnelForwarder:
     # PASSWORD AUTH
     elif ssh_password:
         try:
-            ssh_kwargs["ssh_password"] = decrypt(ssh_password)
+            ssh_kwargs["ssh_password"] = ssh_password #decrypt(ssh_password)
         except Exception:
             ssh_kwargs["ssh_password"] = ssh_password
 
@@ -128,7 +92,7 @@ def create_ssh_tunnel(tunnel_conf: Dict[str, Any]) -> SSHTunnelForwarder:
     host = "127.0.0.1"
     port = 5432
 
-    logger.info("Opening SSH tunnel %s@%s:%s → %s:%s",ssh_user,ssh_host,ssh_port,host,port)
+    logger.info("Opening SSH tunnel %s@%s:%s → %s:%s",ssh_username,ssh_host,ssh_port,host,port)
     tunnel = SSHTunnelForwarder(
         (ssh_host, ssh_port),
         remote_bind_address=(host, port),  # PostgreSQL distant
@@ -169,7 +133,6 @@ def get_tunnel_for_connection(conn):
 
     return SSHTunnelManager.get(key, _create)
 
-
 # Create Engine
 def get_engine(conn: Dict[str, Any], ssh_server: Optional[SSHTunnelForwarder] = None, pool_size=5, max_overflow=10, timeout=30):
     """
@@ -184,7 +147,8 @@ def get_engine(conn: Dict[str, Any], ssh_server: Optional[SSHTunnelForwarder] = 
         if missing:
             raise ValueError(f"Missing DB fields: {', '.join(missing)}")
 
-        password = quote_plus(decrypt(conn["password"]))  # 🔥 IMPORTANT
+        # password = quote_plus(decrypt(conn["password"]))  # 🔥 IMPORTANT
+        password = quote_plus(conn["password"])  # 🔥 IMPORTANT
 
         host = conn['host']
         port = conn['port']
@@ -213,103 +177,343 @@ def explore_schema(conn: Dict[str, Any], ssh_server: Optional[SSHTunnelForwarder
     except SQLAlchemyError as e:
         raise Exception(f"Failed to explore schema: {str(e)}")
 
-# Validate SQL
-def validate_sql(sql: str):
-    parsed = sqlparse.parse(sql)
-    if not parsed:
-        raise ValueError("Empty or invalid SQL")
-    if parsed[0].get_type() != 'SELECT':
-        raise ValueError("Only SELECT statements are allowed")
-
-# Build Dynamic Query
-def build_query(payload: Dict[str, Any]):
+def inspect_some_postgres_schema(conn: Dict[str, Any],ssh_server: Optional[SSHTunnelForwarder] = None,schema: str = "public") -> Dict[str, Any]:
     """
-    Build SQL query from dynamic payload.
-    payload: {
-        table: str,
-        columns: [str],
-        metrics: [{agg: str, column: str, alias: str}],
-        filters: [{column:str, op:str, value:any}],
-        group_by: [str]
-    }
+    Inspect PostgreSQL schema:
+    - tables
+    - views
+    - materialized views
+    - columns + types
     """
-    table = payload.get("table")
-    if not table:
-        raise ValueError("Table is required")
 
-    
-    
-    select_parts, params, where_clauses = [], {}, []
-
-    # Columns
-    for c in payload.get('columns', []):
-        select_parts.append(f'"{c}"')
-
-    # Metrics
-    for m in payload.get('metrics', []):
-        agg = m['agg']
-        col = m['column']
-        alias = m.get('alias', f"{agg}_{col}")
-        if agg not in ALLOWED_AGGS:
-            raise ValueError(f"Aggregation {agg} not allowed")
-        select_parts.append(f'{ALLOWED_AGGS[agg]}("{col}") AS "{alias}"')
-    
-    # Filters
-    for f in payload.get('filters', []):
-        op = f['op']
-        if op not in ALLOWED_OPS:
-            raise ValueError("Invalid operator")
-        
-        col = f['column']
-        param_name = f"param_{col}"
-        where_clauses.append(f'"{col}" {op} :{param_name}')
-        params[param_name] = f['value']
-    
-    sql = f'SELECT {", ".join(select_parts) or "*"} FROM "{table}"'
-    if where_clauses:
-        sql += " WHERE " + " AND ".join(where_clauses)
-
-    group_by = payload.get('group_by', [])
-    if group_by:
-        sql += " GROUP BY " + ", ".join([f'"{g}"' for g in group_by])
-    
-    return text(sql), params
-
-# Run Query
-def run_query(conn: Dict[str, Any], sql: str, params: Optional[Dict[str, Any]] = None, ssh_server: Optional[SSHTunnelForwarder] = None) -> List[Dict[str, Any]]:
-    """
-    Execute SQL query and return results as list of dicts.
-    """
-    validate_sql(sql)
     engine = get_engine(conn, ssh_server)
+    inspector = inspect(engine)
+
+    tables_output: List[Dict[str, Any]] = []
+
     try:
-        with engine.connect() as c:
-            result = c.execute(text(sql), params or {})
-            return [dict(row._mapping) for row in result]
-    except SQLAlchemyError as e:
-        raise Exception(f"Query execution failed: {str(e)}")
+        # ---------- TABLES ----------
+        for table_name in inspector.get_table_names(schema=schema):
+            columns = inspector.get_columns(table_name, schema=schema)
 
-# # Example usage
-# if __name__ == "__main__":
-#     # Example connection dictionary
-#     conn = {
-#         "host": "localhost",
-#         "port": 5432,
-#         "dbname": "mydb",
-#         "username": "postgres",
-#         "password": encrypt("mypassword"),
-#         "ssh_enabled": False
-#     }
+            tables_output.append({
+                "tablename": table_name,
+                "type": "table",
+                "attribut": [
+                    { "attributname": col["name"], "type": str(col["type"]) }
+                    for col in columns
+                ]
+            })
 
-#     # Example query
-#     payload = {
-#         "table": "users",
-#         "columns": ["id", "name"],
-#         "metrics": [{"agg": "count", "column": "id", "alias": "total_users"}],
-#         "filters": [{"column": "age", "op": ">", "value": 18}],
-#         "group_by": ["country"]
-#     }
+        # ---------- VIEWS ----------
+        for view_name in inspector.get_view_names(schema=schema):
+            columns = inspector.get_columns(view_name, schema=schema)
 
-#     sql, params = build_query(payload)
-#     result = run_query(conn, sql, params)
-#     print(result)
+            tables_output.append({
+                "tablename": view_name,
+                "type": "view",
+                "attribut": [
+                    { "attributname": col["name"], "type": str(col["type"]) }
+                    for col in columns
+                ]
+            })
+
+        # ---------- MATERIALIZED VIEWS ----------
+        with engine.connect() as db:
+            matviews = db.execute(text("""
+                SELECT matviewname
+                FROM pg_matviews
+                WHERE schemaname = :schema
+            """), {"schema": schema}).fetchall()
+
+        for (matview_name,) in matviews:
+            columns = inspector.get_columns(matview_name, schema=schema)
+
+            tables_output.append({
+                "tablename": matview_name,
+                "type": "materialized_view",
+                "attribut": [
+                    { "attributname": col["name"], "type": str(col["type"]) }
+                    for col in columns
+                ]
+            })
+
+        return { "dbname": conn["dbname"], "tables": tables_output }
+
+    finally:
+        engine.dispose()
+
+def inspect_full_postgres_schema(conn_conf: Dict[str, Any],ssh_server: Optional[SSHTunnelForwarder] = None, excluded_tables:list[str]=[], schema: str = "public") -> Dict[str, Any]:
+    """
+    Full PostgreSQL schema introspection.
+    Uses SQLAlchemy only.
+    """
+
+    engine = get_engine(conn_conf, ssh_server)
+    inspector = inspect(engine)
+
+    result: Dict[str, Any] = {
+        "schemas": [],
+        "tables": [],
+        "views": [],
+        "materialized_views": [],
+        "sequences": [],
+        "indexes": [],
+        "functions": [],
+        "triggers": [],
+    }
+
+    try:
+        with engine.connect() as db:
+            # ---------- Schemas ----------
+            result["schemas"] = inspector.get_schema_names()
+
+            # ---------- Tables ----------
+            for table_name in inspector.get_table_names(schema=schema):
+                if table_name in (excluded_tables or []):
+                    continue
+
+                columns = inspector.get_columns(table_name, schema=schema)
+                constraints = inspector.get_pk_constraint(table_name, schema=schema)
+                fks = inspector.get_foreign_keys(table_name, schema=schema)
+                indexes = inspector.get_indexes(table_name, schema=schema)
+
+                result["tables"].append({
+                    "table_name": table_name,
+                    "columns": [
+                        {
+                            "name": c["name"],
+                            "type": str(c["type"]),
+                            "nullable": c["nullable"],
+                            "default": str(c.get("default")),
+                        }
+                        for c in columns
+                    ],
+                    "primary_key": constraints.get("constrained_columns", []),
+                    "foreign_keys": fks,
+                    "indexes": indexes,
+                })
+
+            # ---------- Views ----------
+            for view in inspector.get_view_names(schema=schema):
+                definition = inspector.get_view_definition(view, schema=schema)
+                result["views"].append({
+                    "view_name": view,
+                    "definition": definition,
+                })
+
+            # ---------- Materialized Views ----------
+            matviews = db.execute(text("""
+                SELECT matviewname, definition
+                FROM pg_matviews
+                WHERE schemaname = :schema
+                ORDER BY matviewname
+            """), {"schema": schema}).fetchall()
+
+            result["materialized_views"] = [
+                {"name": row.matviewname, "definition": row.definition}
+                for row in matviews
+            ]
+
+            # ---------- Sequences ----------
+            sequences = db.execute(text("""
+                SELECT sequence_name
+                FROM information_schema.sequences
+                WHERE sequence_schema = :schema
+                ORDER BY sequence_name
+            """), {"schema": schema}).fetchall()
+
+            result["sequences"] = [row.sequence_name for row in sequences]
+
+            # ---------- Functions ----------
+            functions = db.execute(text("""
+                SELECT routine_name, routine_type, data_type
+                FROM information_schema.routines
+                WHERE specific_schema = :schema
+                ORDER BY routine_name
+            """), {"schema": schema}).fetchall()
+
+            result["functions"] = [dict(row._mapping) for row in functions]
+
+            # ---------- Triggers ----------
+            triggers = db.execute(text("""
+                SELECT trigger_name, event_manipulation,
+                       event_object_table, action_statement
+                FROM information_schema.triggers
+                WHERE trigger_schema = :schema
+                ORDER BY trigger_name
+            """), {"schema": schema}).fetchall()
+
+            result["triggers"] = [dict(row._mapping) for row in triggers]
+
+        return result
+
+    finally:
+        engine.dispose()
+
+
+
+def inspect_source(conn: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Entry point:
+    - ouvre tunnel SSH si défini
+    - inspecte la base
+    - ferme proprement
+    """
+    ssh_tunnel = None
+
+    try:
+        if conn.get("ssh"):
+            ssh_tunnel = create_ssh_tunnel(conn["ssh"])
+
+        return inspect_some_postgres_schema(conn, ssh_tunnel)
+
+    finally:
+        if ssh_tunnel:
+            ssh_tunnel.stop()
+
+
+
+
+
+
+
+
+# @bp.route("/schema_info", methods=["GET"])
+# @require_auth
+# def get_schema_info():
+#     conn = None
+#     try:
+#         conn = get_connection()
+#         if not conn:
+#             return jsonify({"error": "PostgreSQL connection failed"}), 500
+
+#         result = {
+#             "schemas": [],
+#             "tables": [],
+#             "views": [],
+#             "matviews": [],
+#             "sequences": [],
+#             "indexes": [],
+#             "constraints": [],
+#             "functions": [],
+#             "triggers": []
+#         }
+
+#         with conn.cursor(cursor_factory=DictCursor) as cur:
+#             # -- Schemas --
+#             cur.execute("""
+#                 SELECT schema_name
+#                 FROM information_schema.schemata
+#                 ORDER BY schema_name;
+#             """)
+#             result["schemas"] = [row["schema_name"] for row in cur.fetchall()]
+
+#             # -- Tables --
+#             cur.execute("""
+#                 SELECT table_name
+#                 FROM information_schema.tables
+#                 WHERE table_schema='public' AND table_type='BASE TABLE'
+#                 ORDER BY table_name;
+#             """)
+#             tables = [row["table_name"] for row in cur.fetchall() if row["table_name"] not in EXCLUDES_TABLE]
+
+#             for table in tables:
+#                 cur.execute("""
+#                     SELECT column_name, data_type, is_nullable, column_default
+#                     FROM information_schema.columns
+#                     WHERE table_schema='public' AND table_name=%s
+#                     ORDER BY ordinal_position;
+#                 """, (table,))
+#                 columns = [dict(row) for row in cur.fetchall()]
+
+#                 cur.execute("""
+#                     SELECT
+#                         kcu.column_name,
+#                         tc.constraint_type,
+#                         tc.constraint_name,
+#                         ccu.table_name AS foreign_table,
+#                         ccu.column_name AS foreign_column
+#                     FROM information_schema.table_constraints tc
+#                     LEFT JOIN information_schema.key_column_usage kcu
+#                       ON tc.constraint_name = kcu.constraint_name
+#                      AND tc.table_schema = kcu.table_schema
+#                      AND tc.table_name = kcu.table_name
+#                     LEFT JOIN information_schema.constraint_column_usage ccu
+#                       ON ccu.constraint_name = tc.constraint_name
+#                     WHERE tc.table_schema='public' AND tc.table_name=%s;
+#                 """, (table,))
+#                 constraints = [dict(row) for row in cur.fetchall()]
+
+#                 result["tables"].append({
+#                     "table_name": table,
+#                     "columns": columns,
+#                     "constraints": constraints
+#                 })
+
+#             # -- Views --
+#             cur.execute("""
+#                 SELECT table_name, view_definition
+#                 FROM information_schema.views
+#                 WHERE table_schema='public'
+#                 ORDER BY table_name;
+#             """)
+#             result["views"] = [{"view_name": row["table_name"], "definition": row["view_definition"]}
+#                                for row in cur.fetchall()]
+
+#             # -- Materialized Views --
+#             cur.execute("""
+#                 SELECT matviewname AS matview_name, definition
+#                 FROM pg_catalog.pg_matviews
+#                 WHERE schemaname='public'
+#                 ORDER BY matviewname;
+#             """)
+#             result["matviews"] = [{"matview_name": row["matview_name"], "definition": row["definition"]}
+#                                   for row in cur.fetchall()]
+
+#             # -- Sequences --
+#             cur.execute("""
+#                 SELECT sequence_name
+#                 FROM information_schema.sequences
+#                 WHERE sequence_schema='public'
+#                 ORDER BY sequence_name;
+#             """)
+#             result["sequences"] = [row["sequence_name"] for row in cur.fetchall()]
+
+#             # -- Indexes --
+#             cur.execute("""
+#                 SELECT tablename, indexname, indexdef
+#                 FROM pg_indexes
+#                 WHERE schemaname='public'
+#                 ORDER BY tablename, indexname;
+#             """)
+#             result["indexes"] = [dict(row) for row in cur.fetchall()]
+
+#             # -- Functions / Stored Procedures --
+#             cur.execute("""
+#                 SELECT routine_name, routine_type, data_type
+#                 FROM information_schema.routines
+#                 WHERE specific_schema='public'
+#                 ORDER BY routine_name;
+#             """)
+#             result["functions"] = [dict(row) for row in cur.fetchall()]
+
+#             # -- Triggers --
+#             cur.execute("""
+#                 SELECT trigger_name, event_manipulation, event_object_table, action_statement
+#                 FROM information_schema.triggers
+#                 WHERE trigger_schema='public'
+#                 ORDER BY trigger_name;
+#             """)
+#             result["triggers"] = [dict(row) for row in cur.fetchall()]
+
+#         return jsonify(result)
+
+#     except Exception as e:
+#         return jsonify(str(e)), 500
+#     finally:
+#         if conn:
+#             try:
+#                 conn.close()
+#             except:
+#                 pass

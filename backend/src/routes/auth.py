@@ -3,9 +3,8 @@ import uuid
 import random
 import string
 from backend.src.config import Config
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.src.database.extensions import db
-from backend.src.logger import get_backend_logger
 from sqlalchemy.exc import IntegrityError
 from backend.src.models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g, current_app
@@ -13,6 +12,7 @@ from backend.src.helpers.hasher import hash_password, verify_password, hash_toke
 from backend.src.helpers.auth import create_token,create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,check_rate_limit
 from backend.src.security.access_security import require_auth
 
+from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
@@ -29,6 +29,10 @@ def available_uid(existing_ids: set) -> str:
     return new_id
 
 
+def utc(dt: datetime) -> datetime:
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
 # ===================== LOGIN =====================
 @bp.post("/login")
 def login():
@@ -38,7 +42,7 @@ def login():
         password = data.get("password")
 
         if not username or not password:
-            return jsonify({"error": "username and password required"}), 400
+            return jsonify({"error": "username anpostd password required"}), 400
 
         user: User = User.query.filter_by(username=username).first()
         if not user or not user.is_active or user.is_deleted:
@@ -70,9 +74,9 @@ def login():
         # Sinon refresh token en JSON
         return jsonify({**response, "refresh_token": raw_refresh}), 200
 
-    except Exception:
-        current_app.logger.exception("Login error")
-        return jsonify({"error": "Login failed"}), 500
+    except Exception as e:
+        current_app.logger.error(f"Login error: {str(e)}")
+        return jsonify({"error": f"Login failed: {str(e)}"}), 500
 
 
 # ===================== REGISTER =====================
@@ -131,7 +135,7 @@ def register():
         db.session.rollback()
         return jsonify({"error": "Database integrity error"}), 500
     except Exception as e:
-        logger.exception("Register error")
+        logger.error(f"Register error: {str(e)}")
         return jsonify({"error": "Registration failed", "details": str(e)}), 500
 
 # ===================== UPDATE PASSWORD =====================
@@ -172,18 +176,19 @@ def update_password():
         return jsonify({"message": "Password updated successfully", "token": token}), 200
 
     except Exception as e:
-        logger.exception("Update password error")
+        logger.error(f"Update password error: {str(e)}")
         return jsonify({"error": "Failed to update password", "details": str(e)}), 500
 
 # ===================== REFRESH TOKEN =====================
 @bp.post("/refresh")
-@require_auth
 def refresh():
     """
     Rotate refresh token and return new access + refresh token.
     Accepts JSON body { "refresh_token": "..." } or cookie "refresh_token".
     """
-    client_id = request.remote_addr or "unknown"
+    # client_id = request.remote_addr or "unknown"
+    client_id = f"{request.remote_addr}:{request.headers.get('User-Agent','')}"
+
     if not check_rate_limit(client_id):
         return jsonify({"error": "Too many attempts"}), 429
 
@@ -195,11 +200,12 @@ def refresh():
     try:
         hashed_incoming = hash_token(incoming)
         rt:RefreshToken = RefreshToken.query.filter_by(token=hashed_incoming).first()  # fallback
-        
-        if not rt:
+        now = datetime.now(timezone.utc)
+
+        if not rt or not rt.expires_at:
             return jsonify({"error": "Invalid refresh token"}), 401
 
-        if rt.revoked or rt.expires_at < datetime.datetime.utcnow():
+        if rt.revoked or utc(rt.expires_at) <= now:
             return jsonify({"error": "Refresh token invalid or expired"}), 401
 
         user: User = User.query.get(rt.user_id)
@@ -231,7 +237,7 @@ def refresh():
         return jsonify({**response, "refresh_token": raw_new}), 200
 
     except Exception as e:
-        logger.exception("Unhandled error during refresh")
+        logger.error(f"Unhandled error during refresh: {str(e)}")
         return jsonify({"error": "Internal error", "details": str(e)}), 500
 
 # ===================== LOGOUT =====================
@@ -259,7 +265,7 @@ def logout():
         return jsonify({"message": "Logged out successfully"}), 200
 
     except Exception as e:
-        logger.exception("Logout error")
+        logger.error(f"Logout error: {str(e)}")
         return jsonify({"error": "Logout failed", "details": str(e)}), 500
 
 # ===================== CURRENT USER =====================
@@ -273,5 +279,5 @@ def me():
             return jsonify({"error": "Unauthorized"}), 401
         return jsonify({"user": current}), 200
     except Exception as e:
-        logger.exception("Failed to return current user")
+        logger.error(f"Failed to return current user: {str(e)}")
         return jsonify({"error": "Failed", "details": str(e)}), 500

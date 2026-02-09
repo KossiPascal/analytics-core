@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.database.extensions import db
 from backend.src.models.visualization import Visualization,VisualizationExecutionLog,VisualizationShare
@@ -76,7 +76,7 @@ def create_visualization():
 
     except Exception as e:
         db.session.rollback()
-        logger.exception("Create visualization failed")
+        logger.error(f"Create visualization failed: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 # 📄 GET ONE
@@ -184,7 +184,7 @@ def create_execution_log(vid):
     )
 
     if v.type == "report":
-        v.executed_at = datetime.utcnow()
+        v.executed_at = datetime.now(timezone.utc)
 
     db.session.add(log)
     db.session.commit()

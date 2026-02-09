@@ -1,5 +1,5 @@
 import logging
-from shared_libs.logger.logger import logger_maker
+from shared_libs.helpers.logger import logger_maker
 
 
 def get_backend_logger(name: str) -> logging.Logger:

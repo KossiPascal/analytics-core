@@ -225,15 +225,7 @@ const Icons = {
 // COMPONENT
 // ============================================================================
 
-export const SqlBuilder: React.FC<SqlBuilderProps> = ({
-  model,
-  initialQuery,
-  onQueryChange,
-  onRun,
-  onSave,
-  readOnly = false,
-  compact = false,
-}) => {
+export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQueryChange, onRun, onLoadDatabases, readOnly = false, compact = false, }) => {
   const [definitionSelections, setDefinitionSelections] = useState<DefinitionSelections>(() => {
     const initial: DefinitionSelections = {};
     model.tables.forEach((table) => {
@@ -279,6 +271,18 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     document.addEventListener('click', handleClick);
     return () => document.removeEventListener('click', handleClick);
   }, [tableMenuOpenId]);
+
+
+  const afterUpsert = async (): Promise<void> => {
+    if (onLoadDatabases) {
+      try {
+        await onLoadDatabases();
+        setIsConnectionModalOpen(false)
+      } catch (error) {
+
+      }
+    }
+  }
 
   const effectiveModel = useMemo(() => {
     const additionalDimensions: DimensionDef[] = [];
@@ -355,7 +359,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
   const querySQL = useMemo(() => buildSQL(), [buildSQL]);
 
   // Notify on change
-  React.useEffect(() => {
+  useEffect(() => {
     onQueryChange?.(queryJSON);
   }, [queryJSON, onQueryChange]);
 
@@ -744,16 +748,19 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                   const tableDatabase = (table as { database?: string }).database;
                   const databaseLabel = getDatabaseLabel(tableDatabase);
                   const isSelected = selectedSourceId === table.id;
+                  
                   const iconClass = tableType === 'view'
                     ? styles.dataSourceIconView
                     : tableType === 'materialized_view'
                       ? styles.dataSourceIconMaterialized
                       : styles.dataSourceIconTable;
+
                   const icon = tableType === 'view'
                     ? Icons.view
                     : tableType === 'materialized_view'
                       ? Icons.materializedView
                       : Icons.tableLarge;
+
                   const typeLabel = tableType === 'view'
                     ? 'Vue'
                     : tableType === 'materialized_view'
@@ -1245,7 +1252,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
       //   </div>
       // )}
       >
-        <DatabaseConnectionTab showTitle={false}/>
+        <DatabaseConnectionTab showTitle={false} showDbList={false} outOfCard={true} afterUpsert={afterUpsert} />
       </Modal>
 
       <Modal
@@ -1417,7 +1424,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                   </div>
                                   <button
                                     type="button"
-                                    
+
                                     onClick={() => {
                                       setDefinitionSelections((prev) => ({
                                         ...prev,
@@ -1465,7 +1472,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                                   </div>
                                   <button
                                     type="button"
-                                    
+
                                     onClick={() => {
                                       setDefinitionSelections((prev) => ({
                                         ...prev,

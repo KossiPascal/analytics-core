@@ -1,3 +1,2 @@
 backend
-shared_libs
 workers

@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 import gzip
 import shutil
 import glob
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 
 # -------------------------
@@ -225,7 +225,7 @@ def full_logger_maker(folder: str,name: str,log_level: str = None,max_bytes: int
 # import gzip
 # import shutil
 # import glob
-# from datetime import datetime
+# from datetime import datetime, timezone
 
 
 
@@ -321,7 +321,7 @@ def full_logger_maker(folder: str,name: str,log_level: str = None,max_bytes: int
 # import logging
 # from logging.handlers import RotatingFileHandler
 # from flask import g, request, has_request_context
-# from datetime import datetime
+# from datetime import datetime, timezone
 
 # # =============================
 # # Configuration SAFE

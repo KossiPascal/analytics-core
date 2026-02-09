@@ -21,18 +21,7 @@ export interface ModalProps {
   className?: string;
 }
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  size = 'md',
-  showCloseButton = true,
-  closeOnBackdrop = false,
-  closeOnEscape = false,
-  footer,
-  className,
-}: ModalProps) {
+export function Modal({isOpen,onClose,title,children,size = 'md',showCloseButton = true,closeOnBackdrop = false,closeOnEscape = false,footer,className}: ModalProps) {
   // Handle escape key
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
