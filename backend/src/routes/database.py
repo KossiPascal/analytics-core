@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
 import requests
 from backend.src.models.database import AuditHistory
-from backend.src.database.extensions import db
+from backend.src.databases.extensions import db
 from backend.src.config import Config
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger

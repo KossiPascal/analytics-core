@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.extras
 from flask import g
 from backend.src.models.auth import User
-from backend.src.database.extensions import isAdmin, isSuperAdmin
+from backend.src.databases.extensions import isAdmin, isSuperAdmin
 from backend.src.security.sql_guard import validate_sql
 from backend.src.security.sql_guard import jsonify_value
 
