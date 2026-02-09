@@ -1,12 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Type, Any
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect
-from backend.src.database.extensions import db
 from sqlalchemy.exc import ProgrammingError, OperationalError
-
-from workers.couchdb.utils import normalize_name
-
+from shared_libs.helpers.utils import normalize_name
 from workers.logger import get_workers_logger
 logger = get_workers_logger(__name__)
 
@@ -69,7 +66,7 @@ class CreateTableModel:
             "source_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sources.id", ondelete="CASCADE"),nullable=False),
             "cible_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sync_cibles.id", ondelete="CASCADE"),nullable=False),
             "last_seq": self.db.Column(self.db.Text, nullable=True),
-            "last_sync_at": self.db.Column(self.db.DateTime, nullable=True),
+            "last_sync_at": self.db.Column(self.db.DateTime(timezone=True), nullable=True),
         }
 
         def _repr(self):
@@ -97,8 +94,8 @@ class CreateTableModel:
             "message": self.db.Column(self.db.Text, nullable=True),
             "action": self.db.Column(self.db.Text, nullable=True),  # INSERT, UPDATE, DELETE, ERROR
             "status": self.db.Column(self.db.String(32), nullable=False),  # STARTED, SUCCESS, ERROR
-            "started_at": self.db.Column(self.db.DateTime, default=datetime.utcnow, nullable=False),
-            "finished_at": self.db.Column(self.db.DateTime, nullable=True),
+            "started_at": self.db.Column(self.db.DateTime(timezone=True), default=datetime.utcnow, nullable=False),
+            "finished_at": self.db.Column(self.db.DateTime(timezone=True), nullable=True),
         }
 
         def _repr(self):

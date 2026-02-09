@@ -1,6 +1,6 @@
 from typing import Optional
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.src.database.extensions import db,  deserializeContent, serializeContent 
 
 
@@ -13,8 +13,8 @@ class Script(db.Model):
     _content = db.Column("content", db.Text, nullable=False)  # champ interne pour sérialisation
     owner_id = db.Column(db.String, nullable=True)
     updated_by = db.Column(db.String)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # --- Propriété content avec sérialisation automatique ---
     @property
@@ -55,5 +55,5 @@ class ExecutionLog(db.Model):
     status = db.Column(db.String)
     output = db.Column(db.Text)
     duration = db.Column(db.Float)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
 

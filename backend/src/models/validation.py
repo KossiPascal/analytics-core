@@ -11,10 +11,10 @@ class Validation(db.Model):
     # Fields
     uid = db.Column(db.String, nullable=True)
     is_validate = db.Column(db.Boolean, nullable=False, default=False)
-    validated_at = db.Column(db.DateTime, nullable=True)
-    canceled_at = db.Column(db.DateTime, nullable=True)
+    validated_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    canceled_at = db.Column(db.DateTime(timezone=True), nullable=True)
     on_dhis2 = db.Column(db.Boolean, nullable=False, default=False)
-    on_dhis2_at = db.Column(db.DateTime, nullable=True)
+    on_dhis2_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # Foreign key references to User
     validated_by = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)

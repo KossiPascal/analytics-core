@@ -46,7 +46,7 @@ export const PAGES = {
 }
 
 
-const LOGIN_ROUTE = '/auths/login';
+const LOGIN_ROUTE = '/auth/login';
 
 // ROUTES - Navigation helpers
 export const ROUTES = {
@@ -66,9 +66,9 @@ export const ROUTES = {
     // AUTHENTICATION
     auth: {
         login: (returnTo?: string) => returnTo ? withQuery(LOGIN_ROUTE, { returnTo }) : LOGIN_ROUTE,
-        changePassword: () => '/auths/change-default-password',
-        forgotPassword: () => '/auths/forgot-password',
-        resetPassword: (token: string) => buildUrl('/auths/reset-password/:token', { token }),
+        changePassword: () => '/auth/change-default-password',
+        forgotPassword: () => '/auth/forgot-password',
+        resetPassword: (token: string) => buildUrl('/auth/reset-password/:token', { token }),
     },
 
     // DASHBOARDS

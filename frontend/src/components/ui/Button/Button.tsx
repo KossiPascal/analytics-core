@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@utils/cn';
 import styles from './Button.module.css';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'ghost' | 'outline';
+export type ButtonVariant = 'success' | 'dark-success' | 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'ghost' | 'outline';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onAnimationStart' | 'onDrag' | 'onDragEnd' | 'onDragStart'> {

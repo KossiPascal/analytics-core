@@ -4,7 +4,6 @@ import threading
 from typing import Any, Dict, Optional
 from flask import jsonify, request
 from psycopg2 import connect, OperationalError
-from backend.src.security.token_manager import TokenManagement
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -17,8 +16,6 @@ import ast
 
 from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
-
-tokenManagement = TokenManagement(useJWT = True)
 
 # Flask ORM (SYNC)
 db = SQLAlchemy()

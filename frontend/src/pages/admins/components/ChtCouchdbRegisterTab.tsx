@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Modal, Button, StatusBadge } from '@components/ui';
-import { FormCheckbox, FormInput, FormTextarea } from '@/components/forms';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { couchdbService, ChtCouchdbConnect } from '@/services/couchdb.service';
 import { Building2, Save, Edit2, Trash2, RefreshCw, Plus } from 'lucide-react';
 import styles from '../AdminPage.module.css';
 import { SyncBadge } from '@/components/ui/Badge/Badge';
+import { Button } from '@/components/ui/Button/Button';
+import { Modal } from '@/components/ui/Modal/Modal';
 
 
 

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.src.database.extensions import db
 from backend.src.models.auth import Tenant
 
@@ -116,7 +116,7 @@ def delete_tenant(id):
 
     # 🔐 Soft delete
     tenant.deleted = True
-    tenant.deleted_at = datetime.utcnow()
+    tenant.deleted_at = datetime.now(timezone.utc)
 
     db.session.commit()
     return jsonify({"success": True}), 200

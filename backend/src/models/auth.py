@@ -1,11 +1,13 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.exc import IntegrityError
-from backend.src.database.extensions import db, tokenManagement
+from backend.src.database.extensions import db
 from backend.src.config import Config
 from backend.src.helpers.hasher import hash_password, verify_password
 from hashlib import sha256
+
+from backend.src.security.token_manager import TokenManagement
 
 # -------------------- TENANT --------------------
 class Tenant(db.Model):
@@ -13,14 +15,14 @@ class Tenant(db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(255), nullable=False, unique=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
 
     users = db.relationship("User", back_populates="tenant", cascade="all, delete-orphan")
     datasets = db.relationship("Dataset", back_populates="tenant", cascade="all, delete-orphan")
     data_sources = db.relationship("DataSource", back_populates="tenant", cascade="all, delete-orphan")
     visualizations = db.relationship("Visualization", back_populates="tenant", cascade="all, delete-orphan")
     deleted = db.Column(db.Boolean, default=False)
-    deleted_at = db.Column(db.DateTime, nullable=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     def to_dict_safe(self):
         return {
@@ -44,7 +46,7 @@ class Permission(db.Model):
     name = db.Column(db.String(150), nullable=False)   # dashboard:read, report:create, chart:update
     description = db.Column(db.String(255), nullable=True)
     deleted = db.Column(db.Boolean, default=False)
-    deleted_at = db.Column(db.DateTime, nullable=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     def to_dict_safe(self):
         return {
@@ -64,7 +66,7 @@ class Role(db.Model):
     tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id"), nullable=True)
     is_system = db.Column(db.Boolean, default=False)
     deleted = db.Column(db.Boolean, default=False)
-    deleted_at = db.Column(db.DateTime, nullable=True)
+    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
     permissions = db.relationship(Permission,secondary="role_permissions",lazy="selectin")
 
     def to_dict_safe(self):
@@ -102,7 +104,7 @@ class UsersLog(db.Model):
     os = db.Column(db.String(100), nullable=True)
     platform = db.Column(db.String(100), nullable=True)
     device = db.Column(db.String(100), nullable=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
 
     def to_dict(self):
         return {
@@ -139,7 +141,7 @@ class User(db.Model):
 
     # Optional fields
     email = db.Column(db.String(255), unique=True, nullable=True)
-    email_verified_at = db.Column(db.DateTime, nullable=True)
+    email_verified_at = db.Column(db.DateTime(timezone=True), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
 
     token = db.Column(db.String(255), nullable=True)
@@ -155,9 +157,9 @@ class User(db.Model):
     orgunits = db.Column(db.JSON, nullable=True, default=list)  # e.g., [{"id1": [...]}, {"id2": [...]}]
 
     # Audit fields
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     created_by = db.Column(UUID(as_uuid=True), nullable=True)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow, nullable=True)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=datetime.utcnow, nullable=True)
     updated_by = db.Column(UUID(as_uuid=True), nullable=True)
 
     # Relationships
@@ -197,13 +199,10 @@ class User(db.Model):
         name = name.strip().lower()
         roles, permissions = self.permissions_roles()
         return any(perm.lower() == name for perm in permissions)
-    
-    def generate_permission_payload(self, onlyPayload:bool=False):
-        """ Génère le payload JWT basé sur les rôles / permissions (caps). """
-
+   
+    def build_access_payload(self) -> dict:
         roles, permissions = self.permissions_roles()
-
-        payload = {
+        return {
             "id": str(self.id),
             "username": self.username,
             "fullname": self.fullname,
@@ -214,8 +213,15 @@ class User(db.Model):
             "token_type": "access",
             "ver": 1,  # token versioning
         }
-        return payload if onlyPayload else tokenManagement.encode(payload)
 
+    def generate_permission_payload(self, onlyPayload:bool=False):
+        """ Génère le payload JWT basé sur les rôles / permissions (caps). """
+
+        payloadBrut = self.build_access_payload()
+        token, exp, payload = TokenManagement.encode(payloadBrut)
+
+        return payload if onlyPayload else (token, exp, payload)
+    
                     
     
     def has_role(self, name: str) -> bool:
@@ -234,8 +240,7 @@ class User(db.Model):
     # Utility methods
     def to_dict_safe(self):
         payload = self.generate_permission_payload(onlyPayload = True)
-        return {**payload, "created_at": self.created_at.isoformat(),
-        }
+        return {**payload, "created_at": self.created_at.isoformat() }
 
     @classmethod
     def create_default_admin(cls):
@@ -300,8 +305,8 @@ class RefreshToken(db.Model):
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     token = db.Column(db.String(255), unique=True, nullable=False)  # hashed
-    issued_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    expires_at = db.Column(db.DateTime, nullable=False)
+    issued_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
     revoked = db.Column(db.Boolean, default=False, nullable=False)
 
     # Foreign key to user
@@ -309,7 +314,7 @@ class RefreshToken(db.Model):
     user = db.relationship("User", back_populates="refresh_tokens")
 
     def is_valid(self):
-        return not self.revoked and self.expires_at > datetime.utcnow()
+        return not self.revoked and self.expires_at > datetime.now(timezone.utc)
 
     def hash_token(token: str) -> str:
         return sha256(token.encode()).hexdigest()

@@ -94,14 +94,14 @@ def list_scripts():
     # ❌ ERREURS SQL
     except SQLAlchemyError as e:
         db.session.rollback()
-        logger.exception(f"Database error while fetching scripts: {e}")
-        return jsonify({"error": f"Database error: {e}"}), 500
+        logger.error(f"Database error while fetching scripts: {str(e)}")
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
 
     # ❌ ERREURS GÉNÉRALES
     except Exception as e:
         db.session.rollback()
-        logger.exception(f"Unexpected error in list_scripts: {e}")
-        return jsonify({"error": f"Internal server error: {e}"}), 500
+        logger.error(f"Unexpected error in list_scripts: {str(e)}")
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
 # RÉCUPÉRER UN SCRIPT PAR ID
 @bp.get("/<int:script_id>")
@@ -322,6 +322,6 @@ def execute_script():
         return jsonify(result), status
     
     except Exception as e:
-        logger.exception("Error executing content")
+        logger.error(f"Error executing content: {str(e)}")
         return jsonify({"error": "Execution failed", "details": str(e)}), 500
 

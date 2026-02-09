@@ -10,7 +10,7 @@
   white-space: nowrap;
   vertical-align: middle;
   cursor: pointer;
-  user-select: none;
+  /* user-select: none; */
   border: 1px solid transparent;
   border-radius: var(--radius-button);
   transition: all var(--transition-fast);
@@ -85,6 +85,12 @@
 
 .success {
   background-color: var(--success);
+  color: var(--text-inverse);
+  border-color: var(--success);
+}
+
+.dark-success {
+  background-color: #004422;
   color: var(--text-inverse);
   border-color: var(--success);
 }
