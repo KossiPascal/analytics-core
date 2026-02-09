@@ -7,6 +7,7 @@ import {
 } from "react-icons/fa";
 import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
+import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import styles from '@pages/admins/AdminPage.module.css';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
@@ -163,7 +164,35 @@ const Field = memo<FieldProps>(function Field({ label, name, value, onChange, ty
   );
 });
 
-export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?: boolean, outOfCard?: boolean, afterUpsert?: () => Promise<void> }> = ({ afterUpsert, showTitle = true, showDbList = true, outOfCard = false }) => {
+interface DatabaseConnectionTabProps {
+  showTitle?: boolean;
+  title?: string;
+  showDbList?: boolean;
+  outOfCard?: boolean;
+  showSshTunnel?: boolean;
+  showTestConnectionButton?: boolean;
+  showSshTestButton?: boolean;
+  renderAsModal?: boolean;
+  modalOpen?: boolean;
+  onCloseModal?: () => void;
+  modalTitle?: string;
+  afterUpsert?: () => Promise<void>;
+}
+
+export const DatabaseConnectionTab: React.FC<DatabaseConnectionTabProps> = ({
+  afterUpsert,
+  showTitle = true,
+  title = 'Connexion à une base de données',
+  showDbList = true,
+  outOfCard = false,
+  showSshTunnel = true,
+  showTestConnectionButton = true,
+  showSshTestButton = true,
+  renderAsModal = false,
+  modalOpen = false,
+  onCloseModal,
+  modalTitle = 'Connexion à une base de données',
+}) => {
   const [form, setForm] = useState<DbConnection>(DEFAULT_FORM);
   const [testing, setTesting] = useState<TestType | null>(null);
   const [response, setResponse] = useState<{ type: "success" | "error", msg: string } | null>(null);
@@ -204,6 +233,12 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
     fetchTypes();
     fetchConnexions();
   }, []);
+
+  useEffect(() => {
+    if (showSshTunnel) return;
+    if (!form.ssh_enabled) return;
+    setForm((prev) => ({ ...prev, ssh_enabled: false }));
+  }, [showSshTunnel, form.ssh_enabled]);
 
 
   const isValid = useMemo(() => {
@@ -293,7 +328,7 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
       <>
         {/* <h1 className="title"><Database/>PostgreSQL Connections</h1> */}
 
-        {showTitle && (<CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />Connexion à une base de données</div>} />)}
+        {showTitle && (<CardHeader title={<div className={styles.cardTitle}><FaDatabase size={20} />{title}</div>} />)}
 
         <CardBody>
           <div className={styles.form}>
@@ -313,9 +348,11 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
               <Field name="password" value={form.password} onChange={updateField} type='password' label={"Mot de passe"} icon={<FaLock />} placeholder="••••••••" />
             </div>
 
-            <Field name="ssh_enabled" value={form.ssh_enabled} onChange={updateField} type={"checkbox"} label={"🔐 Utiliser un tunnel SSH"} icon={<FaShieldAlt />} />
+            {showSshTunnel && (
+              <Field name="ssh_enabled" value={form.ssh_enabled} onChange={updateField} type={"checkbox"} label={"🔐 Utiliser un tunnel SSH"} icon={<FaShieldAlt />} />
+            )}
 
-            {form.ssh_enabled && (
+            {showSshTunnel && form.ssh_enabled && (
               <div className={styles.grid + ' ' + styles.grid3}>
                 {/* <h3>SSH Configuration</h3> */}
                 <Field name="ssh_host" value={form.ssh_host} onChange={updateField} label={"Hôte SSH"} icon={<FaServer />} placeholder="Ex: ssh.example.com" required={true} />
@@ -367,15 +404,17 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
                 <KeyRound size={16} /> Réinitialiser
               </Button>
 
-              {form.ssh_enabled && (<Button disabled={!isValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
+              {showSshTunnel && showSshTestButton && form.ssh_enabled && (<Button disabled={!isValid || loading || testing === 'test-ssh'} variant="primary" size="sm" onClick={() => handleTest('test-ssh')}>
                 {testing === 'test-ssh' ? (<><Plug size={16} className="animate-spin" />Test SSH en cours...</>) :
                   (<><Plug size={16} /> Tester le tunel ssh</>)}
               </Button>)}
 
-              <Button disabled={!isValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
-                {testing === 'test-ssh-db' ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
-                  (<><Database size={16} /> Tester la connexion</>)}
-              </Button>
+              {showTestConnectionButton && (
+                <Button disabled={!isValid || loading || testing === 'test-ssh-db'} variant="primary" size="sm" onClick={() => handleTest('test-ssh-db')}>
+                  {testing === 'test-ssh-db' ? (<><Plug size={16} className="animate-spin" />Test en cours...</>) :
+                    (<><Database size={16} /> Tester la connexion</>)}
+                </Button>
+              )}
 
               <Button disabled={!isValid || loading || !!testing} isLoading={loading} variant="dark-success" size="sm" onClick={() => save()} color="success">
                 <FaSave /> {editId ? "Update" : "Save"}
@@ -387,7 +426,7 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
     );
   }
 
-  return (
+  const content = (
     <>
       { outOfCard === true ? (<ConnexionCardField /> ) : (<Card><ConnexionCardField /></Card>) }
 
@@ -411,6 +450,16 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, showDbList?:
       </div>)}
     </>
   );
+
+  if (renderAsModal) {
+    return (
+      <Modal isOpen={modalOpen} onClose={() => onCloseModal?.()} title={modalTitle} size="xl">
+        {content}
+      </Modal>
+    );
+  }
+
+  return content;
 }
 
 export default DatabaseConnectionTab;

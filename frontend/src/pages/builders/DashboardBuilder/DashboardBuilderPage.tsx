@@ -31,6 +31,9 @@ import styles from '@pages/builders/DashboardBuilder/DashboardBuilderPage.module
 import { BuilderHeader } from './components/BuilderHeader';
 import { BuilderMainArea } from './components/BuilderMainArea';
 import { BuilderSidebar } from './components/BuilderSidebar';
+import { OptionsModal } from './components/OptionsModal';
+import { SaveModal } from './components/SaveModal';
+import { SavedVisualizationsModal } from './components/SavedVisualizationsModal';
 import { VisualizationTypeModal } from './components/VisualizationTypeModal';
 
 const CHART_TYPES: ChartTypeOption[] = [
@@ -49,8 +52,6 @@ const CHART_TYPES: ChartTypeOption[] = [
 ];
 
 const DEFAULT_OPTIONS: VisualizationOptions = {
-  title: 'Évolution des consultations',
-  subtitle: 'Par type de service',
   showLegend: true,
   showTooltip: true,
   showGrid: true,
@@ -70,21 +71,34 @@ interface PreviewSnapshot {
 const DashboardBuilderPage: React.FC = () => {
   const { showSuccess, showError } = useNotification();
 
+  // Modal states
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
+  const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isSavedListOpen, setIsSavedListOpen] = useState(false);
+
+  // Visualization metadata
   const [visualizationType, setVisualizationType] = useState<VisualizationType>('dashboard');
   const [chartType, setChartType] = useState<ChartVariant>('bar');
   const [name, setName] = useState('Nouvelle visualisation');
   const [description, setDescription] = useState('');
 
+  // Edit mode
+  const [editingVisualizationId, setEditingVisualizationId] = useState<string | null>(null);
+  const isEditing = editingVisualizationId !== null;
+
+  // Dimension selections
   const [selectedDataElements, setSelectedDataElements] = useState<string[]>(['de1', 'de2', 'de3']);
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>(['ind1', 'ind2']);
   const [selectedPeriods, setSelectedPeriods] = useState<string[]>(['LAST_6_MONTHS']);
   const [selectedOrgUnits, setSelectedOrgUnits] = useState<string[]>(['ou1', 'ou2', 'ou3']);
 
+  // Layout
   const [columnItems, setColumnItems] = useState<string[]>(['LAST_6_MONTHS']);
   const [rowItems, setRowItems] = useState<string[]>(['ind1', 'ind2']);
   const [filterItems, setFilterItems] = useState<string[]>(['ou1']);
 
+  // Data sources
   const [dataElements, setDataElements] = useState<DimensionItem[]>([]);
   const [indicators, setIndicators] = useState<DimensionItem[]>([]);
   const [periods, setPeriods] = useState<DimensionItem[]>([]);
@@ -104,13 +118,13 @@ const DashboardBuilderPage: React.FC = () => {
   const [isPreviewStale, setIsPreviewStale] = useState(false);
 
   const hasInitializedRef = useRef(false);
+  const previousChartTypeRef = useRef<ChartVariant>(chartType);
 
   const loadSavedVisualizations = useCallback(() => {
     const { items } = db.list<StoredVisualization>('visualizations', {
       sortBy: 'updatedAt',
       sortDir: 'desc',
     });
-
     setSavedVisualizations(items);
   }, []);
 
@@ -133,18 +147,14 @@ const DashboardBuilderPage: React.FC = () => {
     }
   }, [loadSavedVisualizations, showError]);
 
+  // Mark preview as stale on any config change (except chartType which auto-refreshes)
   useEffect(() => {
     if (!hasInitializedRef.current) {
       hasInitializedRef.current = true;
       return;
     }
-
     setIsPreviewStale(true);
   }, [
-    visualizationType,
-    chartType,
-    name,
-    description,
     selectedDataElements,
     selectedIndicators,
     selectedPeriods,
@@ -155,6 +165,21 @@ const DashboardBuilderPage: React.FC = () => {
     options,
   ]);
 
+  // Auto-refresh preview when chart type changes (from modal)
+  useEffect(() => {
+    if (previousChartTypeRef.current === chartType) {
+      return;
+    }
+    previousChartTypeRef.current = chartType;
+
+    setPreviewSnapshot((prev) => ({
+      ...prev,
+      chartType,
+    }));
+    setIsPreviewStale(false);
+  }, [chartType]);
+
+  // Clean up data elements when switching away from table type
   useEffect(() => {
     if (chartType === 'table') {
       return;
@@ -181,11 +206,6 @@ const DashboardBuilderPage: React.FC = () => {
     });
     setIsPreviewStale(false);
   }, [chartType, selectedDataElements, selectedIndicators, selectedPeriods, selectedOrgUnits, options]);
-
-  const filteredSavedVisualizations = useMemo(
-    () => savedVisualizations.filter((viz) => viz.type === visualizationType),
-    [savedVisualizations, visualizationType]
-  );
 
   const availableLayoutItems = useMemo(
     () =>
@@ -286,68 +306,99 @@ const DashboardBuilderPage: React.FC = () => {
     });
   }, [activePreviewDataIds, dataElements, indicators, previewSnapshot.chartType]);
 
-  const handleSave = useCallback(() => {
-    const config: VisualizationConfig = {
-      name,
-      description,
-      type: visualizationType,
-      chartType,
-      columns: [{ dimension: 'pe', items: columnItems }],
-      rows: [{ dimension: 'dx', items: rowItems }],
-      filters: [{ dimension: 'ou', items: filterItems }],
-      options,
-    };
+  const handleSaveConfirm = useCallback(
+    (saveName: string, saveDescription: string, saveVizType: VisualizationType) => {
+      const config: VisualizationConfig = {
+        name: saveName,
+        description: saveDescription,
+        type: saveVizType,
+        chartType,
+        columns: [{ dimension: 'pe', items: columnItems }],
+        rows: [{ dimension: 'dx', items: rowItems }],
+        filters: [{ dimension: 'ou', items: filterItems }],
+        options,
+      };
 
-    const now = new Date().toISOString();
-    const storedVisualization: StoredVisualization = {
-      id: `viz-${Date.now()}`,
-      createdAt: now,
-      updatedAt: now,
-      ...config,
-    };
+      const now = new Date().toISOString();
 
-    try {
-      db.create<StoredVisualization>('visualizations', storedVisualization);
-      setSavedVisualizations((previous) => [storedVisualization, ...previous]);
-      showSuccess(`Visualisation sauvegardée : "${name}"`);
-    } catch (error) {
-      console.error('[VisualizationsTab] Failed to save visualization', error);
-      showError('Impossible de sauvegarder la visualisation.');
+      if (isEditing && editingVisualizationId) {
+        const updatedVisualization: StoredVisualization = {
+          id: editingVisualizationId,
+          createdAt: savedVisualizations.find((v) => v.id === editingVisualizationId)?.createdAt || now,
+          updatedAt: now,
+          ...config,
+        };
+
+        try {
+          db.create<StoredVisualization>('visualizations', updatedVisualization);
+          setSavedVisualizations((previous) =>
+            previous.map((v) => (v.id === editingVisualizationId ? updatedVisualization : v))
+          );
+          setName(saveName);
+          setDescription(saveDescription);
+          setVisualizationType(saveVizType);
+          showSuccess(`Visualisation modifiée : "${saveName}"`);
+        } catch (error) {
+          console.error('[VisualizationsTab] Failed to update visualization', error);
+          showError('Impossible de modifier la visualisation.');
+        }
+      } else {
+        const storedVisualization: StoredVisualization = {
+          id: `viz-${Date.now()}`,
+          createdAt: now,
+          updatedAt: now,
+          ...config,
+        };
+
+        try {
+          db.create<StoredVisualization>('visualizations', storedVisualization);
+          setSavedVisualizations((previous) => [storedVisualization, ...previous]);
+          setName(saveName);
+          setDescription(saveDescription);
+          setVisualizationType(saveVizType);
+          showSuccess(`Visualisation sauvegardée : "${saveName}"`);
+        } catch (error) {
+          console.error('[VisualizationsTab] Failed to save visualization', error);
+          showError('Impossible de sauvegarder la visualisation.');
+        }
+      }
+
+      setIsSaveModalOpen(false);
+    },
+    [chartType, columnItems, rowItems, filterItems, options, isEditing, editingVisualizationId, savedVisualizations, showSuccess, showError]
+  );
+
+  const handleLoadVisualization = useCallback((viz: StoredVisualization) => {
+    setName(viz.name);
+    setDescription(viz.description || '');
+    setVisualizationType(viz.type);
+    setChartType(viz.chartType);
+    setOptions(viz.options);
+    setEditingVisualizationId(viz.id);
+
+    if (viz.columns.length > 0) {
+      setColumnItems(viz.columns[0].items);
     }
-  }, [name, description, visualizationType, chartType, columnItems, rowItems, filterItems, options, showSuccess, showError]);
-
-  const handleReset = useCallback(() => {
-    setName('Nouvelle visualisation');
-    setDescription('');
-    setChartType('bar');
-    setSelectedDataElements(['de1', 'de2', 'de3']);
-    setSelectedIndicators(['ind1', 'ind2']);
-    setSelectedPeriods(['LAST_6_MONTHS']);
-    setSelectedOrgUnits(['ou1', 'ou2', 'ou3']);
-    setColumnItems(['LAST_6_MONTHS']);
-    setRowItems(['ind1', 'ind2']);
-    setFilterItems(['ou1']);
-    setOptions(DEFAULT_OPTIONS);
+    if (viz.rows.length > 0) {
+      setRowItems(viz.rows[0].items);
+    }
+    if (viz.filters.length > 0) {
+      setFilterItems(viz.filters[0].items);
+    }
   }, []);
 
   return (
     <>
       <div className={styles.container}>
         <BuilderHeader
-          name={name}
-          description={description}
-          visualizationType={visualizationType}
-          onNameChange={(event) => setName(event.target.value)}
-          onDescriptionChange={(event) => setDescription(event.target.value)}
+          chartType={chartType}
+          chartTypes={CHART_TYPES}
           onOpenTypeModal={() => setIsTypeModalOpen(true)}
         />
 
         <div className={styles.content}>
           <BuilderSidebar
-            chartTypes={CHART_TYPES}
             chartType={chartType}
-            onChartTypeChange={setChartType}
-            filteredSavedVisualizations={filteredSavedVisualizations}
             dataElements={dataElements}
             indicators={indicators}
             periods={periods}
@@ -370,25 +421,50 @@ const DashboardBuilderPage: React.FC = () => {
             onRemoveColumnItem={(id) => setColumnItems(columnItems.filter((item) => item !== id))}
             onRemoveRowItem={(id) => setRowItems(rowItems.filter((item) => item !== id))}
             onRemoveFilterItem={(id) => setFilterItems(filterItems.filter((item) => item !== id))}
-            options={options}
             previewOptions={previewSnapshot.options}
-            onOptionsChange={setOptions}
             previewChartType={previewSnapshot.chartType}
             previewData={previewData}
             previewSeries={previewSeries}
             isPreviewStale={isPreviewStale}
+            isEditing={isEditing}
             onRefreshPreview={handleRefreshPreview}
-            onSave={handleSave}
-            onReset={handleReset}
+            onOpenOptions={() => setIsOptionsModalOpen(true)}
+            onOpenSaved={() => setIsSavedListOpen(true)}
+            onSave={() => setIsSaveModalOpen(true)}
           />
         </div>
       </div>
 
       <VisualizationTypeModal
         isOpen={isTypeModalOpen}
-        selectedType={visualizationType}
+        chartTypes={CHART_TYPES}
+        selectedChartType={chartType}
         onClose={() => setIsTypeModalOpen(false)}
-        onSelectType={setVisualizationType}
+        onSelectChartType={setChartType}
+      />
+
+      <OptionsModal
+        isOpen={isOptionsModalOpen}
+        options={options}
+        onOptionsChange={setOptions}
+        onClose={() => setIsOptionsModalOpen(false)}
+      />
+
+      <SaveModal
+        isOpen={isSaveModalOpen}
+        isEditing={isEditing}
+        initialName={name}
+        initialDescription={description}
+        initialVisualizationType={visualizationType}
+        onClose={() => setIsSaveModalOpen(false)}
+        onConfirm={handleSaveConfirm}
+      />
+
+      <SavedVisualizationsModal
+        isOpen={isSavedListOpen}
+        savedVisualizations={savedVisualizations}
+        onClose={() => setIsSavedListOpen(false)}
+        onSelect={handleLoadVisualization}
       />
     </>
   );

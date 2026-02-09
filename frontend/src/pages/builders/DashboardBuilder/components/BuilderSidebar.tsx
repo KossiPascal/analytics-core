@@ -1,15 +1,12 @@
 import React from 'react';
-import { BarChart3, Building2, Calendar, Database, Layers, TrendingUp } from 'lucide-react';
+import { Building2, Calendar, Database, TrendingUp } from 'lucide-react';
 
 import { DimensionSelector } from './DimensionSelector';
-import type { ChartTypeOption, ChartVariant, DimensionItem, StoredVisualization } from './types';
+import type { ChartVariant, DimensionItem } from './types';
 import styles from './BuilderSidebar.module.css';
 
 interface BuilderSidebarProps {
-  chartTypes: ChartTypeOption[];
   chartType: ChartVariant;
-  onChartTypeChange: (type: ChartVariant) => void;
-  filteredSavedVisualizations: StoredVisualization[];
   dataElements: DimensionItem[];
   indicators: DimensionItem[];
   periods: DimensionItem[];
@@ -25,10 +22,7 @@ interface BuilderSidebarProps {
 }
 
 export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
-  chartTypes,
   chartType,
-  onChartTypeChange,
-  filteredSavedVisualizations,
   dataElements,
   indicators,
   periods,
@@ -46,51 +40,6 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
 
   return (
     <div className={styles.sidebar}>
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>
-          <Layers size={18} />
-          Visualisations sauvegardées
-        </div>
-        <div className={styles.savedList}>
-          {filteredSavedVisualizations.length === 0 ? (
-            <div className={styles.savedEmpty}>Aucune visualisation pour ce type.</div>
-          ) : (
-            filteredSavedVisualizations.map((viz) => (
-              <div key={viz.id} className={styles.savedItem}>
-                <div className={styles.savedItemTitle}>{viz.name}</div>
-                {viz.description && <div className={styles.savedItemDescription}>{viz.description}</div>}
-                <div className={styles.savedItemMeta}>
-                  <span>{viz.chartType}</span>
-                  <span>•</span>
-                  <span>{new Date(viz.updatedAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>
-          <BarChart3 size={18} />
-          Type de graphique
-        </div>
-        <div className={styles.chartTypeGrid}>
-          {chartTypes.map((type) => (
-            <button
-              key={type.id}
-              type="button"
-              className={`${styles.chartTypeCard} ${chartType === type.id ? styles.chartTypeCardActive : ''}`}
-              onClick={() => onChartTypeChange(type.id)}
-              title={type.description}
-            >
-              {type.icon}
-              <span>{type.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
           <Database size={18} />

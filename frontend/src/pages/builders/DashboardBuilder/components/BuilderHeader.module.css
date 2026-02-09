@@ -1,15 +1,21 @@
-.typeSummary {
+.headerRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.typeSummary {
+  display: flex;
+  align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem 0;
 }
 
 .typeLabel {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .typeLabelText {

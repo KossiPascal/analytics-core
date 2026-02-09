@@ -9,6 +9,7 @@ import styles from '../AdminPage.module.css';
 import { SyncBadge } from '@/components/ui/Badge/Badge';
 import { Button } from '@/components/ui/Button/Button';
 import { Modal } from '@/components/ui/Modal/Modal';
+import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
 
 
 
@@ -32,6 +33,7 @@ export function ChtCouchdbRegisterTab() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDbConnectionModalOpen, setIsDbConnectionModalOpen] = useState(false);
   const { showError, showSuccess } = useNotification();
 
   // Form validation
@@ -170,6 +172,13 @@ export function ChtCouchdbRegisterTab() {
             Gestion des CHT Couchdb
           </h3>
           <div className={styles.buttonGroup}>
+            <button
+              className={`${styles.btn} ${styles.btnOutline} ${styles.btnSmall}`}
+              onClick={() => setIsDbConnectionModalOpen(true)}
+            >
+              <Building2 size={16} />
+              Connexion BD
+            </button>
             <button
               className={`${styles.btn} ${styles.btnOutline} ${styles.btnSmall}`}
               onClick={fetchCouchdbRegistered}
@@ -324,6 +333,19 @@ export function ChtCouchdbRegisterTab() {
           onChange={(e) => updateField('auto_sync', e.target.checked)}
         />
       </Modal>
+
+      <DatabaseConnectionTab
+        renderAsModal
+        modalOpen={isDbConnectionModalOpen}
+        onCloseModal={() => setIsDbConnectionModalOpen(false)}
+        modalTitle="Connexion base pour CHT"
+        title="Connexion base pour CHT"
+        showTitle={false}
+        showDbList={false}
+        outOfCard
+        showSshTunnel={false}
+        showTestConnectionButton={false}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal
