@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wifi, Clock, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
-import { PageWrapper } from '@components/layout';
+import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { GraduationLoader } from '@components/loaders/GraduationLoader/GraduationLoader';
 import { useDashboard } from '@/contexts/OLD/useDashboard';
-import { DashboardFilters, VaccinationTable } from '@pages/dashboards/components';
+import { DashboardFilters } from '@/pages/dashboards/components/DashboardFilters';
+import { VaccinationTable } from '@/pages/dashboards/components/VaccinationTable';
 import type { DashboardFilterParams } from '@/stores/OLD/dashboard.store';
 import styles from './RealtimeDashboard.module.css';
 

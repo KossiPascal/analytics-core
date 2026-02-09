@@ -17,7 +17,7 @@ interface AuthContextType {
     login: (username: string, password: string, callback?: () => Promise<void>) => Promise<void>;
     logout: (callback?: () => void) => Promise<void>;
     restore: (callback?: () => void) => Promise<void>;
-    refresh: (callback?: () => void) => Promise<void>;
+    refresh: (refresh_token: string | null, callback?: () => void) => Promise<void>;
     changePassword: (oldPass: string, newPass: string, callback?: () => Promise<void>) => Promise<void>;
     hasPermission: (perms: string | string[], all?: boolean) => boolean;
 }
@@ -28,47 +28,56 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const store = useAuthStore();
     const location = useLocation();
     const navigate = useNavigate();
-    const token = useAuthStore((s) => s.getToken());
+
+    // useAuthStore.getState().restore();
+    // const token = useAuthStore((s) => s.getToken());
+    // useEffect(() => {
+    //     tokenProvider.set(token ?? null);
+    // }, [token]);
 
     useEffect(() => {
-        tokenProvider.set(token ?? null);
-    }, [token]);
+        store.restore();
+    }, []); // 👈 UNE FOIS
 
     const login = async (username: string, password: string, callback?: () => Promise<void>) => {
-        await store.login(username, password, async () => {
-            if (callback) await callback();
+        await store.login(username, password);
+        if (callback) await callback();
 
-            // 📍 Redirection après login
-            const redirectTo = (location.state as { from?: Location })?.from?.pathname || ROUTES.dashboards.root();
+        // 📍 Redirection après login
+        const redirectTo = (location.state as { from?: Location })?.from?.pathname || ROUTES.dashboards.root();
 
-            if (store.user?.mustChangeDefaultPassword) {
-                navigate(ROUTES.auth.changePassword());
-            } else {
-                navigate(DEFAULT_AUTHENTICATED_ROUTE);
-            }
-        });
+        if (store.user?.mustChangeDefaultPassword) {
+            navigate(ROUTES.auth.changePassword());
+        } else {
+            navigate(DEFAULT_AUTHENTICATED_ROUTE);
+        }
     };
 
     const logout = async (callback?: () => void) => {
-        await store.logout(() => {
-            callback?.();
-            navigate(ROUTES.auth.login());
-        });
+        await store.logout();
+        callback?.();
+        navigate(ROUTES.auth.login());
     };
 
     const changePassword = async (oldPass: string, newPass: string, callback?: () => Promise<void>) => {
-        await store.changePassword(oldPass, newPass, async () => {
-            if (callback) await callback();
-            if (store.user?.mustChangeDefaultPassword) {
-                navigate(ROUTES.auth.changePassword());
-            } else {
-                navigate(DEFAULT_AUTHENTICATED_ROUTE);
-            }
-        });
+        await store.changePassword(oldPass, newPass);
+
+        if (callback) await callback();
+        if (store.user?.mustChangeDefaultPassword) {
+            navigate(ROUTES.auth.changePassword());
+        } else {
+            navigate(DEFAULT_AUTHENTICATED_ROUTE);
+        }
     };
 
-    const restore = async (callback?: () => void) => await store.restore(callback);
-    const refresh = async (callback?: () => void) => await store.refresh(callback);
+    const restore = async (callback?: () => void) => {
+        await store.restore();
+        callback?.();
+    }
+    const refresh = async (refresh_token: string | null, callback?: () => void) => {
+        await store.refresh(refresh_token);
+        callback?.();
+    }
 
     const hasPermission = (perms: string | string[], all: boolean = false) => store.hasPermission(perms, all);
 

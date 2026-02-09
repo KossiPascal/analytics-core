@@ -1,0 +1,94 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.label {
+  white-space: nowrap;
+}
+
+.selectContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.selectButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-3);
+  min-width: 70px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.selectButton:hover {
+  border-color: var(--primary);
+  background-color: var(--bg-tertiary);
+}
+
+.iconOpen {
+  transform: rotate(180deg);
+}
+
+.selectButton svg {
+  transition: transform var(--transition-fast);
+}
+
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.dropdown {
+  position: absolute;
+  bottom: calc(100% + var(--spacing-1));
+  left: 0;
+  min-width: 100%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background-color: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.option:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.option.active {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.option:not(:last-child) {
+  border-bottom: 1px solid var(--border-color);
+}

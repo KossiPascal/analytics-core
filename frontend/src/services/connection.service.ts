@@ -1,68 +1,7 @@
 import { api } from '@/apis/api';
-import { onlineOrOffline } from '@/stores/stores.config';
-import { IndexedDbStorage } from '@services/storages/indexed-db.service';
+import { PaginationParams, PaginatedResponse } from '@/models/OLD/old';
+import { DbConnectionParams, TestType } from '@/pages/queries/SqlBuilder/models';
 
-type DbType = 'postgres' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'couchdb' | 'mongodb' | 'oracle' | 'other';
-
-
-export interface DbConnectionForm {
-  id?: string|null;
-  type: DbType;
-  name: string;
-  dbname: string;
-  username: string;
-  password?: string;
-  host: string;
-  port: number;
-  ssh_enabled: boolean;
-  ssh_host?: string;
-  ssh_port?: number;
-  ssh_user?: string;
-  ssh_password?: string;
-  ssh_key?: string;
-  ssh_key_pass?: string;
-}
-
-export interface DbConnectionParams {
-  id?: string|null;
-  type: DbType;
-  name: string;
-  host: string;
-  username: string;
-  dbname: string;
-  port: number;
-  password?: string;
-  ssh?: {
-    host?: string;
-    port?: number;
-    username?: string;
-    password?: string;
-    key?: string;
-    key_pass?: string;
-  } | null;
-}
-
-
-
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  search?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
-
-export type TestType = "test-ssh" | "test-ssh-db"
 
 // Normalisation des erreurs API
 function normalizeError(error: any) {
@@ -77,14 +16,20 @@ function normalizeError(error: any) {
 
 // API Connexions & Query Builder
 export const connService = {
-  async list() {
+  async list<T=any>() {
     try {
-      return await api.get("/connections");
+      return await api.get<T[]>(`/connections`);
     } catch (e) {
       throw normalizeError(e);
     }
   },
-
+  async listWithDetails<T=any>() {
+    try {
+      return await api.get<T[]>(`/connections/with-details`);
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
   async create(data: DbConnectionParams) {
     try {
       return await api.post("/connections", data);
@@ -116,6 +61,51 @@ export const connService = {
       throw normalizeError(e);
     }
   },
+
+
+  // ---------------------- TYPES ---------------------- 
+  async typesList<T=any>() {
+    try {
+      return await api.get<T[]>("/conn-types");
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+
+  async typesCreate(data: DbConnectionParams) {
+    try {
+      return await api.post("/conn-types", data);
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+
+  async typesUpdate(id: string, data: DbConnectionParams) {
+    try {
+      return await api.put(`/conn-types/${id}`, data);
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+
+  async typesPatch(id: string, data: DbConnectionParams) {
+    try {
+      return await api.patch(`/conn-types/${id}`, data);
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+
+  async typesDelete(id: string) {
+    try {
+      return await api.delete(`/conn-types/${id}`);
+    } catch (e) {
+      throw normalizeError(e);
+    }
+  },
+
+
+  // API Connexions & Query Builder
 
   async test(type: TestType, data: DbConnectionParams) {
     try {
@@ -202,3 +192,6 @@ export const connService = {
     }
   }
 };
+
+
+

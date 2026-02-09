@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { FileText, Download, Eye, Settings, RefreshCw } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
-import { FormCheckbox, FormSelect } from '@/components/forms';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface PdfTemplate {

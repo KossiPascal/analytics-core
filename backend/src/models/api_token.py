@@ -1,6 +1,6 @@
 import uuid
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from backend.src.database.extensions import db
 from backend.src.logger import get_backend_logger
@@ -15,9 +15,9 @@ class ApiToken(db.Model):
     # Token hashé (SHA256 hex)
     token_hash = db.Column(db.String(64),unique=True,nullable=False,index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    last_used_at = db.Column(db.DateTime, nullable=True)
-    revoked_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # -------------------------
     # Static helpers
@@ -37,10 +37,10 @@ class ApiToken(db.Model):
     # -------------------------
     def revoke(self):
         self.is_active = False
-        self.revoked_at = datetime.utcnow()
+        self.revoked_at = datetime.now(timezone.utc)
 
     def mark_used(self):
-        self.last_used_at = datetime.utcnow()
+        self.last_used_at = datetime.now(timezone.utc)
 
     def is_valid(self) -> bool:
         return self.is_active and self.revoked_at is None

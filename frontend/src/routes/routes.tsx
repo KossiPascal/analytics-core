@@ -3,7 +3,7 @@ import { Home, FileText, Map, Users, Shield, BookOpen, Gauge, Activity, Eye, Che
 import { generateRouteConfig, generateNavItems, type RouteConfig, generateGridNavItems, RouteItem, NavItem, slugify } from './utils';
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { SuspenseLoader } from "@components/loaders";
+import { SuspenseLoader } from "@components/loaders/SuspenseLoader/SuspenseLoader";
 import { PAGES, ROUTES} from "./configs";
 import { RouteAccess } from "./access";
 
@@ -189,3 +189,9 @@ export const AppRoutes: React.FC = () => {
   );
 }
 
+
+// Re-export needed items
+export { ROUTES } from './configs';
+export type { NavItem } from './utils';
+export const DEFAULT_AUTHENTICATED_ROUTE = ROUTES.home();
+export const LOGIN_ROUTE = ROUTES.auth.login();

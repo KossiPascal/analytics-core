@@ -2,12 +2,13 @@ from flask import Blueprint, request, jsonify
 from typing import Any, Dict
 
 # from backend.src.celery_module.tasks_sync import dispatch_all_sources
-from backend.src.models.couchdb import CibleDatabase, CouchdbSource, encrypt
+from backend.src.models.couchdb import CibleDatabase, CouchdbSource
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
 from backend.src.database.extensions import db, error_response, success_response, get_json_payload, CouchdbSourceMap
 from sqlalchemy.exc import SQLAlchemyError
 
+from shared_libs.helpers.utils import encrypt
 from workers.couchdb.models import CreateTableModel
 
 logger = get_backend_logger(__name__)
@@ -27,7 +28,7 @@ def list_sources():
         # return jsonify(results), 200
         return []
     except SQLAlchemyError as e:
-        logger.exception("Failed to list sources")
+        logger.error(f"Failed to list sources: {str(e)}")
         return error_response("Failed to list sources", 500, str(e))
 
 
@@ -159,7 +160,7 @@ def connect_couchdb():
     #     return error_response(str(e), 400)
 
     # except Exception as e:
-    #     logger.exception("CouchDB connect failed")
+    #     logger.error(f"CouchDB connect failed: {str(e)}")
     #     return error_response(str(e), 500)
 
     pass
@@ -206,7 +207,7 @@ def upsert_couchdb_doc():
         return error_response(str(e), 400)
 
     except Exception as e:
-        logger.exception("Upsert document failed")
+        logger.error(f"Upsert document failed: {str(e)}")
         return error_response(str(e), 500)
 
 
@@ -251,5 +252,5 @@ def update_couchdb_last_seq():
         return error_response(str(e), 400)
 
     except Exception as e:
-        logger.exception("Update last_seq failed")
+        logger.error(f"Update last_seq failed: {str(e)}")
         return error_response(str(e), 500)

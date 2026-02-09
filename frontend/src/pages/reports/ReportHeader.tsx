@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReportType } from '@/models/OLD/old/reports.types';
-import type { ReportStatus } from '@stores/OLD/reports.store';
-import { FormSwitch } from '@/components/forms';
+import type { ReportStatus } from '@/stores/OLD/reports.store';
+import { FormSwitch } from '@/components/forms/FormSwitch/FormSwitch';
 import styles from './ReportHeader.module.css';
 
 interface ReportHeaderProps {

@@ -3,291 +3,21 @@
  * Page principale du Query Builder avec modèle de données de démonstration
  */
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SqlBuilder } from './components/SqlBuilder';
-import type { AnalyticsModel, QueryJSON } from './models';
+import type { AnalyticsModel, AttributDef, DatabaseDef, DbConnection, DimensionDef, MetricDef, QueryJSON, TableDef } from './models';
+import { } from '@/services/connection.service';
+import { connService as API } from '@/services/connection.service';
+import { boolean } from 'zod';
 
 // ============================================================================
 // DEMO ANALYTICS MODEL
 // ============================================================================
 
 const DEMO_MODEL: AnalyticsModel = {
-  tables: [
-    {
-      id: 'consultations',
-      label: 'Consultations',
-      description: 'Table des consultations médicales',
-    },
-    {
-      id: 'patients',
-      label: 'Patients',
-      description: 'Table des patients',
-    },
-    {
-      id: 'health_workers',
-      label: 'Agents de santé',
-      description: 'Table des agents de santé',
-    },
-    {
-      id: 'facilities',
-      label: 'Formations sanitaires',
-      description: 'Table des formations sanitaires',
-    },
-    {
-      id: 'regions',
-      label: 'Régions',
-      description: 'Table des régions',
-    },
-    {
-      id: 'districts',
-      label: 'Districts',
-      description: 'Table des districts sanitaires',
-    },
-    {
-      id: 'vaccinations',
-      label: 'Vaccinations',
-      description: 'Table des vaccinations',
-    },
-    {
-      id: 'medications',
-      label: 'Médicaments',
-      description: 'Table des médicaments',
-    },
-  ],
+  tables: [],
 
-  dimensions: [
-    // Consultations dimensions
-    {
-      id: 'consultations.id',
-      label: 'ID Consultation',
-      table: 'consultations',
-      type: 'string',
-      groupable: false,
-      filterable: true,
-    },
-    {
-      id: 'consultations.visit_date',
-      label: 'Date de visite',
-      table: 'consultations',
-      type: 'date',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'consultations.status',
-      label: 'Statut',
-      table: 'consultations',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'consultations.diagnosis',
-      label: 'Diagnostic',
-      table: 'consultations',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'consultations.consultation_type',
-      label: 'Type de consultation',
-      table: 'consultations',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-
-    // Patients dimensions
-    {
-      id: 'patients.id',
-      label: 'ID Patient',
-      table: 'patients',
-      type: 'string',
-      groupable: false,
-      filterable: true,
-    },
-    {
-      id: 'patients.gender',
-      label: 'Genre',
-      table: 'patients',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'patients.age_group',
-      label: "Tranche d'âge",
-      table: 'patients',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'patients.birth_date',
-      label: 'Date de naissance',
-      table: 'patients',
-      type: 'date',
-      groupable: false,
-      filterable: true,
-    },
-    {
-      id: 'patients.registration_date',
-      label: "Date d'inscription",
-      table: 'patients',
-      type: 'date',
-      groupable: true,
-      filterable: true,
-    },
-
-    // Health workers dimensions
-    {
-      id: 'health_workers.id',
-      label: 'ID Agent',
-      table: 'health_workers',
-      type: 'string',
-      groupable: false,
-      filterable: true,
-    },
-    {
-      id: 'health_workers.role',
-      label: 'Rôle',
-      table: 'health_workers',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'health_workers.specialization',
-      label: 'Spécialisation',
-      table: 'health_workers',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-
-    // Facilities dimensions
-    {
-      id: 'facilities.id',
-      label: 'ID Formation',
-      table: 'facilities',
-      type: 'string',
-      groupable: false,
-      filterable: true,
-    },
-    {
-      id: 'facilities.name',
-      label: 'Nom formation',
-      table: 'facilities',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'facilities.type',
-      label: 'Type formation',
-      table: 'facilities',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'facilities.level',
-      label: 'Niveau',
-      table: 'facilities',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-
-    // Regions dimensions
-    {
-      id: 'regions.id',
-      label: 'ID Région',
-      table: 'regions',
-      type: 'string',
-      groupable: false,
-      filterable: true,
-    },
-    {
-      id: 'regions.name',
-      label: 'Nom région',
-      table: 'regions',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'regions.code',
-      label: 'Code région',
-      table: 'regions',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-
-    // Districts dimensions
-    {
-      id: 'districts.id',
-      label: 'ID District',
-      table: 'districts',
-      type: 'string',
-      groupable: false,
-      filterable: true,
-    },
-    {
-      id: 'districts.name',
-      label: 'Nom district',
-      table: 'districts',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-
-    // Vaccinations dimensions
-    {
-      id: 'vaccinations.vaccine_type',
-      label: 'Type vaccin',
-      table: 'vaccinations',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'vaccinations.dose_number',
-      label: 'Numéro dose',
-      table: 'vaccinations',
-      type: 'number',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'vaccinations.vaccination_date',
-      label: 'Date vaccination',
-      table: 'vaccinations',
-      type: 'date',
-      groupable: true,
-      filterable: true,
-    },
-
-    // Medications dimensions
-    {
-      id: 'medications.name',
-      label: 'Nom médicament',
-      table: 'medications',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-    {
-      id: 'medications.category',
-      label: 'Catégorie',
-      table: 'medications',
-      type: 'string',
-      groupable: true,
-      filterable: true,
-    },
-  ],
+  dimensions: [],
 
   metrics: [
     // Consultations metrics
@@ -386,13 +116,22 @@ const DEMO_MODEL: AnalyticsModel = {
       returnType: 'number',
     },
   ],
+
+  databases: [],
+  
+  attributs: []
 };
+
+
 
 // ============================================================================
 // PAGE COMPONENT
 // ============================================================================
 
 export const SqlBuilderPage: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [isLoadError, setIsLoadError] = useState<boolean>(false);
+
   const handleQueryChange = useCallback((query: QueryJSON) => {
     console.log('[SqlBuilder] Query changed:', query);
   }, []);
@@ -408,12 +147,86 @@ export const SqlBuilderPage: React.FC = () => {
     // Here you would typically save the query to your backend
   }, []);
 
+  const loadDatabases = async () => {
+    setLoading(true);
+    setIsLoadError(false);
+    try {
+      const { data } = await API.listWithDetails<DbConnection>();
+     
+      const connList: DatabaseDef[] = [];
+      const TablesList: TableDef[] = [];
+      const AttributesList: AttributDef[] = [];
+      const DimensionsList: DimensionDef[] = [];
+      const MetricsList: MetricDef[] = [];
+
+
+      for (const db of (data ?? [])) {
+        connList.push({
+          id: db.id!,
+          label: db.name,
+          description: db.description,
+          type: db.type,
+          // icon?: string,
+          // color?: string,
+        })
+
+        if (db.details && (db.details.tables ?? []).length > 0) {
+          for (const table of db.details.tables) {
+            TablesList.push({
+              id: table.table_name,
+              label: table.table_name,
+              description: `Table ${table.table_name.toUpperCase()}`,
+            })
+
+            if (table.columns && table.columns.length > 0) {
+              for (const col of table.columns) {
+                AttributesList.push({
+                  id: `${table.table_name}.${col.name}`,
+                  label: col.name,
+                  table: table.table_name,
+                  type: col.type as any,
+                  description: "",
+                  groupable: true,
+                  filterable: true,
+                  // icon?: string,
+                  // defaultAgg?: AggType,
+                })
+              }
+            }
+          }
+        }
+      }
+
+      DEMO_MODEL.databases = connList;
+      DEMO_MODEL.tables = TablesList;
+      DEMO_MODEL.attributs = AttributesList;
+
+      // DEMO_MODEL.dimensions = DimensionsList;
+      // DEMO_MODEL.metrics = MetricsList;
+      
+
+    } catch {
+      setIsLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFullModels = async () => {
+    await loadDatabases();
+  }
+
+  useEffect(() => {
+    loadFullModels();
+  }, []);
+
   return (
     <SqlBuilder
       model={DEMO_MODEL}
       onQueryChange={handleQueryChange}
       onRun={handleRun}
       onSave={handleSave}
+      onLoadDatabases={loadDatabases}
     />
   );
 };

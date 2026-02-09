@@ -2,7 +2,7 @@ from typing import Any
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import requests
 from backend.src.models.database import AuditHistory
 from backend.src.database.extensions import db
@@ -29,7 +29,7 @@ def log_audit(action, table_name, record_id, user, details=None):
         record_id=record_id,
         user=user,
         details=details or {},
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     db.session.add(audit)
 

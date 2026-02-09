@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from backend.src.database.extensions import db
 from backend.src.logger import get_backend_logger
 
@@ -14,4 +14,4 @@ class AuditHistory(db.Model):
     table_name = db.Column(db.String)
     record_id = db.Column(db.String)
     user = db.Column(db.String)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)

@@ -6,7 +6,7 @@
 import React, { useState, useMemo } from 'react';
 import type { DimensionDef, MetricDef } from '../models';
 import DraggableField from './DraggableField';
-import { FormInput } from '@/components/forms';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 
 // ============================================================================

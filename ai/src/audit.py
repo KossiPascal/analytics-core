@@ -1,6 +1,6 @@
 # 12️⃣ ai/audit.py – Audit avancé
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 class Auditor:

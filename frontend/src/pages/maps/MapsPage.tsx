@@ -18,12 +18,12 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { PageHeader } from '@components/layout';
+import { PageHeader } from '@components/layout/PageHeader/PageHeader';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { MapsApi } from '@/services/OLD/old/api.service';
-import { DashboardFilters } from '@/pages/dashboards/components';
+import { DashboardFilters } from '@/pages/dashboards/components/DashboardFilters';
 import type { DashboardFilterParams } from '@/stores/OLD/dashboard.store';
 import styles from './MapsPage.module.css';
 

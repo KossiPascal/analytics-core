@@ -1,4 +1,4 @@
-import { Modal } from '@components/ui';
+import { Modal } from '@components/ui/Modal/Modal';
 import {
   LineChart,
   Line,

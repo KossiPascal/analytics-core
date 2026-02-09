@@ -109,7 +109,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async getOne(id: string, callback?: DbCallback<T | undefined>): Promise<T | undefined> {
+    async getOne<T=any>(id: string, callback?: DbCallback<T | undefined>): Promise<T | undefined> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();
@@ -118,7 +118,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async getAll(callback?: DbCallback<T[]>): Promise<T[]> {
+    async getAll<T=any>(callback?: DbCallback<T[]>): Promise<T[]> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();

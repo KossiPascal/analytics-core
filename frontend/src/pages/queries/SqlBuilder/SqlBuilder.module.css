@@ -1334,7 +1334,7 @@
   padding: 12px 16px;
   border-bottom: 1px solid var(--qb-border);
   text-align: left;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .definitionTable th {
@@ -1459,6 +1459,267 @@
 .definitionSelect:focus {
   outline: none;
   border-color: var(--qb-border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.definitionAttributeLabelInput {
+  font-weight: 600;
+  color: var(--qb-text);
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.875rem;
+  width: 100%;
+  transition: var(--qb-transition);
+}
+
+.definitionAttributeLabelInput:hover {
+  border-color: var(--qb-border);
+  background: var(--qb-bg);
+}
+
+.definitionAttributeLabelInput:focus {
+  outline: none;
+  border-color: var(--qb-border-focus);
+  background: var(--qb-bg-card);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.definitionItemForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--qb-bg);
+  border-radius: var(--qb-radius);
+  border: 1px solid var(--qb-border);
+}
+
+.definitionItemFormTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--qb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.definitionFormColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 280px;
+}
+
+.definitionEntryList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.definitionEntryListTitle {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--qb-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.definitionEntry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--qb-bg-card);
+  border-radius: var(--qb-radius-sm);
+  border: 1px solid var(--qb-border);
+}
+
+.definitionEntryInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.definitionEntryLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--qb-text);
+}
+
+.definitionEntryAlias {
+  font-size: 0.6875rem;
+  color: var(--qb-text-light);
+}
+
+.definitionEntryFormula {
+  font-size: 0.6875rem;
+  color: var(--qb-primary);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.definitionEntryRemove {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--qb-text-light);
+  cursor: pointer;
+  border-radius: var(--qb-radius-sm);
+  transition: var(--qb-transition);
+  flex-shrink: 0;
+}
+
+.definitionEntryRemove:hover {
+  background: var(--qb-danger);
+  color: white;
+}
+
+.definitionFormPlaceholder {
+  font-size: 0.8125rem;
+  color: var(--qb-text-light);
+  font-style: italic;
+  padding: 12px;
+}
+
+.definitionActionIcons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.definitionActionBtn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--qb-border);
+  background: var(--qb-bg-card);
+  color: #475569;
+  cursor: pointer;
+  border-radius: var(--qb-radius-sm);
+  transition: var(--qb-transition);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.definitionActionBtn:hover {
+  background: var(--qb-bg-hover);
+  color: var(--qb-primary);
+  border-color: var(--qb-primary);
+}
+
+.definitionActionBtn:disabled {
+  opacity: 0.4;
+  color: var(--qb-text-light);
+  cursor: not-allowed;
+  border-color: var(--qb-border);
+}
+
+.definitionActionBtnDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.definitionActionBtn svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.definitionEditRow :global(.formField) {
+  margin-bottom: 0;
+  gap: 0.25rem;
+}
+
+.definitionEditRow :global(.formFieldInlineContent) {
+  gap: 0;
+}
+
+.definitionEditRow :global(.selectWrapper) {
+  min-width: 140px;
+}
+
+.definitionActionBtnDanger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--qb-danger);
+  border-color: var(--qb-danger);
+}
+
+.definitionActionBtnSuccess:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--qb-success);
+  border-color: var(--qb-success);
+}
+
+.definitionUniqueBadgeActive {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.definitionUniqueBadgeInactive {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: var(--qb-bg);
+  color: var(--qb-text-light);
+}
+
+.definitionEditRow {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.definitionEditInput {
+  padding: 6px 8px;
+  border: 1px solid var(--qb-border-focus);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8125rem;
+  background: var(--qb-bg-card);
+  width: 100%;
+  min-width: 120px;
+}
+
+.definitionEditInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.definitionEditSelect {
+  padding: 6px 8px;
+  border: 1px solid var(--qb-border-focus);
+  border-radius: var(--qb-radius-sm);
+  font-size: 0.8125rem;
+  background: var(--qb-bg-card);
+  min-width: 100px;
+  cursor: pointer;
+}
+
+.definitionEditSelect:focus {
+  outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 

@@ -5,10 +5,10 @@
 import { motion } from 'framer-motion';
 import { MoreVertical, Trash2, Edit, Download, Maximize2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardBody, CardHeader } from '@components/ui';
-import { Chart } from '@components/charts';
+import { Card, CardBody, CardHeader } from '@components/ui/Card/Card';
+import { Chart } from '@components/charts/Chart';
 import type { VisualizationWithData, ChartVariant } from '@/contexts/OLD/useVisualizations';
-import type { ChartType } from '@components/charts';
+import type { ChartType } from '@components/charts/types';
 import styles from './VisualizationCard.module.css';
 
 export interface VisualizationCardProps {

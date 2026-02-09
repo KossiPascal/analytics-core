@@ -1,5 +1,5 @@
 # backend/src/models/worker_control.py
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, Integer, DateTime
 from backend.src.database.extensions import db
 

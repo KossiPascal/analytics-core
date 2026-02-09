@@ -1,7 +1,6 @@
 .wrapper {
   width: 100%;
-  max-width: var(--content-max-width);
-  margin: 0 auto;
+  max-width: 100%;
 }
 
 .noPadding .content {
@@ -15,12 +14,12 @@
 /* Content */
 .content {
   width: 100%;
-  padding: var(--spacing-4);
+  padding: var(--spacing-2);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .content {
-    padding: var(--spacing-3);
+    padding: var(--spacing-1);
   }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
-import { PageHeader } from '@components/layout';
+import { PageHeader } from '@components/layout/PageHeader/PageHeader';
 // import { useStore } from '@/stores/OLD';
 import { useAuth } from "@/contexts/AuthContext";
 import styles from './SettingsPage.module.css';

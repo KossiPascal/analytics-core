@@ -122,3 +122,6 @@ class Config:
     STATEMENT_TIMEOUT_MS = 15_000     # 15s
     DEFAULT_NON_ADMIN_MAX_ROWS = 1000 # limite pour non-admins
     ALLOWED_LANGUAGES = {"python", "sql", "json", "js", "javascript"}
+
+    TIMEOUT = 60
+

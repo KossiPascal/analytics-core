@@ -5,7 +5,13 @@ from passlib.hash import sha256_crypt
 
 def hash_token(token: str) -> str:
     """Deterministic SHA256 hex digest for storing refresh tokens."""
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+    # return hashlib.sha256(token.encode("utf-8")).hexdigest()
+    return hashlib.pbkdf2_hmac(
+        "sha256",
+        token.encode(),
+        b"refresh-token-salt",
+        100_000
+    ).hex()
 
 def hash_password(password: str) -> str:
     if not password:

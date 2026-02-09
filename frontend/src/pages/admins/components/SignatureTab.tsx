@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { PenTool, Save, Trash2, Upload, Download, RefreshCw } from 'lucide-react';
-import { Card, CardHeader, CardBody } from '@components/ui';
+import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { useNotification } from '@/contexts/OLD/useNotification';
 import { AdminApi } from '@/services/OLD/old/api.service';
-import { FormField, FormInput } from '@/components/forms';
+import { FormField } from '@/components/forms/FormField/FormField';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
 import styles from '@pages/admins/AdminPage.module.css';
 
 interface SignatureData {

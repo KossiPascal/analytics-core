@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import request, jsonify, Blueprint
 from backend.src.database.extensions import db
-from backend.src.models.auth import User  # your User model
 from backend.src.models.api_token import ApiToken  # the ApiToken model you already defined
 from backend.src.services.api_token import ApiTokenService
 
-logger = __import__('logging').getLogger(__name__)
+from backend.src.logger import get_backend_logger
+logger = get_backend_logger(__name__)
 
 
 # -----------------------------
@@ -42,7 +42,7 @@ def access_key_list():
             raw_token = ApiTokenService.generate_unique_api_token(token_len)
             api.token_hash = ApiToken.hash_token(raw_token)
             api.is_active = action == "create" or bool(is_active)
-            api.created_at = datetime.utcnow()
+            api.created_at = datetime.now(timezone.utc)
 
             db.session.add(api)
             db.session.commit()
@@ -78,5 +78,5 @@ def access_key_list():
         return jsonify({"status": 400, "data": "Impossible de réaliser l’action demandée"}), 400
 
     except Exception as e:
-        logger.exception("AccessKeyList error")
+        logger.error(f"AccessKeyList error: {str(e)}")
         return jsonify({"status": 500, "data": f"Erreur serveur: {str(e)}"}), 500

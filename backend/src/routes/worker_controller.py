@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from backend.src.database.extensions import db
 from backend.src.models.worker_control import WorkerControl
-from workers.couchdb.sync_manager import start_async_single_source
+# from workers.couchdb.sync_manager import start_async_single_source
 
 bp = Blueprint("workers", __name__, url_prefix="/api/workers")
 
@@ -38,7 +38,7 @@ def start_worker(worker_name: str):
 def trigger_sync(worker_name: str, source_id: int):
     # Permet de déclencher un sync ponctuel, même si le worker est arrêté
     try:
-        start_async_single_source(source_id)
+        # start_async_single_source(source_id)
         return jsonify({"worker": worker_name, "source_id": source_id, "status": "sync triggered"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

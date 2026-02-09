@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@components/ui/Button/Button';
-import { FormInput, FormSwitch, FormCheckbox } from '@/components/forms';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormSwitch } from '@/components/forms/FormSwitch/FormSwitch';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { Save, X, ChevronDown, ChevronRight, Check, User as UserIcon, Mail, Lock, Phone } from 'lucide-react';
 import type { User, Roles } from '@/models/OLD/old/auth.types';
 import type {

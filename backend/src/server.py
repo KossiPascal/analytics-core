@@ -2,8 +2,13 @@ import warnings
 from sqlalchemy.exc import SAWarning
 from cryptography.utils import CryptographyDeprecationWarning
 
+
 warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 warnings.filterwarnings("ignore", category=SAWarning)
+
+from backend.src.security.ssh_crypto import harden_ssh_crypto
+
+harden_ssh_crypto()
 
 import warnings
 import urllib3
@@ -22,10 +27,11 @@ from cryptography.utils import CryptographyDeprecationWarning
 
 from backend.src.config import Config
 from backend.src.models.auth import User
-from backend.src.routes import auth, visualization, connections, scripts, couchdb, worker_controller
-from backend.src.routes.admin import permissions, roles, tenants, users
-from backend.src.logger import get_backend_logger
 from backend.src.security.api_security import api_security
+
+from backend.src.routes import auth, visualization, scripts, couchdb, worker_controller
+from backend.src.routes.admin import permissions, roles, tenants, users
+from backend.src.routes.databases import connections, db_types
 
 from backend.src.database.extensions import db
 
@@ -36,6 +42,7 @@ from backend.src.database.extensions import db
 warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
 
 # -----------------------------------------------------------------------------
@@ -110,7 +117,7 @@ def create_flask_app(create_default_elements = True) -> Flask:
 
     # Blueprints
     for bp in (
-        auth, connections, couchdb, scripts,
+        auth, connections, couchdb, scripts,db_types,
         permissions, roles, tenants, users, visualization, worker_controller
     ):
         app.register_blueprint(bp.bp if hasattr(bp, "bp") else bp)
@@ -158,7 +165,7 @@ def create_flask_app(create_default_elements = True) -> Flask:
 
     @app.errorhandler(Exception)
     def handle_exception(e):
-        logger.exception("Unhandled exception")
+        logger.error(f"Unhandled exception: {str(e)}")
         return jsonify(error="internal server error"), 500
 
     @app.teardown_appcontext

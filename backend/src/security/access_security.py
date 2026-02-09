@@ -3,10 +3,10 @@ from functools import wraps
 from typing import Optional, Callable, Awaitable
 from flask import request, jsonify, g
 from werkzeug.exceptions import Unauthorized, Forbidden
-from backend.src.database.extensions import tokenManagement
 from backend.src.models.auth import User
 import inspect
 from backend.src.database.extensions import db
+from backend.src.security.token_manager import TokenManagement
 
 # Decorator to protect routes (uses JWT access token)
 def require_auth(f=None, *, roles: Optional[list[str]] = None):
@@ -20,33 +20,36 @@ def require_auth(f=None, *, roles: Optional[list[str]] = None):
             # 1. Read Authorization header
             auth_header = request.headers.get("Authorization", "")
             if not auth_header or not auth_header.startswith("Bearer "):
-                raise Unauthorized("Authorization header missing")
+                raise Unauthorized("[REQUIRE_AUTH] Authorization header missing")
 
             scheme, _, token = auth_header.partition(" ")
             if scheme.lower() != "bearer" or not token:
-                raise Unauthorized("Invalid Authorization header format")
+                raise Unauthorized("[REQUIRE_AUTH] Invalid Authorization header format")
             
              # 2. Decode token (JWT / serializer abstraction)
+            token = token or auth_header.split(" ", 1)[1]
+            if not token:
+                raise Unauthorized("[REQUIRE_AUTH] Invalid or expired access token")
+            
             try:
-                token = token or auth_header.split(" ", 1)[1]
-                payload = tokenManagement.decode(token)
+                payload = TokenManagement.decode(token)
             except Exception as e:
                 # Do NOT leak decoding errors
-                raise Unauthorized("Invalid or expired access token")
+                raise Unauthorized(f"[REQUIRE_AUTH] Error on loading payload: {str(e)}")
 
             username = payload.get("username")
             user_id = payload.get("id")
 
             if not username or not user_id:
-                raise Unauthorized("Invalid token payload")
+                raise Unauthorized("[REQUIRE_AUTH] Invalid token payload")
 
             # 4. Validate user exists & is active
             user: User | None = (User.query.filter_by(id=user_id, username=username).first())
             if not user:
-                raise Unauthorized("User not found")
+                raise Unauthorized("[REQUIRE_AUTH] User not found")
 
             if hasattr(user, "is_active") and not user.is_active:
-                raise Forbidden("User account is disabled")
+                raise Forbidden("[REQUIRE_AUTH] User account is disabled")
 
             # 5. Role / permission validation
             if roles:
@@ -54,11 +57,13 @@ def require_auth(f=None, *, roles: Optional[list[str]] = None):
                 required_roles = set(roles)
 
                 if user_roles.isdisjoint(required_roles):
-                    raise Forbidden("Insufficient permissions")
+                    raise Forbidden("[REQUIRE_AUTH] Insufficient permissions")
 
             # 6. Attach security context
             g.current_user = payload
             # g.current_user = user
+            # g.current_user_payload = payload
+
             # g.current_user_permissions = set(payload.get("permissions", []))
             # g.current_user_roles = set(payload.get("roles", []))
 
@@ -90,9 +95,9 @@ def async_require_auth(f: Optional[Callable] = None, *, roles: Optional[list[str
 
             # 2. Decode token
             try:
-                payload = tokenManagement.decode(token)
+                payload = TokenManagement.decode(token)
             except Exception:
-                raise Unauthorized("Invalid or expired access token")
+                raise Unauthorized("No payload founded")
 
             user_id = payload.get("id")
             username = payload.get("username")

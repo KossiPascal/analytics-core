@@ -14,6 +14,91 @@ export type FilterOp = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'in' | 'not_in' | 
 export type OrderDirection = 'asc' | 'desc';
 export type LogicalOperator = 'AND' | 'OR';
 
+
+// ============================================================================
+// CONNECTIONS
+// ============================================================================
+export type DbType = 'postgresql' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'couchdb' | 'mongodb' | 'oracle' | 'other';
+
+export interface DbConnectionDetails {
+  functions: any[],
+  indexes: any[],
+  materialized_views: any[],
+  schemas: any[],
+  sequences: any[],
+  tables: {
+    columns: { default: string, name: string, nullable: boolean, type: string }[],
+    foreign_keys: any[];
+    indexes: any[],
+    primary_key: string[];
+    table_name:string
+  }[],
+  triggers: any[],
+  views: any[]
+}
+
+export interface DbConnection {
+  id?: string | null;
+  type: DbType;
+  description: string;
+  name: string;
+  dbname: string;
+  username: string;
+  password?: string;
+  host: string;
+  port: number;
+  ssh_enabled: boolean;
+  ssh_host?: string;
+  ssh_port?: number;
+  ssh_username?: string;
+  ssh_password?: string;
+  ssh_key?: string;
+  ssh_key_pass?: string;
+  details?: DbConnectionDetails
+}
+
+export interface DbConnectionParams {
+  id?: string | null;
+  type: DbType;
+  name: string;
+  description: string;
+  host: string;
+  username: string;
+  dbname: string;
+  port: number;
+  password?: string;
+  ssh?: {
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    key?: string;
+    key_pass?: string;
+  } | null;
+}
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  search?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export type TestType = "test-ssh" | "test-ssh-db"
+
+
+
 // ============================================================================
 // FIELD DEFINITIONS
 // ============================================================================
@@ -23,10 +108,10 @@ export type EntityType = 'table' | 'view' | 'materialized_view';
 export interface DatabaseDef {
   id: string;
   label: string;
+  type: DbType;
   description?: string;
   icon?: string;
   color?: string;
-  type?: 'postgresql' | 'mysql' | 'mssql' | 'oracle' | 'sqlite' | 'other';
 }
 
 export interface TableDef {
@@ -48,6 +133,7 @@ export interface DimensionDef {
   groupable: boolean;
   filterable: boolean;
   icon?: string;
+  defaultAgg?: AggType;
 }
 
 export interface MetricDef {
@@ -58,6 +144,18 @@ export interface MetricDef {
   defaultAgg?: AggType;
   returnType: 'number';
   icon?: string;
+}
+
+export interface AttributDef {
+  id: string;
+  label: string;
+  table: string;
+  type: ColumnType;
+  description?: string;
+  groupable: boolean;
+  filterable: boolean;
+  icon?: string;
+  defaultAgg?: AggType;
 }
 
 // ============================================================================
@@ -157,10 +255,11 @@ export interface QueryJSON {
 // ============================================================================
 
 export interface AnalyticsModel {
-  databases?: DatabaseDef[];
+  databases: DatabaseDef[];
   tables: TableDef[];
   dimensions: DimensionDef[];
   metrics: MetricDef[];
+  attributs: AttributDef[];
 }
 
 // ============================================================================
@@ -219,6 +318,10 @@ export interface SqlBuilderProps {
   model: AnalyticsModel;
   initialQuery?: Partial<SqlBuilderState>;
   onQueryChange?: (query: QueryJSON) => void;
+  onLoadTables?: (query: QueryJSON) => void;
+  onLoadDimensions?: () => void;
+  onLoadMetrics?: () => void;
+  onLoadDatabases?: () => Promise<void>;
   onRun?: (query: QueryJSON) => void;
   onSave?: (query: QueryJSON, name: string) => void;
   readOnly?: boolean;

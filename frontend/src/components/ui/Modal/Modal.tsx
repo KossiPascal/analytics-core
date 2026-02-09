@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@utils/cn';
-import { backdropVariants, modalVariants } from '@animations/index';
+import { backdropVariants, modalVariants } from '@animations/modal.variants';
 import styles from './Modal.module.css';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -21,18 +21,7 @@ export interface ModalProps {
   className?: string;
 }
 
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  children,
-  size = 'md',
-  showCloseButton = true,
-  closeOnBackdrop = true,
-  closeOnEscape = true,
-  footer,
-  className,
-}: ModalProps) {
+export function Modal({isOpen,onClose,title,children,size = 'md',showCloseButton = true,closeOnBackdrop = false,closeOnEscape = false,footer,className}: ModalProps) {
   // Handle escape key
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {

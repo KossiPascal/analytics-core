@@ -15,19 +15,22 @@ import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
 import styles from '@pages/queries/SqlBuilder/SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@/components/ui';
-import { DatabaseConnectionTab } from '@/pages/admins/components';
+import { Button } from '@/components/ui/Button/Button';
+import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
+import { FormRadio, FormRadioGroup } from '@/components/forms/FormRadio/FormRadio';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
+import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { RemoveIcon } from '@/components/ui/icons/RemoveIcon';
+import { DefinitionItemForm, buildAlias, FORMULA_OPTIONS, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
-type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'distinct';
+type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max';
 
 type AttributeDefinition = {
-  dimension: boolean;
-  metric: boolean;
-  dimensionLabel?: string;
-  dimensionAlias?: string;
-  metricLabel?: string;
-  metricAlias?: string;
-  aggregationType?: AggregationType;
+  attributeLabel: string | null;
+  selectedAction: 'dimension' | 'metric' | null;
+  dimensions: DimensionEntry[];
+  metrics: MetricEntry[];
 };
 
 type DefinitionSelections = {
@@ -42,7 +45,6 @@ const AGGREGATION_OPTIONS: { value: AggregationType; label: string }[] = [
   { value: 'avg', label: 'AVG' },
   { value: 'min', label: 'MIN' },
   { value: 'max', label: 'MAX' },
-  { value: 'distinct', label: 'DISTINCT' },
 ];
 
 type SourceType = 'all' | 'table' | 'view' | 'materialized_view';
@@ -175,6 +177,28 @@ const Icons = {
       <circle cx="9" cy="14" r="1.8" />
     </svg>
   ),
+  edit: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M9.5 2.5L11.5 4.5L4.5 11.5H2.5V9.5L9.5 2.5Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  save: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M2 7L5.5 10.5L12 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  close: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
+    </svg>
+  ),
+  trash: (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M3 4H11" strokeLinecap="round" />
+      <path d="M5 4V2.8H9V4" strokeLinecap="round" />
+      <path d="M4 4L4.7 11.2H9.3L10 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
   entities: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="1" y="1" width="6" height="6" rx="1" />
@@ -201,15 +225,7 @@ const Icons = {
 // COMPONENT
 // ============================================================================
 
-export const SqlBuilder: React.FC<SqlBuilderProps> = ({
-  model,
-  initialQuery,
-  onQueryChange,
-  onRun,
-  onSave,
-  readOnly = false,
-  compact = false,
-}) => {
+export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQueryChange, onRun, onLoadDatabases, readOnly = false, compact = false, }) => {
   const [definitionSelections, setDefinitionSelections] = useState<DefinitionSelections>(() => {
     const initial: DefinitionSelections = {};
     model.tables.forEach((table) => {
@@ -219,14 +235,24 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
       if (!initial[dimension.table]) {
         initial[dimension.table] = {};
       }
-      initial[dimension.table][dimension.id] = { dimension: true, metric: false };
+      initial[dimension.table][dimension.id] = {
+        attributeLabel: null,
+        selectedAction: null,
+        dimensions: [],
+        metrics: [],
+      };
     });
     return initial;
   });
 
   const [tableMenuOpenId, setTableMenuOpenId] = useState<string | null>(null);
   const [definitionTableId, setDefinitionTableId] = useState<string | null>(null);
+  const [dimensionsTableId, setDimensionsTableId] = useState<string | null>(null);
   const [metricsTableId, setMetricsTableId] = useState<string | null>(null);
+  const [editingDimId, setEditingDimId] = useState<string | null>(null);
+  const [editDimData, setEditDimData] = useState<{ label: string; unique: boolean }>({ label: '', unique: false });
+  const [editingMetId, setEditingMetId] = useState<string | null>(null);
+  const [editMetData, setEditMetData] = useState<{ label: string; formula: string; unique: boolean }>({ label: '', formula: '', unique: false });
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>('all');
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [selectedDatabaseIds, setSelectedDatabaseIds] = useState<Set<string>>(() => {
@@ -246,31 +272,51 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     return () => document.removeEventListener('click', handleClick);
   }, [tableMenuOpenId]);
 
-  const effectiveModel = useMemo(() => {
-    const filteredDimensions = model.dimensions.filter((dimension) => {
-      const selection = definitionSelections[dimension.table]?.[dimension.id];
-      return selection ? selection.dimension : true;
-    });
 
-    const baseMetricIds = new Set(model.metrics.map((metric) => metric.id));
+  const afterUpsert = async (): Promise<void> => {
+    if (onLoadDatabases) {
+      try {
+        await onLoadDatabases();
+        setIsConnectionModalOpen(false)
+      } catch (error) {
+
+      }
+    }
+  }
+
+  const effectiveModel = useMemo(() => {
+    const additionalDimensions: DimensionDef[] = [];
     const additionalMetrics: MetricDef[] = [];
 
-    model.dimensions.forEach((dimension) => {
-      const selection = definitionSelections[dimension.table]?.[dimension.id];
-      if (selection?.metric && !baseMetricIds.has(dimension.id)) {
-        additionalMetrics.push({
-          id: dimension.id,
-          label: selection.metricLabel || dimension.label,
-          table: dimension.table,
-          defaultAgg: selection.aggregationType || (dimension.type === 'number' ? 'sum' : 'count'),
-          returnType: 'number',
+    Object.entries(definitionSelections).forEach(([tableId, attrs]) => {
+      Object.entries(attrs).forEach(([attrId, config]) => {
+        const baseDim = model.dimensions.find((d) => d.id === attrId);
+        if (!baseDim) return;
+
+        config.dimensions.forEach((dim) => {
+          additionalDimensions.push({
+            ...baseDim,
+            id: `${attrId}__dim__${dim.id}`,
+            label: dim.label,
+            defaultAgg: dim.unique ? 'distinct' : undefined,
+          });
         });
-      }
+
+        config.metrics.forEach((met) => {
+          additionalMetrics.push({
+            id: `${attrId}__met__${met.id}`,
+            label: met.label,
+            table: tableId,
+            returnType: 'number',
+            defaultAgg: met.unique ? 'distinct' : (met.formula?.toLowerCase() as AggregationType | undefined),
+          });
+        });
+      });
     });
 
     return {
       ...model,
-      dimensions: filteredDimensions,
+      dimensions: [...model.dimensions, ...additionalDimensions],
       metrics: [...model.metrics, ...additionalMetrics],
     };
   }, [model, definitionSelections]);
@@ -313,7 +359,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
   const querySQL = useMemo(() => buildSQL(), [buildSQL]);
 
   // Notify on change
-  React.useEffect(() => {
+  useEffect(() => {
     onQueryChange?.(queryJSON);
   }, [queryJSON, onQueryChange]);
 
@@ -484,6 +530,10 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     () => model.tables.find((table) => table.id === metricsTableId) ?? null,
     [metricsTableId, model.tables]
   );
+  const dimensionsTable = useMemo(
+    () => model.tables.find((table) => table.id === dimensionsTableId) ?? null,
+    [dimensionsTableId, model.tables]
+  );
 
   const definitionAttributes = useMemo(() => {
     if (!definitionTableId) return [];
@@ -495,7 +545,44 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
     return effectiveModel.metrics.filter((metric) => metric.table === metricsTableId);
   }, [effectiveModel.metrics, metricsTableId]);
 
-  const baseDimensionIds = useMemo(() => new Set(model.dimensions.map((dimension) => dimension.id)), [model.dimensions]);
+  const dimensionsForTable = useMemo(() => {
+    if (!dimensionsTableId) return [];
+    return effectiveModel.dimensions.filter((dim) => dim.table === dimensionsTableId);
+  }, [effectiveModel.dimensions, dimensionsTableId]);
+
+  const parseCustomDimensionId = (id: string) => {
+    const parts = id.split('__dim__');
+    if (parts.length !== 2) return null;
+    return { attributeId: parts[0], entryId: parts[1] };
+  };
+
+  const parseCustomMetricId = (id: string) => {
+    const parts = id.split('__met__');
+    if (parts.length !== 2) return null;
+    return { attributeId: parts[0], entryId: parts[1] };
+  };
+
+  const getCustomDimensionEntry = (dim: DimensionDef) => {
+    const parsed = parseCustomDimensionId(dim.id);
+    if (!parsed) return null;
+    const selection = definitionSelections[dim.table]?.[parsed.attributeId];
+    const entry = selection?.dimensions.find((d) => d.id === parsed.entryId) ?? null;
+    if (!entry) return null;
+    const attribute = model.dimensions.find((d) => d.id === parsed.attributeId) ?? null;
+    const table = model.tables.find((t) => t.id === dim.table) ?? null;
+    return { parsed, entry, attribute, table };
+  };
+
+  const getCustomMetricEntry = (metric: MetricDef) => {
+    const parsed = parseCustomMetricId(metric.id);
+    if (!parsed) return null;
+    const selection = definitionSelections[metric.table]?.[parsed.attributeId];
+    const entry = selection?.metrics.find((m) => m.id === parsed.entryId) ?? null;
+    if (!entry) return null;
+    const attribute = model.dimensions.find((d) => d.id === parsed.attributeId) ?? null;
+    const table = model.tables.find((t) => t.id === metric.table) ?? null;
+    return { parsed, entry, attribute, table };
+  };
 
   return (
     <div className={styles.container}>
@@ -661,16 +748,19 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                   const tableDatabase = (table as { database?: string }).database;
                   const databaseLabel = getDatabaseLabel(tableDatabase);
                   const isSelected = selectedSourceId === table.id;
+                  
                   const iconClass = tableType === 'view'
                     ? styles.dataSourceIconView
                     : tableType === 'materialized_view'
                       ? styles.dataSourceIconMaterialized
                       : styles.dataSourceIconTable;
+
                   const icon = tableType === 'view'
                     ? Icons.view
                     : tableType === 'materialized_view'
                       ? Icons.materializedView
                       : Icons.tableLarge;
+
                   const typeLabel = tableType === 'view'
                     ? 'Vue'
                     : tableType === 'materialized_view'
@@ -739,12 +829,24 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                               className={styles.dataSourceMenuItem}
                               onClick={(event) => {
                                 event.stopPropagation();
+                                setDimensionsTableId(table.id);
+                                setTableMenuOpenId(null);
+                              }}
+                              role="menuitem"
+                            >
+                              Liste des dimensions
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.dataSourceMenuItem}
+                              onClick={(event) => {
+                                event.stopPropagation();
                                 setMetricsTableId(table.id);
                                 setTableMenuOpenId(null);
                               }}
                               role="menuitem"
                             >
-                              Métriques
+                              Liste des métriques
                             </button>
                           </div>
                         )}
@@ -785,9 +887,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                       onClick={() => setFrom('')}
                       title="Retirer la table"
                     >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 4L4 12M4 4L12 12" strokeLinecap="round" />
-                      </svg>
+                      <RemoveIcon size={10} variant="cross" />
                     </button>
                   )}
                 </div>
@@ -840,7 +940,6 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                     key={field.id}
                     field={field}
                     index={index}
-                    onUpdate={(updates) => updateSelect(field.id, updates)}
                     onRemove={() => removeSelect(field.id)}
                     onDragStart={() => setDragOverIndex(null)}
                     onDragEnd={() => setDragOverIndex(null)}
@@ -884,46 +983,39 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                           className={styles.filterRemove}
                           onClick={() => !readOnly && removeJoin(join.id)}
                         >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
-                          </svg>
+                          <RemoveIcon size={14} variant="trash" />
                         </button>
                       </div>
                       <div style={{ marginBottom: '8px' }}>
-                        <select
-                          className={styles.filterSelect}
+                        <FormSelect
                           value={join.table}
-                          onChange={(e) => !readOnly && updateJoin(join.id, { table: e.target.value })}
-                          style={{ width: '100%' }}
-                        >
-                          <option value="">Sélectionner une table</option>
-                          {availableTables.map((t) => (
-                            <option key={t.id} value={t.id}>{t.label}</option>
-                          ))}
-                        </select>
+                          onChange={(value) => !readOnly && updateJoin(join.id, { table: value })}
+                          options={[
+                            ...(join.table && !availableTables.some((t) => t.id === join.table)
+                              ? effectiveModel.tables.filter((t) => t.id === join.table).map((t) => ({ value: t.id, label: t.label }))
+                              : []),
+                            ...availableTables.map((t) => ({ value: t.id, label: t.label })),
+                          ]}
+                          placeholder="Sélectionner une table"
+                          disabled={readOnly}
+                        />
                       </div>
                       <div className={styles.joinCondition}>
-                        <select
-                          className={styles.filterSelect}
+                        <FormSelect
                           value={join.on.left}
-                          onChange={(e) => !readOnly && updateJoin(join.id, { on: { ...join.on, left: e.target.value } })}
-                        >
-                          <option value="">Champ source</option>
-                          {allFields.map((f) => (
-                            <option key={f.id} value={f.id}>{f.label}</option>
-                          ))}
-                        </select>
+                          onChange={(value) => !readOnly && updateJoin(join.id, { on: { ...join.on, left: value } })}
+                          options={allFields.map((f) => ({ value: f.id, label: f.label }))}
+                          placeholder="Champ source"
+                          disabled={readOnly}
+                        />
                         <span className={styles.joinConditionEquals}>=</span>
-                        <select
-                          className={styles.filterSelect}
+                        <FormSelect
                           value={join.on.right}
-                          onChange={(e) => !readOnly && updateJoin(join.id, { on: { ...join.on, right: e.target.value } })}
-                        >
-                          <option value="">Champ cible</option>
-                          {allFields.map((f) => (
-                            <option key={f.id} value={f.id}>{f.label}</option>
-                          ))}
-                        </select>
+                          onChange={(value) => !readOnly && updateJoin(join.id, { on: { ...join.on, right: value } })}
+                          options={allFields.map((f) => ({ value: f.id, label: f.label }))}
+                          placeholder="Champ cible"
+                          disabled={readOnly}
+                        />
                       </div>
                     </div>
                   ))}
@@ -989,9 +1081,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         className={styles.selectedFieldRemove}
                         onClick={() => !readOnly && removeGroupBy(g.id)}
                       >
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                          <path d="M9.5 2.5L2.5 9.5M2.5 2.5L9.5 9.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
+                        <RemoveIcon size={12} variant="trash" />
                       </button>
                     </div>
                   ))}
@@ -1002,22 +1092,19 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                 </div>
               )}
               <div style={{ marginTop: '12px' }}>
-                <select
-                  className={styles.filterSelect}
+                <FormSelect
                   value=""
-                  onChange={(e) => {
-                    if (e.target.value && !readOnly) {
-                      addGroupBy(e.target.value);
+                  onChange={(value) => {
+                    if (value && !readOnly) {
+                      addGroupBy(value);
                     }
                   }}
-                >
-                  <option value="">+ Ajouter un champ</option>
-                  {availableDimensions
+                  options={availableDimensions
                     .filter((d) => d.groupable && !state.groupBy.some((g) => g.field === d.id))
-                    .map((d) => (
-                      <option key={d.id} value={d.id}>{d.label}</option>
-                    ))}
-                </select>
+                    .map((d) => ({ value: d.id, label: d.label }))}
+                  placeholder="+ Ajouter un champ"
+                  disabled={readOnly}
+                />
               </div>
             </CollapsibleSection>
 
@@ -1085,29 +1172,24 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         className={styles.filterRemove}
                         onClick={() => !readOnly && removeOrderBy(o.id)}
                       >
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" strokeLinecap="round" />
-                        </svg>
+                        <RemoveIcon size={14} variant="trash" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
               <div style={{ marginTop: state.orderBy.length > 0 ? '12px' : 0 }}>
-                <select
-                  className={styles.filterSelect}
+                <FormSelect
                   value=""
-                  onChange={(e) => {
-                    if (e.target.value && !readOnly) {
-                      addOrderBy(e.target.value);
+                  onChange={(value) => {
+                    if (value && !readOnly) {
+                      addOrderBy(value);
                     }
                   }}
-                >
-                  <option value="">+ Ajouter un tri</option>
-                  {allFields.map((f) => (
-                    <option key={f.id} value={f.id}>{f.label}</option>
-                  ))}
-                </select>
+                  options={allFields.map((f) => ({ value: f.id, label: f.label }))}
+                  placeholder="+ Ajouter un tri"
+                  disabled={readOnly}
+                />
               </div>
             </CollapsibleSection>
 
@@ -1120,26 +1202,28 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             >
               <div className={styles.limitOffset}>
                 <div className={styles.limitField}>
-                  <label className={styles.limitLabel}>LIMIT</label>
-                  <input
+                  <FormInput
                     type="number"
-                    className={styles.limitInput}
+                    label="LIMIT"
+                    layout="inline"
                     value={state.limit ?? ''}
                     onChange={(e) => !readOnly && setLimit(e.target.value ? parseInt(e.target.value, 10) : undefined)}
                     min={1}
                     max={100000}
                     placeholder="100"
+                    disabled={readOnly}
                   />
                 </div>
                 <div className={styles.limitField}>
-                  <label className={styles.limitLabel}>OFFSET</label>
-                  <input
+                  <FormInput
                     type="number"
-                    className={styles.limitInput}
+                    label="OFFSET"
+                    layout="inline"
                     value={state.offset ?? ''}
                     onChange={(e) => !readOnly && setOffset(e.target.value ? parseInt(e.target.value, 10) : undefined)}
                     min={0}
                     placeholder="0"
+                    disabled={readOnly}
                   />
                 </div>
               </div>
@@ -1168,14 +1252,14 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
       //   </div>
       // )}
       >
-        <DatabaseConnectionTab showTitle={false}/>
+        <DatabaseConnectionTab showTitle={false} showDbList={false} outOfCard={true} afterUpsert={afterUpsert} />
       </Modal>
 
       <Modal
         isOpen={Boolean(definitionTableId)}
         onClose={() => setDefinitionTableId(null)}
         title={definitionTable ? `Définitions - ${definitionTable.label}` : 'Définitions'}
-        size="lg"
+        size="xl"
         footer={(
           <div className={styles.modalFooter}>
             <button
@@ -1198,15 +1282,17 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
               <thead>
                 <tr>
                   <th>Attribut</th>
-                  <th>Dimension</th>
-                  <th>Métrique</th>
+                  <th>Actions</th>
+                  <th>Formulaire</th>
                 </tr>
               </thead>
               <tbody>
                 {definitionAttributes.map((attribute) => {
                   const selection = definitionSelections[attribute.table]?.[attribute.id] ?? {
-                    dimension: true,
-                    metric: false,
+                    attributeLabel: null,
+                    selectedAction: null,
+                    dimensions: [],
+                    metrics: [],
                   };
                   const typeLabels: Record<string, string> = {
                     string: 'Texte',
@@ -1218,7 +1304,30 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                     <tr key={attribute.id}>
                       <td>
                         <div className={styles.definitionAttribute}>
-                          <span className={styles.definitionAttributeLabel}>{attribute.label}</span>
+                          <input
+                            type="text"
+                            className={styles.definitionAttributeLabelInput}
+                            value={selection.attributeLabel ?? attribute.label}
+                            disabled={readOnly}
+                            onChange={(e) => {
+                              setDefinitionSelections((prev) => ({
+                                ...prev,
+                                [attribute.table]: {
+                                  ...prev[attribute.table],
+                                  [attribute.id]: {
+                                    ...(prev[attribute.table]?.[attribute.id] ?? {
+                                      attributeLabel: null,
+                                      selectedAction: null,
+                                      dimensions: [],
+                                      metrics: [],
+                                    }),
+                                    attributeLabel: e.target.value,
+                                  },
+                                },
+                              }));
+                            }}
+                            placeholder={attribute.label}
+                          />
                           <span className={styles.definitionAttributeId}>{attribute.id}</span>
                           <span className={styles.definitionAttributeType}>
                             Type: {typeLabels[attribute.type] || attribute.type}
@@ -1226,161 +1335,384 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
                         </div>
                       </td>
                       <td>
-                        <div className={styles.definitionCell}>
-                          <label className={styles.definitionCheckbox}>
-                            <input
-                              type="checkbox"
-                              checked={selection.dimension}
-                              disabled={readOnly}
-                              onChange={(event) => {
-                                const checked = event.target.checked;
-                                const currentLabel = selection.dimensionLabel || attribute.label;
-                                setDefinitionSelections((prev) => ({
-                                  ...prev,
-                                  [attribute.table]: {
-                                    ...prev[attribute.table],
-                                    [attribute.id]: {
-                                      ...prev[attribute.table]?.[attribute.id],
-                                      dimension: checked,
-                                      dimensionLabel: checked ? currentLabel : undefined,
-                                      dimensionAlias: checked ? generateAlias(currentLabel) : undefined,
-                                    },
-                                  },
-                                }));
-                              }}
-                            />
-                            <span>Dimension</span>
-                          </label>
-                          {selection.dimension && (
-                            <div className={styles.definitionFields}>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Libellé</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInput}
-                                  value={selection.dimensionLabel || attribute.label}
-                                  disabled={readOnly}
-                                  onChange={(event) => {
-                                    const newLabel = event.target.value;
-                                    setDefinitionSelections((prev) => ({
+                        <FormRadioGroup
+                          name={`action-${attribute.id}`}
+                          options={[
+                            { value: 'dimension', label: 'Ajouter dimension' },
+                            { value: 'metric', label: 'Ajouter métrique' },
+                          ]}
+                          value={selection.selectedAction || ''}
+                          onChange={(value) => {
+                            if (readOnly) return;
+                            setDefinitionSelections((prev) => ({
+                              ...prev,
+                              [attribute.table]: {
+                                ...prev[attribute.table],
+                                [attribute.id]: {
+                                  ...(prev[attribute.table]?.[attribute.id] ?? {
+                                    attributeLabel: null,
+                                    selectedAction: null,
+                                    dimensions: [],
+                                    metrics: [],
+                                  }),
+                                  selectedAction: value as 'dimension' | 'metric',
+                                },
+                              },
+                            }));
+                          }}
+                          orientation="vertical"
+                          disabled={readOnly}
+                        />
+                      </td>
+                      <td>
+                        <div className={styles.definitionFormColumn}>
+                          {selection.selectedAction && (
+                            <DefinitionItemForm
+                              type={selection.selectedAction}
+                              tableName={definitionTable?.id || attribute.table}
+                              attributeColumnName={attribute.id}
+                              attributeId={attribute.id}
+                              onAdd={(entry) => {
+                                setDefinitionSelections((prev) => {
+                                  const current = prev[attribute.table]?.[attribute.id] ?? {
+                                    attributeLabel: null,
+                                    selectedAction: selection.selectedAction,
+                                    dimensions: [],
+                                    metrics: [],
+                                  };
+                                  if (selection.selectedAction === 'dimension') {
+                                    return {
                                       ...prev,
                                       [attribute.table]: {
                                         ...prev[attribute.table],
                                         [attribute.id]: {
-                                          ...prev[attribute.table]?.[attribute.id],
-                                          dimensionLabel: newLabel,
-                                          dimensionAlias: generateAlias(newLabel),
+                                          ...current,
+                                          dimensions: [...current.dimensions, entry as DimensionEntry],
                                         },
                                       },
-                                    }));
-                                  }}
-                                />
+                                    };
+                                  } else {
+                                    return {
+                                      ...prev,
+                                      [attribute.table]: {
+                                        ...prev[attribute.table],
+                                        [attribute.id]: {
+                                          ...current,
+                                          metrics: [...current.metrics, entry as MetricEntry],
+                                        },
+                                      },
+                                    };
+                                  }
+                                });
+                              }}
+                            />
+                          )}
+
+                          {selection.dimensions.length > 0 && (
+                            <div className={styles.definitionEntryList}>
+                              <div className={styles.definitionEntryListTitle}>
+                                Dimensions ({selection.dimensions.length})
                               </div>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Alias</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInputDisabled}
-                                  value={selection.dimensionAlias || generateAlias(selection.dimensionLabel || attribute.label)}
-                                  disabled
-                                  readOnly
-                                />
-                              </div>
+                              {selection.dimensions.map((dim) => (
+                                <div key={dim.id} className={styles.definitionEntry}>
+                                  <div className={styles.definitionEntryInfo}>
+                                    <span className={styles.definitionEntryLabel}>{dim.label}</span>
+                                    <span className={styles.definitionEntryAlias}>{dim.alias}</span>
+                                    <span className={dim.unique ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                                      {dim.unique ? 'Unique' : 'Standard'}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+
+                                    onClick={() => {
+                                      setDefinitionSelections((prev) => ({
+                                        ...prev,
+                                        [attribute.table]: {
+                                          ...prev[attribute.table],
+                                          [attribute.id]: {
+                                            ...(prev[attribute.table]?.[attribute.id] ?? {
+                                              attributeLabel: null,
+                                              selectedAction: null,
+                                              dimensions: [],
+                                              metrics: [],
+                                            }),
+                                            dimensions: (prev[attribute.table]?.[attribute.id]?.dimensions ?? []).filter(
+                                              (d) => d.id !== dim.id
+                                            ),
+                                          },
+                                        },
+                                      }));
+                                    }}
+                                    title="Supprimer"
+                                  >
+                                    <RemoveIcon size={14} variant="trash" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
+                          )}
+
+                          {selection.metrics.length > 0 && (
+                            <div className={styles.definitionEntryList}>
+                              <div className={styles.definitionEntryListTitle}>
+                                Métriques ({selection.metrics.length})
+                              </div>
+                              {selection.metrics.map((met) => (
+                                <div key={met.id} className={styles.definitionEntry}>
+                                  <div className={styles.definitionEntryInfo}>
+                                    <span className={styles.definitionEntryLabel}>{met.label}</span>
+                                    <span className={styles.definitionEntryAlias}>{met.alias}</span>
+                                    {met.formula && (
+                                      <span className={styles.definitionEntryFormula}>{met.formula}</span>
+                                    )}
+                                    <span className={met.unique ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                                      {met.unique ? 'Unique' : 'Standard'}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+
+                                    onClick={() => {
+                                      setDefinitionSelections((prev) => ({
+                                        ...prev,
+                                        [attribute.table]: {
+                                          ...prev[attribute.table],
+                                          [attribute.id]: {
+                                            ...(prev[attribute.table]?.[attribute.id] ?? {
+                                              attributeLabel: null,
+                                              selectedAction: null,
+                                              dimensions: [],
+                                              metrics: [],
+                                            }),
+                                            metrics: (prev[attribute.table]?.[attribute.id]?.metrics ?? []).filter(
+                                              (m) => m.id !== met.id
+                                            ),
+                                          },
+                                        },
+                                      }));
+                                    }}
+                                    title="Supprimer"
+                                  >
+                                    <RemoveIcon size={14} variant="trash" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {!selection.selectedAction && selection.dimensions.length === 0 && selection.metrics.length === 0 && (
+                            <span className={styles.definitionFormPlaceholder}>
+                              Sélectionnez une action pour afficher le formulaire
+                            </span>
                           )}
                         </div>
                       </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(dimensionsTableId)}
+        onClose={() => {
+          setDimensionsTableId(null);
+          setEditingDimId(null);
+          setEditDimData({ label: '', unique: false });
+        }}
+        title={dimensionsTable ? `Dimensions - ${dimensionsTable.label}` : 'Dimensions'}
+        size="lg"
+        footer={(
+          <div className={styles.modalFooter}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              onClick={() => {
+                setDimensionsTableId(null);
+                setEditingDimId(null);
+                setEditDimData({ label: '', unique: false });
+              }}
+            >
+              Fermer
+            </button>
+          </div>
+        )}
+      >
+        {dimensionsForTable.length === 0 ? (
+          <div className={styles.modalEmptyState}>
+            Aucune dimension configurée pour cette table.
+          </div>
+        ) : (
+          <div className={styles.definitionTableWrapper}>
+            <table className={styles.definitionTable}>
+              <thead>
+                <tr>
+                  <th>Attribut</th>
+                  <th>Libellé</th>
+                  <th>Alias</th>
+                  <th>Unique</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dimensionsForTable.map((dim) => {
+                  const customInfo = getCustomDimensionEntry(dim);
+                  const isEditing = editingDimId === dim.id;
+                  const isEditable = Boolean(customInfo);
+                  const uniqueValue = customInfo?.entry.unique ?? false;
+                  const aliasValue = customInfo?.entry.alias ?? '—';
+                  const attributeName = customInfo?.attribute?.label ?? dim.label;
+                  const labelValue = customInfo?.entry.label ?? dim.label;
+                  const editAlias = isEditing && customInfo
+                    ? buildAlias(
+                      customInfo.table?.id || dim.table,
+                      customInfo.attribute?.id || customInfo.parsed.attributeId,
+                      editDimData.unique
+                    )
+                    : aliasValue;
+                  return (
+                    <tr key={dim.id} className={isEditing ? styles.definitionEditRow : undefined}>
                       <td>
-                        <div className={styles.definitionCell}>
-                          <label className={styles.definitionCheckbox}>
-                            <input
-                              type="checkbox"
-                              checked={selection.metric}
-                              disabled={readOnly}
-                              onChange={(event) => {
-                                const checked = event.target.checked;
-                                const currentLabel = selection.metricLabel || attribute.label;
-                                const defaultAgg: AggregationType = attribute.type === 'number' ? 'sum' : 'count';
-                                setDefinitionSelections((prev) => ({
-                                  ...prev,
-                                  [attribute.table]: {
-                                    ...prev[attribute.table],
-                                    [attribute.id]: {
-                                      ...prev[attribute.table]?.[attribute.id],
-                                      metric: checked,
-                                      metricLabel: checked ? currentLabel : undefined,
-                                      metricAlias: checked ? generateAlias(currentLabel) : undefined,
-                                      aggregationType: checked ? (prev[attribute.table]?.[attribute.id]?.aggregationType || defaultAgg) : undefined,
+                        <span className={styles.definitionAttributeLabel}>{attributeName}</span>
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <FormInput
+                            value={editDimData.label}
+                            onChange={(event) => setEditDimData((prev) => ({ ...prev, label: event.target.value }))}
+                            placeholder="Libellé"
+                          />
+                        ) : (
+                          <span>{labelValue}</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={styles.definitionEntryAlias}>{isEditing ? editAlias : aliasValue}</span>
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <FormCheckbox
+                            label="Unique"
+                            checked={editDimData.unique}
+                            onChange={(event) => setEditDimData((prev) => ({ ...prev, unique: event.target.checked }))}
+                          />
+                        ) : (
+                          <span className={uniqueValue ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                            {uniqueValue ? 'Unique' : 'Standard'}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <div className={styles.definitionActionIcons}>
+                          {isEditing ? (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
+                                onClick={() => {
+                                  const nextLabel = editDimData.label.trim();
+                                  if (!nextLabel || !customInfo) return;
+                                  const nextAlias = buildAlias(
+                                    customInfo.table?.id || dim.table,
+                                    customInfo.attribute?.id || customInfo.parsed.attributeId,
+                                    editDimData.unique
+                                  );
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [dim.table]: {
+                                      ...prev[dim.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).map((entry) =>
+                                          entry.id === customInfo.parsed.entryId
+                                            ? {
+                                              ...entry,
+                                              label: nextLabel,
+                                              name: nextLabel,
+                                              unique: editDimData.unique,
+                                              alias: nextAlias,
+                                            }
+                                            : entry
+                                        ),
+                                      },
                                     },
-                                  },
-                                }));
-                              }}
-                            />
-                            <span>Métrique</span>
-                          </label>
-                          {selection.metric && (
-                            <div className={styles.definitionFields}>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Libellé</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInput}
-                                  value={selection.metricLabel || attribute.label}
-                                  disabled={readOnly}
-                                  onChange={(event) => {
-                                    const newLabel = event.target.value;
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [attribute.table]: {
-                                        ...prev[attribute.table],
-                                        [attribute.id]: {
-                                          ...prev[attribute.table]?.[attribute.id],
-                                          metricLabel: newLabel,
-                                          metricAlias: generateAlias(newLabel),
-                                        },
+                                  }));
+                                  setEditingDimId(null);
+                                }}
+                                title="Enregistrer"
+                                disabled={!customInfo}
+                              >
+                                {Icons.save}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.definitionActionBtn}
+                                onClick={() => {
+                                  setEditingDimId(null);
+                                  setEditDimData({ label: '', unique: false });
+                                }}
+                                title="Annuler"
+                              >
+                                {Icons.close}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setEditingDimId(dim.id);
+                                  setEditDimData({ label: customInfo.entry.label, unique: customInfo.entry.unique });
+                                }}
+                                title={customInfo ? 'Modifier' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.edit}
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [dim.table]: {
+                                      ...prev[dim.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[dim.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        dimensions: (prev[dim.table]?.[customInfo.parsed.attributeId]?.dimensions ?? []).filter(
+                                          (entry) => entry.id !== customInfo.parsed.entryId
+                                        ),
                                       },
-                                    }));
-                                  }}
-                                />
-                              </div>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Alias</label>
-                                <input
-                                  type="text"
-                                  className={styles.definitionInputDisabled}
-                                  value={selection.metricAlias || generateAlias(selection.metricLabel || attribute.label)}
-                                  disabled
-                                  readOnly
-                                />
-                              </div>
-                              <div className={styles.definitionFieldGroup}>
-                                <label className={styles.definitionFieldLabel}>Agrégation</label>
-                                <select
-                                  className={styles.definitionSelect}
-                                  value={selection.aggregationType || (attribute.type === 'number' ? 'sum' : 'count')}
-                                  disabled={readOnly}
-                                  onChange={(event) => {
-                                    const aggType = event.target.value as AggregationType;
-                                    setDefinitionSelections((prev) => ({
-                                      ...prev,
-                                      [attribute.table]: {
-                                        ...prev[attribute.table],
-                                        [attribute.id]: {
-                                          ...prev[attribute.table]?.[attribute.id],
-                                          aggregationType: aggType,
-                                        },
-                                      },
-                                    }));
-                                  }}
-                                >
-                                  {AGGREGATION_OPTIONS.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                      {opt.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
+                                    },
+                                  }));
+                                  if (editingDimId === dim.id) {
+                                    setEditingDimId(null);
+                                    setEditDimData({ label: '', unique: false });
+                                  }
+                                }}
+                                title={customInfo ? 'Supprimer' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.trash}
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -1395,7 +1727,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
 
       <Modal
         isOpen={Boolean(metricsTableId)}
-        onClose={() => setMetricsTableId(null)}
+        onClose={() => {
+          setMetricsTableId(null);
+          setEditingMetId(null);
+          setEditMetData({ label: '', formula: '', unique: false });
+        }}
         title={metricsTable ? `Métriques - ${metricsTable.label}` : 'Métriques'}
         size="lg"
         footer={(
@@ -1403,7 +1739,11 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             <button
               type="button"
               className={`${styles.btn} ${styles.btnSecondary}`}
-              onClick={() => setMetricsTableId(null)}
+              onClick={() => {
+                setMetricsTableId(null);
+                setEditingMetId(null);
+                setEditMetData({ label: '', formula: '', unique: false });
+              }}
             >
               Fermer
             </button>
@@ -1419,32 +1759,199 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({
             <table className={styles.definitionTable}>
               <thead>
                 <tr>
-                  <th>Métrique</th>
-                  <th>Agrégation</th>
-                  <th>Source</th>
+                  <th>Attribut</th>
+                  <th>Libellé</th>
+                  <th>Alias</th>
+                  <th>Formule</th>
+                  <th>Unique</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {metricsForTable.map((metric) => (
-                  <tr key={metric.id}>
-                    <td>
-                      <div className={styles.definitionAttribute}>
-                        <span className={styles.definitionAttributeLabel}>{metric.label}</span>
-                        <span className={styles.definitionAttributeId}>{metric.id}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={styles.metricAgg}>
-                        {metric.defaultAgg ? metric.defaultAgg.toUpperCase() : 'AUTO'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={styles.metricSource}>
-                        {baseDimensionIds.has(metric.id) ? 'Attribut' : 'Métrique'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {metricsForTable.map((metric) => {
+                  const customInfo = getCustomMetricEntry(metric);
+                  const isEditing = editingMetId === metric.id;
+                  const isEditable = Boolean(customInfo);
+                  const uniqueValue = customInfo?.entry.unique ?? false;
+                  const aliasValue = customInfo?.entry.alias ?? '—';
+                  const attributeName = customInfo?.attribute?.label ?? metric.label;
+                  const labelValue = customInfo?.entry.label ?? metric.label;
+                  const formulaValue = customInfo?.entry.formula || (metric.defaultAgg ? metric.defaultAgg.toUpperCase() : 'AUTO');
+                  const editAlias = isEditing && customInfo
+                    ? buildAlias(
+                      customInfo.table?.id || metric.table,
+                      customInfo.attribute?.id || customInfo.parsed.attributeId,
+                      editMetData.unique,
+                      editMetData.formula
+                    )
+                    : aliasValue;
+                  const canSave = editMetData.label.trim().length > 0 && editMetData.formula.length > 0;
+
+                  return (
+                    <tr key={metric.id} className={isEditing ? styles.definitionEditRow : undefined}>
+                      <td>
+                        <span className={styles.definitionAttributeLabel}>{attributeName}</span>
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <FormInput
+                            value={editMetData.label}
+                            onChange={(event) => setEditMetData((prev) => ({ ...prev, label: event.target.value }))}
+                            placeholder="Libellé"
+                          />
+                        ) : (
+                          <span>{labelValue}</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={styles.definitionEntryAlias}>{isEditing ? editAlias : aliasValue}</span>
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <FormSelect
+                            options={FORMULA_OPTIONS}
+                            value={editMetData.formula}
+                            onChange={(value) => setEditMetData((prev) => ({ ...prev, formula: value }))}
+                            placeholder="Sélectionner"
+                          />
+                        ) : (
+                          <span className={styles.metricAgg}>
+                            {formulaValue}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {isEditing ? (
+                          <FormCheckbox
+                            label="Unique"
+                            checked={editMetData.unique}
+                            onChange={(event) => setEditMetData((prev) => ({ ...prev, unique: event.target.checked }))}
+                          />
+                        ) : (
+                          <span className={uniqueValue ? styles.definitionUniqueBadgeActive : styles.definitionUniqueBadgeInactive}>
+                            {uniqueValue ? 'Unique' : 'Standard'}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <div className={styles.definitionActionIcons}>
+                          {isEditing ? (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnSuccess}`}
+                                onClick={() => {
+                                  if (!canSave || !customInfo) return;
+                                  const nextLabel = editMetData.label.trim();
+                                  const nextAlias = buildAlias(
+                                    customInfo.table?.id || metric.table,
+                                    customInfo.attribute?.id || customInfo.parsed.attributeId,
+                                    editMetData.unique,
+                                    editMetData.formula
+                                  );
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [metric.table]: {
+                                      ...prev[metric.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).map((entry) =>
+                                          entry.id === customInfo.parsed.entryId
+                                            ? {
+                                              ...entry,
+                                              label: nextLabel,
+                                              name: nextLabel,
+                                              unique: editMetData.unique,
+                                              formula: editMetData.formula,
+                                              alias: nextAlias,
+                                            }
+                                            : entry
+                                        ),
+                                      },
+                                    },
+                                  }));
+                                  setEditingMetId(null);
+                                }}
+                                title="Enregistrer"
+                                disabled={!canSave || !customInfo}
+                              >
+                                {Icons.save}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.definitionActionBtn}
+                                onClick={() => {
+                                  setEditingMetId(null);
+                                  setEditMetData({ label: '', formula: '', unique: false });
+                                }}
+                                title="Annuler"
+                              >
+                                {Icons.close}
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setEditingMetId(metric.id);
+                                  setEditMetData({
+                                    label: customInfo.entry.label,
+                                    formula: customInfo.entry.formula,
+                                    unique: customInfo.entry.unique,
+                                  });
+                                }}
+                                title={customInfo ? 'Modifier' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.edit}
+                              </button>
+                              <button
+                                type="button"
+                                className={`${styles.definitionActionBtn} ${styles.definitionActionBtnDanger} ${!isEditable ? styles.definitionActionBtnDisabled : ''}`}
+                                onClick={() => {
+                                  if (!customInfo) return;
+                                  setDefinitionSelections((prev) => ({
+                                    ...prev,
+                                    [metric.table]: {
+                                      ...prev[metric.table],
+                                      [customInfo.parsed.attributeId]: {
+                                        ...(prev[metric.table]?.[customInfo.parsed.attributeId] ?? {
+                                          attributeLabel: null,
+                                          selectedAction: null,
+                                          dimensions: [],
+                                          metrics: [],
+                                        }),
+                                        metrics: (prev[metric.table]?.[customInfo.parsed.attributeId]?.metrics ?? []).filter(
+                                          (entry) => entry.id !== customInfo.parsed.entryId
+                                        ),
+                                      },
+                                    },
+                                  }));
+                                  if (editingMetId === metric.id) {
+                                    setEditingMetId(null);
+                                    setEditMetData({ label: '', formula: '', unique: false });
+                                  }
+                                }}
+                                title={customInfo ? 'Supprimer' : 'Non modifiable'}
+                                aria-disabled={!isEditable}
+                              >
+                                {Icons.trash}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

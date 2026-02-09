@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Paper } from "@mui/material";
-import { FormCheckbox } from "@/components/forms";
+import { FormCheckbox } from "@/components/forms/FormCheckbox/FormCheckbox";
 import { scriptStore } from "@/stores/scripts.store";
 
 export default function ResultsTable() {
