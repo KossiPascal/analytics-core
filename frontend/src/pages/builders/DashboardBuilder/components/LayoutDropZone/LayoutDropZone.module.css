@@ -69,3 +69,37 @@
 .removeItemBtn:hover {
   color: #ef4444;
 }
+
+/* ── Drag & Drop ───────────────────────────────────── */
+
+.layoutItem {
+  cursor: grab;
+}
+
+.layoutItem:active {
+  cursor: grabbing;
+}
+
+.layoutItem[draggable='true']:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.layoutZoneDragOver {
+  border-color: #7c3aed;
+  border-style: dashed;
+  background: #faf5ff;
+}
+
+.layoutZoneDragOver .layoutZoneHeader {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.layoutZoneDragOver .layoutPlaceholder {
+  color: #7c3aed;
+}
+
+.dragging {
+  opacity: 0.4;
+}

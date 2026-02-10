@@ -2,7 +2,7 @@ import React from 'react';
 
 import { LayoutConfiguration } from '../LayoutConfiguration/LayoutConfiguration';
 import { PreviewSection } from '../PreviewSection/PreviewSection';
-import type { ChartVariant, DimensionItem, VisualizationOptions } from '../types';
+import type { ChartVariant, DimensionItem, LayoutZone, VisualizationOptions } from '../types';
 import styles from './BuilderMainArea.module.css';
 
 interface BuilderMainAreaProps {
@@ -13,6 +13,7 @@ interface BuilderMainAreaProps {
   onRemoveColumnItem: (id: string) => void;
   onRemoveRowItem: (id: string) => void;
   onRemoveFilterItem: (id: string) => void;
+  onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
   previewChartType: ChartVariant;
   previewData: any[];
   previewSeries: any[];
@@ -20,6 +21,7 @@ interface BuilderMainAreaProps {
   isPreviewStale: boolean;
   isEditing: boolean;
   onRefreshPreview: () => void;
+  onOpenTheme: () => void;
   onOpenOptions: () => void;
   onOpenSaved: () => void;
   onSave: () => void;
@@ -33,6 +35,7 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
   onRemoveColumnItem,
   onRemoveRowItem,
   onRemoveFilterItem,
+  onMoveItem,
   previewChartType,
   previewData,
   previewSeries,
@@ -40,6 +43,7 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
   isPreviewStale,
   isEditing,
   onRefreshPreview,
+  onOpenTheme,
   onOpenOptions,
   onOpenSaved,
   onSave,
@@ -54,6 +58,7 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
         onRemoveColumnItem={onRemoveColumnItem}
         onRemoveRowItem={onRemoveRowItem}
         onRemoveFilterItem={onRemoveFilterItem}
+        onMoveItem={onMoveItem}
       />
 
       <PreviewSection
@@ -64,6 +69,7 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
         isPreviewStale={isPreviewStale}
         isEditing={isEditing}
         onRefreshPreview={onRefreshPreview}
+        onOpenTheme={onOpenTheme}
         onOpenOptions={onOpenOptions}
         onOpenSaved={onOpenSaved}
         onSave={onSave}

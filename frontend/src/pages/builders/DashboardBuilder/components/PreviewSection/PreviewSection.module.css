@@ -65,6 +65,19 @@
   background: #fef3c7;
 }
 
+.themeSwatches {
+  display: flex;
+  gap: 2px;
+  margin-left: 2px;
+}
+
+.themeSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
 .refreshIconSpin {
   animation: rotate-refresh 1.2s linear infinite;
 }
