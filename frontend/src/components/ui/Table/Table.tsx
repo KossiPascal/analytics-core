@@ -217,7 +217,7 @@ export function Table<T extends Record<string, unknown>>({
         } : undefined}
       >
         <table className={styles.table}>
-        <thead className={cn(styles.thead, stickyHeader && styles.stickyHeader)}>
+        <thead className={cn(styles.thead, (stickyHeader || scrollable || enableScrollable) && styles.stickyHeader)}>
           <tr>
             {displayColumns.map((column) => (
               <th
