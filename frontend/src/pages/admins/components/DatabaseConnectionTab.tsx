@@ -470,7 +470,7 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
           dbConnections.length === 0 ? (<EmptyState />) :
             (
               <Table
-                data={form as any}
+                data={dbConnections as any}
                 columns={columns as any}
                 keyExtractor={(org: any) => org.id as string}
                 isLoading={loading}

@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.src.models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g, current_app
 from backend.src.helpers.hasher import hash_password, verify_password, hash_token
-from backend.src.helpers.auth import create_token,create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,check_rate_limit
+from backend.src.helpers.auth import create_refresh_token,save_refresh_token,get_refresh_token,revoke_refresh_token,check_rate_limit
 from backend.src.security.access_security import require_auth
 
 from backend.src.logger import get_backend_logger
@@ -171,7 +171,8 @@ def update_password():
         db.session.commit()
 
         # Optionally issue new access token
-        token, access_exp = create_token(user.to_dict_safe())
+        token, exp, payload = user.generate_permission_payload()
+
 
         return jsonify({"message": "Password updated successfully", "token": token}), 200
 
@@ -182,6 +183,7 @@ def update_password():
 # ===================== REFRESH TOKEN =====================
 @bp.post("/refresh")
 def refresh():
+    print("Refresh token request received from:", request.remote_addr)
     """
     Rotate refresh token and return new access + refresh token.
     Accepts JSON body { "refresh_token": "..." } or cookie "refresh_token".
@@ -202,12 +204,15 @@ def refresh():
         rt:RefreshToken = RefreshToken.query.filter_by(token=hashed_incoming).first()  # fallback
         now = datetime.now(timezone.utc)
 
+        print(f"Attempting to refresh token for client {client_id} at {now.isoformat()}")
         if not rt or not rt.expires_at:
             return jsonify({"error": "Invalid refresh token"}), 401
 
+        print(f"Found refresh token for user_id {rt.user_id}, expires at {rt.expires_at.isoformat()}, revoked: {rt.revoked}")
         if rt.revoked or utc(rt.expires_at) <= now:
             return jsonify({"error": "Refresh token invalid or expired"}), 401
 
+        print(f"Refresh token is valid. Issuing new tokens for user_id {rt.user_id}")
         user: User = User.query.get(rt.user_id)
         if not user or not user.is_active or user.is_deleted:
             return jsonify({"error": "User not found or inactive"}), 401
@@ -219,7 +224,6 @@ def refresh():
         raw_new, hashed_new, expires_at = create_refresh_token()
         save_refresh_token(user.id, hashed_new, expires_at)
 
-        # token, access_exp = create_token(user.to_dict_safe())
         token, expire, payload = user.generate_permission_payload()
         response = {
             "access_token": token,

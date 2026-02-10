@@ -46,10 +46,10 @@ export default function AdminPage() {
   const [isDbConnectionModalOpen, setIsDbConnectionModalOpen] = useState(false);
 
   const handleTabChange = (tabId: AdminTabType) => {
-    if (tabId === 'DB_CONNECTION') {
-      setIsDbConnectionModalOpen(true);
-      return;
-    }
+    // if (tabId === 'DB_CONNECTION') {
+    //   setIsDbConnectionModalOpen(true);
+    //   return;
+    // }
     setCurrentTab(tabId);
   };
 
@@ -61,7 +61,7 @@ export default function AdminPage() {
         case 'API_ACCESS':
           return <ApiAccessTab />;
         case 'DB_CONNECTION':
-          return null;
+          return <DatabaseConnectionTab />;
         case 'DATABASE':
           return <DatabaseActionsTab />;
         case 'DELETE_COUCHDB':
@@ -118,13 +118,13 @@ export default function AdminPage() {
           {renderTabContent()}
         </AnimatePresence>
       </div>
-
+{/* 
       <DatabaseConnectionTab
         renderAsModal
         modalOpen={isDbConnectionModalOpen}
         onCloseModal={() => setIsDbConnectionModalOpen(false)}
         modalTitle="Connexion à une base de données"
-      />
+      /> */}
     </PageWrapper>
   );
 }

@@ -90,8 +90,8 @@ def add_connection():
             dbname=data.get("dbname"),
             username_enc=encrypt(data["username"]) if data.get("username") else None,
             password_enc=encrypt(data["password"]) if data.get("password") else None,
-            is_active = bool(data.get("is_active") or True),
-            auto_sync = bool(payload.get("auto_sync", False)),
+            is_active = bool(data.get("is_active", True)),
+            auto_sync = payload.get("auto_sync") is True, # only for CouchDB
 
             ssh_enabled=bool(data.get("ssh_enabled", False)),
             ssh_host=data.get("ssh_host"),
@@ -112,14 +112,16 @@ def add_connection():
             for cible in CouchdbSyncCible.couchdb_names():
                 ModelMgr.create_source_table(cible.local_name)
 
+        conn_id = conn.id
+        conn_name = conn.name
         db.session.close()
 
-        logger.info("Connection created: %s", conn.name)
-        return jsonify({"id": conn.id}), 201
+        logger.info("Connection created: %s", conn_name)
+        return jsonify({"id": conn_id}), 201
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return error_response("Failed to create connection", 500, str(e))
+        return error_response(f"Failed to create connection", 500, str(e))
 
 @bp.put("/<int:conn_id>")
 @require_auth

@@ -218,7 +218,7 @@ class User(db.Model):
         """ Génère le payload JWT basé sur les rôles / permissions (caps). """
 
         payloadBrut = self.build_access_payload()
-        token, exp, payload = TokenManagement.encode(payloadBrut)
+        token, exp, payload = TokenManagement.encode(payload=payloadBrut)
 
         return payload if onlyPayload else (token, exp, payload)
     
