@@ -97,32 +97,9 @@ function TreemapTooltip({ active, payload, formatter }: any) {
   const data = payload[0].payload;
 
   return (
-    <div
-      style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-        padding: '12px 16px',
-        minWidth: '150px',
-      }}
-    >
-      <div
-        style={{
-          fontWeight: 600,
-          fontSize: '13px',
-          color: '#1e293b',
-          marginBottom: '4px',
-        }}
-      >
-        {data.name}
-      </div>
-      <div
-        style={{
-          fontSize: '13px',
-          color: '#64748b',
-        }}
-      >
+    <div className={styles.customTooltip}>
+      <div className={styles.tooltipLabel}>{data.name}</div>
+      <div className={styles.tooltipItemValue}>
         {formatter ? formatter(data.value, data.name) : formatNumber(data.value)}
       </div>
     </div>
