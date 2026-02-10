@@ -20,7 +20,7 @@ def require_auth(f=None, *, roles: Optional[list[str]] = None):
             # 1. Read Authorization header
             auth_header = request.headers.get("Authorization", "")
             if not auth_header or not auth_header.startswith("Bearer "):
-                raise Unauthorized("[REQUIRE_AUTH] Authorization header missing")
+                raise Unauthorized(f"[REQUIRE_AUTH] Authorization header missing: {auth_header} | {request.headers}")
 
             scheme, _, token = auth_header.partition(" ")
             if scheme.lower() != "bearer" or not token:

@@ -18,7 +18,43 @@ const PUBLIC_ENDPOINTS = [
   "/auth/logout",
 ];
 
+/* ============================================================================
+   API RESPONSE CONTRACT
+   ============================================================================ */
+export interface PayloadUser {
+  id: string;
+  username: string;
+  fullname: string;
+  tenant_id?: string;
+  roles: string[];
+  permissions?: string[];
+}
 
+export interface LoginResponse {
+  access_token: string;
+  access_token_exp: number;
+  refresh_token: string;
+  refresh_token_exp: number;
+  payload: PayloadUser;
+}
+
+export type ApiResponse<T = any> = {
+  status: number;
+  success: boolean;
+  data?: T;
+  message?: string;
+  headers?: any;
+};
+
+export type ApiMethods<UseFetch extends boolean> = {
+  get: <T = any>(url: string, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
+  post: <T = any>(url: string, data?: any, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
+  put: <T = any>(url: string, data?: any, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
+  patch: <T = any>(url: string, data?: any, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
+  delete: <T = any>(url: string, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
+  options: <T = any>(url: string, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
+  head: <T = any>(url: string, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
+};
 
 /* ============================================================================
    GLOBAL AUTH STATE (CRITICAL SECTION)
@@ -60,34 +96,15 @@ const refreshAccessToken = async (): Promise<string> => {
   }
 
   try {
-    const res = await axios.post(
-      `${API_URL}/auth/refresh`,
-      { refresh_token: refreshToken },
-      { withCredentials: true }
-    );
+    const res = await axios.post(`${API_URL}/auth/refresh`,{ refresh_token: refreshToken },{ withCredentials: true });
 
-    const {
-      access_token,
-      access_token_exp,
-      refresh_token,
-      refresh_token_exp,
-    } = res.data ?? {};
+    const {access_token,access_token_exp,refresh_token,refresh_token_exp} = res.data ?? {};
 
-    if (
-      !access_token ||
-      !access_token_exp ||
-      !refresh_token ||
-      !refresh_token_exp
-    ) {
+    if (!access_token ||!access_token_exp ||!refresh_token ||!refresh_token_exp) {
       throw new Error("INVALID_REFRESH_RESPONSE");
     }
 
-    tokenProvider.set(
-      access_token,
-      access_token_exp,
-      refresh_token,
-      refresh_token_exp
-    );
+    tokenProvider.set(access_token,access_token_exp,refresh_token,refresh_token_exp);
 
     return access_token;
   } catch (err) {
@@ -99,7 +116,6 @@ const refreshAccessToken = async (): Promise<string> => {
 /* ============================================================================
    AXIOS INSTANCE
    ============================================================================ */
-
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_URL,
   timeout: TIMEOUT,
@@ -109,27 +125,30 @@ const axiosInstance: AxiosInstance = axios.create({
 /* ============================================================================
    REQUEST INTERCEPTOR
    ============================================================================ */
-
-axiosInstance.interceptors.request.use((config:any) => {
+axiosInstance.interceptors.request.use((config: any) => {
   const url = config.url ?? "";
 
-  config.headers = {
-    "Content-Type": "application/json",
-    ...(config.headers || {}),
-  };
-
+  config.headers = { "Content-Type": "application/json", ...(config.headers || {}) };
+  
+  // 🚫 PAS DE TOKEN pour les routes publiques
   if (PUBLIC_ENDPOINTS.some(p => url.includes(p))) {
+    console.log(`[API] Public endpoint, no auth needed: ${url}`);
     return config;
   }
 
-  if (authFailed) {
-    return Promise.reject(new Error("AUTH_FAILED"));
-  }
+  // if (authFailed) {
+  //   console.warn(`[API] Auth previously failed, blocking request to: ${url}`);
+  //   return Promise.reject(new Error("AUTH_FAILED"));
+  // }
 
   const token = tokenProvider.getAccessToken();
+
   if (token && !tokenProvider.isAccessTokenExpired()) {
+    console.log(`[API] Attaching access token to request: ${url}`);
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  console.log(`[API] Request config for ${url}:`, config);
 
   return config;
 });
@@ -137,7 +156,6 @@ axiosInstance.interceptors.request.use((config:any) => {
 /* ============================================================================
    RESPONSE INTERCEPTOR (REFRESH CORE)
    ============================================================================ */
-
 axiosInstance.interceptors.response.use(
   (res: AxiosResponse) => res,
   async (error: AxiosError) => {
@@ -151,12 +169,8 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (
-      status !== 401 ||
-      original._retry ||
-      PUBLIC_ENDPOINTS.some(p => url.includes(p)) ||
-      authFailed
-    ) {
+    // if (status !== 401 || original._retry || PUBLIC_ENDPOINTS.some(p => url.includes(p)) || authFailed) {
+    if (status !== 401 || original._retry || PUBLIC_ENDPOINTS.some(p => url.includes(p))) {
       return Promise.reject(error);
     }
 
@@ -198,54 +212,28 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-/* ============================================================================
-   API RESPONSE CONTRACT
-   ============================================================================ */
-
-export type ApiResponse<T = any> = {
-  success: boolean;
-  status: number;
-  data?: T;
-  message?: string;
-};
 
 /* ============================================================================
    ERROR NORMALIZATION
    ============================================================================ */
-
 const normalizeError = (err: unknown): ApiResponse => {
   if (axios.isAxiosError(err)) {
-    return {
-      success: false,
-      status: err.response?.status ?? 0,
-      message:
-        err.response?.data?.message ??
-        err.message ??
-        "Request failed",
-    };
+    const status = err.response?.status ?? 0;
+    const message = extractErrorMessage(err.response?.data?.message, err.message ?? "Request failed");
+    return { status, success: false, message, headers: err.response?.headers };
   }
-
-  return {
-    success: false,
-    status: 0,
-    message: err instanceof Error ? err.message : "Unknown error",
-  };
+  if (err instanceof Error) return { status: 0, success: false, message: err.message };
+  return { status: 0, success: false, message: "Unknown error" };
 };
+
 
 /* ============================================================================
    SAFE API WRAPPER
    ============================================================================ */
-
-async function wrap<T>(
-  fn: () => Promise<AxiosResponse<T>>
-): Promise<ApiResponse<T>> {
+async function wrap<T>(fn: () => Promise<AxiosResponse<T>>): Promise<ApiResponse<T>> {
   try {
     const res = await fn();
-    return {
-      success: true,
-      status: res.status,
-      data: res.data,
-    };
+    return { success: true, status: res.status, data: res.data, headers: res.headers };
   } catch (err) {
     return normalizeError(err);
   }

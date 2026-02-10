@@ -39,15 +39,19 @@ export const tokenProvider = {
 
   isAccessTokenExpired(): boolean {
     const exp = Number(localStorage.getItem("access_token_exp"));
-    return !exp || Date.now() >= exp;
+    if (!exp) return true;
+
+    const expMs = exp * 1000; // secondes → millisecondes
+    console.log(`[TOKEN_PROVIDER] Checking access token expiration: exp=${expMs}, now=${Date.now()}`);
+    return Date.now() >= expMs;
+
+
+    // const nowSec = Math.floor(Date.now() / 1000);
+    // console.log(`[TOKEN_PROVIDER] Checking access token expiration: exp=${exp}, now=${nowSec}`);
+    // return nowSec >= exp;
   },
 
-  set(
-    access: string,
-    accessExp: number,
-    refresh: string,
-    refreshExp: number
-  ) {
+  set(access: string,accessExp: number,refresh: string,refreshExp: number) {
     localStorage.setItem("access_token", access);
     localStorage.setItem("access_token_exp", String(accessExp));
     localStorage.setItem("refresh_token", refresh);
