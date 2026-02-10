@@ -22,6 +22,7 @@ import type {
   ChartTypeOption,
   ChartVariant,
   DimensionItem,
+  LayoutZone,
   StoredVisualization,
   VisualizationConfig,
   VisualizationOptions,
@@ -35,6 +36,7 @@ import { OptionsModal } from './components/OptionsModal/OptionsModal';
 import { SaveModal } from './components/SaveModal/SaveModal';
 import { SavedVisualizationsModal } from './components/SavedVisualizationsModal/SavedVisualizationsModal';
 import { VisualizationTypeModal } from './components/VisualizationTypeModal/VisualizationTypeModal';
+import { ThemeModal } from './components/ThemeModal/ThemeModal';
 
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'line', name: 'Ligne', icon: <LineChart size={20} />, description: 'Évolution dans le temps', category: 'trend' },
@@ -74,6 +76,7 @@ const DashboardBuilderPage: React.FC = () => {
   // Modal states
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isSavedListOpen, setIsSavedListOpen] = useState(false);
 
@@ -195,6 +198,16 @@ const DashboardBuilderPage: React.FC = () => {
     setFilterItems((items) => items.filter((item) => !dataElementIds.has(item)));
   }, [chartType, dataElements, selectedDataElements.length]);
 
+  const handleMoveItem = useCallback((itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => {
+    const setters: Record<LayoutZone, React.Dispatch<React.SetStateAction<string[]>>> = {
+      column: setColumnItems,
+      row: setRowItems,
+      filter: setFilterItems,
+    };
+    setters[fromZone]((prev) => prev.filter((id) => id !== itemId));
+    setters[toZone]((prev) => (prev.includes(itemId) ? prev : [...prev, itemId]));
+  }, []);
+
   const handleRefreshPreview = useCallback(() => {
     setPreviewSnapshot({
       chartType,
@@ -235,6 +248,7 @@ const DashboardBuilderPage: React.FC = () => {
   const previewData = useMemo((): ChartDataItem[] => {
     const periodsForPreview =
       previewSnapshot.selectedPeriods.length > 0 ? previewSnapshot.selectedPeriods : ['THIS_MONTH'];
+    const palette = previewSnapshot.options.colors ?? CHART_COLORS.primary;
 
     if (
       previewSnapshot.chartType === 'pie' ||
@@ -250,7 +264,7 @@ const DashboardBuilderPage: React.FC = () => {
         return {
           name: item?.name || itemId,
           value: Math.floor(Math.random() * 500) + 100,
-          color: CHART_COLORS.primary[index % CHART_COLORS.primary.length],
+          color: palette[index % palette.length],
         };
       });
     }
@@ -293,6 +307,7 @@ const DashboardBuilderPage: React.FC = () => {
   }, [activePreviewDataIds, dataElements, indicators, orgUnits, previewSnapshot]);
 
   const previewSeries = useMemo(() => {
+    const palette = previewSnapshot.options.colors ?? CHART_COLORS.primary;
     return activePreviewDataIds.slice(0, 4).map((dataId, index) => {
       const item = dataElements.find((candidate) => candidate.id === dataId) ||
         indicators.find((candidate) => candidate.id === dataId);
@@ -300,11 +315,11 @@ const DashboardBuilderPage: React.FC = () => {
       return {
         dataKey: item?.name || dataId,
         name: item?.name || dataId,
-        color: CHART_COLORS.primary[index % CHART_COLORS.primary.length],
+        color: palette[index % palette.length],
         type: previewSnapshot.chartType === 'composed' ? ((index === 0 ? 'bar' : 'line') as 'bar' | 'line') : undefined,
       };
     });
-  }, [activePreviewDataIds, dataElements, indicators, previewSnapshot.chartType]);
+  }, [activePreviewDataIds, dataElements, indicators, previewSnapshot]);
 
   const handleSaveConfirm = useCallback(
     (saveName: string, saveDescription: string, saveVizType: VisualizationType) => {
@@ -385,6 +400,14 @@ const DashboardBuilderPage: React.FC = () => {
     if (viz.filters.length > 0) {
       setFilterItems(viz.filters[0].items);
     }
+
+    // Synchroniser immédiatement le snapshot avec les options de la viz chargée
+    // (notamment les couleurs), sans attendre un clic sur Actualiser.
+    setPreviewSnapshot((prev) => ({
+      ...prev,
+      chartType: viz.chartType,
+      options: viz.options,
+    }));
   }, []);
 
   return (
@@ -421,6 +444,7 @@ const DashboardBuilderPage: React.FC = () => {
             onRemoveColumnItem={(id) => setColumnItems(columnItems.filter((item) => item !== id))}
             onRemoveRowItem={(id) => setRowItems(rowItems.filter((item) => item !== id))}
             onRemoveFilterItem={(id) => setFilterItems(filterItems.filter((item) => item !== id))}
+            onMoveItem={handleMoveItem}
             previewOptions={previewSnapshot.options}
             previewChartType={previewSnapshot.chartType}
             previewData={previewData}
@@ -428,6 +452,7 @@ const DashboardBuilderPage: React.FC = () => {
             isPreviewStale={isPreviewStale}
             isEditing={isEditing}
             onRefreshPreview={handleRefreshPreview}
+            onOpenTheme={() => setIsThemeModalOpen(true)}
             onOpenOptions={() => setIsOptionsModalOpen(true)}
             onOpenSaved={() => setIsSavedListOpen(true)}
             onSave={() => setIsSaveModalOpen(true)}
@@ -448,6 +473,19 @@ const DashboardBuilderPage: React.FC = () => {
         options={options}
         onOptionsChange={setOptions}
         onClose={() => setIsOptionsModalOpen(false)}
+      />
+
+      <ThemeModal
+        isOpen={isThemeModalOpen}
+        currentColors={options.colors}
+        onClose={() => setIsThemeModalOpen(false)}
+        onApply={(colors) => {
+          setOptions((prev) => ({ ...prev, colors }));
+          setPreviewSnapshot((prev) => ({
+            ...prev,
+            options: { ...prev.options, colors },
+          }));
+        }}
       />
 
       <SaveModal

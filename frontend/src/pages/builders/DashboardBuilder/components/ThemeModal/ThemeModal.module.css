@@ -1,0 +1,195 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.headerTitle svg {
+  color: #7c3aed;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.closeBtn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* ── Preview bande ───────────────────────────────── */
+
+.previewBar {
+  display: flex;
+  height: 8px;
+}
+
+.previewBarSwatch {
+  flex: 1;
+  transition: flex 0.3s;
+}
+
+/* ── Body ────────────────────────────────────────── */
+
+.body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0 0 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
+}
+
+/* ── Palette card ────────────────────────────────── */
+
+.paletteCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.625rem;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: left;
+}
+
+.paletteCard:hover {
+  border-color: #a78bfa;
+  background: #faf5ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+}
+
+.paletteCardActive {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.swatches {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.swatch {
+  flex: 1;
+  height: 28px;
+  border-radius: 4px;
+  transition: transform 0.15s;
+}
+
+.paletteCard:hover .swatch {
+  transform: scaleY(1.1);
+}
+
+.paletteName {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.paletteCardActive .paletteName {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.checkIcon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: #7c3aed;
+  color: white;
+  border-radius: 50%;
+}
+
+/* ── Footer ──────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.btnClose {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnClose:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}

@@ -41,7 +41,7 @@ export const RenderChartPreview: React.FC<{ chartType: string; previewData: any[
     tooltip: { enabled: options.showTooltip },
     grid: { horizontal: options.showGrid, vertical: false },
     animation: { enabled: options.animation },
-    colors: CHART_COLORS.primary,
+    colors: options.colors ?? CHART_COLORS.primary,
   };
 
   const needsDataKey = ['pie', 'donut', 'radialBar', 'treemap', 'funnel'].includes(chartType);
