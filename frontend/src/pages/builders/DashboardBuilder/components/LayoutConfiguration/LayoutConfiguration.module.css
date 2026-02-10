@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 0.25rem;
+  padding: 0.1rem 0.1rem;
   font-size: 0.9375rem;
   font-weight: 600;
   color: #1e293b;
@@ -24,7 +24,7 @@
 .layoutSection {
   display: grid;
   gap: 1rem;
-  padding: 1rem;
+  padding: 0.1rem;
 }
 
 @media (min-width: 640px) {
