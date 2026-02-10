@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Palette, X } from 'lucide-react';
 import styles from './ThemeModal.module.css';
 
@@ -62,6 +62,8 @@ export const THEME_PALETTES: ThemePalette[] = [
 interface ThemeModalProps {
   isOpen: boolean;
   currentColors?: string[];
+  /** Noms des indicateurs/séries actifs, pour afficher le mapping couleur→indicateur */
+  indicatorNames?: string[];
   onClose: () => void;
   onApply: (colors: string[]) => void;
 }
@@ -69,16 +71,24 @@ interface ThemeModalProps {
 export const ThemeModal: React.FC<ThemeModalProps> = ({
   isOpen,
   currentColors,
+  indicatorNames = [],
   onClose,
   onApply,
 }) => {
-  const [selected, setSelected] = useState<string | null>(() => {
-    if (!currentColors) return 'vivid';
+  const resolveSelected = (colors?: string[]) => {
+    if (!colors) return 'vivid';
     const match = THEME_PALETTES.find(
-      (p) => JSON.stringify(p.colors) === JSON.stringify(currentColors)
+      (p) => JSON.stringify(p.colors) === JSON.stringify(colors)
     );
     return match?.id ?? null;
-  });
+  };
+
+  const [selected, setSelected] = useState<string | null>(() => resolveSelected(currentColors));
+
+  // Sync quand currentColors change (chargement d'une viz existante)
+  useEffect(() => {
+    setSelected(resolveSelected(currentColors));
+  }, [currentColors]);
 
   if (!isOpen) return null;
 
@@ -88,10 +98,12 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
   };
 
   const activePalette = THEME_PALETTES.find((p) => p.id === selected);
+  const activeColors = activePalette?.colors ?? currentColors ?? THEME_PALETTES[0].colors;
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerTitle}>
@@ -103,25 +115,53 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
           </button>
         </div>
 
-        {/* Preview bande */}
-        {activePalette && (
-          <div className={styles.previewBar}>
-            {activePalette.colors.map((color, i) => (
-              <div
-                key={i}
-                className={styles.previewBarSwatch}
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
-        )}
+        {/* Bande de prévisualisation */}
+        <div className={styles.previewBar}>
+          {activeColors.map((color, i) => (
+            <div
+              key={i}
+              className={styles.previewBarSwatch}
+              style={{ backgroundColor: color }}
+            />
+          ))}
+        </div>
 
-        {/* Grille de palettes */}
         <div className={styles.body}>
-          <p className={styles.subtitle}>Choisissez une palette de couleurs pour ce graphique</p>
+
+          {/* Mapping indicateur → couleur */}
+          {indicatorNames.length > 0 && (
+            <div className={styles.indicatorSection}>
+              <p className={styles.indicatorTitle}>Couleurs assignées aux indicateurs</p>
+              <div className={styles.indicatorList}>
+                {indicatorNames.map((name, index) => {
+                  const color = activeColors[index % activeColors.length];
+                  return (
+                    <div key={index} className={styles.indicatorRow}>
+                      <span
+                        className={styles.indicatorDot}
+                        style={{ backgroundColor: color }}
+                      />
+                      <span
+                        className={styles.indicatorColorHex}
+                        style={{ color }}
+                      >
+                        {color}
+                      </span>
+                      <span className={styles.indicatorName}>{name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Grille de palettes */}
+          <p className={styles.subtitle}>Choisissez une palette de couleurs</p>
           <div className={styles.grid}>
             {THEME_PALETTES.map((palette) => {
               const isActive = selected === palette.id;
+              // Nombre de swatches = max entre 5 et le nombre d'indicateurs (plafonné à 10)
+              const swatchCount = Math.min(Math.max(indicatorNames.length, 5), palette.colors.length);
               return (
                 <button
                   key={palette.id}
@@ -130,7 +170,7 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                   onClick={() => handleSelect(palette)}
                 >
                   <div className={styles.swatches}>
-                    {palette.colors.slice(0, 5).map((color, i) => (
+                    {palette.colors.slice(0, swatchCount).map((color, i) => (
                       <span
                         key={i}
                         className={styles.swatch}

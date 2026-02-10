@@ -234,15 +234,13 @@ const DashboardBuilderPage: React.FC = () => {
         ? [...previewSnapshot.selectedDataElements, ...previewSnapshot.selectedIndicators]
         : [...previewSnapshot.selectedIndicators];
 
-    if (fromSelection.length > 0) {
-      return fromSelection;
-    }
-
-    if (previewSnapshot.chartType === 'table') {
+    // Si rien n'est sélectionné pour le tableau, fallback sur quelques éléments
+    if (fromSelection.length === 0 && previewSnapshot.chartType === 'table') {
       return [...dataElements.slice(0, 2).map((item) => item.id), ...indicators.slice(0, 2).map((item) => item.id)];
     }
 
-    return indicators.slice(0, 4).map((item) => item.id);
+    // Aucune sélection → pas de données (évite d'afficher tout par défaut)
+    return fromSelection;
   }, [previewSnapshot, dataElements, indicators]);
 
   const previewData = useMemo((): ChartDataItem[] => {
@@ -257,7 +255,7 @@ const DashboardBuilderPage: React.FC = () => {
       previewSnapshot.chartType === 'funnel' ||
       previewSnapshot.chartType === 'radialBar'
     ) {
-      return activePreviewDataIds.slice(0, 6).map((itemId, index) => {
+      return activePreviewDataIds.map((itemId, index) => {
         const item = dataElements.find((candidate) => candidate.id === itemId) ||
           indicators.find((candidate) => candidate.id === itemId);
 
@@ -274,7 +272,7 @@ const DashboardBuilderPage: React.FC = () => {
         const orgUnit = orgUnits.find((item) => item.id === orgUnitId);
         const entry: ChartDataItem = { subject: orgUnit?.name || orgUnitId };
 
-        activePreviewDataIds.slice(0, 3).forEach((dataId) => {
+        activePreviewDataIds.forEach((dataId) => {
           const dataItem = dataElements.find((item) => item.id === dataId) || indicators.find((item) => item.id === dataId);
           entry[dataItem?.name || dataId] = Math.floor(Math.random() * 100) + 20;
         });
@@ -297,7 +295,7 @@ const DashboardBuilderPage: React.FC = () => {
     return monthNames.slice(0, Math.max(periodsForPreview.length, 6)).map((month) => {
       const entry: ChartDataItem = { name: month };
 
-      activePreviewDataIds.slice(0, 4).forEach((dataId) => {
+      activePreviewDataIds.forEach((dataId) => {
         const dataItem = dataElements.find((item) => item.id === dataId) || indicators.find((item) => item.id === dataId);
         entry[dataItem?.name || dataId] = Math.floor(Math.random() * 300) + 50;
       });
@@ -308,7 +306,7 @@ const DashboardBuilderPage: React.FC = () => {
 
   const previewSeries = useMemo(() => {
     const palette = previewSnapshot.options.colors ?? CHART_COLORS.primary;
-    return activePreviewDataIds.slice(0, 4).map((dataId, index) => {
+    return activePreviewDataIds.map((dataId, index) => {
       const item = dataElements.find((candidate) => candidate.id === dataId) ||
         indicators.find((candidate) => candidate.id === dataId);
 
@@ -478,6 +476,10 @@ const DashboardBuilderPage: React.FC = () => {
       <ThemeModal
         isOpen={isThemeModalOpen}
         currentColors={options.colors}
+        indicatorNames={activePreviewDataIds.map((id) => {
+          const item = dataElements.find((d) => d.id === id) || indicators.find((d) => d.id === id);
+          return item?.name || id;
+        })}
         onClose={() => setIsThemeModalOpen(false)}
         onApply={(colors) => {
           setOptions((prev) => ({ ...prev, colors }));
