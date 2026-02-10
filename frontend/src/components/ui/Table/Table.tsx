@@ -52,6 +52,7 @@ export interface TableProps<T> {
   showFirstLastButtons?: boolean;
   toolbarLeftSection?: ReactNode;
   toolbarRightSection?: ReactNode;
+  scrollable?: boolean;
   maxHeight?: string | number;
 }
 
@@ -75,6 +76,7 @@ export function Table<T extends Record<string, unknown>>({
   showFirstLastButtons = true,
   toolbarLeftSection,
   toolbarRightSection,
+  scrollable = false,
   maxHeight = '600px',
 }: TableProps<T>) {
   const {
@@ -208,7 +210,7 @@ export function Table<T extends Record<string, unknown>>({
 
       <div
         className={styles.wrapper}
-        style={enableScrollable ? {
+        style={(enableScrollable || scrollable) ? {
           maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
           overflowY: 'auto',
           overflowX: 'auto',
