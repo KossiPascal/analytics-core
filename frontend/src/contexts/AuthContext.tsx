@@ -4,9 +4,6 @@ import { useAuthStore } from "@/stores/auth.store";
 import { DEFAULT_AUTHENTICATED_ROUTE, ROUTES } from "@/routes";
 import { useLocation, useNavigate } from "react-router-dom";
 
-// auth.sync.tsx
-import { tokenProvider } from "@/apis/token.provider";
-
 interface AuthContextType {
     user: PayloadUser | null;
     isAuthenticated: boolean;
@@ -28,12 +25,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const store = useAuthStore();
     const location = useLocation();
     const navigate = useNavigate();
-
-    // useAuthStore.getState().restore();
-    // const token = useAuthStore((s) => s.getToken());
-    // useEffect(() => {
-    //     tokenProvider.set(token ?? null);
-    // }, [token]);
 
     useEffect(() => {
         const init = async () => {
