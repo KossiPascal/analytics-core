@@ -30,3 +30,4 @@ TO_BE_DELETED
 logs
 flask_session
 analytics_engine
+query_engine
