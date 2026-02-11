@@ -29,3 +29,4 @@ backend/web
 TO_BE_DELETED
 logs
 flask_session
+analytics_engine
