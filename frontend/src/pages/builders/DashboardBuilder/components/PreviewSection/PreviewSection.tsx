@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit3, Eye, FolderOpen, RefreshCw, Save, Settings } from 'lucide-react';
+import { Edit3, Eye, FolderOpen, Palette, RefreshCw, Save, Settings } from 'lucide-react';
 
 import { RenderChartPreview } from '../RenderChartPreview/RenderChartPreview';
 import type { ChartVariant, VisualizationOptions } from '../types';
@@ -13,6 +13,7 @@ interface PreviewSectionProps {
   isPreviewStale: boolean;
   isEditing: boolean;
   onRefreshPreview: () => void;
+  onOpenTheme: () => void;
   onOpenOptions: () => void;
   onOpenSaved: () => void;
   onSave: () => void;
@@ -26,10 +27,13 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
   isPreviewStale,
   isEditing,
   onRefreshPreview,
+  onOpenTheme,
   onOpenOptions,
   onOpenSaved,
   onSave,
 }) => {
+  const activeColors = previewOptions.colors;
+
   return (
     <div className={styles.previewSection}>
       <div className={styles.previewHeader}>
@@ -46,6 +50,22 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           >
             <RefreshCw size={16} className={isPreviewStale ? styles.refreshIconSpin : ''} />
             Actualiser
+          </button>
+          <button
+            type="button"
+            className={styles.headerBtn}
+            onClick={onOpenTheme}
+            title="Changer le thème de couleurs"
+          >
+            <Palette size={16} />
+            Thème
+            {activeColors && (
+              <span className={styles.themeSwatches}>
+                {activeColors.slice(0, 4).map((c, i) => (
+                  <span key={i} className={styles.themeSwatch} style={{ backgroundColor: c }} />
+                ))}
+              </span>
+            )}
           </button>
           <button
             type="button"

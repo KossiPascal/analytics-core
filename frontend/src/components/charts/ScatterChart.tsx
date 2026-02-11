@@ -26,6 +26,7 @@ import {
   ChartContainer,
   useHiddenSeries,
 } from './ChartHelpers';
+import styles from './charts.module.css';
 
 // Custom tooltip for scatter chart
 function ScatterTooltip({ active, payload, formatter }: any) {
@@ -34,43 +35,14 @@ function ScatterTooltip({ active, payload, formatter }: any) {
   const data = payload[0].payload;
 
   return (
-    <div
-      style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-        padding: '12px 16px',
-        minWidth: '150px',
-      }}
-    >
+    <div className={styles.customTooltip}>
       {data.name && (
-        <div
-          style={{
-            fontWeight: 600,
-            fontSize: '13px',
-            color: '#1e293b',
-            marginBottom: '8px',
-            paddingBottom: '8px',
-            borderBottom: '1px solid #e2e8f0',
-          }}
-        >
-          {data.name}
-        </div>
+        <div className={styles.tooltipLabel}>{data.name}</div>
       )}
       {payload.map((entry: any, index: number) => (
-        <div
-          key={index}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            padding: '4px 0',
-          }}
-        >
-          <span style={{ color: '#64748b', fontSize: '13px' }}>{entry.name}</span>
-          <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '13px' }}>
+        <div key={index} className={styles.tooltipItem}>
+          <span className={styles.tooltipItemLabel}>{entry.name}</span>
+          <span className={styles.tooltipItemValue}>
             {formatter ? formatter(entry.value, entry.name) : formatNumber(entry.value)}
           </span>
         </div>

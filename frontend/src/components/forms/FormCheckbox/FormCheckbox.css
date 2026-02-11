@@ -1,13 +1,6 @@
 /* ===================
    CHECKBOX STYLES
    =================== */
-.checkboxWrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  user-select: none;
-}
 
 .checkboxBox {
   position: relative;

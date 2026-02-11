@@ -33,10 +33,7 @@
   gap: 1rem;
 }
 
-.dateInput {
-  flex: 1;
-  min-width: 150px;
-}
+
 
 .input {
   width: 100%;
@@ -84,14 +81,9 @@
     flex-direction: column;
   }
 
-  .filterGroup,
-  .dateInput {
+  .filterGroup
+   {
     min-width: 100%;
-  }
-
-  .dateRangeGroup {
-    flex-direction: column;
-    width: 100%;
   }
 
   .filterActions {

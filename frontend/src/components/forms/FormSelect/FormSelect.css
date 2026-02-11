@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.500rem 1rem;
+  padding: 0.300rem 0.8rem;
   font-size: 0.9375rem;
   color: var(--form-text);
   background: transparent;

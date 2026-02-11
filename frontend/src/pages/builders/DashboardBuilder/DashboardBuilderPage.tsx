@@ -21,7 +21,9 @@ import { db, initializeTestData, type VisualizationDimensionItem } from '@/utils
 import type {
   ChartTypeOption,
   ChartVariant,
+  DataSourceMode,
   DimensionItem,
+  LayoutZone,
   StoredVisualization,
   VisualizationConfig,
   VisualizationOptions,
@@ -35,6 +37,9 @@ import { OptionsModal } from './components/OptionsModal/OptionsModal';
 import { SaveModal } from './components/SaveModal/SaveModal';
 import { SavedVisualizationsModal } from './components/SavedVisualizationsModal/SavedVisualizationsModal';
 import { VisualizationTypeModal } from './components/VisualizationTypeModal/VisualizationTypeModal';
+import { ThemeModal } from './components/ThemeModal/ThemeModal';
+import { IndicatorBuilder } from './components/IndicatorBuilder/IndicatorBuilder';
+import type { IndicatorQueryConfig, SidebarEntity } from './components/IndicatorBuilder/IndicatorBuilder';
 
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'line', name: 'Ligne', icon: <LineChart size={20} />, description: 'Évolution dans le temps', category: 'trend' },
@@ -74,14 +79,21 @@ const DashboardBuilderPage: React.FC = () => {
   // Modal states
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isSavedListOpen, setIsSavedListOpen] = useState(false);
+  const [isIndicatorBuilderOpen, setIsIndicatorBuilderOpen] = useState(false);
+  const [editingIndicatorId, setEditingIndicatorId] = useState<string | null>(null);
+  const [indicatorConfigs, setIndicatorConfigs] = useState<Record<string, IndicatorQueryConfig>>({});
 
   // Visualization metadata
   const [visualizationType, setVisualizationType] = useState<VisualizationType>('dashboard');
   const [chartType, setChartType] = useState<ChartVariant>('bar');
   const [name, setName] = useState('Nouvelle visualisation');
   const [description, setDescription] = useState('');
+
+  // Data source mode (for table chart toggle)
+  const [dataSourceMode, setDataSourceMode] = useState<DataSourceMode>('indicators');
 
   // Edit mode
   const [editingVisualizationId, setEditingVisualizationId] = useState<string | null>(null);
@@ -104,6 +116,31 @@ const DashboardBuilderPage: React.FC = () => {
   const [periods, setPeriods] = useState<DimensionItem[]>([]);
   const [orgUnits, setOrgUnits] = useState<DimensionItem[]>([]);
   const [savedVisualizations, setSavedVisualizations] = useState<StoredVisualization[]>([]);
+
+  // Indicator builder data
+  const [indicatorEntities] = useState<SidebarEntity[]>([
+    {
+      id: 'mv1', label: 'Matview 1', type: 'materialized_view',
+      columns: [
+        { name: 'age', type: 'number', nullable: false },
+        { name: 'membre', type: 'number', nullable: false },
+        { name: 'sexe', type: 'string', nullable: false },
+        { name: 'fluorescence', type: 'string', nullable: true },
+        { name: 'date_visite', type: 'date', nullable: false },
+        { name: 'poids', type: 'number', nullable: true },
+      ],
+    },
+    { id: 'mv2', label: 'Matview 2', type: 'materialized_view', columns: [{ name: 'score', type: 'number', nullable: false }, { name: 'categorie', type: 'string', nullable: false }] },
+    { id: 'mv3', label: 'Matview 3', type: 'materialized_view', columns: [{ name: 'total', type: 'number', nullable: false }] },
+    { id: 't1', label: 'Table 1', type: 'table', columns: [{ name: 'valeur', type: 'number', nullable: false }] },
+    { id: 't2', label: 'Table 2', type: 'table', columns: [{ name: 'montant', type: 'number', nullable: false }] },
+    { id: 'v1', label: 'Vue 1', type: 'view', columns: [{ name: 'indicateur', type: 'number', nullable: false }] },
+  ]);
+  const [indicatorSites] = useState([
+    { value: 'site1', label: 'Site Lomé' },
+    { value: 'site2', label: 'Site Kara' },
+    { value: 'site3', label: 'Site Sokodé' },
+  ]);
 
   const [options, setOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
 
@@ -195,6 +232,68 @@ const DashboardBuilderPage: React.FC = () => {
     setFilterItems((items) => items.filter((item) => !dataElementIds.has(item)));
   }, [chartType, dataElements, selectedDataElements.length]);
 
+  const handleSaveIndicator = useCallback(
+    (indicator: DimensionItem, config: IndicatorQueryConfig) => {
+      setIndicatorConfigs((prev) => ({ ...prev, [indicator.id]: config }));
+
+      setIndicators((prev) => {
+        const existingIndex = prev.findIndex((ind) => ind.id === indicator.id);
+        if (existingIndex >= 0) {
+          // Update existing
+          const updated = [...prev];
+          updated[existingIndex] = indicator;
+          return updated;
+        }
+        // Add new
+        return [...prev, indicator];
+      });
+
+      setEditingIndicatorId(null);
+      showSuccess(
+        editingIndicatorId
+          ? `Indicateur modifié : "${indicator.name}"`
+          : `Indicateur créé : "${indicator.name}"`
+      );
+    },
+    [showSuccess, editingIndicatorId]
+  );
+
+  const editableIndicatorIds = useMemo(
+    () => new Set(Object.keys(indicatorConfigs)),
+    [indicatorConfigs]
+  );
+
+  const handleEditIndicator = useCallback(
+    (indicatorId: string) => {
+      setEditingIndicatorId(indicatorId);
+      setIsIndicatorBuilderOpen(true);
+    },
+    []
+  );
+
+  const handleDataSourceModeChange = useCallback(
+    (mode: DataSourceMode) => {
+      if (mode === dataSourceMode) return;
+      setDataSourceMode(mode);
+      if (mode === 'matview') {
+        setSelectedIndicators([]);
+      } else {
+        setSelectedDataElements([]);
+      }
+    },
+    [dataSourceMode]
+  );
+
+  const handleMoveItem = useCallback((itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => {
+    const setters: Record<LayoutZone, React.Dispatch<React.SetStateAction<string[]>>> = {
+      column: setColumnItems,
+      row: setRowItems,
+      filter: setFilterItems,
+    };
+    setters[fromZone]((prev) => prev.filter((id) => id !== itemId));
+    setters[toZone]((prev) => (prev.includes(itemId) ? prev : [...prev, itemId]));
+  }, []);
+
   const handleRefreshPreview = useCallback(() => {
     setPreviewSnapshot({
       chartType,
@@ -221,20 +320,19 @@ const DashboardBuilderPage: React.FC = () => {
         ? [...previewSnapshot.selectedDataElements, ...previewSnapshot.selectedIndicators]
         : [...previewSnapshot.selectedIndicators];
 
-    if (fromSelection.length > 0) {
-      return fromSelection;
-    }
-
-    if (previewSnapshot.chartType === 'table') {
+    // Si rien n'est sélectionné pour le tableau, fallback sur quelques éléments
+    if (fromSelection.length === 0 && previewSnapshot.chartType === 'table') {
       return [...dataElements.slice(0, 2).map((item) => item.id), ...indicators.slice(0, 2).map((item) => item.id)];
     }
 
-    return indicators.slice(0, 4).map((item) => item.id);
+    // Aucune sélection → pas de données (évite d'afficher tout par défaut)
+    return fromSelection;
   }, [previewSnapshot, dataElements, indicators]);
 
   const previewData = useMemo((): ChartDataItem[] => {
     const periodsForPreview =
       previewSnapshot.selectedPeriods.length > 0 ? previewSnapshot.selectedPeriods : ['THIS_MONTH'];
+    const palette = previewSnapshot.options.colors ?? CHART_COLORS.primary;
 
     if (
       previewSnapshot.chartType === 'pie' ||
@@ -243,14 +341,14 @@ const DashboardBuilderPage: React.FC = () => {
       previewSnapshot.chartType === 'funnel' ||
       previewSnapshot.chartType === 'radialBar'
     ) {
-      return activePreviewDataIds.slice(0, 6).map((itemId, index) => {
+      return activePreviewDataIds.map((itemId, index) => {
         const item = dataElements.find((candidate) => candidate.id === itemId) ||
           indicators.find((candidate) => candidate.id === itemId);
 
         return {
           name: item?.name || itemId,
           value: Math.floor(Math.random() * 500) + 100,
-          color: CHART_COLORS.primary[index % CHART_COLORS.primary.length],
+          color: palette[index % palette.length],
         };
       });
     }
@@ -260,7 +358,7 @@ const DashboardBuilderPage: React.FC = () => {
         const orgUnit = orgUnits.find((item) => item.id === orgUnitId);
         const entry: ChartDataItem = { subject: orgUnit?.name || orgUnitId };
 
-        activePreviewDataIds.slice(0, 3).forEach((dataId) => {
+        activePreviewDataIds.forEach((dataId) => {
           const dataItem = dataElements.find((item) => item.id === dataId) || indicators.find((item) => item.id === dataId);
           entry[dataItem?.name || dataId] = Math.floor(Math.random() * 100) + 20;
         });
@@ -283,7 +381,7 @@ const DashboardBuilderPage: React.FC = () => {
     return monthNames.slice(0, Math.max(periodsForPreview.length, 6)).map((month) => {
       const entry: ChartDataItem = { name: month };
 
-      activePreviewDataIds.slice(0, 4).forEach((dataId) => {
+      activePreviewDataIds.forEach((dataId) => {
         const dataItem = dataElements.find((item) => item.id === dataId) || indicators.find((item) => item.id === dataId);
         entry[dataItem?.name || dataId] = Math.floor(Math.random() * 300) + 50;
       });
@@ -293,18 +391,19 @@ const DashboardBuilderPage: React.FC = () => {
   }, [activePreviewDataIds, dataElements, indicators, orgUnits, previewSnapshot]);
 
   const previewSeries = useMemo(() => {
-    return activePreviewDataIds.slice(0, 4).map((dataId, index) => {
+    const palette = previewSnapshot.options.colors ?? CHART_COLORS.primary;
+    return activePreviewDataIds.map((dataId, index) => {
       const item = dataElements.find((candidate) => candidate.id === dataId) ||
         indicators.find((candidate) => candidate.id === dataId);
 
       return {
         dataKey: item?.name || dataId,
         name: item?.name || dataId,
-        color: CHART_COLORS.primary[index % CHART_COLORS.primary.length],
+        color: palette[index % palette.length],
         type: previewSnapshot.chartType === 'composed' ? ((index === 0 ? 'bar' : 'line') as 'bar' | 'line') : undefined,
       };
     });
-  }, [activePreviewDataIds, dataElements, indicators, previewSnapshot.chartType]);
+  }, [activePreviewDataIds, dataElements, indicators, previewSnapshot]);
 
   const handleSaveConfirm = useCallback(
     (saveName: string, saveDescription: string, saveVizType: VisualizationType) => {
@@ -385,6 +484,14 @@ const DashboardBuilderPage: React.FC = () => {
     if (viz.filters.length > 0) {
       setFilterItems(viz.filters[0].items);
     }
+
+    // Synchroniser immédiatement le snapshot avec les options de la viz chargée
+    // (notamment les couleurs), sans attendre un clic sur Actualiser.
+    setPreviewSnapshot((prev) => ({
+      ...prev,
+      chartType: viz.chartType,
+      options: viz.options,
+    }));
   }, []);
 
   return (
@@ -393,12 +500,19 @@ const DashboardBuilderPage: React.FC = () => {
         <BuilderHeader
           chartType={chartType}
           chartTypes={CHART_TYPES}
+          dataSourceMode={dataSourceMode}
+          onDataSourceModeChange={handleDataSourceModeChange}
           onOpenTypeModal={() => setIsTypeModalOpen(true)}
+          onOpenIndicatorBuilder={() => {
+            setEditingIndicatorId(null);
+            setIsIndicatorBuilderOpen(true);
+          }}
         />
 
         <div className={styles.content}>
           <BuilderSidebar
             chartType={chartType}
+            dataSourceMode={dataSourceMode}
             dataElements={dataElements}
             indicators={indicators}
             periods={periods}
@@ -411,6 +525,8 @@ const DashboardBuilderPage: React.FC = () => {
             onIndicatorsChange={setSelectedIndicators}
             onPeriodsChange={setSelectedPeriods}
             onOrgUnitsChange={setSelectedOrgUnits}
+            editableIndicatorIds={editableIndicatorIds}
+            onEditIndicator={handleEditIndicator}
           />
 
           <BuilderMainArea
@@ -421,6 +537,7 @@ const DashboardBuilderPage: React.FC = () => {
             onRemoveColumnItem={(id) => setColumnItems(columnItems.filter((item) => item !== id))}
             onRemoveRowItem={(id) => setRowItems(rowItems.filter((item) => item !== id))}
             onRemoveFilterItem={(id) => setFilterItems(filterItems.filter((item) => item !== id))}
+            onMoveItem={handleMoveItem}
             previewOptions={previewSnapshot.options}
             previewChartType={previewSnapshot.chartType}
             previewData={previewData}
@@ -428,6 +545,7 @@ const DashboardBuilderPage: React.FC = () => {
             isPreviewStale={isPreviewStale}
             isEditing={isEditing}
             onRefreshPreview={handleRefreshPreview}
+            onOpenTheme={() => setIsThemeModalOpen(true)}
             onOpenOptions={() => setIsOptionsModalOpen(true)}
             onOpenSaved={() => setIsSavedListOpen(true)}
             onSave={() => setIsSaveModalOpen(true)}
@@ -450,6 +568,23 @@ const DashboardBuilderPage: React.FC = () => {
         onClose={() => setIsOptionsModalOpen(false)}
       />
 
+      <ThemeModal
+        isOpen={isThemeModalOpen}
+        currentColors={options.colors}
+        indicatorNames={activePreviewDataIds.map((id) => {
+          const item = dataElements.find((d) => d.id === id) || indicators.find((d) => d.id === id);
+          return item?.name || id;
+        })}
+        onClose={() => setIsThemeModalOpen(false)}
+        onApply={(colors) => {
+          setOptions((prev) => ({ ...prev, colors }));
+          setPreviewSnapshot((prev) => ({
+            ...prev,
+            options: { ...prev.options, colors },
+          }));
+        }}
+      />
+
       <SaveModal
         isOpen={isSaveModalOpen}
         isEditing={isEditing}
@@ -465,6 +600,19 @@ const DashboardBuilderPage: React.FC = () => {
         savedVisualizations={savedVisualizations}
         onClose={() => setIsSavedListOpen(false)}
         onSelect={handleLoadVisualization}
+      />
+
+      <IndicatorBuilder
+        isOpen={isIndicatorBuilderOpen}
+        onClose={() => {
+          setIsIndicatorBuilderOpen(false);
+          setEditingIndicatorId(null);
+        }}
+        entities={indicatorEntities}
+        sites={indicatorSites}
+        onSaveIndicator={handleSaveIndicator}
+        editingIndicatorId={editingIndicatorId}
+        initialConfig={editingIndicatorId ? indicatorConfigs[editingIndicatorId] ?? null : null}
       />
     </>
   );

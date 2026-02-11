@@ -59,12 +59,13 @@ export const FormDatePicker = forwardRef<HTMLInputElement, FormDatePickerProps>(
       >
         <div className={wrapperClasses}>
           <input
+            {...props}
             ref={ref}
             id={inputId}
             type="date"
-            disabled={disabled}
-            className={`${styles.dateInput} ${className}`}
-            {...props}
+            disabled={disabled} 
+            className={`date-input ${className}`}
+            
           />
           <span className={styles.inputIconRight} style={{ pointerEvents: 'none' }}>
             <Calendar size={18} />
