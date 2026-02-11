@@ -1,15 +1,15 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { Database, Eye, Table2, X } from 'lucide-react';
+import { Database, Eye, Table2 } from 'lucide-react';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
-import { FormMultiSelect } from '@/components/forms/FormSelect/FormMultiSelect';
-import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { FormDatePicker } from '@/components/forms/FormDatePicker/FormDatePicker';
 import { Modal } from '@components/ui/Modal/Modal';
 import { CollapsibleSection } from '@pages/builders/SqlBuilder/components/CollapsibleSection';
 import type { AggType, ColumnType, EntityType, FilterOp } from '../../../builders.models';
 import { AGG_LABELS } from '../../../builders.models';
 import type { DimensionItem } from '../types';
+import { IndicatorFilterBuilder } from './IndicatorFilterBuilder';
+import type { IndicatorFilter } from './IndicatorFilterBuilder';
 import styles from './IndicatorBuilder.module.css';
 
 // ============================================================================
@@ -27,18 +27,6 @@ export interface SidebarEntity {
   label: string;
   type: EntityType;
   columns: SidebarColumn[];
-}
-
-interface IndicatorFilter {
-  id: string;
-  columnName: string;
-  columnType: ColumnType;
-  enabled: boolean;
-  min: string;
-  max: string;
-  selectedValues: string[];
-  dateStart: string;
-  dateEnd: string;
 }
 
 export interface IndicatorQueryConfig {
@@ -86,22 +74,6 @@ const ENTITY_SECTION_LABELS: Record<EntityType, string> = {
 };
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-const createFilter = (col: SidebarColumn): IndicatorFilter => ({
-  id: `filter-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-  columnName: col.name,
-  columnType: col.type,
-  enabled: false,
-  min: '',
-  max: '',
-  selectedValues: [],
-  dateStart: '',
-  dateEnd: '',
-});
-
-// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -124,7 +96,6 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
 
   // Filters
   const [filters, setFilters] = useState<IndicatorFilter[]>([]);
-  const [showFilterPicker, setShowFilterPicker] = useState(false);
 
   // Period
   const [periodStart, setPeriodStart] = useState('');
@@ -155,23 +126,16 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
       if (entity) {
         const restoredFilters: IndicatorFilter[] = initialConfig.filters.map((f) => {
           const col = entity.columns.find((c) => c.name === f.column);
-          const colType = col?.type ?? 'string';
-          const values = Array.isArray(f.value) ? f.value : [];
           return {
             id: `filter-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
             columnName: f.column,
-            columnType: colType,
-            enabled: true,
-            min: colType === 'number' ? String(values[0] ?? '') : '',
-            max: colType === 'number' ? String(values[1] ?? '') : '',
-            selectedValues: colType === 'string' ? (values as string[]) : [],
-            dateStart: colType === 'date' ? String(values[0] ?? '') : '',
-            dateEnd: colType === 'date' ? String(values[1] ?? '') : '',
+            columnType: col?.type ?? 'string',
+            op: f.op,
+            value: f.value,
           };
         });
         setFilters(restoredFilters);
       }
-      setShowFilterPicker(false);
     }
   }, [isOpen, initialConfig, editingIndicatorId, entities]);
 
@@ -201,17 +165,6 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
       .map((col) => ({ value: col.name, label: col.name }));
   }, [selectedEntity]);
 
-  const availableFilterColumns = useMemo(() => {
-    if (!selectedEntity) return [];
-    const usedColumns = new Set(filters.map((f) => f.columnName));
-    return selectedEntity.columns.filter((col) => !usedColumns.has(col.name));
-  }, [selectedEntity, filters]);
-
-  const filterColumnOptions = useMemo(
-    () => availableFilterColumns.map((col) => ({ value: col.name, label: `${col.name} (${col.type})` })),
-    [availableFilterColumns]
-  );
-
   const isFormValid = useMemo(
     () => !!(selectedEntityId && selectedMetric && aggType && indicatorName.trim()),
     [selectedEntityId, selectedMetric, aggType, indicatorName]
@@ -225,7 +178,6 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
     setAggType('avg');
     setIndicatorName('');
     setFilters([]);
-    setShowFilterPicker(false);
     setPeriodStart('');
     setPeriodEnd('');
     setSelectedSite('');
@@ -235,59 +187,17 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
     setSelectedEntityId(entityId);
     setSelectedMetric('');
     setFilters([]);
-    setShowFilterPicker(false);
-  }, []);
-
-  const handleAddFilter = useCallback(
-    (columnName: string) => {
-      const col = selectedEntity?.columns.find((c) => c.name === columnName);
-      if (!col) return;
-      setFilters((prev) => [...prev, createFilter(col)]);
-      setShowFilterPicker(false);
-    },
-    [selectedEntity]
-  );
-
-  const handleToggleFilter = useCallback((filterId: string) => {
-    setFilters((prev) =>
-      prev.map((f) => (f.id === filterId ? { ...f, enabled: !f.enabled } : f))
-    );
-  }, []);
-
-  const handleUpdateFilter = useCallback((filterId: string, updates: Partial<IndicatorFilter>) => {
-    setFilters((prev) =>
-      prev.map((f) => (f.id === filterId ? { ...f, ...updates } : f))
-    );
-  }, []);
-
-  const handleRemoveFilter = useCallback((filterId: string) => {
-    setFilters((prev) => prev.filter((f) => f.id !== filterId));
   }, []);
 
   const handleSave = useCallback(() => {
     if (!selectedEntityId || !isFormValid) return;
-
-    const activeFilters = filters
-      .filter((f) => f.enabled)
-      .map((f) => {
-        if (f.columnType === 'number') {
-          return { column: f.columnName, op: 'between' as FilterOp, value: [f.min, f.max] };
-        }
-        if (f.columnType === 'string') {
-          return { column: f.columnName, op: 'in' as FilterOp, value: f.selectedValues };
-        }
-        if (f.columnType === 'date') {
-          return { column: f.columnName, op: 'between' as FilterOp, value: [f.dateStart, f.dateEnd] };
-        }
-        return { column: f.columnName, op: '=' as FilterOp, value: '' };
-      });
 
     const config: IndicatorQueryConfig = {
       entityId: selectedEntityId,
       metric: selectedMetric,
       aggType,
       indicatorName: indicatorName.trim(),
-      filters: activeFilters,
+      filters: filters.map((f) => ({ column: f.columnName, op: f.op, value: f.value })),
       periodStart,
       periodEnd,
       site: selectedSite,
@@ -303,64 +213,6 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
     resetForm();
     onClose();
   }, [selectedEntityId, selectedMetric, aggType, indicatorName, filters, periodStart, periodEnd, selectedSite, isFormValid, onSaveIndicator, editingIndicatorId, resetForm, onClose]);
-
-  // ---------- Render helpers ----------
-
-  const renderFilterControls = (filter: IndicatorFilter) => {
-    if (!filter.enabled) return null;
-
-    switch (filter.columnType) {
-      case 'number':
-        return (
-          <div className={styles.filterControls}>
-            <FormInput
-              label="Mini:"
-              type="number"
-              value={filter.min}
-              onChange={(e) => handleUpdateFilter(filter.id, { min: e.target.value })}
-              placeholder="Min"
-            />
-            <FormInput
-              label="Max:"
-              type="number"
-              value={filter.max}
-              onChange={(e) => handleUpdateFilter(filter.id, { max: e.target.value })}
-              placeholder="Max"
-            />
-          </div>
-        );
-      case 'string':
-        return (
-          <div className={styles.filterControls}>
-            <FormMultiSelect
-              label="Dans:"
-              options={filter.selectedValues.map((v) => ({ value: v, label: v }))}
-              value={filter.selectedValues}
-              onChange={(values) => handleUpdateFilter(filter.id, { selectedValues: values })}
-              placeholder="Saisir des valeurs..."
-              searchable
-            />
-          </div>
-        );
-      case 'date':
-        return (
-          <div className={styles.filterControls}>
-            <FormDatePicker
-              label="De:"
-              value={filter.dateStart}
-              onChange={(e) => handleUpdateFilter(filter.id, { dateStart: e.target.value })}
-            />
-            <FormDatePicker
-              label="A:"
-              value={filter.dateEnd}
-              onChange={(e) => handleUpdateFilter(filter.id, { dateEnd: e.target.value })}
-            />
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
 
   // ---------- JSX ----------
 
@@ -440,69 +292,11 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
           </div>
 
           {/* --- Filtres --- */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>Filtres</span>
-              <button
-                type="button"
-                className={styles.addFilterBtn}
-                onClick={() => setShowFilterPicker(true)}
-                disabled={!selectedEntity || availableFilterColumns.length === 0}
-              >
-                + Ajouter filtre+
-              </button>
-            </div>
-
-            {showFilterPicker && (
-              <div className={styles.filterPickerRow}>
-                <FormSelect
-                  value=""
-                  onChange={(value) => {
-                    if (value) handleAddFilter(value);
-                  }}
-                  placeholder="Choisir une colonne..."
-                  options={filterColumnOptions}
-                  searchable
-                />
-                <button
-                  type="button"
-                  className={styles.btnCancel}
-                  onClick={() => setShowFilterPicker(false)}
-                >
-                  Annuler
-                </button>
-              </div>
-            )}
-
-            {filters.length > 0 && (
-              <div className={styles.filtersList}>
-                {filters.map((filter) => (
-                  <div key={filter.id} className={styles.filterRow}>
-                    <div className={styles.filterCheckbox}>
-                      <FormCheckbox
-                        label={filter.columnName}
-                        checked={filter.enabled}
-                        onChange={() => handleToggleFilter(filter.id)}
-                      />
-                    </div>
-                    {renderFilterControls(filter)}
-                    <button
-                      type="button"
-                      className={styles.filterRemove}
-                      onClick={() => handleRemoveFilter(filter.id)}
-                      aria-label="Supprimer le filtre"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {filters.length === 0 && !showFilterPicker && (
-              <div className={styles.emptyFilters}>Aucun filtre défini</div>
-            )}
-          </div>
+          <IndicatorFilterBuilder
+            columns={selectedEntity?.columns ?? []}
+            filters={filters}
+            onFiltersChange={setFilters}
+          />
 
           {/* --- Période --- */}
           <div className={styles.card}>
