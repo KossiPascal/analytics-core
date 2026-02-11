@@ -130,9 +130,10 @@
 }
 
 .filterRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 0.5rem;
   align-items: center;
-  gap: 0.75rem;
   padding: 0.75rem;
   background: #f8fafc;
   border-radius: 0.5rem;
@@ -140,22 +141,19 @@
 }
 
 .filterColumnLabel {
-  flex-shrink: 0;
-  min-width: 120px;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #1e293b;
+  white-space: nowrap;
 }
 
 .filterValueArea {
-  flex: 1;
   min-width: 0;
 }
 
 .filterControls {
   display: flex;
-  gap: 0.75rem;
-  flex: 1;
+  gap: 0.5rem;
   align-items: center;
 }
 
@@ -166,7 +164,6 @@
 }
 
 .filterRemove {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -178,7 +175,6 @@
   border-radius: 0.25rem;
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
-  margin-top: 0.25rem;
 }
 
 .filterRemove:hover {
@@ -302,6 +298,10 @@
   }
 
   .dateRow {
+    grid-template-columns: 1fr;
+  }
+
+  .filterRow {
     grid-template-columns: 1fr;
   }
 

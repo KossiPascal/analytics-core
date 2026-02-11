@@ -110,7 +110,7 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
                 {editableItemIds?.has(item.id) && onEditItem && (
                   <button
                     type="button"
-                    className={styles.editItemBtn}
+                    // className={styles.editItemBtn}
                     onClick={() => onEditItem(item.id)}
                     aria-label={`Modifier ${item.name}`}
                   >
