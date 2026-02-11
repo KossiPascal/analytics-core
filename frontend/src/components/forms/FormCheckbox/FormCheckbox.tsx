@@ -55,7 +55,7 @@ export const FormCheckbox = forwardRef<HTMLInputElement, FormCheckboxProps>(
           />
           {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
 
-          <span className={`${styles.checkboxBox} ${checkedValue ? styles.checked : ''}`}>
+          <span className={`checkboxBox ${styles.checkboxBox} ${checkedValue ? styles.checked : ''}`}>
              <Check size={14} strokeWidth={3} />
           </span>
           {label && <span className={styles.checkboxLabel}>{label}</span>}

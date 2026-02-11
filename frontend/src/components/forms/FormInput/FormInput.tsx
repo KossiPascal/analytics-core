@@ -110,7 +110,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
             id={inputId}
             type={inputType}
             disabled={disabled}
-            className={inputClasses}
+            className={`form-input ${inputClasses}`}
             {...props}
           />
           {isPassword && (

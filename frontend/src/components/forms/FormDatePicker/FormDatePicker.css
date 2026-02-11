@@ -1,9 +1,10 @@
 /* ===================
    DATE PICKER STYLES
    =================== */
-.dateInput {
+.date-input {
   width: 100%;
-  padding: 0.500rem 2.75rem 0.875rem 1rem;
+  height: auto;
+  padding: 0.300rem 0.8rem;
   font-size: 0.9375rem;
   color: var(--form-text);
   background: transparent;
@@ -12,12 +13,28 @@
   border-radius: var(--form-border-radius);
 }
 
-.dateInput::-webkit-calendar-picker-indicator {
+.date-input::-webkit-calendar-picker-indicator {
   opacity: 0;
   position: absolute;
   right: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
   cursor: pointer;
 }
+
+.date-input {
+  flex: 1;
+  min-width: 150px;
+}
+
+@media (max-width: 768px) {
+.date-input {
+ min-width: 100%;
+  }
+.dateRangeGroup {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
 
