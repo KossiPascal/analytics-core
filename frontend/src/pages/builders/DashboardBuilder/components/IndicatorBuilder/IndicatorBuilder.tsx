@@ -221,7 +221,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={editingIndicatorId ? 'Modifier l\'indicateur' : 'Indicator Builder'}
-      size="xl"
+      size="full"
       closeOnBackdrop
       closeOnEscape
     >
