@@ -5,6 +5,8 @@
 
 export type VisualizationType = 'dashboard' | 'report';
 
+export type DataSourceMode = 'matview' | 'indicators';
+
 export type ChartVariant =
   | 'line'
   | 'area'
@@ -88,6 +90,7 @@ export type ChartVariant =
   selectedItems: string[];
   onSelectionChange: (items: string[]) => void;
   searchPlaceholder?: string;
+  singleSelect?: boolean;
 }
 
 export type LayoutZone = 'column' | 'row' | 'filter';

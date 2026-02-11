@@ -14,6 +14,7 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   selectedItems,
   onSelectionChange,
   searchPlaceholder = 'Rechercher...',
+  singleSelect = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +29,12 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   }, [items, searchTerm]);
 
   const handleToggleItem = (itemId: string) => {
+    if (singleSelect) {
+      // In single-select mode, toggle off if already selected, otherwise select only this one
+      onSelectionChange(selectedItems.includes(itemId) ? [] : [itemId]);
+      return;
+    }
+
     if (selectedItems.includes(itemId)) {
       onSelectionChange(selectedItems.filter((id) => id !== itemId));
       return;
@@ -37,6 +44,7 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   };
 
   const handleSelectAll = () => {
+    if (singleSelect) return;
     onSelectionChange(filteredItems.map((item) => item.id));
   };
 
@@ -78,9 +86,11 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
           </div>
 
           <div className={styles.dimensionActions}>
-            <button type="button" onClick={handleSelectAll}>
-              Tout sélectionner
-            </button>
+            {!singleSelect && (
+              <button type="button" onClick={handleSelectAll}>
+                Tout sélectionner
+              </button>
+            )}
             <button type="button" onClick={handleDeselectAll}>
               Tout désélectionner
             </button>

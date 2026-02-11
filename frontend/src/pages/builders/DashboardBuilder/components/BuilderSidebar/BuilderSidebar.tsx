@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Building2, Calendar, Database, TrendingUp } from 'lucide-react';
 
 import { DimensionSelector } from '../DimensionSelector/DimensionSelector';
-import type { ChartVariant, DimensionItem } from '../types';
+import type { ChartVariant, DataSourceMode, DimensionItem } from '../types';
 import styles from './BuilderSidebar.module.css';
 
 interface BuilderSidebarProps {
   chartType: ChartVariant;
+  dataSourceMode: DataSourceMode;
   dataElements: DimensionItem[];
   indicators: DimensionItem[];
   periods: DimensionItem[];
@@ -23,6 +24,7 @@ interface BuilderSidebarProps {
 
 export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
   chartType,
+  dataSourceMode,
   dataElements,
   indicators,
   periods,
@@ -38,6 +40,17 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
 }) => {
   const isTableChart = chartType === 'table';
 
+  const handleMatViewSelectionChange = useCallback(
+    (items: string[]) => {
+      if (items.length <= 1) {
+        onDataElementsChange(items);
+        return;
+      }
+      onDataElementsChange([items[items.length - 1]]);
+    },
+    [onDataElementsChange]
+  );
+
   return (
     <div className={styles.sidebar}>
       <div className={styles.section}>
@@ -46,25 +59,28 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
           Dimensions de données
         </div>
 
-        {isTableChart && (
+        {isTableChart && dataSourceMode === 'matview' && (
           <DimensionSelector
             title="Mat views"
             icon={<Database size={16} />}
             items={dataElements}
             selectedItems={selectedDataElements}
-            onSelectionChange={onDataElementsChange}
+            onSelectionChange={handleMatViewSelectionChange}
             searchPlaceholder="Rechercher une mat view..."
+            singleSelect
           />
         )}
 
-        <DimensionSelector
-          title="Indicateurs"
-          icon={<TrendingUp size={16} />}
-          items={indicators}
-          selectedItems={selectedIndicators}
-          onSelectionChange={onIndicatorsChange}
-          searchPlaceholder="Rechercher un indicateur..."
-        />
+        {(!isTableChart || dataSourceMode === 'indicators') && (
+          <DimensionSelector
+            title="Indicateurs"
+            icon={<TrendingUp size={16} />}
+            items={indicators}
+            selectedItems={selectedIndicators}
+            onSelectionChange={onIndicatorsChange}
+            searchPlaceholder="Rechercher un indicateur..."
+          />
+        )}
 
         <DimensionSelector
           title="Périodes"

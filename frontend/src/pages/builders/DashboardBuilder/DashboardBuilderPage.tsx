@@ -21,6 +21,7 @@ import { db, initializeTestData, type VisualizationDimensionItem } from '@/utils
 import type {
   ChartTypeOption,
   ChartVariant,
+  DataSourceMode,
   DimensionItem,
   LayoutZone,
   StoredVisualization,
@@ -85,6 +86,9 @@ const DashboardBuilderPage: React.FC = () => {
   const [chartType, setChartType] = useState<ChartVariant>('bar');
   const [name, setName] = useState('Nouvelle visualisation');
   const [description, setDescription] = useState('');
+
+  // Data source mode (for table chart toggle)
+  const [dataSourceMode, setDataSourceMode] = useState<DataSourceMode>('indicators');
 
   // Edit mode
   const [editingVisualizationId, setEditingVisualizationId] = useState<string | null>(null);
@@ -197,6 +201,19 @@ const DashboardBuilderPage: React.FC = () => {
     setRowItems((items) => items.filter((item) => !dataElementIds.has(item)));
     setFilterItems((items) => items.filter((item) => !dataElementIds.has(item)));
   }, [chartType, dataElements, selectedDataElements.length]);
+
+  const handleDataSourceModeChange = useCallback(
+    (mode: DataSourceMode) => {
+      if (mode === dataSourceMode) return;
+      setDataSourceMode(mode);
+      if (mode === 'matview') {
+        setSelectedIndicators([]);
+      } else {
+        setSelectedDataElements([]);
+      }
+    },
+    [dataSourceMode]
+  );
 
   const handleMoveItem = useCallback((itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => {
     const setters: Record<LayoutZone, React.Dispatch<React.SetStateAction<string[]>>> = {
@@ -414,12 +431,15 @@ const DashboardBuilderPage: React.FC = () => {
         <BuilderHeader
           chartType={chartType}
           chartTypes={CHART_TYPES}
+          dataSourceMode={dataSourceMode}
+          onDataSourceModeChange={handleDataSourceModeChange}
           onOpenTypeModal={() => setIsTypeModalOpen(true)}
         />
 
         <div className={styles.content}>
           <BuilderSidebar
             chartType={chartType}
+            dataSourceMode={dataSourceMode}
             dataElements={dataElements}
             indicators={indicators}
             periods={periods}

@@ -68,6 +68,50 @@
   font-weight: 600;
 }
 
+.toggleContainer {
+  display: flex;
+  gap: 0;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748b;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleButton:first-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+  border-right: none;
+}
+
+.toggleButton:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.toggleButton:hover:not(.toggleButtonActive) {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.toggleButtonActive {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.toggleButtonActive svg {
+  color: #fff;
+}
+
 .typeChangeBtn {
   border: 1px solid #dbeafe;
   background: #fff;
