@@ -1,19 +1,26 @@
-import uuid
-from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
+import jwt
+import time
+import secrets
+import hashlib
+import hmac
+from typing import Any, Dict, Tuple
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.exc import IntegrityError
 from backend.src.databases.extensions import db
 from backend.src.config import Config
 from backend.src.helpers.hasher import hash_password, verify_password
-from hashlib import sha256
+from sqlalchemy.exc import SQLAlchemyError
+from itsdangerous import BadSignature, SignatureExpired
 
-from backend.src.security.token_manager import TokenManagement
+
+rate_limit_store: Dict[str, Tuple[int, int]] = {}  # client_id -> (count, first_ts)
+
 
 # -------------------- TENANT --------------------
 class Tenant(db.Model):
     __tablename__ = "tenants"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
@@ -42,7 +49,7 @@ class Tenant(db.Model):
 class Permission(db.Model):
     __tablename__ = "permissions"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), nullable=False)   # dashboard:read, report:create, chart:update
     description = db.Column(db.String(255), nullable=True)
     deleted = db.Column(db.Boolean, default=False)
@@ -61,9 +68,9 @@ class Permission(db.Model):
 class Role(db.Model):
     __tablename__ = "roles"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100), nullable=False)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id"), nullable=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), nullable=True)
     is_system = db.Column(db.Boolean, default=False)
     deleted = db.Column(db.Boolean, default=False)
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
@@ -83,15 +90,15 @@ class Role(db.Model):
 class RolePermission(db.Model):
     __tablename__ = "role_permissions"
 
-    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey("roles.id"), primary_key=True)
-    permission_id = db.Column(UUID(as_uuid=True), db.ForeignKey("permissions.id"), primary_key=True)
+    role_id = db.Column(db.BigInteger, db.ForeignKey("roles.id"), primary_key=True)
+    permission_id = db.Column(db.BigInteger, db.ForeignKey("permissions.id"), primary_key=True)
 
 # UsersLog model
 class UsersLog(db.Model):
     __tablename__ = "users_log"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
     user = db.relationship("User", back_populates="logs", lazy="joined")
 
     method = db.Column(db.String(10), nullable=False)
@@ -132,8 +139,8 @@ class UsersLog(db.Model):
 class User(db.Model):
     __tablename__ = "users"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey('tenants.id'), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id'), nullable=False)
 
     fullname = db.Column(db.String(255), nullable=True)
     username = db.Column(db.String(150), unique=True, nullable=False, index=True)
@@ -158,9 +165,9 @@ class User(db.Model):
 
     # Audit fields
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    created_by = db.Column(UUID(as_uuid=True), nullable=True)
+    created_by = db.Column(db.BigInteger, nullable=True)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
-    updated_by = db.Column(UUID(as_uuid=True), nullable=True)
+    updated_by = db.Column(db.BigInteger, nullable=True)
 
     # Relationships
     refresh_tokens = db.relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
@@ -168,7 +175,14 @@ class User(db.Model):
     tenant = db.relationship(Tenant, back_populates="users")
     roles = db.relationship(Role,secondary="user_roles",lazy="selectin")
 
-    
+    def __repr__(self):
+        return f"<User(username={self.username},roles={self.roles})>"
+   
+    # Utility methods
+    def to_dict_safe(self):
+        payload = self.generate_permission_payload(onlyPayload = True)
+        return {**payload, "created_at": self.created_at.isoformat() }
+
     def set_password(self, password: str):
         self.password_hash = hash_password(password)
     
@@ -216,13 +230,10 @@ class User(db.Model):
 
     def generate_permission_payload(self, onlyPayload:bool=False):
         """ Génère le payload JWT basé sur les rôles / permissions (caps). """
-
         payloadBrut = self.build_access_payload()
-        token, exp, payload = TokenManagement.encode(payload=payloadBrut)
+        token, exp, payload = User.encode(payload=payloadBrut)
 
         return payload if onlyPayload else (token, exp, payload)
-    
-                    
     
     def has_role(self, name: str) -> bool:
         return any(role.name.lower() == name.lower() for role in self.roles)
@@ -236,12 +247,7 @@ class User(db.Model):
     def is_viewer(self) -> bool:
         return self.has_role("viewer")
 
-    
-    # Utility methods
-    def to_dict_safe(self):
-        payload = self.generate_permission_payload(onlyPayload = True)
-        return {**payload, "created_at": self.created_at.isoformat() }
-
+ 
     @classmethod
     def create_default_admin(cls):
         cfg = Config.DEFAULT_ADMIN or {}
@@ -288,37 +294,171 @@ class User(db.Model):
                 return existing
             raise
 
+    @staticmethod
+    def encode(payload: Dict[str, Any],expires_in_minutes: int | None = None,useJWT: bool = True) -> Tuple[str, int, Dict[str, Any]]:
+        """
+        Encode an access token.
+        Returns: token: encoded token, exp: expiration timestamp (seconds), full_payload
+        """
+        now = int(time.time())  # seconds
 
-    def __repr__(self):
-        return f"<User(username={self.username},roles={self.roles})>"
+        ttl_minutes = (expires_in_minutes if expires_in_minutes is not None else Config.ACCESS_TOKEN_EXPIRES_MINUTES)
+        if not ttl_minutes:
+            raise ValueError("ACCESS_TOKEN_EXPIRES_MINUTES is not configured")
+
+        ttl_seconds = ttl_minutes * 60
+        exp = now + ttl_seconds
+
+        full_payload = { **payload, "iat": now, "exp": exp, "jti": secrets.token_hex(8), "typ": "access" }
+
+        if useJWT:
+            token = jwt.encode(full_payload, Config.JWT_SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
+        else:
+            token = Config.SERIALISER.dumps(full_payload)
+
+        return token, exp, full_payload
+
+    @staticmethod
+    def decode(token: str, useJWT: bool = True) -> Dict[str, Any]:
+        """
+        Decode and validate an access token.
+        Raises ValueError if invalid or expired.
+        """
+        if useJWT:
+            try:
+                return jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=[Config.JWT_ALGORITHM])
+            except jwt.ExpiredSignatureError:
+                raise ValueError("Access token expired")
+            except jwt.InvalidTokenError:
+                raise ValueError("Invalid access token")
+        try:
+            return Config.SERIALISER.loads(token, max_age=Config.ACCESS_TOKEN_EXPIRES_MINUTES * 60)
+        except SignatureExpired:
+            raise ValueError("Access token expired")
+        except BadSignature:
+            raise ValueError("Invalid access token")
+        except Exception:
+            raise ValueError("Invalid or expired access token")
+
+    @staticmethod
+    def is_expired(exp: int) -> bool:
+        """ Check expiration from exp timestamp (seconds) """
+        return int(time.time()) >= exp
+
+
 
 class UserRole(db.Model):
     __tablename__ = "user_roles"
 
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), primary_key=True)
-    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey("roles.id"), primary_key=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), primary_key=True)
+    role_id = db.Column(db.BigInteger, db.ForeignKey("roles.id"), primary_key=True)
 
 
-# RefreshToken model
 class RefreshToken(db.Model):
     __tablename__ = "refresh_tokens"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     token = db.Column(db.String(255), unique=True, nullable=False)  # hashed
     issued_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
     revoked = db.Column(db.Boolean, default=False, nullable=False)
+    revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # Foreign key to user
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     user = db.relationship("User", back_populates="refresh_tokens")
 
     def is_valid(self):
         return not self.revoked and self.expires_at > datetime.now(timezone.utc)
 
-    def hash_token(token: str) -> str:
-        return sha256(token.encode()).hexdigest()
+    @staticmethod
+    def hash_token(raw_token: str) -> str:
+        # return sha256(raw_token.encode()).hexdigest()
+        return hashlib.pbkdf2_hmac("sha256",raw_token.encode(),Config.REFRESH_TOKEN_SALT,Config.HASH_ITERATIONS).hex()
 
     def __repr__(self):
         return f"<RefreshToken user={self.user_id} revoked={self.revoked}>"
 
+
+    @staticmethod
+    def encode(days: int | None = None) -> Tuple[str, str, datetime]:
+        """
+        Generate refresh token.
+        Returns: raw_token: token sent to client hashed_token: token stored in DB expires_at: UTC datetime
+        """
+        expires_days = days or Config.REFRESH_TOKEN_EXPIRES_DAYS
+        raw_token = secrets.token_urlsafe(64)
+        hashed_token = RefreshToken.hash_token(raw_token)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
+        return raw_token, hashed_token, expires_at
+
+    @staticmethod
+    def isDecoded(raw_token: str,hashed_token_from_db: str,expires_at: datetime,revoked_at: datetime | None = None) -> bool:
+        """
+        Validate refresh token using DB state. Raises ValueError if invalid.
+        """
+        if revoked_at is not None:
+            raise ValueError("Refresh token revoked")
+
+        now = datetime.now(timezone.utc)
+        if expires_at <= now:
+            raise ValueError("Refresh token expired")
+
+        computed_hash = RefreshToken.hash_token(raw_token)
+        if not hmac.compare_digest(computed_hash,hashed_token_from_db):
+            raise ValueError("Invalid refresh token")
+
+        return True
+
+    @staticmethod
+    def rotate(old_refresh_token_row:"RefreshToken") -> Tuple[str, str, datetime]:
+        """
+        Revoke old token and generate a new one.
+        """
+        old_refresh_token_row.revoked = True
+        old_refresh_token_row.revoked_at = datetime.now(timezone.utc)
+
+        return RefreshToken.encode()
+    
+    @staticmethod
+    def save_refresh_token(user_id: str, hashed_token: str, expires_at: datetime) -> "RefreshToken":
+        """Save a new refresh token in DB."""
+        try:
+            rt = RefreshToken(user_id=user_id, token=hashed_token, expires_at=expires_at, revoked=False)
+            db.session.add(rt)
+            db.session.commit()
+            return rt
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            # logger.error(f"Failed to save refresh token: {str(e)}")
+            raise e
+
+    @staticmethod
+    def check_rate_limit(client_id: str) -> bool:
+        """Simple sliding window per-client rate limit (in-memory)."""
+        now = int(time.time())
+        entry = rate_limit_store.get(client_id)
+        if not entry:
+            rate_limit_store[client_id] = (1, now)
+            return True
+        count, first_ts = entry
+        if now - first_ts > Config.REFRESH_RATE_LIMIT_WINDOW_SECONDS:
+            rate_limit_store[client_id] = (1, now)
+            return True
+        if count >= Config.REFRESH_RATE_LIMIT_MAX:
+            return False
+        rate_limit_store[client_id] = (count + 1, first_ts)
+        return True
+    
+
+
+    def revoke_refresh_token(rt_obj: "RefreshToken") -> None:
+        """Revoke an existing refresh token."""
+        try:
+            rt_obj.revoked = True
+            rt_obj.revoked_at = datetime.now(timezone.utc)
+            db.session.commit()
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            # logger.error(f"Failed to revoke refresh token: {str(e)}")
+            raise e

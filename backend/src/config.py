@@ -3,6 +3,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 from celery.schedules import crontab
+from itsdangerous import URLSafeTimedSerializer
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ROOT_DIR = BASE_DIR.parent
@@ -45,10 +47,14 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     JWT_SECURITY_SALT = os.getenv("JWT_SECURITY_SALT", 'JWT_SECURITY_SALT')
     ACCESS_TOKEN_EXPIRES_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRES_MINUTES", 15))  # 15 min default
+
     REFRESH_TOKEN_EXPIRES_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRES_DAYS", 7))  # 7 days
+    REFRESH_TOKEN_SALT = os.getenv("REFRESH_TOKEN_SALT", "REFRESH_TOKEN_SALT").encode()
 
     REFRESH_RATE_LIMIT_MAX = int(os.getenv("REFRESH_RATE_LIMIT_MAX", 10))
     REFRESH_RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("REFRESH_RATE_LIMIT_WINDOW_SECONDS", 60))
+
+    HASH_ITERATIONS = int(os.getenv("HASH_ITERATIONS", 150_000))
 
 
     POSTGRES_HOST = os.getenv('POSTGRES_HOST') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_HOST')
@@ -124,4 +130,6 @@ class Config:
     ALLOWED_LANGUAGES = {"python", "sql", "json", "js", "javascript"}
 
     TIMEOUT = 60
+
+    SERIALISER = URLSafeTimedSerializer(secret_key=JWT_SECRET_KEY, salt=JWT_SECURITY_SALT)
 

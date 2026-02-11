@@ -3,7 +3,6 @@ from flask import Blueprint, jsonify, request
 from backend.src.security.access_security import require_auth
 from backend.src.databases.extensions import db
 from backend.src.models.visualization import Dataset
-import uuid
 
 bp = Blueprint("datasets", __name__, url_prefix="/api/datasets")
 
@@ -19,8 +18,8 @@ def list_datasets():
 def create_dataset():
     data = request.get_json()
     ds = Dataset(
-        tenant_id=uuid.UUID(data["tenant_id"]),
-        datasource_id=uuid.UUID(data["datasource_id"]),
+        tenant_id=int(data["tenant_id"]),
+        datasource_id=int(data["datasource_id"]),
         name=data["name"],
         sql=data["sql"],
         sql_type=data.get("sql_type", "select")

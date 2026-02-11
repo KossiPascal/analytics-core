@@ -26,6 +26,7 @@ export const PAGES = {
     SqlBuilderPage: lazy(() => import('@/pages/builders/SqlBuilder/SqlBuilderPage')) as any,
     QueryBuilderPage: lazy(() => import('@/pages/builders/QueryBuilder/QueryBuilderPage')) as any,
     DashboardBuilderPage: lazy(() => import('@/pages/builders/DashboardBuilder/DashboardBuilderPage')) as any,
+    CustomBuilderPage: lazy(() => import('@/pages/builders/CustomBuilder/CustomBuilderPage')) as any,
 
     // Users pages
     UsersPage: lazy(() => import('@pages/users/UsersPage')),
@@ -65,6 +66,7 @@ export const ROUTES = {
         sqlBuilder: () => '/sql-builder',
         queryBuilder: () => '/query-builder',
         dashboardBuilder: () => '/dashboard-builder',
+        customBuilder: () => '/custom-builder',
     },
 
     // AUTHENTICATION

@@ -1,7 +1,5 @@
-import uuid
 from datetime import datetime, timezone
-from sqlalchemy import CheckConstraint, Enum, Index, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Enum, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from backend.src.databases.extensions import db
 from backend.src.models.query.query_validator import QueryValidator
@@ -9,8 +7,8 @@ from backend.src.models.query.query_validator import QueryValidator
 class DataSource(db.Model):
     __tablename__ = "data_sources"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)  # keeps same type as TypeORM (text)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
 
     type = db.Column(db.String(50), nullable=False)  # postgres | mysql | api
     name = db.Column(db.String(255), nullable=False)
@@ -42,8 +40,8 @@ class DataSource(db.Model):
 class DataSourceConnection(db.Model):
     __tablename__ = "datasource_connections"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    datasource_id = db.Column(UUID(as_uuid=True), db.ForeignKey("data_sources.id", ondelete="CASCADE"))
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    datasource_id = db.Column(db.BigInteger, db.ForeignKey("data_sources.id", ondelete="CASCADE"))
     environment = db.Column(db.String(20), nullable=False)  # prod | staging
     host = db.Column(db.String(255))
     port = db.Column(db.Integer)
@@ -53,16 +51,16 @@ class DataSourceConnection(db.Model):
 class DataSourceCredential(db.Model):
     __tablename__ = "datasource_credentials"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    datasource_id = db.Column(UUID(as_uuid=True), db.ForeignKey("data_sources.id", ondelete="CASCADE"))
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    datasource_id = db.Column(db.BigInteger, db.ForeignKey("data_sources.id", ondelete="CASCADE"))
     vault_ref = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 class DataSourcePermission(db.Model):
     __tablename__ = "datasource_permissions"
 
-    datasource_id = db.Column(UUID(as_uuid=True), db.ForeignKey("data_sources.id", ondelete="CASCADE"), primary_key=True)
-    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
+    datasource_id = db.Column(db.BigInteger, db.ForeignKey("data_sources.id", ondelete="CASCADE"), primary_key=True)
+    role_id = db.Column(db.BigInteger, db.ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
 
     can_read = db.Column(db.Boolean, default=True)
     can_write = db.Column(db.Boolean, default=False)
@@ -74,9 +72,9 @@ class DataSourcePermission(db.Model):
 class Dataset(db.Model):
     __tablename__ = "datasets"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
-    datasource_id = db.Column(UUID(as_uuid=True), db.ForeignKey("data_sources.id", ondelete="RESTRICT"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    datasource_id = db.Column(db.BigInteger, db.ForeignKey("data_sources.id", ondelete="RESTRICT"), nullable=False)
 
     name = db.Column(db.String(255), nullable=False)
 
@@ -88,27 +86,27 @@ class Dataset(db.Model):
     
     is_validated = db.Column(db.Boolean, default=False)
     validated_at = db.Column(db.DateTime)
-    validated_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
+    validated_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
 
     sql = db.Column(db.Text, nullable=False)
     columns = db.Column(db.JSON, default=list)
 
     version = db.Column(db.Integer, default=1)
-    parent_id = db.Column(UUID(as_uuid=True), db.ForeignKey("datasets.id"))
+    parent_id = db.Column(db.BigInteger, db.ForeignKey("datasets.id"))
 
     is_active = db.Column(db.Boolean, default=True)
     is_deleted = db.Column(db.Boolean, default=False)
 
     # deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
-    # deleted_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
+    # deleted_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=True)
     # deleted_by = relationship("User", foreign_keys=[deleted_by_id])
 
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    created_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
+    created_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=True)
     # created_by = relationship("User", foreign_keys=[created_by_id])
 
     # updated_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    # updated_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
+    # updated_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=True)
     # updated_by = relationship("User", foreign_keys=[updated_by_id])
 
     tenant = relationship("Tenant", back_populates="datasets")
@@ -136,9 +134,9 @@ class Dataset(db.Model):
 class SemanticDimension(db.Model):
     __tablename__ = "semantic_dimensions"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    dataset_id = db.Column(UUID(as_uuid=True), db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
-    # tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    dataset_id = db.Column(db.BigInteger, db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
+    # tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
 
     name = db.Column(db.String(255), nullable=False)
     # field_type = db.Column(db.String(20), nullable=False)  # dimension | metric
@@ -159,9 +157,9 @@ class SemanticDimension(db.Model):
 class Metric(db.Model):
     __tablename__ = "metrics"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    # tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id"), nullable=False)
-    dataset_id = db.Column(UUID(as_uuid=True), db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    # tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), nullable=False)
+    dataset_id = db.Column(db.BigInteger, db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
 
     name = db.Column(db.String(255), nullable=False)
     formula = db.Column(db.Text, nullable=False)
@@ -177,9 +175,9 @@ class Metric(db.Model):
 class Query(db.Model):
     __tablename__ = "queries"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    # tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
-    dataset_id = db.Column(UUID(as_uuid=True), db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    # tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    dataset_id = db.Column(db.BigInteger, db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
 
     query_json = db.Column(db.JSON, nullable=False)
     compiled_sql = db.Column(db.Text, nullable=False)
@@ -237,9 +235,9 @@ class Query(db.Model):
 class Chart(db.Model):
     __tablename__ = "charts"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    # tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
-    query_id = db.Column(UUID(as_uuid=True), db.ForeignKey("queries.id", ondelete="CASCADE"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    # tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    query_id = db.Column(db.BigInteger, db.ForeignKey("queries.id", ondelete="CASCADE"), nullable=False)
 
     type = db.Column(db.String(50), nullable=False)  # bar, line, pie, table
     options = db.Column(db.JSON, nullable=False, default=dict) # chart config: colors, labels...
@@ -264,8 +262,8 @@ class Visualization(db.Model):
     __table_args__ = (db.UniqueConstraint("name", "status", name="uq_viz_role"),)
 
     # Core fields
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
 
     name = db.Column(db.String(255), nullable=False)
     type = db.Column(db.String(50), nullable=False)  # dashboard | report
@@ -282,7 +280,7 @@ class Visualization(db.Model):
         nullable=False
     )
 
-    parent_id = db.Column(UUID(as_uuid=True), db.ForeignKey("visualizations.id"))
+    parent_id = db.Column(db.BigInteger, db.ForeignKey("visualizations.id"))
 
     # Config & layout
 
@@ -292,15 +290,15 @@ class Visualization(db.Model):
     generated_data = db.Column(db.JSON)
 
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    created_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
+    created_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
     created_by = relationship("User", foreign_keys=[created_by_id])
 
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
-    updated_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
+    updated_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
     updated_by = relationship("User", foreign_keys=[updated_by_id])
 
     validated_at = db.Column(db.DateTime)
-    validated_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
+    validated_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
     validated_by = relationship("User", foreign_keys=[validated_by_id])
     validation_comment = db.Column(db.Text)
 
@@ -313,12 +311,12 @@ class Visualization(db.Model):
     shares = relationship("VisualizationShare", back_populates="visualization", cascade="all, delete-orphan")
 
     executed_at = db.Column(db.DateTime)
-    executed_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
+    executed_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
     executed_by = relationship("User", foreign_keys=[executed_by_id])
 
     is_deleted = db.Column(db.Boolean, default=False)
     deleted_at = db.Column(db.DateTime)
-    deleted_by_id = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"))
+    deleted_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
     deleted_by = relationship("User", foreign_keys=[deleted_by_id])
 
 
@@ -367,9 +365,9 @@ class Visualization(db.Model):
 class VisualizationChart(db.Model):
     __tablename__ = "visualization_charts"
 
-    visualization_id = db.Column(UUID(as_uuid=True),db.ForeignKey("visualizations.id", ondelete="CASCADE"),primary_key=True)
-    chart_id = db.Column(UUID(as_uuid=True),db.ForeignKey("charts.id", ondelete="CASCADE"),primary_key=True)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id"), nullable=False)
+    visualization_id = db.Column(db.BigInteger,db.ForeignKey("visualizations.id", ondelete="CASCADE"),primary_key=True)
+    chart_id = db.Column(db.BigInteger,db.ForeignKey("charts.id", ondelete="CASCADE"),primary_key=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), nullable=False)
 
     position = db.Column(db.JSON)
 
@@ -382,13 +380,13 @@ class VisualizationChart(db.Model):
 class VisualizationExecutionLog(db.Model):
     __tablename__ = "visualization_execution_logs"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id"), nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), nullable=False)
 
-    visualization_id = db.Column(UUID(as_uuid=True),db.ForeignKey("visualizations.id", ondelete="CASCADE"),nullable=False)
+    visualization_id = db.Column(db.BigInteger,db.ForeignKey("visualizations.id", ondelete="CASCADE"),nullable=False)
     
     executed_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    executed_by = db.Column(UUID(as_uuid=True), db.ForeignKey("users.id"), nullable=True)
+    executed_by = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=True)
 
     status = db.Column(
         db.Enum("success", "failed", name="visualization_execution_status"),
@@ -407,8 +405,8 @@ class VisualizationExecutionLog(db.Model):
 class VisualizationShare(db.Model):
     __tablename__ = "visualization_shares"
 
-    visualization_id = db.Column(UUID(as_uuid=True),db.ForeignKey("visualizations.id", ondelete="CASCADE"),primary_key=True)
-    role_id = db.Column(UUID(as_uuid=True),db.ForeignKey("roles.id", ondelete="CASCADE"),primary_key=True)
+    visualization_id = db.Column(db.BigInteger,db.ForeignKey("visualizations.id", ondelete="CASCADE"),primary_key=True)
+    role_id = db.Column(db.BigInteger,db.ForeignKey("roles.id", ondelete="CASCADE"),primary_key=True)
     public_token = db.Column(db.String(255), nullable=False)
     can_view = db.Column(db.Boolean, default=True)
     can_edit = db.Column(db.Boolean, default=False)
@@ -426,14 +424,14 @@ class VisualizationShare(db.Model):
 class DataLineage(db.Model):
     __tablename__ = "data_lineage"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id", ondelete="CASCADE"))
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"))
 
     source_type = db.Column(db.String(50), nullable=False)  # datasource | dataset | metric | chart
-    source_id = db.Column(UUID(as_uuid=True), nullable=False)
+    source_id = db.Column(db.BigInteger, nullable=False)
 
     target_type = db.Column(db.String(50), nullable=False)
-    target_id = db.Column(UUID(as_uuid=True), nullable=False)
+    target_id = db.Column(db.BigInteger, nullable=False)
 
     operation = db.Column(
         Enum("derived_from", "aggregated", "filtered", name="lineage_operation"),
@@ -446,8 +444,8 @@ class DataLineage(db.Model):
 class AIQueryLog(db.Model):
     __tablename__ = "ai_query_logs"
 
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = db.Column(UUID(as_uuid=True), db.ForeignKey("tenants.id"))
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"))
 
     prompt = db.Column(db.Text, nullable=False)
     generated_query_json = db.Column(db.JSON, nullable=False)

@@ -1,8 +1,7 @@
-from sqlalchemy.dialects.postgresql import UUID
 from database import db
 
 
 class Policy(db.Model):
-    id = db.Column(UUID(as_uuid=True), primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     effect = db.Column(db.String(10))  # allow / deny
     condition = db.Column(db.JSON)     # règles ou IA

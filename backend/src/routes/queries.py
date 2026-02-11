@@ -3,7 +3,6 @@ from flask import Blueprint, jsonify, request
 from backend.src.security.access_security import require_auth
 from backend.src.databases.extensions import db
 from backend.src.models.visualization import Query
-import uuid
 
 bp = Blueprint("queries", __name__, url_prefix="/api/queries")
 
@@ -13,7 +12,7 @@ bp = Blueprint("queries", __name__, url_prefix="/api/queries")
 def create_query():
     try:
         data = request.get_json()
-        query = Query(dataset_id=uuid.UUID(data["dataset_id"]),query_json=data["query_json"])
+        query = Query(dataset_id=int(data["dataset_id"]),query_json=data["query_json"])
         db.session.add(query)
         db.session.commit()
         return jsonify({"id": str(query.id)}), 201

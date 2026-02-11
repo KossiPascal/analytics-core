@@ -1,0 +1,38 @@
+{
+  "source": "pcimne",
+  "joins": [
+    {"table": "reco", "on": {"reco_id":"id"}},
+    {"table": "site", "on": {"site_id":"id"}}
+  ],
+  "dimensions": [
+    {"field": "age", "table": "pcimne"},
+    {"field": "date", "table": "pcimne", "time_series": true, "grain": "month", "alias": "month_bucket"}
+  ],
+  "metrics": [
+    {"agg": "count", "field": "*", "alias": "total_cases", "condition": "pcimne.has_fever IS TRUE"},
+    {"agg": "sum", "field": "has_fever", "alias": "fever_sum"}
+  ],
+  "window": [
+    {"fn": "rank", "field": "", "alias": "age_rank", "order": "total_cases DESC"}
+  ],
+  "pivot": {"field": "sex", "table": "pcimne", "values": ["male", "female"]},
+  "filters": {
+    "logic": "AND",
+    "conditions": [
+      {
+        "logic": "AND",
+        "conditions": [
+          {"field": "age", "op": "gte", "value": 5, "table": "pcimne"},
+          {"field": "region", "op": "eq", "value": "Kankan", "table": "site"}
+        ]
+      },
+      {
+        "logic": "OR",
+        "conditions": [
+          {"field": "sex", "op": "eq", "value": "male", "table": "pcimne"},
+          {"field": "sex", "op": "eq", "value": "female", "table": "pcimne"}
+        ]
+      }
+    ]
+  }
+}

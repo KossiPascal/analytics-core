@@ -132,7 +132,7 @@ axiosInstance.interceptors.request.use((config: any) => {
   
   // 🚫 PAS DE TOKEN pour les routes publiques
   if (PUBLIC_ENDPOINTS.some(p => url.includes(p))) {
-    console.log(`[API] Public endpoint, no auth needed: ${url}`);
+    // console.log(`[API] Public endpoint, no auth needed: ${url}`);
     return config;
   }
 
@@ -144,12 +144,11 @@ axiosInstance.interceptors.request.use((config: any) => {
   const token = tokenProvider.getAccessToken();
 
   if (token && !tokenProvider.isAccessTokenExpired()) {
-    console.log(`[API] Attaching access token to request: ${url}`);
+    // console.log(`[API] Attaching access token to request: ${url}`);
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  console.log(`[API] Request config for ${url}:`, config);
-
+  // console.log(`[API] Request config for ${url}:`, config);
   return config;
 });
 

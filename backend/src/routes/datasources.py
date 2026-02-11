@@ -3,7 +3,6 @@ from flask import Blueprint, jsonify, request
 from backend.src.security.access_security import require_auth
 from backend.src.databases.extensions import db
 from backend.src.models.visualization import DataSource
-import uuid
 
 bp = Blueprint("datasources", __name__, url_prefix="/api/datasources")
 
@@ -12,7 +11,7 @@ bp = Blueprint("datasources", __name__, url_prefix="/api/datasources")
 @require_auth
 def create_datasource():
     data = request.get_json()
-    ds = DataSource(tenant_id=uuid.UUID(data["tenant_id"]), type=data["type"], name=data["name"])
+    ds = DataSource(tenant_id=int(data["tenant_id"]), type=data["type"], name=data["name"])
     db.session.add(ds)
     db.session.commit()
     return jsonify({"id": str(ds.id), "name": ds.name}), 201

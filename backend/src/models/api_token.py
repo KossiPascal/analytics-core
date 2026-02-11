@@ -1,7 +1,5 @@
-import uuid
 import hashlib
 from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
 from backend.src.databases.extensions import db
 from backend.src.logger import get_backend_logger
 
@@ -11,7 +9,7 @@ logger = get_backend_logger(__name__)
 class ApiToken(db.Model):
     __tablename__ = "api_tokens"
 
-    id = db.Column(UUID(as_uuid=True),primary_key=True,default=uuid.uuid4)
+    id = db.Column(db.BigInteger,primary_key=True, autoincrement=True)
     # Token hashé (SHA256 hex)
     token_hash = db.Column(db.String(64),unique=True,nullable=False,index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
