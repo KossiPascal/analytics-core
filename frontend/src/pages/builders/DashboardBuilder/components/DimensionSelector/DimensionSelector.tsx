@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Search, X } from 'lucide-react';
 
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
@@ -15,6 +15,8 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   onSelectionChange,
   searchPlaceholder = 'Rechercher...',
   singleSelect = false,
+  editableItemIds,
+  onEditItem,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,13 +100,24 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
 
           <div className={styles.dimensionItems}>
             {filteredItems.map((item) => (
-              <FormCheckbox
-                key={item.id}
-                label={item.code ? `${item.name} (${item.code})` : item.name}
-                checked={selectedItems.includes(item.id)}
-                onChange={() => handleToggleItem(item.id)}
-                wrapperClassName={styles.dimensionItem}
-              />
+              <div key={item.id} className={styles.dimensionItemRow}>
+                <FormCheckbox
+                  label={item.code ? `${item.name} (${item.code})` : item.name}
+                  checked={selectedItems.includes(item.id)}
+                  onChange={() => handleToggleItem(item.id)}
+                  wrapperClassName={styles.dimensionItem}
+                />
+                {editableItemIds?.has(item.id) && onEditItem && (
+                  <button
+                    type="button"
+                    className={styles.editItemBtn}
+                    onClick={() => onEditItem(item.id)}
+                    aria-label={`Modifier ${item.name}`}
+                  >
+                    <Pencil size={12} />
+                  </button>
+                )}
+              </div>
             ))}
             {filteredItems.length === 0 && <div className={styles.noResults}>Aucun résultat</div>}
           </div>

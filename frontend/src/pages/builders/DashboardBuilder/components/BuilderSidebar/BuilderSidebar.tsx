@@ -20,6 +20,8 @@ interface BuilderSidebarProps {
   onIndicatorsChange: (items: string[]) => void;
   onPeriodsChange: (items: string[]) => void;
   onOrgUnitsChange: (items: string[]) => void;
+  editableIndicatorIds?: Set<string>;
+  onEditIndicator?: (indicatorId: string) => void;
 }
 
 export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
@@ -37,6 +39,8 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
   onIndicatorsChange,
   onPeriodsChange,
   onOrgUnitsChange,
+  editableIndicatorIds,
+  onEditIndicator,
 }) => {
   const isTableChart = chartType === 'table';
 
@@ -79,6 +83,8 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
             selectedItems={selectedIndicators}
             onSelectionChange={onIndicatorsChange}
             searchPlaceholder="Rechercher un indicateur..."
+            editableItemIds={editableIndicatorIds}
+            onEditItem={onEditIndicator}
           />
         )}
 

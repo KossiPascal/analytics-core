@@ -91,6 +91,8 @@ export type ChartVariant =
   onSelectionChange: (items: string[]) => void;
   searchPlaceholder?: string;
   singleSelect?: boolean;
+  editableItemIds?: Set<string>;
+  onEditItem?: (itemId: string) => void;
 }
 
 export type LayoutZone = 'column' | 'row' | 'filter';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Layers, TrendingUp } from 'lucide-react';
+import { Database, Layers, Plus, TrendingUp } from 'lucide-react';
 
 import styles from './BuilderHeader.module.css';
 import type { ChartTypeOption, ChartVariant, DataSourceMode } from '../types';
@@ -11,6 +11,7 @@ interface BuilderHeaderProps {
   dataSourceMode: DataSourceMode;
   onDataSourceModeChange: (mode: DataSourceMode) => void;
   onOpenTypeModal: () => void;
+  onOpenIndicatorBuilder: () => void;
 }
 
 export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
@@ -19,6 +20,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   dataSourceMode,
   onDataSourceModeChange,
   onOpenTypeModal,
+  onOpenIndicatorBuilder,
 }) => {
   const currentType = chartTypes.find((t) => t.id === chartType);
   const isTableChart = chartType === 'table';
@@ -32,6 +34,15 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
         </h2>
 
         <div className={styles.headerControls}>
+          <button
+            type="button"
+            className={styles.createIndicatorBtn}
+            onClick={onOpenIndicatorBuilder}
+          >
+            <Plus size={14} />
+            Créer indicateur
+          </button>
+
           {isTableChart && (
             <div className={styles.toggleContainer}>
               <button

@@ -1,13 +1,15 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Database, Eye, Table2, X } from 'lucide-react';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormMultiSelect } from '@/components/forms/FormSelect/FormMultiSelect';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { FormDatePicker } from '@/components/forms/FormDatePicker/FormDatePicker';
+import { Modal } from '@components/ui/Modal/Modal';
 import { CollapsibleSection } from '@pages/builders/SqlBuilder/components/CollapsibleSection';
 import type { AggType, ColumnType, EntityType, FilterOp } from '../../../builders.models';
 import { AGG_LABELS } from '../../../builders.models';
+import type { DimensionItem } from '../types';
 import styles from './IndicatorBuilder.module.css';
 
 // ============================================================================
@@ -51,9 +53,15 @@ export interface IndicatorQueryConfig {
 }
 
 interface IndicatorBuilderProps {
+  isOpen: boolean;
+  onClose: () => void;
   entities: SidebarEntity[];
   sites: { value: string; label: string }[];
-  onShowTable: (config: IndicatorQueryConfig) => void;
+  onSaveIndicator: (indicator: DimensionItem, config: IndicatorQueryConfig) => void;
+  /** ID of the indicator being edited (null = creation mode) */
+  editingIndicatorId?: string | null;
+  /** Pre-filled config when editing an existing indicator */
+  initialConfig?: IndicatorQueryConfig | null;
 }
 
 // ============================================================================
@@ -82,7 +90,7 @@ const ENTITY_SECTION_LABELS: Record<EntityType, string> = {
 // ============================================================================
 
 const createFilter = (col: SidebarColumn): IndicatorFilter => ({
-  id: `filter-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+  id: `filter-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
   columnName: col.name,
   columnType: col.type,
   enabled: false,
@@ -98,9 +106,13 @@ const createFilter = (col: SidebarColumn): IndicatorFilter => ({
 // ============================================================================
 
 export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
+  isOpen,
+  onClose,
   entities,
   sites,
-  onShowTable,
+  onSaveIndicator,
+  editingIndicatorId = null,
+  initialConfig = null,
 }) => {
   // Sidebar selection
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
@@ -120,6 +132,48 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
 
   // Location
   const [selectedSite, setSelectedSite] = useState('');
+
+  // Pre-fill form when opening in edit mode
+  const prevIsOpenRef = useRef(false);
+  useEffect(() => {
+    const justOpened = isOpen && !prevIsOpenRef.current;
+    prevIsOpenRef.current = isOpen;
+
+    if (!justOpened) return;
+
+    if (initialConfig && editingIndicatorId) {
+      setSelectedEntityId(initialConfig.entityId);
+      setSelectedMetric(initialConfig.metric);
+      setAggType(initialConfig.aggType);
+      setIndicatorName(initialConfig.indicatorName);
+      setPeriodStart(initialConfig.periodStart);
+      setPeriodEnd(initialConfig.periodEnd);
+      setSelectedSite(initialConfig.site);
+
+      // Rebuild filters from config
+      const entity = entities.find((e) => e.id === initialConfig.entityId);
+      if (entity) {
+        const restoredFilters: IndicatorFilter[] = initialConfig.filters.map((f) => {
+          const col = entity.columns.find((c) => c.name === f.column);
+          const colType = col?.type ?? 'string';
+          const values = Array.isArray(f.value) ? f.value : [];
+          return {
+            id: `filter-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            columnName: f.column,
+            columnType: colType,
+            enabled: true,
+            min: colType === 'number' ? String(values[0] ?? '') : '',
+            max: colType === 'number' ? String(values[1] ?? '') : '',
+            selectedValues: colType === 'string' ? (values as string[]) : [],
+            dateStart: colType === 'date' ? String(values[0] ?? '') : '',
+            dateEnd: colType === 'date' ? String(values[1] ?? '') : '',
+          };
+        });
+        setFilters(restoredFilters);
+      }
+      setShowFilterPicker(false);
+    }
+  }, [isOpen, initialConfig, editingIndicatorId, entities]);
 
   // ---------- Derived state ----------
 
@@ -165,6 +219,18 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
 
   // ---------- Handlers ----------
 
+  const resetForm = useCallback(() => {
+    setSelectedEntityId(null);
+    setSelectedMetric('');
+    setAggType('avg');
+    setIndicatorName('');
+    setFilters([]);
+    setShowFilterPicker(false);
+    setPeriodStart('');
+    setPeriodEnd('');
+    setSelectedSite('');
+  }, []);
+
   const handleSelectEntity = useCallback((entityId: string) => {
     setSelectedEntityId(entityId);
     setSelectedMetric('');
@@ -198,7 +264,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
     setFilters((prev) => prev.filter((f) => f.id !== filterId));
   }, []);
 
-  const handleShowTable = useCallback(() => {
+  const handleSave = useCallback(() => {
     if (!selectedEntityId || !isFormValid) return;
 
     const activeFilters = filters
@@ -216,7 +282,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
         return { column: f.columnName, op: '=' as FilterOp, value: '' };
       });
 
-    onShowTable({
+    const config: IndicatorQueryConfig = {
       entityId: selectedEntityId,
       metric: selectedMetric,
       aggType,
@@ -225,8 +291,18 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
       periodStart,
       periodEnd,
       site: selectedSite,
-    });
-  }, [selectedEntityId, selectedMetric, aggType, indicatorName, filters, periodStart, periodEnd, selectedSite, isFormValid, onShowTable]);
+    };
+
+    const indicator: DimensionItem = {
+      id: editingIndicatorId ?? `ind-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      name: indicatorName.trim(),
+      code: `${aggType.toUpperCase()}(${selectedMetric})`,
+    };
+
+    onSaveIndicator(indicator, config);
+    resetForm();
+    onClose();
+  }, [selectedEntityId, selectedMetric, aggType, indicatorName, filters, periodStart, periodEnd, selectedSite, isFormValid, onSaveIndicator, editingIndicatorId, resetForm, onClose]);
 
   // ---------- Render helpers ----------
 
@@ -289,190 +365,195 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
   // ---------- JSX ----------
 
   return (
-    <div className={styles.container}>
-      {/* ===== LEFT SIDEBAR ===== */}
-      <aside className={styles.sidebar}>
-        <div className={styles.sidebarTitle}>Liste des matview</div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingIndicatorId ? 'Modifier l\'indicateur' : 'Indicator Builder'}
+      size="xl"
+      closeOnBackdrop
+      closeOnEscape
+    >
+      <div className={styles.container}>
+        {/* ===== LEFT SIDEBAR ===== */}
+        <aside className={styles.sidebar}>
+          <div className={styles.sidebarTitle}>Liste des matview</div>
 
-        {(['materialized_view', 'table', 'view'] as EntityType[]).map((entityType) => {
-          const group = entityGroups[entityType];
-          if (group.length === 0) return null;
+          {(['materialized_view', 'table', 'view'] as EntityType[]).map((entityType) => {
+            const group = entityGroups[entityType];
+            if (group.length === 0) return null;
 
-          return (
-            <CollapsibleSection
-              key={entityType}
-              title={ENTITY_SECTION_LABELS[entityType]}
-              icon={ENTITY_ICONS[entityType]}
-              defaultOpen={entityType === 'materialized_view'}
-              badge={group.length}
-            >
-              {group.map((entity) => (
-                <div
-                  key={entity.id}
-                  className={entity.id === selectedEntityId ? styles.entityItemActive : styles.entityItem}
-                  onClick={() => handleSelectEntity(entity.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleSelectEntity(entity.id);
-                    }
-                  }}
-                >
-                  {entity.label}
-                </div>
-              ))}
-            </CollapsibleSection>
-          );
-        })}
-      </aside>
+            return (
+              <CollapsibleSection
+                key={entityType}
+                title={ENTITY_SECTION_LABELS[entityType]}
+                icon={ENTITY_ICONS[entityType]}
+                defaultOpen={entityType === 'materialized_view'}
+                badge={group.length}
+              >
+                {group.map((entity) => (
+                  <div
+                    key={entity.id}
+                    className={entity.id === selectedEntityId ? styles.entityItemActive : styles.entityItem}
+                    onClick={() => handleSelectEntity(entity.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleSelectEntity(entity.id);
+                      }
+                    }}
+                  >
+                    {entity.label}
+                  </div>
+                ))}
+              </CollapsibleSection>
+            );
+          })}
+        </aside>
 
-      {/* ===== RIGHT PANEL ===== */}
-      <main className={styles.mainPanel}>
-        <h3 className={styles.panelTitle}>Indicator Builder</h3>
-
-        {/* --- Top Row --- */}
-        <div className={styles.topRow}>
-          <FormSelect
-            label="Sélectionner:"
-            options={metricOptions}
-            value={selectedMetric}
-            onChange={(value) => setSelectedMetric(value)}
-            placeholder="Liste des metrics..."
-            searchable
-            disabled={!selectedEntity}
-          />
-          <FormSelect
-            label="Type agrégatif:"
-            options={AGG_OPTIONS}
-            value={aggType}
-            onChange={(value) => setAggType(value as AggType)}
-          />
-          <FormInput
-            label="Nom de l'indicateur:"
-            value={indicatorName}
-            onChange={(e) => setIndicatorName(e.target.value)}
-            placeholder="Nom de l'indicateur"
-          />
-        </div>
-
-        {/* --- Filtres --- */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Filtres</span>
-            <button
-              type="button"
-              className={styles.addFilterBtn}
-              onClick={() => setShowFilterPicker(true)}
-              disabled={!selectedEntity || availableFilterColumns.length === 0}
-            >
-              + Ajouter filtre+
-            </button>
+        {/* ===== RIGHT PANEL ===== */}
+        <main className={styles.mainPanel}>
+          {/* --- Top Row --- */}
+          <div className={styles.topRow}>
+            <FormSelect
+              label="Sélectionner:"
+              options={metricOptions}
+              value={selectedMetric}
+              onChange={(value) => setSelectedMetric(value)}
+              placeholder="Liste des metrics..."
+              searchable
+              disabled={!selectedEntity}
+            />
+            <FormSelect
+              label="Type agrégatif:"
+              options={AGG_OPTIONS}
+              value={aggType}
+              onChange={(value) => setAggType(value as AggType)}
+            />
+            <FormInput
+              label="Nom de l'indicateur:"
+              value={indicatorName}
+              onChange={(e) => setIndicatorName(e.target.value)}
+              placeholder="Nom de l'indicateur"
+            />
           </div>
 
-          {/* Filter picker */}
-          {showFilterPicker && (
-            <div className={styles.filterPickerRow}>
-              <FormSelect
-                value=""
-                onChange={(value) => {
-                  if (value) handleAddFilter(value);
-                }}
-                placeholder="Choisir une colonne..."
-                options={filterColumnOptions}
-                searchable
-              />
+          {/* --- Filtres --- */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.cardTitle}>Filtres</span>
               <button
                 type="button"
-                className={styles.btnCancel}
-                onClick={() => setShowFilterPicker(false)}
+                className={styles.addFilterBtn}
+                onClick={() => setShowFilterPicker(true)}
+                disabled={!selectedEntity || availableFilterColumns.length === 0}
               >
-                Annuler
+                + Ajouter filtre+
               </button>
             </div>
-          )}
 
-          {/* Filter list */}
-          {filters.length > 0 && (
-            <div className={styles.filtersList}>
-              {filters.map((filter) => (
-                <div key={filter.id} className={styles.filterRow}>
-                  <div className={styles.filterCheckbox}>
-                    <FormCheckbox
-                      label={filter.columnName}
-                      checked={filter.enabled}
-                      onChange={() => handleToggleFilter(filter.id)}
-                    />
+            {showFilterPicker && (
+              <div className={styles.filterPickerRow}>
+                <FormSelect
+                  value=""
+                  onChange={(value) => {
+                    if (value) handleAddFilter(value);
+                  }}
+                  placeholder="Choisir une colonne..."
+                  options={filterColumnOptions}
+                  searchable
+                />
+                <button
+                  type="button"
+                  className={styles.btnCancel}
+                  onClick={() => setShowFilterPicker(false)}
+                >
+                  Annuler
+                </button>
+              </div>
+            )}
+
+            {filters.length > 0 && (
+              <div className={styles.filtersList}>
+                {filters.map((filter) => (
+                  <div key={filter.id} className={styles.filterRow}>
+                    <div className={styles.filterCheckbox}>
+                      <FormCheckbox
+                        label={filter.columnName}
+                        checked={filter.enabled}
+                        onChange={() => handleToggleFilter(filter.id)}
+                      />
+                    </div>
+                    {renderFilterControls(filter)}
+                    <button
+                      type="button"
+                      className={styles.filterRemove}
+                      onClick={() => handleRemoveFilter(filter.id)}
+                      aria-label="Supprimer le filtre"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
-                  {renderFilterControls(filter)}
-                  <button
-                    type="button"
-                    className={styles.filterRemove}
-                    onClick={() => handleRemoveFilter(filter.id)}
-                    aria-label="Supprimer le filtre"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+
+            {filters.length === 0 && !showFilterPicker && (
+              <div className={styles.emptyFilters}>Aucun filtre défini</div>
+            )}
+          </div>
+
+          {/* --- Période --- */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.cardTitle}>Période</span>
             </div>
-          )}
-
-          {filters.length === 0 && !showFilterPicker && (
-            <div className={styles.emptyFilters}>Aucun filtre défini</div>
-          )}
-        </div>
-
-        {/* --- Période --- */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Période</span>
+            <div className={styles.dateRow}>
+              <span className={styles.dateLabel}>Sélectionner la range de période :</span>
+              <FormDatePicker
+                value={periodStart}
+                onChange={(e) => setPeriodStart(e.target.value)}
+              />
+              <span className={styles.dateLabel}>-</span>
+              <FormDatePicker
+                value={periodEnd}
+                onChange={(e) => setPeriodEnd(e.target.value)}
+              />
+            </div>
           </div>
-          <div className={styles.dateRow}>
-            <span className={styles.dateLabel}>Sélectionner la range de période :</span>
-            <FormDatePicker
-              value={periodStart}
-              onChange={(e) => setPeriodStart(e.target.value)}
-            />
-            <span className={styles.dateLabel}>-</span>
-            <FormDatePicker
-              value={periodEnd}
-              onChange={(e) => setPeriodEnd(e.target.value)}
-            />
-          </div>
-        </div>
 
-        {/* --- Lieu --- */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <span className={styles.cardTitle}>Lieu.</span>
+          {/* --- Lieu --- */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.cardTitle}>Lieu.</span>
+            </div>
+            <div className={styles.lieuRow}>
+              <span className={styles.lieuLabel}>Site</span>
+              <FormSelect
+                options={sites}
+                value={selectedSite}
+                onChange={(value) => setSelectedSite(value)}
+                placeholder="Sélectionner..."
+                searchable
+              />
+            </div>
           </div>
-          <div className={styles.lieuRow}>
-            <span className={styles.lieuLabel}>Site</span>
-            <FormSelect
-              options={sites}
-              value={selectedSite}
-              onChange={(value) => setSelectedSite(value)}
-              placeholder="Sélectionner..."
-              searchable
-            />
-          </div>
-        </div>
 
-        {/* --- Action --- */}
-        <div className={styles.actionRow}>
-          <button
-            type="button"
-            className={styles.showTableBtn}
-            onClick={handleShowTable}
-            disabled={!isFormValid}
-          >
-            Afficher la table
-          </button>
-        </div>
-      </main>
-    </div>
+          {/* --- Action --- */}
+          <div className={styles.actionRow}>
+            <button
+              type="button"
+              className={styles.showTableBtn}
+              onClick={handleSave}
+              disabled={!isFormValid}
+            >
+              {editingIndicatorId ? 'Modifier l\'indicateur' : 'Enregistrer l\'indicateur'}
+            </button>
+          </div>
+        </main>
+      </div>
+    </Modal>
   );
 };
 

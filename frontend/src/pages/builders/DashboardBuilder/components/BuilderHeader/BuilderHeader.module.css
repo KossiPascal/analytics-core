@@ -68,6 +68,26 @@
   font-weight: 600;
 }
 
+.createIndicatorBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #fff;
+  background: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.createIndicatorBtn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
 .toggleContainer {
   display: flex;
   gap: 0;

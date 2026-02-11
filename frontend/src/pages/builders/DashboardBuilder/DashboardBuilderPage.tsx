@@ -38,6 +38,8 @@ import { SaveModal } from './components/SaveModal/SaveModal';
 import { SavedVisualizationsModal } from './components/SavedVisualizationsModal/SavedVisualizationsModal';
 import { VisualizationTypeModal } from './components/VisualizationTypeModal/VisualizationTypeModal';
 import { ThemeModal } from './components/ThemeModal/ThemeModal';
+import { IndicatorBuilder } from './components/IndicatorBuilder/IndicatorBuilder';
+import type { IndicatorQueryConfig, SidebarEntity } from './components/IndicatorBuilder/IndicatorBuilder';
 
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'line', name: 'Ligne', icon: <LineChart size={20} />, description: 'Évolution dans le temps', category: 'trend' },
@@ -80,6 +82,9 @@ const DashboardBuilderPage: React.FC = () => {
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isSavedListOpen, setIsSavedListOpen] = useState(false);
+  const [isIndicatorBuilderOpen, setIsIndicatorBuilderOpen] = useState(false);
+  const [editingIndicatorId, setEditingIndicatorId] = useState<string | null>(null);
+  const [indicatorConfigs, setIndicatorConfigs] = useState<Record<string, IndicatorQueryConfig>>({});
 
   // Visualization metadata
   const [visualizationType, setVisualizationType] = useState<VisualizationType>('dashboard');
@@ -111,6 +116,31 @@ const DashboardBuilderPage: React.FC = () => {
   const [periods, setPeriods] = useState<DimensionItem[]>([]);
   const [orgUnits, setOrgUnits] = useState<DimensionItem[]>([]);
   const [savedVisualizations, setSavedVisualizations] = useState<StoredVisualization[]>([]);
+
+  // Indicator builder data
+  const [indicatorEntities] = useState<SidebarEntity[]>([
+    {
+      id: 'mv1', label: 'Matview 1', type: 'materialized_view',
+      columns: [
+        { name: 'age', type: 'number', nullable: false },
+        { name: 'membre', type: 'number', nullable: false },
+        { name: 'sexe', type: 'string', nullable: false },
+        { name: 'fluorescence', type: 'string', nullable: true },
+        { name: 'date_visite', type: 'date', nullable: false },
+        { name: 'poids', type: 'number', nullable: true },
+      ],
+    },
+    { id: 'mv2', label: 'Matview 2', type: 'materialized_view', columns: [{ name: 'score', type: 'number', nullable: false }, { name: 'categorie', type: 'string', nullable: false }] },
+    { id: 'mv3', label: 'Matview 3', type: 'materialized_view', columns: [{ name: 'total', type: 'number', nullable: false }] },
+    { id: 't1', label: 'Table 1', type: 'table', columns: [{ name: 'valeur', type: 'number', nullable: false }] },
+    { id: 't2', label: 'Table 2', type: 'table', columns: [{ name: 'montant', type: 'number', nullable: false }] },
+    { id: 'v1', label: 'Vue 1', type: 'view', columns: [{ name: 'indicateur', type: 'number', nullable: false }] },
+  ]);
+  const [indicatorSites] = useState([
+    { value: 'site1', label: 'Site Lomé' },
+    { value: 'site2', label: 'Site Kara' },
+    { value: 'site3', label: 'Site Sokodé' },
+  ]);
 
   const [options, setOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
 
@@ -201,6 +231,45 @@ const DashboardBuilderPage: React.FC = () => {
     setRowItems((items) => items.filter((item) => !dataElementIds.has(item)));
     setFilterItems((items) => items.filter((item) => !dataElementIds.has(item)));
   }, [chartType, dataElements, selectedDataElements.length]);
+
+  const handleSaveIndicator = useCallback(
+    (indicator: DimensionItem, config: IndicatorQueryConfig) => {
+      setIndicatorConfigs((prev) => ({ ...prev, [indicator.id]: config }));
+
+      setIndicators((prev) => {
+        const existingIndex = prev.findIndex((ind) => ind.id === indicator.id);
+        if (existingIndex >= 0) {
+          // Update existing
+          const updated = [...prev];
+          updated[existingIndex] = indicator;
+          return updated;
+        }
+        // Add new
+        return [...prev, indicator];
+      });
+
+      setEditingIndicatorId(null);
+      showSuccess(
+        editingIndicatorId
+          ? `Indicateur modifié : "${indicator.name}"`
+          : `Indicateur créé : "${indicator.name}"`
+      );
+    },
+    [showSuccess, editingIndicatorId]
+  );
+
+  const editableIndicatorIds = useMemo(
+    () => new Set(Object.keys(indicatorConfigs)),
+    [indicatorConfigs]
+  );
+
+  const handleEditIndicator = useCallback(
+    (indicatorId: string) => {
+      setEditingIndicatorId(indicatorId);
+      setIsIndicatorBuilderOpen(true);
+    },
+    []
+  );
 
   const handleDataSourceModeChange = useCallback(
     (mode: DataSourceMode) => {
@@ -434,6 +503,10 @@ const DashboardBuilderPage: React.FC = () => {
           dataSourceMode={dataSourceMode}
           onDataSourceModeChange={handleDataSourceModeChange}
           onOpenTypeModal={() => setIsTypeModalOpen(true)}
+          onOpenIndicatorBuilder={() => {
+            setEditingIndicatorId(null);
+            setIsIndicatorBuilderOpen(true);
+          }}
         />
 
         <div className={styles.content}>
@@ -452,6 +525,8 @@ const DashboardBuilderPage: React.FC = () => {
             onIndicatorsChange={setSelectedIndicators}
             onPeriodsChange={setSelectedPeriods}
             onOrgUnitsChange={setSelectedOrgUnits}
+            editableIndicatorIds={editableIndicatorIds}
+            onEditIndicator={handleEditIndicator}
           />
 
           <BuilderMainArea
@@ -525,6 +600,19 @@ const DashboardBuilderPage: React.FC = () => {
         savedVisualizations={savedVisualizations}
         onClose={() => setIsSavedListOpen(false)}
         onSelect={handleLoadVisualization}
+      />
+
+      <IndicatorBuilder
+        isOpen={isIndicatorBuilderOpen}
+        onClose={() => {
+          setIsIndicatorBuilderOpen(false);
+          setEditingIndicatorId(null);
+        }}
+        entities={indicatorEntities}
+        sites={indicatorSites}
+        onSaveIndicator={handleSaveIndicator}
+        editingIndicatorId={editingIndicatorId}
+        initialConfig={editingIndicatorId ? indicatorConfigs[editingIndicatorId] ?? null : null}
       />
     </>
   );
