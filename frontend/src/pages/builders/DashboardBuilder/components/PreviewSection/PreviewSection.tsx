@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Edit3, Eye, FolderOpen, Palette, RefreshCw, Save, Settings } from 'lucide-react';
 
+import { TransposeButton } from '@components/charts/TransposeButton/TransposeButton';
+import { transposeChartData } from '@components/charts/transpose';
 import { RenderChartPreview } from '../RenderChartPreview/RenderChartPreview';
 import type { ChartVariant, VisualizationOptions } from '../types';
 import styles from './PreviewSection.module.css';
@@ -33,6 +35,28 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
   onSave,
 }) => {
   const activeColors = previewOptions.colors;
+  const [isTransposed, setIsTransposed] = useState(false);
+
+  const handleToggleTranspose = useCallback(() => {
+    setIsTransposed((prev) => !prev);
+  }, []);
+
+  // Compute transposed data when toggled
+  const { data: displayData, series: displaySeries } = useMemo(() => {
+    if (!isTransposed) {
+      return { data: previewData, series: previewSeries };
+    }
+
+    // For chart types that use series (line, bar, area, radar, scatter, composed)
+    const seriesCharts = ['line', 'area', 'bar', 'radar', 'scatter', 'composed'];
+    if (seriesCharts.includes(previewChartType)) {
+      return transposeChartData(previewData, previewSeries, previewChartType === 'radar' ? 'subject' : 'name');
+    }
+
+    // For table: transposition is handled inside RenderChartPreview
+    // For pie/donut/treemap/funnel/radialBar: transpose swaps name ↔ value (not very meaningful, pass through)
+    return { data: previewData, series: previewSeries };
+  }, [isTransposed, previewData, previewSeries, previewChartType]);
 
   return (
     <div className={styles.previewSection}>
@@ -42,6 +66,10 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           Aperçu
         </h3>
         <div className={styles.headerActions}>
+          <TransposeButton
+            isTransposed={isTransposed}
+            onToggle={handleToggleTranspose}
+          />
           <button
             type="button"
             className={`${styles.headerBtn} ${isPreviewStale ? styles.headerBtnStale : ''}`}
@@ -91,9 +119,10 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
       <div className={styles.previewContent}>
         <RenderChartPreview
           chartType={previewChartType}
-          previewData={previewData}
-          previewSeries={previewSeries}
+          previewData={displayData}
+          previewSeries={displaySeries}
           options={previewOptions}
+          isTransposed={isTransposed}
         />
       </div>
 
