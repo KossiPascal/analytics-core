@@ -2,7 +2,6 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Database, Eye, Table2 } from 'lucide-react';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
-import { FormDatePicker } from '@/components/forms/FormDatePicker/FormDatePicker';
 import { Modal } from '@components/ui/Modal/Modal';
 import { CollapsibleSection } from '@pages/builders/SqlBuilder/components/CollapsibleSection';
 import type { AggType, ColumnType, EntityType, FilterOp } from '../../../builders.models';
@@ -10,6 +9,8 @@ import { AGG_LABELS } from '../../../builders.models';
 import type { DimensionItem } from '../types';
 import { IndicatorFilterBuilder } from './IndicatorFilterBuilder';
 import type { IndicatorFilter } from './IndicatorFilterBuilder';
+import { IndicatorPeriodBuilder } from './IndicatorPeriodBuilder';
+import type { IndicatorPeriodConfig } from './IndicatorPeriodBuilder';
 import styles from './IndicatorBuilder.module.css';
 
 // ============================================================================
@@ -35,8 +36,7 @@ export interface IndicatorQueryConfig {
   aggType: AggType;
   indicatorName: string;
   filters: Array<{ column: string; op: FilterOp; value: unknown }>;
-  periodStart: string;
-  periodEnd: string;
+  period: IndicatorPeriodConfig | null;
   site: string;
 }
 
@@ -98,8 +98,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
   const [filters, setFilters] = useState<IndicatorFilter[]>([]);
 
   // Period
-  const [periodStart, setPeriodStart] = useState('');
-  const [periodEnd, setPeriodEnd] = useState('');
+  const [periodConfig, setPeriodConfig] = useState<IndicatorPeriodConfig | null>(null);
 
   // Location
   const [selectedSite, setSelectedSite] = useState('');
@@ -117,8 +116,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
       setSelectedMetric(initialConfig.metric);
       setAggType(initialConfig.aggType);
       setIndicatorName(initialConfig.indicatorName);
-      setPeriodStart(initialConfig.periodStart);
-      setPeriodEnd(initialConfig.periodEnd);
+      setPeriodConfig(initialConfig.period ?? null);
       setSelectedSite(initialConfig.site);
 
       // Rebuild filters from config
@@ -178,8 +176,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
     setAggType('avg');
     setIndicatorName('');
     setFilters([]);
-    setPeriodStart('');
-    setPeriodEnd('');
+    setPeriodConfig(null);
     setSelectedSite('');
   }, []);
 
@@ -198,8 +195,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
       aggType,
       indicatorName: indicatorName.trim(),
       filters: filters.map((f) => ({ column: f.columnName, op: f.op, value: f.value })),
-      periodStart,
-      periodEnd,
+      period: periodConfig,
       site: selectedSite,
     };
 
@@ -212,7 +208,7 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
     onSaveIndicator(indicator, config);
     resetForm();
     onClose();
-  }, [selectedEntityId, selectedMetric, aggType, indicatorName, filters, periodStart, periodEnd, selectedSite, isFormValid, onSaveIndicator, editingIndicatorId, resetForm, onClose]);
+  }, [selectedEntityId, selectedMetric, aggType, indicatorName, filters, periodConfig, selectedSite, isFormValid, onSaveIndicator, editingIndicatorId, resetForm, onClose]);
 
   // ---------- JSX ----------
 
@@ -299,23 +295,11 @@ export const IndicatorBuilder: React.FC<IndicatorBuilderProps> = ({
           />
 
           {/* --- Période --- */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>Période</span>
-            </div>
-            <div className={styles.dateRow}>
-              <span className={styles.dateLabel}>Sélectionner la range de période :</span>
-              <FormDatePicker
-                value={periodStart}
-                onChange={(e) => setPeriodStart(e.target.value)}
-              />
-              <span className={styles.dateLabel}>-</span>
-              <FormDatePicker
-                value={periodEnd}
-                onChange={(e) => setPeriodEnd(e.target.value)}
-              />
-            </div>
-          </div>
+          <IndicatorPeriodBuilder
+            columns={selectedEntity?.columns ?? []}
+            config={periodConfig}
+            onConfigChange={setPeriodConfig}
+          />
 
           {/* --- Lieu --- */}
           <div className={styles.card}>
