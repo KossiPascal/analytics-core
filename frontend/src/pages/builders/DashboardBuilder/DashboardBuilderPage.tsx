@@ -416,6 +416,10 @@ const DashboardBuilderPage: React.FC = () => {
         rows: [{ dimension: 'dx', items: rowItems }],
         filters: [{ dimension: 'ou', items: filterItems }],
         options,
+        selectedDataElements,
+        selectedIndicators,
+        selectedPeriods,
+        selectedOrgUnits,
       };
 
       const now = new Date().toISOString();
@@ -464,7 +468,7 @@ const DashboardBuilderPage: React.FC = () => {
 
       setIsSaveModalOpen(false);
     },
-    [chartType, columnItems, rowItems, filterItems, options, isEditing, editingVisualizationId, savedVisualizations, showSuccess, showError]
+    [chartType, columnItems, rowItems, filterItems, options, selectedDataElements, selectedIndicators, selectedPeriods, selectedOrgUnits, isEditing, editingVisualizationId, savedVisualizations, showSuccess, showError]
   );
 
   const handleLoadVisualization = useCallback((viz: StoredVisualization) => {
@@ -485,13 +489,22 @@ const DashboardBuilderPage: React.FC = () => {
       setFilterItems(viz.filters[0].items);
     }
 
-    // Synchroniser immédiatement le snapshot avec les options de la viz chargée
-    // (notamment les couleurs), sans attendre un clic sur Actualiser.
-    setPreviewSnapshot((prev) => ({
-      ...prev,
+    // Restaurer les sélections de dimensions
+    setSelectedDataElements(viz.selectedDataElements ?? []);
+    setSelectedIndicators(viz.selectedIndicators ?? []);
+    setSelectedPeriods(viz.selectedPeriods ?? []);
+    setSelectedOrgUnits(viz.selectedOrgUnits ?? []);
+
+    // Synchroniser immédiatement le snapshot avec les données chargées
+    setPreviewSnapshot({
       chartType: viz.chartType,
+      selectedDataElements: viz.selectedDataElements ?? [],
+      selectedIndicators: viz.selectedIndicators ?? [],
+      selectedPeriods: viz.selectedPeriods ?? [],
+      selectedOrgUnits: viz.selectedOrgUnits ?? [],
       options: viz.options,
-    }));
+    });
+    setIsPreviewStale(false);
   }, []);
 
   return (

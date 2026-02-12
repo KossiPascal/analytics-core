@@ -50,6 +50,10 @@ export type ChartVariant =
   rows: LayoutDimension[];
   filters: LayoutDimension[];
   options: VisualizationOptions;
+  selectedDataElements: string[];
+  selectedIndicators: string[];
+  selectedPeriods: string[];
+  selectedOrgUnits: string[];
 }
 
  export interface VisualizationOptions {

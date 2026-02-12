@@ -54,6 +54,10 @@ export interface StoredVisualization {
   rows: LayoutDimension[];
   filters: LayoutDimension[];
   options: VisualizationOptions;
+  selectedDataElements: string[];
+  selectedIndicators: string[];
+  selectedPeriods: string[];
+  selectedOrgUnits: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -117,18 +121,32 @@ function generateVisualizationData(
   _periods: DimensionItem[],
   orgUnits: DimensionItem[]
 ): { data: ChartDataItem[]; series: ChartSeries[] } {
-  const { chartType, rows, columns } = visualization;
+  const { chartType, columns } = visualization;
 
-  // Get selected data items from rows
-  const dataItemIds = rows
-    .filter((r) => r.dimension === 'dx')
-    .flatMap((r) => r.items);
+  // Use saved selections (selectedIndicators / selectedDataElements) as primary source
+  const savedIndicatorIds = visualization.selectedIndicators ?? [];
+  const savedDataElementIds = visualization.selectedDataElements ?? [];
+  const savedOrgUnitIds = visualization.selectedOrgUnits ?? [];
+  const allSavedIds = [...savedDataElementIds, ...savedIndicatorIds];
 
-  const dataItems = dataItemIds
+  // Resolve IDs to DimensionItem objects
+  const dataItems: DimensionItem[] = allSavedIds
     .map((id) => dataElements.find((d) => d.id === id) || indicators.find((i) => i.id === id))
     .filter(Boolean) as DimensionItem[];
 
-  // If no data items selected, use defaults
+  // Fallback: try rows[dimension='dx'] if no saved selections
+  if (dataItems.length === 0) {
+    const rowItemIds = (visualization.rows ?? [])
+      .filter((r) => r.dimension === 'dx')
+      .flatMap((r) => r.items);
+
+    rowItemIds.forEach((id) => {
+      const found = dataElements.find((d) => d.id === id) || indicators.find((i) => i.id === id);
+      if (found) dataItems.push(found);
+    });
+  }
+
+  // Last fallback: use defaults
   if (dataItems.length === 0) {
     dataItems.push(
       { id: 'de1', name: 'Consultations totales' },
@@ -137,11 +155,16 @@ function generateVisualizationData(
     );
   }
 
+  // Use saved colors from options, fallback to CHART_COLORS
+  const palette = visualization.options.colors && visualization.options.colors.length > 0
+    ? visualization.options.colors
+    : CHART_COLORS;
+
   // Generate series
   const series: ChartSeries[] = dataItems.slice(0, 4).map((item, index) => ({
     dataKey: item.name,
     name: item.name,
-    color: CHART_COLORS[index % CHART_COLORS.length],
+    color: palette[index % palette.length],
     type: chartType === 'composed' ? (index === 0 ? 'bar' : 'line') : undefined,
   }));
 
@@ -153,17 +176,21 @@ function generateVisualizationData(
     data = dataItems.slice(0, 6).map((item, index) => ({
       name: item.name,
       value: Math.floor(Math.random() * 500) + 100,
-      color: CHART_COLORS[index % CHART_COLORS.length],
+      color: palette[index % palette.length],
     }));
   } else if (chartType === 'radar') {
     // For radar, use org units as subjects
-    const selectedOrgUnits = columns
-      .filter((c) => c.dimension === 'ou')
-      .flatMap((c) => c.items)
-      .map((id) => orgUnits.find((o) => o.id === id))
-      .filter(Boolean) as DimensionItem[];
+    const resolvedOrgUnits = savedOrgUnitIds.length > 0
+      ? savedOrgUnitIds
+          .map((id) => orgUnits.find((o) => o.id === id))
+          .filter(Boolean) as DimensionItem[]
+      : columns
+          .filter((c) => c.dimension === 'ou')
+          .flatMap((c) => c.items)
+          .map((id) => orgUnits.find((o) => o.id === id))
+          .filter(Boolean) as DimensionItem[];
 
-    const subjects = selectedOrgUnits.length > 0 ? selectedOrgUnits : orgUnits.slice(0, 5);
+    const subjects = resolvedOrgUnits.length > 0 ? resolvedOrgUnits : orgUnits.slice(0, 5);
 
     data = subjects.map((ou) => {
       const entry: ChartDataItem = { subject: ou.name };
