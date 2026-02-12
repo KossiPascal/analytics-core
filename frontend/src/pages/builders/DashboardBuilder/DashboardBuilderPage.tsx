@@ -248,6 +248,11 @@ const DashboardBuilderPage: React.FC = () => {
         return [...prev, indicator];
       });
 
+      // Auto-sélectionner l'indicateur créé pour le graphique
+      setSelectedIndicators((prev) =>
+        prev.includes(indicator.id) ? prev : [...prev, indicator.id]
+      );
+
       setEditingIndicatorId(null);
       showSuccess(
         editingIndicatorId
