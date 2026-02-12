@@ -40,6 +40,8 @@ import { VisualizationTypeModal } from './components/VisualizationTypeModal/Visu
 import { ThemeModal } from './components/ThemeModal/ThemeModal';
 import { IndicatorBuilder } from './components/IndicatorBuilder/IndicatorBuilder';
 import type { IndicatorQueryConfig, SidebarEntity } from './components/IndicatorBuilder/IndicatorBuilder';
+import type { IndicatorFilter } from './components/IndicatorBuilder/IndicatorFilterBuilder';
+import type { DefinitionEntry } from '@pages/builders/SqlBuilder/components/DefinitionItemForm';
 
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'line', name: 'Ligne', icon: <LineChart size={20} />, description: 'Évolution dans le temps', category: 'trend' },
@@ -109,6 +111,12 @@ const DashboardBuilderPage: React.FC = () => {
   const [columnItems, setColumnItems] = useState<string[]>(['LAST_6_MONTHS']);
   const [rowItems, setRowItems] = useState<string[]>(['ind1', 'ind2']);
   const [filterItems, setFilterItems] = useState<string[]>(['ou1']);
+
+  // Layout filters (from IndicatorFilterBuilder modal)
+  const [layoutFilters, setLayoutFilters] = useState<IndicatorFilter[]>([]);
+
+  // Layout data (from DefinitionItemForm modal)
+  const [layoutData, setLayoutData] = useState<DefinitionEntry[]>([]);
 
   // Data sources
   const [dataElements, setDataElements] = useState<DimensionItem[]>([]);
@@ -556,6 +564,11 @@ const DashboardBuilderPage: React.FC = () => {
             onRemoveRowItem={(id) => setRowItems(rowItems.filter((item) => item !== id))}
             onRemoveFilterItem={(id) => setFilterItems(filterItems.filter((item) => item !== id))}
             onMoveItem={handleMoveItem}
+            entities={indicatorEntities}
+            layoutFilters={layoutFilters}
+            onLayoutFiltersChange={setLayoutFilters}
+            layoutData={layoutData}
+            onLayoutDataChange={setLayoutData}
             previewOptions={previewSnapshot.options}
             previewChartType={previewSnapshot.chartType}
             previewData={previewData}

@@ -14,6 +14,7 @@ export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({
   onRemove,
   onMoveItem,
   placeholder = 'Glissez des éléments ici',
+  children,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -78,24 +79,27 @@ export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({
     >
       <div className={styles.layoutZoneHeader}>{title}</div>
       <div className={styles.layoutZoneContent}>
-        {items.length === 0 ? (
+        {items.length === 0 && !children ? (
           <div className={styles.layoutPlaceholder}>{placeholder}</div>
         ) : (
-          items.map((itemId) => (
-            <div
-              key={itemId}
-              className={styles.layoutItem}
-              draggable
-              onDragStart={(e) => handleDragStart(e, itemId)}
-              onDragEnd={handleDragEnd}
-            >
-              <GripVertical size={14} />
-              <span>{getItemName(itemId)}</span>
-              <button type="button" onClick={() => onRemove(itemId)} className={styles.removeItemBtn}>
-                <X size={14} />
-              </button>
-            </div>
-          ))
+          <>
+            {items.map((itemId) => (
+              <div
+                key={itemId}
+                className={styles.layoutItem}
+                draggable
+                onDragStart={(e) => handleDragStart(e, itemId)}
+                onDragEnd={handleDragEnd}
+              >
+                <GripVertical size={14} />
+                <span>{getItemName(itemId)}</span>
+                <button type="button" onClick={() => onRemove(itemId)} className={styles.removeItemBtn}>
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            {children}
+          </>
         )}
       </div>
     </div>

@@ -109,4 +109,5 @@ export type LayoutZone = 'column' | 'row' | 'filter';
   onRemove: (itemId: string) => void;
   onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
   placeholder?: string;
+  children?: React.ReactNode;
 }
