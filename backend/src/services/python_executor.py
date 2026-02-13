@@ -77,7 +77,7 @@ def run_python(code: str, use_temp_file: bool = False):
                 f.write(code)
                 temp_path = f.name
 
-            cmd = ["python3", "security/sandbox.py", temp_path]
+            cmd = ["python3", "backend/src/security/sandbox.py", temp_path]
             result = subprocess.run(
                 cmd,
                 text=True,
@@ -86,7 +86,7 @@ def run_python(code: str, use_temp_file: bool = False):
                 preexec_fn=_limit_resources,
             )
         else:
-            cmd = ["python3", "security/sandbox.py"]
+            cmd = ["python3", "backend/src/security/sandbox.py"]
             result = subprocess.run(
                 cmd,
                 input=code,          # 🔥 stdin

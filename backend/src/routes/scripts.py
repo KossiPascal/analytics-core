@@ -318,7 +318,7 @@ def execute_script():
 
         # ---------------- LOGGING ----------------
         elapsed = round(time.time() - start_time, 3)
-        logger.info(f"[EXECUTE] user_id={user_id}, language={language}, rows_limit={max_rows}, elapsed={elapsed}s")
+        logger.info(f"[EXECUTE] user_id={user_id}, language={language}, rows_limit={max_rows}, elapsed={elapsed}s, result_type={str(result)}, explain={explain}")
 
         return jsonify(result), status
     
