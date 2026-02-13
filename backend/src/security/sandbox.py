@@ -17,6 +17,7 @@ MAX_PRINT_ITEMS = 10_000
 # ------------------------------------------------------------------
 
 SAFE_BUILTINS = {
+    "print": print,
     "range": range,
     "len": len,
     "int": int,
