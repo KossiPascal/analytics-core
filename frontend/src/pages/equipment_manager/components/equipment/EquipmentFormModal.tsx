@@ -9,8 +9,9 @@ import { Save, Plus, X } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { equipmentApi } from '../../api';
-import type { Equipment, ASC, Accessory } from '../../types';
+import type { Equipment, ASC, Accessory, EquipmentCategory, EquipmentBrand } from '../../types';
 import { AccessoryFormModal } from './AccessoryFormModal';
+import { QuickCreateModal } from './QuickCreateModal';
 
 const ACCESSORY_STATUS_LABEL: Record<string, string> = {
   FUNCTIONAL: 'Fonctionnel',
@@ -30,11 +31,13 @@ interface Props {
   onSuccess: () => void;
   editData?: Equipment | null;
   ascs: ASC[];
+  categories: EquipmentCategory[];
+  brands: EquipmentBrand[];
 }
 
-export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs }: Props) {
-  const [equipmentType, setEquipmentType] = useState('PHONE');
-  const [brand, setBrand] = useState('');
+export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs, categories, brands }: Props) {
+  const [categoryId, setCategoryId] = useState('');
+  const [brandId, setBrandId] = useState('');
   const [modelName, setModelName] = useState('');
   const [imei, setImei] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
@@ -49,12 +52,23 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
   const [pendingAccessories, setPendingAccessories] = useState<Accessory[]>([]);
   const [accFormOpen, setAccFormOpen] = useState(false);
 
+  // Quick-create modals
+  const [catCreateOpen, setCatCreateOpen] = useState(false);
+  const [brandCreateOpen, setBrandCreateOpen] = useState(false);
+  const [localCategories, setLocalCategories] = useState<EquipmentCategory[]>([]);
+  const [localBrands, setLocalBrands] = useState<EquipmentBrand[]>([]);
+
   const isEdit = !!editData;
+
+  const allCategories = [...categories, ...localCategories.filter((lc) => !categories.find((c) => c.id === lc.id))];
+  const activeCategories = allCategories.filter((c) => c.is_active);
+  const allBrands = [...brands, ...localBrands.filter((lb) => !brands.find((b) => b.id === lb.id))];
+  const activeBrands = allBrands.filter((b) => b.is_active);
 
   useEffect(() => {
     if (editData) {
-      setEquipmentType(editData.equipment_type);
-      setBrand(editData.brand);
+      setCategoryId(editData.category_id || '');
+      setBrandId(editData.brand_id || '');
       setModelName(editData.model_name);
       setImei(editData.imei);
       setSerialNumber(editData.serial_number);
@@ -65,24 +79,30 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
       setNotes(editData.notes);
       setPendingAccessories(editData.accessories || []);
     } else {
-      setEquipmentType('PHONE'); setBrand(''); setModelName(''); setImei('');
+      setCategoryId(''); setBrandId(''); setModelName(''); setImei('');
       setSerialNumber(''); setStatus('FUNCTIONAL'); setOwnerId('');
       setAcquisitionDate(''); setWarrantyDate(''); setNotes('');
       setPendingAccessories([]);
     }
+    setLocalCategories([]);
+    setLocalBrands([]);
   }, [editData, isOpen]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!brand.trim() || !modelName.trim() || !imei.trim()) {
-      toast.error('Marque, modele et IMEI sont requis');
+    if (!modelName.trim() || !imei.trim()) {
+      toast.error('Modele et IMEI sont requis');
       return;
     }
 
     setSaving(true);
     try {
       const data = {
-        equipment_type: equipmentType, brand, model_name: modelName, imei,
+        equipment_type: categoryId ? (activeCategories.find((c) => c.id === categoryId)?.code || '') : '',
+        category_id: categoryId || null,
+        brand: brandId ? (activeBrands.find((b) => b.id === brandId)?.name || '') : '',
+        brand_id: brandId || null,
+        model_name: modelName, imei,
         serial_number: serialNumber, status,
         owner_id: ownerId || null,
         acquisition_date: acquisitionDate || null,
@@ -145,17 +165,20 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
     >
       <form className={shared.form} onSubmit={handleSave}>
         <div className={shared.formRow}>
-          <FormSelect
-            label="Type"
-            required
-            value={equipmentType}
-            onChange={(v) => setEquipmentType(v)}
-            options={[
-              { value: 'PHONE', label: 'Telephone' },
-              { value: 'TABLET', label: 'Tablette' },
-              { value: 'OTHER', label: 'Autre' },
-            ]}
-          />
+          {/* Type (Category) with + button */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flex: 1 }}>
+            <div style={{ flex: 1 }}>
+              <FormSelect
+                label="Type"
+                value={categoryId}
+                onChange={(v) => setCategoryId(v)}
+                options={[{ value: '', label: 'Selectionner' }, ...activeCategories.map((c) => ({ value: c.id, label: c.name }))]}
+              />
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => setCatCreateOpen(true)} style={{ marginBottom: '0.25rem', flexShrink: 0 }}>
+              <Plus size={16} />
+            </Button>
+          </div>
           <FormSelect
             label="Statut"
             value={status}
@@ -168,7 +191,20 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
           />
         </div>
         <div className={shared.formRow}>
-          <FormInput label="Marque" required value={brand} onChange={(e) => setBrand(e.target.value)} />
+          {/* Brand with + button */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flex: 1 }}>
+            <div style={{ flex: 1 }}>
+              <FormSelect
+                label="Marque"
+                value={brandId}
+                onChange={(v) => setBrandId(v)}
+                options={[{ value: '', label: 'Selectionner' }, ...activeBrands.map((b) => ({ value: b.id, label: b.name }))]}
+              />
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => setBrandCreateOpen(true)} style={{ marginBottom: '0.25rem', flexShrink: 0 }}>
+              <Plus size={16} />
+            </Button>
+          </div>
           <FormInput label="Modele" required value={modelName} onChange={(e) => setModelName(e.target.value)} />
         </div>
         <div className={shared.formRow}>
@@ -254,6 +290,22 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
         localMode={!isEdit}
         equipmentId={isEdit ? editData!.id : null}
         onCreated={handleAccessoryCreated}
+      />
+
+      <QuickCreateModal
+        isOpen={catCreateOpen}
+        onClose={() => setCatCreateOpen(false)}
+        title="Nouveau Type d'equipement"
+        onSave={(data) => equipmentApi.createCategory(data)}
+        onCreated={(item) => { setLocalCategories((prev) => [...prev, item]); setCategoryId(item.id); }}
+      />
+
+      <QuickCreateModal
+        isOpen={brandCreateOpen}
+        onClose={() => setBrandCreateOpen(false)}
+        title="Nouvelle Marque"
+        onSave={(data) => equipmentApi.createBrand(data)}
+        onCreated={(item) => { setLocalBrands((prev) => [...prev, item]); setBrandId(item.id); }}
       />
     </Modal>
   );

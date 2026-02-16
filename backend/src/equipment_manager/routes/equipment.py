@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.models.equipment import Equipment, EquipmentHistory, Accessory
+from backend.src.equipment_manager.models.equipment import EquipmentCategory, EquipmentBrand, Equipment, EquipmentHistory, Accessory
 from backend.src.equipment_manager.models.asc import ASC
 from backend.src.equipment_manager.models.employees import Employee
 from backend.src.logger import get_backend_logger
@@ -13,6 +13,110 @@ logger = get_backend_logger(__name__)
 
 bp = Blueprint("em_equipment", __name__, url_prefix="/api/equipment/assets")
 
+
+# ─── CATEGORIES (Types d'equipement) ─────────────────────────────────────────
+
+@bp.get("/categories")
+@require_auth
+def list_categories():
+    items = EquipmentCategory.query.order_by(EquipmentCategory.name).all()
+    return jsonify([c.to_dict_safe() for c in items]), 200
+
+
+@bp.post("/categories")
+@require_auth
+def create_category():
+    data = request.get_json(silent=True) or {}
+    name = data.get("name", "").strip()
+    code = data.get("code", "").strip()
+    if not name or not code:
+        return error_response("name and code are required", 400)
+    try:
+        cat = EquipmentCategory(
+            name=name, code=code,
+            description=data.get("description", ""),
+            is_active=True,
+        )
+        db.session.add(cat)
+        db.session.commit()
+        return jsonify(cat.to_dict_safe()), 201
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Category with this name or code already exists", 409)
+
+
+@bp.put("/categories/<int:id>")
+@require_auth
+def update_category(id):
+    cat = EquipmentCategory.query.get(id)
+    if not cat:
+        return error_response("Category not found", 404)
+    data = request.get_json(silent=True) or {}
+    for field in ("name", "code", "description"):
+        if field in data:
+            setattr(cat, field, data[field].strip() if isinstance(data[field], str) else data[field])
+    if "is_active" in data:
+        cat.is_active = bool(data["is_active"])
+    try:
+        db.session.commit()
+        return jsonify(cat.to_dict_safe()), 200
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Category with this name or code already exists", 409)
+
+
+# ─── BRANDS (Marques) ────────────────────────────────────────────────────────
+
+@bp.get("/brands")
+@require_auth
+def list_brands():
+    items = EquipmentBrand.query.order_by(EquipmentBrand.name).all()
+    return jsonify([b.to_dict_safe() for b in items]), 200
+
+
+@bp.post("/brands")
+@require_auth
+def create_brand():
+    data = request.get_json(silent=True) or {}
+    name = data.get("name", "").strip()
+    code = data.get("code", "").strip()
+    if not name or not code:
+        return error_response("name and code are required", 400)
+    try:
+        brand = EquipmentBrand(
+            name=name, code=code,
+            description=data.get("description", ""),
+            is_active=True,
+        )
+        db.session.add(brand)
+        db.session.commit()
+        return jsonify(brand.to_dict_safe()), 201
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Brand with this name or code already exists", 409)
+
+
+@bp.put("/brands/<int:id>")
+@require_auth
+def update_brand(id):
+    brand = EquipmentBrand.query.get(id)
+    if not brand:
+        return error_response("Brand not found", 404)
+    data = request.get_json(silent=True) or {}
+    for field in ("name", "code", "description"):
+        if field in data:
+            setattr(brand, field, data[field].strip() if isinstance(data[field], str) else data[field])
+    if "is_active" in data:
+        brand.is_active = bool(data["is_active"])
+    try:
+        db.session.commit()
+        return jsonify(brand.to_dict_safe()), 200
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Brand with this name or code already exists", 409)
+
+
+# ─── EQUIPMENT ────────────────────────────────────────────────────────────────
 
 @bp.get("")
 @require_auth
@@ -46,17 +150,18 @@ def create_equipment():
     brand = data.get("brand", "").strip()
     model_name = data.get("model_name", "").strip()
     imei = data.get("imei", "").strip()
+    category_id = data.get("category_id")
+    brand_id = data.get("brand_id")
 
-    if not equipment_type or not brand or not model_name or not imei:
-        return error_response("equipment_type, brand, model_name and imei are required", 400)
-
-    if equipment_type not in ("PHONE", "TABLET", "OTHER"):
-        return error_response("equipment_type must be PHONE, TABLET or OTHER", 400)
+    if not model_name or not imei:
+        return error_response("model_name and imei are required", 400)
 
     try:
         eq = Equipment(
             equipment_type=equipment_type,
+            category_id=int(category_id) if category_id else None,
             brand=brand,
+            brand_id=int(brand_id) if brand_id else None,
             model_name=model_name,
             imei=imei,
             serial_number=data.get("serial_number", ""),
@@ -114,6 +219,11 @@ def update_equipment(id):
     for field in ("equipment_type", "brand", "model_name", "imei", "serial_number", "notes", "reception_form_path"):
         if field in data:
             setattr(eq, field, data[field].strip() if isinstance(data[field], str) else data[field])
+
+    if "category_id" in data:
+        eq.category_id = int(data["category_id"]) if data["category_id"] else None
+    if "brand_id" in data:
+        eq.brand_id = int(data["brand_id"]) if data["brand_id"] else None
 
     if "status" in data:
         old_status = eq.status

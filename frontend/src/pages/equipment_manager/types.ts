@@ -96,6 +96,26 @@ export type EquipmentType = 'PHONE' | 'TABLET' | 'OTHER';
 export type EquipmentStatus = 'FUNCTIONAL' | 'FAULTY' | 'UNDER_REPAIR';
 export type AccessoryStatus = 'FUNCTIONAL' | 'FAULTY' | 'MISSING';
 
+export interface EquipmentCategory {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface EquipmentBrand {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export interface Accessory {
   id: string;
   equipment_id: string;
@@ -110,7 +130,11 @@ export interface Accessory {
 export interface Equipment {
   id: string;
   equipment_type: EquipmentType;
+  category_id: string | null;
+  category_name: string | null;
   brand: string;
+  brand_id: string | null;
+  brand_name: string | null;
   model_name: string;
   imei: string;
   serial_number: string;

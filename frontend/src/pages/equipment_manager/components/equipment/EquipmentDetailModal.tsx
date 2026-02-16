@@ -101,8 +101,8 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
       ) : equipment ? (
         <div>
           <div className={styles.detailGrid}>
-            <div className={styles.detailItem}><span className={styles.detailLabel}>Type</span><span className={styles.detailValue}>{equipment.equipment_type}</span></div>
-            <div className={styles.detailItem}><span className={styles.detailLabel}>Marque/Modele</span><span className={styles.detailValue}>{equipment.brand} {equipment.model_name}</span></div>
+            <div className={styles.detailItem}><span className={styles.detailLabel}>Type</span><span className={styles.detailValue}>{equipment.category_name || equipment.equipment_type || '-'}</span></div>
+            <div className={styles.detailItem}><span className={styles.detailLabel}>Marque/Modele</span><span className={styles.detailValue}>{equipment.brand_name || equipment.brand || ''} {equipment.model_name}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>IMEI</span><span className={styles.detailValue}>{equipment.imei}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>N. Serie</span><span className={styles.detailValue}>{equipment.serial_number || '-'}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Proprietaire ASC</span><span className={styles.detailValue}>{equipment.owner_name || '-'}</span></div>

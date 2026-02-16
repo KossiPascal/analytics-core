@@ -2,12 +2,72 @@ from datetime import datetime, timezone
 from backend.src.databases.extensions import db
 
 
+class EquipmentCategory(db.Model):
+    """Type d'equipement (ex: Telephone, Tablette, Autre)"""
+    __tablename__ = "em_equipment_categories"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.Text, default="")
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    equipments = db.relationship("Equipment", back_populates="category_rel", lazy="selectin")
+
+    def to_dict_safe(self):
+        return {
+            "id": str(self.id),
+            "name": self.name,
+            "code": self.code,
+            "description": self.description,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<EquipmentCategory(id={self.id}, name={self.name})>"
+
+
+class EquipmentBrand(db.Model):
+    """Marque d'equipement (ex: Samsung, Tecno, Itel)"""
+    __tablename__ = "em_equipment_brands"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.Text, default="")
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    equipments = db.relationship("Equipment", back_populates="brand_rel", lazy="selectin")
+
+    def to_dict_safe(self):
+        return {
+            "id": str(self.id),
+            "name": self.name,
+            "code": self.code,
+            "description": self.description,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<EquipmentBrand(id={self.id}, name={self.name})>"
+
+
 class Equipment(db.Model):
     __tablename__ = "em_equipment"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    equipment_type = db.Column(db.String(20), nullable=False)  # PHONE, TABLET, OTHER
-    brand = db.Column(db.String(100), nullable=False)
+    equipment_type = db.Column(db.String(20), default="")
+    category_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment_categories.id"), nullable=True)
+    brand = db.Column(db.String(100), default="")
+    brand_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment_brands.id"), nullable=True)
     model_name = db.Column(db.String(100), nullable=False)
     imei = db.Column(db.String(50), unique=True, nullable=False)
     serial_number = db.Column(db.String(100), default="")
@@ -25,6 +85,8 @@ class Equipment(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
+    category_rel = db.relationship("EquipmentCategory", back_populates="equipments", lazy="selectin")
+    brand_rel = db.relationship("EquipmentBrand", back_populates="equipments", lazy="selectin")
     owner = db.relationship("ASC", back_populates="equipments", lazy="selectin")
     employee = db.relationship("Employee", back_populates="equipments", lazy="selectin")
     history = db.relationship("EquipmentHistory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
@@ -35,7 +97,11 @@ class Equipment(db.Model):
         return {
             "id": str(self.id),
             "equipment_type": self.equipment_type,
+            "category_id": str(self.category_id) if self.category_id else None,
+            "category_name": self.category_rel.name if self.category_rel else None,
             "brand": self.brand,
+            "brand_id": str(self.brand_id) if self.brand_id else None,
+            "brand_name": self.brand_rel.name if self.brand_rel else None,
             "model_name": self.model_name,
             "imei": self.imei,
             "serial_number": self.serial_number,

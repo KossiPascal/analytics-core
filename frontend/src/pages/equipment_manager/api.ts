@@ -6,6 +6,7 @@ import { api } from '@/apis/api';
 import type {
   Region, District, Site, ZoneASC,
   ASC, Supervisor, Equipment, EquipmentHistory, Accessory,
+  EquipmentCategory, EquipmentBrand,
   Department, Position, Employee,
   RepairTicket, ProblemType, TicketComment,
   DelayAlertRecipient,
@@ -72,6 +73,16 @@ export const supervisorsApi = {
 // ─── EQUIPMENT ──────────────────────────────────────────────────────────────
 
 export const equipmentApi = {
+  // Categories (Types)
+  getCategories: () => api.get<EquipmentCategory[]>(`${BASE}/assets/categories`),
+  createCategory: (data: Record<string, unknown>) => api.post<EquipmentCategory>(`${BASE}/assets/categories`, data),
+  updateCategory: (id: string, data: Record<string, unknown>) => api.put<EquipmentCategory>(`${BASE}/assets/categories/${id}`, data),
+
+  // Brands (Marques)
+  getBrands: () => api.get<EquipmentBrand[]>(`${BASE}/assets/brands`),
+  createBrand: (data: Record<string, unknown>) => api.post<EquipmentBrand>(`${BASE}/assets/brands`, data),
+  updateBrand: (id: string, data: Record<string, unknown>) => api.put<EquipmentBrand>(`${BASE}/assets/brands/${id}`, data),
+
   getAll: (params?: { asc_id?: string; employee_id?: string; status?: string; type?: string }) => {
     const query = new URLSearchParams();
     if (params?.asc_id) query.set('asc_id', params.asc_id);
