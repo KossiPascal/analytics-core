@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { AlertTriangle, Plus, Trash2, X } from 'lucide-react';
+import { WarningIcon3D, AddIcon3D, DeleteIcon3D, ErrorIcon3D, icon3dStyles } from '@/components/ui/icons';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormDatePicker } from '@/components/forms/FormDatePicker/FormDatePicker';
@@ -426,16 +426,15 @@ export const IndicatorFilterBuilder: React.FC<IndicatorFilterBuilderProps> = ({
           <div className={styles.cellActions}>
             {filterWarnings && (
               <span className={styles.warningIcon} title={filterWarnings.join('\n')}>
-                <AlertTriangle size={14} />
+                <WarningIcon3D size={14} color="warning" className={icon3dStyles.pulse} />
               </span>
             )}
             <button
               type="button"
-              className={styles.removeBtn}
               onClick={() => handleRemoveFilter(item.id)}
               aria-label="Supprimer le filtre"
             >
-              <Trash2 size={14} />
+              <DeleteIcon3D size={14} color="danger" className={icon3dStyles.clickable} />
             </button>
           </div>
         );
@@ -458,7 +457,7 @@ export const IndicatorFilterBuilder: React.FC<IndicatorFilterBuilderProps> = ({
           onClick={() => setShowFilterPicker(true)}
           disabled={columns.length === 0}
         >
-          <Plus size={14} />
+          <AddIcon3D size={14} color="success" className={icon3dStyles.inline} />
           Ajouter filtre
         </button>
       </div>
@@ -470,7 +469,7 @@ export const IndicatorFilterBuilder: React.FC<IndicatorFilterBuilderProps> = ({
             onChange={(value) => {
               if (value) handleAddFilter(value);
             }}
-            placeholder="Choisir une colonne..."
+            placeholder="yyyyyyyyyyyyyyyChoisir une colonne..."
             options={columnOptions}
             searchable
           />
@@ -479,14 +478,14 @@ export const IndicatorFilterBuilder: React.FC<IndicatorFilterBuilderProps> = ({
             className={styles.btnCancel}
             onClick={() => setShowFilterPicker(false)}
           >
-            <X size={14} />
+            <ErrorIcon3D size={14} color="danger" className={icon3dStyles.clickable} />
           </button>
         </div>
       )}
 
       {hasWarnings && (
         <div className={styles.globalWarning}>
-          <AlertTriangle size={14} />
+          <WarningIcon3D size={14} color="warning" className={icon3dStyles.inline} />
           <span>Certains filtres sont contradictoires et ne retourneront aucun résultat.</span>
         </div>
       )}
