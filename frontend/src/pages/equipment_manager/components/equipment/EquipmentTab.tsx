@@ -53,7 +53,11 @@ export function EquipmentTab() {
       <EquipmentTable
         data={equipment}
         isLoading={loading}
-        onEdit={(e) => { setEditData(e); setFormOpen(true); }}
+        onEdit={async (e) => {
+          const res = await equipmentApi.get(e.id);
+          setEditData(res.success && res.data ? res.data : e);
+          setFormOpen(true);
+        }}
         onView={(e) => { setDetailId(e.id); setDetailOpen(true); }}
         onAssign={(e) => { setAssignTarget(e); setAssignOpen(true); }}
       />

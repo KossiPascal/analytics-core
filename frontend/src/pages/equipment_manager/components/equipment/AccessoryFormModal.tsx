@@ -14,11 +14,14 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  equipmentId: string;
+  equipmentId?: string | null;
   editData?: Accessory | null;
+  onCreated?: (accessory: Accessory) => void;
+  /** When true, accessory is collected locally without API call (no equipmentId yet) */
+  localMode?: boolean;
 }
 
-export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, editData }: Props) {
+export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, editData, onCreated, localMode }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
@@ -45,12 +48,32 @@ export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, ed
     setSaving(true);
     try {
       const data = { name, description, serial_number: serialNumber, status };
+
+      if (localMode) {
+        // Local mode: create a temporary accessory object (no API call)
+        const tempAcc: Accessory = {
+          id: `temp_${Date.now()}`,
+          equipment_id: '',
+          name,
+          description,
+          serial_number: serialNumber,
+          status: status as Accessory['status'],
+          created_at: null,
+          updated_at: null,
+        };
+        if (onCreated) onCreated(tempAcc);
+        toast.success('Accessoire ajoute');
+        onClose();
+        return;
+      }
+
       const res = isEdit
-        ? await equipmentApi.updateAccessory(equipmentId, editData!.id, data)
-        : await equipmentApi.createAccessory(equipmentId, data);
+        ? await equipmentApi.updateAccessory(equipmentId!, editData!.id, data)
+        : await equipmentApi.createAccessory(equipmentId!, data);
 
       if (res.success) {
         toast.success(`Accessoire ${isEdit ? 'mis a jour' : 'ajoute'} avec succes`);
+        if (!isEdit && onCreated && res.data) onCreated(res.data);
         onSuccess(); onClose();
       } else {
         toast.error(res.message || 'Erreur');

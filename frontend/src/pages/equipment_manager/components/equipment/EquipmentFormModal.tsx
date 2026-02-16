@@ -1,14 +1,28 @@
 import { useState, useEffect } from 'react';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@components/ui/Button/Button';
+import { Badge } from '@components/ui/Badge/Badge';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
-import { Save } from 'lucide-react';
+import { Save, Plus, X } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { equipmentApi } from '../../api';
-import type { Equipment, ASC } from '../../types';
+import type { Equipment, ASC, Accessory } from '../../types';
+import { AccessoryFormModal } from './AccessoryFormModal';
+
+const ACCESSORY_STATUS_LABEL: Record<string, string> = {
+  FUNCTIONAL: 'Fonctionnel',
+  FAULTY: 'Defectueux',
+  MISSING: 'Manquant',
+};
+
+const ACCESSORY_STATUS_VARIANT: Record<string, 'success' | 'danger' | 'warning'> = {
+  FUNCTIONAL: 'success',
+  FAULTY: 'danger',
+  MISSING: 'warning',
+};
 
 interface Props {
   isOpen: boolean;
@@ -31,6 +45,10 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Accessories
+  const [pendingAccessories, setPendingAccessories] = useState<Accessory[]>([]);
+  const [accFormOpen, setAccFormOpen] = useState(false);
+
   const isEdit = !!editData;
 
   useEffect(() => {
@@ -45,10 +63,12 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
       setAcquisitionDate(editData.acquisition_date || '');
       setWarrantyDate(editData.warranty_expiry_date || '');
       setNotes(editData.notes);
+      setPendingAccessories(editData.accessories || []);
     } else {
       setEquipmentType('PHONE'); setBrand(''); setModelName(''); setImei('');
       setSerialNumber(''); setStatus('FUNCTIONAL'); setOwnerId('');
       setAcquisitionDate(''); setWarrantyDate(''); setNotes('');
+      setPendingAccessories([]);
     }
   }, [editData, isOpen]);
 
@@ -73,7 +93,20 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
         ? await equipmentApi.update(editData!.id, data)
         : await equipmentApi.create(data);
 
-      if (res.success) {
+      if (res.success && res.data) {
+        const eqId = res.data.id;
+
+        // Save new pending accessories (those with temp IDs)
+        const newAccessories = pendingAccessories.filter((a) => a.id.startsWith('temp_'));
+        for (const acc of newAccessories) {
+          await equipmentApi.createAccessory(eqId, {
+            name: acc.name,
+            description: acc.description,
+            serial_number: acc.serial_number,
+            status: acc.status,
+          });
+        }
+
         toast.success(`Equipement ${isEdit ? 'mis a jour' : 'cree'} avec succes`);
         onSuccess();
         onClose();
@@ -85,6 +118,14 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleAccessoryCreated = (acc: Accessory) => {
+    setPendingAccessories((prev) => [...prev, acc]);
+  };
+
+  const handleRemoveAccessory = (accId: string) => {
+    setPendingAccessories((prev) => prev.filter((a) => a.id !== accId));
   };
 
   return (
@@ -145,7 +186,75 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
           <FormInput label="Fin de garantie" type={"date" as any} value={warrantyDate} onChange={(e) => setWarrantyDate(e.target.value)} />
         </div>
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+
+        {/* Accessories section */}
+        <div style={{ marginTop: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <label style={{ fontWeight: 500, fontSize: '0.875rem' }}>
+              Accessoires ({pendingAccessories.length})
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              leftIcon={<Plus size={14} />}
+              onClick={() => setAccFormOpen(true)}
+            >
+              Ajouter
+            </Button>
+          </div>
+          {pendingAccessories.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              {pendingAccessories.map((acc) => (
+                <div
+                  key={acc.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid var(--border-color, #e2e8f0)',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontWeight: 500 }}>{acc.name}</span>
+                    {acc.serial_number && (
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                        S/N: {acc.serial_number}
+                      </span>
+                    )}
+                    <Badge variant={ACCESSORY_STATUS_VARIANT[acc.status] || 'secondary'}>
+                      {ACCESSORY_STATUS_LABEL[acc.status] || acc.status}
+                    </Badge>
+                  </div>
+                  {acc.id.startsWith('temp_') && (
+                    <button
+                      type="button"
+                      className={shared.actionBtn}
+                      onClick={() => handleRemoveAccessory(acc.id)}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', margin: 0 }}>Aucun accessoire</p>
+          )}
+        </div>
       </form>
+
+      <AccessoryFormModal
+        isOpen={accFormOpen}
+        onClose={() => setAccFormOpen(false)}
+        onSuccess={() => {}}
+        localMode={!isEdit}
+        equipmentId={isEdit ? editData!.id : null}
+        onCreated={handleAccessoryCreated}
+      />
     </Modal>
   );
 }

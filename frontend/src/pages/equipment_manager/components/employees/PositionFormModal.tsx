@@ -15,9 +15,10 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   editData?: Position | null;
+  onCreated?: (position: Position) => void;
 }
 
-export function PositionFormModal({ isOpen, onClose, onSuccess, editData }: Props) {
+export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCreated }: Props) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
@@ -50,6 +51,7 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData }: Prop
 
       if (res.success) {
         toast.success(`Poste ${isEdit ? 'mis a jour' : 'cree'} avec succes`);
+        if (!isEdit && onCreated && res.data) onCreated(res.data);
         onSuccess(); onClose();
       } else {
         toast.error(res.message || 'Erreur');
