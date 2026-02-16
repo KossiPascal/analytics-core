@@ -191,7 +191,7 @@ def update_user_facility():
         if not all([code, role, parent, contact, new_parent]):
             return jsonify({"status": 400, "message": "Missing parameters"}), 400
 
-        # Fetch user from CouchDB repository
+        # Fetch user FROM kendeya_docs repository
         # user = CouchDBUsers.query.filter_by(type=role, roles=role, code=code, place=parent, contact=contact).first()
 
         user:Any=None

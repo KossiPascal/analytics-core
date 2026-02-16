@@ -36,8 +36,8 @@
 .qb-section {
     background: white;
     border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 5px;
+    margin-bottom: 10px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.05);
     transition: all 0.2s ease;
 }
@@ -66,7 +66,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px;
+    padding: 5px;
     background: #f8fafc;
     border-radius: 8px;
     margin-bottom: 12px;
@@ -141,8 +141,8 @@
     transition: all 0.2s ease;
 } */
 .qb-btn {
-    height: 36px;
-    padding: 0 14px;
+    height: 30px;
+    padding: 0 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -227,6 +227,99 @@
 .qb-number-input {
     width: 120px;
 }
+
+
+/* =========================
+   WHERE GROUPS
+========================= */
+
+.qb-group {
+    position: relative;
+    background: #f9fafb;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 5px;
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+}
+
+.qb-group:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 6px 18px rgba(99,102,241,0.08);
+}
+
+/* Ligne logique entre groupes (AND / OR) */
+.qb-group-logic {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2px 0;
+    font-weight: 600;
+}
+
+.qb-group-logic select {
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    font-weight: 600;
+    color: #4338ca;
+    width: 90px;
+    text-align: center;
+}
+
+/* Header du groupe */
+.qb-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+/* Numéro de groupe */
+.qb-group-header strong {
+    font-size: 14px;
+    color: #475569;
+    background: #e2e8f0;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+/* Conditions indentées visuellement */
+.qb-group .qb-row {
+    /* margin-left: 5px; */
+    border-left: 3px solid #e2e8f0;
+    padding-left: 5px;
+}
+
+/* Sélecteur logique condition (AND / OR interne) */
+.qb-row select:last-child {
+    background: #f1f5f9;
+    font-weight: 600;
+    width: 90px;
+    /* padding: 2px; */
+    text-align: center;
+}
+
+/* Bouton add condition dans groupe */
+.qb-group > .qb-btn-secondary {
+    margin-top: 10px;
+}
+
+/* Animation légère apparition */
+.qb-group {
+    animation: fadeInGroup 0.25s ease;
+}
+
+@keyframes fadeInGroup {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 
 /* =========================
    RESPONSIVE

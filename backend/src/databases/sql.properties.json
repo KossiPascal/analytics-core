@@ -1,0 +1,783 @@
+[
+    {
+        "name": "get_value_or_default",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "calculate_age_in",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "generate_random_colors",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "age_with_full_label",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "generate_full_year_month_grid",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "parse_json_boolean",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "parse_json_bigint",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "parse_json_decimal",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "clean_json_text",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "no_vaccine_reason",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "year_month_grid_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "country_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "region_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "prefecture_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "commune_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "hospital_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "district_quartier_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "village_secteur_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "family_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "country_manager_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "region_manager_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "prefecture_manager_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "commune_manager_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "hospital_manager_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "chw_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "reco_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "patient_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "adult_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "family_planning_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "pregnant_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "newborn_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "pcimne_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "delivery_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "reco_meg_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "referal_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "vaccination_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "events_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "fs_meg_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "promotional_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "death_data_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "reco_chws_supervision_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "year_month_reco_grid_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "patient_household_stats_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "tasks_state_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "users_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "build_meg_json",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "build_family_planning_json",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "safe_monthly_count",
+        "type": "function",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": []
+    },
+    {
+        "name": "report_all_cover_reco_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "report_all_functional_reco_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_adults_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_death_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_events_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_family_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_newborn_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_patient_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_pcime_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_pregnant_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_promotional_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_vaccination_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "report_patient_count_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "reports_morbidity_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "reports_chws_reco_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "reports_promotional_activities_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "reports_family_planning_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "reports_household_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "reports_pcime_newborn_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "reports_reco_meg_situation_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "dash_max_vaccination_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "dash_all_actions_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "dash_consultation_followup_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true },
+            { "columns": ["month", "year"], "method": "btree"}
+        ]
+    },
+    {
+        "name": "dashboards_active_reco_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "dashboards_reco_performance_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "dashboards_reco_performance_full_year_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "dashboards_reco_vaccination_not_done_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "dashboards_reco_vaccination_all_done_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "dashboards_reco_vaccination_partial_done_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["reco_id", "month", "year"], "unique": true },
+            { "columns": ["id"], "method": "btree" }
+        ]
+    },
+    {
+        "name": "dashboards_tasks_state_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "reco_data_map_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "devices_telemetry_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "metrics_telemetry_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "users_telemetry_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    },
+    {
+        "name": "users_feedback_view",
+        "type": "matview",
+        "depends": [],
+        "auto_depends": true,
+        "indexes": [
+            { "columns": ["id"], "unique": true }
+        ]
+    }
+]

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import time
 from dataclasses import dataclass
-from typing import Dict, Optional, Any
+from typing import Dict, List, Optional, Any
 from sqlalchemy.dialects.postgresql import JSONB
 from backend.src.config import Config
 from backend.src.databases.extensions import db
@@ -98,11 +98,11 @@ class CouchdbSyncCible(db.Model):
         """Return active CouchDB logical databases"""
         couchdbs:list[CouchdbSyncCible] = CouchdbSyncCible.query.filter_by(is_active=True, type="couchdb").all()
         return couchdbs
-    
+
     @staticmethod
-    def ensure_default_couchdb_dbs():
+    def ensure_default_couchdb_dbs()->List["CouchdbSyncCible"]:
         try:
-            couchdbs:list[CouchdbSyncCible] = CouchdbSyncCible.query.filter_by(type="couchdb").all()
+            couchdbs:List[CouchdbSyncCible] = CouchdbSyncCible.query.filter_by(type="couchdb").all()
             existing = { d.local_name for d in couchdbs }
             if not existing:
                 for dbn in DEFAULT_COUCHDB_DBS:
@@ -110,6 +110,7 @@ class CouchdbSyncCible(db.Model):
                         db.session.add(CouchdbSyncCible(local_name=dbn["local_name"],host_name=dbn["host_name"],type="couchdb",is_active=True))
 
                 db.session.commit()
+            return CouchdbSyncCible.query.filter_by(type="couchdb").all()
         except Exception as e:
             db.session.rollback()
             logger.error(f"Failed to ensure default CouchDB DBs: {str(e)}")
