@@ -1,0 +1,151 @@
+-- @name: dashboards_reco_vaccination_all_done_view
+-- @type: matview
+-- @depends:
+-- @auto_depends: true
+-- @indexes:
+--   - columns: ["month","year","reco_id"]
+--     unique: true
+--   - columns: ["id"]
+--     method: btree
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS dashboards_reco_vaccination_all_done_view AS
+
+WITH base AS (
+    SELECT *
+    FROM dash_max_vaccination_view
+    WHERE has_all_vaccine_done IS TRUE
+      AND child_id IS NOT NULL
+),
+
+children_preagg AS (
+    -- Pré-calcul des MAX() par famille/reco avant jsonb_agg
+    SELECT
+        family_id,
+        reco_id,
+        MAX(family_given_name) AS family_given_name,
+        MAX(family_name) AS family_name,
+        MAX(family_external_id) AS family_external_id,
+        MAX(householder_phone) AS householder_phone,
+        MAX(householder_phone_other) AS householder_phone_other,
+        child_id,
+        child_name,
+        child_code,
+        child_sex,
+        child_age_in_days,
+        child_age_in_months,
+        child_age_in_years,
+        child_age_str,
+        bool_or(vaccine_BCG) AS vaccine_BCG,
+        MAX(vaccine_BCG_date) AS vaccine_BCG_date,
+        MAX(no_BCG_reason) AS no_BCG_reason,
+        bool_or(vaccine_VPO_0) AS vaccine_VPO_0,
+        MAX(vaccine_VPO_0_date) AS vaccine_VPO_0_date,
+        MAX(no_VPO_0_reason) AS no_VPO_0_reason,
+        bool_or(vaccine_PENTA_1) AS vaccine_PENTA_1,
+        MAX(vaccine_PENTA_1_date) AS vaccine_PENTA_1_date,
+        MAX(no_PENTA_1_reason) AS no_PENTA_1_reason,
+        bool_or(vaccine_VPO_1) AS vaccine_VPO_1,
+        MAX(vaccine_VPO_1_date) AS vaccine_VPO_1_date,
+        MAX(no_VPO_1_reason) AS no_VPO_1_reason,
+        -- … répéter pour toutes les vaccinations
+        bool_or(vaccine_VAR_2) AS vaccine_VAR_2,
+        MAX(vaccine_VAR_2_date) AS vaccine_VAR_2_date,
+        MAX(no_VAR_2_reason) AS no_VAR_2_reason
+    FROM base
+    GROUP BY family_id, reco_id, child_id, child_name, child_code, child_sex,
+             child_age_in_days, child_age_in_months, child_age_in_years, child_age_str
+),
+
+children_per_family AS (
+    SELECT
+        family_id,
+        reco_id,
+        family_given_name,
+        family_name,
+        family_external_id,
+        householder_phone,
+        householder_phone_other,
+        jsonb_agg(
+            jsonb_build_object(
+                'phone', jsonb_build_object(
+                    'reco', NULL,
+                    'parent', NULLIF(householder_phone, ''),
+                    'neighbor', NULLIF(householder_phone_other, '')
+                ),
+                'child', jsonb_build_object(
+                    'id', child_id,
+                    'name', child_name,
+                    'code', child_code,
+                    'sex', child_sex,
+                    'age_in_days', child_age_in_days,
+                    'age_in_months', child_age_in_months,
+                    'age_in_years', child_age_in_years,
+                    'age_str', child_age_str
+                ),
+                'BCG', jsonb_build_object('done', vaccine_BCG, 'date', vaccine_BCG_date, 'reason', no_BCG_reason),
+                'VPO_0', jsonb_build_object('done', vaccine_VPO_0, 'date', vaccine_VPO_0_date, 'reason', no_VPO_0_reason),
+                'PENTA_1', jsonb_build_object('done', vaccine_PENTA_1, 'date', vaccine_PENTA_1_date, 'reason', no_PENTA_1_reason)
+                -- … répéter pour toutes les vaccinations restantes
+            )
+            ORDER BY child_name
+        ) AS children
+    FROM children_preagg
+    GROUP BY family_id, reco_id, family_given_name, family_name, family_external_id, householder_phone, householder_phone_other
+),
+
+families_per_reco AS (
+    SELECT
+        reco_id,
+        jsonb_agg(
+            jsonb_build_object(
+                'family', jsonb_build_object(
+                    'id', family_id,
+                    'name', family_given_name,
+                    'fullname', family_name,
+                    'code', family_external_id,
+                    'phone', COALESCE(NULLIF(householder_phone, ''), NULLIF(householder_phone_other, ''))
+                ),
+                'data', children
+            )
+            ORDER BY family_given_name
+        ) AS families
+    FROM children_per_family
+    GROUP BY reco_id
+)
+
+SELECT
+    CONCAT(a.month, '-', a.year, '-', a.reco_id) AS id,
+    a.month,
+    a.year,
+    a.reco_id,
+    fpr.families AS children_vaccines,
+    jsonb_build_object('id', r.id, 'name', r.name, 'phone', r.phone) AS reco,
+    jsonb_build_object('id', c.id, 'name', c.name) AS country,
+    jsonb_build_object('id', g.id, 'name', g.name) AS region,
+    jsonb_build_object('id', p.id, 'name', p.name) AS prefecture,
+    jsonb_build_object('id', m.id, 'name', m.name) AS commune,
+    jsonb_build_object('id', h.id, 'name', h.name) AS hospital,
+    jsonb_build_object('id', d.id, 'name', d.name) AS district_quartier,
+    jsonb_build_object('id', v.id, 'name', v.name) AS village_secteur
+FROM year_month_reco_grid_view a
+JOIN reco_view r ON r.id = a.reco_id
+LEFT JOIN families_per_reco fpr ON fpr.reco_id = a.reco_id
+LEFT JOIN country_view c ON r.country_id = c.id
+LEFT JOIN region_view g ON r.region_id = g.id
+LEFT JOIN prefecture_view p ON r.prefecture_id = p.id
+LEFT JOIN commune_view m ON r.commune_id = m.id
+LEFT JOIN hospital_view h ON r.hospital_id = h.id
+LEFT JOIN district_quartier_view d ON r.district_quartier_id = d.id
+LEFT JOIN village_secteur_view v ON r.village_secteur_id = v.id
+WHERE fpr.families IS NOT NULL
+GROUP BY
+    a.month, a.year, a.reco_id,
+    r.id, r.name, r.phone,
+    c.id, c.name,
+    g.id, g.name,
+    p.id, p.name,
+    m.id, m.name,
+    h.id, h.name,
+    d.id, d.name,
+    v.id, v.name,
+    fpr.families;

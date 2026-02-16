@@ -33,6 +33,7 @@ class Config:
     PUBLIC_DIR = SRC_FOLDER / "public"
     WEBAPP_DIR = BACKEND_DIR / "web" #os.path.join(os.path.dirname(__file__), "..", "web")
     EJS_DIR = SRC_FOLDER / "ejs"
+    POSTGRESQL_DIR = SRC_FOLDER / "postgresql"
 
     ACCESS_ALL_AVAILABLE_PORT = os.getenv("ACCESS_ALL_AVAILABLE_PORT", "false").lower() == "true"
     SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")

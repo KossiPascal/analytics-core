@@ -6,24 +6,28 @@ import time
 import threading
 from datetime import datetime, timezone
 from typing import Any, Type, List, Dict, Optional
-from functools import wraps
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from flask import Flask
+from aiohttp import ClientSession, ClientTimeout, BasicAuth, ClientError
+
 from sqlalchemy import delete, literal_column
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from aiohttp import ClientSession, ClientTimeout, BasicAuth, ClientError
 
 from backend.src.config import Config
 from backend.src.databases.extensions import db
 from backend.src.models.connection import CouchdbSyncCible, DbConnection
 from backend.src.models.worker_control import WorkerControl
 from backend.src.server import create_flask_app
-from shared_libs.helpers.utils import sanitize_doc
+
 from workers.couchdb.models import CreateTableModel
+from workers.couchdb.sql_migration import SQLStarter
+from workers.couchdb.utils import with_app_context
 from workers.logger import get_workers_logger
+
+from shared_libs.helpers.utils import sanitize_doc
 
 logger = get_workers_logger(__name__)
 
@@ -51,21 +55,6 @@ EXCLUDED_PATTERNS = [
 STOP_EVENT = threading.Event()
 WORKER_CONTROL_NAME = "couchdb_worker"
 SOURCE_LOCKS = {}  # Verrouillage par source_id
-
-
-# -------------------------------
-# Decorator Flask app context
-# -------------------------------
-def with_app_context(func):
-    """Wrap function in Flask app context to safely use db.session and extensions."""
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        app: Flask = kwargs.get("app")
-        if not app:
-            raise ValueError("Flask app must be passed as keyword arg 'app'")
-        with app.app_context():
-            return func(*args, **kwargs)
-    return wrapper
 
 
 # -------------------------------
@@ -97,7 +86,6 @@ def _upsert_chunk(DataModel: Type[Any], chunk: List[dict], source_name: str, app
             logger.error(f"[UPSERT BULK] Failed on source={source_name}: {e}", extra={"source": source_name})
     return created, updated
 
-
 @with_app_context
 def _delete_chunk(DataModel: Type[Any], chunk: List[str], source_name: str, app=None) -> int:
     deleted = 0
@@ -112,7 +100,6 @@ def _delete_chunk(DataModel: Type[Any], chunk: List[str], source_name: str, app=
             session.rollback()
             logger.error(f"[DELETE BULK] Failed on source={source_name}: {e}", extra={"source": source_name})
     return deleted
-
 
 @with_app_context
 def bulk_apply_changes(source_name: str, DataModel: Type[Any], rows_upsert: List[dict], ids_delete: List[str], app=None) -> tuple[int, int, int]:
@@ -141,7 +128,6 @@ def bulk_apply_changes(source_name: str, DataModel: Type[Any], rows_upsert: List
 
     return created, updated, deleted
 
-
 # -------------------------------
 # FETCH CHANGES
 # -------------------------------
@@ -159,7 +145,6 @@ async def fetch_changes(client: ClientSession, base_url: str, host_db: str, last
     async with client.get(url, params=params, auth=BasicAuth(username, password)) as resp:
         resp.raise_for_status()
         return await resp.json()
-
 
 # -------------------------------
 # SYNC SINGLE DB
@@ -347,8 +332,6 @@ def start_async_single_source(source_id: int, app: Flask = None) -> dict:
         # return {"status": "error", "message": str(e)}
         return None
 
-
-
 def is_worker_paused(session: Session) -> bool:
     control = session.query(WorkerControl).filter_by(name=WORKER_CONTROL_NAME).first()
     if not control:
@@ -356,49 +339,49 @@ def is_worker_paused(session: Session) -> bool:
         session.add(control)
         session.commit()
     return control.status.lower() == "stop"
+
 # -------------------------------
 # CouchDB Worker encapsulé
 # -------------------------------
-def run_workers_logger_loop(poll_interval: int = 5):
-    app = create_flask_app(create_default_elements=False)
-    with app.app_context():
-        logger.info("🚀 CouchDB Sync Worker started")
-        while not STOP_EVENT.is_set():
-            try:
-                with Session(db.engine) as session:
-                    if is_worker_paused(session):
-                        logger.info("⏸ Worker paused", extra={"worker": WORKER_CONTROL_NAME})
-                        time.sleep(poll_interval)
-                        continue
-
-                    source_ids = [s.id for s in session.query(DbConnection.id).filter_by(is_active=True).all()]
-
-                if not source_ids:
-                    logger.debug("⏸️ No active sources", extra={"worker": WORKER_CONTROL_NAME})
+@with_app_context
+def run_workers_logger_loop(poll_interval: int = 5, app: Flask=None):
+    logger.info("🚀 CouchDB Sync Worker started")
+    while not STOP_EVENT.is_set():
+        try:
+            with Session(db.engine) as session:
+                if is_worker_paused(session):
+                    logger.info("⏸ Worker paused", extra={"worker": WORKER_CONTROL_NAME})
                     time.sleep(poll_interval)
                     continue
 
-                for source_id in source_ids:
-                    if STOP_EVENT.is_set():
-                        break
-                    # logger.info(f"\n🔄 Sync source_id={source_id}", extra={"source": source_id})
-                    results = start_async_single_source(source_id, app=app)
-                    # # logger.info(results, extra={"source": source_id})
-                    # if results and isinstance(results, list):
-                    #     found = 0
-                    #     for r in results:
-                    #         found += r
-                    #     if found > 0:
-                    #         print(f"\n")
+                source_ids = [s.id for s in session.query(DbConnection.id).filter_by(is_active=True).all()]
 
-                    
+            if not source_ids:
+                logger.debug("⏸️ No active sources", extra={"worker": WORKER_CONTROL_NAME})
+                time.sleep(poll_interval)
+                continue
 
-            except Exception as e:
-                logger.error(f"🔥 Worker loop error: {str(e)}", extra={"worker": WORKER_CONTROL_NAME})
+            for source_id in source_ids:
+                if STOP_EVENT.is_set():
+                    break
+                # logger.info(f"\n🔄 Sync source_id={source_id}", extra={"source": source_id})
+                results = start_async_single_source(source_id, app=app)
+                # # logger.info(results, extra={"source": source_id})
+                # if results and isinstance(results, list):
+                #     found = 0
+                #     for r in results:
+                #         found += r
+                #     if found > 0:
+                #         print(f"\n")
 
-            time.sleep(poll_interval)
+                
 
-        logger.info("👋 CouchDB Sync Worker stopped")
+        except Exception as e:
+            logger.error(f"🔥 Worker loop error: {str(e)}", extra={"worker": WORKER_CONTROL_NAME})
+
+        time.sleep(poll_interval)
+
+    logger.info("👋 CouchDB Sync Worker stopped")
 
 def stop_workers_logger_loop():
     STOP_EVENT.set()
@@ -408,9 +391,12 @@ def stop_workers_logger_loop():
 # Entrée principale
 # -------------------------------
 if __name__ == "__main__":
-    
     try:
-        run_workers_logger_loop()
+        app = create_flask_app(create_default_elements=False)
+        # run_workers_logger_loop(app=app)
+        starter = SQLStarter(project_name="kendeya", app=app)
+        starter.run("init")
+        # starter.run("rebuild")
     except KeyboardInterrupt:
         stop_workers_logger_loop()
         logger.info("👋 CouchDB Sync Worker stopped manually")

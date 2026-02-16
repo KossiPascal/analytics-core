@@ -1,0 +1,21 @@
+-- @name: no_vaccine_reason
+-- @type: function
+
+CREATE OR REPLACE FUNCTION no_vaccine_reason(reason TEXT, other_reason TEXT DEFAULT NULL) 
+RETURNS TEXT AS $$
+BEGIN
+    IF reason = 'shortage' THEN
+        RETURN 'Rupture de vaccin';
+    ELSIF reason = 'no_appointment_respect' THEN
+        RETURN 'Non respect du rendez-vous';
+    ELSIF reason = 'hesitancy' THEN
+        RETURN 'Réticence des parents';
+    ELSIF reason = 'upcoming' THEN
+        RETURN 'Rendez-vous pas encore arrivé';
+    ELSIF reason = 'others' AND other_reason IS NOT NULL AND LENGTH(TRIM(other_reason)) > 0 THEN
+        RETURN other_reason;
+    ELSE
+        RETURN NULL;
+    END IF;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
