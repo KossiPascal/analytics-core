@@ -32,6 +32,19 @@ from backend.src.security.api_security import api_security
 from backend.src.routes import auth, connections, visualization, scripts, database, worker_controller
 from backend.src.routes.admin import permissions, roles, tenants, users
 
+# Equipment Manager module - import models so SQLAlchemy registers them
+import backend.src.equipment_manager.models  # noqa: F401
+from backend.src.equipment_manager.routes import (
+    locations as em_locations,
+    ascs as em_ascs,
+    supervisors as em_supervisors,
+    equipment as em_equipment,
+    tickets as em_tickets,
+    employees as em_employees,
+    dashboard as em_dashboard,
+    dhis2_sync as em_dhis2_sync,
+)
+
 from backend.src.databases.extensions import db
 
 # -----------------------------------------------------------------------------
@@ -117,9 +130,16 @@ def create_flask_app(create_default_elements = True) -> Flask:
     # Blueprints
     for bp in (
         auth, connections, database, scripts,visualization, worker_controller,
-        permissions, roles, tenants, users, 
+        permissions, roles, tenants, users,
     ):
         app.register_blueprint(bp.bp if hasattr(bp, "bp") else bp)
+
+    # Equipment Manager blueprints
+    for em_bp in (
+        em_locations, em_ascs, em_supervisors, em_equipment,
+        em_tickets, em_employees, em_dashboard, em_dhis2_sync,
+    ):
+        app.register_blueprint(em_bp.bp)
 
     # -----------------------------------------------------------------------------
     # ROUTES
