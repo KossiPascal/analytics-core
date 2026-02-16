@@ -5,8 +5,8 @@
 import { api } from '@/apis/api';
 import type {
   Region, District, Site, ZoneASC,
-  ASC, Supervisor, Equipment, EquipmentHistory,
-  Department, Employee,
+  ASC, Supervisor, Equipment, EquipmentHistory, Accessory,
+  Department, Position, Employee,
   RepairTicket, ProblemType, TicketComment,
   DelayAlertRecipient,
   DashboardStats, TicketsByStatus, TicketsByDelay, BlockagePoint,
@@ -86,6 +86,12 @@ export const equipmentApi = {
   update: (id: string, data: Record<string, unknown>) => api.put<Equipment>(`${BASE}/assets/${id}`, data),
   assign: (id: string, data: { asc_id?: string; employee_id?: string; notes?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/assign`, data),
   getHistory: (id: string) => api.get<EquipmentHistory[]>(`${BASE}/assets/${id}/history`),
+
+  // Accessories
+  getAccessories: (equipmentId: string) => api.get<Accessory[]>(`${BASE}/assets/${equipmentId}/accessories`),
+  createAccessory: (equipmentId: string, data: Record<string, unknown>) => api.post<Accessory>(`${BASE}/assets/${equipmentId}/accessories`, data),
+  updateAccessory: (equipmentId: string, accId: string, data: Record<string, unknown>) => api.put<Accessory>(`${BASE}/assets/${equipmentId}/accessories/${accId}`, data),
+  deleteAccessory: (equipmentId: string, accId: string) => api.delete(`${BASE}/assets/${equipmentId}/accessories/${accId}`),
 };
 
 // ─── TICKETS ────────────────────────────────────────────────────────────────
@@ -127,6 +133,11 @@ export const employeesApi = {
   createDepartment: (data: Record<string, unknown>) => api.post<Department>(`${BASE}/employees/departments`, data),
   getDepartment: (id: string) => api.get<Department & { children: Department[]; employees: Employee[] }>(`${BASE}/employees/departments/${id}`),
   updateDepartment: (id: string, data: Record<string, unknown>) => api.put<Department>(`${BASE}/employees/departments/${id}`, data),
+
+  // Positions
+  getPositions: () => api.get<Position[]>(`${BASE}/employees/positions`),
+  createPosition: (data: Record<string, unknown>) => api.post<Position>(`${BASE}/employees/positions`, data),
+  updatePosition: (id: string, data: Record<string, unknown>) => api.put<Position>(`${BASE}/employees/positions/${id}`, data),
 
   // Employees
   getAll: (params?: { department_id?: string; active?: string; search?: string }) => {

@@ -2,26 +2,33 @@ import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Plus } from 'lucide-react';
 import { employeesApi } from '../../api';
-import type { Employee, Department } from '../../types';
+import type { Employee, Department, Position } from '../../types';
 import { DepartmentsTable } from './DepartmentsTable';
 import { DepartmentFormModal } from './DepartmentFormModal';
+import { PositionsTable } from './PositionsTable';
+import { PositionFormModal } from './PositionFormModal';
 import { EmployeesTable } from './EmployeesTable';
 import { EmployeeFormModal } from './EmployeeFormModal';
 import { EmployeeDetailModal } from './EmployeeDetailModal';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
-type SubTab = 'departments' | 'employees';
+type SubTab = 'employees' | 'departments' | 'positions';
 
 export function EmployeesTab() {
   const [subTab, setSubTab] = useState<SubTab>('employees');
   const [departments, setDepartments] = useState<(Department & { children: Department[] })[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Department modal
   const [deptFormOpen, setDeptFormOpen] = useState(false);
   const [deptEditData, setDeptEditData] = useState<Department | null>(null);
+
+  // Position modal
+  const [posFormOpen, setPosFormOpen] = useState(false);
+  const [posEditData, setPosEditData] = useState<Position | null>(null);
 
   // Employee modal
   const [empFormOpen, setEmpFormOpen] = useState(false);
@@ -34,11 +41,13 @@ export function EmployeesTab() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [deptRes, empRes] = await Promise.all([
+      const [deptRes, posRes, empRes] = await Promise.all([
         employeesApi.getDepartments(),
+        employeesApi.getPositions(),
         employeesApi.getAll(),
       ]);
       if (deptRes.success) setDepartments(deptRes.data!);
+      if (posRes.success) setPositions(posRes.data!);
       if (empRes.success) setEmployees(empRes.data!);
     } catch {
       toast.error('Erreur de chargement');
@@ -56,7 +65,20 @@ export function EmployeesTab() {
   const SUB_TABS: { key: SubTab; label: string }[] = [
     { key: 'employees', label: 'Employes' },
     { key: 'departments', label: 'Departements' },
+    { key: 'positions', label: 'Postes' },
   ];
+
+  const getAddButtonLabel = () => {
+    if (subTab === 'departments') return 'Nouveau Departement';
+    if (subTab === 'positions') return 'Nouveau Poste';
+    return 'Nouvel Employe';
+  };
+
+  const handleAddClick = () => {
+    if (subTab === 'departments') { setDeptEditData(null); setDeptFormOpen(true); }
+    else if (subTab === 'positions') { setPosEditData(null); setPosFormOpen(true); }
+    else { setEmpEditData(null); setEmpFormOpen(true); }
+  };
 
   return (
     <div>
@@ -75,12 +97,9 @@ export function EmployeesTab() {
         <Button
           size="sm"
           leftIcon={<Plus size={16} />}
-          onClick={() => {
-            if (subTab === 'departments') { setDeptEditData(null); setDeptFormOpen(true); }
-            else { setEmpEditData(null); setEmpFormOpen(true); }
-          }}
+          onClick={handleAddClick}
         >
-          {subTab === 'departments' ? 'Nouveau Departement' : 'Nouvel Employe'}
+          {getAddButtonLabel()}
         </Button>
       </div>
 
@@ -89,6 +108,14 @@ export function EmployeesTab() {
           data={departments}
           isLoading={loading}
           onEdit={(d) => { setDeptEditData(d); setDeptFormOpen(true); }}
+        />
+      )}
+
+      {subTab === 'positions' && (
+        <PositionsTable
+          data={positions}
+          isLoading={loading}
+          onEdit={(p) => { setPosEditData(p); setPosFormOpen(true); }}
         />
       )}
 
@@ -110,12 +137,20 @@ export function EmployeesTab() {
         departments={departments}
       />
 
+      <PositionFormModal
+        isOpen={posFormOpen}
+        onClose={() => setPosFormOpen(false)}
+        onSuccess={loadAll}
+        editData={posEditData}
+      />
+
       <EmployeeFormModal
         isOpen={empFormOpen}
         onClose={() => setEmpFormOpen(false)}
         onSuccess={loadAll}
         editData={empEditData}
         departments={departments}
+        positions={positions}
       />
 
       <EmployeeDetailModal

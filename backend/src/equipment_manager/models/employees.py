@@ -55,26 +55,54 @@ class Department(db.Model):
         return f"<Department(id={self.id}, name={self.name}, parent_id={self.parent_id})>"
 
 
+class Position(db.Model):
+    __tablename__ = "em_positions"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.Text, default="")
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    employees = db.relationship("Employee", back_populates="position_rel", lazy="selectin")
+
+    def to_dict_safe(self):
+        return {
+            "id": str(self.id),
+            "name": self.name,
+            "code": self.code,
+            "description": self.description,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<Position(id={self.id}, name={self.name})>"
+
+
 class Employee(db.Model):
     __tablename__ = "em_employees"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     department_id = db.Column(db.BigInteger, db.ForeignKey("em_departments.id", ondelete="CASCADE"), nullable=False)
+    position_id = db.Column(db.BigInteger, db.ForeignKey("em_positions.id"), nullable=True)
     first_name = db.Column(db.String(150), nullable=False)
     last_name = db.Column(db.String(150), nullable=False)
     employee_id_code = db.Column(db.String(50), unique=True, nullable=False)
     gender = db.Column(db.String(1), default="")
     phone = db.Column(db.String(20), default="")
     email = db.Column(db.String(255), default="")
-    position = db.Column(db.String(100), nullable=False)
     hire_date = db.Column(db.Date, nullable=True)
-    end_date = db.Column(db.Date, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     notes = db.Column(db.Text, default="")
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     department = db.relationship("Department", back_populates="employees", lazy="selectin")
+    position_rel = db.relationship("Position", back_populates="employees", lazy="selectin")
     equipments = db.relationship("Equipment", back_populates="employee", lazy="selectin")
     history = db.relationship("EmployeeHistory", back_populates="employee", lazy="selectin", cascade="all, delete-orphan")
 
@@ -88,6 +116,8 @@ class Employee(db.Model):
             "department_id": str(self.department_id),
             "department_name": self.department.name if self.department else None,
             "root_department_name": root.name if root else None,
+            "position_id": str(self.position_id) if self.position_id else None,
+            "position_name": self.position_rel.name if self.position_rel else None,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "full_name": self.get_full_name(),
@@ -95,9 +125,7 @@ class Employee(db.Model):
             "gender": self.gender,
             "phone": self.phone,
             "email": self.email,
-            "position": self.position,
             "hire_date": self.hire_date.isoformat() if self.hire_date else None,
-            "end_date": self.end_date.isoformat() if self.end_date else None,
             "is_active": self.is_active,
             "notes": self.notes,
             "created_at": self.created_at.isoformat() if self.created_at else None,

@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.models.equipment import Equipment, EquipmentHistory
+from backend.src.equipment_manager.models.equipment import Equipment, EquipmentHistory, Accessory
 from backend.src.equipment_manager.models.asc import ASC
 from backend.src.equipment_manager.models.employees import Employee
 from backend.src.logger import get_backend_logger
@@ -98,6 +98,7 @@ def get_equipment(id):
     result = eq.to_dict_safe()
     result["history"] = [h.to_dict_safe() for h in sorted(eq.history, key=lambda h: h.created_at, reverse=True)]
     result["tickets"] = [t.to_dict_safe() for t in eq.repair_tickets]
+    result["accessories"] = [a.to_dict_safe() for a in eq.accessories]
     return jsonify(result), 200
 
 
@@ -198,3 +199,66 @@ def get_equipment_history(id):
 
     history = sorted(eq.history, key=lambda h: h.created_at, reverse=True)
     return jsonify([h.to_dict_safe() for h in history]), 200
+
+
+# ─── ACCESSORIES ──────────────────────────────────────────────────────────────
+
+@bp.get("/<int:id>/accessories")
+@require_auth
+def list_accessories(id):
+    eq = Equipment.query.get(id)
+    if not eq:
+        return error_response("Equipment not found", 404)
+    return jsonify([a.to_dict_safe() for a in eq.accessories]), 200
+
+
+@bp.post("/<int:id>/accessories")
+@require_auth
+def create_accessory(id):
+    eq = Equipment.query.get(id)
+    if not eq:
+        return error_response("Equipment not found", 404)
+
+    data = request.get_json(silent=True) or {}
+    name = data.get("name", "").strip()
+    if not name:
+        return error_response("name is required", 400)
+
+    acc = Accessory(
+        equipment_id=eq.id,
+        name=name,
+        description=data.get("description", ""),
+        serial_number=data.get("serial_number", ""),
+        status=data.get("status", "FUNCTIONAL"),
+    )
+    db.session.add(acc)
+    db.session.commit()
+    return jsonify(acc.to_dict_safe()), 201
+
+
+@bp.put("/<int:id>/accessories/<int:acc_id>")
+@require_auth
+def update_accessory(id, acc_id):
+    acc = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
+    if not acc:
+        return error_response("Accessory not found", 404)
+
+    data = request.get_json(silent=True) or {}
+    for field in ("name", "description", "serial_number", "status"):
+        if field in data:
+            setattr(acc, field, data[field].strip() if isinstance(data[field], str) else data[field])
+
+    db.session.commit()
+    return jsonify(acc.to_dict_safe()), 200
+
+
+@bp.delete("/<int:id>/accessories/<int:acc_id>")
+@require_auth
+def delete_accessory(id, acc_id):
+    acc = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
+    if not acc:
+        return error_response("Accessory not found", 404)
+
+    db.session.delete(acc)
+    db.session.commit()
+    return jsonify({"message": "Accessory deleted"}), 200

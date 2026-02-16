@@ -29,6 +29,7 @@ class Equipment(db.Model):
     employee = db.relationship("Employee", back_populates="equipments", lazy="selectin")
     history = db.relationship("EquipmentHistory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
     repair_tickets = db.relationship("RepairTicket", back_populates="equipment", lazy="selectin")
+    accessories = db.relationship("Accessory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
 
     def to_dict_safe(self):
         return {
@@ -68,7 +69,7 @@ class EquipmentHistory(db.Model):
     created_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    equipment = db.relationship("Equipment", back_populates="history", lazy="selection")
+    equipment = db.relationship("Equipment", back_populates="history", lazy="selectin")
 
     def to_dict_safe(self):
         return {
@@ -84,3 +85,33 @@ class EquipmentHistory(db.Model):
 
     def __repr__(self):
         return f"<EquipmentHistory(id={self.id}, action={self.action})>"
+
+
+class Accessory(db.Model):
+    __tablename__ = "em_accessories"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment.id", ondelete="CASCADE"), nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, default="")
+    serial_number = db.Column(db.String(100), default="")
+    status = db.Column(db.String(20), default="FUNCTIONAL")  # FUNCTIONAL, FAULTY, MISSING
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    equipment = db.relationship("Equipment", back_populates="accessories", lazy="selectin")
+
+    def to_dict_safe(self):
+        return {
+            "id": str(self.id),
+            "equipment_id": str(self.equipment_id),
+            "name": self.name,
+            "description": self.description,
+            "serial_number": self.serial_number,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<Accessory(id={self.id}, name={self.name})>"

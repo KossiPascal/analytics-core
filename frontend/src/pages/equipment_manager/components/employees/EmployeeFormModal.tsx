@@ -8,7 +8,7 @@ import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { employeesApi } from '../../api';
-import type { Employee, Department } from '../../types';
+import type { Employee, Department, Position } from '../../types';
 
 interface Props {
   isOpen: boolean;
@@ -16,9 +16,10 @@ interface Props {
   onSuccess: () => void;
   editData?: Employee | null;
   departments: Department[];
+  positions: Position[];
 }
 
-export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, departments }: Props) {
+export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, departments, positions }: Props) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [code, setCode] = useState('');
@@ -26,9 +27,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
   const [gender, setGender] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [position, setPosition] = useState('');
+  const [positionId, setPositionId] = useState('');
   const [hireDate, setHireDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -53,21 +53,20 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
       setGender(editData.gender);
       setPhone(editData.phone);
       setEmail(editData.email);
-      setPosition(editData.position);
+      setPositionId(editData.position_id || '');
       setHireDate(editData.hire_date || '');
-      setEndDate(editData.end_date || '');
       setNotes(editData.notes);
     } else {
       setFirstName(''); setLastName(''); setCode(''); setDepartmentId('');
-      setGender(''); setPhone(''); setEmail(''); setPosition('');
-      setHireDate(''); setEndDate(''); setNotes('');
+      setGender(''); setPhone(''); setEmail(''); setPositionId('');
+      setHireDate(''); setNotes('');
     }
   }, [editData, isOpen]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || !code.trim() || !departmentId || !position.trim() || !hireDate) {
-      toast.error('Prenom, nom, code, departement, poste et date embauche sont requis');
+    if (!firstName.trim() || !lastName.trim() || !code.trim() || !departmentId) {
+      toast.error('Prenom, nom, code et departement sont requis');
       return;
     }
 
@@ -75,8 +74,9 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
     try {
       const data = {
         first_name: firstName, last_name: lastName, employee_id_code: code,
-        department_id: departmentId, gender, phone, email, position,
-        hire_date: hireDate, end_date: endDate || null, notes,
+        department_id: departmentId, gender, phone, email,
+        position_id: positionId || null,
+        hire_date: hireDate || null, notes,
       };
       const res = isEdit
         ? await employeesApi.update(editData!.id, data)
@@ -94,6 +94,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
       setSaving(false);
     }
   };
+
+  const activePositions = positions.filter((p) => p.is_active);
 
   return (
     <Modal
@@ -132,15 +134,19 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
             onChange={(v) => setDepartmentId(v)}
             options={[{ value: '', label: 'Selectionner' }, ...allDepts.map((d) => ({ value: d.id, label: d.name }))]}
           />
-          <FormInput label="Poste" required value={position} onChange={(e) => setPosition(e.target.value)} />
+          <FormSelect
+            label="Poste"
+            value={positionId}
+            onChange={(v) => setPositionId(v)}
+            options={[{ value: '', label: 'Selectionner' }, ...activePositions.map((p) => ({ value: p.id, label: p.name }))]}
+          />
         </div>
         <div className={shared.formRow}>
           <FormInput label="Telephone" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <FormInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className={shared.formRow}>
-          <FormInput label="Date d'embauche" type={"date" as any} required value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
-          <FormInput label="Date de fin" type={"date" as any} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <FormInput label="Date d'embauche" type={"date" as any} value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
         </div>
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>

@@ -94,6 +94,18 @@ export interface Supervisor {
 
 export type EquipmentType = 'PHONE' | 'TABLET' | 'OTHER';
 export type EquipmentStatus = 'FUNCTIONAL' | 'FAULTY' | 'UNDER_REPAIR';
+export type AccessoryStatus = 'FUNCTIONAL' | 'FAULTY' | 'MISSING';
+
+export interface Accessory {
+  id: string;
+  equipment_id: string;
+  name: string;
+  description: string;
+  serial_number: string;
+  status: AccessoryStatus;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 export interface Equipment {
   id: string;
@@ -116,6 +128,7 @@ export interface Equipment {
   updated_at: string | null;
   history?: EquipmentHistory[];
   tickets?: RepairTicket[];
+  accessories?: Accessory[];
 }
 
 export interface EquipmentHistory {
@@ -130,6 +143,16 @@ export interface EquipmentHistory {
 }
 
 // ─── EMPLOYEES ──────────────────────────────────────────────────────────────
+
+export interface Position {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 export interface Department {
   id: string;
@@ -158,9 +181,10 @@ export interface Employee {
   gender: string;
   phone: string;
   email: string;
-  position: string;
+  position_id: string | null;
+  position_name: string | null;
   hire_date: string | null;
-  end_date: string | null;
+  // end_date: string | null;
   is_active: boolean;
   notes: string;
   created_at: string | null;

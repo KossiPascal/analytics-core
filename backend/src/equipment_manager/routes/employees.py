@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.models.employees import Department, Employee, EmployeeHistory
+from backend.src.equipment_manager.models.employees import Department, Position, Employee, EmployeeHistory
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
@@ -95,6 +95,62 @@ def update_department(id):
         return error_response("Department with this name or code already exists", 409)
 
 
+# ─── POSITIONS ────────────────────────────────────────────────────────────────
+
+@bp.get("/positions")
+@require_auth
+def list_positions():
+    positions = Position.query.order_by(Position.name).all()
+    return jsonify([p.to_dict_safe() for p in positions]), 200
+
+
+@bp.post("/positions")
+@require_auth
+def create_position():
+    data = request.get_json(silent=True) or {}
+    name = data.get("name", "").strip()
+    code = data.get("code", "").strip()
+
+    if not name or not code:
+        return error_response("name and code are required", 400)
+
+    try:
+        pos = Position(
+            name=name,
+            code=code,
+            description=data.get("description", ""),
+            is_active=True,
+        )
+        db.session.add(pos)
+        db.session.commit()
+        return jsonify(pos.to_dict_safe()), 201
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Position with this name or code already exists", 409)
+
+
+@bp.put("/positions/<int:id>")
+@require_auth
+def update_position(id):
+    pos = Position.query.get(id)
+    if not pos:
+        return error_response("Position not found", 404)
+
+    data = request.get_json(silent=True) or {}
+    for field in ("name", "code", "description"):
+        if field in data:
+            setattr(pos, field, data[field].strip() if isinstance(data[field], str) else data[field])
+    if "is_active" in data:
+        pos.is_active = bool(data["is_active"])
+
+    try:
+        db.session.commit()
+        return jsonify(pos.to_dict_safe()), 200
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Position with this name or code already exists", 409)
+
+
 # ─── EMPLOYEES ───────────────────────────────────────────────────────────────
 
 @bp.get("")
@@ -137,11 +193,11 @@ def create_employee():
     last_name = data.get("last_name", "").strip()
     employee_id_code = data.get("employee_id_code", "").strip()
     department_id = data.get("department_id")
-    position = data.get("position", "").strip()
+    position_id = data.get("position_id")
     hire_date = data.get("hire_date")
 
-    if not first_name or not last_name or not employee_id_code or not department_id or not position or not hire_date:
-        return error_response("first_name, last_name, employee_id_code, department_id, position and hire_date are required", 400)
+    if not first_name or not last_name or not employee_id_code or not department_id:
+        return error_response("first_name, last_name, employee_id_code and department_id are required", 400)
 
     dept = Department.query.get(int(department_id))
     if not dept:
@@ -153,12 +209,11 @@ def create_employee():
             last_name=last_name,
             employee_id_code=employee_id_code,
             department_id=dept.id,
+            position_id=int(position_id) if position_id else None,
             gender=data.get("gender", ""),
             phone=data.get("phone", ""),
             email=data.get("email", ""),
-            position=position,
-            hire_date=hire_date,
-            end_date=data.get("end_date"),
+            hire_date=hire_date or None,
             notes=data.get("notes", ""),
             is_active=True,
         )
@@ -206,13 +261,15 @@ def update_employee(id):
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
 
-    for field in ("first_name", "last_name", "employee_id_code", "gender", "phone", "email", "position", "notes"):
+    for field in ("first_name", "last_name", "employee_id_code", "gender", "phone", "email", "notes"):
         if field in data:
             setattr(emp, field, data[field].strip() if isinstance(data[field], str) else data[field])
 
-    for date_field in ("hire_date", "end_date"):
-        if date_field in data:
-            setattr(emp, date_field, data[date_field])
+    if "position_id" in data:
+        emp.position_id = int(data["position_id"]) if data["position_id"] else None
+
+    if "hire_date" in data:
+        emp.hire_date = data["hire_date"] or None
 
     # Handle department transfer
     if "department_id" in data and int(data["department_id"]) != emp.department_id:
