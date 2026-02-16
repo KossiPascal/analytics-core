@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from "react";
-import { Home, FileText, Map, Users, Shield, BookOpen, Gauge, Activity, Eye, ChevronRight, User, Settings, LogOut } from 'lucide-react';
+import { Home, FileText, Map, Users, Shield, BookOpen, Gauge, Activity, Eye, ChevronRight, User, Settings, LogOut, Smartphone } from 'lucide-react';
 import { generateRouteConfig, generateNavItems, type RouteConfig, generateGridNavItems, RouteItem, NavItem, slugify } from './utils';
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
@@ -106,6 +106,18 @@ export const ROUTES_ITEMS: RouteItem[] = [
       {label: "Dashboard Builder", path: ROUTES.builder.dashboardBuilder(), component: PAGES.DashboardBuilderPage, icon: <Shield size={20} />, permissions:['_admin', '_superadmin']},
       {label: "Custom Builder", path: ROUTES.builder.customBuilder(), component: PAGES.CustomBuilderPage, icon: <Shield size={20} />, permissions:['_admin', '_superadmin']},
     ]
+  },
+
+  // EQUIPMENT MANAGER
+  {
+    label: 'Gestion des Equipements',
+    path: ROUTES.equipmentManager.root(),
+    component: PAGES.EquipmentManagerPage,
+    icon: <Smartphone size={20} />,
+    access: "authenticated",
+    showInGridpNav: true,
+    showInSideNav: true,
+    permissions: ['_admin', '_superadmin'],
   },
 
   // SETTINGS

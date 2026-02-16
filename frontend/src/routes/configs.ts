@@ -43,6 +43,9 @@ export const PAGES = {
     // Settings page
     SettingsPage: lazy(() => import('@pages/settings/SettingsPage')),
 
+    // Equipment Manager page
+    EquipmentManagerPage: lazy(() => import('@pages/equipment_manager')),
+
     // Error pages
     NotFoundPage: lazy(() => import('@pages/errors/NotFoundPage')),
     ServerErrorPage: lazy(() => import('@pages/errors/ServerErrorPage')),
@@ -125,6 +128,11 @@ export const ROUTES = {
     settings: {
         root: () => '/settings',
         section: (section: string) => buildUrl('/settings/:section', { section }),
+    },
+
+    // EQUIPMENT MANAGER
+    equipmentManager: {
+        root: () => '/equipment-manager',
     },
 
     // ERRORS
