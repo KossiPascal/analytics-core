@@ -132,7 +132,7 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
             options={[{ value: '', label: 'Aucun' }, ...supervisors.map((s) => ({ value: s.user_id, label: s.full_name }))]}
           />
         </div>
-        <FormInput label="Date de debut" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <FormInput label="Date de debut" type={"date" as any} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>
     </Modal>

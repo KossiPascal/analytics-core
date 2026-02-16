@@ -29,8 +29,7 @@ export function SitesTable({ data, isLoading, onEdit }: Props) {
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(s) => s.id}
       isLoading={isLoading}

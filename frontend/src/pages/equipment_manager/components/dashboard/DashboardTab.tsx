@@ -132,8 +132,7 @@ export function DashboardTab() {
       {overdueTickets.length > 0 && (
         <>
           <h3 className={styles.sectionTitle}>Tickets en retard (&gt;14 jours)</h3>
-          <Table
-            data={overdueTickets}
+          <Table<any>             data={overdueTickets}
             columns={overdueColumns}
             keyExtractor={(t) => t.id}
             features={{ pagination: true }}

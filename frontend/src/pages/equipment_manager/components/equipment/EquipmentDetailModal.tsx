@@ -62,7 +62,7 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
           {equipment.history && equipment.history.length > 0 && (
             <>
               <h4 className={styles.sectionTitle}>Historique</h4>
-              <Table data={equipment.history} columns={historyColumns} keyExtractor={(h) => h.id} defaultPageSize={5} />
+              <Table<any> data={equipment.history} columns={historyColumns} keyExtractor={(h) => h.id} defaultPageSize={5} />
             </>
           )}
 

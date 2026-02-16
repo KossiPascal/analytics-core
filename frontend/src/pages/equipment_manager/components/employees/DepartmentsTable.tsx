@@ -57,8 +57,7 @@ export function DepartmentsTable({ data, isLoading, onEdit }: Props) {
   ];
 
   return (
-    <Table
-      data={flattened}
+    <Table<any>       data={flattened}
       columns={columns}
       keyExtractor={(d) => d.id}
       isLoading={isLoading}

@@ -67,7 +67,7 @@ class Employee(db.Model):
     phone = db.Column(db.String(20), default="")
     email = db.Column(db.String(255), default="")
     position = db.Column(db.String(100), nullable=False)
-    hire_date = db.Column(db.Date, nullable=False)
+    hire_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     notes = db.Column(db.Text, default="")

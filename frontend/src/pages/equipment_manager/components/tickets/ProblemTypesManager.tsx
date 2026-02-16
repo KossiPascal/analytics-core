@@ -58,7 +58,7 @@ export function ProblemTypesManager() {
         <Button size="sm" leftIcon={<Plus size={16} />} onClick={() => setFormOpen(true)}>Nouveau type</Button>
       </div>
 
-      <Table data={types} columns={columns} keyExtractor={(pt) => pt.id} isLoading={loading} features={{ search: true }} emptyMessage="Aucun type" />
+      <Table<any> data={types} columns={columns} keyExtractor={(pt) => pt.id} isLoading={loading} features={{ search: true }} emptyMessage="Aucun type" />
 
       <Modal
         isOpen={formOpen}

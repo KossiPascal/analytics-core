@@ -27,8 +27,7 @@ export function DistrictsTable({ data, isLoading, onEdit }: Props) {
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(d) => d.id}
       isLoading={isLoading}

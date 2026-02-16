@@ -36,8 +36,7 @@ export function SupervisorsTable({ data, isLoading, onEdit, onView }: Props) {
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(s) => s.id}
       isLoading={isLoading}

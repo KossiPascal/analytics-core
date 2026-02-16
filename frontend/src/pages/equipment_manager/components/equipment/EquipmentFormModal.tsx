@@ -141,8 +141,8 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs 
           options={[{ value: '', label: 'Aucun' }, ...ascs.map((a) => ({ value: a.id, label: `${a.full_name} (${a.code})` }))]}
         />
         <div className={shared.formRow}>
-          <FormInput label="Date d'acquisition" type="date" value={acquisitionDate} onChange={(e) => setAcquisitionDate(e.target.value)} />
-          <FormInput label="Fin de garantie" type="date" value={warrantyDate} onChange={(e) => setWarrantyDate(e.target.value)} />
+          <FormInput label="Date d'acquisition" type={"date" as any} value={acquisitionDate} onChange={(e) => setAcquisitionDate(e.target.value)} />
+          <FormInput label="Fin de garantie" type={"date" as any} value={warrantyDate} onChange={(e) => setWarrantyDate(e.target.value)} />
         </div>
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>

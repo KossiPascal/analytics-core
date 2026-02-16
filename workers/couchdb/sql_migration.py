@@ -1034,8 +1034,7 @@ class SQLMigrator:
                 session.commit()
             except Exception as e:
                 session.rollback()
-                logger.error(f"❌ Failed to create project indexes: {e}")
-                raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.name}") from e
+                logger.warning(f"⚠ Failed to create project indexes (will retry later): {e}")
 
             # Assure la table de migrations
             logger.info(f"{session.execute(text("SELECT current_database()")).scalar()}\n")

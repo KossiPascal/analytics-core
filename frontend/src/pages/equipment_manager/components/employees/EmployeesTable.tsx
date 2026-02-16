@@ -41,8 +41,7 @@ export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(e) => e.id}
       isLoading={isLoading}

@@ -139,8 +139,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
           <FormInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className={shared.formRow}>
-          <FormInput label="Date d'embauche" type="date" required value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
-          <FormInput label="Date de fin" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <FormInput label="Date d'embauche" type={"date" as any} required value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
+          <FormInput label="Date de fin" type={"date" as any} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
         </div>
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>

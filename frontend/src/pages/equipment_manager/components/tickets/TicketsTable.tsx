@@ -62,8 +62,7 @@ export function TicketsTable({ data, isLoading, onView }: Props) {
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(t) => t.id}
       isLoading={isLoading}

@@ -67,14 +67,14 @@ export function EmployeeDetailModal({ isOpen, onClose, employeeId }: Props) {
           {employee.equipments && employee.equipments.length > 0 && (
             <>
               <h4 className={styles.sectionTitle}>Equipements ({employee.equipments.length})</h4>
-              <Table data={employee.equipments} columns={equipColumns} keyExtractor={(e) => e.id} defaultPageSize={5} />
+              <Table<any> data={employee.equipments} columns={equipColumns} keyExtractor={(e) => e.id} defaultPageSize={5} />
             </>
           )}
 
           {employee.history && employee.history.length > 0 && (
             <>
               <h4 className={styles.sectionTitle}>Historique</h4>
-              <Table data={employee.history} columns={historyColumns} keyExtractor={(h) => h.id} defaultPageSize={5} />
+              <Table<any> data={employee.history} columns={historyColumns} keyExtractor={(h) => h.id} defaultPageSize={5} />
             </>
           )}
         </div>

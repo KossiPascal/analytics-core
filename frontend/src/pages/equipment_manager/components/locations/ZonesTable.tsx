@@ -27,8 +27,7 @@ export function ZonesTable({ data, isLoading, onEdit }: Props) {
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(z) => z.id}
       isLoading={isLoading}

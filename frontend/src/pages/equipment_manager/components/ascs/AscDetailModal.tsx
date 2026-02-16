@@ -66,14 +66,14 @@ export function AscDetailModal({ isOpen, onClose, ascId }: Props) {
           {asc.equipments && asc.equipments.length > 0 && (
             <>
               <h4 className={styles.sectionTitle}>Equipements ({asc.equipments.length})</h4>
-              <Table data={asc.equipments} columns={equipColumns} keyExtractor={(e) => e.id} defaultPageSize={5} />
+              <Table<any> data={asc.equipments} columns={equipColumns} keyExtractor={(e) => e.id} defaultPageSize={5} />
             </>
           )}
 
           {asc.tickets && asc.tickets.length > 0 && (
             <>
               <h4 className={styles.sectionTitle}>Tickets ({asc.tickets.length})</h4>
-              <Table data={asc.tickets} columns={ticketColumns} keyExtractor={(t) => t.id} defaultPageSize={5} />
+              <Table<any> data={asc.tickets} columns={ticketColumns} keyExtractor={(t) => t.id} defaultPageSize={5} />
             </>
           )}
         </div>

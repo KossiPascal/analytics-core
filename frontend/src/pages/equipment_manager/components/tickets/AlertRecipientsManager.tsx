@@ -74,7 +74,7 @@ export function AlertRecipientsManager() {
         <Button size="sm" leftIcon={<Plus size={16} />} onClick={() => setFormOpen(true)}>Ajouter</Button>
       </div>
 
-      <Table data={recipients} columns={columns} keyExtractor={(r) => r.id} isLoading={loading} emptyMessage="Aucun destinataire" />
+      <Table<any> data={recipients} columns={columns} keyExtractor={(r) => r.id} isLoading={loading} emptyMessage="Aucun destinataire" />
 
       <Modal
         isOpen={formOpen}

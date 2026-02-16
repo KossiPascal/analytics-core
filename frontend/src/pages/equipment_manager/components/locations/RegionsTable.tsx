@@ -29,8 +29,7 @@ export function RegionsTable({ data, isLoading, onEdit, onDelete }: Props) {
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(r) => r.id}
       isLoading={isLoading}

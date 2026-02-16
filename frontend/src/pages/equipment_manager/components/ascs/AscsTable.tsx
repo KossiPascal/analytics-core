@@ -41,8 +41,7 @@ export function AscsTable({ data, isLoading, onEdit, onView, onDelete }: Props) 
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(a) => a.id}
       isLoading={isLoading}

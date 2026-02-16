@@ -50,8 +50,7 @@ export function EquipmentTable({ data, isLoading, onEdit, onView, onAssign }: Pr
   ];
 
   return (
-    <Table
-      data={data}
+    <Table<any>       data={data}
       columns={columns}
       keyExtractor={(e) => e.id}
       isLoading={isLoading}

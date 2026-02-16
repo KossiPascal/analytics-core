@@ -68,7 +68,7 @@ class EquipmentHistory(db.Model):
     created_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    equipment = db.relationship("Equipment", back_populates="history", lazy="selectin")
+    equipment = db.relationship("Equipment", back_populates="history", lazy="selection")
 
     def to_dict_safe(self):
         return {
