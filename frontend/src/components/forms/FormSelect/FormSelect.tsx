@@ -56,7 +56,7 @@ export function FormSelect({
   value,
   onChange,
   placeholder = 'Sélectionner...',
-  searchable = false,
+  searchable = true,
   searchPlaceholder = 'Rechercher...',
   disabled = false,
   leftIcon,

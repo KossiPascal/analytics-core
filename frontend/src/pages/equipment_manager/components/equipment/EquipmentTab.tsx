@@ -85,7 +85,6 @@ export function EquipmentTab() {
         onClose={() => setAssignOpen(false)}
         onSuccess={loadAll}
         equipment={assignTarget}
-        ascs={ascs}
         employees={employees}
       />
     </div>
