@@ -395,26 +395,45 @@ def generate_reception_pdf(id):
     employee = eq.owner or eq.employee
     accessories = [a.name for a in eq.accessories]
 
+    # Date de réception = date d'attribution de l'équipement
+    if eq.assignment_date:
+        date_reception = eq.assignment_date.strftime("%d/%m/%Y")
+    else:
+        date_reception = "—"
+
+    # District = département de l'employé ; Zone = département racine (si différent)
+    dept = employee.department if employee else None
+    root = dept.root_department if dept else None
+    district = dept.name if dept else "—"
+    zone = root.name if (root and root.id != getattr(dept, "id", None)) else "—"
+
     context = {
-        # Logo — chemin absolu en file:// URI
         "logo_uri": (IMG_DIR / "Logo_Integrate_Health.png").as_uri(),
-        # Méta
-        "date": datetime.now(timezone.utc).strftime("%d/%m/%Y"),
-        "reference": f"EQ-{eq.imei}",
-        # Équipement (dict sérialisé)
-        "equipment": eq.to_dict_safe(),
-        "status_label": _STATUS_LABELS.get(eq.status, eq.status),
-        "accessories_str": ", ".join(accessories) if accessories else "",
-        "empty_rows": max(0, 2 - 1),  # laisser 2 lignes vides sous l'équipement
+        # En-tête
+        "date_reception": date_reception,
+        "ref_ih": f"EQ-{eq.imei}",
         # Employé
         "employee_name": employee.get_full_name() if employee else "—",
-        "employee_code": employee.employee_id_code if employee else "—",
         "employee_position": (
             employee.position_rel.name if employee and employee.position_rel else "—"
         ),
-        "employee_department": (
-            employee.department.name if employee and employee.department else "—"
+        "employee_district": district,
+        "employee_zone": zone,
+        "employee_phone": employee.phone if employee else "—",
+        "employee_role_label": (
+            employee.position_rel.name if employee and employee.position_rel else "ASC"
         ),
+        # Équipement
+        "equipment_type": (
+            eq.category_rel.name if eq.category_rel else eq.equipment_type or "—"
+        ),
+        "equipment_brand": (
+            eq.brand_rel.name if eq.brand_rel else eq.brand or "—"
+        ),
+        "equipment_model": eq.model_name or "—",
+        "equipment_description": eq.serial_number or eq.notes or "—",
+        "equipment_imei": eq.imei,
+        "accessories_str": ", ".join(accessories) if accessories else "—",
     }
 
     filename = f"fiche_reception_{eq.imei}.pdf"
