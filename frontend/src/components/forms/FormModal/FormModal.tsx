@@ -16,7 +16,7 @@ export interface FormModalProps {
   errors?: string[];
 
   /** Handler appelé lors du clic sur le bouton soumettre */
-  onSubmit: (e?: React.FormEvent) => void;
+  onSubmit: () => void;
   /** Désactive le bouton soumettre quand les champs requis ne sont pas remplis */
   isSubmitDisabled?: boolean;
   /** Affiche un spinner sur le bouton soumettre */
