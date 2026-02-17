@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui/Button/Button';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { XCircle } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { ticketsApi } from '../../api';
+
+const VALIDATION_RULES = {
+  reason: { required: true, message: "La raison de l'annulation est requise" },
+};
 
 interface Props {
   isOpen: boolean;
@@ -18,14 +22,19 @@ export function TicketCancelModal({ isOpen, onClose, onSuccess, ticketId }: Prop
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
+
+  const canSubmit = isFormValid({ reason });
+  const errorMessages = getErrorMessages();
+
   const handleSave = async () => {
-    if (!ticketId || !reason.trim()) { toast.error('Raison requise'); return; }
+    if (!ticketId || !validateAll({ reason })) return;
     setSaving(true);
     try {
       const res = await ticketsApi.cancel(ticketId, { cancellation_reason: reason });
       if (res.success) {
         toast.success('Ticket annule');
-        onSuccess(); onClose(); setReason('');
+        onSuccess(); onClose(); setReason(''); reset();
       } else {
         toast.error(res.message || 'Erreur');
       }
@@ -37,23 +46,31 @@ export function TicketCancelModal({ isOpen, onClose, onSuccess, ticketId }: Prop
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title="Annuler le ticket"
       size="md"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="danger" size="sm" onClick={handleSave} isLoading={saving}>
-            <XCircle size={16} /> Annuler le ticket
-          </Button>
-        </div>
-      }
+      errors={errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Annuler le ticket"
+      submitIcon={<XCircle size={16} />}
+      submitVariant="danger"
     >
-      <form className={shared.form}>
-        <FormTextarea label="Raison de l'annulation" required rows={4} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Expliquer la raison de l'annulation..." />
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+        <FormTextarea
+          label="Raison de l'annulation"
+          required
+          rows={4}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          onBlur={() => touchField('reason', reason)}
+          error={getFieldError('reason')}
+          placeholder="Expliquer la raison de l'annulation..."
+        />
       </form>
-    </Modal>
+    </FormModal>
   );
 }

@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui/Button/Button';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
+
+const VALIDATION_RULES = {
+  name: { required: true, message: 'Le nom est requis' },
+  code: { required: true, message: 'Le code est requis' },
+};
 
 interface Props {
   isOpen: boolean;
@@ -21,13 +26,17 @@ export function QuickCreateModal({ isOpen, onClose, title, onSave, onCreated }: 
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
+
   useEffect(() => {
-    if (isOpen) { setName(''); setCode(''); setDescription(''); }
+    if (isOpen) { setName(''); setCode(''); setDescription(''); reset(); }
   }, [isOpen]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !code.trim()) { toast.error('Nom et code requis'); return; }
+  const canSubmit = isFormValid({ name, code });
+  const errorMessages = getErrorMessages();
+
+  const handleSave = async () => {
+    if (!validateAll({ name, code })) return;
 
     setSaving(true);
     try {
@@ -47,27 +56,39 @@ export function QuickCreateModal({ isOpen, onClose, title, onSave, onCreated }: 
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={title}
       size="md"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-            <Save size={16} /> Enregistrer
-          </Button>
-        </div>
-      }
+      errors={errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Enregistrer"
+      submitIcon={<Save size={16} />}
     >
-      <form className={shared.form} onSubmit={handleSave}>
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <div className={shared.formRow}>
-          <FormInput label="Nom" required value={name} onChange={(e) => setName(e.target.value)} />
-          <FormInput label="Code" required value={code} onChange={(e) => setCode(e.target.value)} />
+          <FormInput
+            label="Nom"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => touchField('name', name)}
+            error={getFieldError('name')}
+          />
+          <FormInput
+            label="Code"
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            onBlur={() => touchField('code', code)}
+            error={getFieldError('code')}
+          />
         </div>
         <FormTextarea label="Description" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
       </form>
-    </Modal>
+    </FormModal>
   );
 }

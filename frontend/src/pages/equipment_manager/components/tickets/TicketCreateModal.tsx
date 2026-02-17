@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui/Button/Button';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { ticketsApi, ascsApi, equipmentApi } from '../../api';
 import type { ASC, Equipment, ProblemType } from '../../types';
+
+const VALIDATION_RULES = {
+  equipmentId: { required: true, message: "Selectionner un equipement" },
+  description: { required: true, message: 'La description du probleme est requise' },
+};
 
 interface Props {
   isOpen: boolean;
@@ -25,6 +30,8 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
   const [selectedProblemIds, setSelectedProblemIds] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
 
   useEffect(() => {
     if (isOpen) loadData();
@@ -48,6 +55,8 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
     ]);
     if (ascsRes.success) setAscs(ascsRes.data!);
     if (ptRes.success) setProblemTypes(ptRes.data!);
+    reset();
+    setAscId(''); setEquipmentId(''); setSelectedProblemIds([]); setDescription('');
   };
 
   const toggleProblem = (id: string) => {
@@ -56,12 +65,11 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
     );
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!equipmentId || !description.trim()) {
-      toast.error('Equipement et description sont requis');
-      return;
-    }
+  const canSubmit = isFormValid({ equipmentId, description });
+  const errorMessages = getErrorMessages();
+
+  const handleSave = async () => {
+    if (!validateAll({ equipmentId, description })) return;
 
     setSaving(true);
     try {
@@ -75,8 +83,7 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
         toast.success('Ticket cree avec succes');
         onSuccess();
         onClose();
-        // Reset
-        setAscId(''); setEquipmentId(''); setSelectedProblemIds([]); setDescription('');
+        setAscId(''); setEquipmentId(''); setSelectedProblemIds([]); setDescription(''); reset();
       } else {
         toast.error(res.message || 'Erreur');
       }
@@ -88,21 +95,19 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title="Nouveau Ticket de Reparation"
       size="lg"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-            <Save size={16} /> Creer le ticket
-          </Button>
-        </div>
-      }
+      errors={errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Creer le ticket"
+      submitIcon={<Save size={16} />}
     >
-      <form className={shared.form} onSubmit={handleSave}>
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <FormSelect
           label="ASC"
           value={ascId}
@@ -114,7 +119,11 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
           label="Equipement"
           required
           value={equipmentId}
-          onChange={(v) => setEquipmentId(v)}
+          onChange={(v) => {
+            setEquipmentId(v);
+            touchField('equipmentId', v);
+          }}
+          error={getFieldError('equipmentId')}
           options={[
             { value: '', label: ascId ? 'Selectionner un equipement' : "Selectionner d'abord un ASC" },
             ...equipment.map((e) => ({ value: e.id, label: `${e.brand} ${e.model_name} (${e.imei})` })),
@@ -143,8 +152,10 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          onBlur={() => touchField('description', description)}
+          error={getFieldError('description')}
         />
       </form>
-    </Modal>
+    </FormModal>
   );
 }

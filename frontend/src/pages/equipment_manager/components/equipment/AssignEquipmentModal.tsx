@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui/Button/Button';
+import { useState, useMemo } from 'react';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { ArrowRightLeft } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
@@ -25,10 +25,23 @@ export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, as
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const targetValue = assignType === 'asc' ? ascId : employeeId;
+
+  const validationRules = useMemo(() => ({
+    target: {
+      required: true,
+      message: assignType === 'asc' ? 'Selectionner un ASC' : 'Selectionner un employe',
+    },
+  }), [assignType]);
+
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(validationRules);
+
+  const canSubmit = isFormValid({ target: targetValue });
+  const errorMessages = getErrorMessages();
+
   const handleSave = async () => {
     if (!equipment) return;
-    if (assignType === 'asc' && !ascId) { toast.error('Selectionner un ASC'); return; }
-    if (assignType === 'employee' && !employeeId) { toast.error('Selectionner un employe'); return; }
+    if (!validateAll({ target: targetValue })) return;
 
     setSaving(true);
     try {
@@ -41,6 +54,7 @@ export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, as
         toast.success('Equipement assigne avec succes');
         onSuccess();
         onClose();
+        setAscId(''); setEmployeeId(''); setNotes(''); reset();
       } else {
         toast.error(res.message || 'Erreur');
       }
@@ -52,25 +66,27 @@ export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, as
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={`Assigner: ${equipment?.imei || ''}`}
       size="md"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-            <ArrowRightLeft size={16} /> Assigner
-          </Button>
-        </div>
-      }
+      errors={errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Assigner"
+      submitIcon={<ArrowRightLeft size={16} />}
     >
-      <form className={shared.form}>
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <FormSelect
           label="Assigner a"
           value={assignType}
-          onChange={(v) => setAssignType(v as 'asc' | 'employee')}
+          onChange={(v) => {
+            setAssignType(v as 'asc' | 'employee');
+            setAscId(''); setEmployeeId('');
+            reset();
+          }}
           options={[{ value: 'asc', label: 'ASC' }, { value: 'employee', label: 'Employe' }]}
         />
         {assignType === 'asc' ? (
@@ -78,7 +94,11 @@ export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, as
             label="ASC"
             required
             value={ascId}
-            onChange={(v) => setAscId(v)}
+            onChange={(v) => {
+              setAscId(v);
+              touchField('target', v);
+            }}
+            error={getFieldError('target')}
             options={[{ value: '', label: 'Selectionner' }, ...ascs.map((a) => ({ value: a.id, label: `${a.full_name} (${a.code})` }))]}
           />
         ) : (
@@ -86,12 +106,16 @@ export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, as
             label="Employe"
             required
             value={employeeId}
-            onChange={(v) => setEmployeeId(v)}
+            onChange={(v) => {
+              setEmployeeId(v);
+              touchField('target', v);
+            }}
+            error={getFieldError('target')}
             options={[{ value: '', label: 'Selectionner' }, ...employees.map((e) => ({ value: e.id, label: `${e.full_name} (${e.employee_id_code})` }))]}
           />
         )}
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>
-    </Modal>
+    </FormModal>
   );
 }

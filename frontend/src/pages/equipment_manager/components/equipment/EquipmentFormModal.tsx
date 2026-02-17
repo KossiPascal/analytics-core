@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { Button } from '@components/ui/Button/Button';
 import { Badge } from '@components/ui/Badge/Badge';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { Save, Plus, X } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
@@ -23,6 +24,11 @@ const ACCESSORY_STATUS_VARIANT: Record<string, 'success' | 'danger' | 'warning'>
   FUNCTIONAL: 'success',
   FAULTY: 'danger',
   MISSING: 'warning',
+};
+
+const VALIDATION_RULES = {
+  modelName: { required: true, message: 'Le modele est requis' },
+  imei: { required: true, message: "L'IMEI est requis" },
 };
 
 interface Props {
@@ -59,6 +65,7 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
   const [localBrands, setLocalBrands] = useState<EquipmentBrand[]>([]);
 
   const isEdit = !!editData;
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
 
   const allCategories = [...categories, ...localCategories.filter((lc) => !categories.find((c) => c.id === lc.id))];
   const activeCategories = allCategories.filter((c) => c.is_active);
@@ -86,14 +93,14 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
     }
     setLocalCategories([]);
     setLocalBrands([]);
+    reset();
   }, [editData, isOpen]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!modelName.trim() || !imei.trim()) {
-      toast.error('Modele et IMEI sont requis');
-      return;
-    }
+  const canSubmit = isFormValid({ modelName, imei });
+  const errorMessages = getErrorMessages();
+
+  const handleSave = async () => {
+    if (!validateAll({ modelName, imei })) return;
 
     setSaving(true);
     try {
@@ -149,21 +156,19 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={`${isEdit ? 'Modifier' : 'Nouvel'} Equipement`}
       size="lg"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-            <Save size={16} /> Enregistrer
-          </Button>
-        </div>
-      }
+      errors={errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Enregistrer"
+      submitIcon={<Save size={16} />}
     >
-      <form className={shared.form} onSubmit={handleSave}>
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <div className={shared.formRow}>
           {/* Type (Category) with + button */}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flex: 1 }}>
@@ -205,10 +210,24 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
               <Plus size={16} />
             </Button>
           </div>
-          <FormInput label="Modele" required value={modelName} onChange={(e) => setModelName(e.target.value)} />
+          <FormInput
+            label="Modele"
+            required
+            value={modelName}
+            onChange={(e) => setModelName(e.target.value)}
+            onBlur={() => touchField('modelName', modelName)}
+            error={getFieldError('modelName')}
+          />
         </div>
         <div className={shared.formRow}>
-          <FormInput label="IMEI" required value={imei} onChange={(e) => setImei(e.target.value)} />
+          <FormInput
+            label="IMEI"
+            required
+            value={imei}
+            onChange={(e) => setImei(e.target.value)}
+            onBlur={() => touchField('imei', imei)}
+            error={getFieldError('imei')}
+          />
           <FormInput label="Numero de serie" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
         </div>
         <FormSelect
@@ -307,6 +326,6 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
         onSave={(data) => equipmentApi.createBrand(data)}
         onCreated={(item) => { setLocalBrands((prev) => [...prev, item]); setBrandId(item.id); }}
       />
-    </Modal>
+    </FormModal>
   );
 }

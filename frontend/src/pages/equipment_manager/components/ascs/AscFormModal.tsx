@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui/Button/Button';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { ascsApi } from '../../api';
 import type { ASC, Site, Supervisor } from '../../types';
+
+const VALIDATION_RULES = {
+  firstName: { required: true, message: 'Le prenom est requis' },
+  lastName: { required: true, message: 'Le nom est requis' },
+  code: { required: true, message: 'Le code est requis' },
+};
 
 interface Props {
   isOpen: boolean;
@@ -33,6 +39,7 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
   const [saving, setSaving] = useState(false);
 
   const isEdit = !!editData;
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
 
   useEffect(() => {
     if (editData) {
@@ -51,14 +58,14 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
       setPhone(''); setEmail(''); setSiteId(''); setSupervisorId('');
       setStartDate(''); setNotes('');
     }
+    reset();
   }, [editData, isOpen]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!firstName.trim() || !lastName.trim() || !code.trim()) {
-      toast.error('Prenom, nom et code sont requis');
-      return;
-    }
+  const canSubmit = isFormValid({ firstName, lastName, code });
+  const errorMessages = getErrorMessages();
+
+  const handleSave = async () => {
+    if (!validateAll({ firstName, lastName, code })) return;
 
     setSaving(true);
     try {
@@ -86,27 +93,46 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={`${isEdit ? 'Modifier' : 'Nouvel'} ASC`}
       size="lg"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-            <Save size={16} /> Enregistrer
-          </Button>
-        </div>
-      }
+      errors={errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Enregistrer"
+      submitIcon={<Save size={16} />}
     >
-      <form className={shared.form} onSubmit={handleSave}>
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <div className={shared.formRow}>
-          <FormInput label="Prenom" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-          <FormInput label="Nom" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          <FormInput
+            label="Prenom"
+            required
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            onBlur={() => touchField('firstName', firstName)}
+            error={getFieldError('firstName')}
+          />
+          <FormInput
+            label="Nom"
+            required
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            onBlur={() => touchField('lastName', lastName)}
+            error={getFieldError('lastName')}
+          />
         </div>
         <div className={shared.formRow}>
-          <FormInput label="Code" required value={code} onChange={(e) => setCode(e.target.value)} />
+          <FormInput
+            label="Code"
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            onBlur={() => touchField('code', code)}
+            error={getFieldError('code')}
+          />
           <FormSelect
             label="Genre"
             value={gender}
@@ -135,6 +161,6 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
         <FormInput label="Date de debut" type={"date" as any} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>
-    </Modal>
+    </FormModal>
   );
 }

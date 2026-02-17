@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui/Button/Button';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
@@ -21,6 +21,10 @@ interface Props {
   localMode?: boolean;
 }
 
+const VALIDATION_RULES = {
+  name: { required: true, message: 'Le nom de l\'accessoire est requis' },
+};
+
 export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, editData, onCreated, localMode }: Props) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -29,6 +33,7 @@ export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, ed
   const [saving, setSaving] = useState(false);
 
   const isEdit = !!editData;
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
 
   useEffect(() => {
     if (editData) {
@@ -39,18 +44,20 @@ export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, ed
     } else {
       setName(''); setDescription(''); setSerialNumber(''); setStatus('FUNCTIONAL');
     }
+    reset();
   }, [editData, isOpen]);
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) { toast.error('Le nom est requis'); return; }
+  const canSubmit = isFormValid({ name });
+  const errorMessages = getErrorMessages();
+
+  const handleSave = async () => {
+    if (!validateAll({ name })) return;
 
     setSaving(true);
     try {
       const data = { name, description, serial_number: serialNumber, status };
 
       if (localMode) {
-        // Local mode: create a temporary accessory object (no API call)
         const tempAcc: Accessory = {
           id: `temp_${Date.now()}`,
           equipment_id: '',
@@ -86,23 +93,28 @@ export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, ed
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={`${isEdit ? 'Modifier' : 'Ajouter'} Accessoire`}
       size="md"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-            <Save size={16} /> Enregistrer
-          </Button>
-        </div>
-      }
+      errors={errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Enregistrer"
+      submitIcon={<Save size={16} />}
     >
-      <form className={shared.form} onSubmit={handleSave}>
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <div className={shared.formRow}>
-          <FormInput label="Nom" required value={name} onChange={(e) => setName(e.target.value)} />
+          <FormInput
+            label="Nom"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => touchField('name', name)}
+            error={getFieldError('name')}
+          />
           <FormInput label="N. Serie" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
         </div>
         <FormSelect
@@ -117,6 +129,6 @@ export function AccessoryFormModal({ isOpen, onClose, onSuccess, equipmentId, ed
         />
         <FormTextarea label="Description" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
       </form>
-    </Modal>
+    </FormModal>
   );
 }

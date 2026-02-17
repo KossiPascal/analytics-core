@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { Button } from '@components/ui/Button/Button';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { useFormValidation } from '@/components/forms/useFormValidation';
 import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 import { supervisorsApi } from '../../api';
 import type { Supervisor, District, Site } from '../../types';
+
+const VALIDATION_RULES = {
+  firstName: { required: true, message: 'Le prenom est requis' },
+  lastName: { required: true, message: 'Le nom est requis' },
+  districtId: { required: true, message: 'Le district est requis' },
+};
 
 interface Props {
   isOpen: boolean;
@@ -31,6 +38,7 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
   const [credentials, setCredentials] = useState<{ username: string; password: string } | null>(null);
 
   const isEdit = !!editData;
+  const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
 
   useEffect(() => {
     if (editData) {
@@ -40,7 +48,6 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
       setPhone(editData.phone);
       setSelectedSiteIds(editData.sites.map((s) => s.id));
       setCredentials(null);
-      // Try to find district from sites
       if (editData.sites.length > 0) {
         const firstSite = sites.find((s) => s.id === editData.sites[0].id);
         if (firstSite) setDistrictId(firstSite.district_id);
@@ -49,6 +56,7 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
       setFirstName(''); setLastName(''); setEmail(''); setPhone('');
       setDistrictId(''); setSelectedSiteIds([]); setCredentials(null);
     }
+    reset();
   }, [editData, isOpen]);
 
   const filteredSites = districtId ? sites.filter((s) => s.district_id === districtId) : [];
@@ -59,16 +67,11 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
     );
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!firstName.trim() || !lastName.trim()) {
-      toast.error('Prenom et nom sont requis');
-      return;
-    }
-    if (!districtId) {
-      toast.error('District est requis');
-      return;
-    }
+  const canSubmit = isFormValid({ firstName, lastName, districtId });
+  const errorMessages = getErrorMessages();
+
+  const handleSave = async () => {
+    if (!validateAll({ firstName, lastName, districtId })) return;
 
     setSaving(true);
     try {
@@ -103,26 +106,26 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
     }
   };
 
+  // Footer override when showing credentials
+  const credentialsFooter = credentials ? (
+    <div className={shared.modalFooter}>
+      <Button variant="primary" size="sm" onClick={onClose}>Fermer</Button>
+    </div>
+  ) : undefined;
+
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title={credentials ? 'Identifiants generes' : `${isEdit ? 'Modifier' : 'Nouveau'} Superviseur`}
       size="md"
-      footer={
-        credentials ? (
-          <div className={shared.modalFooter}>
-            <Button variant="primary" size="sm" onClick={onClose}>Fermer</Button>
-          </div>
-        ) : (
-          <div className={shared.modalFooter}>
-            <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-            <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-              <Save size={16} /> Enregistrer
-            </Button>
-          </div>
-        )
-      }
+      errors={credentials ? undefined : errorMessages}
+      onSubmit={handleSave}
+      isSubmitDisabled={!canSubmit}
+      isLoading={saving}
+      submitLabel="Enregistrer"
+      submitIcon={<Save size={16} />}
+      footer={credentialsFooter}
     >
       {credentials ? (
         <div className={styles.credentialBox}>
@@ -133,10 +136,24 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
           </p>
         </div>
       ) : (
-        <form className={shared.form} onSubmit={handleSave}>
+        <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           <div className={shared.formRow}>
-            <FormInput label="Prenom" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-            <FormInput label="Nom" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            <FormInput
+              label="Prenom"
+              required
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              onBlur={() => touchField('firstName', firstName)}
+              error={getFieldError('firstName')}
+            />
+            <FormInput
+              label="Nom"
+              required
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              onBlur={() => touchField('lastName', lastName)}
+              error={getFieldError('lastName')}
+            />
           </div>
           <div className={shared.formRow}>
             <FormInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -146,7 +163,12 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
             label="District"
             required
             value={districtId}
-            onChange={(v) => { setDistrictId(v); setSelectedSiteIds([]); }}
+            onChange={(v) => {
+              setDistrictId(v);
+              setSelectedSiteIds([]);
+              touchField('districtId', v);
+            }}
+            error={getFieldError('districtId')}
             options={[{ value: '', label: 'Selectionner' }, ...districts.map((d) => ({ value: d.id, label: `${d.name} (${d.region_name})` }))]}
           />
           {filteredSites.length > 0 && (
@@ -166,6 +188,6 @@ export function SupervisorFormModal({ isOpen, onClose, onSuccess, editData, dist
           )}
         </form>
       )}
-    </Modal>
+    </FormModal>
   );
 }

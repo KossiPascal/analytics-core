@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@components/ui/Button/Button';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { CheckCircle } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
@@ -37,23 +36,19 @@ export function TicketReceiveModal({ isOpen, onClose, onSuccess, ticketId }: Pro
   };
 
   return (
-    <Modal
+    <FormModal
       isOpen={isOpen}
       onClose={onClose}
       title="Confirmer la reception"
       size="sm"
-      footer={
-        <div className={shared.modalFooter}>
-          <Button variant="outline" size="sm" onClick={onClose}>Annuler</Button>
-          <Button variant="primary" size="sm" onClick={handleSave} isLoading={saving}>
-            <CheckCircle size={16} /> Confirmer
-          </Button>
-        </div>
-      }
+      onSubmit={handleSave}
+      isLoading={saving}
+      submitLabel="Confirmer"
+      submitIcon={<CheckCircle size={16} />}
     >
-      <form className={shared.form}>
+      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
         <FormTextarea label="Commentaire (optionnel)" rows={3} value={comment} onChange={(e) => setComment(e.target.value)} />
       </form>
-    </Modal>
+    </FormModal>
   );
 }
