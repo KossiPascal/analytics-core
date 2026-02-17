@@ -1,0 +1,303 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Fiche d'Accusé de Réception — WeasyPrint styles
+   ═══════════════════════════════════════════════════════════════════ */
+
+@page {
+  size: A4;
+  margin: 1.8cm 2cm 2cm 2cm;
+  @bottom-center {
+    content: "";
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif;
+  font-size: 10pt;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+.page {
+  width: 100%;
+}
+
+/* ─── EN-TÊTE ────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1cm;
+  margin-bottom: 0.5cm;
+}
+
+.header-logo img {
+  width: 3.5cm;
+  height: auto;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+}
+
+.title-box h1 {
+  font-size: 15pt;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #003366;
+  margin-bottom: 2pt;
+}
+
+.title-box h2 {
+  font-size: 11pt;
+  font-weight: normal;
+  color: #003366;
+  letter-spacing: 0.06em;
+}
+
+.header-ref {
+  min-width: 4cm;
+  text-align: right;
+}
+
+.ref-table {
+  margin-left: auto;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+
+.ref-table td {
+  padding: 1pt 4pt;
+}
+
+.ref-label {
+  font-weight: bold;
+  color: #555;
+}
+
+.ref-value {
+  color: #003366;
+  font-weight: bold;
+}
+
+.divider {
+  border-top: 2.5pt solid #003366;
+  margin-bottom: 0.5cm;
+}
+
+/* ─── SECTIONS ───────────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: 0.5cm;
+}
+
+.section-intro {
+  font-style: italic;
+  margin-bottom: 0.3cm;
+  color: #333;
+}
+
+/* ─── CHAMPS EMPLOYÉ ──────────────────────────────────────────────────── */
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2cm;
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4pt;
+}
+
+.field-label {
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 5.5cm;
+  color: #333;
+}
+
+.field-label::after {
+  content: " :";
+}
+
+.field-dots {
+  flex: 1;
+  border-bottom: 1pt solid #888;
+  margin: 0 6pt 3pt 6pt;
+}
+
+.field-value {
+  min-width: 6cm;
+  font-weight: bold;
+  color: #003366;
+  text-align: center;
+}
+
+/* ─── TABLEAU ÉQUIPEMENT ──────────────────────────────────────────────── */
+
+.eq-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+  margin-top: 0.2cm;
+}
+
+.eq-table th {
+  background-color: #003366;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  padding: 5pt 4pt;
+  border: 0.5pt solid #002244;
+}
+
+.eq-table td {
+  border: 0.5pt solid #ccc;
+  padding: 5pt 4pt;
+  vertical-align: middle;
+}
+
+.eq-table tbody tr:nth-child(even) {
+  background-color: #f0f4f8;
+}
+
+.eq-table .center {
+  text-align: center;
+}
+
+.eq-table .mono {
+  font-family: "DejaVu Sans Mono", "Courier New", monospace;
+  font-size: 8.5pt;
+  text-align: center;
+}
+
+.eq-table .empty-row td {
+  height: 1.2cm;
+  color: #ccc;
+}
+
+.col-n      { width: 0.8cm; }
+.col-type   { width: 2cm; }
+.col-brand  { width: 2cm; }
+.col-model  { width: 2.5cm; }
+.col-imei   { width: 3cm; }
+.col-serial { width: 2.5cm; }
+.col-status { width: 1.8cm; }
+.col-acc    { width: 3cm; }
+
+/* ─── CONDITIONS ──────────────────────────────────────────────────────── */
+
+.conditions {
+  background-color: #f7f9fc;
+  border: 0.5pt solid #ccd6e0;
+  border-radius: 4pt;
+  padding: 0.35cm 0.45cm;
+}
+
+.conditions h3 {
+  font-size: 9.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #003366;
+  margin-bottom: 0.25cm;
+  border-bottom: 0.5pt solid #003366;
+  padding-bottom: 3pt;
+}
+
+.conditions p {
+  margin-bottom: 0.2cm;
+  font-size: 9pt;
+  text-align: justify;
+}
+
+.conditions ol {
+  padding-left: 1.2em;
+  font-size: 9pt;
+  margin-bottom: 0.2cm;
+}
+
+.conditions ol li {
+  margin-bottom: 0.1cm;
+  text-align: justify;
+}
+
+/* ─── SIGNATURES ──────────────────────────────────────────────────────── */
+
+.signatures {
+  display: flex;
+  gap: 0.5cm;
+  margin-top: 0.5cm;
+  page-break-inside: avoid;
+}
+
+.sig-col {
+  flex: 1;
+  border: 0.5pt solid #ccc;
+  border-radius: 4pt;
+  padding: 0.25cm 0.3cm;
+  text-align: center;
+}
+
+.sig-title {
+  font-weight: bold;
+  font-size: 9.5pt;
+  color: #003366;
+  border-bottom: 0.5pt solid #003366;
+  padding-bottom: 4pt;
+  margin-bottom: 0.2cm;
+}
+
+.sig-space {
+  height: 1.8cm;
+}
+
+.sig-line-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4pt;
+  margin-bottom: 0.15cm;
+}
+
+.sig-label {
+  font-size: 8.5pt;
+  white-space: nowrap;
+  color: #555;
+}
+
+.sig-line {
+  flex: 1;
+  border-bottom: 0.5pt solid #555;
+}
+
+.sig-name {
+  font-size: 8.5pt;
+  font-weight: bold;
+  color: #003366;
+}
+
+.sig-date {
+  font-size: 8pt;
+  color: #555;
+  margin-top: 3pt;
+}
+
+/* ─── PIED DE PAGE ────────────────────────────────────────────────────── */
+
+.footer {
+  margin-top: 0.4cm;
+  padding-top: 0.2cm;
+  border-top: 0.5pt solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+  color: #888;
+}

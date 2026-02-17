@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Plus } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { equipmentApi, ascsApi, employeesApi } from '../../api';
 import type { Equipment, ASC, Employee, EquipmentCategory, EquipmentBrand } from '../../types';
 import { EquipmentTable } from './EquipmentTable';
 import { EquipmentFormModal } from './EquipmentFormModal';
 import { EquipmentDetailModal } from './EquipmentDetailModal';
 import { AssignEquipmentModal } from './AssignEquipmentModal';
-import toast from 'react-hot-toast';
 
 export function EquipmentTab() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -66,6 +66,13 @@ export function EquipmentTab() {
         }}
         onView={(e) => { setDetailId(e.id); setDetailOpen(true); }}
         onAssign={(e) => { setAssignTarget(e); setAssignOpen(true); }}
+        onGeneratePdf={async (e) => {
+          try {
+            await equipmentApi.downloadReceptionPdf(e.id);
+          } catch {
+            toast.error('Erreur lors de la génération du PDF');
+          }
+        }}
       />
 
       <EquipmentFormModal

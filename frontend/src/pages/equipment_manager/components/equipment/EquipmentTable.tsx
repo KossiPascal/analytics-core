@@ -1,6 +1,6 @@
 import { Table, type Column } from '@components/ui/Table/Table';
 import { Badge } from '@components/ui/Badge/Badge';
-import { Edit, Eye, ArrowRightLeft } from 'lucide-react';
+import { Edit, Eye, ArrowRightLeft, FileText } from 'lucide-react';
 import type { Equipment } from '../../types';
 import shared from '@components/ui/styles/shared.module.css';
 
@@ -22,9 +22,10 @@ interface Props {
   onEdit: (item: Equipment) => void;
   onView: (item: Equipment) => void;
   onAssign: (item: Equipment) => void;
+  onGeneratePdf: (item: Equipment) => void;
 }
 
-export function EquipmentTable({ data, isLoading, onEdit, onView, onAssign }: Props) {
+export function EquipmentTable({ data, isLoading, onEdit, onView, onAssign, onGeneratePdf }: Props) {
   const columns: Column<Equipment>[] = [
     { key: 'imei', header: 'IMEI', render: (e) => e.imei, sortable: true },
     { key: 'type', header: 'Type', render: (e) => e.category_name || e.equipment_type || '-' },
@@ -41,9 +42,10 @@ export function EquipmentTable({ data, isLoading, onEdit, onView, onAssign }: Pr
       align: 'right',
       render: (e) => (
         <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onView(e)}><Eye size={16} /></button>
-          <button className={shared.actionBtn} onClick={() => onAssign(e)}><ArrowRightLeft size={16} /></button>
-          <button className={shared.actionBtn} onClick={() => onEdit(e)}><Edit size={16} /></button>
+          <button className={shared.actionBtn} title="Voir les détails" onClick={() => onView(e)}><Eye size={16} /></button>
+          <button className={shared.actionBtn} title="Assigner" onClick={() => onAssign(e)}><ArrowRightLeft size={16} /></button>
+          <button className={shared.actionBtn} title="Fiche de réception PDF" onClick={() => onGeneratePdf(e)}><FileText size={16} /></button>
+          <button className={shared.actionBtn} title="Modifier" onClick={() => onEdit(e)}><Edit size={16} /></button>
         </div>
       ),
     },

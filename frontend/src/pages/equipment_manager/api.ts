@@ -98,6 +98,26 @@ export const equipmentApi = {
   assign: (id: string, data: { asc_id?: string; employee_id?: string; notes?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/assign`, data),
   getHistory: (id: string) => api.get<EquipmentHistory[]>(`${BASE}/assets/${id}/history`),
 
+  /** Télécharge la fiche d'accusé de réception (PDF) pour un équipement. */
+  downloadReceptionPdf: async (id: string): Promise<void> => {
+    const apiBase = (import.meta.env.VITE_API_URL as string | undefined) ?? '/api';
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(`${apiBase}/equipment/assets/${id}/pdf/reception`, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error('Erreur lors de la génération du PDF');
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `fiche_reception_${id}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(objectUrl);
+  },
+
   // Accessories
   getAccessories: (equipmentId: string) => api.get<Accessory[]>(`${BASE}/assets/${equipmentId}/accessories`),
   createAccessory: (equipmentId: string, data: Record<string, unknown>) => api.post<Accessory>(`${BASE}/assets/${equipmentId}/accessories`, data),

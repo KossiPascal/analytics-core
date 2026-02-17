@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Fiche d'Accusé de Réception</title>
+  <link rel="stylesheet" href="fiche_reception.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- ─── EN-TÊTE ─────────────────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="{{ logo_uri }}" alt="Integrate Health">
+    </div>
+    <div class="header-title">
+      <div class="title-box">
+        <h1>FICHE D'ACCUSÉ DE RÉCEPTION</h1>
+        <h2>D'ÉQUIPEMENT</h2>
+      </div>
+    </div>
+    <div class="header-ref">
+      <table class="ref-table">
+        <tr>
+          <td class="ref-label">Référence :</td>
+          <td class="ref-value">{{ reference }}</td>
+        </tr>
+        <tr>
+          <td class="ref-label">Date :</td>
+          <td class="ref-value">{{ date }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECTION EMPLOYÉ ──────────────────────────────────────────────────── -->
+  <div class="section">
+    <p class="section-intro">
+      Je soussigné(e), l'agent de santé communautaire / l'employé(e) désigné(e) ci-dessous :
+    </p>
+    <div class="fields">
+      <div class="field-row">
+        <span class="field-label">Nom et Prénom</span>
+        <span class="field-dots"></span>
+        <span class="field-value">{{ employee_name }}</span>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Fonction</span>
+        <span class="field-dots"></span>
+        <span class="field-value">{{ employee_position }}</span>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Département / District</span>
+        <span class="field-dots"></span>
+        <span class="field-value">{{ employee_department }}</span>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Code employé</span>
+        <span class="field-dots"></span>
+        <span class="field-value">{{ employee_code }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SECTION ÉQUIPEMENT ───────────────────────────────────────────────── -->
+  <div class="section">
+    <p class="section-intro">Déclare avoir bien reçu le(s) équipement(s) suivant(s) :</p>
+    <table class="eq-table">
+      <thead>
+        <tr>
+          <th class="col-n">N°</th>
+          <th class="col-type">Type</th>
+          <th class="col-brand">Marque</th>
+          <th class="col-model">Modèle</th>
+          <th class="col-imei">IMEI</th>
+          <th class="col-serial">N° de Série</th>
+          <th class="col-status">Statut</th>
+          <th class="col-acc">Accessoires</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="center">1</td>
+          <td>{{ equipment.category_name or equipment.equipment_type or '—' }}</td>
+          <td>{{ equipment.brand_name or equipment.brand or '—' }}</td>
+          <td>{{ equipment.model_name }}</td>
+          <td class="mono">{{ equipment.imei }}</td>
+          <td class="mono">{{ equipment.serial_number or '—' }}</td>
+          <td class="center">{{ status_label }}</td>
+          <td>{{ accessories_str or '—' }}</td>
+        </tr>
+        {% for i in range(empty_rows) %}
+        <tr class="empty-row">
+          <td>{{ i + 2 }}</td>
+          <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ─── CONDITIONS ───────────────────────────────────────────────────────── -->
+  <div class="section conditions">
+    <h3>CONDITIONS D'UTILISATION ET DE RESPONSABILITÉ</h3>
+    <p>
+      En réceptionnant cet équipement, le signataire s'engage à :
+    </p>
+    <ol>
+      <li>Utiliser l'équipement exclusivement dans le cadre de ses fonctions et conformément aux instructions reçues.</li>
+      <li>Assurer la garde, l'entretien et la bonne conservation de l'équipement.</li>
+      <li>Signaler immédiatement toute panne, perte ou vol au responsable hiérarchique.</li>
+      <li>Restituer l'équipement en bon état à la fin de sa mission ou sur demande de la hiérarchie.</li>
+      <li>Ne pas prêter, céder ou transférer l'équipement à un tiers sans autorisation préalable.</li>
+    </ol>
+    <p>
+      Tout équipement endommagé, perdu ou volé par négligence avérée pourra faire l'objet d'une retenue
+      sur salaire ou d'une procédure disciplinaire conformément au règlement intérieur de l'organisation.
+    </p>
+  </div>
+
+  <!-- ─── SIGNATURES ────────────────────────────────────────────────────────── -->
+  <div class="signatures">
+    <div class="sig-col">
+      <p class="sig-title">L'Agent / L'Employé(e)</p>
+      <div class="sig-space"></div>
+      <div class="sig-line-wrap">
+        <span class="sig-label">Signature :</span>
+        <span class="sig-line"></span>
+      </div>
+      <p class="sig-name">{{ employee_name }}</p>
+      <p class="sig-date">Date : _______________</p>
+    </div>
+    <div class="sig-col">
+      <p class="sig-title">Le Superviseur</p>
+      <div class="sig-space"></div>
+      <div class="sig-line-wrap">
+        <span class="sig-label">Signature :</span>
+        <span class="sig-line"></span>
+      </div>
+      <p class="sig-name">___________________</p>
+      <p class="sig-date">Date : _______________</p>
+    </div>
+    <div class="sig-col">
+      <p class="sig-title">Responsable Équipement</p>
+      <div class="sig-space"></div>
+      <div class="sig-line-wrap">
+        <span class="sig-label">Signature :</span>
+        <span class="sig-line"></span>
+      </div>
+      <p class="sig-name">___________________</p>
+      <p class="sig-date">Date : _______________</p>
+    </div>
+  </div>
+
+  <!-- ─── PIED DE PAGE ──────────────────────────────────────────────────────── -->
+  <div class="footer">
+    <span>Integrate Health — Document généré le {{ date }}</span>
+    <span>Réf. {{ reference }}</span>
+  </div>
+
+</div>
+</body>
+</html>

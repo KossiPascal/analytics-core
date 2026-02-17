@@ -6,6 +6,7 @@ from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.equipment import EquipmentCategory, EquipmentBrand, Equipment, EquipmentHistory, Accessory
 from backend.src.equipment_manager.models.employees import Employee
+from backend.src.docs_generetor.pdf_generator import pdf_response
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
@@ -371,3 +372,50 @@ def delete_accessory(id, acc_id):
     db.session.delete(acc)
     db.session.commit()
     return jsonify({"message": "Accessory deleted"}), 200
+
+
+# ─── GÉNÉRATION PDF ────────────────────────────────────────────────────────────
+
+_STATUS_LABELS = {
+    "FUNCTIONAL": "Fonctionnel",
+    "FAULTY": "Défaillant",
+    "UNDER_REPAIR": "En réparation",
+}
+
+
+@bp.get("/<int:id>/pdf/reception")
+@require_auth
+def generate_reception_pdf(id):
+    from backend.src.docs_generetor.pdf_generator import IMG_DIR
+
+    eq = Equipment.query.get(id)
+    if not eq:
+        return error_response("Equipment not found", 404)
+
+    employee = eq.owner or eq.employee
+    accessories = [a.name for a in eq.accessories]
+
+    context = {
+        # Logo — chemin absolu en file:// URI
+        "logo_uri": (IMG_DIR / "Logo_Integrate_Health.png").as_uri(),
+        # Méta
+        "date": datetime.now(timezone.utc).strftime("%d/%m/%Y"),
+        "reference": f"EQ-{eq.imei}",
+        # Équipement (dict sérialisé)
+        "equipment": eq.to_dict_safe(),
+        "status_label": _STATUS_LABELS.get(eq.status, eq.status),
+        "accessories_str": ", ".join(accessories) if accessories else "",
+        "empty_rows": max(0, 2 - 1),  # laisser 2 lignes vides sous l'équipement
+        # Employé
+        "employee_name": employee.get_full_name() if employee else "—",
+        "employee_code": employee.employee_id_code if employee else "—",
+        "employee_position": (
+            employee.position_rel.name if employee and employee.position_rel else "—"
+        ),
+        "employee_department": (
+            employee.department.name if employee and employee.department else "—"
+        ),
+    }
+
+    filename = f"fiche_reception_{eq.imei}.pdf"
+    return pdf_response("fiche_reception", context, filename)
