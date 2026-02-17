@@ -66,6 +66,19 @@ def init_database(app: Flask) -> None:
         try:
             if Config.IS_DEBUG_MODE:
                 logger.warning("⚠ DEV MODE: creating tables directly")
+                with db.engine.connect() as conn:
+                    conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS em"))
+                    # Si le schéma em existe sans aucune table (séquences orphelines
+                    # d'une tentative create_all() avortée), on le recrée proprement.
+                    # Les séquences PostgreSQL ne sont pas rollbackées par les transactions.
+                    result = conn.execute(db.text(
+                        "SELECT COUNT(*) FROM information_schema.tables "
+                        "WHERE table_schema = 'em' AND table_type = 'BASE TABLE'"
+                    ))
+                    if result.scalar() == 0:
+                        conn.execute(db.text("DROP SCHEMA em CASCADE"))
+                        conn.execute(db.text("CREATE SCHEMA em"))
+                    conn.commit()
                 db.create_all()
                 User.create_default_admin()
             else:
