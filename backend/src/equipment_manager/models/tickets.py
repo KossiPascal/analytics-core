@@ -3,7 +3,8 @@ from backend.src.databases.extensions import db
 
 
 class ProblemType(db.Model):
-    __tablename__ = "em_problem_types"
+    __tablename__ = "problem_types"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False)
@@ -33,7 +34,8 @@ class ProblemType(db.Model):
 
 
 class RepairTicket(db.Model):
-    __tablename__ = "em_repair_tickets"
+    __tablename__ = "repair_tickets"
+    __table_args__ = {'schema': 'em'}
 
     STATUS_CHOICES = ["OPEN", "IN_PROGRESS", "REPAIRED", "RETURNING", "CLOSED", "CANCELLED"]
     STAGE_CHOICES = [
@@ -54,8 +56,8 @@ class RepairTicket(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     ticket_number = db.Column(db.String(30), unique=True, nullable=False)
-    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment.id", ondelete="CASCADE"), nullable=False)
-    asc_id = db.Column(db.BigInteger, db.ForeignKey("em_ascs.id", ondelete="CASCADE"), nullable=False)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
+    asc_id = db.Column(db.BigInteger, db.ForeignKey("em.ascs.id", ondelete="CASCADE"), nullable=False)
     status = db.Column(db.String(20), default="OPEN", nullable=False)
     current_stage = db.Column(db.String(30), default="SUPERVISOR", nullable=False)
     current_holder_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -149,11 +151,12 @@ class RepairTicket(db.Model):
 
 
 class Issue(db.Model):
-    __tablename__ = "em_issues"
+    __tablename__ = "issues"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em_repair_tickets.id", ondelete="CASCADE"), nullable=False)
-    problem_type_id = db.Column(db.BigInteger, db.ForeignKey("em_problem_types.id", ondelete="RESTRICT"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    problem_type_id = db.Column(db.BigInteger, db.ForeignKey("em.problem_types.id", ondelete="RESTRICT"), nullable=False)
     description = db.Column(db.Text, default="")
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
@@ -176,10 +179,11 @@ class Issue(db.Model):
 
 
 class TicketEvent(db.Model):
-    __tablename__ = "em_ticket_events"
+    __tablename__ = "ticket_events"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em_repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
     event_type = db.Column(db.String(20), nullable=False)
     from_role = db.Column(db.String(30), default="")
     to_role = db.Column(db.String(30), default="")
@@ -210,10 +214,11 @@ class TicketEvent(db.Model):
 
 
 class TicketComment(db.Model):
-    __tablename__ = "em_ticket_comments"
+    __tablename__ = "ticket_comments"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em_repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     comment = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -234,7 +239,8 @@ class TicketComment(db.Model):
 
 
 class DelayAlertRecipient(db.Model):
-    __tablename__ = "em_delay_alert_recipients"
+    __tablename__ = "delay_alert_recipients"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -260,10 +266,11 @@ class DelayAlertRecipient(db.Model):
 
 
 class DelayAlertLog(db.Model):
-    __tablename__ = "em_delay_alert_logs"
+    __tablename__ = "delay_alert_logs"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em_repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
     stage = db.Column(db.String(30), nullable=False)
     days_in_stage = db.Column(db.Integer, nullable=False)
     recipients = db.Column(db.Text, nullable=False)

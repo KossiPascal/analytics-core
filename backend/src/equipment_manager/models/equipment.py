@@ -4,7 +4,8 @@ from backend.src.databases.extensions import db
 
 class EquipmentCategory(db.Model):
     """Type d'equipement (ex: Telephone, Tablette, Autre)"""
-    __tablename__ = "em_equipment_categories"
+    __tablename__ = "equipment_categories"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
@@ -33,7 +34,8 @@ class EquipmentCategory(db.Model):
 
 class EquipmentBrand(db.Model):
     """Marque d'equipement (ex: Samsung, Tecno, Itel)"""
-    __tablename__ = "em_equipment_brands"
+    __tablename__ = "equipment_brands"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
@@ -61,19 +63,20 @@ class EquipmentBrand(db.Model):
 
 
 class Equipment(db.Model):
-    __tablename__ = "em_equipment"
+    __tablename__ = "equipment"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     equipment_type = db.Column(db.String(20), default="")
-    category_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment_categories.id"), nullable=True)
+    category_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment_categories.id"), nullable=True)
     brand = db.Column(db.String(100), default="")
-    brand_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment_brands.id"), nullable=True)
+    brand_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment_brands.id"), nullable=True)
     model_name = db.Column(db.String(100), nullable=False)
     imei = db.Column(db.String(50), unique=True, nullable=False)
     serial_number = db.Column(db.String(100), default="")
 
-    owner_id = db.Column(db.BigInteger, db.ForeignKey("em_ascs.id", ondelete="SET NULL"), nullable=True)
-    employee_id = db.Column(db.BigInteger, db.ForeignKey("em_employees.id", ondelete="SET NULL"), nullable=True)
+    owner_id = db.Column(db.BigInteger, db.ForeignKey("em.ascs.id", ondelete="SET NULL"), nullable=True)
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
 
     status = db.Column(db.String(20), default="FUNCTIONAL", nullable=False)  # FUNCTIONAL, FAULTY, UNDER_REPAIR
     acquisition_date = db.Column(db.Date, nullable=True)
@@ -124,10 +127,11 @@ class Equipment(db.Model):
 
 
 class EquipmentHistory(db.Model):
-    __tablename__ = "em_equipment_history"
+    __tablename__ = "equipment_history"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment.id", ondelete="CASCADE"), nullable=False)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
     action = db.Column(db.String(30), nullable=False)  # CREATED, ASSIGNED, ASSIGNED_TO_EMPLOYEE, STATUS_CHANGED, TRANSFERRED, RETIRED
     old_value = db.Column(db.String(255), default="")
     new_value = db.Column(db.String(255), default="")
@@ -154,10 +158,11 @@ class EquipmentHistory(db.Model):
 
 
 class Accessory(db.Model):
-    __tablename__ = "em_accessories"
+    __tablename__ = "accessories"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em_equipment.id", ondelete="CASCADE"), nullable=False)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
     name = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text, default="")
     serial_number = db.Column(db.String(100), default="")

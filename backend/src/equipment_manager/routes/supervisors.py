@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.models.asc import Supervisor, em_supervisor_sites
+from backend.src.equipment_manager.models.asc import Supervisor, supervisor_sites
 from backend.src.models.auth import User
 from backend.src.equipment_manager.models.locations import District, Site
 from backend.src.logger import get_backend_logger
@@ -48,8 +48,8 @@ def create_supervisor():
 
     # Generate supervisor code: [DISTRICT_CODE]-SUP-[###]
     existing_count = db.session.query(Supervisor).join(
-        em_supervisor_sites, Supervisor.id == em_supervisor_sites.c.supervisor_id
-    ).join(Site, em_supervisor_sites.c.site_id == Site.id).filter(
+        supervisor_sites, Supervisor.id == supervisor_sites.c.supervisor_id
+    ).join(Site, supervisor_sites.c.site_id == Site.id).filter(
         Site.district_id == district.id
     ).distinct().count()
 
@@ -108,7 +108,7 @@ def create_supervisor():
         # Assign sites
         for site in sites:
             db.session.execute(
-                em_supervisor_sites.insert().values(supervisor_id=supervisor.id, site_id=site.id)
+                supervisor_sites.insert().values(supervisor_id=supervisor.id, site_id=site.id)
             )
 
         db.session.commit()
@@ -172,10 +172,10 @@ def update_supervisor(id):
             sites = Site.query.filter(Site.id.in_([int(s) for s in site_ids])).all()
 
         # Clear and reassign
-        db.session.execute(em_supervisor_sites.delete().where(em_supervisor_sites.c.supervisor_id == supervisor.id))
+        db.session.execute(supervisor_sites.delete().where(supervisor_sites.c.supervisor_id == supervisor.id))
         for site in sites:
             db.session.execute(
-                em_supervisor_sites.insert().values(supervisor_id=supervisor.id, site_id=site.id)
+                supervisor_sites.insert().values(supervisor_id=supervisor.id, site_id=site.id)
             )
 
     try:

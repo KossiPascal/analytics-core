@@ -3,15 +3,17 @@ from backend.src.databases.extensions import db
 
 
 # Junction table for Supervisor <-> Site M2M
-em_supervisor_sites = db.Table(
-    "em_supervisor_sites",
-    db.Column("supervisor_id", db.BigInteger, db.ForeignKey("em_supervisors.id", ondelete="CASCADE"), primary_key=True),
-    db.Column("site_id", db.BigInteger, db.ForeignKey("em_sites.id", ondelete="CASCADE"), primary_key=True),
+supervisor_sites = db.Table(
+    "supervisor_sites",
+    db.Column("supervisor_id", db.BigInteger, db.ForeignKey("em.supervisors.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("site_id", db.BigInteger, db.ForeignKey("em.sites.id", ondelete="CASCADE"), primary_key=True),
+    schema="em",
 )
 
 
 class ASC(db.Model):
-    __tablename__ = "em_ascs"
+    __tablename__ = "ascs"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     first_name = db.Column(db.String(150), nullable=False)
@@ -21,8 +23,8 @@ class ASC(db.Model):
     phone = db.Column(db.String(20), default="")
     email = db.Column(db.String(255), default="")
 
-    site_id = db.Column(db.BigInteger, db.ForeignKey("em_sites.id", ondelete="SET NULL"), nullable=True)
-    zone_asc_id = db.Column(db.BigInteger, db.ForeignKey("em_zones_asc.id", ondelete="SET NULL"), nullable=True)
+    site_id = db.Column(db.BigInteger, db.ForeignKey("em.sites.id", ondelete="SET NULL"), nullable=True)
+    zone_asc_id = db.Column(db.BigInteger, db.ForeignKey("em.zones_asc.id", ondelete="SET NULL"), nullable=True)
     supervisor_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     is_active = db.Column(db.Boolean, default=True, nullable=False)
@@ -69,7 +71,8 @@ class ASC(db.Model):
 
 
 class Supervisor(db.Model):
-    __tablename__ = "em_supervisors"
+    __tablename__ = "supervisors"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
@@ -82,7 +85,7 @@ class Supervisor(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
-    sites = db.relationship("Site", secondary=em_supervisor_sites, lazy="selectin")
+    sites = db.relationship("Site", secondary=supervisor_sites, lazy="selectin")
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"

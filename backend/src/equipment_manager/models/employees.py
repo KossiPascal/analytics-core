@@ -8,13 +8,14 @@ class Department(db.Model):
     A root department has parent_id = NULL.
     A sub-department has parent_id pointing to its parent department.
     """
-    __tablename__ = "em_departments"
+    __tablename__ = "departments"
     __table_args__ = (
-        db.UniqueConstraint("parent_id", "name", name="uq_em_departments_parent_name"),
+        db.UniqueConstraint("parent_id", "name", name="uq_departments_parent_name"),
+        {'schema': 'em'},
     )
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    parent_id = db.Column(db.BigInteger, db.ForeignKey("em_departments.id", ondelete="CASCADE"), nullable=True)
+    parent_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="CASCADE"), nullable=True)
     name = db.Column(db.String(255), nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
@@ -56,7 +57,8 @@ class Department(db.Model):
 
 
 class Position(db.Model):
-    __tablename__ = "em_positions"
+    __tablename__ = "positions"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
@@ -84,11 +86,12 @@ class Position(db.Model):
 
 
 class Employee(db.Model):
-    __tablename__ = "em_employees"
+    __tablename__ = "employees"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    department_id = db.Column(db.BigInteger, db.ForeignKey("em_departments.id", ondelete="CASCADE"), nullable=False)
-    position_id = db.Column(db.BigInteger, db.ForeignKey("em_positions.id"), nullable=True)
+    department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="CASCADE"), nullable=False)
+    position_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id"), nullable=True)
     first_name = db.Column(db.String(150), nullable=False)
     last_name = db.Column(db.String(150), nullable=False)
     employee_id_code = db.Column(db.String(50), unique=True, nullable=False)
@@ -137,13 +140,14 @@ class Employee(db.Model):
 
 
 class EmployeeHistory(db.Model):
-    __tablename__ = "em_employee_history"
+    __tablename__ = "employee_history"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    employee_id = db.Column(db.BigInteger, db.ForeignKey("em_employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="CASCADE"), nullable=False)
     action = db.Column(db.String(30), nullable=False)
-    old_department_id = db.Column(db.BigInteger, db.ForeignKey("em_departments.id", ondelete="SET NULL"), nullable=True)
-    new_department_id = db.Column(db.BigInteger, db.ForeignKey("em_departments.id", ondelete="SET NULL"), nullable=True)
+    old_department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="SET NULL"), nullable=True)
+    new_department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="SET NULL"), nullable=True)
     notes = db.Column(db.Text, default="")
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

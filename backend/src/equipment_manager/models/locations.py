@@ -3,7 +3,8 @@ from backend.src.databases.extensions import db
 
 
 class Region(db.Model):
-    __tablename__ = "em_regions"
+    __tablename__ = "regions"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), unique=True, nullable=False)
@@ -27,13 +28,14 @@ class Region(db.Model):
 
 
 class District(db.Model):
-    __tablename__ = "em_districts"
+    __tablename__ = "districts"
     __table_args__ = (
-        db.UniqueConstraint("region_id", "code", name="uq_em_districts_region_code"),
+        db.UniqueConstraint("region_id", "code", name="uq_districts_region_code"),
+        {'schema': 'em'},
     )
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    region_id = db.Column(db.BigInteger, db.ForeignKey("em_regions.id", ondelete="CASCADE"), nullable=False)
+    region_id = db.Column(db.BigInteger, db.ForeignKey("em.regions.id", ondelete="CASCADE"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     code = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -58,10 +60,11 @@ class District(db.Model):
 
 
 class Site(db.Model):
-    __tablename__ = "em_sites"
+    __tablename__ = "sites"
+    __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    district_id = db.Column(db.BigInteger, db.ForeignKey("em_districts.id", ondelete="CASCADE"), nullable=False)
+    district_id = db.Column(db.BigInteger, db.ForeignKey("em.districts.id", ondelete="CASCADE"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     code = db.Column(db.String(100), unique=True, nullable=False)
     address = db.Column(db.Text, default="")
@@ -92,13 +95,14 @@ class Site(db.Model):
 
 
 class ZoneASC(db.Model):
-    __tablename__ = "em_zones_asc"
+    __tablename__ = "zones_asc"
     __table_args__ = (
-        db.UniqueConstraint("site_id", "code", name="uq_em_zones_asc_site_code"),
+        db.UniqueConstraint("site_id", "code", name="uq_zones_asc_site_code"),
+        {'schema': 'em'},
     )
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    site_id = db.Column(db.BigInteger, db.ForeignKey("em_sites.id", ondelete="CASCADE"), nullable=False)
+    site_id = db.Column(db.BigInteger, db.ForeignKey("em.sites.id", ondelete="CASCADE"), nullable=False)
     name = db.Column(db.String(255), nullable=False)
     code = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
