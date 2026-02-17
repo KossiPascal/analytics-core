@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.tickets import RepairTicket
 from backend.src.equipment_manager.models.equipment import Equipment
-from backend.src.equipment_manager.models.asc import ASC
+from backend.src.equipment_manager.models.employees import Employee, Position
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
@@ -21,7 +21,9 @@ def global_stats():
     closed = RepairTicket.query.filter_by(status="CLOSED").count()
     cancelled = RepairTicket.query.filter_by(status="CANCELLED").count()
 
-    total_ascs = ASC.query.filter_by(is_active=True).count()
+    total_ascs = Employee.query.join(Position, Employee.position_id == Position.id).filter(
+        Position.code == "ASC", Employee.is_active == True
+    ).count()
     total_equipment = Equipment.query.count()
 
     # Average processing duration for closed tickets

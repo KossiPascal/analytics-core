@@ -75,7 +75,7 @@ class Equipment(db.Model):
     imei = db.Column(db.String(50), unique=True, nullable=False)
     serial_number = db.Column(db.String(100), default="")
 
-    owner_id = db.Column(db.BigInteger, db.ForeignKey("em.ascs.id", ondelete="SET NULL"), nullable=True)
+    owner_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
     employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
 
     status = db.Column(db.String(20), default="FUNCTIONAL", nullable=False)  # FUNCTIONAL, FAULTY, UNDER_REPAIR
@@ -90,8 +90,8 @@ class Equipment(db.Model):
 
     category_rel = db.relationship("EquipmentCategory", back_populates="equipments", lazy="selectin")
     brand_rel = db.relationship("EquipmentBrand", back_populates="equipments", lazy="selectin")
-    owner = db.relationship("ASC", back_populates="equipments", lazy="selectin")
-    employee = db.relationship("Employee", back_populates="equipments", lazy="selectin")
+    owner = db.relationship("Employee", back_populates="owned_equipments", lazy="selectin", foreign_keys=[owner_id])
+    employee = db.relationship("Employee", back_populates="equipments", lazy="selectin", foreign_keys=[employee_id])
     history = db.relationship("EquipmentHistory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
     repair_tickets = db.relationship("RepairTicket", back_populates="equipment", lazy="selectin")
     accessories = db.relationship("Accessory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")

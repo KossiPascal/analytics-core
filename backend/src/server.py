@@ -66,21 +66,36 @@ def init_database(app: Flask) -> None:
         try:
             if Config.IS_DEBUG_MODE:
                 logger.warning("⚠ DEV MODE: creating tables directly")
-                with db.engine.connect() as conn:
-                    conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS em"))
-                    # Si le schéma em existe sans aucune table (séquences orphelines
-                    # d'une tentative create_all() avortée), on le recrée proprement.
-                    # Les séquences PostgreSQL ne sont pas rollbackées par les transactions.
-                    result = conn.execute(db.text(
-                        "SELECT COUNT(*) FROM information_schema.tables "
-                        "WHERE table_schema = 'em' AND table_type = 'BASE TABLE'"
-                    ))
-                    if result.scalar() == 0:
-                        conn.execute(db.text("DROP SCHEMA em CASCADE"))
-                        conn.execute(db.text("CREATE SCHEMA em"))
-                    conn.commit()
-                db.create_all()
-                User.create_default_admin()
+                # Advisory lock (session-level) pour sérialiser les workers Gunicorn.
+                # Seul le premier worker effectue le DROP/CREATE/create_all().
+                # Les suivants attendent, puis détectent que les tables existent et passent.
+                with db.engine.connect() as lock_conn:
+                    lock_conn.execute(db.text("SELECT pg_advisory_lock(42424242)"))
+                    try:
+                        with db.engine.connect() as conn:
+                            conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS em"))
+                            table_count = conn.execute(db.text(
+                                "SELECT COUNT(*) FROM information_schema.tables "
+                                "WHERE table_schema = 'em' AND table_type = 'BASE TABLE'"
+                            )).scalar()
+                            # Schéma vide (séquences orphelines) OU schéma obsolète
+                            # (table 'ascs' encore présente = avant migration ASC→Employee).
+                            # Dans les deux cas on recrée proprement.
+                            has_stale_tables = conn.execute(db.text(
+                                "SELECT COUNT(*) FROM information_schema.tables "
+                                "WHERE table_schema = 'em' AND table_name IN ('ascs','supervisors','zones_asc')"
+                            )).scalar() > 0
+                            if table_count == 0 or has_stale_tables:
+                                conn.execute(db.text("DROP SCHEMA em CASCADE"))
+                                conn.execute(db.text("CREATE SCHEMA em"))
+                                conn.commit()
+                                db.create_all()
+                                User.create_default_admin()
+                            else:
+                                conn.commit()
+                    finally:
+                        lock_conn.execute(db.text("SELECT pg_advisory_unlock(42424242)"))
+                        lock_conn.commit()
             else:
                 if Path("migrations").exists():
                     logger.info("Applying database migrations")

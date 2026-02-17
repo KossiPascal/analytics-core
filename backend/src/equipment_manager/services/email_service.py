@@ -86,8 +86,8 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
                     <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.equipment.brand} {ticket.equipment.model_name} ({ticket.equipment.imei})</td>
                 </tr>
                 <tr style="background: #f8f9fa;">
-                    <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>ASC</strong></td>
-                    <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.asc.get_full_name()}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Employe</strong></td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.employee.get_full_name() if ticket.employee else ""}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Destination</strong></td>
@@ -176,8 +176,8 @@ def send_delay_alert(ticket, recipients, stage, days):
                         <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.equipment.brand} {ticket.equipment.model_name} ({ticket.equipment.imei})</td>
                     </tr>
                     <tr>
-                        <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>ASC</strong></td>
-                        <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.asc.get_full_name()}</td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Employe</strong></td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.employee.get_full_name() if ticket.employee else ""}</td>
                     </tr>
                     <tr style="background: #f8f9fa;">
                         <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Jours dans l'etape</strong></td>

@@ -57,7 +57,7 @@ class RepairTicket(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     ticket_number = db.Column(db.String(30), unique=True, nullable=False)
     equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
-    asc_id = db.Column(db.BigInteger, db.ForeignKey("em.ascs.id", ondelete="CASCADE"), nullable=False)
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="CASCADE"), nullable=False)
     status = db.Column(db.String(20), default="OPEN", nullable=False)
     current_stage = db.Column(db.String(30), default="SUPERVISOR", nullable=False)
     current_holder_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -76,7 +76,7 @@ class RepairTicket(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     equipment = db.relationship("Equipment", back_populates="repair_tickets", lazy="selectin")
-    asc = db.relationship("ASC", back_populates="repair_tickets", lazy="selectin")
+    employee = db.relationship("Employee", back_populates="repair_tickets", lazy="selectin")
     events = db.relationship("TicketEvent", back_populates="ticket", lazy="selectin", cascade="all, delete-orphan")
     issues = db.relationship("Issue", back_populates="ticket", lazy="selectin", cascade="all, delete-orphan")
     comments = db.relationship("TicketComment", back_populates="ticket", lazy="selectin", cascade="all, delete-orphan")
@@ -124,8 +124,8 @@ class RepairTicket(db.Model):
             "equipment_imei": self.equipment.imei if self.equipment else None,
             "equipment_brand": self.equipment.brand if self.equipment else None,
             "equipment_model": self.equipment.model_name if self.equipment else None,
-            "asc_id": str(self.asc_id),
-            "asc_name": self.asc.get_full_name() if self.asc else None,
+            "employee_id": str(self.employee_id),
+            "employee_name": self.employee.get_full_name() if self.employee else None,
             "status": self.status,
             "current_stage": self.current_stage,
             "current_stage_label": self.STAGE_LABELS.get(self.current_stage, self.current_stage),

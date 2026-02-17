@@ -9,7 +9,7 @@ from backend.src.equipment_manager.models.tickets import (
     DelayAlertRecipient, DelayAlertLog,
 )
 from backend.src.equipment_manager.models.equipment import Equipment
-from backend.src.equipment_manager.models.asc import ASC
+from backend.src.equipment_manager.models.employees import Employee
 from backend.src.equipment_manager.services.ticket_workflow import (
     generate_ticket_number, validate_transition, get_next_stages,
 )
@@ -47,7 +47,7 @@ def create_ticket():
     data = request.get_json(silent=True) or {}
 
     equipment_id = data.get("equipment_id")
-    asc_id = data.get("asc_id")
+    employee_id = data.get("employee_id") or data.get("asc_id")
     problem_description = data.get("problem_description", "").strip()
     problem_type_ids = data.get("problem_type_ids", [])
 
@@ -58,15 +58,15 @@ def create_ticket():
     if not equipment:
         return error_response("Equipment not found", 404)
 
-    # Use provided ASC or equipment's owner
-    asc = None
-    if asc_id:
-        asc = ASC.query.get(int(asc_id))
+    # Use provided employee or equipment's owner
+    employee = None
+    if employee_id:
+        employee = Employee.query.get(int(employee_id))
     elif equipment.owner_id:
-        asc = equipment.owner
+        employee = equipment.owner
 
-    if not asc:
-        return error_response("ASC is required (provide asc_id or assign equipment to an ASC first)", 400)
+    if not employee:
+        return error_response("employee_id is required (or assign equipment to an employee first)", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
 
@@ -74,7 +74,7 @@ def create_ticket():
         ticket = RepairTicket(
             ticket_number=generate_ticket_number(),
             equipment_id=equipment.id,
-            asc_id=asc.id,
+            employee_id=employee.id,
             created_by_id=user_id,
             initial_problem_description=problem_description,
             current_stage="SUPERVISOR",

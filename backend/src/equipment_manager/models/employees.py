@@ -90,8 +90,9 @@ class Employee(db.Model):
     __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="CASCADE"), nullable=False)
+    department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="CASCADE"), nullable=True)
     position_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id"), nullable=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True)
     first_name = db.Column(db.String(150), nullable=False)
     last_name = db.Column(db.String(150), nullable=False)
     employee_id_code = db.Column(db.String(50), unique=True, nullable=False)
@@ -106,8 +107,11 @@ class Employee(db.Model):
 
     department = db.relationship("Department", back_populates="employees", lazy="selectin")
     position_rel = db.relationship("Position", back_populates="employees", lazy="selectin")
-    equipments = db.relationship("Equipment", back_populates="employee", lazy="selectin")
+    equipments = db.relationship("Equipment", back_populates="employee", lazy="selectin", foreign_keys="Equipment.employee_id")
+    owned_equipments = db.relationship("Equipment", back_populates="owner", lazy="selectin", foreign_keys="Equipment.owner_id")
     history = db.relationship("EmployeeHistory", back_populates="employee", lazy="selectin", cascade="all, delete-orphan")
+    profile = db.relationship("EmployeeProfile", back_populates="employee", uselist=False, lazy="selectin", cascade="all, delete-orphan", foreign_keys="EmployeeProfile.employee_id")
+    repair_tickets = db.relationship("RepairTicket", back_populates="employee", lazy="selectin")
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -116,11 +120,13 @@ class Employee(db.Model):
         root = self.department.root_department if self.department else None
         return {
             "id": str(self.id),
-            "department_id": str(self.department_id),
+            "department_id": str(self.department_id) if self.department_id else None,
             "department_name": self.department.name if self.department else None,
             "root_department_name": root.name if root else None,
             "position_id": str(self.position_id) if self.position_id else None,
             "position_name": self.position_rel.name if self.position_rel else None,
+            "position_code": self.position_rel.code if self.position_rel else None,
+            "user_id": str(self.user_id) if self.user_id else None,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "full_name": self.get_full_name(),
@@ -131,12 +137,38 @@ class Employee(db.Model):
             "hire_date": self.hire_date.isoformat() if self.hire_date else None,
             "is_active": self.is_active,
             "notes": self.notes,
+            "profile": self.profile.to_dict_safe() if self.profile else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def __repr__(self):
         return f"<Employee(id={self.id}, code={self.employee_id_code})>"
+
+
+class EmployeeProfile(db.Model):
+    """Profil étendu pour les champs spécifiques (superviseur hiérarchique, dates)."""
+    __tablename__ = "employee_profile"
+    __table_args__ = {'schema': 'em'}
+
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="CASCADE"), primary_key=True)
+    supervisor_employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+
+    employee = db.relationship("Employee", back_populates="profile", foreign_keys=[employee_id], lazy="selectin")
+    supervisor = db.relationship("Employee", foreign_keys=[supervisor_employee_id], lazy="selectin")
+
+    def to_dict_safe(self):
+        return {
+            "supervisor_employee_id": str(self.supervisor_employee_id) if self.supervisor_employee_id else None,
+            "supervisor_name": self.supervisor.get_full_name() if self.supervisor else None,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+        }
+
+    def __repr__(self):
+        return f"<EmployeeProfile(employee_id={self.employee_id})>"
 
 
 class EmployeeHistory(db.Model):

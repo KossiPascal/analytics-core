@@ -73,8 +73,6 @@ class Site(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     district = db.relationship("District", back_populates="sites", lazy="selectin")
-    zones_asc = db.relationship("ZoneASC", back_populates="site", lazy="selectin", cascade="all, delete-orphan")
-    ascs = db.relationship("ASC", back_populates="site", lazy="selectin")
 
     def to_dict_safe(self):
         return {
@@ -92,35 +90,3 @@ class Site(db.Model):
 
     def __repr__(self):
         return f"<Site(id={self.id}, name={self.name})>"
-
-
-class ZoneASC(db.Model):
-    __tablename__ = "zones_asc"
-    __table_args__ = (
-        db.UniqueConstraint("site_id", "code", name="uq_zones_asc_site_code"),
-        {'schema': 'em'},
-    )
-
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    site_id = db.Column(db.BigInteger, db.ForeignKey("em.sites.id", ondelete="CASCADE"), nullable=False)
-    name = db.Column(db.String(255), nullable=False)
-    code = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
-
-    site = db.relationship("Site", back_populates="zones_asc", lazy="selectin")
-    ascs = db.relationship("ASC", back_populates="zone_asc", lazy="selectin")
-
-    def to_dict_safe(self):
-        return {
-            "id": str(self.id),
-            "site_id": str(self.site_id),
-            "name": self.name,
-            "code": self.code,
-            "site_name": self.site.name if self.site else None,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-        }
-
-    def __repr__(self):
-        return f"<ZoneASC(id={self.id}, name={self.name})>"

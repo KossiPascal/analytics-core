@@ -3,20 +3,28 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.models.asc import Supervisor, supervisor_sites
+from backend.src.equipment_manager.models.employees import Employee, Position
 from backend.src.models.auth import User
-from backend.src.equipment_manager.models.locations import District, Site
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("em_supervisors", __name__, url_prefix="/api/equipment/supervisors")
 
+SUPERVISOR_POSITION_CODE = "SUPERVISEUR"
+
+
+def _supervisor_query():
+    """Base query returning only employees with position code 'SUPERVISEUR'."""
+    return Employee.query.join(Position, Employee.position_id == Position.id).filter(
+        Position.code == SUPERVISOR_POSITION_CODE
+    )
+
 
 @bp.get("")
 @require_auth
 def list_supervisors():
-    supervisors = Supervisor.query.order_by(Supervisor.last_name, Supervisor.first_name).all()
+    supervisors = _supervisor_query().order_by(Employee.last_name, Employee.first_name).all()
     return jsonify([s.to_dict_safe() for s in supervisors]), 200
 
 
@@ -29,35 +37,24 @@ def create_supervisor():
     last_name = data.get("last_name", "").strip()
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
-    district_id = data.get("district_id")
-    site_ids = data.get("site_ids", [])
+    code = data.get("code", "").strip()
 
     if not first_name or not last_name:
         return error_response("first_name and last_name are required", 400)
-    if not district_id:
-        return error_response("district_id is required", 400)
 
-    district = District.query.get(int(district_id))
-    if not district:
-        return error_response("District not found", 404)
+    # Resolve supervisor position
+    position = Position.query.filter_by(code=SUPERVISOR_POSITION_CODE).first()
+    if not position:
+        return error_response(f"Position '{SUPERVISOR_POSITION_CODE}' not found in database", 500)
 
-    # Validate sites belong to district
-    sites = []
-    if site_ids:
-        sites = Site.query.filter(Site.id.in_([int(s) for s in site_ids]), Site.district_id == district.id).all()
-
-    # Generate supervisor code: [DISTRICT_CODE]-SUP-[###]
-    existing_count = db.session.query(Supervisor).join(
-        supervisor_sites, Supervisor.id == supervisor_sites.c.supervisor_id
-    ).join(Site, supervisor_sites.c.site_id == Site.id).filter(
-        Site.district_id == district.id
-    ).distinct().count()
-
-    seq = existing_count + 1
-    code = f"{district.code}-SUP-{str(seq).zfill(3)}"
-    while Supervisor.query.filter_by(code=code).first():
-        seq += 1
-        code = f"{district.code}-SUP-{str(seq).zfill(3)}"
+    if not code:
+        # Auto-generate code from name
+        base = f"SUP-{last_name[:3].upper()}{first_name[0].upper()}"
+        code = base
+        counter = 1
+        while Employee.query.filter_by(employee_id_code=code).first():
+            code = f"{base}{counter}"
+            counter += 1
 
     # Generate username: [lastname][first_letter][last_letter]
     first_clean = first_name.strip()
@@ -93,27 +90,21 @@ def create_supervisor():
         db.session.add(user)
         db.session.flush()
 
-        # Create supervisor profile
-        supervisor = Supervisor(
+        # Create Employee record linked to user
+        employee = Employee(
             user_id=user.id,
-            code=code,
+            employee_id_code=code,
             first_name=first_name,
             last_name=last_name,
             email=email,
             phone=phone,
+            position_id=position.id,
+            is_active=True,
         )
-        db.session.add(supervisor)
-        db.session.flush()
-
-        # Assign sites
-        for site in sites:
-            db.session.execute(
-                supervisor_sites.insert().values(supervisor_id=supervisor.id, site_id=site.id)
-            )
-
+        db.session.add(employee)
         db.session.commit()
 
-        result = supervisor.to_dict_safe()
+        result = employee.to_dict_safe()
         result["username"] = username
         result["password"] = password
         return jsonify(result), 201
@@ -130,57 +121,39 @@ def create_supervisor():
 @bp.get("/<int:id>")
 @require_auth
 def get_supervisor(id):
-    supervisor = Supervisor.query.get(id)
-    if not supervisor:
+    employee = Employee.query.get(id)
+    if not employee:
         return error_response("Supervisor not found", 404)
-    return jsonify(supervisor.to_dict_safe()), 200
+    return jsonify(employee.to_dict_safe()), 200
 
 
 @bp.put("/<int:id>")
 @require_auth
 def update_supervisor(id):
-    supervisor = Supervisor.query.get(id)
-    if not supervisor:
+    employee = Employee.query.get(id)
+    if not employee:
         return error_response("Supervisor not found", 404)
 
     data = request.get_json(silent=True) or {}
 
     for field in ("first_name", "last_name", "email", "phone"):
         if field in data:
-            setattr(supervisor, field, data[field].strip() if isinstance(data[field], str) else data[field])
+            setattr(employee, field, data[field].strip() if isinstance(data[field], str) else data[field])
 
-    # Update associated user
-    user = User.query.get(supervisor.user_id)
-    if user:
-        if "first_name" in data or "last_name" in data:
-            user.fullname = f"{supervisor.first_name} {supervisor.last_name}"
-        if "email" in data:
-            user.email = data["email"].strip() or None
-        if "phone" in data:
-            user.phone = data["phone"].strip()
-
-    # Update sites
-    site_ids = data.get("site_ids")
-    if site_ids is not None:
-        district_id = data.get("district_id")
-        if district_id:
-            sites = Site.query.filter(
-                Site.id.in_([int(s) for s in site_ids]),
-                Site.district_id == int(district_id),
-            ).all()
-        else:
-            sites = Site.query.filter(Site.id.in_([int(s) for s in site_ids])).all()
-
-        # Clear and reassign
-        db.session.execute(supervisor_sites.delete().where(supervisor_sites.c.supervisor_id == supervisor.id))
-        for site in sites:
-            db.session.execute(
-                supervisor_sites.insert().values(supervisor_id=supervisor.id, site_id=site.id)
-            )
+    # Update associated user account
+    if employee.user_id:
+        user = User.query.get(employee.user_id)
+        if user:
+            if "first_name" in data or "last_name" in data:
+                user.fullname = f"{employee.first_name} {employee.last_name}"
+            if "email" in data:
+                user.email = data["email"].strip() or None
+            if "phone" in data:
+                user.phone = data["phone"].strip()
 
     try:
         db.session.commit()
-        return jsonify(supervisor.to_dict_safe()), 200
+        return jsonify(employee.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
         return error_response("Update failed (duplicate data)", 409)

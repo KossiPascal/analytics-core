@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.models.locations import Region, District, Site, ZoneASC
+from backend.src.equipment_manager.models.locations import Region, District, Site
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
@@ -203,9 +203,7 @@ def get_site(id):
     site = Site.query.get(id)
     if not site:
         return error_response("Site not found", 404)
-    result = site.to_dict_safe()
-    result["zones"] = [z.to_dict_safe() for z in site.zones_asc]
-    return jsonify(result), 200
+    return jsonify(site.to_dict_safe()), 200
 
 
 @bp.put("/sites/<int:id>")
@@ -228,64 +226,3 @@ def update_site(id):
     except IntegrityError:
         db.session.rollback()
         return error_response("Site with this code already exists", 409)
-
-
-# ─── ZONES ASC ───────────────────────────────────────────────────────────────
-
-@bp.get("/zones")
-@require_auth
-def list_zones():
-    query = ZoneASC.query
-    site_id = request.args.get("site_id")
-    if site_id:
-        query = query.filter_by(site_id=int(site_id))
-    zones = query.order_by(ZoneASC.name).all()
-    return jsonify([z.to_dict_safe() for z in zones]), 200
-
-
-@bp.post("/zones")
-@require_auth
-def create_zone():
-    data = request.get_json(silent=True) or {}
-    name = data.get("name", "").strip()
-    code = data.get("code", "").strip()
-    site_id = data.get("site_id")
-
-    if not name or not code or not site_id:
-        return error_response("name, code and site_id are required", 400)
-
-    site = Site.query.get(int(site_id))
-    if not site:
-        return error_response("Site not found", 404)
-
-    try:
-        zone = ZoneASC(name=name, code=code, site_id=site.id)
-        db.session.add(zone)
-        db.session.commit()
-        return jsonify(zone.to_dict_safe()), 201
-    except IntegrityError:
-        db.session.rollback()
-        return error_response("Zone with this code already exists for this site", 409)
-
-
-@bp.put("/zones/<int:id>")
-@require_auth
-def update_zone(id):
-    zone = ZoneASC.query.get(id)
-    if not zone:
-        return error_response("Zone not found", 404)
-
-    data = request.get_json(silent=True) or {}
-    if "name" in data:
-        zone.name = data["name"].strip()
-    if "code" in data:
-        zone.code = data["code"].strip()
-    if "site_id" in data:
-        zone.site_id = int(data["site_id"])
-
-    try:
-        db.session.commit()
-        return jsonify(zone.to_dict_safe()), 200
-    except IntegrityError:
-        db.session.rollback()
-        return error_response("Zone with this code already exists for this site", 409)

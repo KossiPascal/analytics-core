@@ -6,8 +6,7 @@ import requests
 import warnings
 
 from backend.src.databases.extensions import db
-from backend.src.equipment_manager.models.locations import Region, District, Site, ZoneASC
-from backend.src.equipment_manager.models.asc import ASC
+from backend.src.equipment_manager.models.locations import Region, District, Site
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
@@ -38,6 +37,7 @@ def parse_dhis2_value(value):
     return {"code": code.strip(), "name": name.strip()}
 
 
+# TODO: adapter pour Employee (modèle ASC supprimé)
 def parse_asc_data(asc_string):
     """
     Parse ASC data from DHIS2 format.
@@ -116,6 +116,7 @@ def _extract_unique_admin_units(data, field_name):
     return list(results.values())
 
 
+# TODO: adapter pour Employee (modèle ASC supprimé)
 def _get_ascs_from_events(data):
     """Extract unique ASCs from events data."""
     ascs = {}
@@ -222,68 +223,11 @@ def sync_organizational_units(program_id=None, org_unit_id=None):
     }
 
 
+# TODO: adapter pour Employee (modèle ASC supprimé — utiliser Employee avec Position.code='ASC')
+# La géographie (site, zone) est gérée via users_orgunits.
 def sync_ascs(program_id=None, org_unit_id=None):
     """
     Sync ASCs from DHIS2.
-    Returns dict with counts of created/updated ASCs.
+    TEMPORAIREMENT DESACTIVE — à adapter pour le modèle Employee.
     """
-    if not DHIS2_USERNAME:
-        return {"error": "DHIS2 credentials not configured"}
-
-    program_id = program_id or DHIS2_PROGRAM_ID
-    session = _get_dhis2_session()
-
-    try:
-        data = _export_program_events(session, program_id, org_unit_id)
-    except Exception as e:
-        logger.error(f"DHIS2 export failed: {e}")
-        return {"error": str(e)}
-
-    ascs_data = _get_ascs_from_events(data)
-
-    created_ascs = 0
-    updated_ascs = 0
-
-    for asc_info in ascs_data:
-        code = asc_info["code"]
-        site_code = asc_info.get("site_code")
-
-        site = Site.query.filter_by(code=site_code).first() if site_code else None
-
-        existing = ASC.query.filter_by(code=code).first()
-        if existing:
-            existing.first_name = asc_info["first_name"]
-            existing.last_name = asc_info["last_name"]
-            existing.site_id = site.id if site else existing.site_id
-            existing.is_active = True
-            updated_ascs += 1
-        else:
-            asc = ASC(
-                code=code,
-                first_name=asc_info["first_name"],
-                last_name=asc_info["last_name"],
-                site_id=site.id if site else None,
-                is_active=True,
-            )
-            db.session.add(asc)
-            db.session.flush()
-            created_ascs += 1
-            existing = asc
-
-        # Auto-create ZoneASC
-        if site:
-            zone = ZoneASC.query.filter_by(site_id=site.id, code=code).first()
-            if not zone:
-                zone = ZoneASC(
-                    site_id=site.id,
-                    code=code,
-                    name=f"Zone {asc_info['first_name']} {asc_info['last_name']}",
-                )
-                db.session.add(zone)
-                db.session.flush()
-            existing.zone_asc_id = zone.id
-
-    db.session.commit()
-    logger.info(f"DHIS2 ASC sync: {created_ascs} created, {updated_ascs} updated")
-
-    return {"created_ascs": created_ascs, "updated_ascs": updated_ascs}
+    return {"error": "sync_ascs non implémenté pour le modèle Employee. Voir TODO."}

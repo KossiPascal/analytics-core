@@ -5,7 +5,6 @@ from sqlalchemy.exc import IntegrityError
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.equipment import EquipmentCategory, EquipmentBrand, Equipment, EquipmentHistory, Accessory
-from backend.src.equipment_manager.models.asc import ASC
 from backend.src.equipment_manager.models.employees import Employee
 from backend.src.logger import get_backend_logger
 
@@ -123,13 +122,13 @@ def update_brand(id):
 def list_equipment():
     query = Equipment.query
 
-    asc_id = request.args.get("asc_id")
+    owner_id = request.args.get("owner_id") or request.args.get("asc_id")
     employee_id = request.args.get("employee_id")
     status = request.args.get("status")
     eq_type = request.args.get("type")
 
-    if asc_id:
-        query = query.filter_by(owner_id=int(asc_id))
+    if owner_id:
+        query = query.filter_by(owner_id=int(owner_id))
     if employee_id:
         query = query.filter_by(employee_id=int(employee_id))
     if status:
@@ -260,20 +259,20 @@ def assign_equipment(id):
         return error_response("Equipment not found", 404)
 
     data = request.get_json(silent=True) or {}
-    asc_id = data.get("asc_id")
+    asc_id = data.get("owner_id") or data.get("asc_id")
     employee_id = data.get("employee_id")
 
     user_id = int(g.current_user["id"]) if g.current_user else None
     old_owner = eq.owner.get_full_name() if eq.owner else (eq.employee.get_full_name() if eq.employee else "None")
 
     if asc_id:
-        asc = ASC.query.get(int(asc_id))
-        if not asc:
-            return error_response("ASC not found", 404)
-        eq.owner_id = asc.id
+        owner = Employee.query.get(int(asc_id))
+        if not owner:
+            return error_response("Employee not found", 404)
+        eq.owner_id = owner.id
         eq.employee_id = None
         eq.assignment_date = datetime.now(timezone.utc).date()
-        new_owner = asc.get_full_name()
+        new_owner = owner.get_full_name()
         action = "ASSIGNED"
     elif employee_id:
         employee = Employee.query.get(int(employee_id))
@@ -285,7 +284,7 @@ def assign_equipment(id):
         new_owner = employee.get_full_name()
         action = "ASSIGNED_TO_EMPLOYEE"
     else:
-        return error_response("asc_id or employee_id is required", 400)
+        return error_response("owner_id or employee_id is required", 400)
 
     history = EquipmentHistory(
         equipment_id=eq.id,
