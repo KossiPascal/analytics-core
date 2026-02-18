@@ -134,3 +134,11 @@ class Config:
 
     SERIALISER = URLSafeTimedSerializer(secret_key=JWT_SECRET_KEY, salt=JWT_SECURITY_SALT)
 
+    # ── Meeting Intelligence ──────────────────────────────────────────────────
+    # Gemini Flash — clé gratuite sur aistudio.google.com/app/apikey
+    GEMINI_API_KEY  = os.getenv("GEMINI_API_KEY", "")
+    # Groq — clé gratuite sur console.groq.com
+    GROQ_API_KEY    = os.getenv("GROQ_API_KEY", "")
+    # Ollama — serveur local (défaut: http://localhost:11434)
+    OLLAMA_HOST     = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+

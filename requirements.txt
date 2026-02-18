@@ -89,6 +89,17 @@ twilio==8.13.0
 
 weasyprint
 
+# ── Meeting Intelligence ──────────────────────────────────────────────────────
+# WhisperX (transcription audio locale avec timestamps)
+# Pré-requis système : ffmpeg  →  sudo apt install ffmpeg
+# GPU (optionnel)    : pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+whisperx
+
+# Providers AI pour le résumé (installer uniquement ceux que tu utilises)
+google-generativeai>=0.8.0    # Gemini Flash — GEMINI_API_KEY requis
+groq>=0.11.0                  # Groq Llama  — GROQ_API_KEY requis
+ollama>=0.3.0                 # Ollama local — aucune clé, serveur local requis
+
 
 # pip install pip-tools
 # pip-compile requirements.in --output-file ../requirements.txt

@@ -45,6 +45,10 @@ from backend.src.equipment_manager.routes import (
     dhis2_sync as em_dhis2_sync,
 )
 
+# Meeting Intelligence module - import models so SQLAlchemy registers them
+import backend.src.meeting_intelligence.models  # noqa: F401
+from backend.src.meeting_intelligence.routes import meeting as mi_meeting
+
 from backend.src.databases.extensions import db
 
 # -----------------------------------------------------------------------------
@@ -74,6 +78,7 @@ def init_database(app: Flask) -> None:
                     try:
                         with db.engine.connect() as conn:
                             conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS em"))
+                            conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS mi"))
                             table_count = conn.execute(db.text(
                                 "SELECT COUNT(*) FROM information_schema.tables "
                                 "WHERE table_schema = 'em' AND table_type = 'BASE TABLE'"
@@ -168,6 +173,9 @@ def create_flask_app(create_default_elements = True) -> Flask:
         em_tickets, em_employees, em_dashboard, em_dhis2_sync,
     ):
         app.register_blueprint(em_bp.bp)
+
+    # Meeting Intelligence blueprint
+    app.register_blueprint(mi_meeting.bp)
 
     # -----------------------------------------------------------------------------
     # ROUTES
