@@ -46,6 +46,9 @@ export const PAGES = {
     // Equipment Manager page
     EquipmentManagerPage: lazy(() => import('@pages/equipment_manager')),
 
+    // Meeting Intelligence page
+    MeetingIntelligencePage: lazy(() => import('@pages/meeting_intelligence')),
+
     // Error pages
     NotFoundPage: lazy(() => import('@pages/errors/NotFoundPage')),
     ServerErrorPage: lazy(() => import('@pages/errors/ServerErrorPage')),
@@ -133,6 +136,11 @@ export const ROUTES = {
     // EQUIPMENT MANAGER
     equipmentManager: {
         root: () => '/equipment-manager',
+    },
+
+    // MEETING INTELLIGENCE
+    meetingIntelligence: {
+        root: () => '/meeting-intelligence',
     },
 
     // ERRORS

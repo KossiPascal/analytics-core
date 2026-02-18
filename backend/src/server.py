@@ -97,7 +97,14 @@ def init_database(app: Flask) -> None:
                                 db.create_all()
                                 User.create_default_admin()
                             else:
+                                # Check if mi tables are missing (module added after initial DB setup)
+                                mi_count = conn.execute(db.text(
+                                    "SELECT COUNT(*) FROM information_schema.tables "
+                                    "WHERE table_schema = 'mi' AND table_type = 'BASE TABLE'"
+                                )).scalar()
                                 conn.commit()
+                                if mi_count == 0:
+                                    db.create_all()
                     finally:
                         lock_conn.execute(db.text("SELECT pg_advisory_unlock(42424242)"))
                         lock_conn.commit()

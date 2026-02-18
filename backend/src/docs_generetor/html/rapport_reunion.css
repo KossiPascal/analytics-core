@@ -1,0 +1,201 @@
+/* ────────────────────────────────────────────────────────────
+   RAPPORT DE RÉUNION — WeasyPrint stylesheet
+   ──────────────────────────────────────────────────────────── */
+
+@page {
+  size: A4;
+  margin: 1.6cm 2cm 1.6cm 2cm;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "DejaVu Sans", "Helvetica Neue", Arial, sans-serif;
+  font-size: 9.5pt;
+  color: #1a1a2e;
+  line-height: 1.45;
+}
+
+.page {
+  width: 100%;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid #003366;
+  padding-bottom: 0.6cm;
+  margin-bottom: 0.55cm;
+}
+
+.header-logo img {
+  height: 1.4cm;
+  width: auto;
+}
+
+.header-title {
+  text-align: right;
+}
+
+.header-title h1 {
+  font-size: 16pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #003366;
+  text-transform: uppercase;
+}
+
+/* ── META FIELDS ── */
+.fields {
+  border: 1px solid #ccc;
+  border-radius: 3pt;
+  margin-bottom: 0.5cm;
+  overflow: hidden;
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 0.22cm 0.35cm;
+  gap: 0.3cm;
+}
+
+.field-row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 8.5pt;
+  color: #444;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.value {
+  font-size: 9pt;
+  color: #1a1a2e;
+  border-bottom: 1px solid #aaa;
+  min-height: 1em;
+  padding-bottom: 1pt;
+}
+
+.value.flex1  { flex: 1; }
+.value.short  { width: 2.5cm; }
+.value.mid    { width: 4.5cm; }
+.value.ml     { margin-left: 0.6cm; }
+.ml           { margin-left: 0.6cm; }
+
+.bold-underline {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2pt;
+}
+
+/* ── SECTION TITLE ── */
+.section-title {
+  background: #003366;
+  color: #ffffff;
+  font-size: 9pt;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2cm 0.35cm;
+  margin-top: 0.45cm;
+  margin-bottom: 0;
+  border-radius: 2pt 2pt 0 0;
+}
+
+/* ── SECTION CONTENT ── */
+.section-content {
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 2pt 2pt;
+  padding: 0.35cm 0.4cm;
+  min-height: 1.8cm;
+  font-size: 9pt;
+  white-space: pre-wrap;
+  color: #1a1a2e;
+  line-height: 1.5;
+}
+
+/* ── PARTICIPANTS ── */
+.participants-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2cm 0.5cm;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 2pt 2pt;
+  padding: 0.3cm 0.4cm;
+}
+
+.participant-item {
+  font-size: 9pt;
+  color: #003366;
+  font-weight: 500;
+  padding: 0.05cm 0.3cm;
+  background: #e8f0f8;
+  border-radius: 20pt;
+  border: 1px solid #b3cde0;
+}
+
+/* ── SIGNATURES ── */
+.signatures {
+  display: flex;
+  gap: 0.5cm;
+  margin-top: 1cm;
+  border: 1px solid #ccc;
+  border-radius: 3pt;
+  padding: 0.4cm;
+}
+
+.sig-col {
+  flex: 1;
+  text-align: center;
+}
+
+.sig-header {
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #003366;
+  border-bottom: 1px solid #003366;
+  padding-bottom: 0.15cm;
+  margin-bottom: 0.15cm;
+}
+
+.sig-role {
+  font-size: 8pt;
+  color: #555;
+  font-style: italic;
+  margin-bottom: 0.1cm;
+}
+
+.sig-space {
+  height: 1.5cm;
+}
+
+.sig-name-line {
+  font-size: 8.5pt;
+  font-weight: 600;
+  border-top: 1px solid #aaa;
+  padding-top: 0.1cm;
+}
+
+/* ── FOOTER ── */
+.footer {
+  margin-top: 0.6cm;
+  font-size: 7.5pt;
+  color: #777;
+  text-align: center;
+  border-top: 1px solid #ddd;
+  padding-top: 0.3cm;
+  line-height: 1.4;
+}

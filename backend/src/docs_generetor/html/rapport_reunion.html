@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapport de Réunion</title>
+  <link rel="stylesheet" href="rapport_reunion.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- ─── EN-TÊTE ─────────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="{{ logo_uri }}" alt="Integrate Health">
+    </div>
+    <div class="header-title">
+      <h1>RAPPORT DE RÉUNION</h1>
+    </div>
+  </div>
+
+  <!-- ─── MÉTA-DONNÉES ─────────────────────────────────────────────── -->
+  <div class="fields">
+
+    <div class="field-row">
+      <span class="label">Date :</span>
+      <span class="value short">{{ meeting_date }}</span>
+      <span class="label ml">Durée :</span>
+      <span class="value short">{{ duration }}</span>
+      <span class="label ml">Ref :</span>
+      <span class="value flex1">MI-{{ meeting_id }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Titre :</span>
+      <span class="value flex1 bold-underline">{{ titre }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Résumé généré par :</span>
+      <span class="value flex1">{{ ai_provider }}</span>
+      <span class="label ml">Transcrit le :</span>
+      <span class="value flex1">{{ generated_at }}</span>
+    </div>
+
+  </div>
+
+  <!-- ─── PARTICIPANTS ──────────────────────────────────────────────── -->
+  {% if participants %}
+  <div class="section-title">Participants</div>
+  <div class="participants-grid">
+    {% for p in participants %}
+    <div class="participant-item">{{ p }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ─── ORDRE DU JOUR ─────────────────────────────────────────────── -->
+  <div class="section-title">Ordre du Jour</div>
+  <div class="section-content">
+    {{ ordre_du_jour }}
+  </div>
+
+  <!-- ─── DISCUSSIONS ──────────────────────────────────────────────── -->
+  <div class="section-title">Points Discutés</div>
+  <div class="section-content">
+    {{ discussions }}
+  </div>
+
+  <!-- ─── PROCHAINES ÉTAPES ─────────────────────────────────────────── -->
+  <div class="section-title">Prochaines Étapes &amp; Décisions</div>
+  <div class="section-content">
+    {{ prochaines_etapes }}
+  </div>
+
+  <!-- ─── RECOMMANDATIONS ──────────────────────────────────────────── -->
+  {% if recommandations %}
+  <div class="section-title">Recommandations</div>
+  <div class="section-content">
+    {{ recommandations }}
+  </div>
+  {% endif %}
+
+  <!-- ─── SIGNATURES ───────────────────────────────────────────────── -->
+  <div class="signatures">
+    <div class="sig-col">
+      <div class="sig-header">Nom et Signature</div>
+      <div class="sig-role">Président de séance</div>
+      <div class="sig-space"></div>
+      <div class="sig-name-line">&nbsp;</div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-header">Nom et Signature</div>
+      <div class="sig-role">Rapporteur</div>
+      <div class="sig-space"></div>
+      <div class="sig-name-line">&nbsp;</div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-header">Nom et Signature</div>
+      <div class="sig-role">Superviseur</div>
+      <div class="sig-space"></div>
+      <div class="sig-name-line">&nbsp;</div>
+    </div>
+  </div>
+
+  <!-- ─── PIED DE PAGE ─────────────────────────────────────────────── -->
+  <div class="footer">
+    Document généré automatiquement par le système Analytics — Integrate Health.
+    Ce rapport synthétise les échanges de la réunion via transcription IA.
+    Toute modification doit être approuvée par les signataires.
+  </div>
+
+</div>
+</body>
+</html>

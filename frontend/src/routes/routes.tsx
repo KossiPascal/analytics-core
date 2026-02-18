@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from "react";
-import { Home, FileText, Map, Users, Shield, BookOpen, Gauge, Activity, Eye, ChevronRight, User, Settings, LogOut, Smartphone } from 'lucide-react';
+import { Home, FileText, Map, Users, Shield, BookOpen, Gauge, Activity, Eye, ChevronRight, User, Settings, LogOut, Smartphone, Mic } from 'lucide-react';
 import { generateRouteConfig, generateNavItems, type RouteConfig, generateGridNavItems, RouteItem, NavItem, slugify } from './utils';
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
@@ -114,6 +114,18 @@ export const ROUTES_ITEMS: RouteItem[] = [
     path: ROUTES.equipmentManager.root(),
     component: PAGES.EquipmentManagerPage,
     icon: <Smartphone size={20} />,
+    access: "authenticated",
+    showInGridpNav: true,
+    showInSideNav: true,
+    permissions: ['_admin', '_superadmin'],
+  },
+
+  // MEETING INTELLIGENCE
+  {
+    label: 'Intelligence Réunion',
+    path: ROUTES.meetingIntelligence.root(),
+    component: PAGES.MeetingIntelligencePage,
+    icon: <Mic size={20} />,
     access: "authenticated",
     showInGridpNav: true,
     showInSideNav: true,

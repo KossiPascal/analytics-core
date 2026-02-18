@@ -19,6 +19,27 @@ from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
 
+# ---------------------------------------------------------------------------
+# Ensure ffmpeg is on PATH.
+# If the system ffmpeg is missing, fall back to the binary bundled with
+# imageio-ffmpeg (installed as a Python package, no sudo required).
+# ---------------------------------------------------------------------------
+def _ensure_ffmpeg_on_path() -> None:
+    import shutil
+    if shutil.which("ffmpeg"):
+        return  # already available
+
+    try:
+        import imageio_ffmpeg
+        ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_dir = str(Path(ffmpeg_exe).parent)
+        os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+        logger.info(f"ffmpeg not found in PATH — using imageio-ffmpeg bundle: {ffmpeg_exe}")
+    except Exception as exc:
+        logger.warning(f"Could not locate ffmpeg via imageio-ffmpeg: {exc}")
+
+_ensure_ffmpeg_on_path()
+
 # Whisper model sizes: tiny | base | small | medium | large-v2 | large-v3
 DEFAULT_MODEL_SIZE = os.getenv("WHISPERX_MODEL_SIZE", "large-v2")
 DEFAULT_DEVICE      = os.getenv("WHISPERX_DEVICE", "cpu")        # "cuda" for GPU

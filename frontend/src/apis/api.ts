@@ -128,7 +128,13 @@ const axiosInstance: AxiosInstance = axios.create({
 axiosInstance.interceptors.request.use((config: any) => {
   const url = config.url ?? "";
 
-  config.headers = { "Content-Type": "application/json", ...(config.headers || {}) };
+  // Don't force JSON Content-Type for FormData — let the browser set
+  // multipart/form-data with the correct boundary automatically.
+  if (config.data instanceof FormData) {
+    config.headers = { ...(config.headers || {}) };
+  } else {
+    config.headers = { "Content-Type": "application/json", ...(config.headers || {}) };
+  }
   
   // 🚫 PAS DE TOKEN pour les routes publiques
   if (PUBLIC_ENDPOINTS.some(p => url.includes(p))) {
