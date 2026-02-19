@@ -258,6 +258,12 @@ def update_employee(id):
     if not emp:
         return error_response("Employee not found", 404)
 
+    if not emp.is_active:
+        return error_response(
+            "Employé inactif. Activez l'employé avant toute modification.",
+            409
+        )
+
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
 

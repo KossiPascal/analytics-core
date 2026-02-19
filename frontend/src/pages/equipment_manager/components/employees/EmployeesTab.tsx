@@ -126,6 +126,7 @@ export function EmployeesTab() {
           onEdit={(e) => { setEmpEditData(e); setEmpFormOpen(true); }}
           onView={(e) => { setEmpDetailId(e.id); setEmpDetailOpen(true); }}
           onToggleActive={handleToggleActive}
+          onTransfer={(e) => { setEmpDetailId(e.id); setEmpDetailOpen(true); }}
         />
       )}
 

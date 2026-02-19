@@ -76,7 +76,7 @@ export function EmployeeDetailModal({ isOpen, onClose, employeeId }: Props) {
           variant="ghost"
           size="sm"
           leftIcon={<ArrowRightLeft size={14} />}
-          title="Transférer vers un autre employé"
+          title={!e.is_active ? 'Équipement inactif (déclaré)' : 'Transférer vers un autre employé'}
           disabled={!e.is_active}
           onClick={() => { setSelectedEquipment(e); setTransferOpen(true); }}
         >

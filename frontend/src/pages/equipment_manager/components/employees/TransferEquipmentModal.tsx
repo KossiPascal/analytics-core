@@ -77,11 +77,20 @@ export function TransferEquipmentModal({ isOpen, onClose, onSuccess, equipment, 
         <div style={{
           padding: '0.625rem 0.875rem',
           borderRadius: '6px',
-          background: 'var(--color-bg-secondary, #f8fafc)',
-          border: '1px solid var(--border-color, #e2e8f0)',
+          background: currentEmployee && !currentEmployee.is_active
+            ? 'var(--color-danger-bg, #fee2e2)'
+            : 'var(--color-bg-secondary, #f8fafc)',
+          border: `1px solid ${currentEmployee && !currentEmployee.is_active ? 'var(--color-danger, #ef4444)' : 'var(--border-color, #e2e8f0)'}`,
           fontSize: '0.875rem',
         }}>
-          <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Détenteur actuel</span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+            Détenteur actuel
+            {currentEmployee && !currentEmployee.is_active && (
+              <span style={{ marginLeft: '0.5rem', color: 'var(--color-danger, #ef4444)', fontWeight: 600 }}>
+                — Inactif
+              </span>
+            )}
+          </span>
           <p style={{ margin: '0.125rem 0 0', fontWeight: 600 }}>
             {currentEmployee?.full_name ?? '—'}
             {currentEmployee?.employee_id_code && (
@@ -91,7 +100,7 @@ export function TransferEquipmentModal({ isOpen, onClose, onSuccess, equipment, 
             )}
           </p>
           <p style={{ margin: '0.125rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Statut : {EQUIPMENT_STATUS_LABELS[equipment?.status ?? ''] ?? equipment?.status ?? '—'}
+            Statut équipement : {EQUIPMENT_STATUS_LABELS[equipment?.status ?? ''] ?? equipment?.status ?? '—'}
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 import { Table, type Column } from '@components/ui/Table/Table';
 import { Badge } from '@components/ui/Badge/Badge';
-import { Edit, Eye, ToggleLeft, ToggleRight } from 'lucide-react';
+import { ArrowRightLeft, Edit, Eye, ToggleLeft, ToggleRight } from 'lucide-react';
 import type { Employee } from '../../types';
 import shared from '@components/ui/styles/shared.module.css';
 
@@ -10,9 +10,10 @@ interface Props {
   onEdit: (item: Employee) => void;
   onView: (item: Employee) => void;
   onToggleActive: (item: Employee) => void;
+  onTransfer: (item: Employee) => void;
 }
 
-export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive }: Props) {
+export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive, onTransfer }: Props) {
   const columns: Column<Employee>[] = [
     { key: 'code', header: 'Code', render: (e) => e.employee_id_code, sortable: true },
     { key: 'name', header: 'Nom', render: (e) => e.full_name, sortable: true },
@@ -30,9 +31,30 @@ export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive
       align: 'right',
       render: (e) => (
         <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onView(e)}><Eye size={16} /></button>
-          <button className={shared.actionBtn} onClick={() => onEdit(e)}><Edit size={16} /></button>
-          <button className={shared.actionBtn} onClick={() => onToggleActive(e)}>
+          <button className={shared.actionBtn} title="Voir le détail" onClick={() => onView(e)}>
+            <Eye size={16} />
+          </button>
+          <button
+            className={shared.actionBtn}
+            title={e.is_active ? 'Modifier' : "Employé inactif — activez-le d'abord"}
+            disabled={!e.is_active}
+            style={!e.is_active ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
+            onClick={() => e.is_active && onEdit(e)}
+          >
+            <Edit size={16} />
+          </button>
+          <button
+            className={shared.actionBtn}
+            title="Transférer un équipement"
+            onClick={() => onTransfer(e)}
+          >
+            <ArrowRightLeft size={16} />
+          </button>
+          <button
+            className={shared.actionBtn}
+            title={e.is_active ? 'Désactiver' : 'Activer'}
+            onClick={() => onToggleActive(e)}
+          >
             {e.is_active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
           </button>
         </div>
