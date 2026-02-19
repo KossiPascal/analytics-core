@@ -259,6 +259,7 @@ export interface Employee {
   // end_date: string | null;
   is_active: boolean;
   notes: string;
+  equipment_count: number;
   created_at: string | null;
   updated_at: string | null;
   history?: EmployeeHistory[];

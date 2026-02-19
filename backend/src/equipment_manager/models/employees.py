@@ -138,6 +138,7 @@ class Employee(db.Model):
             "is_active": self.is_active,
             "notes": self.notes,
             "profile": self.profile.to_dict_safe() if self.profile else None,
+            "equipment_count": sum(1 for e in self.equipments if e.is_active),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }

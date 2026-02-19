@@ -49,6 +49,8 @@ export function EmployeeTransferModal({ isOpen, onClose, onSuccess, employee }: 
     if (empDetail.success && empDetail.data) {
       const active = (empDetail.data.equipments ?? []).filter((e) => e.is_active);
       setEquipments(active);
+      // Auto-sélection si un seul équipement
+      if (active.length === 1) setEquipmentId(active[0].id);
     }
     if (allEmp.success && allEmp.data) setAllEmployees(allEmp.data);
     setLoading(false);
@@ -120,20 +122,22 @@ export function EmployeeTransferModal({ isOpen, onClose, onSuccess, employee }: 
           </p>
         ) : (
           <>
-            <FormSelect
-              label="Équipement à transférer"
-              required
-              value={equipmentId}
-              onChange={(v) => { setEquipmentId(v); touchField('equipment', v); }}
-              error={getFieldError('equipment')}
-              options={[
-                { value: '', label: loading ? 'Chargement...' : 'Sélectionner un équipement' },
-                ...equipments.map((e) => ({
-                  value: e.id,
-                  label: `${e.brand} ${e.model_name} — IMEI: ${e.imei}`,
-                })),
-              ]}
-            />
+            {equipments.length > 1 && (
+              <FormSelect
+                label="Équipement à transférer"
+                required
+                value={equipmentId}
+                onChange={(v) => { setEquipmentId(v); touchField('equipment', v); }}
+                error={getFieldError('equipment')}
+                options={[
+                  { value: '', label: loading ? 'Chargement...' : 'Sélectionner un équipement' },
+                  ...equipments.map((e) => ({
+                    value: e.id,
+                    label: `${e.brand} ${e.model_name} — IMEI: ${e.imei}`,
+                  })),
+                ]}
+              />
+            )}
 
             {selectedEquipment && (
               <div style={{

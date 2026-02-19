@@ -43,13 +43,15 @@ export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive
           >
             <Edit size={16} />
           </button>
-          <button
-            className={shared.actionBtn}
-            title="Transférer un équipement"
-            onClick={() => onTransfer(e)}
-          >
-            <ArrowRightLeft size={16} />
-          </button>
+          {e.equipment_count > 0 && (
+            <button
+              className={shared.actionBtn}
+              title="Transférer un équipement"
+              onClick={() => onTransfer(e)}
+            >
+              <ArrowRightLeft size={16} />
+            </button>
+          )}
           <button
             className={shared.actionBtn}
             title={e.is_active ? 'Désactiver' : 'Activer'}
