@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Spinner } from '@components/ui/Spinner/Spinner';
 import { Badge } from '@components/ui/Badge/Badge';
+import { Button } from '@components/ui/Button/Button';
 import { Table, type Column } from '@components/ui/Table/Table';
-import { AlertTriangle, Clock, CheckCircle, XCircle, Ticket, Users, Smartphone } from 'lucide-react';
-import { dashboardApi } from '../../api';
-import type { DashboardStats, TicketsByDelay, BlockagePoint, RepairTicket } from '../../types';
-import { STATUS_LABELS, STAGE_LABELS } from '../../types';
+import {
+  AlertTriangle, Clock, CheckCircle, XCircle, Ticket, Users, Smartphone, Plus, PackagePlus,
+} from 'lucide-react';
+import { dashboardApi, ascsApi, equipmentApi } from '../../api';
+import type {
+  DashboardStats, TicketsByDelay, BlockagePoint, RepairTicket,
+  ASC, EquipmentCategory, EquipmentBrand,
+} from '../../types';
+import { TicketCreateModal } from '../tickets/TicketCreateModal';
+import { EquipmentFormModal } from '../equipment/EquipmentFormModal';
+import { ReserveDeclarationModal } from '../equipment/ReserveDeclarationModal';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
@@ -16,9 +25,18 @@ export function DashboardTab() {
   const [overdueTickets, setOverdueTickets] = useState<RepairTicket[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  // Quick-action modals
+  const [ticketModalOpen, setTicketModalOpen] = useState(false);
+  const [equipFormOpen, setEquipFormOpen] = useState(false);
+  const [reserveOpen, setReserveOpen] = useState(false);
+
+  // Data for EquipmentFormModal (loaded lazily)
+  const [ascs, setAscs] = useState<ASC[]>([]);
+  const [categories, setCategories] = useState<EquipmentCategory[]>([]);
+  const [brands, setBrands] = useState<EquipmentBrand[]>([]);
+  const [equipDataLoading, setEquipDataLoading] = useState(false);
+
+  useEffect(() => { loadDashboard(); }, []);
 
   const loadDashboard = async () => {
     setLoading(true);
@@ -40,16 +58,57 @@ export function DashboardTab() {
     }
   };
 
-  if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}><Spinner /></div>;
+  const openEquipmentForm = async () => {
+    if (categories.length === 0 && !equipDataLoading) {
+      setEquipDataLoading(true);
+      const [ascsRes, catRes, brandRes] = await Promise.all([
+        ascsApi.getAll(),
+        equipmentApi.getCategories(),
+        equipmentApi.getBrands(),
+      ]);
+      if (ascsRes.success) setAscs(ascsRes.data!);
+      if (catRes.success) setCategories(catRes.data!);
+      if (brandRes.success) setBrands(brandRes.data!);
+      setEquipDataLoading(false);
+    }
+    setEquipFormOpen(true);
+  };
+
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+      <Spinner />
+    </div>
+  );
+
+  const STAT_CARDS = [
+    { label: 'Total Tickets', value: stats?.total_tickets ?? 0, icon: <Ticket size={14} />, variant: 'primary' },
+    { label: 'Ouverts', value: stats?.open_tickets ?? 0, icon: <Clock size={14} />, variant: 'warning' },
+    { label: 'En cours', value: stats?.in_progress_tickets ?? 0, icon: <AlertTriangle size={14} />, variant: 'info' },
+    { label: 'Fermés', value: stats?.closed_tickets ?? 0, icon: <CheckCircle size={14} />, variant: 'success' },
+    { label: 'Employés', value: stats?.total_ascs ?? 0, icon: <Users size={14} />, variant: '' },
+    { label: 'Équipements', value: stats?.total_equipment ?? 0, icon: <Smartphone size={14} />, variant: '' },
+    { label: 'Annulés', value: stats?.cancelled_tickets ?? 0, icon: <XCircle size={14} />, variant: '' },
+    {
+      label: 'Durée moy.',
+      value: stats?.avg_duration_days != null ? `${stats.avg_duration_days}j` : '—',
+      icon: null,
+      variant: 'info',
+    },
+  ];
+
+  const DELAY_ITEMS = delays ? [
+    { label: '< 7 jours', value: delays.green, cls: styles.green },
+    { label: '7–14 jours', value: delays.yellow, cls: styles.yellow },
+    { label: '> 14 jours', value: delays.red, cls: styles.red },
+  ] : [];
 
   const overdueColumns: Column<RepairTicket>[] = [
     { key: 'ticket_number', header: 'Numero', render: (t) => t.ticket_number },
-    { key: 'equipment', header: 'Equipement', render: (t) => `${t.equipment_brand} ${t.equipment_model}` },
+    { key: 'equipment', header: 'Equipement', render: (t) => `${t.equipment_brand ?? ''} ${t.equipment_model ?? ''}`.trim() },
     { key: 'asc_name', header: 'ASC', render: (t) => t.asc_name },
-    { key: 'stage', header: 'Etape', render: (t) => <Badge variant="info">{t.current_stage_label}</Badge> },
     {
       key: 'delay',
-      header: 'Delai',
+      header: 'Délai',
       render: (t) => (
         <Badge variant={t.delay_color === 'red' ? 'danger' : t.delay_color === 'yellow' ? 'warning' : 'success'}>
           {t.delay_days}j
@@ -62,84 +121,134 @@ export function DashboardTab() {
     <div>
       {/* Stats Cards */}
       <div className={styles.statsGrid}>
-        <div className={`${styles.statCard} ${styles.primary}`}>
-          <span className={styles.statLabel}><Ticket size={16} /> Total Tickets</span>
-          <span className={styles.statValue}>{stats?.total_tickets ?? 0}</span>
-        </div>
-        <div className={`${styles.statCard} ${styles.warning}`}>
-          <span className={styles.statLabel}><Clock size={16} /> Ouverts</span>
-          <span className={styles.statValue}>{stats?.open_tickets ?? 0}</span>
-        </div>
-        <div className={`${styles.statCard} ${styles.info}`}>
-          <span className={styles.statLabel}><AlertTriangle size={16} /> En cours</span>
-          <span className={styles.statValue}>{stats?.in_progress_tickets ?? 0}</span>
-        </div>
-        <div className={`${styles.statCard} ${styles.success}`}>
-          <span className={styles.statLabel}><CheckCircle size={16} /> Fermes</span>
-          <span className={styles.statValue}>{stats?.closed_tickets ?? 0}</span>
-        </div>
-        <div className={`${styles.statCard}`}>
-          <span className={styles.statLabel}><Users size={16} /> ASCs actifs</span>
-          <span className={styles.statValue}>{stats?.total_ascs ?? 0}</span>
-        </div>
-        <div className={`${styles.statCard}`}>
-          <span className={styles.statLabel}><Smartphone size={16} /> Equipements</span>
-          <span className={styles.statValue}>{stats?.total_equipment ?? 0}</span>
-        </div>
-        <div className={`${styles.statCard}`}>
-          <span className={styles.statLabel}><XCircle size={16} /> Annules</span>
-          <span className={styles.statValue}>{stats?.cancelled_tickets ?? 0}</span>
-        </div>
-        <div className={`${styles.statCard} ${styles.info}`}>
-          <span className={styles.statLabel}>Duree moy. (jours)</span>
-          <span className={styles.statValue}>{stats?.avg_duration_days ?? '-'}</span>
-        </div>
+        {STAT_CARDS.map((card, i) => (
+          <motion.div
+            key={card.label}
+            className={`${styles.statCard} ${card.variant ? styles[card.variant] : ''}`}
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.28, delay: i * 0.06, ease: 'easeOut' }}
+          >
+            <span className={styles.statLabel}>
+              {card.icon}
+              {card.label}
+            </span>
+            <span className={styles.statValue}>{card.value}</span>
+          </motion.div>
+        ))}
       </div>
 
       {/* Delay Indicators */}
       {delays && (
         <div className={styles.delayGrid}>
-          <div className={`${styles.delayCard} ${styles.green}`}>
-            <div className={styles.delayValue}>{delays.green}</div>
-            <div className={styles.delayLabel}>&lt; 7 jours</div>
-          </div>
-          <div className={`${styles.delayCard} ${styles.yellow}`}>
-            <div className={styles.delayValue}>{delays.yellow}</div>
-            <div className={styles.delayLabel}>7-14 jours</div>
-          </div>
-          <div className={`${styles.delayCard} ${styles.red}`}>
-            <div className={styles.delayValue}>{delays.red}</div>
-            <div className={styles.delayLabel}>&gt; 14 jours</div>
-          </div>
+          {DELAY_ITEMS.map((d, i) => (
+            <motion.div
+              key={d.label}
+              className={`${styles.delayCard} ${d.cls}`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25, delay: 0.52 + i * 0.08, ease: 'easeOut' }}
+            >
+              <div className={styles.delayValue}>{d.value}</div>
+              <div className={styles.delayLabel}>{d.label}</div>
+            </motion.div>
+          ))}
         </div>
       )}
 
       {/* Blockage Points */}
       {blockages.length > 0 && (
-        <>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.72, duration: 0.25 }}
+        >
           <h3 className={styles.sectionTitle}>Points de blocage</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.25rem' }}>
             {blockages.map((b) => (
               <Badge key={b.stage} variant="danger">
                 {b.stage}: {b.count} ticket{b.count > 1 ? 's' : ''}
               </Badge>
             ))}
           </div>
-        </>
+        </motion.div>
       )}
 
       {/* Overdue Tickets */}
       {overdueTickets.length > 0 && (
-        <>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.82, duration: 0.25 }}
+        >
           <h3 className={styles.sectionTitle}>Tickets en retard (&gt;14 jours)</h3>
-          <Table<any>             data={overdueTickets}
+          <Table<any>
+            data={overdueTickets}
             columns={overdueColumns}
             keyExtractor={(t) => t.id}
             features={{ pagination: true }}
             defaultPageSize={5}
           />
-        </>
+        </motion.div>
       )}
+
+      {/* Quick Actions */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.92, duration: 0.25 }}
+      >
+        <h3 className={styles.sectionTitle} style={{ marginTop: '1.5rem' }}>Actions rapides</h3>
+        <div className={styles.quickActionsGrid}>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Plus size={15} />}
+            onClick={() => setTicketModalOpen(true)}
+          >
+            Créer un ticket
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Smartphone size={15} />}
+            onClick={openEquipmentForm}
+            isLoading={equipDataLoading}
+          >
+            Nouvel équipement
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<PackagePlus size={15} />}
+            onClick={() => setReserveOpen(true)}
+          >
+            Déclarer en réserve
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* Modals */}
+      <TicketCreateModal
+        isOpen={ticketModalOpen}
+        onClose={() => setTicketModalOpen(false)}
+        onSuccess={() => { setTicketModalOpen(false); loadDashboard(); }}
+      />
+
+      <EquipmentFormModal
+        isOpen={equipFormOpen}
+        onClose={() => setEquipFormOpen(false)}
+        onSuccess={() => { setEquipFormOpen(false); loadDashboard(); }}
+        ascs={ascs}
+        categories={categories}
+        brands={brands}
+      />
+
+      <ReserveDeclarationModal
+        isOpen={reserveOpen}
+        onClose={() => setReserveOpen(false)}
+        onSuccess={() => { setReserveOpen(false); loadDashboard(); }}
+      />
     </div>
   );
 }

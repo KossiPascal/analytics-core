@@ -215,6 +215,25 @@ def get_equipment(id):
     result["history"] = [h.to_dict_safe() for h in sorted(eq.history, key=lambda h: h.created_at, reverse=True)]
     result["tickets"] = [t.to_dict_safe() for t in eq.repair_tickets]
     result["accessories"] = [a.to_dict_safe() for a in eq.accessories]
+
+    # Sibling equipment (active, same employee/owner, excluding self)
+    sibling_equipment = []
+    if eq.employee_id:
+        siblings = Equipment.query.filter(
+            Equipment.employee_id == eq.employee_id,
+            Equipment.id != eq.id,
+            Equipment.status.in_(list(ACTIVE_STATUSES)),
+        ).all()
+        sibling_equipment = [s.to_dict_safe() for s in siblings]
+    elif eq.owner_id:
+        siblings = Equipment.query.filter(
+            Equipment.owner_id == eq.owner_id,
+            Equipment.id != eq.id,
+            Equipment.status.in_(list(ACTIVE_STATUSES)),
+        ).all()
+        sibling_equipment = [s.to_dict_safe() for s in siblings]
+    result["sibling_equipment"] = sibling_equipment
+
     return jsonify(result), 200
 
 
@@ -313,7 +332,7 @@ def assign_equipment(id):
             return error_response("Employee not found", 404)
         eq.owner_id = owner.id
         eq.employee_id = None
-        eq.assignment_date = datetime.now(timezone.utc).date()
+        eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
         new_owner = owner.get_full_name()
         action = "ASSIGNED"
     elif employee_id:
@@ -322,7 +341,7 @@ def assign_equipment(id):
             return error_response("Employee not found", 404)
         eq.employee_id = employee.id
         eq.owner_id = None
-        eq.assignment_date = datetime.now(timezone.utc).date()
+        eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
         new_owner = employee.get_full_name()
         action = "ASSIGNED_TO_EMPLOYEE"
     else:
@@ -385,7 +404,7 @@ def transfer_equipment(id):
 
     eq.employee_id = target.id
     eq.owner_id = None
-    eq.assignment_date = datetime.now(timezone.utc).date()
+    eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
     if eq.status == "PENDING":
         eq.status = "FUNCTIONAL"
 
@@ -399,6 +418,55 @@ def transfer_equipment(id):
     ))
     db.session.commit()
     return jsonify(eq.to_dict_safe()), 200
+
+
+@bp.post("/reserve")
+@require_auth
+def declare_reserve():
+    """Assign multiple equipment to an employee as reserve (status stays PENDING)."""
+    data = request.get_json(silent=True) or {}
+    employee_id = data.get("employee_id")
+    equipment_ids = data.get("equipment_ids", [])
+    notes = data.get("notes", "").strip()
+    action_date = data.get("action_date")
+
+    if not employee_id or not equipment_ids:
+        return error_response("employee_id et equipment_ids sont requis", 400)
+
+    employee = Employee.query.get(int(employee_id))
+    if not employee:
+        return error_response("Employé introuvable", 404)
+    if not employee.is_active:
+        return error_response("L'employé est inactif", 409)
+
+    user_id = int(g.current_user["id"]) if g.current_user else None
+    assignment_date = action_date or datetime.now(timezone.utc).date().isoformat()
+    updated = []
+
+    for eq_id in equipment_ids:
+        eq = Equipment.query.get(int(eq_id))
+        if not eq or not eq.is_active:
+            continue
+        old_holder = (
+            eq.employee.get_full_name() if eq.employee else
+            (eq.owner.get_full_name() if eq.owner else "Aucun")
+        )
+        eq.employee_id = employee.id
+        eq.owner_id = None
+        eq.assignment_date = assignment_date
+        # Status stays PENDING — reserve stock for distribution
+        db.session.add(EquipmentHistory(
+            equipment_id=eq.id,
+            action="ASSIGNED_RESERVE",
+            old_value=old_holder,
+            new_value=employee.get_full_name(),
+            notes=notes or "Déclaré en réserve",
+            created_by_id=user_id,
+        ))
+        updated.append(eq)
+
+    db.session.commit()
+    return jsonify([e.to_dict_safe() for e in updated]), 200
 
 
 @bp.post("/<int:id>/declare")
@@ -421,6 +489,7 @@ def declare_equipment(id):
     declaration = data.get("declaration", "").strip().upper()
     reason = data.get("reason", "").strip()
     notes = data.get("notes", "").strip()
+    action_date = data.get("action_date", "").strip()
 
     valid = {"LOST", "STOLEN", "TAKEN_AWAY", "COMPLETELY_DAMAGED"}
     if declaration not in valid:
@@ -452,12 +521,13 @@ def declare_equipment(id):
             ))
 
     action = DECLARATION_ACTION_MAP[declaration]
+    combined_notes = f"{('[' + action_date + '] ') if action_date else ''}{reason}{(' — ' + notes) if notes else ''}"
     db.session.add(EquipmentHistory(
         equipment_id=eq.id,
         action=action,
         old_value=old_status,
         new_value=declaration,
-        notes=f"{reason}{(' — ' + notes) if notes else ''}",
+        notes=combined_notes,
         created_by_id=user_id,
     ))
 
@@ -478,18 +548,20 @@ def cancel_declaration(id):
 
     data = request.get_json(silent=True) or {}
     notes = data.get("notes", "").strip()
+    action_date = data.get("action_date", "").strip()
     user_id = int(g.current_user["id"]) if g.current_user else None
     old_status = eq.status
 
     # Si l'équipement est assigné à quelqu'un, le remettre Fonctionnel plutôt qu'En attente
     new_status = "FUNCTIONAL" if (eq.owner_id or eq.employee_id) else "PENDING"
     eq.status = new_status
+    combined_notes = f"{('[' + action_date + '] ') if action_date else ''}{notes or 'Annulation de la déclaration'}"
     db.session.add(EquipmentHistory(
         equipment_id=eq.id,
         action="DECLARATION_CANCELLED",
         old_value=old_status,
         new_value=new_status,
-        notes=notes or "Annulation de la déclaration",
+        notes=combined_notes,
         created_by_id=user_id,
     ))
 

@@ -199,6 +199,40 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId, onStatusCha
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem' }}>Aucun accessoire</p>
           )}
 
+          {/* ── Other equipment of the same holder ── */}
+          {equipment.sibling_equipment && equipment.sibling_equipment.length > 0 && (
+            <>
+              <h4 className={styles.sectionTitle}>
+                Autres équipements de {equipment.employee_name || equipment.owner_name || 'ce détenteur'}
+                {' '}({equipment.sibling_equipment.length})
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                {equipment.sibling_equipment.map((eq) => (
+                  <div
+                    key={eq.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.375rem',
+                      border: '1px solid var(--border-color, #e2e8f0)',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontWeight: 500 }}>{eq.brand} {eq.model_name}</span>
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>IMEI: {eq.imei}</span>
+                    </div>
+                    <Badge variant={EQUIPMENT_STATUS_VARIANT[eq.status] || 'secondary'}>
+                      {EQUIPMENT_STATUS_LABELS[eq.status] || eq.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           {/* ── History ── */}
           {equipment.history && equipment.history.length > 0 && (
             <>

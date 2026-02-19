@@ -11,6 +11,7 @@ import { EmployeesTable } from './EmployeesTable';
 import { EmployeeFormModal } from './EmployeeFormModal';
 import { EmployeeDetailModal } from './EmployeeDetailModal';
 import { EmployeeTransferModal } from './EmployeeTransferModal';
+import { ConfirmToggleEmployeeModal } from './ConfirmToggleEmployeeModal';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
@@ -38,6 +39,8 @@ export function EmployeesTab() {
   const [empDetailId, setEmpDetailId] = useState<string | null>(null);
   const [empTransferOpen, setEmpTransferOpen] = useState(false);
   const [empTransferTarget, setEmpTransferTarget] = useState<Employee | null>(null);
+  const [toggleModalOpen, setToggleModalOpen] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState<Employee | null>(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -59,10 +62,9 @@ export function EmployeesTab() {
     }
   };
 
-  const handleToggleActive = async (emp: Employee) => {
-    const res = await employeesApi.toggleActive(emp.id);
-    if (res.success) { toast.success(`Employe ${emp.is_active ? 'desactive' : 'active'}`); loadAll(); }
-    else toast.error('Erreur');
+  const handleToggleActive = (emp: Employee) => {
+    setToggleTarget(emp);
+    setToggleModalOpen(true);
   };
 
   const SUB_TABS: { key: SubTab; label: string }[] = [
@@ -168,6 +170,13 @@ export function EmployeesTab() {
         onClose={() => { setEmpTransferOpen(false); setEmpTransferTarget(null); }}
         onSuccess={loadAll}
         employee={empTransferTarget}
+      />
+
+      <ConfirmToggleEmployeeModal
+        isOpen={toggleModalOpen}
+        onClose={() => { setToggleModalOpen(false); setToggleTarget(null); }}
+        onSuccess={loadAll}
+        employee={toggleTarget}
       />
     </div>
   );

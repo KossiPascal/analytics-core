@@ -315,14 +315,25 @@ def toggle_active(id):
     if not emp:
         return error_response("Employee not found", 404)
 
+    data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
+    notes = data.get("notes", "").strip()
+    action_date = data.get("action_date", "").strip()
+
     emp.is_active = not emp.is_active
 
     action = "REACTIVATED" if emp.is_active else "DEACTIVATED"
+    note_parts = []
+    if action_date:
+        note_parts.append(f"Date : {action_date}")
+    if notes:
+        note_parts.append(notes)
+
     history = EmployeeHistory(
         employee_id=emp.id,
         action=action,
         user_id=user_id,
+        notes=" — ".join(note_parts) if note_parts else "",
     )
     db.session.add(history)
     db.session.commit()

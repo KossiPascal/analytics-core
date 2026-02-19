@@ -132,6 +132,7 @@ export const HISTORY_ACTION_LABELS: Record<string, string> = {
   CREATED:                    'Création',
   ASSIGNED:                   'Assigné (ASC)',
   ASSIGNED_TO_EMPLOYEE:       'Assigné (Employé)',
+  ASSIGNED_RESERVE:           'Assigné en réserve',
   STATUS_CHANGED:             'Changement de statut',
   TRANSFERRED:                'Transfert',
   RETIRED:                    'Retraité',
@@ -201,6 +202,7 @@ export interface Equipment {
   history?: EquipmentHistory[];
   tickets?: RepairTicket[];
   accessories?: Accessory[];
+  sibling_equipment?: Equipment[];
 }
 
 export interface EquipmentHistory {

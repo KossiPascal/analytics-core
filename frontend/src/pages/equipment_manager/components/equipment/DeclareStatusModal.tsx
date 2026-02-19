@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Button } from '@components/ui/Button/Button';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
+
+const today = () => new Date().toISOString().slice(0, 10);
 import { equipmentApi } from '../../api';
 import type { Equipment } from '../../types';
 import { EQUIPMENT_STATUS_LABELS } from '../../types';
@@ -25,14 +27,19 @@ export function DeclareStatusModal({ isOpen, onClose, onSuccess, equipment }: Pr
   const [declaration, setDeclaration] = useState('LOST');
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
+  const [actionDate, setActionDate] = useState(today());
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setActionDate(today());
+  }, [isOpen]);
 
   const isCancelling = equipment ? !equipment.is_active : false;
 
   const handleDeclare = async () => {
     if (!equipment || !reason.trim()) return;
     setLoading(true);
-    const res = await equipmentApi.declare(equipment.id, { declaration, reason: reason.trim(), notes: notes.trim() || undefined });
+    const res = await equipmentApi.declare(equipment.id, { declaration, reason: reason.trim(), notes: notes.trim() || undefined, action_date: actionDate });
     if (res.success) {
       toast.success(`Équipement déclaré : ${EQUIPMENT_STATUS_LABELS[declaration]}`);
       resetAndClose();
@@ -46,7 +53,7 @@ export function DeclareStatusModal({ isOpen, onClose, onSuccess, equipment }: Pr
   const handleCancelDeclaration = async () => {
     if (!equipment) return;
     setLoading(true);
-    const res = await equipmentApi.cancelDeclaration(equipment.id, { notes: notes.trim() || undefined });
+    const res = await equipmentApi.cancelDeclaration(equipment.id, { notes: notes.trim() || undefined, action_date: actionDate });
     if (res.success) {
       toast.success('Déclaration annulée — équipement remis en attente');
       resetAndClose();
@@ -60,6 +67,7 @@ export function DeclareStatusModal({ isOpen, onClose, onSuccess, equipment }: Pr
   const resetAndClose = () => {
     setReason('');
     setNotes('');
+    setActionDate(today());
     setDeclaration('LOST');
     onClose();
   };
@@ -94,6 +102,23 @@ export function DeclareStatusModal({ isOpen, onClose, onSuccess, equipment }: Pr
               <span>
                 L'équipement est actuellement <strong>{currentStatusLabel}</strong>. L'annulation le remettra au statut <strong>{restoredStatusLabel}</strong>.
               </span>
+            </div>
+
+            {/* Date */}
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.375rem', fontSize: '0.875rem' }}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={actionDate}
+                onChange={(e) => setActionDate(e.target.value)}
+                style={{
+                  width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px',
+                  border: '1px solid var(--border-color, #e5e7eb)',
+                  fontSize: '0.875rem', boxSizing: 'border-box',
+                }}
+              />
             </div>
 
             {/* Notes */}
@@ -180,6 +205,23 @@ export function DeclareStatusModal({ isOpen, onClose, onSuccess, equipment }: Pr
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Ex : Équipement non retrouvé lors de l'inventaire..."
+                style={{
+                  width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px',
+                  border: '1px solid var(--border-color, #e5e7eb)',
+                  fontSize: '0.875rem', boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {/* Date */}
+            <div>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '0.375rem', fontSize: '0.875rem' }}>
+                Date de l'événement
+              </label>
+              <input
+                type="date"
+                value={actionDate}
+                onChange={(e) => setActionDate(e.target.value)}
                 style={{
                   width: '100%', padding: '0.5rem 0.75rem', borderRadius: '6px',
                   border: '1px solid var(--border-color, #e5e7eb)',

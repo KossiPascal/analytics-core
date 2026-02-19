@@ -1,8 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { useFormValidation } from '@/components/forms/useFormValidation';
+
+const today = () => new Date().toISOString().slice(0, 10);
 import { ArrowRightLeft } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
@@ -20,7 +23,12 @@ interface Props {
 export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, employees }: Props) {
   const [employeeId, setEmployeeId] = useState('');
   const [notes, setNotes] = useState('');
+  const [actionDate, setActionDate] = useState(today());
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setActionDate(today());
+  }, [isOpen]);
 
   const validationRules = useMemo(() => ({
     employee: { required: true, message: 'Selectionner un employe' },
@@ -37,7 +45,7 @@ export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, em
 
     setSaving(true);
     try {
-      const res = await equipmentApi.assign(equipment.id, { employee_id: employeeId, notes });
+      const res = await equipmentApi.assign(equipment.id, { employee_id: employeeId, notes, action_date: actionDate });
       if (res.success) {
         toast.success('Equipement assigne avec succes');
         onSuccess();
@@ -80,6 +88,12 @@ export function AssignEquipmentModal({ isOpen, onClose, onSuccess, equipment, em
             { value: '', label: 'Selectionner un employe' },
             ...employees.map((e) => ({ value: e.id, label: `${e.full_name} (${e.employee_id_code})` })),
           ]}
+        />
+        <FormInput
+          label="Date"
+          type={"date" as any}
+          value={actionDate}
+          onChange={(e) => setActionDate(e.target.value)}
         />
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>

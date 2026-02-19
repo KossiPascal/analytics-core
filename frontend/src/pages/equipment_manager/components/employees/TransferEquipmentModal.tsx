@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+
+const today = () => new Date().toISOString().slice(0, 10);
 import { useFormValidation } from '@/components/forms/useFormValidation';
 import { ArrowRightLeft } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
@@ -26,13 +29,18 @@ const VALIDATION_RULES = {
 export function TransferEquipmentModal({ isOpen, onClose, onSuccess, equipment, currentEmployee, employees }: Props) {
   const [targetId, setTargetId] = useState('');
   const [notes, setNotes] = useState('');
+  const [actionDate, setActionDate] = useState(today());
   const [saving, setSaving] = useState(false);
 
   const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } =
     useFormValidation(VALIDATION_RULES);
 
+  useEffect(() => {
+    if (isOpen) setActionDate(today());
+  }, [isOpen]);
+
   const handleClose = () => {
-    setTargetId(''); setNotes(''); reset();
+    setTargetId(''); setNotes(''); setActionDate(today()); reset();
     onClose();
   };
 
@@ -42,6 +50,7 @@ export function TransferEquipmentModal({ isOpen, onClose, onSuccess, equipment, 
     const res = await equipmentApi.transfer(equipment.id, {
       employee_id: targetId,
       notes: notes.trim() || undefined,
+      action_date: actionDate,
     });
     if (res.success) {
       const target = employees.find((e) => e.id === targetId);
@@ -117,6 +126,13 @@ export function TransferEquipmentModal({ isOpen, onClose, onSuccess, equipment, 
               label: `${e.full_name} (${e.employee_id_code})${e.department_name ? ` — ${e.department_name}` : ''}`,
             })),
           ]}
+        />
+
+        <FormInput
+          label="Date du transfert"
+          type={"date" as any}
+          value={actionDate}
+          onChange={(e) => setActionDate(e.target.value)}
         />
 
         <FormTextarea

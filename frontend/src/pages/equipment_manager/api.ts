@@ -95,8 +95,9 @@ export const equipmentApi = {
   create: (data: Record<string, unknown>) => api.post<Equipment>(`${BASE}/assets`, data),
   get: (id: string) => api.get<Equipment & { history: EquipmentHistory[]; tickets: RepairTicket[] }>(`${BASE}/assets/${id}`),
   update: (id: string, data: Record<string, unknown>) => api.put<Equipment>(`${BASE}/assets/${id}`, data),
-  assign: (id: string, data: { asc_id?: string; employee_id?: string; notes?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/assign`, data),
-  transfer: (id: string, data: { employee_id: string; notes?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/transfer`, data),
+  assign: (id: string, data: { asc_id?: string; employee_id?: string; notes?: string; action_date?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/assign`, data),
+  transfer: (id: string, data: { employee_id: string; notes?: string; action_date?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/transfer`, data),
+  reserve: (data: { employee_id: string; equipment_ids: string[]; notes?: string; action_date?: string }) => api.post<Equipment[]>(`${BASE}/assets/reserve`, data),
   getHistory: (id: string) => api.get<EquipmentHistory[]>(`${BASE}/assets/${id}/history`),
 
   /** Télécharge la fiche d'accusé de réception (PDF) pour un équipement. */
@@ -119,10 +120,10 @@ export const equipmentApi = {
     URL.revokeObjectURL(objectUrl);
   },
 
-  declare: (id: string, data: { declaration: string; reason: string; notes?: string }) =>
+  declare: (id: string, data: { declaration: string; reason: string; notes?: string; action_date?: string }) =>
     api.post<Equipment>(`${BASE}/assets/${id}/declare`, data),
 
-  cancelDeclaration: (id: string, data?: { notes?: string }) =>
+  cancelDeclaration: (id: string, data?: { notes?: string; action_date?: string }) =>
     api.post<Equipment>(`${BASE}/assets/${id}/cancel-declaration`, data ?? {}),
 
   // Accessories
@@ -189,7 +190,7 @@ export const employeesApi = {
   create: (data: Record<string, unknown>) => api.post<Employee>(`${BASE}/employees`, data),
   get: (id: string) => api.get<Employee & { history: import('./types').EmployeeHistory[]; equipments: Equipment[] }>(`${BASE}/employees/${id}`),
   update: (id: string, data: Record<string, unknown>) => api.put<Employee>(`${BASE}/employees/${id}`, data),
-  toggleActive: (id: string) => api.patch<Employee>(`${BASE}/employees/${id}/toggle-active`),
+  toggleActive: (id: string, data?: { notes?: string; action_date?: string }) => api.patch<Employee>(`${BASE}/employees/${id}/toggle-active`, data),
 };
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────────

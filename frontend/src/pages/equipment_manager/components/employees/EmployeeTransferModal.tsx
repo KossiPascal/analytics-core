@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+
+const today = () => new Date().toISOString().slice(0, 10);
 import { useFormValidation } from '@/components/forms/useFormValidation';
 import { ArrowRightLeft } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
@@ -28,6 +31,7 @@ export function EmployeeTransferModal({ isOpen, onClose, onSuccess, employee }: 
   const [equipmentId, setEquipmentId] = useState('');
   const [targetId, setTargetId] = useState('');
   const [notes, setNotes] = useState('');
+  const [actionDate, setActionDate] = useState(today());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -36,7 +40,7 @@ export function EmployeeTransferModal({ isOpen, onClose, onSuccess, employee }: 
 
   useEffect(() => {
     if (isOpen && employee) loadData();
-    else { setEquipmentId(''); setTargetId(''); setNotes(''); reset(); }
+    else { setEquipmentId(''); setTargetId(''); setNotes(''); setActionDate(today()); reset(); }
   }, [isOpen, employee]);
 
   const loadData = async () => {
@@ -62,6 +66,7 @@ export function EmployeeTransferModal({ isOpen, onClose, onSuccess, employee }: 
     const res = await equipmentApi.transfer(equipmentId, {
       employee_id: targetId,
       notes: notes.trim() || undefined,
+      action_date: actionDate,
     });
     if (res.success) {
       const target = allEmployees.find((e) => e.id === targetId);
@@ -165,6 +170,13 @@ export function EmployeeTransferModal({ isOpen, onClose, onSuccess, employee }: 
                   label: `${e.full_name} (${e.employee_id_code})${e.department_name ? ` — ${e.department_name}` : ''}`,
                 })),
               ]}
+            />
+
+            <FormInput
+              label="Date du transfert"
+              type={"date" as any}
+              value={actionDate}
+              onChange={(e) => setActionDate(e.target.value)}
             />
 
             <FormTextarea
