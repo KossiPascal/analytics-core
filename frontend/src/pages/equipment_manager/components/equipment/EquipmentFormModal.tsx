@@ -192,7 +192,7 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
             value={status}
             onChange={(v) => setStatus(v)}
             options={[
-              { value: 'PENDING', label: 'En attente' },
+              ...(!ownerId ? [{ value: 'PENDING', label: 'En attente' }] : []),
               { value: 'FUNCTIONAL', label: 'Fonctionnel' },
               { value: 'FAULTY', label: 'Defaillant' },
             ]}
@@ -251,7 +251,10 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
         <FormSelect
           label="Proprietaire ASC"
           value={ownerId}
-          onChange={(v) => setOwnerId(v)}
+          onChange={(v) => {
+            setOwnerId(v);
+            if (v && status === 'PENDING') setStatus('FUNCTIONAL');
+          }}
           options={[{ value: '', label: 'Aucun' }, ...ascs.map((a) => ({ value: a.id, label: `${a.full_name} (${a.code})` }))]}
         />
         <div className={shared.formRow}>

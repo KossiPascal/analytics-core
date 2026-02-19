@@ -39,10 +39,20 @@ export function EquipmentTable({ data, isLoading, onEdit, onView, onAssign, onGe
           <button className={shared.actionBtn} title="Voir les détails" onClick={() => onView(e)}><Eye size={16} /></button>
           <button
             className={shared.actionBtn}
-            title="Assigner"
+            title={
+              !e.is_active
+                ? 'Équipement inactif'
+                : e.is_unique && (e.owner_id || e.employee_id)
+                ? `Déjà assigné à ${e.owner_name || e.employee_name}. Utilisez Modifier pour changer de propriétaire.`
+                : 'Assigner'
+            }
             onClick={() => onAssign(e)}
-            disabled={!e.is_active}
-            style={!e.is_active ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
+            disabled={!e.is_active || !!(e.is_unique && (e.owner_id || e.employee_id))}
+            style={
+              !e.is_active || (e.is_unique && (e.owner_id || e.employee_id))
+                ? { opacity: 0.35, cursor: 'not-allowed' }
+                : undefined
+            }
           >
             <ArrowRightLeft size={16} />
           </button>

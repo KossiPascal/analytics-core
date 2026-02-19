@@ -160,6 +160,13 @@ def create_equipment():
         return error_response("model_name and imei are required", 400)
 
     try:
+        owner_id = int(data["owner_id"]) if data.get("owner_id") else None
+        employee_id = int(data["employee_id"]) if data.get("employee_id") else None
+        status = data.get("status", "PENDING")
+        # Un équipement assigné à quelqu'un ne peut pas rester "En attente"
+        if (owner_id or employee_id) and status == "PENDING":
+            status = "FUNCTIONAL"
+
         eq = Equipment(
             equipment_type=equipment_type,
             category_id=int(category_id) if category_id else None,
@@ -168,9 +175,9 @@ def create_equipment():
             model_name=model_name,
             imei=imei,
             serial_number=data.get("serial_number", ""),
-            owner_id=int(data["owner_id"]) if data.get("owner_id") else None,
-            employee_id=int(data["employee_id"]) if data.get("employee_id") else None,
-            status=data.get("status", "PENDING"),
+            owner_id=owner_id,
+            employee_id=employee_id,
+            status=status,
             is_unique=bool(data.get("is_unique", True)),
             acquisition_date=data.get("acquisition_date"),
             warranty_expiry_date=data.get("warranty_expiry_date"),
@@ -241,6 +248,11 @@ def update_equipment(id):
     if "status" in data:
         old_status = eq.status
         new_status = data["status"]
+        # Un équipement assigné ne peut pas être remis "En attente"
+        effective_owner = data.get("owner_id", eq.owner_id)
+        effective_employee = data.get("employee_id", eq.employee_id)
+        if new_status == "PENDING" and (effective_owner or effective_employee):
+            new_status = "FUNCTIONAL"
         if old_status != new_status:
             eq.status = new_status
             user_id = int(g.current_user["id"]) if g.current_user else None
@@ -275,6 +287,16 @@ def assign_equipment(id):
     if not eq.is_active:
         return error_response(
             f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute assignation.",
+            409
+        )
+
+    # Un équipement unique déjà assigné ne peut pas être ré-assigné via ce endpoint
+    # (utiliser la modification pour changer de propriétaire)
+    if eq.is_unique and (eq.owner_id or eq.employee_id):
+        current = eq.owner.get_full_name() if eq.owner else (eq.employee.get_full_name() if eq.employee else "quelqu'un")
+        return error_response(
+            f"Cet équipement unique est déjà assigné à {current}. "
+            "Pour changer de propriétaire, utilisez la modification de l'équipement.",
             409
         )
 
@@ -412,12 +434,14 @@ def cancel_declaration(id):
     user_id = int(g.current_user["id"]) if g.current_user else None
     old_status = eq.status
 
-    eq.status = "PENDING"
+    # Si l'équipement est assigné à quelqu'un, le remettre Fonctionnel plutôt qu'En attente
+    new_status = "FUNCTIONAL" if (eq.owner_id or eq.employee_id) else "PENDING"
+    eq.status = new_status
     db.session.add(EquipmentHistory(
         equipment_id=eq.id,
         action="DECLARATION_CANCELLED",
         old_value=old_status,
-        new_value="PENDING",
+        new_value=new_status,
         notes=notes or "Annulation de la déclaration",
         created_by_id=user_id,
     ))
