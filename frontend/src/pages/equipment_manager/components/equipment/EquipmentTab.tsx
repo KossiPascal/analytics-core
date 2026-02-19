@@ -8,6 +8,7 @@ import { EquipmentTable } from './EquipmentTable';
 import { EquipmentFormModal } from './EquipmentFormModal';
 import { EquipmentDetailModal } from './EquipmentDetailModal';
 import { AssignEquipmentModal } from './AssignEquipmentModal';
+import { DeclareStatusModal } from './DeclareStatusModal';
 
 export function EquipmentTab() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -23,6 +24,8 @@ export function EquipmentTab() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignTarget, setAssignTarget] = useState<Equipment | null>(null);
+  const [declareOpen, setDeclareOpen] = useState(false);
+  const [declareTarget, setDeclareTarget] = useState<Equipment | null>(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -66,6 +69,7 @@ export function EquipmentTab() {
         }}
         onView={(e) => { setDetailId(e.id); setDetailOpen(true); }}
         onAssign={(e) => { setAssignTarget(e); setAssignOpen(true); }}
+        onDeclare={(e) => { setDeclareTarget(e); setDeclareOpen(true); }}
         onGeneratePdf={async (e) => {
           try {
             await equipmentApi.downloadReceptionPdf(e.id);
@@ -85,7 +89,19 @@ export function EquipmentTab() {
         brands={brands}
       />
 
-      <EquipmentDetailModal isOpen={detailOpen} onClose={() => setDetailOpen(false)} equipmentId={detailId} />
+      <EquipmentDetailModal
+        isOpen={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        equipmentId={detailId}
+        onStatusChange={loadAll}
+      />
+
+      <DeclareStatusModal
+        isOpen={declareOpen}
+        onClose={() => setDeclareOpen(false)}
+        onSuccess={loadAll}
+        equipment={declareTarget}
+      />
 
       <AssignEquipmentModal
         isOpen={assignOpen}

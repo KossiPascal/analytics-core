@@ -4,7 +4,10 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.models.equipment import EquipmentCategory, EquipmentBrand, Equipment, EquipmentHistory, Accessory
+from backend.src.equipment_manager.models.equipment import (
+    EquipmentCategory, EquipmentBrand, Equipment, EquipmentHistory, Accessory,
+    ACTIVE_STATUSES, INACTIVE_STATUSES, DECLARATION_ACTION_MAP,
+)
 from backend.src.equipment_manager.models.employees import Employee
 from backend.src.docs_generetor.pdf_generator import pdf_response
 from backend.src.logger import get_backend_logger
@@ -167,7 +170,8 @@ def create_equipment():
             serial_number=data.get("serial_number", ""),
             owner_id=int(data["owner_id"]) if data.get("owner_id") else None,
             employee_id=int(data["employee_id"]) if data.get("employee_id") else None,
-            status=data.get("status", "FUNCTIONAL"),
+            status=data.get("status", "PENDING"),
+            is_unique=bool(data.get("is_unique", True)),
             acquisition_date=data.get("acquisition_date"),
             warranty_expiry_date=data.get("warranty_expiry_date"),
             assignment_date=data.get("assignment_date"),
@@ -214,11 +218,20 @@ def update_equipment(id):
     if not eq:
         return error_response("Equipment not found", 404)
 
+    # Block edits on inactive equipment (use cancel-declaration first)
+    if not eq.is_active:
+        return error_response(
+            f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute modification.",
+            409
+        )
+
     data = request.get_json(silent=True) or {}
 
     for field in ("equipment_type", "brand", "model_name", "imei", "serial_number", "notes", "reception_form_path"):
         if field in data:
             setattr(eq, field, data[field].strip() if isinstance(data[field], str) else data[field])
+    if "is_unique" in data:
+        eq.is_unique = bool(data["is_unique"])
 
     if "category_id" in data:
         eq.category_id = int(data["category_id"]) if data["category_id"] else None
@@ -259,6 +272,12 @@ def assign_equipment(id):
     if not eq:
         return error_response("Equipment not found", 404)
 
+    if not eq.is_active:
+        return error_response(
+            f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute assignation.",
+            409
+        )
+
     data = request.get_json(silent=True) or {}
     asc_id = data.get("owner_id") or data.get("asc_id")
     employee_id = data.get("employee_id")
@@ -296,6 +315,113 @@ def assign_equipment(id):
         created_by_id=user_id,
     )
     db.session.add(history)
+
+    # Auto-transition PENDING → FUNCTIONAL when first assigned to someone
+    if eq.status == "PENDING":
+        db.session.add(EquipmentHistory(
+            equipment_id=eq.id,
+            action="STATUS_CHANGED",
+            old_value="PENDING",
+            new_value="FUNCTIONAL",
+            notes="Passage automatique à Fonctionnel lors de l'assignation",
+            created_by_id=user_id,
+        ))
+        eq.status = "FUNCTIONAL"
+
+    db.session.commit()
+    return jsonify(eq.to_dict_safe()), 200
+
+
+@bp.post("/<int:id>/declare")
+@require_auth
+def declare_equipment(id):
+    """Déclare un équipement actif comme Perdu / Volé / Emporté / Complètement gâté."""
+    from backend.src.equipment_manager.models.tickets import RepairTicket, TicketEvent
+
+    eq = Equipment.query.get(id)
+    if not eq:
+        return error_response("Equipment not found", 404)
+
+    if not eq.is_active:
+        return error_response(
+            f"Équipement déjà inactif ({eq.status}). Annulez la déclaration existante pour en créer une nouvelle.",
+            409
+        )
+
+    data = request.get_json(silent=True) or {}
+    declaration = data.get("declaration", "").strip().upper()
+    reason = data.get("reason", "").strip()
+    notes = data.get("notes", "").strip()
+
+    valid = {"LOST", "STOLEN", "TAKEN_AWAY", "COMPLETELY_DAMAGED"}
+    if declaration not in valid:
+        return error_response(f"declaration doit être l'une de : {', '.join(sorted(valid))}", 400)
+    if not reason:
+        return error_response("reason est obligatoire", 400)
+
+    user_id = int(g.current_user["id"]) if g.current_user else None
+    old_status = eq.status
+
+    eq.status = declaration  # LOST | STOLEN | TAKEN_AWAY | COMPLETELY_DAMAGED
+
+    # If COMPLETELY_DAMAGED and there is an open repair ticket → close it
+    if declaration == "COMPLETELY_DAMAGED":
+        active_ticket = RepairTicket.query.filter(
+            RepairTicket.equipment_id == eq.id,
+            RepairTicket.status.notin_(["CLOSED", "CANCELLED"])
+        ).first()
+        if active_ticket:
+            active_ticket.status = "CLOSED"
+            active_ticket.closed_date = datetime.now(timezone.utc)
+            db.session.add(TicketEvent(
+                ticket_id=active_ticket.id,
+                event_type="DAMAGED",
+                user_id=user_id,
+                from_role=active_ticket.current_stage,
+                to_role=active_ticket.current_stage,
+                comment=f"Équipement déclaré complètement gâté. {reason}",
+            ))
+
+    action = DECLARATION_ACTION_MAP[declaration]
+    db.session.add(EquipmentHistory(
+        equipment_id=eq.id,
+        action=action,
+        old_value=old_status,
+        new_value=declaration,
+        notes=f"{reason}{(' — ' + notes) if notes else ''}",
+        created_by_id=user_id,
+    ))
+
+    db.session.commit()
+    return jsonify(eq.to_dict_safe()), 200
+
+
+@bp.post("/<int:id>/cancel-declaration")
+@require_auth
+def cancel_declaration(id):
+    """Annule une déclaration (LOST/STOLEN/TAKEN_AWAY/COMPLETELY_DAMAGED) → PENDING."""
+    eq = Equipment.query.get(id)
+    if not eq:
+        return error_response("Equipment not found", 404)
+
+    if eq.is_active:
+        return error_response("Cet équipement n'a pas de déclaration active à annuler.", 409)
+
+    data = request.get_json(silent=True) or {}
+    notes = data.get("notes", "").strip()
+    user_id = int(g.current_user["id"]) if g.current_user else None
+    old_status = eq.status
+
+    eq.status = "PENDING"
+    db.session.add(EquipmentHistory(
+        equipment_id=eq.id,
+        action="DECLARATION_CANCELLED",
+        old_value=old_status,
+        new_value="PENDING",
+        notes=notes or "Annulation de la déclaration",
+        created_by_id=user_id,
+    ))
+
     db.session.commit()
     return jsonify(eq.to_dict_safe()), 200
 
@@ -377,9 +503,14 @@ def delete_accessory(id, acc_id):
 # ─── GÉNÉRATION PDF ────────────────────────────────────────────────────────────
 
 _STATUS_LABELS = {
-    "FUNCTIONAL": "Fonctionnel",
-    "FAULTY": "Défaillant",
-    "UNDER_REPAIR": "En réparation",
+    "PENDING":            "En attente",
+    "FUNCTIONAL":         "Fonctionnel",
+    "FAULTY":             "Défaillant",
+    "UNDER_REPAIR":       "En réparation",
+    "COMPLETELY_DAMAGED": "Complètement gâté",
+    "LOST":               "Perdu",
+    "STOLEN":             "Volé",
+    "TAKEN_AWAY":         "Emporté",
 }
 
 

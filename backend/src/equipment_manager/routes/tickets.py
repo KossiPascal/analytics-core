@@ -58,6 +58,12 @@ def create_ticket():
     if not equipment:
         return error_response("Equipment not found", 404)
 
+    if not equipment.is_active:
+        return error_response(
+            f"Impossible de créer un ticket : l'équipement est inactif ({equipment.status}).",
+            409
+        )
+
     # Use provided employee or equipment's owner
     employee = None
     if employee_id:

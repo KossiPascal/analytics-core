@@ -4,10 +4,13 @@ import { Badge } from '@components/ui/Badge/Badge';
 import { Button } from '@components/ui/Button/Button';
 import { Spinner } from '@components/ui/Spinner/Spinner';
 import { Table, type Column } from '@components/ui/Table/Table';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { equipmentApi } from '../../api';
 import type { Equipment, EquipmentHistory, RepairTicket, Accessory } from '../../types';
-import { STATUS_LABELS } from '../../types';
+import {
+  EQUIPMENT_STATUS_LABELS, EQUIPMENT_STATUS_VARIANT,
+  HISTORY_ACTION_LABELS, STATUS_LABELS,
+} from '../../types';
 import { AccessoryFormModal } from './AccessoryFormModal';
 import styles from '../../EquipmentManager.module.css';
 import shared from '@components/ui/styles/shared.module.css';
@@ -17,6 +20,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   equipmentId: string | null;
+  onStatusChange?: () => void;
 }
 
 const ACCESSORY_STATUS_VARIANT: Record<string, 'success' | 'danger' | 'warning'> = {
@@ -31,9 +35,10 @@ const ACCESSORY_STATUS_LABEL: Record<string, string> = {
   MISSING: 'Manquant',
 };
 
-export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
+export function EquipmentDetailModal({ isOpen, onClose, equipmentId, onStatusChange }: Props) {
   const [equipment, setEquipment] = useState<(Equipment & { history: EquipmentHistory[]; tickets: RepairTicket[]; accessories: Accessory[] }) | null>(null);
   const [loading, setLoading] = useState(false);
+  const [cancellingDecl, setCancellingDecl] = useState(false);
 
   // Accessory modal
   const [accFormOpen, setAccFormOpen] = useState(false);
@@ -51,6 +56,20 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
     setLoading(false);
   };
 
+  const handleCancelDeclaration = async () => {
+    if (!equipmentId) return;
+    setCancellingDecl(true);
+    const res = await equipmentApi.cancelDeclaration(equipmentId);
+    if (res.success) {
+      toast.success("Déclaration annulée — équipement remis en attente");
+      loadDetail();
+      onStatusChange?.();
+    } else {
+      toast.error(res.message || "Erreur lors de l'annulation");
+    }
+    setCancellingDecl(false);
+  };
+
   const handleDeleteAccessory = async (acc: Accessory) => {
     if (!equipmentId) return;
     const res = await equipmentApi.deleteAccessory(equipmentId, acc.id);
@@ -63,10 +82,15 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
   };
 
   const historyColumns: Column<EquipmentHistory>[] = [
-    { key: 'action', header: 'Action', render: (h) => h.action },
-    { key: 'old', header: 'Ancien', render: (h) => h.old_value || '-' },
-    { key: 'new', header: 'Nouveau', render: (h) => h.new_value || '-' },
-    { key: 'date', header: 'Date', render: (h) => h.created_at ? new Date(h.created_at).toLocaleDateString('fr') : '-' },
+    {
+      key: 'action',
+      header: 'Action',
+      render: (h) => HISTORY_ACTION_LABELS[h.action] || h.action,
+    },
+    { key: 'old', header: 'Avant', render: (h) => EQUIPMENT_STATUS_LABELS[h.old_value] || h.old_value || '-' },
+    { key: 'new', header: 'Après', render: (h) => EQUIPMENT_STATUS_LABELS[h.new_value] || h.new_value || '-' },
+    { key: 'notes', header: 'Notes', render: (h) => h.notes || '-' },
+    { key: 'date', header: 'Date', render: (h) => h.created_at ? new Date(h.created_at).toLocaleString('fr') : '-' },
   ];
 
   const accessoryColumns: Column<Accessory>[] = [
@@ -85,12 +109,12 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
       key: 'actions',
       header: '',
       align: 'right',
-      render: (a) => (
+      render: (a) => equipment?.is_active ? (
         <div className={shared.actionsCell}>
           <button className={shared.actionBtn} onClick={() => { setAccEditData(a); setAccFormOpen(true); }}><Edit size={16} /></button>
           <button className={shared.actionBtn} onClick={() => handleDeleteAccessory(a)}><Trash2 size={16} /></button>
         </div>
-      ),
+      ) : null,
     },
   ];
 
@@ -100,6 +124,39 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
         <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}><Spinner /></div>
       ) : equipment ? (
         <div>
+
+          {/* ── Inactive state banner ── */}
+          {!equipment.is_active && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem',
+              padding: '0.875rem 1rem', borderRadius: '8px', marginBottom: '1.25rem',
+              background: '#fee2e2', border: '1px solid #f87171',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertTriangle size={18} color="#dc2626" />
+                <span style={{ fontWeight: 600, color: '#dc2626', fontSize: '0.9rem' }}>
+                  Équipement inactif —{' '}
+                  <Badge variant="danger">
+                    {EQUIPMENT_STATUS_LABELS[equipment.status] || equipment.status}
+                  </Badge>
+                </span>
+                <span style={{ color: '#7f1d1d', fontSize: '0.82rem' }}>
+                  Aucune action n'est possible sur cet équipement.
+                </span>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<CheckCircle size={14} />}
+                onClick={handleCancelDeclaration}
+                isLoading={cancellingDecl}
+              >
+                Annuler la déclaration
+              </Button>
+            </div>
+          )}
+
+          {/* ── Equipment info ── */}
           <div className={styles.detailGrid}>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Type</span><span className={styles.detailValue}>{equipment.category_name || equipment.equipment_type || '-'}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Marque/Modele</span><span className={styles.detailValue}>{equipment.brand_name || equipment.brand || ''} {equipment.model_name}</span></div>
@@ -109,26 +166,32 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
             <div className={styles.detailItem}><span className={styles.detailLabel}>Employe</span><span className={styles.detailValue}>{equipment.employee_name || '-'}</span></div>
             <div className={styles.detailItem}>
               <span className={styles.detailLabel}>Statut</span>
-              <Badge variant={equipment.status === 'FUNCTIONAL' ? 'success' : equipment.status === 'FAULTY' ? 'danger' : 'warning'}>
-                {equipment.status}
+              <Badge variant={EQUIPMENT_STATUS_VARIANT[equipment.status] || 'secondary'}>
+                {EQUIPMENT_STATUS_LABELS[equipment.status] || equipment.status}
               </Badge>
+            </div>
+            <div className={styles.detailItem}>
+              <span className={styles.detailLabel}>Unicité</span>
+              <span className={styles.detailValue}>{equipment.is_unique ? 'Unique (non partageable)' : 'Partageable'}</span>
             </div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Acquisition</span><span className={styles.detailValue}>{equipment.acquisition_date || '-'}</span></div>
           </div>
 
-          {/* Accessories section */}
+          {/* ── Accessories section ── */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' }}>
             <h4 className={styles.sectionTitle} style={{ margin: 0 }}>
               Accessoires ({equipment.accessories?.length || 0})
             </h4>
-            <Button
-              size="sm"
-              variant="outline"
-              leftIcon={<Plus size={14} />}
-              onClick={() => { setAccEditData(null); setAccFormOpen(true); }}
-            >
-              Ajouter
-            </Button>
+            {equipment.is_active && (
+              <Button
+                size="sm"
+                variant="outline"
+                leftIcon={<Plus size={14} />}
+                onClick={() => { setAccEditData(null); setAccFormOpen(true); }}
+              >
+                Ajouter
+              </Button>
+            )}
           </div>
           {equipment.accessories && equipment.accessories.length > 0 ? (
             <Table<any> data={equipment.accessories} columns={accessoryColumns} keyExtractor={(a) => a.id} defaultPageSize={5} />
@@ -136,20 +199,22 @@ export function EquipmentDetailModal({ isOpen, onClose, equipmentId }: Props) {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem' }}>Aucun accessoire</p>
           )}
 
+          {/* ── History ── */}
           {equipment.history && equipment.history.length > 0 && (
             <>
-              <h4 className={styles.sectionTitle}>Historique</h4>
-              <Table<any> data={equipment.history} columns={historyColumns} keyExtractor={(h) => h.id} defaultPageSize={5} />
+              <h4 className={styles.sectionTitle}>Historique des changements</h4>
+              <Table<any> data={equipment.history} columns={historyColumns} keyExtractor={(h) => h.id} defaultPageSize={8} />
             </>
           )}
 
+          {/* ── Tickets ── */}
           {equipment.tickets && equipment.tickets.length > 0 && (
             <>
               <h4 className={styles.sectionTitle}>Tickets ({equipment.tickets.length})</h4>
               <div className={styles.badgeGroup}>
                 {equipment.tickets.map((t) => (
                   <Badge key={t.id} variant={t.status === 'CLOSED' ? 'success' : t.status === 'CANCELLED' ? 'danger' : 'warning'}>
-                    {t.ticket_number} - {STATUS_LABELS[t.status]}
+                    {t.ticket_number} — {STATUS_LABELS[t.status] || t.status}
                   </Badge>
                 ))}
               </div>

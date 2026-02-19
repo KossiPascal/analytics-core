@@ -1,6 +1,30 @@
 from datetime import datetime, timezone
 from backend.src.databases.extensions import db
 
+# ---------------------------------------------------------------------------
+# Equipment lifecycle constants
+# ---------------------------------------------------------------------------
+ACTIVE_STATUSES = {"PENDING", "FUNCTIONAL", "FAULTY", "UNDER_REPAIR"}
+INACTIVE_STATUSES = {"COMPLETELY_DAMAGED", "LOST", "STOLEN", "TAKEN_AWAY"}
+
+EQUIPMENT_STATUS_LABELS = {
+    "PENDING":            "En attente",
+    "FUNCTIONAL":         "Fonctionnel",
+    "FAULTY":             "Défaillant",
+    "UNDER_REPAIR":       "En réparation",
+    "COMPLETELY_DAMAGED": "Complètement gâté",
+    "LOST":               "Perdu",
+    "STOLEN":             "Volé",
+    "TAKEN_AWAY":         "Emporté",
+}
+
+DECLARATION_ACTION_MAP = {
+    "LOST":               "DECLARED_LOST",
+    "STOLEN":             "DECLARED_STOLEN",
+    "TAKEN_AWAY":         "DECLARED_TAKEN_AWAY",
+    "COMPLETELY_DAMAGED": "DECLARED_COMPLETELY_DAMAGED",
+}
+
 
 class EquipmentCategory(db.Model):
     """Type d'equipement (ex: Telephone, Tablette, Autre)"""
@@ -78,7 +102,9 @@ class Equipment(db.Model):
     owner_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
     employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
 
-    status = db.Column(db.String(20), default="FUNCTIONAL", nullable=False)  # FUNCTIONAL, FAULTY, UNDER_REPAIR
+    # PENDING | FUNCTIONAL | FAULTY | UNDER_REPAIR | COMPLETELY_DAMAGED | LOST | STOLEN | TAKEN_AWAY
+    status = db.Column(db.String(30), default="PENDING", nullable=False)
+    is_unique = db.Column(db.Boolean, default=True, nullable=False)  # Unique = non partageable (1 employé à la fois)
     acquisition_date = db.Column(db.Date, nullable=True)
     warranty_expiry_date = db.Column(db.Date, nullable=True)
     assignment_date = db.Column(db.Date, nullable=True)
@@ -95,6 +121,10 @@ class Equipment(db.Model):
     history = db.relationship("EquipmentHistory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
     repair_tickets = db.relationship("RepairTicket", back_populates="equipment", lazy="selectin")
     accessories = db.relationship("Accessory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
+
+    @property
+    def is_active(self) -> bool:
+        return self.status in ACTIVE_STATUSES
 
     def to_dict_safe(self):
         return {
@@ -113,6 +143,8 @@ class Equipment(db.Model):
             "employee_id": str(self.employee_id) if self.employee_id else None,
             "employee_name": self.employee.get_full_name() if self.employee else None,
             "status": self.status,
+            "is_active": self.is_active,
+            "is_unique": self.is_unique,
             "acquisition_date": self.acquisition_date.isoformat() if self.acquisition_date else None,
             "warranty_expiry_date": self.warranty_expiry_date.isoformat() if self.warranty_expiry_date else None,
             "assignment_date": self.assignment_date.isoformat() if self.assignment_date else None,

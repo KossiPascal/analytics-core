@@ -93,8 +93,54 @@ export interface Supervisor {
 // ─── EQUIPMENT ──────────────────────────────────────────────────────────────
 
 export type EquipmentType = 'PHONE' | 'TABLET' | 'OTHER';
-export type EquipmentStatus = 'FUNCTIONAL' | 'FAULTY' | 'UNDER_REPAIR';
+export type EquipmentStatus =
+  | 'PENDING'
+  | 'FUNCTIONAL'
+  | 'FAULTY'
+  | 'UNDER_REPAIR'
+  | 'COMPLETELY_DAMAGED'
+  | 'LOST'
+  | 'STOLEN'
+  | 'TAKEN_AWAY';
 export type AccessoryStatus = 'FUNCTIONAL' | 'FAULTY' | 'MISSING';
+
+export const INACTIVE_STATUSES = new Set<string>(['COMPLETELY_DAMAGED', 'LOST', 'STOLEN', 'TAKEN_AWAY']);
+
+export const EQUIPMENT_STATUS_LABELS: Record<string, string> = {
+  PENDING:            'En attente',
+  FUNCTIONAL:         'Fonctionnel',
+  FAULTY:             'Défaillant',
+  UNDER_REPAIR:       'En réparation',
+  COMPLETELY_DAMAGED: 'Complètement gâté',
+  LOST:               'Perdu',
+  STOLEN:             'Volé',
+  TAKEN_AWAY:         'Emporté',
+};
+
+export const EQUIPMENT_STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'secondary' | 'info'> = {
+  PENDING:            'secondary',
+  FUNCTIONAL:         'success',
+  FAULTY:             'warning',
+  UNDER_REPAIR:       'info',
+  COMPLETELY_DAMAGED: 'danger',
+  LOST:               'danger',
+  STOLEN:             'danger',
+  TAKEN_AWAY:         'danger',
+};
+
+export const HISTORY_ACTION_LABELS: Record<string, string> = {
+  CREATED:                    'Création',
+  ASSIGNED:                   'Assigné (ASC)',
+  ASSIGNED_TO_EMPLOYEE:       'Assigné (Employé)',
+  STATUS_CHANGED:             'Changement de statut',
+  TRANSFERRED:                'Transfert',
+  RETIRED:                    'Retraité',
+  DECLARED_LOST:              'Déclaré perdu',
+  DECLARED_STOLEN:            'Déclaré volé',
+  DECLARED_TAKEN_AWAY:        'Déclaré emporté',
+  DECLARED_COMPLETELY_DAMAGED:'Déclaré complètement gâté',
+  DECLARATION_CANCELLED:      'Déclaration annulée',
+};
 
 export interface EquipmentCategory {
   id: string;
@@ -143,6 +189,8 @@ export interface Equipment {
   employee_id: string | null;
   employee_name: string | null;
   status: EquipmentStatus;
+  is_active: boolean;
+  is_unique: boolean;
   acquisition_date: string | null;
   warranty_expiry_date: string | null;
   assignment_date: string | null;

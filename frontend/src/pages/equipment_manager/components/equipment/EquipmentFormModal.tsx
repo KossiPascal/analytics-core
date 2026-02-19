@@ -47,7 +47,8 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
   const [modelName, setModelName] = useState('');
   const [imei, setImei] = useState('');
   const [serialNumber, setSerialNumber] = useState('');
-  const [status, setStatus] = useState('FUNCTIONAL');
+  const [status, setStatus] = useState('PENDING');
+  const [isUnique, setIsUnique] = useState(true);
   const [ownerId, setOwnerId] = useState('');
   const [acquisitionDate, setAcquisitionDate] = useState('');
   const [warrantyDate, setWarrantyDate] = useState('');
@@ -80,6 +81,7 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
       setImei(editData.imei);
       setSerialNumber(editData.serial_number);
       setStatus(editData.status);
+      setIsUnique(editData.is_unique ?? true);
       setOwnerId(editData.owner_id || '');
       setAcquisitionDate(editData.acquisition_date || '');
       setWarrantyDate(editData.warranty_expiry_date || '');
@@ -87,7 +89,7 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
       setPendingAccessories(editData.accessories || []);
     } else {
       setCategoryId(''); setBrandId(''); setModelName(''); setImei('');
-      setSerialNumber(''); setStatus('FUNCTIONAL'); setOwnerId('');
+      setSerialNumber(''); setStatus('PENDING'); setIsUnique(true); setOwnerId('');
       setAcquisitionDate(''); setWarrantyDate(''); setNotes('');
       setPendingAccessories([]);
     }
@@ -111,6 +113,7 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
         brand_id: brandId || null,
         model_name: modelName, imei,
         serial_number: serialNumber, status,
+        is_unique: isUnique,
         owner_id: ownerId || null,
         acquisition_date: acquisitionDate || null,
         warranty_expiry_date: warrantyDate || null,
@@ -189,12 +192,27 @@ export function EquipmentFormModal({ isOpen, onClose, onSuccess, editData, ascs,
             value={status}
             onChange={(v) => setStatus(v)}
             options={[
+              { value: 'PENDING', label: 'En attente' },
               { value: 'FUNCTIONAL', label: 'Fonctionnel' },
               { value: 'FAULTY', label: 'Defaillant' },
-              { value: 'UNDER_REPAIR', label: 'En reparation' },
             ]}
           />
         </div>
+        {/* Unicité */}
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer', fontSize: '0.875rem', userSelect: 'none' }}>
+          <input
+            type="checkbox"
+            checked={isUnique}
+            onChange={(e) => setIsUnique(e.target.checked)}
+            style={{ width: '1rem', height: '1rem', cursor: 'pointer' }}
+          />
+          <span>
+            <strong>Equipement unique</strong>
+            {' '}
+            <span style={{ color: 'var(--text-secondary)' }}>(ne peut pas être assigné simultanément à plusieurs employés)</span>
+          </span>
+        </label>
+
         <div className={shared.formRow}>
           {/* Brand with + button */}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flex: 1 }}>

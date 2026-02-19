@@ -118,6 +118,12 @@ export const equipmentApi = {
     URL.revokeObjectURL(objectUrl);
   },
 
+  declare: (id: string, data: { declaration: string; reason: string; notes?: string }) =>
+    api.post<Equipment>(`${BASE}/assets/${id}/declare`, data),
+
+  cancelDeclaration: (id: string, data?: { notes?: string }) =>
+    api.post<Equipment>(`${BASE}/assets/${id}/cancel-declaration`, data ?? {}),
+
   // Accessories
   getAccessories: (equipmentId: string) => api.get<Accessory[]>(`${BASE}/assets/${equipmentId}/accessories`),
   createAccessory: (equipmentId: string, data: Record<string, unknown>) => api.post<Accessory>(`${BASE}/assets/${equipmentId}/accessories`, data),
