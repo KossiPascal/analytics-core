@@ -12,7 +12,28 @@ interface Props {
 
 export function PositionsTable({ data, isLoading, onEdit }: Props) {
   const columns: Column<Position>[] = [
-    { key: 'name', header: 'Nom', render: (p) => p.name, sortable: true },
+    {
+      key: 'name',
+      header: 'Nom',
+      sortable: true,
+      render: (p) => (
+        <span>
+          {p.parent_name && (
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginRight: '0.4rem' }}>
+              {p.parent_name} ›
+            </span>
+          )}
+          <strong>{p.name}</strong>
+        </span>
+      ),
+    },
+    {
+      key: 'parent',
+      header: 'Poste supérieur',
+      render: (p) => p.parent_name
+        ? <Badge variant="secondary">{p.parent_name}</Badge>
+        : <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>— Racine</span>,
+    },
     { key: 'code', header: 'Code', render: (p) => p.code, sortable: true },
     { key: 'description', header: 'Description', render: (p) => p.description || '-' },
     {

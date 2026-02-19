@@ -220,6 +220,8 @@ export interface EquipmentHistory {
 
 export interface Position {
   id: string;
+  parent_id: string | null;
+  parent_name: string | null;
   name: string;
   code: string;
   description: string;

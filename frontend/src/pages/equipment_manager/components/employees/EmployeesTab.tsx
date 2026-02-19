@@ -148,6 +148,7 @@ export function EmployeesTab() {
         onClose={() => setPosFormOpen(false)}
         onSuccess={loadAll}
         editData={posEditData}
+        existingPositions={positions}
       />
 
       <EmployeeFormModal

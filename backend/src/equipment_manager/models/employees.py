@@ -57,10 +57,16 @@ class Department(db.Model):
 
 
 class Position(db.Model):
+    """
+    Self-referential table for job positions with hierarchy.
+    A root position has parent_id = NULL.
+    A child position has parent_id pointing to its parent, making it a subordinate role.
+    """
     __tablename__ = "positions"
     __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    parent_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id", ondelete="SET NULL"), nullable=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
@@ -68,11 +74,15 @@ class Position(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
+    parent = db.relationship("Position", remote_side=[id], back_populates="children", lazy="selectin")
+    children = db.relationship("Position", back_populates="parent", lazy="selectin")
     employees = db.relationship("Employee", back_populates="position_rel", lazy="selectin")
 
     def to_dict_safe(self):
         return {
             "id": str(self.id),
+            "parent_id": str(self.parent_id) if self.parent_id else None,
+            "parent_name": self.parent.name if self.parent else None,
             "name": self.name,
             "code": self.code,
             "description": self.description,
@@ -82,7 +92,7 @@ class Position(db.Model):
         }
 
     def __repr__(self):
-        return f"<Position(id={self.id}, name={self.name})>"
+        return f"<Position(id={self.id}, name={self.name}, parent_id={self.parent_id})>"
 
 
 class Employee(db.Model):
@@ -95,7 +105,7 @@ class Employee(db.Model):
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True)
     first_name = db.Column(db.String(150), nullable=False)
     last_name = db.Column(db.String(150), nullable=False)
-    employee_id_code = db.Column(db.String(50), unique=True, nullable=False)
+    employee_id_code = db.Column(db.String(50), unique=True, nullable=True)
     gender = db.Column(db.String(1), default="")
     phone = db.Column(db.String(20), default="")
     email = db.Column(db.String(255), default="")

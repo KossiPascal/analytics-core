@@ -100,7 +100,11 @@ def update_department(id):
 @bp.get("/positions")
 @require_auth
 def list_positions():
-    positions = Position.query.order_by(Position.name).all()
+    """Return flat list of positions ordered hierarchically (parents before children)."""
+    positions = Position.query.order_by(
+        db.func.coalesce(Position.parent_id, 0),
+        Position.name,
+    ).all()
     return jsonify([p.to_dict_safe() for p in positions]), 200
 
 
@@ -110,14 +114,25 @@ def create_position():
     data = request.get_json(silent=True) or {}
     name = data.get("name", "").strip()
     code = data.get("code", "").strip()
+    parent_id = data.get("parent_id")
 
     if not name or not code:
-        return error_response("name and code are required", 400)
+        return error_response("Le nom et le code sont requis", 400)
+
+    # Validate parent if provided
+    if parent_id:
+        parent = Position.query.get(int(parent_id))
+        if not parent:
+            return error_response("Poste parent introuvable", 404)
+        # Prevent circular reference
+        if str(parent.id) == str(parent_id) or _has_ancestor(parent, int(parent_id)):
+            return error_response("Référence circulaire détectée", 400)
 
     try:
         pos = Position(
             name=name,
             code=code,
+            parent_id=int(parent_id) if parent_id else None,
             description=data.get("description", ""),
             is_active=True,
         )
@@ -126,7 +141,7 @@ def create_position():
         return jsonify(pos.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Position with this name or code already exists", 409)
+        return error_response("Un poste avec ce nom ou ce code existe déjà", 409)
 
 
 @bp.put("/positions/<int:id>")
@@ -137,6 +152,14 @@ def update_position(id):
         return error_response("Position not found", 404)
 
     data = request.get_json(silent=True) or {}
+
+    if "parent_id" in data:
+        new_parent_id = int(data["parent_id"]) if data["parent_id"] else None
+        # Prevent a position from becoming its own ancestor
+        if new_parent_id and (new_parent_id == id or _has_ancestor(Position.query.get(new_parent_id), id)):
+            return error_response("Référence circulaire détectée", 400)
+        pos.parent_id = new_parent_id
+
     for field in ("name", "code", "description"):
         if field in data:
             setattr(pos, field, data[field].strip() if isinstance(data[field], str) else data[field])
@@ -148,7 +171,18 @@ def update_position(id):
         return jsonify(pos.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Position with this name or code already exists", 409)
+        return error_response("Un poste avec ce nom ou ce code existe déjà", 409)
+
+
+def _has_ancestor(position: "Position | None", ancestor_id: int) -> bool:
+    """Walk up the position tree; return True if ancestor_id is found."""
+    if position is None:
+        return False
+    if position.parent_id is None:
+        return False
+    if position.parent_id == ancestor_id:
+        return True
+    return _has_ancestor(position.parent, ancestor_id)
 
 
 # ─── EMPLOYEES ───────────────────────────────────────────────────────────────
@@ -191,17 +225,32 @@ def create_employee():
 
     first_name = data.get("first_name", "").strip()
     last_name = data.get("last_name", "").strip()
-    employee_id_code = data.get("employee_id_code", "").strip()
+    phone = data.get("phone", "").strip()
     department_id = data.get("department_id")
     position_id = data.get("position_id")
     hire_date = data.get("hire_date")
 
-    if not first_name or not last_name or not employee_id_code or not department_id:
-        return error_response("first_name, last_name, employee_id_code and department_id are required", 400)
+    # Required fields: first_name, last_name, phone, department_id, position_id
+    if not first_name or not last_name:
+        return error_response("Le prénom et le nom sont requis", 400)
+    if not phone:
+        return error_response("Le téléphone est requis", 400)
+    if not department_id:
+        return error_response("Le département est requis", 400)
+    if not position_id:
+        return error_response("Le poste est requis", 400)
 
     dept = Department.query.get(int(department_id))
     if not dept:
-        return error_response("Department not found", 404)
+        return error_response("Département introuvable", 404)
+
+    pos = Position.query.get(int(position_id))
+    if not pos:
+        return error_response("Poste introuvable", 404)
+
+    # employee_id_code is optional — use None if not provided
+    raw_code = data.get("employee_id_code", "").strip()
+    employee_id_code = raw_code if raw_code else None
 
     try:
         emp = Employee(
@@ -209,10 +258,10 @@ def create_employee():
             last_name=last_name,
             employee_id_code=employee_id_code,
             department_id=dept.id,
-            position_id=int(position_id) if position_id else None,
+            position_id=pos.id,
             gender=data.get("gender", ""),
-            phone=data.get("phone", ""),
-            email=data.get("email", ""),
+            phone=phone,
+            email=data.get("email", "").strip(),
             hire_date=hire_date or None,
             notes=data.get("notes", ""),
             is_active=True,
@@ -227,7 +276,7 @@ def create_employee():
             action="CREATED",
             new_department_id=dept.id,
             user_id=user_id,
-            notes=f"Employee created: {first_name} {last_name}",
+            notes=f"Employé créé : {first_name} {last_name} — Poste : {pos.name}",
         )
         db.session.add(history)
         db.session.commit()
@@ -235,7 +284,7 @@ def create_employee():
 
     except IntegrityError:
         db.session.rollback()
-        return error_response("Employee with this ID code already exists", 409)
+        return error_response("Un employé avec ce code existe déjà", 409)
 
 
 @bp.get("/<int:id>")
@@ -267,9 +316,20 @@ def update_employee(id):
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
 
-    for field in ("first_name", "last_name", "employee_id_code", "gender", "phone", "email", "notes"):
+    # Validate required fields if provided
+    if "phone" in data and not data.get("phone", "").strip():
+        return error_response("Le téléphone est requis", 400)
+    if "position_id" in data and not data.get("position_id"):
+        return error_response("Le poste est requis", 400)
+
+    for field in ("first_name", "last_name", "gender", "phone", "email", "notes"):
         if field in data:
             setattr(emp, field, data[field].strip() if isinstance(data[field], str) else data[field])
+
+    # employee_id_code is optional — store None if empty
+    if "employee_id_code" in data:
+        raw_code = data["employee_id_code"].strip() if isinstance(data["employee_id_code"], str) else data["employee_id_code"]
+        emp.employee_id_code = raw_code if raw_code else None
 
     if "position_id" in data:
         emp.position_id = int(data["position_id"]) if data["position_id"] else None

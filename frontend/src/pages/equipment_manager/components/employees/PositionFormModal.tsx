@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { useFormValidation } from '@/components/forms/useFormValidation';
@@ -21,11 +22,14 @@ interface Props {
   onSuccess: () => void;
   editData?: Position | null;
   onCreated?: (position: Position) => void;
+  /** Existing positions to populate the parent selector. */
+  existingPositions?: Position[];
 }
 
-export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCreated }: Props) {
+export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCreated, existingPositions }: Props) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [parentId, setParentId] = useState('');
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,10 +41,11 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
     if (editData) {
       setName(editData.name);
       setCode(editData.code);
+      setParentId(editData.parent_id ?? '');
       setDescription(editData.description);
       setIsActive(editData.is_active);
     } else {
-      setName(''); setCode(''); setDescription(''); setIsActive(true);
+      setName(''); setCode(''); setParentId(''); setDescription(''); setIsActive(true);
     }
     reset();
   }, [editData, isOpen]);
@@ -48,18 +53,29 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
   const canSubmit = isFormValid({ name, code });
   const errorMessages = getErrorMessages();
 
+  // Parent options: exclude self (when editing) and inactive positions
+  const parentOptions = (existingPositions ?? []).filter(
+    (p) => p.is_active && p.id !== editData?.id,
+  );
+
   const handleSave = async () => {
     if (!validateAll({ name, code })) return;
 
     setSaving(true);
     try {
-      const data = { name, code, description, is_active: isActive };
+      const data = {
+        name,
+        code,
+        parent_id: parentId || null,
+        description,
+        is_active: isActive,
+      };
       const res = isEdit
         ? await employeesApi.updatePosition(editData!.id, data)
         : await employeesApi.createPosition(data);
 
       if (res.success) {
-        toast.success(`Poste ${isEdit ? 'mis a jour' : 'cree'} avec succes`);
+        toast.success(`Poste ${isEdit ? 'mis à jour' : 'créé'} avec succès`);
         if (!isEdit && onCreated && res.data) onCreated(res.data);
         onSuccess(); onClose();
       } else {
@@ -104,6 +120,21 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
             error={getFieldError('code')}
           />
         </div>
+
+        {/* Poste parent : définit la hiérarchie */}
+        <FormSelect
+          label="Poste supérieur (optionnel)"
+          value={parentId}
+          onChange={(v) => setParentId(v)}
+          options={[
+            { value: '', label: '— Aucun (poste racine)' },
+            ...parentOptions.map((p) => ({
+              value: p.id,
+              label: p.parent_name ? `${p.parent_name} › ${p.name}` : p.name,
+            })),
+          ]}
+        />
+
         <FormTextarea label="Description" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
         <FormCheckbox label="Actif" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
       </form>
