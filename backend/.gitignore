@@ -2,6 +2,7 @@
 TO_BE_DELETED
 web/
 logs/
+meetings/
 
 # Python cache
 __pycache__/
