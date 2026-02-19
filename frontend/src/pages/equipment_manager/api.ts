@@ -96,6 +96,7 @@ export const equipmentApi = {
   get: (id: string) => api.get<Equipment & { history: EquipmentHistory[]; tickets: RepairTicket[] }>(`${BASE}/assets/${id}`),
   update: (id: string, data: Record<string, unknown>) => api.put<Equipment>(`${BASE}/assets/${id}`, data),
   assign: (id: string, data: { asc_id?: string; employee_id?: string; notes?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/assign`, data),
+  transfer: (id: string, data: { employee_id: string; notes?: string }) => api.post<Equipment>(`${BASE}/assets/${id}/transfer`, data),
   getHistory: (id: string) => api.get<EquipmentHistory[]>(`${BASE}/assets/${id}/history`),
 
   /** Télécharge la fiche d'accusé de réception (PDF) pour un équipement. */

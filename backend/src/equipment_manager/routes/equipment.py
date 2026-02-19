@@ -354,6 +354,53 @@ def assign_equipment(id):
     return jsonify(eq.to_dict_safe()), 200
 
 
+@bp.post("/<int:id>/transfer")
+@require_auth
+def transfer_equipment(id):
+    """Transfère un équipement d'un employé à un autre (autorisé même pour les équipements uniques)."""
+    eq = Equipment.query.get(id)
+    if not eq:
+        return error_response("Equipment not found", 404)
+
+    if not eq.is_active:
+        return error_response(
+            f"Équipement inactif ({eq.status}). Annulez la déclaration avant tout transfert.",
+            409
+        )
+
+    data = request.get_json(silent=True) or {}
+    employee_id = data.get("employee_id")
+    if not employee_id:
+        return error_response("employee_id est requis", 400)
+
+    target = Employee.query.get(int(employee_id))
+    if not target:
+        return error_response("Employé cible introuvable", 404)
+
+    if not target.is_active:
+        return error_response("L'employé cible est inactif", 409)
+
+    user_id = int(g.current_user["id"]) if g.current_user else None
+    old_holder = eq.employee.get_full_name() if eq.employee else (eq.owner.get_full_name() if eq.owner else "Aucun")
+
+    eq.employee_id = target.id
+    eq.owner_id = None
+    eq.assignment_date = datetime.now(timezone.utc).date()
+    if eq.status == "PENDING":
+        eq.status = "FUNCTIONAL"
+
+    db.session.add(EquipmentHistory(
+        equipment_id=eq.id,
+        action="TRANSFERRED",
+        old_value=old_holder,
+        new_value=target.get_full_name(),
+        notes=data.get("notes", ""),
+        created_by_id=user_id,
+    ))
+    db.session.commit()
+    return jsonify(eq.to_dict_safe()), 200
+
+
 @bp.post("/<int:id>/declare")
 @require_auth
 def declare_equipment(id):
