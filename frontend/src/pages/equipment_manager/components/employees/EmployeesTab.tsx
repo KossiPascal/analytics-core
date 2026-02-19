@@ -10,6 +10,7 @@ import { PositionFormModal } from './PositionFormModal';
 import { EmployeesTable } from './EmployeesTable';
 import { EmployeeFormModal } from './EmployeeFormModal';
 import { EmployeeDetailModal } from './EmployeeDetailModal';
+import { EmployeeTransferModal } from './EmployeeTransferModal';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
@@ -35,6 +36,8 @@ export function EmployeesTab() {
   const [empEditData, setEmpEditData] = useState<Employee | null>(null);
   const [empDetailOpen, setEmpDetailOpen] = useState(false);
   const [empDetailId, setEmpDetailId] = useState<string | null>(null);
+  const [empTransferOpen, setEmpTransferOpen] = useState(false);
+  const [empTransferTarget, setEmpTransferTarget] = useState<Employee | null>(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -126,7 +129,7 @@ export function EmployeesTab() {
           onEdit={(e) => { setEmpEditData(e); setEmpFormOpen(true); }}
           onView={(e) => { setEmpDetailId(e.id); setEmpDetailOpen(true); }}
           onToggleActive={handleToggleActive}
-          onTransfer={(e) => { setEmpDetailId(e.id); setEmpDetailOpen(true); }}
+          onTransfer={(e) => { setEmpTransferTarget(e); setEmpTransferOpen(true); }}
         />
       )}
 
@@ -158,6 +161,13 @@ export function EmployeesTab() {
         isOpen={empDetailOpen}
         onClose={() => setEmpDetailOpen(false)}
         employeeId={empDetailId}
+      />
+
+      <EmployeeTransferModal
+        isOpen={empTransferOpen}
+        onClose={() => { setEmpTransferOpen(false); setEmpTransferTarget(null); }}
+        onSuccess={loadAll}
+        employee={empTransferTarget}
       />
     </div>
   );
