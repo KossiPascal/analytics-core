@@ -25,7 +25,7 @@ class Department(db.Model):
 
     parent = db.relationship("Department", remote_side=[id], back_populates="children", lazy="selectin")
     children = db.relationship("Department", back_populates="parent", lazy="selectin", cascade="all, delete-orphan")
-    employees = db.relationship("Employee", back_populates="department", lazy="selectin", cascade="all, delete-orphan")
+    positions = db.relationship("Position", back_populates="department", lazy="selectin")
 
     @property
     def is_root(self):
@@ -67,6 +67,7 @@ class Position(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     parent_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id", ondelete="SET NULL"), nullable=True)
+    department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="SET NULL"), nullable=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
@@ -76,6 +77,7 @@ class Position(db.Model):
 
     parent = db.relationship("Position", remote_side=[id], back_populates="children", lazy="selectin")
     children = db.relationship("Position", back_populates="parent", lazy="selectin")
+    department = db.relationship("Department", back_populates="positions", lazy="selectin")
     employees = db.relationship("Employee", back_populates="position_rel", lazy="selectin")
 
     def to_dict_safe(self):
@@ -83,6 +85,8 @@ class Position(db.Model):
             "id": str(self.id),
             "parent_id": str(self.parent_id) if self.parent_id else None,
             "parent_name": self.parent.name if self.parent else None,
+            "department_id": str(self.department_id) if self.department_id else None,
+            "department_name": self.department.name if self.department else None,
             "name": self.name,
             "code": self.code,
             "description": self.description,
@@ -100,7 +104,6 @@ class Employee(db.Model):
     __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="CASCADE"), nullable=True)
     position_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id"), nullable=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True)
     first_name = db.Column(db.String(150), nullable=False)
@@ -115,7 +118,6 @@ class Employee(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
-    department = db.relationship("Department", back_populates="employees", lazy="selectin")
     position_rel = db.relationship("Position", back_populates="employees", lazy="selectin")
     equipments = db.relationship("Equipment", back_populates="employee", lazy="selectin", foreign_keys="Equipment.employee_id")
     owned_equipments = db.relationship("Equipment", back_populates="owner", lazy="selectin", foreign_keys="Equipment.owner_id")
@@ -127,15 +129,17 @@ class Employee(db.Model):
         return f"{self.first_name} {self.last_name}"
 
     def to_dict_safe(self):
-        root = self.department.root_department if self.department else None
+        pos = self.position_rel
+        dept = pos.department if pos else None
+        root = dept.root_department if dept else None
         return {
             "id": str(self.id),
-            "department_id": str(self.department_id) if self.department_id else None,
-            "department_name": self.department.name if self.department else None,
+            "department_id": str(dept.id) if dept else None,
+            "department_name": dept.name if dept else None,
             "root_department_name": root.name if root else None,
             "position_id": str(self.position_id) if self.position_id else None,
-            "position_name": self.position_rel.name if self.position_rel else None,
-            "position_code": self.position_rel.code if self.position_rel else None,
+            "position_name": pos.name if pos else None,
+            "position_code": pos.code if pos else None,
             "user_id": str(self.user_id) if self.user_id else None,
             "first_name": self.first_name,
             "last_name": self.last_name,

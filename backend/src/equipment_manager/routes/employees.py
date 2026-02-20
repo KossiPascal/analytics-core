@@ -126,11 +126,18 @@ def create_position():
         if not parent:
             return error_response("Poste parent introuvable", 404)
 
+    department_id = data.get("department_id")
+    if department_id:
+        dept = Department.query.get(int(department_id))
+        if not dept:
+            return error_response("Département introuvable", 404)
+
     try:
         pos = Position(
             name=name,
             code=code,
             parent_id=int(parent_id) if parent_id else None,
+            department_id=int(department_id) if department_id else None,
             description=data.get("description", ""),
             is_active=True,
         )
@@ -157,6 +164,9 @@ def update_position(id):
         if new_parent_id and (new_parent_id == id or _has_ancestor(Position.query.get(new_parent_id), id)):
             return error_response("Référence circulaire détectée", 400)
         pos.parent_id = new_parent_id
+
+    if "department_id" in data:
+        pos.department_id = int(data["department_id"]) if data["department_id"] else None
 
     for field in ("name", "code", "description"):
         if field in data:
@@ -196,11 +206,13 @@ def list_employees():
 
     if department_id:
         dept_id = int(department_id)
-        # Include employees from this department and all its children
         dept = Department.query.get(dept_id)
         if dept:
             dept_ids = [dept_id] + [c.id for c in dept.children]
-            query = query.filter(Employee.department_id.in_(dept_ids))
+            # Filtrer par département via le poste de l'employé
+            matching_positions = Position.query.filter(Position.department_id.in_(dept_ids)).all()
+            pos_ids = [p.id for p in matching_positions]
+            query = query.filter(Employee.position_id.in_(pos_ids))
     if active is not None:
         query = query.filter_by(is_active=active.lower() == "true")
     if search:
@@ -224,23 +236,17 @@ def create_employee():
     first_name = data.get("first_name", "").strip()
     last_name = data.get("last_name", "").strip()
     phone = data.get("phone", "").strip()
-    department_id = data.get("department_id")
     position_id = data.get("position_id")
     hire_date = data.get("hire_date")
 
-    # Required fields: first_name, last_name, phone, department_id, position_id
+    # Required: first_name, last_name, phone, position_id
+    # Le département est déduit du poste — plus de department_id direct
     if not first_name or not last_name:
         return error_response("Le prénom et le nom sont requis", 400)
     if not phone:
         return error_response("Le téléphone est requis", 400)
-    if not department_id:
-        return error_response("Le département est requis", 400)
     if not position_id:
         return error_response("Le poste est requis", 400)
-
-    dept = Department.query.get(int(department_id))
-    if not dept:
-        return error_response("Département introuvable", 404)
 
     pos = Position.query.get(int(position_id))
     if not pos:
@@ -255,7 +261,6 @@ def create_employee():
             first_name=first_name,
             last_name=last_name,
             employee_id_code=employee_id_code,
-            department_id=dept.id,
             position_id=pos.id,
             gender=data.get("gender", ""),
             phone=phone,
@@ -269,10 +274,11 @@ def create_employee():
 
         # Log creation
         user_id = int(g.current_user["id"]) if g.current_user else None
+        dept_id = pos.department_id
         history = EmployeeHistory(
             employee_id=emp.id,
             action="CREATED",
-            new_department_id=dept.id,
+            new_department_id=dept_id,
             user_id=user_id,
             notes=f"Employé créé : {first_name} {last_name} — Poste : {pos.name}",
         )
@@ -329,18 +335,18 @@ def update_employee(id):
         raw_code = data["employee_id_code"].strip() if isinstance(data["employee_id_code"], str) else data["employee_id_code"]
         emp.employee_id_code = raw_code if raw_code else None
 
-    if "position_id" in data:
-        emp.position_id = int(data["position_id"]) if data["position_id"] else None
-
     if "hire_date" in data:
         emp.hire_date = data["hire_date"] or None
 
-    # Handle department transfer
-    if "department_id" in data and int(data["department_id"]) != emp.department_id:
-        old_dept_id = emp.department_id
-        new_dept_id = int(data["department_id"])
-        emp.department_id = new_dept_id
+    # Si le poste change, on enregistre un transfert de département si le département a changé
+    old_dept_id = emp.position_rel.department_id if emp.position_rel else None
 
+    if "position_id" in data:
+        emp.position_id = int(data["position_id"]) if data["position_id"] else None
+
+    new_dept_id = emp.position_rel.department_id if emp.position_rel else None
+
+    if old_dept_id != new_dept_id and (old_dept_id or new_dept_id):
         history = EmployeeHistory(
             employee_id=emp.id,
             action="TRANSFERRED",
@@ -349,14 +355,13 @@ def update_employee(id):
             user_id=user_id,
             notes=data.get("transfer_notes", ""),
         )
-        db.session.add(history)
     else:
         history = EmployeeHistory(
             employee_id=emp.id,
             action="UPDATED",
             user_id=user_id,
         )
-        db.session.add(history)
+    db.session.add(history)
 
     try:
         db.session.commit()

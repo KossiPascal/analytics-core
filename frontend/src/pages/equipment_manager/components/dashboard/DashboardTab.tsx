@@ -10,7 +10,7 @@ import {
 import { dashboardApi, ascsApi, equipmentApi } from '../../api';
 import type {
   DashboardStats, TicketsByDelay, BlockagePoint, RepairTicket,
-  ASC, EquipmentCategory, EquipmentBrand,
+  ASC, EquipmentCategory, EquipmentCategoryGroup, EquipmentBrand,
 } from '../../types';
 import { TicketCreateModal } from '../tickets/TicketCreateModal';
 import { EquipmentFormModal } from '../equipment/EquipmentFormModal';
@@ -33,6 +33,7 @@ export function DashboardTab() {
   // Data for EquipmentFormModal (loaded lazily)
   const [ascs, setAscs] = useState<ASC[]>([]);
   const [categories, setCategories] = useState<EquipmentCategory[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<EquipmentCategoryGroup[]>([]);
   const [brands, setBrands] = useState<EquipmentBrand[]>([]);
   const [equipDataLoading, setEquipDataLoading] = useState(false);
 
@@ -61,14 +62,16 @@ export function DashboardTab() {
   const openEquipmentForm = async () => {
     if (categories.length === 0 && !equipDataLoading) {
       setEquipDataLoading(true);
-      const [ascsRes, catRes, brandRes] = await Promise.all([
+      const [ascsRes, catRes, brandRes, groupRes] = await Promise.all([
         ascsApi.getAll(),
         equipmentApi.getCategories(),
         equipmentApi.getBrands(),
+        equipmentApi.getCategoryGroups(),
       ]);
       if (ascsRes.success) setAscs(ascsRes.data!);
       if (catRes.success) setCategories(catRes.data!);
       if (brandRes.success) setBrands(brandRes.data!);
+      if (groupRes.success) setCategoryGroups(groupRes.data!);
       setEquipDataLoading(false);
     }
     setEquipFormOpen(true);
@@ -241,6 +244,7 @@ export function DashboardTab() {
         onSuccess={() => { setEquipFormOpen(false); loadDashboard(); }}
         ascs={ascs}
         categories={categories}
+        categoryGroups={categoryGroups}
         brands={brands}
       />
 

@@ -143,8 +143,21 @@ export const HISTORY_ACTION_LABELS: Record<string, string> = {
   DECLARATION_CANCELLED:      'Déclaration annulée',
 };
 
+export interface EquipmentCategoryGroup {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export interface EquipmentCategory {
   id: string;
+  category_group_id: string | null;
+  category_group_name: string | null;
+  category_group_code: string | null;
   name: string;
   code: string;
   description: string;
@@ -174,8 +187,16 @@ export interface Accessory {
   updated_at: string | null;
 }
 
+export interface EquipmentImeiEntry {
+  id: string;
+  equipment_id: string;
+  imei: string;
+  slot_number: number;
+}
+
 export interface Equipment {
   id: string;
+  equipment_code: string | null;
   equipment_type: EquipmentType;
   category_id: string | null;
   category_name: string | null;
@@ -183,8 +204,10 @@ export interface Equipment {
   brand_id: string | null;
   brand_name: string | null;
   model_name: string;
-  imei: string;
+  imei: string | null;
   serial_number: string;
+  has_sim: boolean;
+  imeis: EquipmentImeiEntry[];
   owner_id: string | null;
   owner_name: string | null;
   employee_id: string | null;
@@ -222,6 +245,8 @@ export interface Position {
   id: string;
   parent_id: string | null;
   parent_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
   name: string;
   code: string;
   description: string;

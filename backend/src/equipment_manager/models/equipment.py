@@ -26,9 +26,9 @@ DECLARATION_ACTION_MAP = {
 }
 
 
-class EquipmentCategory(db.Model):
-    """Type d'equipement (ex: Telephone, Tablette, Autre)"""
-    __tablename__ = "equipment_categories"
+class EquipmentCategoryGroup(db.Model):
+    """Grande catégorie d'équipement (ex: Appareils électroniques, Meubles, Voitures…)"""
+    __tablename__ = "equipment_category_groups"
     __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
@@ -39,11 +39,46 @@ class EquipmentCategory(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
+    categories = db.relationship("EquipmentCategory", back_populates="category_group", lazy="selectin")
+
+    def to_dict_safe(self):
+        return {
+            "id": str(self.id),
+            "name": self.name,
+            "code": self.code,
+            "description": self.description,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<EquipmentCategoryGroup(id={self.id}, name={self.name})>"
+
+
+class EquipmentCategory(db.Model):
+    """Type d'équipement (ex: Téléphone, Tablette, Chaise, Voiture Toyota…)"""
+    __tablename__ = "equipment_categories"
+    __table_args__ = {'schema': 'em'}
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    category_group_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment_category_groups.id", ondelete="SET NULL"), nullable=True)
+    name = db.Column(db.String(150), unique=True, nullable=False)
+    code = db.Column(db.String(50), unique=True, nullable=False)
+    description = db.Column(db.Text, default="")
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
+
+    category_group = db.relationship("EquipmentCategoryGroup", back_populates="categories", lazy="selectin")
     equipments = db.relationship("Equipment", back_populates="category_rel", lazy="selectin")
 
     def to_dict_safe(self):
         return {
             "id": str(self.id),
+            "category_group_id": str(self.category_group_id) if self.category_group_id else None,
+            "category_group_name": self.category_group.name if self.category_group else None,
+            "category_group_code": self.category_group.code if self.category_group else None,
             "name": self.name,
             "code": self.code,
             "description": self.description,
@@ -96,8 +131,10 @@ class Equipment(db.Model):
     brand = db.Column(db.String(100), default="")
     brand_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment_brands.id"), nullable=True)
     model_name = db.Column(db.String(100), nullable=False)
-    imei = db.Column(db.String(50), unique=True, nullable=False)
+    equipment_code = db.Column(db.String(50), unique=True, nullable=True)
+    imei = db.Column(db.String(50), unique=True, nullable=True)  # Legacy / premier IMEI
     serial_number = db.Column(db.String(100), default="")
+    has_sim = db.Column(db.Boolean, default=False, nullable=False)
 
     owner_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
     employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
@@ -121,6 +158,7 @@ class Equipment(db.Model):
     history = db.relationship("EquipmentHistory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
     repair_tickets = db.relationship("RepairTicket", back_populates="equipment", lazy="selectin")
     accessories = db.relationship("Accessory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
+    imeis = db.relationship("EquipmentImei", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan", order_by="EquipmentImei.slot_number")
 
     @property
     def is_active(self) -> bool:
@@ -129,6 +167,7 @@ class Equipment(db.Model):
     def to_dict_safe(self):
         return {
             "id": str(self.id),
+            "equipment_code": self.equipment_code,
             "equipment_type": self.equipment_type,
             "category_id": str(self.category_id) if self.category_id else None,
             "category_name": self.category_rel.name if self.category_rel else None,
@@ -149,13 +188,15 @@ class Equipment(db.Model):
             "warranty_expiry_date": self.warranty_expiry_date.isoformat() if self.warranty_expiry_date else None,
             "assignment_date": self.assignment_date.isoformat() if self.assignment_date else None,
             "reception_form_path": self.reception_form_path,
+            "has_sim": self.has_sim,
+            "imeis": [i.to_dict_safe() for i in self.imeis] if self.imeis else [],
             "notes": self.notes,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def __repr__(self):
-        return f"<Equipment(id={self.id}, imei={self.imei})>"
+        return f"<Equipment(id={self.id}, equipment_code={self.equipment_code})>"
 
 
 class EquipmentHistory(db.Model):
@@ -218,3 +259,28 @@ class Accessory(db.Model):
 
     def __repr__(self):
         return f"<Accessory(id={self.id}, name={self.name})>"
+
+
+class EquipmentImei(db.Model):
+    """IMEI(s) d'un équipement. Un appareil peut avoir plusieurs IMEI (dual-SIM)."""
+    __tablename__ = "equipment_imeis"
+    __table_args__ = {'schema': 'em'}
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
+    imei = db.Column(db.String(15), unique=True, nullable=False)
+    slot_number = db.Column(db.Integer, default=1, nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    equipment = db.relationship("Equipment", back_populates="imeis", lazy="selectin")
+
+    def to_dict_safe(self):
+        return {
+            "id": str(self.id),
+            "equipment_id": str(self.equipment_id),
+            "imei": self.imei,
+            "slot_number": self.slot_number,
+        }
+
+    def __repr__(self):
+        return f"<EquipmentImei(id={self.id}, imei={self.imei})>"

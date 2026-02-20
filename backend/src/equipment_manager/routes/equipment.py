@@ -4,8 +4,10 @@ from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
+import re
 from backend.src.equipment_manager.models.equipment import (
-    EquipmentCategory, EquipmentBrand, Equipment, EquipmentHistory, Accessory,
+    EquipmentCategoryGroup, EquipmentCategory, EquipmentBrand,
+    Equipment, EquipmentImei, EquipmentHistory, Accessory,
     ACTIVE_STATUSES, INACTIVE_STATUSES, DECLARATION_ACTION_MAP,
 )
 from backend.src.equipment_manager.models.employees import Employee
@@ -17,7 +19,85 @@ logger = get_backend_logger(__name__)
 bp = Blueprint("em_equipment", __name__, url_prefix="/api/equipment/assets")
 
 
-# ─── CATEGORIES (Types d'equipement) ─────────────────────────────────────────
+# ─── IMEI VALIDATION ─────────────────────────────────────────────────────────
+
+def _luhn_check(imei: str) -> bool:
+    """Algorithme de Luhn pour valider un IMEI."""
+    total = 0
+    for i, digit in enumerate(reversed(imei)):
+        n = int(digit)
+        if i % 2 == 1:
+            n *= 2
+            if n > 9:
+                n -= 9
+        total += n
+    return total % 10 == 0
+
+
+def validate_imei(imei: str) -> tuple:
+    """Valide un IMEI. Retourne (True, '') ou (False, message)."""
+    imei = imei.strip()
+    if not imei:
+        return False, "IMEI requis"
+    if not re.match(r'^\d{15}$', imei):
+        return False, "L'IMEI doit contenir exactement 15 chiffres"
+    if not _luhn_check(imei):
+        return False, f"IMEI '{imei}' invalide (échec validation Luhn)"
+    return True, ""
+
+
+# ─── CATEGORY GROUPS (Grandes catégories : Électronique, Meubles, Voitures…) ─
+
+@bp.get("/category-groups")
+@require_auth
+def list_category_groups():
+    items = EquipmentCategoryGroup.query.order_by(EquipmentCategoryGroup.name).all()
+    return jsonify([g.to_dict_safe() for g in items]), 200
+
+
+@bp.post("/category-groups")
+@require_auth
+def create_category_group():
+    data = request.get_json(silent=True) or {}
+    name = data.get("name", "").strip()
+    code = data.get("code", "").strip()
+    if not name or not code:
+        return error_response("Le nom et le code sont requis", 400)
+    try:
+        grp = EquipmentCategoryGroup(
+            name=name, code=code,
+            description=data.get("description", ""),
+            is_active=True,
+        )
+        db.session.add(grp)
+        db.session.commit()
+        return jsonify(grp.to_dict_safe()), 201
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Une catégorie avec ce nom ou ce code existe déjà", 409)
+
+
+@bp.put("/category-groups/<int:id>")
+@require_auth
+def update_category_group(id):
+    grp = EquipmentCategoryGroup.query.get(id)
+    if not grp:
+        return error_response("Catégorie introuvable", 404)
+    data = request.get_json(silent=True) or {}
+    for field in ("name", "code", "description"):
+        if field in data:
+            setattr(grp, field, data[field].strip() if isinstance(data[field], str) else data[field])
+    if "is_active" in data:
+        grp.is_active = bool(data["is_active"])
+    try:
+        db.session.commit()
+        return jsonify(grp.to_dict_safe()), 200
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Une catégorie avec ce nom ou ce code existe déjà", 409)
+
+
+# ─── CATEGORIES (Types d'équipement, FK → category_group) ────────────────────
 
 @bp.get("/categories")
 @require_auth
@@ -33,10 +113,12 @@ def create_category():
     name = data.get("name", "").strip()
     code = data.get("code", "").strip()
     if not name or not code:
-        return error_response("name and code are required", 400)
+        return error_response("Le nom et le code sont requis", 400)
+    category_group_id = data.get("category_group_id")
     try:
         cat = EquipmentCategory(
             name=name, code=code,
+            category_group_id=int(category_group_id) if category_group_id else None,
             description=data.get("description", ""),
             is_active=True,
         )
@@ -45,7 +127,7 @@ def create_category():
         return jsonify(cat.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Category with this name or code already exists", 409)
+        return error_response("Un type avec ce nom ou ce code existe déjà", 409)
 
 
 @bp.put("/categories/<int:id>")
@@ -53,11 +135,13 @@ def create_category():
 def update_category(id):
     cat = EquipmentCategory.query.get(id)
     if not cat:
-        return error_response("Category not found", 404)
+        return error_response("Type introuvable", 404)
     data = request.get_json(silent=True) or {}
     for field in ("name", "code", "description"):
         if field in data:
             setattr(cat, field, data[field].strip() if isinstance(data[field], str) else data[field])
+    if "category_group_id" in data:
+        cat.category_group_id = int(data["category_group_id"]) if data["category_group_id"] else None
     if "is_active" in data:
         cat.is_active = bool(data["is_active"])
     try:
@@ -65,7 +149,7 @@ def update_category(id):
         return jsonify(cat.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Category with this name or code already exists", 409)
+        return error_response("Un type avec ce nom ou ce code existe déjà", 409)
 
 
 # ─── BRANDS (Marques) ────────────────────────────────────────────────────────
@@ -121,6 +205,36 @@ def update_brand(id):
 
 # ─── EQUIPMENT ────────────────────────────────────────────────────────────────
 
+def _generate_equipment_code(category_id: "int | None") -> str:
+    """Génère un code unique SI/EQ/<cat_code>/<NNN> pour un équipement."""
+    cat = EquipmentCategory.query.get(category_id) if category_id else None
+    cat_code = cat.code if cat else "AUTRE"
+    prefix = f"SI/EQ/{cat_code}/"
+    last = db.session.query(
+        db.func.max(Equipment.equipment_code)
+    ).filter(
+        Equipment.equipment_code.like(f"{prefix}%")
+    ).scalar()
+    if last:
+        try:
+            last_num = int(last.split("/")[-1])
+        except (ValueError, IndexError):
+            last_num = 0
+        next_num = last_num + 1
+    else:
+        next_num = 1
+    return f"{prefix}{next_num:03d}"
+
+
+@bp.get("/next-code")
+@require_auth
+def get_next_equipment_code():
+    """Retourne le prochain code disponible pour une catégorie donnée."""
+    category_id = request.args.get("category_id")
+    code = _generate_equipment_code(int(category_id) if category_id else None)
+    return jsonify({"code": code}), 200
+
+
 @bp.get("")
 @require_auth
 def list_equipment():
@@ -149,32 +263,59 @@ def list_equipment():
 def create_equipment():
     data = request.get_json(silent=True) or {}
 
-    equipment_type = data.get("equipment_type", "").strip()
+    category_id = data.get("category_id")
     brand = data.get("brand", "").strip()
     model_name = data.get("model_name", "").strip()
     imei = data.get("imei", "").strip()
-    category_id = data.get("category_id")
     brand_id = data.get("brand_id")
 
-    if not model_name or not imei:
-        return error_response("model_name and imei are required", 400)
+    if not model_name:
+        return error_response("Le modèle est requis", 400)
+
+    # Déterminer si la catégorie est électronique
+    cat = EquipmentCategory.query.get(int(category_id)) if category_id else None
+    is_electronic = cat and cat.category_group and cat.category_group.code == "ELECTRONIQUE"
+
+    # Gestion des IMEIs
+    has_sim = bool(data.get("has_sim", False))
+    imeis_list = data.get("imeis", [])  # liste de strings
+
+    # Téléphone → has_sim implicite
+    if is_electronic and cat and cat.code and "TEL" in cat.code.upper():
+        has_sim = True
+
+    if has_sim:
+        if not imeis_list:
+            return error_response("Au moins un IMEI est requis pour les équipements avec carte SIM", 400)
+        for idx, raw_imei in enumerate(imeis_list):
+            valid, msg = validate_imei(str(raw_imei))
+            if not valid:
+                return error_response(f"IMEI {idx + 1}: {msg}", 400)
+
+    # Générer le code unique
+    cat_id_int = int(category_id) if category_id else None
+    equipment_code = _generate_equipment_code(cat_id_int)
 
     try:
         owner_id = int(data["owner_id"]) if data.get("owner_id") else None
         employee_id = int(data["employee_id"]) if data.get("employee_id") else None
         status = data.get("status", "PENDING")
-        # Un équipement assigné à quelqu'un ne peut pas rester "En attente"
         if (owner_id or employee_id) and status == "PENDING":
             status = "FUNCTIONAL"
 
+        # Premier IMEI pour le champ legacy (backward compat)
+        first_imei = imeis_list[0].strip() if has_sim and imeis_list else None
+
         eq = Equipment(
-            equipment_type=equipment_type,
-            category_id=int(category_id) if category_id else None,
+            equipment_code=equipment_code,
+            equipment_type=cat.code if cat else "",
+            category_id=cat_id_int,
             brand=brand,
             brand_id=int(brand_id) if brand_id else None,
             model_name=model_name,
-            imei=imei,
+            imei=first_imei,
             serial_number=data.get("serial_number", ""),
+            has_sim=has_sim,
             owner_id=owner_id,
             employee_id=employee_id,
             status=status,
@@ -187,12 +328,19 @@ def create_equipment():
         db.session.add(eq)
         db.session.flush()
 
-        # Log creation
+        # Sauvegarder les IMEIs dans la table dédiée
+        for slot, raw_imei in enumerate(imeis_list, start=1):
+            db.session.add(EquipmentImei(
+                equipment_id=eq.id,
+                imei=raw_imei.strip(),
+                slot_number=slot,
+            ))
+
         user_id = int(g.current_user["id"]) if g.current_user else None
         history = EquipmentHistory(
             equipment_id=eq.id,
             action="CREATED",
-            new_value=f"{brand} {model_name} ({imei})",
+            new_value=equipment_code,
             created_by_id=user_id,
         )
         db.session.add(history)
@@ -201,7 +349,7 @@ def create_equipment():
 
     except IntegrityError:
         db.session.rollback()
-        return error_response("Equipment with this IMEI already exists", 409)
+        return error_response("Un équipement avec cet IMEI ou ce code existe déjà", 409)
 
 
 @bp.get("/<int:id>")

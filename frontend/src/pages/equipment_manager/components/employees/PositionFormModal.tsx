@@ -9,7 +9,7 @@ import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { employeesApi } from '../../api';
-import type { Position } from '../../types';
+import type { Position, Department } from '../../types';
 
 const VALIDATION_RULES = {
   name: { required: true, message: 'Le nom est requis' },
@@ -22,14 +22,15 @@ interface Props {
   onSuccess: () => void;
   editData?: Position | null;
   onCreated?: (position: Position) => void;
-  /** Existing positions to populate the parent selector. */
   existingPositions?: Position[];
+  departments?: (Department & { children: Department[] })[];
 }
 
-export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCreated, existingPositions }: Props) {
+export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCreated, existingPositions, departments }: Props) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [parentId, setParentId] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,10 +43,11 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
       setName(editData.name);
       setCode(editData.code);
       setParentId(editData.parent_id ?? '');
+      setDepartmentId(editData.department_id ?? '');
       setDescription(editData.description);
       setIsActive(editData.is_active);
     } else {
-      setName(''); setCode(''); setParentId(''); setDescription(''); setIsActive(true);
+      setName(''); setCode(''); setParentId(''); setDepartmentId(''); setDescription(''); setIsActive(true);
     }
     reset();
   }, [editData, isOpen]);
@@ -67,6 +69,7 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
         name,
         code,
         parent_id: parentId || null,
+        department_id: departmentId || null,
         description,
         is_active: isActive,
       };
@@ -120,6 +123,20 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
             error={getFieldError('code')}
           />
         </div>
+
+        {/* Département */}
+        <FormSelect
+          label="Département"
+          value={departmentId}
+          onChange={(v) => setDepartmentId(v)}
+          options={[
+            { value: '', label: '— Aucun' },
+            ...(departments ?? []).flatMap((d) => [
+              { value: d.id, label: d.name },
+              ...(d.children ?? []).map((c) => ({ value: c.id, label: `\u00A0\u00A0└ ${c.name}` })),
+            ]),
+          ]}
+        />
 
         {/* Poste parent : définit la hiérarchie */}
         <FormSelect

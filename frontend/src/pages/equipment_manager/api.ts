@@ -6,7 +6,7 @@ import { api } from '@/apis/api';
 import type {
   Region, District, Site, ZoneASC,
   ASC, Supervisor, Equipment, EquipmentHistory, Accessory,
-  EquipmentCategory, EquipmentBrand,
+  EquipmentCategoryGroup, EquipmentCategory, EquipmentBrand,
   Department, Position, Employee,
   RepairTicket, ProblemType, TicketComment,
   DelayAlertRecipient,
@@ -73,10 +73,19 @@ export const supervisorsApi = {
 // ─── EQUIPMENT ──────────────────────────────────────────────────────────────
 
 export const equipmentApi = {
-  // Categories (Types)
+  // Category Groups (Grandes catégories)
+  getCategoryGroups: () => api.get<EquipmentCategoryGroup[]>(`${BASE}/assets/category-groups`),
+  createCategoryGroup: (data: Record<string, unknown>) => api.post<EquipmentCategoryGroup>(`${BASE}/assets/category-groups`, data),
+  updateCategoryGroup: (id: string, data: Record<string, unknown>) => api.put<EquipmentCategoryGroup>(`${BASE}/assets/category-groups/${id}`, data),
+
+  // Categories (Types d'équipement)
   getCategories: () => api.get<EquipmentCategory[]>(`${BASE}/assets/categories`),
   createCategory: (data: Record<string, unknown>) => api.post<EquipmentCategory>(`${BASE}/assets/categories`, data),
   updateCategory: (id: string, data: Record<string, unknown>) => api.put<EquipmentCategory>(`${BASE}/assets/categories/${id}`, data),
+
+  // Next equipment code preview
+  getNextEquipmentCode: (categoryId: string) =>
+    api.get<{ code: string }>(`${BASE}/assets/next-code?category_id=${categoryId}`),
 
   // Brands (Marques)
   getBrands: () => api.get<EquipmentBrand[]>(`${BASE}/assets/brands`),

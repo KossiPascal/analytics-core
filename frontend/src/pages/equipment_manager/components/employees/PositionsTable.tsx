@@ -28,6 +28,13 @@ export function PositionsTable({ data, isLoading, onEdit }: Props) {
       ),
     },
     {
+      key: 'department',
+      header: 'Département',
+      render: (p) => p.department_name
+        ? <Badge variant="info">{p.department_name}</Badge>
+        : <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>—</span>,
+    },
+    {
       key: 'parent',
       header: 'Poste supérieur',
       render: (p) => p.parent_name

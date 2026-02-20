@@ -3,7 +3,7 @@ import { Button } from '@components/ui/Button/Button';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { equipmentApi, ascsApi, employeesApi } from '../../api';
-import type { Equipment, ASC, Employee, EquipmentCategory, EquipmentBrand } from '../../types';
+import type { Equipment, ASC, Employee, EquipmentCategory, EquipmentCategoryGroup, EquipmentBrand } from '../../types';
 import { EquipmentTable } from './EquipmentTable';
 import { EquipmentFormModal } from './EquipmentFormModal';
 import { EquipmentDetailModal } from './EquipmentDetailModal';
@@ -15,6 +15,7 @@ export function EquipmentTab() {
   const [ascs, setAscs] = useState<ASC[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [categories, setCategories] = useState<EquipmentCategory[]>([]);
+  const [categoryGroups, setCategoryGroups] = useState<EquipmentCategoryGroup[]>([]);
   const [brands, setBrands] = useState<EquipmentBrand[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -32,18 +33,20 @@ export function EquipmentTab() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [eqRes, ascsRes, empRes, catRes, brandRes] = await Promise.all([
+      const [eqRes, ascsRes, empRes, catRes, brandRes, groupRes] = await Promise.all([
         equipmentApi.getAll(),
         ascsApi.getAll(),
         employeesApi.getAll(),
         equipmentApi.getCategories(),
         equipmentApi.getBrands(),
+        equipmentApi.getCategoryGroups(),
       ]);
       if (eqRes.success) setEquipment(eqRes.data!);
       if (ascsRes.success) setAscs(ascsRes.data!);
       if (empRes.success) setEmployees(empRes.data!);
       if (catRes.success) setCategories(catRes.data!);
       if (brandRes.success) setBrands(brandRes.data!);
+      if (groupRes.success) setCategoryGroups(groupRes.data!);
     } catch {
       toast.error('Erreur de chargement');
     } finally {
@@ -86,6 +89,7 @@ export function EquipmentTab() {
         editData={editData}
         ascs={ascs}
         categories={categories}
+        categoryGroups={categoryGroups}
         brands={brands}
       />
 

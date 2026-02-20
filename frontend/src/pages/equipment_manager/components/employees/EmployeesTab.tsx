@@ -149,6 +149,7 @@ export function EmployeesTab() {
         onSuccess={loadAll}
         editData={posEditData}
         existingPositions={positions}
+        departments={departments}
       />
 
       <EmployeeFormModal
