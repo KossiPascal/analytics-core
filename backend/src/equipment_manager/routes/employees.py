@@ -120,13 +120,11 @@ def create_position():
         return error_response("Le nom et le code sont requis", 400)
 
     # Validate parent if provided
+    # Un nouveau poste ne peut pas créer de référence circulaire (il n'a pas encore d'enfants)
     if parent_id:
         parent = Position.query.get(int(parent_id))
         if not parent:
             return error_response("Poste parent introuvable", 404)
-        # Prevent circular reference
-        if str(parent.id) == str(parent_id) or _has_ancestor(parent, int(parent_id)):
-            return error_response("Référence circulaire détectée", 400)
 
     try:
         pos = Position(
