@@ -11,22 +11,18 @@
   justify-content: center;
   width: 30px;
   height: 30px;
+  padding: 0;
   border-radius: 6px;
   border: none;
   background: transparent;
   cursor: pointer;
-  color: var(--text-secondary, #64748b);
-  transition: background-color 0.15s, color 0.15s;
+  transition: background-color 0.15s;
 }
 
-.trigger:hover {
-  background-color: var(--bg-tertiary, #f1f5f9);
-  color: var(--text-primary, #0f172a);
-}
-
-.trigger.open {
-  background-color: var(--bg-tertiary, #f1f5f9);
-  color: var(--text-primary, #0f172a);
+.trigger:hover,
+.trigger.open,
+.open {
+  background-color: rgba(0, 0, 0, 0.07);
 }
 
 /* ─── Dropdown panel ─── */
@@ -37,7 +33,7 @@
   right: 0;
   z-index: 300;
   min-width: 200px;
-  background: var(--bg-card, #ffffff);
+  background: var(--bg-card, #585757);
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);

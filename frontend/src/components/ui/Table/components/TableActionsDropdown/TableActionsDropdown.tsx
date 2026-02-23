@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { SettingsIcon3D } from '@/components/ui/icons';
 import styles from './TableActionsDropdown.module.css';
+import { MoreHorizontal } from 'lucide-react';
 
 export interface ActionMenuItem {
   label: string;
@@ -59,8 +60,9 @@ export function TableActionsDropdown({ items }: Props) {
         aria-expanded={open}
         title="Actions"
       >
-        <MoreHorizontal size={18} />
+        <MoreHorizontal size={18} color="#475569" strokeWidth={2} />
       </button>
+      
 
       {open && (
         <div className={styles.dropdown} role="menu">
