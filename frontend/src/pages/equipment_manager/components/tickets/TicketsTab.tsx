@@ -113,7 +113,15 @@ export function TicketsTab() {
             </div>
           </div>
 
-          <TicketsTable data={tickets} isLoading={loading} onView={(t) => { setDetailId(t.id); setDetailOpen(true); }} />
+          <TicketsTable
+            data={tickets}
+            isLoading={loading}
+            onView={(t) => { setDetailId(t.id); setDetailOpen(true); }}
+            onSend={(id) => { setSendId(id); setSendOpen(true); }}
+            onReceive={(id) => { setReceiveId(id); setReceiveOpen(true); }}
+            onRepair={(id) => { setRepairId(id); setRepairOpen(true); }}
+            onCancel={(id) => { setCancelId(id); setCancelOpen(true); }}
+          />
         </>
       )}
 

@@ -8,6 +8,7 @@ import { Send, CheckCircle, ArrowRight, XCircle, MessageCircle, Wrench } from 'l
 import { ticketsApi } from '../../api';
 import type { RepairTicket, TicketEvent, TicketComment, Issue } from '../../types';
 import { STATUS_LABELS, STAGE_LABELS } from '../../types';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from '../../EquipmentManager.module.css';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
@@ -32,6 +33,7 @@ const EVENT_CLASS: Record<string, string> = {
 };
 
 export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend, onReceive, onRepair, onCancel }: Props) {
+  const { user, isAdmin } = useAuth();
   const [ticket, setTicket] = useState<(RepairTicket & { events: TicketEvent[]; comments: TicketComment[]; issues: Issue[] }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -64,6 +66,19 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
   };
 
   const canAct = ticket && !['CLOSED', 'CANCELLED'].includes(ticket.status);
+
+  // Logique fine par état du ticket (même logique que la table)
+  const hasHolder  = !!ticket?.current_holder_id;
+  const isHolder   = ticket?.current_holder_id === user?.id;
+  const isCreator  = ticket?.created_by_id === user?.id;
+  const isBlocked  = !!ticket?.is_blocked;
+
+  const showReceive = canAct && !hasHolder;
+  const showSend    = canAct && hasHolder && (isAdmin || isHolder) && ticket?.current_stage !== 'RETURNED_ASC';
+  const showRepair  = canAct && hasHolder && (isAdmin || isHolder)
+    && ['REPAIRER', 'ESANTE'].includes(ticket?.current_stage ?? '')
+    && ticket?.status === 'IN_PROGRESS';
+  const showCancel  = canAct && (isAdmin || isHolder || isCreator);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={ticket ? `Ticket ${ticket.ticket_number}` : 'Detail Ticket'} size="xl">
@@ -111,22 +126,37 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
           )}
 
           {/* Actions */}
-          {canAct && (
+          {(showReceive || showSend || showRepair || showCancel) && (
             <>
               <h4 className={styles.sectionTitle}>Actions</h4>
+              {isBlocked && (
+                <p style={{ fontSize: '0.8rem', color: 'var(--color-error)', marginBottom: '0.5rem' }}>
+                  ⚠ Ticket bloqué — Envoyer et Marquer réparé sont désactivés jusqu'à résolution du blocage.
+                </p>
+              )}
               <div className={shared.buttonGroup}>
-                <Button variant="primary" size="sm" onClick={() => onReceive(ticket.id)}>
-                  <CheckCircle size={16} /> Confirmer reception
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => onSend(ticket.id)}>
-                  <ArrowRight size={16} /> Envoyer
-                </Button>
-                <Button variant="success" size="sm" onClick={() => onRepair(ticket.id)}>
-                  <Wrench size={16} /> Marquer repare
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => onCancel(ticket.id)}>
-                  <XCircle size={16} /> Annuler
-                </Button>
+                {showReceive && (
+                  <Button variant="primary" size="sm" onClick={() => onReceive(ticket!.id)}>
+                    <CheckCircle size={16} /> Confirmer réception
+                  </Button>
+                )}
+                {showSend && (
+                  <Button variant="secondary" size="sm" onClick={() => onSend(ticket!.id)} disabled={isBlocked}
+                    title={isBlocked ? "Ticket bloqué — résoudre le blocage avant d'envoyer" : undefined}>
+                    <ArrowRight size={16} /> Envoyer
+                  </Button>
+                )}
+                {showRepair && (
+                  <Button variant="success" size="sm" onClick={() => onRepair(ticket!.id)} disabled={isBlocked}
+                    title={isBlocked ? "Ticket bloqué — résoudre le blocage avant de marquer réparé" : undefined}>
+                    <Wrench size={16} /> Marquer réparé
+                  </Button>
+                )}
+                {showCancel && (
+                  <Button variant="danger" size="sm" onClick={() => onCancel(ticket!.id)}>
+                    <XCircle size={16} /> Annuler
+                  </Button>
+                )}
               </div>
             </>
           )}
