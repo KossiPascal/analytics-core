@@ -1,8 +1,6 @@
 import { Table, type Column } from '@components/ui/Table/Table';
-import { Button } from '@components/ui/Button/Button';
 import { Edit, Trash2 } from 'lucide-react';
 import type { Region } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: Region[];
@@ -19,17 +17,16 @@ export function RegionsTable({ data, isLoading, onEdit, onDelete }: Props) {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (r) => (
-        <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onEdit(r)}><Edit size={16} /></button>
-          <button className={`${shared.actionBtn} ${shared.actionBtnDanger}`} onClick={() => onDelete(r)}><Trash2 size={16} /></button>
-        </div>
-      ),
+      actionsMenu: (r) => [
+        { label: 'Modifier', icon: <Edit size={15} />, onClick: () => onEdit(r) },
+        { label: 'Supprimer', icon: <Trash2 size={15} />, onClick: () => onDelete(r), danger: true, separator: true },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={data}
+    <Table<any>
+      data={data}
       columns={columns}
       keyExtractor={(r) => r.id}
       isLoading={isLoading}

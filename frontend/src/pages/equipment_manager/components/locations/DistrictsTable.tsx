@@ -1,7 +1,6 @@
 import { Table, type Column } from '@components/ui/Table/Table';
 import { Edit } from 'lucide-react';
 import type { District } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: District[];
@@ -18,16 +17,15 @@ export function DistrictsTable({ data, isLoading, onEdit }: Props) {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (d) => (
-        <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onEdit(d)}><Edit size={16} /></button>
-        </div>
-      ),
+      actionsMenu: (d) => [
+        { label: 'Modifier', icon: <Edit size={15} />, onClick: () => onEdit(d) },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={data}
+    <Table<any>
+      data={data}
       columns={columns}
       keyExtractor={(d) => d.id}
       isLoading={isLoading}

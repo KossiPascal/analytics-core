@@ -7,13 +7,23 @@ import { TableToolbar } from './components/TableToolbar/TableToolbar';
 import { Pagination } from './components/Pagination/Pagination';
 import { PageSizeSelector } from './components/PageSizeSelector/PageSizeSelector';
 import { ColumnVisibilityToggle } from './components/ColumnVisibilityToggle/ColumnVisibilityToggle';
+import { TableActionsDropdown } from './components/TableActionsDropdown/TableActionsDropdown';
 import type { ExportFormat } from './utils/exportData';
 import styles from './Table.module.css';
+
+// Re-export pour que les consumers puissent importer depuis Table
+export type { ActionMenuItem } from './components/TableActionsDropdown/TableActionsDropdown';
 
 export interface Column<T> {
   key: string;
   header: ReactNode;
   render?: (item: T, index: number) => ReactNode;
+  /**
+   * Remplace `render` pour la colonne actions.
+   * Retourne la liste des items du menu déroulant (icône MoreHorizontal).
+   * Chaque item peut être disabled, danger, ou avoir un style custom.
+   */
+  actionsMenu?: (item: T, index: number) => import('./components/TableActionsDropdown/TableActionsDropdown').ActionMenuItem[];
   sortable?: boolean;
   width?: string | number;
   align?: 'left' | 'center' | 'right';
@@ -54,6 +64,17 @@ export interface TableProps<T> {
   toolbarRightSection?: ReactNode;
   scrollable?: boolean;
   maxHeight?: string | number;
+}
+
+/** Rendu d'une cellule : actionsMenu > render > valeur brute */
+function renderCell<T>(column: Column<T>, item: T, index: number): ReactNode {
+  if (column.actionsMenu) {
+    return <TableActionsDropdown items={column.actionsMenu(item, index)} />;
+  }
+  if (column.render) {
+    return column.render(item, index);
+  }
+  return (item as Record<string, unknown>)[column.key] as ReactNode;
 }
 
 export function Table<T extends Record<string, unknown>>({
@@ -100,7 +121,6 @@ export function Table<T extends Record<string, unknown>>({
     columns.map((col) => col.key)
   );
 
-  // Filter columns based on visibility
   const displayColumns = useMemo(() => {
     if (!enableColumnVisibility) return columns;
     return columns.filter((col) => visibleColumns.includes(col.key));
@@ -114,70 +134,54 @@ export function Table<T extends Record<string, unknown>>({
     setSortConfig({ key, direction });
   };
 
-  // Filter by search query
   const filteredData = useMemo(() => {
     if (!enableSearch || !searchQuery.trim()) return data;
-
     const query = searchQuery.toLowerCase();
-    return data.filter((item) => {
-      return columns.some((column) => {
+    return data.filter((item) =>
+      columns.some((column) => {
         if (column.searchable === false) return false;
         const value = item[column.key];
         if (value === null || value === undefined) return false;
         return String(value).toLowerCase().includes(query);
-      });
-    });
+      })
+    );
   }, [data, searchQuery, columns, enableSearch]);
 
-  // Sort data
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
-
     return [...filteredData].sort((a, b) => {
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
-
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
-
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
   }, [filteredData, sortConfig]);
 
-  // Paginate data
   const paginatedData = useMemo(() => {
     if (!enablePagination) return sortedData;
-
     const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return sortedData.slice(startIndex, endIndex);
+    return sortedData.slice(startIndex, startIndex + pageSize);
   }, [sortedData, currentPage, pageSize, enablePagination]);
 
-  const totalPages = useMemo(() => {
-    return Math.ceil(sortedData.length / pageSize);
-  }, [sortedData.length, pageSize]);
+  const totalPages = useMemo(
+    () => Math.ceil(sortedData.length / pageSize),
+    [sortedData.length, pageSize]
+  );
 
-  // Reset to page 1 when search query changes
-  useMemo(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  useMemo(() => { setCurrentPage(1); }, [searchQuery]);
 
   const displayData = paginatedData;
 
   const getSortIcon = (key: string) => {
-    if (sortConfig?.key !== key) {
-      return <ChevronsUpDown size={14} />;
-    }
-    return sortConfig.direction === 'asc' ? (
-      <ChevronUp size={14} />
-    ) : (
-      <ChevronDown size={14} />
-    );
+    if (sortConfig?.key !== key) return <ChevronsUpDown size={14} />;
+    return sortConfig.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />;
   };
 
-  const showToolbar = enableSearch || enableExport || enableColumnVisibility || toolbarLeftSection || toolbarRightSection;
+  const showToolbar =
+    enableSearch || enableExport || enableColumnVisibility || toolbarLeftSection || toolbarRightSection;
 
   return (
     <div className={cn(styles.container, className)}>
@@ -210,135 +214,137 @@ export function Table<T extends Record<string, unknown>>({
 
       <div
         className={styles.wrapper}
-        style={(enableScrollable || scrollable) ? {
-          maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
-          overflowY: 'auto',
-          overflowX: 'auto',
-        } : undefined}
+        style={
+          enableScrollable || scrollable
+            ? {
+                maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
+                overflowY: 'auto',
+                overflowX: 'auto',
+              }
+            : undefined
+        }
       >
         <table className={styles.table}>
-        <thead className={cn(styles.thead, (stickyHeader || scrollable || enableScrollable) && styles.stickyHeader)}>
-          <tr>
-            {displayColumns.map((column) => (
-              <th
-                key={column.key}
-                className={cn(
-                  styles.th,
-                  column.sortable && styles.sortable,
-                  styles[`align-${column.align || 'left'}`]
-                )}
-                style={{ width: column.width }}
-                onClick={() => column.sortable && handleSort(column.key)}
-              >
-                <span className={styles.thContent}>
-                  {column.header}
-                  {column.sortable && (
-                    <span className={styles.sortIcon}>{getSortIcon(column.key)}</span>
-                  )}
-                </span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-
-        {enableAnimate ? (
-          <motion.tbody
-            className={styles.tbody}
-            variants={staggerContainerVariants}
-            initial="initial"
-            animate="animate"
+          <thead
+            className={cn(
+              styles.thead,
+              (stickyHeader || scrollable || enableScrollable) && styles.stickyHeader
+            )}
           >
-            <AnimatePresence mode="popLayout">
-              {!isLoading && displayData.length === 0 && (
-                <motion.tr
-                  variants={listItemVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
+            <tr>
+              {displayColumns.map((column) => (
+                <th
+                  key={column.key}
+                  className={cn(
+                    styles.th,
+                    column.sortable && styles.sortable,
+                    styles[`align-${column.align || 'left'}`]
+                  )}
+                  style={{ width: column.width }}
+                  onClick={() => column.sortable && handleSort(column.key)}
                 >
-                  <td colSpan={displayColumns.length} className={styles.emptyCell}>
+                  <span className={styles.thContent}>
+                    {column.header}
+                    {column.sortable && (
+                      <span className={styles.sortIcon}>{getSortIcon(column.key)}</span>
+                    )}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          {enableAnimate ? (
+            <motion.tbody
+              className={styles.tbody}
+              variants={staggerContainerVariants}
+              initial="initial"
+              animate="animate"
+            >
+              <AnimatePresence mode="popLayout">
+                {!isLoading && displayData.length === 0 && (
+                  <motion.tr
+                    variants={listItemVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    <td colSpan={displayColumns.length} className={styles.emptyCell}>
+                      {emptyMessage}
+                    </td>
+                  </motion.tr>
+                )}
+
+                {!isLoading &&
+                  displayData.map((item, index) => {
+                    const key = keyExtractor(item, index);
+                    const isSelected = selectedRowKey === key;
+                    return (
+                      <motion.tr
+                        key={key}
+                        variants={listItemVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        className={cn(
+                          styles.tr,
+                          isRowClickable && styles.clickable,
+                          isSelected && styles.selected
+                        )}
+                        onClick={() => onRowClick?.(item, index)}
+                        whileHover={
+                          isRowClickable ? { backgroundColor: 'var(--bg-tertiary)' } : undefined
+                        }
+                      >
+                        {displayColumns.map((column) => (
+                          <td
+                            key={column.key}
+                            className={cn(styles.td, styles[`align-${column.align || 'left'}`])}
+                          >
+                            {renderCell(column, item, index)}
+                          </td>
+                        ))}
+                      </motion.tr>
+                    );
+                  })}
+              </AnimatePresence>
+            </motion.tbody>
+          ) : (
+            <tbody className={styles.tbody}>
+              {!isLoading && displayData.length === 0 && (
+                <tr>
+                  <td colSpan={columns.length} className={styles.emptyCell}>
                     {emptyMessage}
                   </td>
-                </motion.tr>
+                </tr>
               )}
-
               {!isLoading &&
                 displayData.map((item, index) => {
                   const key = keyExtractor(item, index);
                   const isSelected = selectedRowKey === key;
-
                   return (
-                    <motion.tr
+                    <tr
                       key={key}
-                      variants={listItemVariants}
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
                       className={cn(
                         styles.tr,
                         isRowClickable && styles.clickable,
                         isSelected && styles.selected
                       )}
                       onClick={() => onRowClick?.(item, index)}
-                      whileHover={
-                        isRowClickable ? { backgroundColor: 'var(--bg-tertiary)' } : undefined
-                      }
                     >
-                      {displayColumns.map((column) => (
+                      {columns.map((column) => (
                         <td
                           key={column.key}
                           className={cn(styles.td, styles[`align-${column.align || 'left'}`])}
                         >
-                          {column.render
-                            ? column.render(item, index)
-                            : (item[column.key] as ReactNode)}
+                          {renderCell(column, item, index)}
                         </td>
                       ))}
-                    </motion.tr>
+                    </tr>
                   );
                 })}
-            </AnimatePresence>
-          </motion.tbody>
-        ) : (
-          <tbody className={styles.tbody}>
-            {!isLoading && displayData.length === 0 && (
-              <tr>
-                <td colSpan={columns.length} className={styles.emptyCell}>
-                  {emptyMessage}
-                </td>
-              </tr>
-            )}
-
-            {!isLoading &&
-              displayData.map((item, index) => {
-                const key = keyExtractor(item, index);
-                const isSelected = selectedRowKey === key;
-
-                return (
-                  <tr
-                    key={key}
-                    className={cn(
-                      styles.tr,
-                      isRowClickable && styles.clickable,
-                      isSelected && styles.selected
-                    )}
-                    onClick={() => onRowClick?.(item, index)}
-                  >
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        className={cn(styles.td, styles[`align-${column.align || 'left'}`])}
-                      >
-                        {column.render
-                          ? column.render(item, index)
-                          : (item[column.key] as ReactNode)}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-          </tbody>
-        )}
+            </tbody>
+          )}
         </table>
 
         {isLoading && (

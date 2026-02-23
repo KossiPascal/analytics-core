@@ -1,7 +1,6 @@
 import { Table, type Column } from '@components/ui/Table/Table';
 import { Edit } from 'lucide-react';
 import type { Site } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: Site[];
@@ -20,16 +19,15 @@ export function SitesTable({ data, isLoading, onEdit }: Props) {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (s) => (
-        <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onEdit(s)}><Edit size={16} /></button>
-        </div>
-      ),
+      actionsMenu: (s) => [
+        { label: 'Modifier', icon: <Edit size={15} />, onClick: () => onEdit(s) },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={data}
+    <Table<any>
+      data={data}
       columns={columns}
       keyExtractor={(s) => s.id}
       isLoading={isLoading}

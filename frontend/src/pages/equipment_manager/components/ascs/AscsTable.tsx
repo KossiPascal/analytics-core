@@ -2,7 +2,6 @@ import { Table, type Column } from '@components/ui/Table/Table';
 import { Badge } from '@components/ui/Badge/Badge';
 import { Edit, Eye, Trash2 } from 'lucide-react';
 import type { ASC } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: ASC[];
@@ -30,18 +29,17 @@ export function AscsTable({ data, isLoading, onEdit, onView, onDelete }: Props) 
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (a) => (
-        <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onView(a)}><Eye size={16} /></button>
-          <button className={shared.actionBtn} onClick={() => onEdit(a)}><Edit size={16} /></button>
-          <button className={`${shared.actionBtn} ${shared.actionBtnDanger}`} onClick={() => onDelete(a)}><Trash2 size={16} /></button>
-        </div>
-      ),
+      actionsMenu: (a) => [
+        { label: 'Voir', icon: <Eye size={15} />, onClick: () => onView(a) },
+        { label: 'Modifier', icon: <Edit size={15} />, onClick: () => onEdit(a), separator: true },
+        { label: 'Supprimer', icon: <Trash2 size={15} />, onClick: () => onDelete(a), danger: true },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={data}
+    <Table<any>
+      data={data}
       columns={columns}
       keyExtractor={(a) => a.id}
       isLoading={isLoading}

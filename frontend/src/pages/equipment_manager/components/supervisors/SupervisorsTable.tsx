@@ -2,7 +2,6 @@ import { Table, type Column } from '@components/ui/Table/Table';
 import { Badge } from '@components/ui/Badge/Badge';
 import { Edit, Eye } from 'lucide-react';
 import type { Supervisor } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: Supervisor[];
@@ -26,17 +25,16 @@ export function SupervisorsTable({ data, isLoading, onEdit, onView }: Props) {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (s) => (
-        <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onView(s)}><Eye size={16} /></button>
-          <button className={shared.actionBtn} onClick={() => onEdit(s)}><Edit size={16} /></button>
-        </div>
-      ),
+      actionsMenu: (s) => [
+        { label: 'Voir', icon: <Eye size={15} />, onClick: () => onView(s) },
+        { label: 'Modifier', icon: <Edit size={15} />, onClick: () => onEdit(s) },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={data}
+    <Table<any>
+      data={data}
       columns={columns}
       keyExtractor={(s) => s.id}
       isLoading={isLoading}

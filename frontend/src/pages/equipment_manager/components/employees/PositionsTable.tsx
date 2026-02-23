@@ -2,7 +2,6 @@ import { Table, type Column } from '@components/ui/Table/Table';
 import { Badge } from '@components/ui/Badge/Badge';
 import { Edit } from 'lucide-react';
 import type { Position } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: Position[];
@@ -52,9 +51,9 @@ export function PositionsTable({ data, isLoading, onEdit }: Props) {
       key: 'actions',
       header: '',
       align: 'right',
-      render: (p) => (
-        <button className={shared.actionBtn} onClick={() => onEdit(p)}><Edit size={16} /></button>
-      ),
+      actionsMenu: (p) => [
+        { label: 'Modifier', icon: <Edit size={15} />, onClick: () => onEdit(p) },
+      ],
     },
   ];
 

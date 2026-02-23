@@ -2,7 +2,6 @@ import { Table, type Column } from '@components/ui/Table/Table';
 import { Badge } from '@components/ui/Badge/Badge';
 import { Edit } from 'lucide-react';
 import type { Department } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: (Department & { children?: Department[] })[];
@@ -11,14 +10,11 @@ interface Props {
 }
 
 export function DepartmentsTable({ data, isLoading, onEdit }: Props) {
-  // Flatten tree for display
   const flattened: (Department & { level: number })[] = [];
   const flatten = (items: (Department & { children?: Department[] })[], level: number) => {
     for (const item of items) {
       flattened.push({ ...item, level });
-      if (item.children && item.children.length > 0) {
-        flatten(item.children, level + 1);
-      }
+      if (item.children && item.children.length > 0) flatten(item.children, level + 1);
     }
   };
   flatten(data, 0);
@@ -50,14 +46,15 @@ export function DepartmentsTable({ data, isLoading, onEdit }: Props) {
       key: 'actions',
       header: '',
       align: 'right',
-      render: (d) => (
-        <button className={shared.actionBtn} onClick={() => onEdit(d)}><Edit size={16} /></button>
-      ),
+      actionsMenu: (d) => [
+        { label: 'Modifier', icon: <Edit size={15} />, onClick: () => onEdit(d) },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={flattened}
+    <Table<any>
+      data={flattened}
       columns={columns}
       keyExtractor={(d) => d.id}
       isLoading={isLoading}

@@ -2,7 +2,6 @@ import { Table, type Column } from '@components/ui/Table/Table';
 import { Badge } from '@components/ui/Badge/Badge';
 import { ArrowRightLeft, Edit, Eye, ToggleLeft, ToggleRight } from 'lucide-react';
 import type { Employee } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: Employee[];
@@ -29,43 +28,32 @@ export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (e) => (
-        <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} title="Voir le détail" onClick={() => onView(e)}>
-            <Eye size={16} />
-          </button>
-          <button
-            className={shared.actionBtn}
-            title={e.is_active ? 'Modifier' : "Employé inactif — activez-le d'abord"}
-            disabled={!e.is_active}
-            style={!e.is_active ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
-            onClick={() => e.is_active && onEdit(e)}
-          >
-            <Edit size={16} />
-          </button>
-          {e.equipment_count > 0 && (
-            <button
-              className={shared.actionBtn}
-              title="Transférer un équipement"
-              onClick={() => onTransfer(e)}
-            >
-              <ArrowRightLeft size={16} />
-            </button>
-          )}
-          <button
-            className={shared.actionBtn}
-            title={e.is_active ? 'Désactiver' : 'Activer'}
-            onClick={() => onToggleActive(e)}
-          >
-            {e.is_active ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-          </button>
-        </div>
-      ),
+      actionsMenu: (e) => [
+        { label: 'Voir le détail', icon: <Eye size={15} />, onClick: () => onView(e) },
+        {
+          label: 'Modifier',
+          icon: <Edit size={15} />,
+          onClick: () => onEdit(e),
+          disabled: !e.is_active,
+          title: e.is_active ? 'Modifier' : "Employé inactif — activez-le d'abord",
+        },
+        ...(e.equipment_count > 0
+          ? [{ label: 'Transférer un équipement', icon: <ArrowRightLeft size={15} />, onClick: () => onTransfer(e) }]
+          : []),
+        {
+          label: e.is_active ? 'Désactiver' : 'Activer',
+          icon: e.is_active ? <ToggleRight size={15} /> : <ToggleLeft size={15} />,
+          onClick: () => onToggleActive(e),
+          separator: true,
+          style: { color: e.is_active ? 'var(--color-error, #ef4444)' : 'var(--color-success, #10b981)' },
+        },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={data}
+    <Table<any>
+      data={data}
       columns={columns}
       keyExtractor={(e) => e.id}
       isLoading={isLoading}

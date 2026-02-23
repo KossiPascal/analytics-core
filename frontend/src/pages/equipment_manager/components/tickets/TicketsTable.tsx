@@ -3,7 +3,6 @@ import { Badge } from '@components/ui/Badge/Badge';
 import { Eye } from 'lucide-react';
 import type { RepairTicket } from '../../types';
 import { STATUS_LABELS } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'secondary'> = {
   OPEN: 'warning',
@@ -55,14 +54,15 @@ export function TicketsTable({ data, isLoading, onView }: Props) {
       key: 'actions',
       header: '',
       align: 'right',
-      render: (t) => (
-        <button className={shared.actionBtn} onClick={() => onView(t)}><Eye size={16} /></button>
-      ),
+      actionsMenu: (t) => [
+        { label: 'Voir le détail', icon: <Eye size={15} />, onClick: () => onView(t) },
+      ],
     },
   ];
 
   return (
-    <Table<any>       data={data}
+    <Table<any>
+      data={data}
       columns={columns}
       keyExtractor={(t) => t.id}
       isLoading={isLoading}

@@ -3,7 +3,6 @@ import { Badge } from '@components/ui/Badge/Badge';
 import { Edit, Eye, ArrowRightLeft, FileText, AlertTriangle } from 'lucide-react';
 import type { Equipment } from '../../types';
 import { EQUIPMENT_STATUS_LABELS, EQUIPMENT_STATUS_VARIANT } from '../../types';
-import shared from '@components/ui/styles/shared.module.css';
 
 interface Props {
   data: Equipment[];
@@ -34,48 +33,42 @@ export function EquipmentTable({ data, isLoading, onEdit, onView, onAssign, onGe
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (e) => (
-        <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} title="Voir les détails" onClick={() => onView(e)}><Eye size={16} /></button>
-          <button
-            className={shared.actionBtn}
-            title={
-              !e.is_active
-                ? 'Équipement inactif'
-                : e.is_unique && (e.owner_id || e.employee_id)
-                ? `Déjà assigné à ${e.owner_name || e.employee_name}. Utilisez Modifier pour changer de propriétaire.`
-                : 'Assigner'
-            }
-            onClick={() => onAssign(e)}
-            disabled={!e.is_active || !!(e.is_unique && (e.owner_id || e.employee_id))}
-            style={
-              !e.is_active || (e.is_unique && (e.owner_id || e.employee_id))
-                ? { opacity: 0.35, cursor: 'not-allowed' }
-                : undefined
-            }
-          >
-            <ArrowRightLeft size={16} />
-          </button>
-          <button className={shared.actionBtn} title="Fiche de réception PDF" onClick={() => onGeneratePdf(e)}><FileText size={16} /></button>
-          <button
-            className={shared.actionBtn}
-            title="Modifier"
-            onClick={() => onEdit(e)}
-            disabled={!e.is_active}
-            style={!e.is_active ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
-          >
-            <Edit size={16} />
-          </button>
-          <button
-            className={shared.actionBtn}
-            title={e.is_active ? 'Déclarer (Perdu / Volé / Emporté / Gâté)' : 'Annuler la déclaration'}
-            onClick={() => onDeclare(e)}
-            style={{ color: e.is_active ? 'var(--color-warning, #f59e0b)' : 'var(--color-success, #10b981)' }}
-          >
-            <AlertTriangle size={16} />
-          </button>
-        </div>
-      ),
+      actionsMenu: (e) => [
+        {
+          label: 'Voir les détails',
+          icon: <Eye size={15} />,
+          onClick: () => onView(e),
+        },
+        {
+          label: 'Assigner',
+          icon: <ArrowRightLeft size={15} />,
+          onClick: () => onAssign(e),
+          disabled: !e.is_active || !!(e.is_unique && (e.owner_id || e.employee_id)),
+          title: !e.is_active
+            ? 'Équipement inactif'
+            : e.is_unique && (e.owner_id || e.employee_id)
+            ? `Déjà assigné à ${e.owner_name || e.employee_name}. Modifier pour changer.`
+            : 'Assigner à un employé',
+        },
+        {
+          label: 'Fiche de réception PDF',
+          icon: <FileText size={15} />,
+          onClick: () => onGeneratePdf(e),
+        },
+        {
+          label: 'Modifier',
+          icon: <Edit size={15} />,
+          onClick: () => onEdit(e),
+          disabled: !e.is_active,
+          separator: true,
+        },
+        {
+          label: e.is_active ? 'Déclarer (Perdu / Volé / Gâté)' : 'Annuler la déclaration',
+          icon: <AlertTriangle size={15} />,
+          onClick: () => onDeclare(e),
+          style: { color: e.is_active ? 'var(--color-warning, #f59e0b)' : 'var(--color-success, #10b981)' },
+        },
+      ],
     },
   ];
 
