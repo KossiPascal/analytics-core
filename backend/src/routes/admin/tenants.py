@@ -21,7 +21,7 @@ def get_tenants():
     return jsonify([t.to_dict_safe() for t in tenants]), 200
 
 
-@bp.route("/<uuid:id>", methods=["GET"])
+@bp.route("/<int:id>", methods=["GET"])
 def get_tenant(id):
     tenant:Tenant = Tenant.query.filter_by(id=id, deleted=False).first()
     if not tenant:
@@ -60,7 +60,7 @@ def create_tenant():
         return jsonify({"error": "Tenant already exists"}), 409
 
 
-@bp.route("/<uuid:id>", methods=["PUT"])
+@bp.route("/<int:id>", methods=["PUT"])
 def replace_tenant(id):
     data, error, status = get_json()
     if error:
@@ -84,7 +84,7 @@ def replace_tenant(id):
         return jsonify({"error": "Tenant name already exists"}), 409
 
 
-@bp.route("/<uuid:id>", methods=["PATCH"])
+@bp.route("/<int:id>", methods=["PATCH"])
 def update_tenant(id):
     data, error, status = get_json()
     if error:
@@ -108,7 +108,7 @@ def update_tenant(id):
         return jsonify({"error": "Tenant name already exists"}), 409
 
 
-@bp.route("/<uuid:id>", methods=["DELETE"])
+@bp.route("/<int:id>", methods=["DELETE"])
 def delete_tenant(id):
     tenant:Tenant = Tenant.query.filter_by(id=id, deleted=False).first()
     if not tenant:
