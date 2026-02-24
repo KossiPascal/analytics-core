@@ -20,7 +20,7 @@ def get_users():
     return jsonify([u.to_dict_safe() for u in users]), 200
 
 
-@bp.get("/<uuid:id>")
+@bp.get("/<int:id>")
 def get_user(id):
     user:User = User.query.filter_by(id=id, is_deleted=False).first()
     if not user:
@@ -71,7 +71,7 @@ def create_user():
         return jsonify({"error": "Username or email already exists"}), 409
 
 
-@bp.put("/<uuid:id>")
+@bp.put("/<int:id>")
 def replace_user(id):
     data, error, status = get_json()
     if error:
@@ -110,7 +110,7 @@ def replace_user(id):
     return jsonify(user.to_dict_safe()), 200
 
 
-@bp.patch("/<uuid:id>")
+@bp.patch("/<int:id>")
 def update_user(id):
     data, error, status = get_json()
     if error:
@@ -129,6 +129,9 @@ def update_user(id):
     if "phone" in data:
         user.phone = data["phone"]
 
+    if "tenant_id" in data:
+        user.tenant_id = data["tenant_id"]
+
     if "is_active" in data:
         user.is_active = bool(data["is_active"])
 
@@ -146,7 +149,7 @@ def update_user(id):
     return jsonify(user.to_dict_safe()), 200
 
 
-@bp.delete("/<uuid:id>")
+@bp.delete("/<int:id>")
 def delete_user(id):
     user:User = User.query.filter_by(id=id, is_deleted=False).first()
     if not user:

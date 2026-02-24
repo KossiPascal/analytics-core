@@ -20,7 +20,7 @@ def get_roles():
     return jsonify([r.to_dict_safe() for r in roles]), 200
 
 
-@bp.route("/<uuid:id>", methods=["GET"])
+@bp.route("/<int:id>", methods=["GET"])
 def get_role(id):
     role:Role = Role.query.filter_by(id=id, deleted=False).first()
     if not role:
@@ -63,7 +63,7 @@ def create_role():
         return jsonify({"error": "Role already exists"}), 409
 
 
-@bp.route("/<uuid:id>", methods=["PUT"])
+@bp.route("/<int:id>", methods=["PUT"])
 def replace_role(id):
     data, error, status = get_json()
     if error:
@@ -95,7 +95,7 @@ def replace_role(id):
     return jsonify(role.to_dict_safe()), 200
 
 
-@bp.route("/<uuid:id>", methods=["PATCH"])
+@bp.route("/<int:id>", methods=["PATCH"])
 def update_role(id):
     data, error, status = get_json()
     if error:
@@ -128,7 +128,7 @@ def update_role(id):
     return jsonify(role.to_dict_safe()), 200
 
 
-@bp.route("/<uuid:id>", methods=["DELETE"])
+@bp.route("/<int:id>", methods=["DELETE"])
 def delete_role(id):
     role:Role = Role.query.filter_by(id=id, deleted=False).first()
     if not role:

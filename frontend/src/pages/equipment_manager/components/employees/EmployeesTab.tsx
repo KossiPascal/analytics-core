@@ -168,7 +168,6 @@ export function EmployeesTab() {
           }
         }}
         editData={empEditData}
-        departments={departments}
         positions={positions}
       />
 

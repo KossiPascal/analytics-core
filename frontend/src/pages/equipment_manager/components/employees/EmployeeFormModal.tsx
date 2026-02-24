@@ -10,17 +10,16 @@ import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { employeesApi } from '../../api';
 import { api } from '@/apis/api';
-import type { Employee, Department, Position, GeneratedCredentials } from '../../types';
+import type { Employee, Position, GeneratedCredentials } from '../../types';
 import { PositionFormModal } from './PositionFormModal';
 
 interface Tenant { id: string; name: string; }
 
 const VALIDATION_RULES = {
-  firstName:    { required: true, message: 'Le prénom est requis' },
-  lastName:     { required: true, message: 'Le nom est requis' },
-  phone:        { required: true, message: 'Le téléphone est requis' },
-  departmentId: { required: true, message: 'Le département est requis' },
-  positionId:   { required: true, message: 'Le poste est requis' },
+  firstName:  { required: true, message: 'Le prénom est requis' },
+  lastName:   { required: true, message: 'Le nom est requis' },
+  phone:      { required: true, message: 'Le téléphone est requis' },
+  positionId: { required: true, message: 'Le poste est requis' },
 };
 
 interface Props {
@@ -28,7 +27,6 @@ interface Props {
   onClose: () => void;
   onSuccess: (credentials?: GeneratedCredentials, employeeName?: string, employeeId?: string) => void;
   editData?: Employee | null;
-  departments: Department[];
   positions: Position[];
 }
 
@@ -57,11 +55,10 @@ function buildPositionOptions(positions: Position[]): { value: string; label: st
   return result;
 }
 
-export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, departments, positions }: Props) {
+export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, positions }: Props) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [code, setCode] = useState('');
-  const [departmentId, setDepartmentId] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [gender, setGender] = useState('');
@@ -85,16 +82,6 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
   const isEdit = !!editData;
   const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
 
-  // Build flat list of departments for select
-  const allDepts: { id: string; name: string }[] = [];
-  const flattenDepts = (items: (Department & { children?: Department[] })[]) => {
-    for (const d of items) {
-      allDepts.push({ id: d.id, name: d.name });
-      if (d.children) flattenDepts(d.children);
-    }
-  };
-  flattenDepts(departments as (Department & { children?: Department[] })[]);
-
   const allPositions = [...positions, ...localPositions.filter((lp) => !positions.find((p) => p.id === lp.id))];
   const positionOptions = buildPositionOptions(allPositions);
 
@@ -103,7 +90,6 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
       setFirstName(editData.first_name);
       setLastName(editData.last_name);
       setCode(editData.employee_id_code ?? '');
-      setDepartmentId(editData.department_id);
       setTenantId(editData.tenant_id ?? '');
       setGender(editData.gender);
       setPhone(editData.phone);
@@ -112,7 +98,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
       setHireDate(editData.hire_date || '');
       setNotes(editData.notes);
     } else {
-      setFirstName(''); setLastName(''); setCode(''); setDepartmentId('');
+      setFirstName(''); setLastName(''); setCode('');
       setTenantId(''); setGender(''); setPhone(''); setEmail('');
       setPositionId(''); setHireDate(''); setNotes('');
     }
@@ -120,7 +106,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
     reset();
   }, [editData, isOpen]);
 
-  const formValues = { firstName, lastName, phone, departmentId, positionId };
+  const formValues = { firstName, lastName, phone, positionId };
   const canSubmit = isFormValid(formValues);
   const errorMessages = getErrorMessages();
 
@@ -134,7 +120,6 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
         last_name: lastName,
         employee_id_code: code.trim() || null,
         tenant_id: tenantId || null,
-        department_id: departmentId,
         gender,
         phone,
         email,
@@ -218,16 +203,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
           />
         </div>
 
-        {/* Département / Poste (requis) */}
+        {/* Poste (requis) */}
         <div className={shared.formRow}>
-          <FormSelect
-            label="Département"
-            required
-            value={departmentId}
-            onChange={(v) => { setDepartmentId(v); touchField('departmentId', v); }}
-            error={getFieldError('departmentId')}
-            options={[{ value: '', label: 'Sélectionner' }, ...allDepts.map((d) => ({ value: d.id, label: d.name }))]}
-          />
           {/* Poste hiérarchique + bouton création rapide */}
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flex: 1 }}>
             <div style={{ flex: 1 }}>

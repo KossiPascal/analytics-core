@@ -132,15 +132,10 @@ class Employee(db.Model):
 
     def to_dict_safe(self):
         pos = self.position_rel
-        dept = pos.department if pos else None
-        root = dept.root_department if dept else None
         return {
             "id": str(self.id),
             "tenant_id": str(self.tenant_id) if self.tenant_id else None,
             "tenant_name": self.tenant.name if self.tenant else None,
-            "department_id": str(dept.id) if dept else None,
-            "department_name": dept.name if dept else None,
-            "root_department_name": root.name if root else None,
             "position_id": str(self.position_id) if self.position_id else None,
             "position_name": pos.name if pos else None,
             "position_code": pos.code if pos else None,

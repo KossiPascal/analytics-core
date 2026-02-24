@@ -181,7 +181,12 @@ class User(db.Model):
     # Utility methods
     def to_dict_safe(self):
         payload = self.generate_permission_payload(onlyPayload = True)
-        return {**payload, "created_at": self.created_at.isoformat() }
+        return {
+            **payload,
+            "email": self.email,
+            "phone": self.phone,
+            "created_at": self.created_at.isoformat(),
+        }
 
     def set_password(self, password: str):
         self.password_hash = hash_password(password)

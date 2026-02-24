@@ -238,22 +238,12 @@ def _has_ancestor(position: "Position | None", ancestor_id: int) -> bool:
 def list_employees():
     query = Employee.query
 
-    department_id = request.args.get("department_id")
     tenant_id = request.args.get("tenant_id")
     active = request.args.get("active")
     search = request.args.get("search", "").strip()
 
     if tenant_id:
         query = query.filter(Employee.tenant_id == int(tenant_id))
-    if department_id:
-        dept_id = int(department_id)
-        dept = Department.query.get(dept_id)
-        if dept:
-            dept_ids = [dept_id] + [c.id for c in dept.children]
-            # Filtrer par département via le poste de l'employé
-            matching_positions = Position.query.filter(Position.department_id.in_(dept_ids)).all()
-            pos_ids = [p.id for p in matching_positions]
-            query = query.filter(Employee.position_id.in_(pos_ids))
     if active is not None:
         query = query.filter_by(is_active=active.lower() == "true")
     if search:

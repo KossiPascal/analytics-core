@@ -280,9 +280,6 @@ export interface Employee {
   user_id: string | null;
   tenant_id: string | null;
   tenant_name: string | null;
-  department_id: string;
-  department_name: string | null;
-  root_department_name: string | null;
   first_name: string;
   last_name: string;
   full_name: string;

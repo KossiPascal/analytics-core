@@ -1,28 +1,20 @@
 import { UserPlus, Edit2, Trash2 } from 'lucide-react';
 import { Table, type Column } from '@components/ui/Table/Table';
 import { Button } from '@components/ui/Button/Button';
-import { StatusBadge, RoleBadge } from '@components/ui/Badge/Badge';
-import type { User } from '@/models/OLD/old/auth.types';
+import { StatusBadge } from '@components/ui/Badge/Badge';
+import type { ApiUser } from '../../types';
 import shared from '@components/ui/styles/shared.module.css';
 
-interface UsersTableProps {
-  users: User[];
+interface Props {
+  users: ApiUser[];
   isLoading: boolean;
-  onEdit: (user: User) => void;
-  onDelete: (user: User) => void;
+  onEdit: (user: ApiUser) => void;
+  onDelete: (user: ApiUser) => void;
   onCreate: () => void;
-  getUserRoleNames: (user: User) => string;
 }
 
-export function UsersTable({
-  users,
-  isLoading,
-  onEdit,
-  onDelete,
-  onCreate,
-  getUserRoleNames,
-}: UsersTableProps) {
-  const columns: Column<User>[] = [
+export function UsersTable({ users, isLoading, onEdit, onDelete, onCreate }: Props) {
+  const columns: Column<ApiUser>[] = [
     {
       key: 'username',
       header: "Nom d'utilisateur",
@@ -34,41 +26,41 @@ export function UsersTable({
       header: 'Nom complet',
       sortable: true,
       searchable: true,
-      render: (user) => user.fullname || '-',
+      render: (u) => u.fullname || '-',
     },
     {
       key: 'email',
       header: 'Email',
       sortable: true,
       searchable: true,
-      render: (user) => user.email || '-',
+      render: (u) => u.email || '-',
     },
     {
       key: 'roles',
       header: 'Rôles',
-      render: (user) => <RoleBadge>{getUserRoleNames(user)}</RoleBadge>,
+      render: (u) => u.roles.length > 0 ? u.roles.join(', ') : '-',
       searchable: false,
     },
     {
-      key: 'isActive',
+      key: 'is_active',
       header: 'Statut',
       sortable: true,
       align: 'center',
-      render: (user) => <StatusBadge isActive={user.isActive} />,
+      render: (u) => <StatusBadge isActive={u.is_active} />,
       searchable: false,
     },
     {
       key: 'id',
       header: 'Actions',
       align: 'center',
-      render: (user) => (
+      render: (u) => (
         <div className={shared.actionsCell}>
-          <button className={shared.actionBtn} onClick={() => onEdit(user)} title="Modifier">
+          <button className={shared.actionBtn} onClick={() => onEdit(u)} title="Modifier">
             <Edit2 size={16} />
           </button>
           <button
             className={`${shared.actionBtn} ${shared.actionBtnDanger}`}
-            onClick={() => onDelete(user)}
+            onClick={() => onDelete(u)}
             title="Supprimer"
           >
             <Trash2 size={16} />
@@ -93,19 +85,12 @@ export function UsersTable({
 
   return (
     <Table
-      data={users as any}
-      columns={columns as any}
-      keyExtractor={(user: any) => user.id as string}
+      data={users}
+      columns={columns}
+      keyExtractor={(u) => u.id}
       isLoading={isLoading}
       emptyMessage="Aucun utilisateur trouvé"
-      features={{
-        search: true,
-        export: true,
-        pagination: true,
-        pageSize: true,
-        animate: true,
-        columnVisibility: true,
-      }}
+      features={{ search: true, export: true, pagination: true, pageSize: true, animate: true, columnVisibility: true }}
       searchPlaceholder="Rechercher un utilisateur..."
       exportFilename="utilisateurs"
       exportFormats={['csv', 'excel', 'json']}

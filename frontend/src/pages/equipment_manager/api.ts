@@ -188,9 +188,8 @@ export const employeesApi = {
   updatePosition: (id: string, data: Record<string, unknown>) => api.put<Position>(`${BASE}/employees/positions/${id}`, data),
 
   // Employees
-  getAll: (params?: { department_id?: string; tenant_id?: string; active?: string; search?: string }) => {
+  getAll: (params?: { tenant_id?: string; active?: string; search?: string }) => {
     const query = new URLSearchParams();
-    if (params?.department_id) query.set('department_id', params.department_id);
     if (params?.tenant_id)     query.set('tenant_id', params.tenant_id);
     if (params?.active)        query.set('active', params.active);
     if (params?.search)        query.set('search', params.search);
