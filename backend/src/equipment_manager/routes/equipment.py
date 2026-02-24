@@ -11,6 +11,7 @@ from backend.src.equipment_manager.models.equipment import (
     ACTIVE_STATUSES, INACTIVE_STATUSES, DECLARATION_ACTION_MAP,
 )
 from backend.src.equipment_manager.models.employees import Employee
+from backend.src.equipment_manager.routes.employees import get_allowed_employee_ids
 from backend.src.docs_generetor.pdf_generator import pdf_response
 from backend.src.logger import get_backend_logger
 
@@ -253,6 +254,17 @@ def list_equipment():
         query = query.filter_by(status=status)
     if eq_type:
         query = query.filter_by(equipment_type=eq_type)
+
+    # Restriction hiérarchique : si l'appelant a un poste, il ne voit que l'équipement de ses subordonnés
+    caller_position_id = g.current_user.get("position_id")
+    if caller_position_id:
+        allowed_ids = get_allowed_employee_ids(int(caller_position_id))
+        query = query.filter(
+            db.or_(
+                Equipment.owner_id.in_(allowed_ids),
+                Equipment.employee_id.in_(allowed_ids),
+            )
+        )
 
     equipment = query.order_by(Equipment.created_at.desc()).all()
     return jsonify([e.to_dict_safe() for e in equipment]), 200

@@ -221,6 +221,19 @@ class User(db.Model):
    
     def build_access_payload(self) -> dict:
         roles, permissions = self.permissions_roles()
+
+        # Lier l'employé associé à cet utilisateur (import local pour éviter les imports circulaires)
+        employee_id: str | None = None
+        position_id: str | None = None
+        try:
+            from backend.src.equipment_manager.models.employees import Employee as _Emp
+            emp = _Emp.query.filter_by(user_id=self.id).first()
+            if emp:
+                employee_id = str(emp.id)
+                position_id = str(emp.position_id) if emp.position_id else None
+        except Exception:
+            pass
+
         return {
             "id": str(self.id),
             "username": self.username,
@@ -229,6 +242,8 @@ class User(db.Model):
             "roles": roles,
             "permissions": permissions,
             "is_active": self.is_active,
+            "employee_id": employee_id,
+            "position_id": position_id,
             "token_type": "access",
             "ver": 1,  # token versioning
         }

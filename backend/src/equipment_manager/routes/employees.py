@@ -231,6 +231,29 @@ def _has_ancestor(position: "Position | None", ancestor_id: int) -> bool:
     return _has_ancestor(position.parent, ancestor_id)
 
 
+# ─── HELPER HIÉRARCHIE ───────────────────────────────────────────────────────
+
+def get_descendant_position_ids(root_position_id: int) -> list[int]:
+    """Retourne tous les IDs de postes dans le sous-arbre enraciné à root_position_id (inclusif)."""
+    visited: set[int] = set()
+    stack = [root_position_id]
+    while stack:
+        pid = stack.pop()
+        if pid in visited:
+            continue
+        visited.add(pid)
+        children = Position.query.filter_by(parent_id=pid).with_entities(Position.id).all()
+        stack.extend(c.id for c in children)
+    return list(visited)
+
+
+def get_allowed_employee_ids(caller_position_id: int) -> list[int]:
+    """Retourne les IDs de tous les employés dont le poste est un descendant du poste donné."""
+    pos_ids = get_descendant_position_ids(caller_position_id)
+    rows = Employee.query.filter(Employee.position_id.in_(pos_ids)).with_entities(Employee.id).all()
+    return [r.id for r in rows]
+
+
 # ─── EMPLOYEES ───────────────────────────────────────────────────────────────
 
 @bp.get("")
@@ -254,6 +277,12 @@ def list_employees():
                 Employee.employee_id_code.ilike(f"%{search}%"),
             )
         )
+
+    # Restriction hiérarchique : si l'appelant a un poste, il ne voit que ses subordonnés
+    caller_position_id = g.current_user.get("position_id")
+    if caller_position_id:
+        allowed_pos_ids = get_descendant_position_ids(int(caller_position_id))
+        query = query.filter(Employee.position_id.in_(allowed_pos_ids))
 
     employees = query.order_by(Employee.last_name, Employee.first_name).all()
     return jsonify([e.to_dict_safe() for e in employees]), 200

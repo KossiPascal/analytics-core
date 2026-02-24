@@ -10,6 +10,7 @@ from backend.src.equipment_manager.models.tickets import (
 )
 from backend.src.equipment_manager.models.equipment import Equipment
 from backend.src.equipment_manager.models.employees import Employee
+from backend.src.equipment_manager.routes.employees import get_allowed_employee_ids
 from backend.src.equipment_manager.services.ticket_workflow import (
     generate_ticket_number, validate_transition, get_next_stages,
 )
@@ -36,6 +37,12 @@ def list_tickets():
         query = query.filter_by(current_stage=stage)
     if search:
         query = query.filter(RepairTicket.ticket_number.ilike(f"%{search}%"))
+
+    # Restriction hiérarchique : si l'appelant a un poste, il ne voit que les tickets de ses subordonnés
+    caller_position_id = g.current_user.get("position_id")
+    if caller_position_id:
+        allowed_ids = get_allowed_employee_ids(int(caller_position_id))
+        query = query.filter(RepairTicket.employee_id.in_(allowed_ids))
 
     tickets = query.order_by(RepairTicket.created_at.desc()).all()
     return jsonify([t.to_dict_safe() for t in tickets]), 200

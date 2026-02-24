@@ -6,6 +6,10 @@ export interface PayloadUser {
     // roles: string[];
     mustChangeDefaultPassword:boolean
     permissions: string[]
+    /** ID de l'employé lié à ce compte (null si admin sans fiche employé) */
+    employee_id?: string | null;
+    /** ID du poste hiérarchique (null si admin sans poste → voit tout) */
+    position_id?: string | null;
     // Organization units (optional for filtered access)
     countries?: any[];
     regions?: any[];

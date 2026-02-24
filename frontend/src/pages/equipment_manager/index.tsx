@@ -3,28 +3,22 @@ import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { Card, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import {
-  LayoutDashboard, MapPin, Users, UserCheck, Smartphone, Ticket, Building2, RefreshCw,
+  LayoutDashboard, Smartphone, Ticket, Building2, RefreshCw,
 } from 'lucide-react';
 import { DashboardTab } from './components/dashboard/DashboardTab';
-import { LocationsTab } from './components/locations/LocationsTab';
-import { AscsTab } from './components/ascs/AscsTab';
-import { SupervisorsTab } from './components/supervisors/SupervisorsTab';
 import { EquipmentTab } from './components/equipment/EquipmentTab';
 import { TicketsTab } from './components/tickets/TicketsTab';
 import { EmployeesTab } from './components/employees/EmployeesTab';
 import styles from './EquipmentManager.module.css';
 import shared from '@components/ui/styles/shared.module.css';
 
-type TabType = 'dashboard' | 'locations' | 'ascs' | 'supervisors' | 'equipment' | 'tickets' | 'employees';
+type TabType = 'dashboard' | 'equipment' | 'tickets' | 'employees';
 
 const TABS: { key: TabType; label: string; icon: React.ReactNode }[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { key: 'locations', label: 'Localisations', icon: <MapPin size={18} /> },
-  { key: 'ascs', label: 'ASCs', icon: <Users size={18} /> },
-  { key: 'supervisors', label: 'Superviseurs', icon: <UserCheck size={18} /> },
+  { key: 'dashboard', label: 'Dashboard',   icon: <LayoutDashboard size={18} /> },
   { key: 'equipment', label: 'Equipements', icon: <Smartphone size={18} /> },
-  { key: 'tickets', label: 'Tickets', icon: <Ticket size={18} /> },
-  { key: 'employees', label: 'Employes', icon: <Building2 size={18} /> },
+  { key: 'tickets',   label: 'Tickets',     icon: <Ticket size={18} /> },
+  { key: 'employees', label: 'Employes',    icon: <Building2 size={18} /> },
 ];
 
 export default function EquipmentManagerPage() {
@@ -66,11 +60,8 @@ export default function EquipmentManagerPage() {
           {/* Tab Content */}
           <div className={styles.tabContent}>
             {activeTab === 'dashboard' && <DashboardTab key={refreshKey} />}
-            {activeTab === 'locations' && <LocationsTab key={refreshKey} />}
-            {activeTab === 'ascs' && <AscsTab key={refreshKey} />}
-            {activeTab === 'supervisors' && <SupervisorsTab key={refreshKey} />}
             {activeTab === 'equipment' && <EquipmentTab key={refreshKey} />}
-            {activeTab === 'tickets' && <TicketsTab key={refreshKey} />}
+            {activeTab === 'tickets'   && <TicketsTab key={refreshKey} />}
             {activeTab === 'employees' && <EmployeesTab key={refreshKey} />}
           </div>
         </CardBody>
