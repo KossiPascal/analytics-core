@@ -20,7 +20,7 @@ interface TableToolbarProps<T> {
   rightSection?: ReactNode;
 }
 
-export const TableToolbar = <T extends Record<string, unknown>>({
+export const TableToolbar = <T extends object>({
   searchValue = '',
   onSearchChange,
   searchPlaceholder,

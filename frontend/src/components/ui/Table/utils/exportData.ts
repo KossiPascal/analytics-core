@@ -2,7 +2,7 @@ import type { Column } from '../Table';
 
 export type ExportFormat = 'csv' | 'json' | 'excel';
 
-export const exportToCSV = <T extends Record<string, unknown>>(
+export const exportToCSV = <T extends object>(
   data: T[],
   columns: Column<T>[],
   filename: string = 'export'
@@ -16,7 +16,7 @@ export const exportToCSV = <T extends Record<string, unknown>>(
   // Créer les lignes
   const rows = data.map((item) =>
     columns.map((col) => {
-      const value = item[col.key];
+      const value = (item as Record<string, unknown>)[col.key];
       if (value === null || value === undefined) return '';
       // Échapper les guillemets et entourer de guillemets si nécessaire
       const stringValue = String(value);
@@ -34,7 +34,7 @@ export const exportToCSV = <T extends Record<string, unknown>>(
   downloadFile(csvContent, `${filename}.csv`, 'text/csv;charset=utf-8;');
 };
 
-export const exportToJSON = <T extends Record<string, unknown>>(
+export const exportToJSON = <T extends object>(
   data: T[],
   filename: string = 'export'
 ) => {
@@ -42,7 +42,7 @@ export const exportToJSON = <T extends Record<string, unknown>>(
   downloadFile(jsonContent, `${filename}.json`, 'application/json;charset=utf-8;');
 };
 
-export const exportToExcel = <T extends Record<string, unknown>>(
+export const exportToExcel = <T extends object>(
   data: T[],
   columns: Column<T>[],
   filename: string = 'export'
@@ -71,7 +71,7 @@ export const exportToExcel = <T extends Record<string, unknown>>(
   data.forEach((item) => {
     excelContent += '<Row>';
     columns.forEach((col) => {
-      const value = item[col.key];
+      const value = (item as Record<string, unknown>)[col.key];
       const stringValue = value === null || value === undefined ? '' : String(value);
       const type = typeof value === 'number' ? 'Number' : 'String';
       excelContent += `<Cell><Data ss:Type="${type}">${escapeXML(stringValue)}</Data></Cell>`;

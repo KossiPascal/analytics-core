@@ -167,7 +167,7 @@ export function EmployeeTransferModal({ isOpen, onClose, onSuccess, employee }: 
                 { value: '', label: 'Sélectionner un employé' },
                 ...eligibleTargets.map((e) => ({
                   value: e.id,
-                  label: `${e.full_name} (${e.employee_id_code})${e.department_name ? ` — ${e.department_name}` : ''}`,
+                  label: `${e.full_name} (${e.employee_id_code})${e.position_name ? ` — ${e.position_name}` : ''}`,
                 })),
               ]}
             />

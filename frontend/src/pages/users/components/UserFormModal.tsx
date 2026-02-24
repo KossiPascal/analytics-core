@@ -166,7 +166,7 @@ export function UserFormModal({ isOpen, onClose, onSuccess, editData }: Props) {
           label="Tenant"
           required
           value={tenantId}
-          onChange={(e) => setTenantId(e.target.value)}
+          onChange={(v) => setTenantId(v)}
           options={tenants.map((t) => ({ value: t.id, label: t.name }))}
           placeholder="Sélectionner un tenant"
         />

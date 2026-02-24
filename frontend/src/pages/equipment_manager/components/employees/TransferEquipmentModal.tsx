@@ -123,7 +123,7 @@ export function TransferEquipmentModal({ isOpen, onClose, onSuccess, equipment, 
             { value: '', label: 'Sélectionner un employé' },
             ...eligibleEmployees.map((e) => ({
               value: e.id,
-              label: `${e.full_name} (${e.employee_id_code})${e.department_name ? ` — ${e.department_name}` : ''}`,
+              label: `${e.full_name} (${e.employee_id_code})${e.position_name ? ` — ${e.position_name}` : ''}`,
             })),
           ]}
         />

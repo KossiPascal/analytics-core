@@ -13,7 +13,7 @@ interface ExportButtonsProps<T> {
   className?: string;
 }
 
-export const ExportButtons = <T extends Record<string, unknown>>({
+export const ExportButtons = <T extends object>({
   data,
   columns,
   filename = 'export',

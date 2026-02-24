@@ -77,7 +77,7 @@ function renderCell<T>(column: Column<T>, item: T, index: number): ReactNode {
   return (item as Record<string, unknown>)[column.key] as ReactNode;
 }
 
-export function Table<T extends Record<string, unknown>>({
+export function Table<T extends object>({
   data,
   columns,
   keyExtractor,
@@ -140,7 +140,7 @@ export function Table<T extends Record<string, unknown>>({
     return data.filter((item) =>
       columns.some((column) => {
         if (column.searchable === false) return false;
-        const value = item[column.key];
+        const value = (item as Record<string, unknown>)[column.key];
         if (value === null || value === undefined) return false;
         return String(value).toLowerCase().includes(query);
       })
@@ -150,8 +150,8 @@ export function Table<T extends Record<string, unknown>>({
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
     return [...filteredData].sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+      const aValue = (a as Record<string, unknown>)[sortConfig.key];
+      const bValue = (b as Record<string, unknown>)[sortConfig.key];
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;

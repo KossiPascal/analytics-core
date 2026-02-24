@@ -16,6 +16,7 @@ interface Props {
 
 export function EquipmentTable({ data, isLoading, onEdit, onView, onAssign, onGeneratePdf, onDeclare }: Props) {
   const columns: Column<Equipment>[] = [
+    { key: 'equipment_code', header: 'Code', render: (e) => e.equipment_code, sortable: true, searchable: true },
     { key: 'imei', header: 'IMEI', render: (e) => e.imei, sortable: true },
     { key: 'type', header: 'Type', render: (e) => e.category_name || e.equipment_type || '-' },
     { key: 'brand', header: 'Marque/Modele', render: (e) => `${e.brand_name || e.brand || ''} ${e.model_name}`.trim() },

@@ -44,7 +44,6 @@ export function EmployeeDetailModal({ isOpen, onClose, employeeId }: Props) {
         <div className={styles.detailGrid}>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Code</span><span className={styles.detailValue}>{employee.employee_id_code}</span></div>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Nom complet</span><span className={styles.detailValue}>{employee.full_name}</span></div>
-          <div className={styles.detailItem}><span className={styles.detailLabel}>Département</span><span className={styles.detailValue}>{employee.department_name || '-'}</span></div>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Poste</span><span className={styles.detailValue}>{employee.position_name || '-'}</span></div>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Genre</span><span className={styles.detailValue}>{employee.gender || '-'}</span></div>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Téléphone</span><span className={styles.detailValue}>{employee.phone || '-'}</span></div>
