@@ -104,6 +104,7 @@ class Employee(db.Model):
     __table_args__ = {'schema': 'em'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True, index=True)
     position_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id"), nullable=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True)
     first_name = db.Column(db.String(150), nullable=False)
@@ -119,6 +120,7 @@ class Employee(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     position_rel = db.relationship("Position", back_populates="employees", lazy="selectin")
+    tenant = db.relationship("Tenant", lazy="selectin", foreign_keys=[tenant_id])
     equipments = db.relationship("Equipment", back_populates="employee", lazy="selectin", foreign_keys="Equipment.employee_id")
     owned_equipments = db.relationship("Equipment", back_populates="owner", lazy="selectin", foreign_keys="Equipment.owner_id")
     history = db.relationship("EmployeeHistory", back_populates="employee", lazy="selectin", cascade="all, delete-orphan")
@@ -134,6 +136,8 @@ class Employee(db.Model):
         root = dept.root_department if dept else None
         return {
             "id": str(self.id),
+            "tenant_id": str(self.tenant_id) if self.tenant_id else None,
+            "tenant_name": self.tenant.name if self.tenant else None,
             "department_id": str(dept.id) if dept else None,
             "department_name": dept.name if dept else None,
             "root_department_name": root.name if root else None,

@@ -83,14 +83,19 @@ def init_database(app: Flask) -> None:
                                 "SELECT COUNT(*) FROM information_schema.tables "
                                 "WHERE table_schema = 'em' AND table_type = 'BASE TABLE'"
                             )).scalar()
-                            # Schéma vide (séquences orphelines) OU schéma obsolète
-                            # (table 'ascs' encore présente = avant migration ASC→Employee).
-                            # Dans les deux cas on recrée proprement.
+                            # Schéma vide, tables obsolètes (ascs/supervisors/zones_asc),
+                            # ou colonnes manquantes sur em.employees → recréation complète.
                             has_stale_tables = conn.execute(db.text(
                                 "SELECT COUNT(*) FROM information_schema.tables "
                                 "WHERE table_schema = 'em' AND table_name IN ('ascs','supervisors','zones_asc')"
                             )).scalar() > 0
-                            if table_count == 0 or has_stale_tables:
+                            # Nombre de colonnes attendues sur em.employees (tenant_id + user_id)
+                            missing_columns = conn.execute(db.text(
+                                "SELECT COUNT(*) FROM information_schema.columns "
+                                "WHERE table_schema = 'em' AND table_name = 'employees' "
+                                "AND column_name IN ('tenant_id', 'user_id')"
+                            )).scalar() < 2
+                            if table_count == 0 or has_stale_tables or missing_columns:
                                 conn.execute(db.text("DROP SCHEMA em CASCADE"))
                                 conn.execute(db.text("CREATE SCHEMA em"))
                                 conn.commit()

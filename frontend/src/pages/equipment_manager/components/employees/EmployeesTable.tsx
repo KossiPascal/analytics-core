@@ -16,6 +16,7 @@ export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive
   const columns: Column<Employee>[] = [
     { key: 'code', header: 'Code', render: (e) => e.employee_id_code, sortable: true },
     { key: 'name', header: 'Nom', render: (e) => e.full_name, sortable: true },
+    { key: 'tenant', header: 'Tenant', render: (e) => e.tenant_name || '-', sortable: true },
     { key: 'department', header: 'Departement', render: (e) => e.department_name || '-' },
     { key: 'position', header: 'Poste', render: (e) => e.position_name || '-' },
     { key: 'phone', header: 'Telephone', render: (e) => e.phone || '-' },

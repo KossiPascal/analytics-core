@@ -9,8 +9,11 @@ import { Save, Plus } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { employeesApi } from '../../api';
-import type { Employee, Department, Position } from '../../types';
+import { api } from '@/apis/api';
+import type { Employee, Department, Position, GeneratedCredentials } from '../../types';
 import { PositionFormModal } from './PositionFormModal';
+
+interface Tenant { id: string; name: string; }
 
 const VALIDATION_RULES = {
   firstName:    { required: true, message: 'Le prénom est requis' },
@@ -23,7 +26,7 @@ const VALIDATION_RULES = {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (credentials?: GeneratedCredentials, employeeName?: string, employeeId?: string) => void;
   editData?: Employee | null;
   departments: Department[];
   positions: Position[];
@@ -59,6 +62,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
   const [lastName, setLastName] = useState('');
   const [code, setCode] = useState('');
   const [departmentId, setDepartmentId] = useState('');
+  const [tenantId, setTenantId] = useState('');
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [gender, setGender] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -66,6 +71,13 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
   const [hireDate, setHireDate] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Charger la liste des tenants au montage
+  useEffect(() => {
+    api.get<Tenant[]>('/tenants').then((res) => {
+      if (res.success) setTenants(res.data ?? []);
+    });
+  }, []);
 
   const [posFormOpen, setPosFormOpen] = useState(false);
   const [localPositions, setLocalPositions] = useState<Position[]>([]);
@@ -92,6 +104,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
       setLastName(editData.last_name);
       setCode(editData.employee_id_code ?? '');
       setDepartmentId(editData.department_id);
+      setTenantId(editData.tenant_id ?? '');
       setGender(editData.gender);
       setPhone(editData.phone);
       setEmail(editData.email);
@@ -100,8 +113,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
       setNotes(editData.notes);
     } else {
       setFirstName(''); setLastName(''); setCode(''); setDepartmentId('');
-      setGender(''); setPhone(''); setEmail(''); setPositionId('');
-      setHireDate(''); setNotes('');
+      setTenantId(''); setGender(''); setPhone(''); setEmail('');
+      setPositionId(''); setHireDate(''); setNotes('');
     }
     setLocalPositions([]);
     reset();
@@ -120,6 +133,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
         first_name: firstName,
         last_name: lastName,
         employee_id_code: code.trim() || null,
+        tenant_id: tenantId || null,
         department_id: departmentId,
         gender,
         phone,
@@ -134,7 +148,9 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
 
       if (res.success) {
         toast.success(`Employé ${isEdit ? 'mis à jour' : 'créé'} avec succès`);
-        onSuccess(); onClose();
+        const creds = !isEdit ? (res.data as any)?.generated_credentials as GeneratedCredentials | undefined : undefined;
+        const empId = !isEdit ? (res.data as any)?.id as string | undefined : undefined;
+        onSuccess(creds, `${firstName} ${lastName}`, empId); onClose();
       } else {
         toast.error(res.message || 'Erreur');
       }
@@ -236,6 +252,17 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, depart
             </Button>
           </div>
         </div>
+
+        {/* Tenant */}
+        <FormSelect
+          label="Tenant (organisation)"
+          value={tenantId}
+          onChange={(v) => setTenantId(v)}
+          options={[
+            { value: '', label: '— Aucun —' },
+            ...tenants.map((t) => ({ value: t.id, label: t.name })),
+          ]}
+        />
 
         {/* Genre / Code (optionnel) */}
         <div className={shared.formRow}>

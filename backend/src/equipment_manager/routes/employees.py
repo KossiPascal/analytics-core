@@ -1,14 +1,52 @@
+import re
+import secrets
+import string
+import unicodedata
+
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy.exc import IntegrityError
 
 from backend.src.databases.extensions import db, error_response
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.employees import Department, Position, Employee, EmployeeHistory
+from backend.src.models.auth import Tenant, User
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("em_employees", __name__, url_prefix="/api/equipment/employees")
+
+
+# ─── HELPERS : génération de compte utilisateur ─────────────────────────────
+
+def _normalize(text: str) -> str:
+    """Minuscules + suppression des accents."""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', text.lower())
+        if unicodedata.category(c) != 'Mn'
+    )
+
+def _build_base_username(first_name: str, last_name: str, code: str | None) -> str:
+    """Username : lettres, chiffres, tirets et underscores uniquement."""
+    if code:
+        base = re.sub(r'[^a-z0-9_-]', '', _normalize(code).replace(' ', '_'))
+        if base:
+            return base
+    first = re.sub(r'[^a-z]', '', _normalize(first_name))[:10]
+    last  = re.sub(r'[^a-z]', '', _normalize(last_name))[:10]
+    return f"{first}_{last}" or "employe"
+
+def _unique_username(base: str) -> str:
+    username = base
+    counter  = 2
+    while User.query.filter_by(username=username).first():
+        username = f"{base}{counter}"
+        counter += 1
+    return username
+
+def _temp_password(length: int = 10) -> str:
+    alphabet = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
 # ─── DEPARTMENTS (self-referential: root + sub) ─────────────────────────────
@@ -201,9 +239,12 @@ def list_employees():
     query = Employee.query
 
     department_id = request.args.get("department_id")
+    tenant_id = request.args.get("tenant_id")
     active = request.args.get("active")
     search = request.args.get("search", "").strip()
 
+    if tenant_id:
+        query = query.filter(Employee.tenant_id == int(tenant_id))
     if department_id:
         dept_id = int(department_id)
         dept = Department.query.get(dept_id)
@@ -233,9 +274,9 @@ def list_employees():
 def create_employee():
     data = request.get_json(silent=True) or {}
 
-    first_name = data.get("first_name", "").strip()
-    last_name = data.get("last_name", "").strip()
-    phone = data.get("phone", "").strip()
+    first_name = (data.get("first_name") or "").strip()
+    last_name = (data.get("last_name") or "").strip()
+    phone = (data.get("phone") or "").strip()
     position_id = data.get("position_id")
     hire_date = data.get("hire_date")
 
@@ -252,39 +293,70 @@ def create_employee():
     if not pos:
         return error_response("Poste introuvable", 404)
 
+    # Tenant (optional)
+    tenant_id = data.get("tenant_id")
+    if tenant_id:
+        if not Tenant.query.filter_by(id=int(tenant_id), deleted=False).first():
+            return error_response("Tenant introuvable", 404)
+
     # employee_id_code is optional — use None if not provided
-    raw_code = data.get("employee_id_code", "").strip()
+    raw_code = (data.get("employee_id_code") or "").strip()
     employee_id_code = raw_code if raw_code else None
+
+    # Tenant pour le compte utilisateur : celui de l'employé, sinon celui de l'admin connecté
+    user_tenant_id = int(tenant_id) if tenant_id else None
+    if not user_tenant_id and g.current_user and g.current_user.get("tenant_id"):
+        user_tenant_id = int(g.current_user["tenant_id"])
+
+    email_val = (data.get("email") or "").strip() or None
 
     try:
         emp = Employee(
             first_name=first_name,
             last_name=last_name,
             employee_id_code=employee_id_code,
+            tenant_id=int(tenant_id) if tenant_id else None,
             position_id=pos.id,
-            gender=data.get("gender", ""),
+            gender=(data.get("gender") or ""),
             phone=phone,
-            email=data.get("email", "").strip(),
+            email=email_val or "",
             hire_date=hire_date or None,
             notes=data.get("notes", ""),
             is_active=True,
         )
         db.session.add(emp)
-        db.session.flush()
+        db.session.flush()  # emp.id disponible
 
-        # Log creation
-        user_id = int(g.current_user["id"]) if g.current_user else None
-        dept_id = pos.department_id
+        # ── Suggestion de credentials (compte créé par l'admin via create-account) ──
+        generated_credentials = None
+        if user_tenant_id:
+            base_username = _build_base_username(first_name, last_name, employee_id_code)
+            suggested_username = _unique_username(base_username)
+            suggested_password = _temp_password()
+            generated_credentials = {
+                "username": suggested_username,
+                "password": suggested_password,
+            }
+        else:
+            logger.warning("Employé créé sans tenant → suggestion de compte impossible.")
+
+        # ── Historique ──────────────────────────────────────────────────────
+        creator_id = int(g.current_user["id"]) if g.current_user else None
+        dept_id    = pos.department_id
         history = EmployeeHistory(
             employee_id=emp.id,
             action="CREATED",
             new_department_id=dept_id,
-            user_id=user_id,
+            user_id=creator_id,
             notes=f"Employé créé : {first_name} {last_name} — Poste : {pos.name}",
         )
         db.session.add(history)
         db.session.commit()
-        return jsonify(emp.to_dict_safe()), 201
+
+        result = emp.to_dict_safe()
+        if generated_credentials:
+            result["generated_credentials"] = generated_credentials
+        return jsonify(result), 201
 
     except IntegrityError:
         db.session.rollback()
@@ -321,7 +393,7 @@ def update_employee(id):
     user_id = int(g.current_user["id"]) if g.current_user else None
 
     # Validate required fields if provided
-    if "phone" in data and not data.get("phone", "").strip():
+    if "phone" in data and not (data.get("phone") or "").strip():
         return error_response("Le téléphone est requis", 400)
     if "position_id" in data and not data.get("position_id"):
         return error_response("Le poste est requis", 400)
@@ -329,6 +401,16 @@ def update_employee(id):
     for field in ("first_name", "last_name", "gender", "phone", "email", "notes"):
         if field in data:
             setattr(emp, field, data[field].strip() if isinstance(data[field], str) else data[field])
+
+    # Tenant
+    if "tenant_id" in data:
+        new_tenant_id = data["tenant_id"]
+        if new_tenant_id:
+            if not Tenant.query.filter_by(id=int(new_tenant_id), deleted=False).first():
+                return error_response("Tenant introuvable", 404)
+            emp.tenant_id = int(new_tenant_id)
+        else:
+            emp.tenant_id = None
 
     # employee_id_code is optional — store None if empty
     if "employee_id_code" in data:
@@ -380,10 +462,16 @@ def toggle_active(id):
 
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
-    notes = data.get("notes", "").strip()
-    action_date = data.get("action_date", "").strip()
+    notes = (data.get("notes") or "").strip()
+    action_date = (data.get("action_date") or "").strip()
 
     emp.is_active = not emp.is_active
+
+    # Synchroniser le compte utilisateur lié
+    if emp.user_id:
+        linked_user = User.query.get(emp.user_id)
+        if linked_user:
+            linked_user.is_active = emp.is_active
 
     action = "REACTIVATED" if emp.is_active else "DEACTIVATED"
     note_parts = []
@@ -402,3 +490,61 @@ def toggle_active(id):
     db.session.commit()
 
     return jsonify(emp.to_dict_safe()), 200
+
+
+# ─── CREATE ACCOUNT ──────────────────────────────────────────────────────────
+
+@bp.post("/<int:id>/create-account")
+@require_auth
+def create_account(id):
+    """Crée le compte utilisateur pour un employé (appelé après confirmation des credentials)."""
+    emp = Employee.query.get(id)
+    if not emp:
+        return error_response("Employé introuvable", 404)
+
+    if emp.user_id and User.query.get(emp.user_id):
+        return error_response("Un compte utilisateur existe déjà pour cet employé", 409)
+
+    data     = request.get_json(silent=True) or {}
+    username = (data.get("username") or "").strip()
+    password = (data.get("password") or "").strip()
+
+    if not username:
+        return error_response("Le nom d'utilisateur est requis", 400)
+    if not re.fullmatch(r'[a-zA-Z0-9_-]+', username):
+        return error_response("Le nom d'utilisateur ne peut contenir que des lettres, chiffres, tirets et underscores", 400)
+    if len(password) < 6:
+        return error_response("Le mot de passe doit contenir au moins 6 caractères", 400)
+
+    if User.query.filter_by(username=username).first():
+        return error_response("Ce nom d'utilisateur est déjà pris", 409)
+
+    # Tenant : celui de l'employé ou celui de l'admin connecté
+    tenant_id = emp.tenant_id
+    if not tenant_id and g.current_user and g.current_user.get("tenant_id"):
+        tenant_id = int(g.current_user["tenant_id"])
+    if not tenant_id:
+        return error_response("Impossible de déterminer le tenant pour ce compte", 400)
+
+    try:
+        user_account = User(
+            username=username,
+            fullname=emp.get_full_name(),
+            tenant_id=tenant_id,
+            email=emp.email or None,
+            phone=emp.phone or None,
+            is_active=True,
+            has_changed_default_password=False,
+        )
+        user_account.set_password(password)
+        db.session.add(user_account)
+        db.session.flush()
+
+        emp.user_id = user_account.id
+        db.session.commit()
+
+        return jsonify(emp.to_dict_safe()), 200
+
+    except IntegrityError:
+        db.session.rollback()
+        return error_response("Ce nom d'utilisateur ou email est déjà utilisé", 409)

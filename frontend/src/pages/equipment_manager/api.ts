@@ -188,11 +188,12 @@ export const employeesApi = {
   updatePosition: (id: string, data: Record<string, unknown>) => api.put<Position>(`${BASE}/employees/positions/${id}`, data),
 
   // Employees
-  getAll: (params?: { department_id?: string; active?: string; search?: string }) => {
+  getAll: (params?: { department_id?: string; tenant_id?: string; active?: string; search?: string }) => {
     const query = new URLSearchParams();
     if (params?.department_id) query.set('department_id', params.department_id);
-    if (params?.active) query.set('active', params.active);
-    if (params?.search) query.set('search', params.search);
+    if (params?.tenant_id)     query.set('tenant_id', params.tenant_id);
+    if (params?.active)        query.set('active', params.active);
+    if (params?.search)        query.set('search', params.search);
     const qs = query.toString();
     return api.get<Employee[]>(`${BASE}/employees${qs ? `?${qs}` : ''}`);
   },
@@ -200,6 +201,7 @@ export const employeesApi = {
   get: (id: string) => api.get<Employee & { history: import('./types').EmployeeHistory[]; equipments: Equipment[] }>(`${BASE}/employees/${id}`),
   update: (id: string, data: Record<string, unknown>) => api.put<Employee>(`${BASE}/employees/${id}`, data),
   toggleActive: (id: string, data?: { notes?: string; action_date?: string }) => api.patch<Employee>(`${BASE}/employees/${id}/toggle-active`, data),
+  createAccount: (id: string, data: { username: string; password: string }) => api.post<Employee>(`${BASE}/employees/${id}/create-account`, data),
 };
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────────

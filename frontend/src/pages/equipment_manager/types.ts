@@ -270,8 +270,16 @@ export interface Department {
   employees?: Employee[];
 }
 
+export interface GeneratedCredentials {
+  username: string;
+  password: string;
+}
+
 export interface Employee {
   id: string;
+  user_id: string | null;
+  tenant_id: string | null;
+  tenant_name: string | null;
   department_id: string;
   department_name: string | null;
   root_department_name: string | null;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Plus } from 'lucide-react';
 import { employeesApi } from '../../api';
-import type { Employee, Department, Position } from '../../types';
+import type { Employee, Department, Position, GeneratedCredentials } from '../../types';
 import { DepartmentsTable } from './DepartmentsTable';
 import { DepartmentFormModal } from './DepartmentFormModal';
 import { PositionsTable } from './PositionsTable';
@@ -12,6 +12,7 @@ import { EmployeeFormModal } from './EmployeeFormModal';
 import { EmployeeDetailModal } from './EmployeeDetailModal';
 import { EmployeeTransferModal } from './EmployeeTransferModal';
 import { ConfirmToggleEmployeeModal } from './ConfirmToggleEmployeeModal';
+import { CredentialsModal } from './CredentialsModal';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
@@ -35,6 +36,9 @@ export function EmployeesTab() {
   // Employee modal
   const [empFormOpen, setEmpFormOpen] = useState(false);
   const [empEditData, setEmpEditData] = useState<Employee | null>(null);
+  const [createdEmployeeName, setCreatedEmployeeName] = useState('');
+  const [createdEmployeeId, setCreatedEmployeeId] = useState<string | null>(null);
+  const [createdCredentials, setCreatedCredentials] = useState<GeneratedCredentials | null>(null);
   const [empDetailOpen, setEmpDetailOpen] = useState(false);
   const [empDetailId, setEmpDetailId] = useState<string | null>(null);
   const [empTransferOpen, setEmpTransferOpen] = useState(false);
@@ -155,11 +159,29 @@ export function EmployeesTab() {
       <EmployeeFormModal
         isOpen={empFormOpen}
         onClose={() => setEmpFormOpen(false)}
-        onSuccess={loadAll}
+        onSuccess={(creds, employeeName, employeeId) => {
+          loadAll();
+          if (creds && employeeId) {
+            setCreatedEmployeeName(employeeName ?? 'Nouvel employé');
+            setCreatedEmployeeId(employeeId);
+            setCreatedCredentials(creds);
+          }
+        }}
         editData={empEditData}
         departments={departments}
         positions={positions}
       />
+
+      {createdCredentials && createdEmployeeId && (
+        <CredentialsModal
+          isOpen={true}
+          onClose={() => { setCreatedCredentials(null); setCreatedEmployeeId(null); }}
+          credentials={createdCredentials}
+          employeeId={createdEmployeeId}
+          employeeName={createdEmployeeName}
+          onAccountCreated={loadAll}
+        />
+      )}
 
       <EmployeeDetailModal
         isOpen={empDetailOpen}
