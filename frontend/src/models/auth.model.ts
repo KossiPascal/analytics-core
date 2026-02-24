@@ -10,6 +10,8 @@ export interface PayloadUser {
     employee_id?: string | null;
     /** ID du poste hiérarchique (null si admin sans poste → voit tout) */
     position_id?: string | null;
+    /** Code du département du poste (ex: LOG, ETH, TIC) */
+    department_code?: string | null;
     // Organization units (optional for filtered access)
     countries?: any[];
     regions?: any[];

@@ -290,6 +290,90 @@ def send_ticket(id):
     return jsonify(ticket.to_dict_safe()), 200
 
 
+LOGISTICS_DEPT_CODES = {"LOG", "ETH", "TIC"}
+
+
+@bp.post("/<int:id>/receive-from-repairer")
+@require_auth
+def receive_from_repairer(id):
+    """
+    Action réservée Logistique/E-Santé/TIC : réceptionner l'équipement venant du réparateur
+    et déclarer son état (REPAIRED → retour lancé | COMPLETELY_DAMAGED → clôture).
+    """
+    ticket = RepairTicket.query.get(id)
+    if not ticket:
+        return error_response("Ticket not found", 404)
+
+    if ticket.current_stage != "RETURNING_LOGISTICS":
+        return error_response(
+            "Cette action n'est disponible qu'à l'étape Retour - Logistique.", 400
+        )
+
+    if ticket.current_holder_id is not None:
+        return error_response("Le ticket a déjà été réceptionné à cette étape.", 400)
+
+    # Vérification du département (LOG / ETH / TIC) ou admin
+    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_roles = set(g.current_user.get("roles", []))
+    is_admin = bool(user_roles & {"admin", "superadmin"})
+
+    if not is_admin:
+        position_id = g.current_user.get("position_id")
+        authorized = False
+        if position_id:
+            from backend.src.equipment_manager.models.employees import Position
+            pos = Position.query.get(int(position_id))
+            if pos and pos.department and pos.department.code in LOGISTICS_DEPT_CODES:
+                authorized = True
+        if not authorized:
+            return error_response(
+                "Accès réservé aux départements Logistique (LOG), E-Santé (ETH) ou TIC.", 403
+            )
+
+    data = request.get_json(silent=True) or {}
+    equipment_state = data.get("equipment_state", "").strip()
+    comment = data.get("comment", "").strip()
+
+    if equipment_state not in ("REPAIRED", "COMPLETELY_DAMAGED"):
+        return error_response(
+            "equipment_state doit être REPAIRED (réparé) ou COMPLETELY_DAMAGED (non récupérable).", 400
+        )
+
+    if equipment_state == "REPAIRED":
+        # Confirmer réception, équipement fonctionnel → processus de retour continue
+        ticket.current_holder_id = user_id
+        ticket.equipment.status = "FUNCTIONAL"
+
+        event = TicketEvent(
+            ticket_id=ticket.id,
+            event_type="RECEIVED",
+            user_id=user_id,
+            from_role=ticket.current_stage,
+            to_role=ticket.current_stage,
+            comment=comment or "Équipement réceptionné depuis le réparateur — état fonctionnel. Retour en cours.",
+        )
+        db.session.add(event)
+    else:
+        # Équipement non récupérable → clôture du ticket
+        ticket.status = "CLOSED"
+        ticket.closed_date = datetime.now(timezone.utc)
+        ticket.current_holder_id = user_id
+        ticket.equipment.status = "COMPLETELY_DAMAGED"
+
+        event = TicketEvent(
+            ticket_id=ticket.id,
+            event_type="CLOSED",
+            user_id=user_id,
+            from_role=ticket.current_stage,
+            to_role=ticket.current_stage,
+            comment=comment or "Équipement non récupérable — complètement endommagé. Ticket clôturé.",
+        )
+        db.session.add(event)
+
+    db.session.commit()
+    return jsonify(ticket.to_dict_safe()), 200
+
+
 @bp.post("/<int:id>/mark-repaired")
 @require_auth
 def mark_repaired(id):

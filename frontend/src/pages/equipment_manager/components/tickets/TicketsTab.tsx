@@ -10,6 +10,7 @@ import { TicketCreateModal } from './TicketCreateModal';
 import { TicketDetailModal } from './TicketDetailModal';
 import { TicketSendModal } from './TicketSendModal';
 import { TicketReceiveModal } from './TicketReceiveModal';
+import { TicketReceiveFromRepairerModal } from './TicketReceiveFromRepairerModal';
 import { TicketRepairModal } from './TicketRepairModal';
 import { TicketCancelModal } from './TicketCancelModal';
 import { ProblemTypesManager } from './ProblemTypesManager';
@@ -34,6 +35,8 @@ export function TicketsTab() {
   const [sendId, setSendId] = useState<string | null>(null);
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [receiveId, setReceiveId] = useState<string | null>(null);
+  const [receiveFromRepairerOpen, setReceiveFromRepairerOpen] = useState(false);
+  const [receiveFromRepairerId, setReceiveFromRepairerId] = useState<string | null>(null);
   const [repairOpen, setRepairOpen] = useState(false);
   const [repairId, setRepairId] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -119,6 +122,7 @@ export function TicketsTab() {
             onView={(t) => { setDetailId(t.id); setDetailOpen(true); }}
             onSend={(id) => { setSendId(id); setSendOpen(true); }}
             onReceive={(id) => { setReceiveId(id); setReceiveOpen(true); }}
+            onReceiveFromRepairer={(id) => { setReceiveFromRepairerId(id); setReceiveFromRepairerOpen(true); }}
             onRepair={(id) => { setRepairId(id); setRepairOpen(true); }}
             onCancel={(id) => { setCancelId(id); setCancelOpen(true); }}
           />
@@ -138,12 +142,14 @@ export function TicketsTab() {
         onAction={handleActionDone}
         onSend={(id) => { setSendId(id); setSendOpen(true); }}
         onReceive={(id) => { setReceiveId(id); setReceiveOpen(true); }}
+        onReceiveFromRepairer={(id) => { setReceiveFromRepairerId(id); setReceiveFromRepairerOpen(true); }}
         onRepair={(id) => { setRepairId(id); setRepairOpen(true); }}
         onCancel={(id) => { setCancelId(id); setCancelOpen(true); }}
       />
 
       <TicketSendModal isOpen={sendOpen} onClose={() => setSendOpen(false)} onSuccess={handleActionDone} ticketId={sendId} />
       <TicketReceiveModal isOpen={receiveOpen} onClose={() => setReceiveOpen(false)} onSuccess={handleActionDone} ticketId={receiveId} />
+      <TicketReceiveFromRepairerModal isOpen={receiveFromRepairerOpen} onClose={() => setReceiveFromRepairerOpen(false)} onSuccess={handleActionDone} ticketId={receiveFromRepairerId} />
       <TicketRepairModal isOpen={repairOpen} onClose={() => setRepairOpen(false)} onSuccess={handleActionDone} ticketId={repairId} />
       <TicketCancelModal isOpen={cancelOpen} onClose={() => setCancelOpen(false)} onSuccess={handleActionDone} ticketId={cancelId} />
     </div>

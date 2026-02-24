@@ -4,7 +4,7 @@ import { Button } from '@components/ui/Button/Button';
 import { Badge } from '@components/ui/Badge/Badge';
 import { Spinner } from '@components/ui/Spinner/Spinner';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
-import { Send, CheckCircle, ArrowRight, XCircle, MessageCircle, Wrench } from 'lucide-react';
+import { Send, CheckCircle, ArrowRight, XCircle, MessageCircle, Wrench, PackageCheck } from 'lucide-react';
 import { ticketsApi } from '../../api';
 import type { RepairTicket, TicketEvent, TicketComment, Issue } from '../../types';
 import { STATUS_LABELS, STAGE_LABELS } from '../../types';
@@ -13,6 +13,8 @@ import styles from '../../EquipmentManager.module.css';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 
+const LOGISTICS_DEPT_CODES = ['LOG', 'ETH', 'TIC'];
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -20,6 +22,7 @@ interface Props {
   onAction: () => void;
   onSend: (ticketId: string) => void;
   onReceive: (ticketId: string) => void;
+  onReceiveFromRepairer: (ticketId: string) => void;
   onRepair: (ticketId: string) => void;
   onCancel: (ticketId: string) => void;
 }
@@ -32,8 +35,9 @@ const EVENT_CLASS: Record<string, string> = {
   CREATED: 'created', SENT: 'sent', RECEIVED: 'received', REPAIRED: 'repaired', CANCELLED: 'cancelled',
 };
 
-export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend, onReceive, onRepair, onCancel }: Props) {
+export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend, onReceive, onReceiveFromRepairer, onRepair, onCancel }: Props) {
   const { user, isAdmin } = useAuth();
+  const isLogisticsDept = isAdmin || LOGISTICS_DEPT_CODES.includes(user?.department_code ?? '');
   const [ticket, setTicket] = useState<(RepairTicket & { events: TicketEvent[]; comments: TicketComment[]; issues: Issue[] }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
@@ -72,12 +76,16 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
   const isHolder   = ticket?.current_holder_id === user?.id;
   const isCreator  = ticket?.created_by_id === user?.id;
 
-  const showReceive = canAct && !hasHolder;
+  const showReceiveFromRepairer = canAct && !hasHolder
+    && ticket?.current_stage === 'RETURNING_LOGISTICS'
+    && isLogisticsDept;
+  const showReceive = canAct && !hasHolder && ticket?.current_stage !== 'RETURNING_LOGISTICS';
   const showSend    = canAct && hasHolder && (isAdmin || isHolder) && ticket?.current_stage !== 'RETURNED_ASC';
   const showRepair  = canAct && hasHolder && (isAdmin || isHolder)
     && ['REPAIRER', 'ESANTE'].includes(ticket?.current_stage ?? '')
     && ticket?.status === 'IN_PROGRESS';
   const showCancel  = canAct && (isAdmin || isHolder || isCreator);
+
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={ticket ? `Ticket ${ticket.ticket_number}` : 'Detail Ticket'} size="xl">
@@ -125,10 +133,15 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
           )}
 
           {/* Actions */}
-          {(showReceive || showSend || showRepair || showCancel) && (
+          {(showReceiveFromRepairer || showReceive || showSend || showRepair || showCancel) && (
             <>
               <h4 className={styles.sectionTitle}>Actions</h4>
               <div className={shared.buttonGroup}>
+                {showReceiveFromRepairer && (
+                  <Button variant="primary" size="sm" onClick={() => onReceiveFromRepairer(ticket!.id)}>
+                    <PackageCheck size={16} /> Réceptionner depuis réparateur
+                  </Button>
+                )}
                 {showReceive && (
                   <Button variant="primary" size="sm" onClick={() => onReceive(ticket!.id)}>
                     <CheckCircle size={16} /> Confirmer réception
