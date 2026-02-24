@@ -404,6 +404,7 @@ export interface TicketEvent {
   from_role_label: string;
   to_role_label: string;
   user_id: string | null;
+  user_name: string | null;
   timestamp: string | null;
   comment: string;
   attachment_path: string;
@@ -413,6 +414,7 @@ export interface TicketComment {
   id: string;
   ticket_id: string;
   user_id: string | null;
+  user_name: string | null;
   comment: string;
   created_at: string | null;
 }

@@ -1,6 +1,6 @@
 """
 Email notification service for equipment manager tickets.
-Uses SMTP via environment variables.
+Uses SMTP via environment variables (read at call time, not at import).
 """
 import os
 import smtplib
@@ -10,14 +10,6 @@ from email.mime.multipart import MIMEMultipart
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
-
-# SMTP config from env
-SMTP_HOST = os.environ.get("SMTP_HOST", "")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "")
-SMTP_PASS = os.environ.get("SMTP_PASS", "")
-SMTP_FROM = os.environ.get("SMTP_FROM", SMTP_USER)
-SITE_URL = os.environ.get("SITE_URL", "http://localhost:5000")
 
 # Stage -> role mapping for email recipients
 STAGE_ROLE_MAP = {
@@ -32,19 +24,33 @@ STAGE_ROLE_MAP = {
 }
 
 
+def _get_smtp_config():
+    """Read SMTP config from env at call time (after load_dotenv has run)."""
+    host = os.environ.get("EMAIL_HOST", os.environ.get("SMTP_HOST", ""))
+    port = int(os.environ.get("EMAIL_PORT", os.environ.get("SMTP_PORT", "587")))
+    user = os.environ.get("EMAIL_HOST_USER", os.environ.get("SMTP_USER", ""))
+    password = os.environ.get("EMAIL_HOST_PASSWORD", os.environ.get("SMTP_PASS", ""))
+    from_addr = os.environ.get("DEFAULT_FROM_EMAIL", os.environ.get("SMTP_FROM", user))
+    use_tls = os.environ.get("EMAIL_USE_TLS", "True").lower() not in ("false", "0", "no")
+    site_url = os.environ.get("SITE_URL", "http://localhost:8000")
+    return host, port, user, password, from_addr, use_tls, site_url
+
+
 def _build_smtp_connection():
     """Create an SMTP connection. Returns None if not configured."""
-    if not SMTP_HOST or not SMTP_USER:
-        logger.warning("SMTP not configured, skipping email send")
-        return None
+    host, port, user, password, _, use_tls, _ = _get_smtp_config()
+    if not host or not user:
+        logger.warning("SMTP not configured (EMAIL_HOST / EMAIL_HOST_USER manquants)")
+        return None, None
     try:
-        server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASS)
-        return server
+        server = smtplib.SMTP(host, port)
+        if use_tls:
+            server.starttls()
+        server.login(user, password)
+        return server, None
     except Exception as e:
         logger.error(f"SMTP connection failed: {e}")
-        return None
+        return None, str(e)
 
 
 def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment=""):
@@ -60,13 +66,25 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
     Returns:
         bool: True if email sent successfully
     """
-    if not SMTP_HOST:
+    host, _, _, _, from_addr, _, site_url = _get_smtp_config()
+
+    if not host:
         logger.info("SMTP not configured, skipping ticket notification email")
+        return False
+
+    if not recipient_email:
+        logger.warning(f"No recipient email for ticket {ticket.ticket_number}")
         return False
 
     try:
         from backend.src.equipment_manager.models.tickets import RepairTicket
         stage_label = RepairTicket.STAGE_LABELS.get(to_role, to_role)
+
+        employee_name = ticket.employee.get_full_name() if ticket.employee else ""
+        equipment_info = (
+            f"{ticket.equipment.brand} {ticket.equipment.model_name} ({ticket.equipment.imei})"
+            if ticket.equipment else ""
+        )
 
         subject = f"[IH Equipment Manager] Nouveau ticket a traiter - {ticket.ticket_number}"
 
@@ -83,11 +101,11 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
                 </tr>
                 <tr>
                     <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Equipement</strong></td>
-                    <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.equipment.brand} {ticket.equipment.model_name} ({ticket.equipment.imei})</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">{equipment_info}</td>
                 </tr>
                 <tr style="background: #f8f9fa;">
                     <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Employe</strong></td>
-                    <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.employee.get_full_name() if ticket.employee else ""}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">{employee_name}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Destination</strong></td>
@@ -102,7 +120,7 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
             {"<p><strong>Commentaire :</strong> " + comment + "</p>" if comment else ""}
 
             <p style="margin-top: 20px;">
-                <a href="{SITE_URL}/equipment/tickets/{ticket.id}"
+                <a href="{site_url}/equipment/tickets/{ticket.id}"
                    style="background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
                     Voir le ticket
                 </a>
@@ -113,19 +131,15 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = SMTP_FROM
-        msg["To"] = recipient_email or ""
+        msg["From"] = from_addr
+        msg["To"] = recipient_email
         msg.attach(MIMEText(html_body, "html"))
 
-        if not recipient_email:
-            logger.warning(f"No recipient email for ticket {ticket.ticket_number}")
-            return False
-
-        server = _build_smtp_connection()
+        server, _ = _build_smtp_connection()
         if not server:
             return False
 
-        server.sendmail(SMTP_FROM, [recipient_email], msg.as_string())
+        server.sendmail(from_addr, [recipient_email], msg.as_string())
         server.quit()
 
         logger.info(f"Ticket notification sent for {ticket.ticket_number} to {recipient_email}")
@@ -148,7 +162,9 @@ def send_delay_alert(ticket, recipients, stage, days):
     Returns:
         bool: True if email sent successfully
     """
-    if not SMTP_HOST or not recipients:
+    host, _, _, _, from_addr, _, _ = _get_smtp_config()
+
+    if not host or not recipients:
         return False
 
     try:
@@ -158,6 +174,12 @@ def send_delay_alert(ticket, recipients, stage, days):
         subject = f"[ALERTE] Ticket {ticket.ticket_number} - {days} jours a l'etape {stage_label}"
 
         color = "#e74c3c" if days > 14 else "#f39c12"
+
+        employee_name = ticket.employee.get_full_name() if ticket.employee else ""
+        equipment_info = (
+            f"{ticket.equipment.brand} {ticket.equipment.model_name} ({ticket.equipment.imei})"
+            if ticket.equipment else ""
+        )
 
         html_body = f"""
         <html>
@@ -173,11 +195,11 @@ def send_delay_alert(ticket, recipients, stage, days):
                 <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                     <tr style="background: #f8f9fa;">
                         <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Equipement</strong></td>
-                        <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.equipment.brand} {ticket.equipment.model_name} ({ticket.equipment.imei})</td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">{equipment_info}</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Employe</strong></td>
-                        <td style="padding: 8px; border: 1px solid #dee2e6;">{ticket.employee.get_full_name() if ticket.employee else ""}</td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">{employee_name}</td>
                     </tr>
                     <tr style="background: #f8f9fa;">
                         <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Jours dans l'etape</strong></td>
@@ -193,15 +215,15 @@ def send_delay_alert(ticket, recipients, stage, days):
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = SMTP_FROM
+        msg["From"] = from_addr
         msg["To"] = ", ".join(recipients)
         msg.attach(MIMEText(html_body, "html"))
 
-        server = _build_smtp_connection()
+        server, _ = _build_smtp_connection()
         if not server:
             return False
 
-        server.sendmail(SMTP_FROM, recipients, msg.as_string())
+        server.sendmail(from_addr, recipients, msg.as_string())
         server.quit()
 
         logger.info(f"Delay alert sent for {ticket.ticket_number} ({days} days at {stage})")

@@ -108,12 +108,22 @@ class RepairTicket(db.Model):
         return 0
 
     def is_blocked(self):
-        sorted_events = sorted(self.events, key=lambda e: e.timestamp, reverse=True)
-        if sorted_events and sorted_events[0].event_type == "RECEIVED":
-            for ev in sorted_events:
-                if ev.event_type == "SENT" and ev.timestamp > sorted_events[0].timestamp:
-                    return False
-            return True
+        """
+        Un ticket est bloqué si la dernière action est RECEIVED mais qu'il n'y a
+        eu aucun SENT depuis ce RECEIVED (ticket confirmé mais pas renvoyé).
+        On compare les timestamps dans l'ordre chronologique.
+        """
+        events_asc = sorted(self.events, key=lambda e: e.timestamp)
+        last_received_ts = None
+        last_sent_ts = None
+        for ev in events_asc:
+            if ev.event_type == "RECEIVED":
+                last_received_ts = ev.timestamp
+            elif ev.event_type == "SENT":
+                last_sent_ts = ev.timestamp
+        # Bloqué uniquement si reçu ET jamais renvoyé après réception
+        if last_received_ts and (last_sent_ts is None or last_sent_ts < last_received_ts):
+            return False  # Reçu mais pas encore envoyé = normal, pas bloqué
         return False
 
     def to_dict_safe(self):
@@ -193,6 +203,7 @@ class TicketEvent(db.Model):
     attachment_path = db.Column(db.String(500), default="")
 
     ticket = db.relationship("RepairTicket", back_populates="events", lazy="selectin")
+    user = db.relationship("User", foreign_keys=[user_id], lazy="selectin")
 
     def to_dict_safe(self):
         return {
@@ -204,6 +215,7 @@ class TicketEvent(db.Model):
             "from_role_label": RepairTicket.STAGE_LABELS.get(self.from_role, self.from_role),
             "to_role_label": RepairTicket.STAGE_LABELS.get(self.to_role, self.to_role),
             "user_id": str(self.user_id) if self.user_id else None,
+            "user_name": (self.user.fullname or self.user.username) if self.user else None,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "comment": self.comment,
             "attachment_path": self.attachment_path,
@@ -224,12 +236,14 @@ class TicketComment(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     ticket = db.relationship("RepairTicket", back_populates="comments", lazy="selectin")
+    user = db.relationship("User", foreign_keys=[user_id], lazy="selectin")
 
     def to_dict_safe(self):
         return {
             "id": str(self.id),
             "ticket_id": str(self.ticket_id),
             "user_id": str(self.user_id) if self.user_id else None,
+            "user_name": (self.user.fullname or self.user.username) if self.user else None,
             "comment": self.comment,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

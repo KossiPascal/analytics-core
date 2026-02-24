@@ -100,16 +100,11 @@ export function TicketsTable({ data, isLoading, onView, onSend, onReceive, onRep
             label: 'Envoyer',
             icon: <ArrowRight size={15} />,
             onClick: () => onSend(t.id),
-            // Ticket bloqué : visible mais désactivé avec explication
-            disabled: t.is_blocked,
-            title: t.is_blocked ? 'Ticket bloqué — résoudre le blocage avant d\'envoyer' : undefined,
           }] : []),
           ...(showRepair ? [{
             label: 'Marquer réparé',
             icon: <Wrench size={15} />,
             onClick: () => onRepair(t.id),
-            disabled: t.is_blocked,
-            title: t.is_blocked ? 'Ticket bloqué — résoudre le blocage avant de marquer réparé' : undefined,
           }] : []),
           ...(showCancel ? [{
             label: 'Annuler',

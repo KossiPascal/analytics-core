@@ -190,6 +190,22 @@ def receive_ticket(id):
 
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
+    user_roles = set(g.current_user.get("roles", []))
+    is_admin = bool(user_roles & {"admin", "superadmin"})
+
+    # Find the last SENT event to identify who sent the ticket
+    last_sent = (
+        TicketEvent.query
+        .filter_by(ticket_id=ticket.id, event_type="SENT")
+        .order_by(TicketEvent.timestamp.desc())
+        .first()
+    )
+
+    # Block the sender from confirming their own dispatch (only admin can bypass)
+    if last_sent and last_sent.user_id == user_id and not is_admin:
+        return error_response(
+            "Vous ne pouvez pas confirmer la réception d'un ticket que vous venez d'envoyer.", 403
+        )
 
     event = TicketEvent(
         ticket_id=ticket.id,

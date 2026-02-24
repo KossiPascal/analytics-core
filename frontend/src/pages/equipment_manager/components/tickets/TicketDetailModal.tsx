@@ -71,7 +71,6 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
   const hasHolder  = !!ticket?.current_holder_id;
   const isHolder   = ticket?.current_holder_id === user?.id;
   const isCreator  = ticket?.created_by_id === user?.id;
-  const isBlocked  = !!ticket?.is_blocked;
 
   const showReceive = canAct && !hasHolder;
   const showSend    = canAct && hasHolder && (isAdmin || isHolder) && ticket?.current_stage !== 'RETURNED_ASC';
@@ -129,11 +128,6 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
           {(showReceive || showSend || showRepair || showCancel) && (
             <>
               <h4 className={styles.sectionTitle}>Actions</h4>
-              {isBlocked && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-error)', marginBottom: '0.5rem' }}>
-                  ⚠ Ticket bloqué — Envoyer et Marquer réparé sont désactivés jusqu'à résolution du blocage.
-                </p>
-              )}
               <div className={shared.buttonGroup}>
                 {showReceive && (
                   <Button variant="primary" size="sm" onClick={() => onReceive(ticket!.id)}>
@@ -141,14 +135,12 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
                   </Button>
                 )}
                 {showSend && (
-                  <Button variant="secondary" size="sm" onClick={() => onSend(ticket!.id)} disabled={isBlocked}
-                    title={isBlocked ? "Ticket bloqué — résoudre le blocage avant d'envoyer" : undefined}>
+                  <Button variant="secondary" size="sm" onClick={() => onSend(ticket!.id)}>
                     <ArrowRight size={16} /> Envoyer
                   </Button>
                 )}
                 {showRepair && (
-                  <Button variant="success" size="sm" onClick={() => onRepair(ticket!.id)} disabled={isBlocked}
-                    title={isBlocked ? "Ticket bloqué — résoudre le blocage avant de marquer réparé" : undefined}>
+                  <Button variant="success" size="sm" onClick={() => onRepair(ticket!.id)}>
                     <Wrench size={16} /> Marquer réparé
                   </Button>
                 )}
@@ -170,7 +162,14 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
                   <div key={ev.id} className={`${styles.timelineItem} ${styles[EVENT_CLASS[ev.event_type] || ''] || ''}`}>
                     <div className={styles.timelineContent}>
                       <span className={styles.timelineTitle}>
-                        {ev.event_type} — {ev.from_role_label} → {ev.to_role_label}
+                        {ev.event_type === 'SENT' && `Envoyé par ${ev.user_name || '—'} : ${ev.from_role_label} → ${ev.to_role_label}`}
+                        {ev.event_type === 'RECEIVED' && `Reçu par ${ev.user_name || '—'} à l'étape ${ev.to_role_label}`}
+                        {ev.event_type === 'CREATED' && `Créé par ${ev.user_name || '—'}`}
+                        {ev.event_type === 'REPAIRED' && `Réparé par ${ev.user_name || '—'}`}
+                        {ev.event_type === 'CANCELLED' && `Annulé par ${ev.user_name || '—'}`}
+                        {!['SENT','RECEIVED','CREATED','REPAIRED','CANCELLED'].includes(ev.event_type) && (
+                          `${ev.event_type} — ${ev.from_role_label} → ${ev.to_role_label}${ev.user_name ? ` (${ev.user_name})` : ''}`
+                        )}
                       </span>
                       <span className={styles.timelineTime}>
                         {ev.timestamp ? new Date(ev.timestamp).toLocaleString('fr') : '-'}
@@ -189,7 +188,7 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
             {ticket.comments?.map((c) => (
               <div key={c.id} className={styles.commentItem}>
                 <div className={styles.commentHeader}>
-                  <span>Utilisateur #{c.user_id}</span>
+                  <span>{c.user_name || `Utilisateur #${c.user_id}`}</span>
                   <span>{c.created_at ? new Date(c.created_at).toLocaleString('fr') : ''}</span>
                 </div>
                 <div className={styles.commentText}>{c.comment}</div>
