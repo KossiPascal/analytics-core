@@ -9,7 +9,7 @@ from backend.src.equipment_manager.models.tickets import (
     DelayAlertRecipient, DelayAlertLog,
 )
 from backend.src.equipment_manager.models.equipment import Equipment
-from backend.src.equipment_manager.models.employees import Employee
+from backend.src.equipment_manager.models.employees import Employee, Position
 from backend.src.equipment_manager.routes.employees import get_allowed_employee_ids
 from backend.src.equipment_manager.services.ticket_workflow import (
     generate_ticket_number, validate_transition, get_next_stages,
@@ -57,6 +57,7 @@ def create_ticket():
     employee_id = data.get("employee_id") or data.get("asc_id")
     problem_description = data.get("problem_description", "").strip()
     problem_type_ids = data.get("problem_type_ids", [])
+    initial_send_date_str = data.get("initial_send_date", "").strip()
 
     if not equipment_id or not problem_description:
         return error_response("equipment_id and problem_description are required", 400)
@@ -83,6 +84,15 @@ def create_ticket():
 
     user_id = int(g.current_user["id"]) if g.current_user else None
 
+    from datetime import date as _date
+    initial_send_date = datetime.now(timezone.utc)
+    if initial_send_date_str:
+        try:
+            parsed = _date.fromisoformat(initial_send_date_str)
+            initial_send_date = datetime(parsed.year, parsed.month, parsed.day, tzinfo=timezone.utc)
+        except ValueError:
+            pass
+
     try:
         ticket = RepairTicket(
             ticket_number=generate_ticket_number(),
@@ -90,6 +100,7 @@ def create_ticket():
             employee_id=employee.id,
             created_by_id=user_id,
             initial_problem_description=problem_description,
+            initial_send_date=initial_send_date,
             current_stage="SUPERVISOR",
             current_holder_id=user_id,
         )
@@ -143,6 +154,33 @@ def get_ticket(id):
     return jsonify(result), 200
 
 
+@bp.get("/<int:id>/candidates")
+@require_auth
+def ticket_candidates(id):
+    """Return next stages + all active employees for this ticket's send form."""
+    ticket = RepairTicket.query.get(id)
+    if not ticket:
+        return error_response("Ticket not found", 404)
+
+    next_stages = get_next_stages(ticket.current_stage)
+    is_final = next_stages == ["RETURNED_ASC"]
+
+    employees = []
+    if not is_final:
+        employees = (
+            Employee.query
+            .filter(Employee.is_active == True)
+            .order_by(Employee.last_name, Employee.first_name)
+            .all()
+        )
+
+    return jsonify({
+        "is_final": is_final,
+        "next_stages": next_stages,
+        "employees": [e.to_dict_safe() for e in employees],
+    }), 200
+
+
 @bp.post("/<int:id>/receive")
 @require_auth
 def receive_ticket(id):
@@ -180,7 +218,15 @@ def send_ticket(id):
     data = request.get_json(silent=True) or {}
     to_role = data.get("to_role", "").strip()
     comment = data.get("comment", "")
-    recipient_email = data.get("recipient_email", "")
+    recipient_employee_id = data.get("recipient_employee_id")
+
+    # Resolve recipient email: prefer explicitly chosen recipient, fallback to ticket owner
+    recipient_email = ""
+    if recipient_employee_id:
+        dest_emp = Employee.query.get(int(recipient_employee_id))
+        recipient_email = (dest_emp.email or "").strip() if dest_emp else ""
+    elif ticket.employee:
+        recipient_email = (ticket.employee.email or "").strip()
 
     if not to_role:
         return error_response("to_role is required", 400)

@@ -99,7 +99,7 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
           {/* Detail grid */}
           <div className={styles.detailGrid}>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Equipement</span><span className={styles.detailValue}>{ticket.equipment_brand} {ticket.equipment_model} ({ticket.equipment_imei})</span></div>
-            <div className={styles.detailItem}><span className={styles.detailLabel}>ASC</span><span className={styles.detailValue}>{ticket.asc_name}</span></div>
+            <div className={styles.detailItem}><span className={styles.detailLabel}>Propriétaire</span><span className={styles.detailValue}>{ticket.employee_name}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Date creation</span><span className={styles.detailValue}>{ticket.created_at ? new Date(ticket.created_at).toLocaleDateString('fr') : '-'}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Jours a l'etape</span><span className={styles.detailValue}>{ticket.days_at_current_stage}j</span></div>
           </div>

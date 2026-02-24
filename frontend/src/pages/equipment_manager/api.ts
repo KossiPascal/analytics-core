@@ -155,8 +155,9 @@ export const ticketsApi = {
   },
   create: (data: Record<string, unknown>) => api.post<RepairTicket>(`${BASE}/tickets`, data),
   get: (id: string) => api.get<RepairTicket & { events: import('./types').TicketEvent[]; comments: TicketComment[]; issues: import('./types').Issue[] }>(`${BASE}/tickets/${id}`),
+  getCandidates: (id: string) => api.get<{ is_final: boolean; next_stages: string[]; employees: import('./types').Employee[] }>(`${BASE}/tickets/${id}/candidates`),
   receive: (id: string, data?: { comment?: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/receive`, data),
-  send: (id: string, data: { to_role: string; comment?: string; recipient_email?: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/send`, data),
+  send: (id: string, data: { to_role: string; comment?: string; recipient_employee_id?: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/send`, data),
   markRepaired: (id: string, data: { resolution_notes: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/mark-repaired`, data),
   cancel: (id: string, data: { cancellation_reason: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/cancel`, data),
   addComment: (id: string, data: { comment: string }) => api.post<TicketComment>(`${BASE}/tickets/${id}/comment`, data),
@@ -188,11 +189,12 @@ export const employeesApi = {
   updatePosition: (id: string, data: Record<string, unknown>) => api.put<Position>(`${BASE}/employees/positions/${id}`, data),
 
   // Employees
-  getAll: (params?: { tenant_id?: string; active?: string; search?: string }) => {
+  getAll: (params?: { tenant_id?: string; active?: string; search?: string; position_code?: string }) => {
     const query = new URLSearchParams();
-    if (params?.tenant_id)     query.set('tenant_id', params.tenant_id);
-    if (params?.active)        query.set('active', params.active);
-    if (params?.search)        query.set('search', params.search);
+    if (params?.tenant_id)      query.set('tenant_id', params.tenant_id);
+    if (params?.active)         query.set('active', params.active);
+    if (params?.search)         query.set('search', params.search);
+    if (params?.position_code)  query.set('position_code', params.position_code);
     const qs = query.toString();
     return api.get<Employee[]>(`${BASE}/employees${qs ? `?${qs}` : ''}`);
   },

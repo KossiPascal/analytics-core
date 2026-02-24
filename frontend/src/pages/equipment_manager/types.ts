@@ -289,6 +289,7 @@ export interface Employee {
   email: string;
   position_id: string | null;
   position_name: string | null;
+  position_code: string | null;
   hire_date: string | null;
   // end_date: string | null;
   is_active: boolean;
@@ -359,8 +360,8 @@ export interface RepairTicket {
   equipment_imei: string | null;
   equipment_brand: string | null;
   equipment_model: string | null;
-  asc_id: string;
-  asc_name: string | null;
+  employee_id: string;
+  employee_name: string | null;
   status: TicketStatus;
   current_stage: TicketStage;
   current_stage_label: string;

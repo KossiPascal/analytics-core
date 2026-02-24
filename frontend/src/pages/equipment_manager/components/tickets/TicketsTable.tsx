@@ -30,7 +30,7 @@ export function TicketsTable({ data, isLoading, onView, onSend, onReceive, onRep
   const columns: Column<RepairTicket>[] = [
     { key: 'number', header: 'Numero', render: (t) => t.ticket_number, sortable: true },
     { key: 'equipment', header: 'Equipement', render: (t) => `${t.equipment_brand || ''} ${t.equipment_model || ''}`.trim() || t.equipment_imei || '-' },
-    { key: 'asc', header: 'ASC', render: (t) => t.asc_name || '-' },
+    { key: 'owner', header: 'Propriétaire', render: (t) => t.employee_name || '-' },
     {
       key: 'status',
       header: 'Statut',

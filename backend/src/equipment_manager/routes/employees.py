@@ -264,11 +264,14 @@ def list_employees():
     tenant_id = request.args.get("tenant_id")
     active = request.args.get("active")
     search = request.args.get("search", "").strip()
+    position_code = request.args.get("position_code", "").strip()
 
     if tenant_id:
         query = query.filter(Employee.tenant_id == int(tenant_id))
     if active is not None:
         query = query.filter_by(is_active=active.lower() == "true")
+    if position_code:
+        query = query.join(Position).filter(Position.code == position_code)
     if search:
         query = query.filter(
             db.or_(

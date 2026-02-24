@@ -108,7 +108,7 @@ export function DashboardTab() {
   const overdueColumns: Column<RepairTicket>[] = [
     { key: 'ticket_number', header: 'Numero', render: (t) => t.ticket_number },
     { key: 'equipment', header: 'Equipement', render: (t) => `${t.equipment_brand ?? ''} ${t.equipment_model ?? ''}`.trim() },
-    { key: 'asc_name', header: 'ASC', render: (t) => t.asc_name },
+    { key: 'owner', header: 'Propriétaire', render: (t) => t.employee_name },
     {
       key: 'delay',
       header: 'Délai',

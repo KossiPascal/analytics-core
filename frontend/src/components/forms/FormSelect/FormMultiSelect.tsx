@@ -45,6 +45,14 @@ export interface FormMultiSelectProps {
   wrapperClassName?: string;
   /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
   layout?: 'vertical' | 'inline';
+  /** Autoriser la création d'une nouvelle option depuis la recherche */
+  creatable?: boolean;
+  /** Callback appelé lorsque l'utilisateur crée une nouvelle option */
+  onCreateOption?: (label: string) => Promise<void> | void;
+  /** Label du bouton de création (défaut: "Créer '...'" ) */
+  createLabel?: (term: string) => string;
+  /** Indique qu'une création est en cours */
+  isCreating?: boolean;
 }
 
 export function FormMultiSelect({
@@ -65,6 +73,10 @@ export function FormMultiSelect({
   className = '',
   wrapperClassName = '',
   layout = 'vertical',
+  creatable = false,
+  onCreateOption,
+  createLabel = (term) => `Créer "${term}"`,
+  isCreating = false,
 }: FormMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -228,45 +240,65 @@ export function FormMultiSelect({
                 />
               </div>
             )}
-            {filteredOptions.length === 0 ? (
+            {filteredOptions.length === 0 && !creatable && (
               <div className={styles.selectNoResults}>Aucun résultat</div>
-            ) : (
-              filteredOptions.map((option) => {
-                const isSelected = value.includes(option.value);
-                return (
-                  <div
-                    key={option.value}
-                    className={`${styles.selectOption} ${isSelected ? styles.selected : ''
-                      } ${option.disabled ? styles.disabled : ''}`}
-                    onClick={() => handleSelect(option)}
-                    role="option"
-                    aria-selected={isSelected}
+            )}
+            {filteredOptions.map((option) => {
+              const isSelected = value.includes(option.value);
+              return (
+                <div
+                  key={option.value}
+                  className={`${styles.selectOption} ${isSelected ? styles.selected : ''
+                    } ${option.disabled ? styles.disabled : ''}`}
+                  onClick={() => handleSelect(option)}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span
+                    style={{
+                      width: '1.25rem',
+                      height: '1.25rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px',
+                      background: isSelected
+                        ? 'rgba(255,255,255,0.2)'
+                        : 'var(--form-bg)',
+                      boxShadow: isSelected
+                        ? 'none'
+                        : 'inset 1px 1px 2px var(--form-shadow-dark), inset -1px -1px 2px var(--form-shadow-light)',
+                    }}
                   >
-                    <span
-                      style={{
-                        width: '1.25rem',
-                        height: '1.25rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '4px',
-                        background: isSelected
-                          ? 'rgba(255,255,255,0.2)'
-                          : 'var(--form-bg)',
-                        boxShadow: isSelected
-                          ? 'none'
-                          : 'inset 1px 1px 2px var(--form-shadow-dark), inset -1px -1px 2px var(--form-shadow-light)',
-                      }}
-                    >
-                      {isSelected && <Check size={12} />}
-                    </span>
-                    {option.icon && (
-                      <span className={styles.selectOptionIcon}>{option.icon}</span>
-                    )}
-                    {option.label}
-                  </div>
-                );
-              })
+                    {isSelected && <Check size={12} />}
+                  </span>
+                  {option.icon && (
+                    <span className={styles.selectOptionIcon}>{option.icon}</span>
+                  )}
+                  {option.label}
+                </div>
+              );
+            })}
+            {creatable && searchTerm.trim() &&
+              !options.some((o) => o.label.toLowerCase() === searchTerm.trim().toLowerCase()) && (
+              <div
+                className={styles.selectOption}
+                onClick={() => {
+                  if (!isCreating) {
+                    onCreateOption?.(searchTerm.trim());
+                    setSearchTerm('');
+                  }
+                }}
+                role="option"
+                aria-selected={false}
+                style={{ fontStyle: 'italic', color: 'var(--form-accent, #3b82f6)' }}
+              >
+                {isCreating ? (
+                  <span>Création en cours...</span>
+                ) : (
+                  <span>+ {createLabel(searchTerm.trim())}</span>
+                )}
+              </div>
             )}
           </div>
         )}
