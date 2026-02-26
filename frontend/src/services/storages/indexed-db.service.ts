@@ -47,10 +47,7 @@ export class IndexedDbStorage<T extends { id: string }> {
     }
 
     // ===================== HELPERS =====================
-    private async safeExec<R>(
-        exec: () => Promise<R>,
-        callback?: DbCallback<R>
-    ): Promise<R | null> {
+    private async safeExec<T>(exec: () => Promise<T>,callback?: DbCallback<T>): Promise<T | null> {
         try {
             const result = await exec();
             callback?.onSuccess?.(result);
@@ -65,7 +62,7 @@ export class IndexedDbStorage<T extends { id: string }> {
 
     // ===================== CRUD =====================
 
-    async save(data: T, callback?: DbCallback<boolean>): Promise<boolean> {
+    async save<T=any>(data: T, callback?: DbCallback<boolean>): Promise<boolean> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();
@@ -75,7 +72,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async update(data: T, callback?: DbCallback<boolean>): Promise<boolean> {
+    async update<T=any>(data: T, callback?: DbCallback<boolean>): Promise<boolean> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();
@@ -85,7 +82,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async upsert(data: T, callback?: DbCallback<boolean>): Promise<boolean> {
+    async upsert<T=any>(data: T, callback?: DbCallback<boolean>): Promise<boolean> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();
@@ -95,7 +92,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async saveMany(datas: T[], callback?: DbCallback<boolean>): Promise<boolean> {
+    async saveMany<T=any>(datas: T[], callback?: DbCallback<boolean>): Promise<boolean> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();
@@ -127,7 +124,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async delete(id: string, callback?: DbCallback<boolean>): Promise<boolean> {
+    async delete<T=any>(id: string, callback?: DbCallback<boolean>): Promise<boolean> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();
@@ -137,7 +134,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async deleteMany(ids: string[], callback?: DbCallback<boolean>): Promise<boolean> {
+    async deleteMany<T=any>(ids: string[], callback?: DbCallback<boolean>): Promise<boolean> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();
@@ -149,7 +146,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async clear(callback?: DbCallback<boolean>): Promise<boolean> {
+    async clear<T=any>(callback?: DbCallback<boolean>): Promise<boolean> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();

@@ -1,10 +1,12 @@
-import { InputHTMLAttributes, forwardRef, useRef } from 'react';
+import { InputHTMLAttributes, ReactNode, forwardRef, useRef } from 'react';
 import styles from '../styles/forms.module.css';
 import './FormSwitch.css';
 
 export interface FormSwitchProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Label du switch */
   label?: string;
+
+  icon?: ReactNode;
   /** Description additionnelle */
   description?: string;
   /** Taille du switch */
@@ -24,6 +26,7 @@ export const FormSwitch = forwardRef<HTMLInputElement, FormSwitchProps>(
       disabled,
       className = '',
       wrapperClassName = '',
+      icon,
       id,
       ...props
     },
@@ -59,6 +62,7 @@ export const FormSwitch = forwardRef<HTMLInputElement, FormSwitchProps>(
               disabled={disabled}
               className={`${styles.switchInput} ${className}`}
             />
+            {icon && <span className={styles.inputIcon}>{icon}</span>}
             <span className={styles.switchThumb} />
           </div>
           {(label || description) && (

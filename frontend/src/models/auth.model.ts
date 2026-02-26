@@ -4,7 +4,7 @@ export interface PayloadUser {
     fullname: string;
     tenant_id: string | undefined;
     // roles: string[];
-    mustChangeDefaultPassword:boolean
+    mustChangeDefaultPassword: boolean
     permissions: string[]
     // Organization units (optional for filtered access)
     countries?: any[];

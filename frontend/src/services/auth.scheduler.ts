@@ -1,4 +1,3 @@
-import { tokenProvider } from "@/apis/token.provider";
 import { authService } from "@/services/auth.service";
 
 let refreshTimer: number | null = null;

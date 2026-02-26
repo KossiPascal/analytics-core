@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from backend.src.databases.extensions import db
-from backend.src.models.worker_control import WorkerControl
+from backend.src.models.controls import WorkerControl
 # from workers.couchdb.sync_manager import start_async_single_source
 
 bp = Blueprint("workers", __name__, url_prefix="/api/workers")

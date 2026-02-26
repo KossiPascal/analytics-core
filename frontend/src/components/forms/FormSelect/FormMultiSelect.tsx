@@ -3,14 +3,14 @@ import { ChevronDown, Search, X, Check } from 'lucide-react';
 import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
 
-export interface MultiSelectOption {
-  value: string;
+export interface MultiSelectOption<T> {
+  value: T;
   label: string;
   icon?: ReactNode;
   disabled?: boolean;
 }
 
-export interface FormMultiSelectProps {
+export interface FormMultiSelectProps<T> {
   /** Label du champ */
   label?: string;
   /** Champ requis */
@@ -20,11 +20,11 @@ export interface FormMultiSelectProps {
   /** Texte d'aide */
   hint?: string;
   /** Options du select */
-  options: MultiSelectOption[];
+  options: MultiSelectOption<T>[];
   /** Valeurs sélectionnées */
-  value?: string[];
+  value?: T[];
   /** Callback de changement */
-  onChange?: (values: string[]) => void;
+  onChange?: (values: T[]) => void;
   /** Placeholder */
   placeholder?: string;
   /** Activer la recherche/autocomplétion */
@@ -47,7 +47,7 @@ export interface FormMultiSelectProps {
   layout?: 'vertical' | 'inline';
 }
 
-export function FormMultiSelect({
+export function FormMultiSelect<T=any>({
   label,
   required,
   error,
@@ -65,7 +65,7 @@ export function FormMultiSelect({
   className = '',
   wrapperClassName = '',
   layout = 'vertical',
-}: FormMultiSelectProps) {
+}: FormMultiSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -87,7 +87,7 @@ export function FormMultiSelect({
     }
   };
 
-  const handleSelect = (option: MultiSelectOption) => {
+  const handleSelect = (option: MultiSelectOption<T>) => {
     if (option.disabled) return;
 
     const isSelected = value.includes(option.value);
@@ -98,7 +98,7 @@ export function FormMultiSelect({
     onChange?.(newValues);
   };
 
-  const handleRemoveTag = (e: React.MouseEvent, optionValue: string) => {
+  const handleRemoveTag = (e: React.MouseEvent, optionValue: T) => {
     e.stopPropagation();
     onChange?.(value.filter((v) => v !== optionValue));
   };
@@ -166,7 +166,7 @@ export function FormMultiSelect({
             {selectedOptions.length > 0 ? (
               <div className={styles.multiSelectTags}>
                 {visibleTags.map((opt) => (
-                  <span key={opt.value} className={styles.multiSelectTag}>
+                  <span key={opt.value as any} className={styles.multiSelectTag}>
                     {opt.label}
                     <span
                       className={styles.multiSelectTagRemove}
@@ -235,7 +235,7 @@ export function FormMultiSelect({
                 const isSelected = value.includes(option.value);
                 return (
                   <div
-                    key={option.value}
+                    key={option.value as any}
                     className={`${styles.selectOption} ${isSelected ? styles.selected : ''
                       } ${option.disabled ? styles.disabled : ''}`}
                     onClick={() => handleSelect(option)}

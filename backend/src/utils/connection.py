@@ -1,6 +1,6 @@
 import paramiko
 import tempfile, os
-from backend.src.models.connection import SSHTunnelManager
+from backend.src.models.datasource import SSHTunnelManager
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 from sshtunnel import SSHTunnelForwarder

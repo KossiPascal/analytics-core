@@ -1,35 +1,20 @@
 import sqlparse
-from typing import Any, Dict, Optional, List
-
 from sqlalchemy import text
-from backend.src.security.access_security import require_auth
-from backend.src.config import Config
-from typing import Optional, List
-from sqlalchemy.exc import SQLAlchemyError
-from flask import Blueprint, request, jsonify, g
-from backend.src.models.script import Script
-from backend.src.services.sql_executor import run_sql
-
+from flask import Blueprint
 from sshtunnel import SSHTunnelForwarder
-from backend.src.logger import get_backend_logger, audit_log
+from sqlalchemy.exc import SQLAlchemyError
+from typing import Any, Dict, Optional, List
 from backend.src.utils.connection import get_engine
+
+from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("sql-builder", __name__, url_prefix="/api/sql-builder")
 
 
-
-
 # Allowed aggregations
 ALLOWED_AGGS = {"sum": "SUM", "avg": "AVG", "count": "COUNT", "min": "MIN", "max": "MAX"}
-
 ALLOWED_OPS = {"=", "!=", ">", "<", ">=", "<=", "LIKE", "IN"}
-
-
-# LISTER TOUS LES SCRIPTS
-@bp.get("")
-@require_auth
-
 
 # Validate SQL
 def validate_sql(sql: str):

@@ -1,11 +1,10 @@
 import warnings
 from sqlalchemy.exc import SAWarning
 from cryptography.utils import CryptographyDeprecationWarning
-
-
 warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 warnings.filterwarnings("ignore", category=SAWarning)
 
+from backend.src.routes.visualizations import script, visualization
 from backend.src.security.ssh_crypto import harden_ssh_crypto
 
 harden_ssh_crypto()
@@ -22,6 +21,7 @@ from flask_session import Session
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate, upgrade
 from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import OperationalError
 from cryptography.utils import CryptographyDeprecationWarning
 
@@ -29,11 +29,18 @@ from backend.src.config import Config
 from backend.src.models.auth import User
 from backend.src.security.api_security import api_security
 
-from backend.src.routes import auth, connections, visualization, scripts, database, worker_controller
-from backend.src.routes.admin import permissions, roles, tenants, users
+from backend.src.routes import auth, database, worker_controller
+from backend.src.routes.visualizations import script, visualization
+from backend.src.routes.identities import permission, role, tenant, user, user_utils, orgunit
+from backend.src.routes.datasources import datasource, datasource_permission, datasource_type
+from backend.src.routes.datasets import dataset, dataset_chart,dataset_field,dataset_query
+
+
 
 from backend.src.databases.extensions import db
-
+                
+from alembic import command
+from alembic.config import Config as AlembicConfig
 # -----------------------------------------------------------------------------
 # GLOBAL SETUP
 # -----------------------------------------------------------------------------
@@ -48,22 +55,87 @@ logger = get_backend_logger(__name__)
 # DATABASE INIT
 # -----------------------------------------------------------------------------
 
-def init_database(app: Flask) -> None:
-    with app.app_context():
-        try:
-            if Config.IS_DEBUG_MODE:
-                logger.warning("⚠ DEV MODE: creating tables directly")
-                db.create_all()
-                User.create_default_admin()
-            else:
-                if Path("migrations").exists():
-                    logger.info("Applying database migrations")
-                    upgrade()
-        except OperationalError:
-            logger.critical("Database initialization failed", exc_info=True)
-            raise
 
-def create_flask_app(create_default_elements = True) -> Flask:
+# flask db revision --autogenerate -m "Add connection_id to datasets"
+# flask db upgrade
+
+def init_database(app: Flask) -> None:
+    """
+    Initialise la base de données.
+    - En mode dev, crée les tables si elles n'existent pas et ajoute un admin par défaut.
+    - En prod, applique les migrations Alembic si nécessaire.
+    """
+    with app.app_context():
+        with db.engine.begin() as conn:
+            conn.execute(text("SELECT pg_advisory_lock(123456);"))
+            try:
+                inspector = inspect(db.engine)
+                existing_tables = inspector.get_table_names()
+                
+                # === DB vierge ou mode dev ===
+                if Config.IS_DEBUG_MODE or not existing_tables:
+                    logger.warning("⚠ DEV MODE or empty DB: creating tables directly")
+                    db.create_all()
+                    
+                    # Crée un admin par défaut si la table User existe
+                    if "users" in db.metadata.tables:
+                        success = User.create_default_admin()
+                        if success:
+                            logger.info("✅ Default admin created")
+                            # from sqlalchemy.orm import configure_mappers
+                            # configure_mappers()
+                    else:
+                        logger.warning("User table not found, skipping default admin creation")
+
+
+                # ==========================
+                # ALEMBIC MIGRATIONS
+                # ==========================
+                migrations_path = Config.ALCHEMY_MIGRATION_FOLDER
+                alembic_ini = migrations_path / "alembic.ini"
+
+                # Création du dossier migrations si absent
+                if not migrations_path.exists():
+                    # logger.info("📦 Creating migrations folder")
+                    # migrations_path.mkdir(parents=True, exist_ok=True)
+                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
+
+                # Initialiser alembic.ini si absent
+                if not alembic_ini.exists():
+                    # logger.info("📦 Creating alembic.ini")
+                    # with open(alembic_ini, "w") as f:
+                    #     f.write("[alembic]\nscript_location = %s\n" % migrations_path)
+                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
+
+                # Créer alembic.ini temporaire
+                alembic_cfg = AlembicConfig(str(alembic_ini))
+                alembic_cfg.set_main_option("script_location", str(migrations_path))
+
+                # # Vérifie si des migrations existent
+                # if not any(migrations_path.glob("versions/*.py")):
+                #     logger.info("📦 Creating initial migration")
+                #     # Générer la révision initiale
+                #     command.revision(alembic_cfg, message="initial migration", autogenerate=True)
+
+
+                # Init folder
+                # command.init(alembic_cfg, str(migrations_path))
+                # Appliquer la migration
+                command.upgrade(alembic_cfg, "head")
+                logger.info("✅ Database migrations applied")
+
+
+            except OperationalError as e:
+                logger.critical("Database initialization failed: operational error", exc_info=True)
+                raise e
+            except Exception as e:
+                logger.critical("Unexpected error during DB initialization", exc_info=True)
+                raise e
+            finally:
+                conn.execute(text("SELECT pg_advisory_unlock(123456);"))
+
+
+def create_flask_app(initialize_database = True) -> Flask:
     Config.validate()
 
     app = Flask(
@@ -107,7 +179,7 @@ def create_flask_app(create_default_elements = True) -> Flask:
     JWTManager(app)
     Session(app)
 
-    if create_default_elements == True:
+    if initialize_database == True:
         init_database(app)
 
     # ⚠️ OPTIONAL SYNC (ENABLE EXPLICITLY)
@@ -116,8 +188,10 @@ def create_flask_app(create_default_elements = True) -> Flask:
 
     # Blueprints
     for bp in (
-        auth, connections, database, scripts,visualization, worker_controller,
-        permissions, roles, tenants, users, 
+        auth, database, worker_controller, script, visualization,
+        permission, role, tenant, user, user_utils, orgunit, 
+        datasource, datasource_permission, datasource_type,
+        dataset, dataset_chart,dataset_field,dataset_query
     ):
         app.register_blueprint(bp.bp if hasattr(bp, "bp") else bp)
 

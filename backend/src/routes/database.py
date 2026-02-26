@@ -1,10 +1,9 @@
+import requests
 from typing import Any
 from flask import Blueprint, request, jsonify, g
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta, timezone
-import requests
-from backend.src.models.database import AuditHistory
 from backend.src.databases.extensions import db
 from backend.src.config import Config
 from backend.src.security.access_security import require_auth
@@ -23,15 +22,16 @@ def not_empty(value):
     return value is not None and value != ""
 
 def log_audit(action, table_name, record_id, user, details=None):
-    audit = AuditHistory(
-        action=action,
-        table_name=table_name,
-        record_id=record_id,
-        user=user,
-        details=details or {},
-        timestamp=datetime.now(timezone.utc)
-    )
-    db.session.add(audit)
+    # audit = AuditHistory(
+    #     action=action,
+    #     table_name=table_name,
+    #     record_id=record_id,
+    #     user=user,
+    #     details=details or {},
+    #     timestamp=datetime.now(timezone.utc)
+    # )
+    # db.session.add(audit)
+    pass
 
 def drop_or_truncate(entities: list, action: str, user: str, procide: bool):
     """Truncate or drop tables with audit logging"""
@@ -51,12 +51,12 @@ def drop_or_truncate(entities: list, action: str, user: str, procide: bool):
                 elif action == "DROP":
                     query = f'DROP TABLE "{table}" CASCADE'
 
-                if query:
-                    db.session.execute(text(query))
-                    # Log audit
-                    audit = AuditHistory(action=action, table_name=table, user=user, record_id="*", details={})
-                    db.session.add(audit)
-                    db.session.commit()
+                # if query:
+                #     db.session.execute(text(query))
+                #     # Log audit
+                #     audit = AuditHistory(action=action, table_name=table, user=user, record_id="*", details={})
+                #     db.session.add(audit)
+                #     db.session.commit()
         return {"status": 200, "success": True, "data": "Done successfully"}
     except SQLAlchemyError as e:
         db.session.rollback()
@@ -147,14 +147,13 @@ def delete_from_couchdb():
             record_id = dt["_id"]
             db.session.execute(text(f'DELETE FROM {table} WHERE id = :id'), {"id": record_id})
             # Log audit
-            audit = AuditHistory(action="DELETE", table_name=table, record_id=record_id, user=user, details=dt)
-            db.session.add(audit)
-        db.session.commit()
+        #     audit = AuditHistory(action="DELETE", table_name=table, record_id=record_id, user=user, details=dt)
+        #     db.session.add(audit)
+        # db.session.commit()
         return jsonify({"status": 200, "data": response.json()})
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": 201, "data": str(e)}), 201
-
 
 def update_reco_village_secteur(contact, new_parent):
     """
@@ -164,7 +163,6 @@ def update_reco_village_secteur(contact, new_parent):
     # Example placeholder:
     return True
 
-
 def update_chws_district_quartier(contact, new_parent):
     """
     Implement your logic for updating CHW district/quartier
@@ -172,7 +170,6 @@ def update_chws_district_quartier(contact, new_parent):
     """
     # Example placeholder:
     return True
-
 
 @bp.route("/update-facility", methods=["POST"])
 @require_auth
@@ -192,7 +189,7 @@ def update_user_facility():
             return jsonify({"status": 400, "message": "Missing parameters"}), 400
 
         # Fetch user FROM kendeya_docs repository
-        # user = CouchDBUsers.query.filter_by(type=role, roles=role, code=code, place=parent, contact=contact).first()
+        # user = CouchDBUsers.query.filter(type=role, roles=role, code=code, place=parent, contact=contact).first()
 
         user:Any=None
         if not user:
@@ -254,15 +251,15 @@ def update_user_facility():
 # -----------------------------
 @bp.route("/audit/history", methods=["GET"])
 @require_auth
-def get_audit_history():
+def get_history():
     """Get audit history with optional filters"""
     try:
         table_name = request.args.get("table")
-        query = AuditHistory.query
-        if table_name:
-            query = query.filter_by(table_name=table_name)
-        audits = query.order_by(AuditHistory.timestamp.desc()).limit(100).all()
-        return jsonify({"status": 200, "data": [a.__dict__ for a in audits]})
+        # query = AuditHistory.query
+        # if table_name:
+        #     query = query.filter_by(table_name=table_name)
+        # audits = query.order_by(AuditHistory.timestamp.desc()).limit(100).all()
+        # return jsonify({"status": 200, "data": [a.__dict__ for a in audits]})
     except Exception as e:
         logger.error(f"Error fetching audit history: {e}")
         return jsonify({"status": 500, "data": str(e)})
@@ -277,3 +274,4 @@ def truncate_all_tables():
     tables = [{"table": t} for t in db.inspect(db.engine).get_table_names()]
     result = drop_or_truncate(tables, "TRUNCATE", user, procide)
     return jsonify(result), result["status"]
+

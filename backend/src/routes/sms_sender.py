@@ -6,9 +6,7 @@ from backend.src.config import Config
 logger = get_backend_logger(__name__)
 bp = Blueprint("sms_providers", __name__, url_prefix="/api/sms")
 
-# -------------------------------
 # Twilio
-# -------------------------------
 try:
     from twilio.rest import Client as TwilioClient
     twilio_client = TwilioClient(Config.TWILIO_SID, Config.TWILIO_AUTH_TOKEN)
@@ -50,14 +48,11 @@ def send_sms_twilio():
         logger.error(f"Twilio route error: {e}")
         return jsonify({"status": 500, "data": str(e)}), 500
 
-# # -------------------------------
 # # Vonage / Nexmo
-# # -------------------------------
 # try:
 #     import vonage
 # except ImportError:
 #     logger.warning("Vonage package not installed.")
-
 
 # @bp.route("/vonage/send", methods=["POST"])
 # @require_auth
@@ -70,19 +65,15 @@ def send_sms_twilio():
 #         from_number = Config.VONAGE_NUMBER
 #         to_number = data.get("to")
 #         message = data.get("message")
-
 #         client = vonage.Client(key=api_key, secret=api_secret)
 #         sms = vonage.Sms(client)
 #         response = sms.send_message({"from": from_number, "to": to_number, "text": message})
-
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Vonage route error: {e}")
 #         return jsonify({"status": 500, "data": str(e)}), 500
 
-# # -------------------------------
 # # Plivo
-# # -------------------------------
 # try:
 #     import plivo
 # except ImportError:
@@ -98,20 +89,16 @@ def send_sms_twilio():
 #         auth_id = Config.PLIVO_AUTH_ID
 #         auth_token = Config.PLIVO_AUTH_TOKEN
 #         client = plivo.RestClient(auth_id, auth_token)
-
 #         from_number = data.get("from")
 #         to_number = data.get("to")
 #         message = data.get("message")
-
 #         response = client.messages.create(src=from_number, dst=to_number, text=message)
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Plivo route error: {e}")
 #         return jsonify({"status": 500, "data": str(e)}), 500
 
-# # -------------------------------
 # # Africa's Talking
-# # -------------------------------
 # try:
 #     import africastalking
 # except ImportError:
@@ -128,20 +115,16 @@ def send_sms_twilio():
 #         api_key = Config.AFRICASTALKING_API_KEY
 #         africastalking.initialize(username, api_key)
 #         sms = africastalking.SMS
-
 #         to_number = data.get("to")
 #         message = data.get("message")
 #         from_number = data.get("from", None)
-
 #         response = sms.send(message=message, to=to_number, from_=from_number)
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Africa's Talking route error: {e}")
 #         return jsonify({"status": 500, "data": str(e)}), 500
 
-# # -------------------------------
 # # Textlocal
-# # -------------------------------
 # try:
 #     from textlocal import Textlocal
 # except ImportError:
@@ -158,16 +141,13 @@ def send_sms_twilio():
 #         to_number = data.get("to")
 #         message = data.get("message")
 #         sender = data.get("from")
-
 #         response = api.send_message(numbers=to_number, message=message, sender=sender)
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Textlocal route error: {e}")
 #         return jsonify({"status": 500, "data": str(e)}), 500
 
-# # -------------------------------
 # # Sendinblue
-# # -------------------------------
 # try:
 #     import sib_api_v3_sdk
 #     from sib_api_v3_sdk.rest import ApiException
@@ -183,22 +163,14 @@ def send_sms_twilio():
 #         api_key = Config.SENDINBLUE_API_KEY
 #         api_instance = sib_api_v3_sdk.TransactionalSMSApi()
 #         sib_api_v3_sdk.configuration.api_key['api-key'] = api_key
-
-#         sms_data = sib_api_v3_sdk.SendTransacSms(
-#             sender=data.get("from"),
-#             recipient=data.get("to"),
-#             content=data.get("message")
-#         )
-
+#         sms_data = sib_api_v3_sdk.SendTransacSms(sender=data.get("from"),recipient=data.get("to"),content=data.get("message"))
 #         response = api_instance.send_transac_sms(sms_data)
 #         return jsonify({"status": 200, "data": response})
 #     except ApiException as e:
 #         logger.error(f"Sendinblue API error: {e}")
 #         return jsonify({"status": 500, "data": str(e)}), 500
 
-# # -------------------------------
 # # Telesign
-# # -------------------------------
 # try:
 #     from telesign.messaging import MessagingClient
 # except ImportError:

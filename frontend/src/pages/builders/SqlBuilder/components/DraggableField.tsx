@@ -5,7 +5,7 @@
 
 import React, { useRef } from 'react';
 import styles from '@pages/builders/SqlBuilder/SqlBuilder.module.css';
-import { ColumnType, DimensionDef, MetricDef } from '../../builders.models';
+import { ColumnType, DimensionDef, MetricDef } from '../../../../models/builders.models';
 
 // ============================================================================
 // TYPES

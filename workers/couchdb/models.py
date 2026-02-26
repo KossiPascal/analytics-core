@@ -34,8 +34,8 @@ class CreateTableModel:
             "__tablename__": table_name,
             "__table_args__": {"extend_existing": True},
             "id": self.db.Column(self.db.Text, primary_key=True, nullable=False),
-            "source_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sources.id", ondelete="CASCADE"),nullable=False),
-            "cible_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sync_cibles.id", ondelete="CASCADE"),nullable=False),
+            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("couchdb_sources.id", ondelete="CASCADE"),nullable=False),
+            "cible_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("couchdb_sync_cibles.id", ondelete="CASCADE"),nullable=False),
             "doc": self.db.Column(self.db.JSON, nullable=False),
             "form": self.db.Column(self.db.String(255), nullable=True),
             "type": self.db.Column(self.db.Text, nullable=True),
@@ -62,9 +62,9 @@ class CreateTableModel:
         attrs = {
             "__tablename__": table_name,
             "__table_args__": {"extend_existing": True},
-            "id": self.db.Column(self.db.Integer, primary_key=True, autoincrement=True),
-            "source_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sources.id", ondelete="CASCADE"),nullable=False),
-            "cible_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sync_cibles.id", ondelete="CASCADE"),nullable=False),
+            "id": self.db.Column(self.db.BigInteger, primary_key=True, autoincrement=True),
+            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("couchdb_sources.id", ondelete="CASCADE"),nullable=False),
+            "cible_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("couchdb_sync_cibles.id", ondelete="CASCADE"),nullable=False),
             "last_seq": self.db.Column(self.db.Text, nullable=True),
             "last_sync_at": self.db.Column(self.db.DateTime(timezone=True), nullable=True),
         }
@@ -88,13 +88,13 @@ class CreateTableModel:
         attrs = {
             "__tablename__": table_name,
             "__table_args__": {"extend_existing": True},
-            "id": self.db.Column(self.db.Integer, primary_key=True, autoincrement=True),
-            "source_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sources.id", ondelete="CASCADE"),nullable=False),
-            "cible_id": self.db.Column(self.db.Integer,self.db.ForeignKey("couchdb_sync_cibles.id", ondelete="CASCADE"),nullable=False),
+            "id": self.db.Column(self.db.BigInteger, primary_key=True, autoincrement=True),
+            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("couchdb_sources.id", ondelete="CASCADE"),nullable=False),
+            "cible_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("couchdb_sync_cibles.id", ondelete="CASCADE"),nullable=False),
             "message": self.db.Column(self.db.Text, nullable=True),
             "action": self.db.Column(self.db.Text, nullable=True),  # INSERT, UPDATE, DELETE, ERROR
             "status": self.db.Column(self.db.String(32), nullable=False),  # STARTED, SUCCESS, ERROR
-            "started_at": self.db.Column(self.db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False),
+            "started_at": self.db.Column(self.db.DateTime(timezone=True), server_default=self.db.func.now(), nullable=False),
             "finished_at": self.db.Column(self.db.DateTime(timezone=True), nullable=True),
         }
 

@@ -9,14 +9,14 @@ import yaml
 import hashlib
 from pathlib import Path
 from typing import List, Dict, Any, Literal, Set, Tuple, Optional, TypedDict
-import psycopg2
 from psycopg2 import sql
 
 from backend.src.config import Config
-from backend.src.models.connection import CouchdbSyncCible
+from backend.src.models.datasource import DataSourceTarget, DataSourceType
 from workers.couchdb.utils import with_app_context
 from backend.src.databases.extensions import db
 from sqlalchemy.orm import Session
+from dataclasses import dataclass, field
 
 from workers.logger import get_workers_logger
 logger = get_workers_logger(__name__)
@@ -53,60 +53,99 @@ TYPE_PRIORITY = {
 MetadataSource = Literal["sql", "json"]
 
 
-class IndexDict(TypedDict, total=False):
+@dataclass(slots=True)
+class Index:
     columns: List[str]
-    unique: bool
-    method: str
-    where: str
-    concurrently: bool
+    unique: bool = False
+    method: Optional[str] = None
+    where: Optional[str] = None
+    concurrently: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "columns": self.columns,
+            "unique": self.unique,
+            "method": self.method,
+            "where": self.where,
+            "concurrently": self.concurrently,
+        }
 
 
-class SQLMetadataConversionError(Exception):
-    pass
+@dataclass(slots=True)
+class SqlMetadata:
+    name: str
+    type: SQLObjectType
+    depends: List[str] = field(default_factory=list)
+    auto_depends: bool = False
+    indexes: List[Index] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "SqlMetadata":
+        return cls(
+            name=data["name"],
+            type=SQLObjectType(data["type"]),
+            depends=data.get("depends", []),
+            auto_depends=data.get("auto_depends", False),
+            indexes=[
+                Index(**idx)
+                for idx in data.get("indexes", [])
+            ],
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "type": self.type.value,  # Enum -> str
+            "depends": list(self.depends),
+            "auto_depends": self.auto_depends,
+            "indexes": [index.to_dict() for index in self.indexes],
+        }
+
+
 
 # CREATE MATERIALIZED VIEW IF NOT EXISTS patient_view WITH NO DATA AS ...
 
-
 class DependencyError(Exception):
     """Base class for all dependency-related errors."""
-    def __init__(self, message: str = None):
-        if message is None:
-            message = "A dependency-related error occurred."
-        super().__init__(message)
+
+    def __init__(self, message: str | None = None):
+        super().__init__(message or "A dependency error occurred.")
+
 
 class CircularDependencyError(DependencyError):
     """Raised when a circular dependency is detected."""
-    def __init__(self, cycle: list[str] = None):
+
+    def __init__(self, cycle: list[str] | None = None):
         if cycle:
-            message = f"Circular dependency detected: {' -> '.join(cycle)}"
+            message = f"Circular dependency detected: {' -> '.join(cycle)}."
         else:
             message = "A circular dependency was detected."
         super().__init__(message)
 
+
 class MissingDependencyError(DependencyError):
     """Raised when a required dependency is missing."""
-    def __init__(self, missing: str = None):
-        if missing:
-            message = f"Missing required dependency: {missing}"
+
+    def __init__(self, dependency_name: str | None = None):
+        if dependency_name:
+            message = f"Missing required dependency: '{dependency_name}'."
         else:
             message = "A required dependency is missing."
         super().__init__(message)
 
 
-
 class SQLMetadataError(Exception):
-    pass
+    """Raised when SQL metadata is invalid or malformed."""
+
+    def __init__(self, message: str | None = None):
+        super().__init__(message or "Invalid or malformed SQL metadata.")
 
 
-class SQLMetadataParser:
-    @staticmethod
-    def parse_indexes(yaml_text: str) -> List[IndexDict]:
-        try:
-            raw = yaml.safe_load(yaml_text) or []
-        except yaml.YAMLError as e:
-            raise SQLMetadataError(f"Invalid YAML: {e}")
-        # Normalisation...
-        return "normalized"
+class SQLMetadataConversionError(SQLMetadataError):
+    """Raised when SQL metadata conversion fails."""
+
+    def __init__(self, message: str | None = None):
+        super().__init__(message or "Failed to convert SQL metadata.")
 
 
 
@@ -115,9 +154,111 @@ class SQLMetadataParser:
 # ----------------------------
 class SQLUtils:
 
-    # ----------------------------
-    # UTILITAIRES
-    # ----------------------------
+    @staticmethod
+    def strip_quotes(value: str) -> str:
+        value = value.strip()
+        if (value.startswith('"') and value.endswith('"')) or \
+        (value.startswith("'") and value.endswith("'")):
+            return value[1:-1]
+        return value
+
+    @staticmethod
+    def parse_bool(value: str) -> bool:
+        value = SQLUtils.strip_quotes(value).lower()
+        if value in {"true", "1", "yes"}:
+            return True
+        if value in {"false", "0", "no"}:
+            return False
+        raise SQLMetadataConversionError(f"Invalid boolean value: {value}")
+
+    @staticmethod
+    def parse_depends(value: str) -> List[str]:
+        """ Supporte : ["a", 'b', c] | ("a", b, 'c') | "a", 'b', c | a, b, c """
+
+        value = value.strip()
+
+        # Cas liste ou tuple Python-like
+        case_one = (value.startswith("[") and value.endswith("]"))
+        case_two = (value.startswith("(") and value.endswith(")"))
+        if case_one or case_two:
+            try:
+                parsed = ast.literal_eval(value)
+                if isinstance(parsed, (list, tuple)):
+                    return [SQLUtils.strip_quotes(str(v)) for v in parsed]
+            except Exception:
+                pass
+
+        # Cas simple CSV
+        parts = re.split(r",\s*", value)
+        return [SQLUtils.strip_quotes(p) for p in parts if p.strip()]
+
+    @staticmethod
+    def normalize_indexes(raw_indexes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Normalize and validate index definitions.
+        """
+
+        if not raw_indexes:
+            return []
+
+        if not isinstance(raw_indexes, list):
+            raise SQLMetadataError("Indexes metadata must be a list")
+
+        normalized = []
+
+        for idx in raw_indexes:
+            if not isinstance(idx, dict):
+                raise SQLMetadataError("Each index must be a dictionary")
+
+            cols = idx.get("columns")
+            if not cols:
+                raise SQLMetadataError(f"Index missing valid 'columns' field: {idx}")
+
+            if isinstance(cols, str):
+                cols = cols.strip()
+                # (a,b) ou ['a','b'] ou "a", 'b'
+                if cols.startswith("(") and cols.endswith(")"):
+                    cols = [c.strip().strip("'\"") for c in cols[1:-1].split(",")]
+
+                elif cols.startswith("[") and cols.endswith("]"):
+                    # Convertir [a,b] ou ["a","b"] en liste
+                    try:
+                        # cols_list = eval(cols)
+                        cols_list = ast.literal_eval(cols)
+                        if isinstance(cols_list, list):
+                            cols = [str(c) for c in cols_list]
+                        else:
+                            cols = [cols]
+                    except Exception:
+                        cols = [cols]
+
+                else:
+                    # colonnes simples séparées par virgule
+                    cols = [c.strip() for c in cols.split(",") if c.strip()]
+            
+            elif isinstance(cols, list):
+                cols = [str(c) for c in cols]
+
+            else:
+                cols = []
+
+            if cols and not all(isinstance(c, str) and c.strip() for c in cols):
+                raise SQLMetadataError(f"Invalid column names in index: {idx}")
+            
+            cols = [str(c).strip().strip("'\"") for c in cols if str(c).strip()]
+
+            normalized_index = {
+                "columns": cols,
+                "unique": bool(idx.get("unique", False)),
+                "method": idx.get("method", "btree"),
+                "where": idx.get("where"),
+                "concurrently": bool(idx.get("concurrently", False)),
+            }
+
+            normalized.append(normalized_index)
+
+        return normalized
+    
     @staticmethod
     def extract_sql_dependencies(sql: str, known_objects: List[str]) -> List[str]:
         """
@@ -144,7 +285,6 @@ class SQLUtils:
                 deps.add(fn)
 
         return list(deps)
-
 
     @staticmethod
     def build_index_sql(object_name: str, idx: Dict[str, Any], project_name:str,) -> str:
@@ -229,10 +369,10 @@ class SQLUtils:
     @staticmethod
     @with_app_context
     def is_up_to_date(session, obj: "SQLObject", project_name:str, app:Flask=None) -> bool:
-
+        
         shema_name = SQLUtils.migrations_shema_name(project_name)
         result = session.execute(
-            text(f"SELECT hash FROM {shema_name} WHERE name = :name"), {"name": obj.name}
+            text(f"SELECT hash FROM {shema_name} WHERE name = :name"), {"name": obj.sql_metadata.name}
         )
         row = result.fetchone()
         # return row is not None and row[0] == obj.hash
@@ -243,28 +383,28 @@ class SQLUtils:
     @staticmethod
     @with_app_context
     def record_migration(session, obj: "SQLObject", project_name:str, app:Flask=None):
-
+        
         shema_name = SQLUtils.migrations_shema_name(project_name)
         session.execute(text(f"""
             INSERT INTO {shema_name} (name, hash)
             VALUES (:name, :hash)
             ON CONFLICT (name)
             DO UPDATE SET hash = EXCLUDED.hash, applied_at = now()
-        """), {"name": obj.name, "hash": obj.hash})
+        """), {"name": obj.sql_metadata.name, "hash": obj.hash})
 
     @staticmethod
     @with_app_context
     def remove_migration(session, obj: "SQLObject", project_name:str, app:Flask=None):
-
+        
         shema_name = SQLUtils.migrations_shema_name(project_name)
-        session.execute(text(f"DELETE FROM {shema_name} WHERE name = :name"), {"name": obj.name})
+        session.execute(text(f"DELETE FROM {shema_name} WHERE name = :name"), {"name": obj.sql_metadata.name})
 
     # ----------------------------
     # DEPENDENCY SORT
     # ----------------------------
     @staticmethod
     def topo_sort(objects: List["SQLObject"]) -> List["SQLObject"]:
-        name_map = {obj.name: obj for obj in objects}
+        name_map = {obj.sql_metadata.name: obj for obj in objects}
         visited: Set[str] = set()
         temp: Set[str] = set()
         stack: List[SQLObject] = []
@@ -274,7 +414,7 @@ class SQLUtils:
                 raise CircularDependencyError(temp)
             if name not in visited:
                 temp.add(name)
-                for dep in name_map[name].depends:
+                for dep in name_map[name].sql_metadata.depends:
                     if dep not in name_map:
                         raise MissingDependencyError(dep)
                     visit(dep)
@@ -282,9 +422,8 @@ class SQLUtils:
                 visited.add(name)
                 stack.append(name_map[name])
 
-        for obj in sorted(objects, key=lambda o: TYPE_PRIORITY.get(o.type, 99)):
-            visit(obj.name)
-            # print(obj.name)
+        for obj in sorted(objects, key=lambda o: TYPE_PRIORITY.get(o.sql_metadata.type, 99)):
+            visit(obj.sql_metadata.name)
             
         return stack
 
@@ -301,58 +440,29 @@ class SQLUtils:
 
         for path in sql_files:
             obj = SQLObject(path, metadata_source=metadata_source)
+            
 
-            if not obj.name:
+            if not obj.sql_metadata.name:
                 raise ValueError(f"Missing object name in {path}")
 
-            if obj.name in known_objects:
-                raise ValueError(f"Duplicate SQL object name: {obj.name}")
+            if obj.sql_metadata.name in known_objects:
+                raise ValueError(f"Duplicate SQL object name: {obj.sql_metadata.name}")
 
-            known_objects.add(obj.name)
+            known_objects.add(obj.sql_metadata.name)
             objects.append(obj)
-
 
         # Auto-detect dependencies
         for obj in objects:
-            if obj.auto_depends:
-                obj.depends = [
+            if obj.sql_metadata.auto_depends:
+                obj.sql_metadata.depends = [
                     d for d in SQLUtils.extract_sql_dependencies(obj.content, list(known_objects))
-                    if d and d != obj.name
+                    if d and d != obj.sql_metadata.name
                 ]
 
+
+        print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
+        print(obj.sql_metadata.depends)
         return objects
-
-    @staticmethod
-    def load_sql_objects_version2(folder: str) -> List[Dict]:
-        """
-        Charge tous les fichiers SQL et construit la liste d'objets avec metadata
-        """
-        objects = []
-        known_objects = []
-
-        for filename in sorted(os.listdir(folder)):
-            if not filename.endswith(".sql"):
-                continue
-            path = os.path.join(folder, filename)
-            sql, meta = SQLObject.parse_sql_file_version_0(path)
-            obj_name = meta.get("name") or os.path.splitext(filename)[0]
-            obj_type = meta.get("type", "function")  # default function
-            objects.append({
-                "name": obj_name,
-                "type": obj_type,
-                "sql": sql,
-                "metadata": meta,
-                "depends": meta.get("depends", []),
-            })
-            known_objects.append(obj_name)
-
-        # Auto-detect dependencies si demandé
-        for obj in objects:
-            if obj["metadata"].get("auto_depends"):
-                obj["depends"] = SQLUtils.extract_sql_dependencies(obj["sql"], known_objects)
-
-        return objects
-    
 
     # ----------------------------
     # INDEX CREATION
@@ -360,15 +470,16 @@ class SQLUtils:
     @staticmethod
     @with_app_context
     def create_indexes(session: Session, obj: "SQLObject", project_name:str, app:Flask=None)-> List[str]:
+        
         view_index_sql = []
 
         print("AAAAAAAAAAAAAAAAAAA")
-        print(str(obj.indexes))
+        print(str(obj.sql_metadata.indexes))
 
-        for idx in obj.indexes:
-            sql_str = SQLUtils.build_index_sql(obj.name, idx, project_name)
+        for idx in obj.sql_metadata.indexes:
+            sql_str = SQLUtils.build_index_sql(obj.sql_metadata.name, idx.to_dict(), project_name)
             if not sql_str or not sql_str.strip():
-                logger.error(f"CREATE INDEXES ERRORRRRRRR...: {str(obj.name)}")
+                logger.error(f"CREATE INDEXES ERRORRRRRRR...: {str(obj.sql_metadata.name)}")
                 raise
             session.execute(text(sql_str))
             view_index_sql.append(sql_str)
@@ -379,7 +490,12 @@ class SQLUtils:
     def create_project_indexes(session: Session, project_name: str, app:Flask=None):
         safe_name = SQLUtils.validate_identifier(project_name)
 
-        local_db_names = [n.local_name for n in CouchdbSyncCible.ensure_default_couchdb_dbs() if n.local_name]
+        DataSourceType.ensure_default_type()
+
+        couchdb_types:List[DataSourceType] = DataSourceType.list_by_target(target=DataSourceTarget.COUCHDB, is_active=True)
+
+        local_db_names = [n.id for n in couchdb_types if n.id]
+        
         queries = [
             "CREATE INDEX IF NOT EXISTS idx_{}_doc_id ON {} ((doc->>'_id')) WHERE (doc::JSONB) ? '_id';",
             "CREATE INDEX IF NOT EXISTS idx_{}_doc_type ON {} ((doc->>'type')) WHERE (doc::JSONB) ? 'type';",
@@ -405,57 +521,245 @@ class SQLUtils:
                 if sql_str.strip():
                     session.execute(text(sql_str))
 
-    @staticmethod
-    def convert_sql_yaml_metadata_to_json(sql_path: Path, overwrite: bool = True) -> Optional[Path]:
-        """
-        Extract YAML metadata from SQL file comments and convert to JSON.
-        Saves <filename>.meta.json in the same directory.
+    # ---------------------------------------------------------
+    # METADATA PARSER (robuste et strict)
+    # ---------------------------------------------------------
 
-        Returns:
-            Path to generated JSON file if successful.
-            None if no YAML metadata found.
+    @staticmethod
+    def parse_metadata_from_sql_yaml(sql_path: Path) -> SqlMetadata:
+        """
+        Parse SQL metadata headers of the form:
+
+            -- @name: my_object
+            -- @type: view
+            -- @depends: other_table, another_table
+            -- @auto_depends: true
+            -- @indexes:
+            --   - columns: ["id"]
+            --     unique: true
+
+        And export them into <file>.meta.json
         """
 
         if not sql_path.exists():
             raise FileNotFoundError(f"SQL file not found: {sql_path}")
 
-        raw_yaml_lines = []
+        content = sql_path.read_text(encoding="utf-8")
+        lines = content.splitlines()
+        clean_lines: List[str] = []
 
-        with sql_path.open("r", encoding="utf-8") as f:
-            for raw_line in f:
-                stripped = raw_line.strip()
+        metadata: Dict[str, Any] = {}
+        depends: List[str] = []
+        indexes: List[Dict[str, Any]] = []
 
-                if stripped.startswith("--"):
-                    # Remove leading "--" and optional space
-                    content = stripped[2:].lstrip()
-                    raw_yaml_lines.append(content)
-                else:
-                    # Stop at first non-comment line
-                    break
+        i = 0
 
-        if not raw_yaml_lines:
-            return None
+        while i < len(lines):
+            line = lines[i].strip()
 
-        yaml_str = "\n".join(raw_yaml_lines).strip()
+            if not line.startswith("-- @"):
+                i += 1
+                continue
+            
+            # match = re.match(r"--\s*@(\w+):\s*(.*)", line)
+            match = re.match(r"-- @(\w+):(.*)", line)
+            
+            if not match:
+                clean_lines.append(lines[i])
+                raise SQLMetadataConversionError(f"Invalid metadata format in {sql_path.name}: {line}")
+
+            key = match.group(1).strip().lower()
+            value = match.group(2).strip()
+
+            # -----------------------
+            # NAME
+            # -----------------------
+            if key == "name":
+                if not value:
+                    raise SQLMetadataConversionError(f"Missing value for @name in {sql_path.name}")
+                
+                metadata["name"] = SQLUtils.strip_quotes(value)
+
+            # -----------------------
+            # TYPE
+            # -----------------------
+            if key == "type":
+                if not value:
+                    raise SQLMetadataConversionError(f"Missing value for @type in {sql_path.name}")
+
+                try:
+                    obj_type_str = SQLUtils.strip_quotes(value).lower()
+                    metadata["type"] = obj_type_str
+                    obj_type = SQLObjectType(obj_type_str)
+                except ValueError:
+                    raise SQLMetadataError(f"Invalid type in metadata JSON: {obj_type_str}")
+                
+            # -----------------------
+            # DEPENDS
+            # -----------------------
+            elif key == "depends":
+                if value:
+                    # depends = [d.strip() for d in value.split(",") if d.strip()]
+                    depends = SQLUtils.parse_depends(value)
+                    if not isinstance(depends, list) or not all(isinstance(d, str) for d in depends):
+                        raise SQLMetadataError(f"'depends' must be a list of strings in {sql_path.name}")
+                    metadata["depends"] = depends
+            # -----------------------
+            # AUTO_DEPENDS
+            # -----------------------
+            elif key == "auto_depends":
+                metadata["auto_depends"] = SQLUtils.parse_bool(value)
+                metadata.setdefault("auto_depends", False)
+
+            # -----------------------
+            # INDEXES BLOCK (YAML)
+            # -----------------------
+            elif key == "indexes":
+
+                yaml_lines = []
+                i += 1
+
+                while i < len(lines):
+                    raw_line = lines[i]
+
+                    # Stop si nouvelle metadata
+                    if raw_line.strip().startswith("-- @"):
+                        break
+                    
+                    # Stop si ligne SQL
+                    if not raw_line.strip().startswith("--"):
+                        break
+
+                    # Nettoyage
+                    # clean_line = re.sub(r"^--\s?", "", raw_line.rstrip())
+                    # clean_line = re.sub(r"^--\s*", "", raw_line.rstrip())
+                    # clean_line = raw_line.split("--", 1)[1].lstrip()
+
+                    if raw_line.startswith("-- "):
+                        clean = raw_line[3:]   # retire exactement "-- "
+                    elif raw_line.startswith("--"):
+                        clean = raw_line[2:]   # fallback
+                    else:
+                        continue
+
+                    yaml_lines.append(clean)
+                    i += 1
+
+                yaml_text = "\n".join(yaml_lines)
+                text_wraped = textwrap.dedent(yaml_text).strip()
+
+                try:
+                    raw_indexes = yaml.safe_load(text_wraped) or []
+                except yaml.YAMLError as e:
+                    raise SQLMetadataConversionError(
+                        f"Invalid YAML in @indexes block of {sql_path.name}:\n\n"
+                        f"YAML received:\n{text_wraped}\n\nError: {e}"
+                    )
+
+                if not isinstance(raw_indexes, list):
+                    raise SQLMetadataConversionError(f"@indexes must be a YAML list in {sql_path.name}")
+
+                indexes = SQLUtils.normalize_indexes(raw_indexes)
+                if not isinstance(indexes, list):
+                    raise SQLMetadataError(f"'indexes' normalization returned invalid type in {sql_path.name}")
+                
+                metadata["indexes"] = indexes
+
+                continue
+
+            i += 1
+
+        if "name" not in metadata:
+            raise SQLMetadataConversionError(f"Missing @name in {sql_path.name}")
+
+        if "type" not in metadata:
+            raise SQLMetadataConversionError(f"Missing @type in {sql_path.name}")
+
+
+        return SqlMetadata.from_dict(metadata)
+
+    @staticmethod
+    def parse_metadata_from_json_file(sql_path: Path) -> SqlMetadata:
+        meta_path = sql_path.with_suffix(".meta.json")
+
+        if not meta_path.exists():
+            raise SQLMetadataError(f"Missing metadata JSON file for {sql_path.name}")
 
         try:
-            metadata = yaml.safe_load(yaml_str)
-        except yaml.YAMLError as e:
-            raise SQLMetadataConversionError(f"Invalid YAML in {sql_path.name}: {e}")
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except Exception as e:
+            raise SQLMetadataError(f"Invalid JSON metadata in {meta_path}: {e}") from e
 
-        if not isinstance(metadata, dict):
-            raise SQLMetadataConversionError(f"Top-level YAML must be a mapping in {sql_path.name}")
+        if not isinstance(meta, dict):
+            raise SQLMetadataError(f"Metadata JSON must be an object: {meta_path}")
+        
+        metadata: Dict[str, Any] = {}
+        
 
-        # Output path: same folder
+        name = meta.get("name")
+        if not isinstance(name, str) or not name.strip():
+            raise SQLMetadataError(f"Metadata JSON missing or invalid 'name': {meta_path}")
+        
+        try:
+            obj_type_str = meta.get("type")
+            obj_type = SQLObjectType(obj_type_str)
+        except ValueError:
+            raise SQLMetadataError(f"Invalid type in metadata JSON: {obj_type_str}")
+
+
+        depends = meta.get("depends", [])
+        if not isinstance(depends, list) or not all(isinstance(d, str) for d in depends):
+            raise SQLMetadataError(f"'depends' must be a list of strings in {meta_path}")
+        
+        auto_depends = bool(meta.get("auto_depends", False))
+
+        raw_indexes = meta.get("indexes", [])
+        indexes = SQLUtils.normalize_indexes(raw_indexes)
+
+        if not isinstance(indexes, list):
+            raise SQLMetadataError(f"'indexes' normalization returned invalid type in {meta_path}")
+    
+        
+        metadata["name"] = name
+        metadata["type"] = obj_type_str
+        metadata["depends"] = depends
+        metadata["auto_depends"] = auto_depends
+        metadata["indexes"] = indexes
+
+        return SqlMetadata.from_dict(metadata)
+
+    
+    @staticmethod
+    def convert_sql_yaml_metadata_to_json(sql_path: Path,overwrite: bool = True,) -> Optional[Path]:
+        """
+        Parse SQL metadata headers of the form:
+
+            -- @name: my_object
+            -- @type: view
+            -- @depends: other_table, another_table
+            -- @auto_depends: true
+            -- @indexes:
+            --   - columns: ["id"]
+            --     unique: true
+
+        And export them into <file>.meta.json
+        """
+        parse_obj = SQLUtils.parse_metadata_from_sql_yaml(sql_path)
+
+        metadata: Dict[str, Any] = parse_obj.to_dict()
+
         json_path = sql_path.with_suffix(".meta.json")
 
-        try:
-            json_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False),encoding="utf-8")
-        except Exception as e:
-            raise SQLMetadataConversionError(f"Failed writing JSON file {json_path.name}: {e}")
+        if json_path.exists() and not overwrite:
+            return json_path
 
-        
-        return json_path if json_path.exists() and not overwrite else None
+        json_path.write_text(
+            json.dumps(metadata, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+        return json_path
+    
     
     @staticmethod
     def convert_all_sql_metadata(project_name: str):
@@ -467,6 +771,70 @@ class SQLUtils:
                     print(f"✔ Converted: {sql_file.name}")
             except Exception as e:
                 print(f"✖ Error in {sql_file.name}: {e}")
+
+
+    @staticmethod
+    def delete_all_meta_json(project_name: str,dry_run: bool = False,verbose: bool = True) -> int:
+        """
+        Delete all `.meta.json` files associated with SQL files
+        for the given project.
+
+        Args:
+            project_name: Name of the project.
+            dry_run: If True, only lists files that would be deleted.
+            verbose: If True, prints deletion status.
+
+        Returns:
+            Number of deleted (or detected in dry_run) files.
+        """
+
+        sql_files = SQLUtils.get_sql_files(project_name)
+        deleted_count = 0
+
+        for sql_file in sql_files:
+            meta_path = sql_file.with_suffix(".meta.json")
+
+            if not meta_path.exists():
+                continue
+
+            if dry_run:
+                if verbose:
+                    print(f"[DRY RUN] Would delete: {meta_path.name}")
+                deleted_count += 1
+                continue
+
+            try:
+                meta_path.unlink()
+                deleted_count += 1
+                if verbose:
+                    print(f"🗑 Deleted: {meta_path.name}")
+            except OSError as e:
+                print(f"✖ Failed to delete {meta_path.name}: {e}")
+
+        return deleted_count
+    
+
+    @staticmethod
+    def delete_all_meta_json_in_directory(directory: Path,dry_run: bool = False,verbose: bool = True) -> int:
+        count = 0
+
+        for meta_file in directory.rglob("*.meta.json"):
+            if dry_run:
+                if verbose:
+                    print(f"[DRY RUN] Would delete: {meta_file}")
+                count += 1
+                continue
+
+            try:
+                meta_file.unlink()
+                count += 1
+                if verbose:
+                    print(f"🗑 Deleted: {meta_file}")
+            except OSError as e:
+                print(f"✖ Failed to delete {meta_file.name}: {e}")
+
+        return count
+
 
     @staticmethod
     def execute_sql_safe(session: Session, sql_str: str, params: dict = None):
@@ -488,322 +856,28 @@ class SQLObject:
         self.content = path.read_text(encoding="utf-8")
 
         if metadata_source == "json":
-            self.name, self.type, self.depends, self.indexes, self.auto_depends = self._parse_metadata_from_json()
+            self.sql_metadata = SQLUtils.parse_metadata_from_json_file(self.path)
         else:
-            self.name, self.type, self.depends, self.indexes, self.auto_depends = self._parse_metadata()
+            self.sql_metadata = SQLUtils.parse_metadata_from_sql_yaml(self.path)
 
         self.sql_str = self._extract_sql_body()
         self.hash = hashlib.sha256(self.sql_str.strip().encode("utf-8")).hexdigest()
 
-        if not self.name or not self.type:
+        if not self.sql_metadata.name or not self.sql_metadata.type:
             raise ValueError(f"{path.name} missing @name or @type")
-        
 
-    def _strip_quotes(self, value: str) -> str:
-        value = value.strip()
-        if (value.startswith('"') and value.endswith('"')) or \
-        (value.startswith("'") and value.endswith("'")):
-            return value[1:-1]
-        return value
 
-    def _parse_bool(self, value: str) -> bool:
-        value = self._strip_quotes(value).lower()
-        return value in {"true", "1", "yes"}
 
-    def _parse_depends(self, value: str) -> List[str]:
-        """ Supporte : ["a", 'b', c] | ("a", b, 'c') | "a", 'b', c | a, b, c """
 
-        value = value.strip()
 
-        # Cas liste ou tuple Python-like
-        case_one = (value.startswith("[") and value.endswith("]"))
-        case_two = (value.startswith("(") and value.endswith(")"))
-        if case_one or case_two:
-            try:
-                parsed = ast.literal_eval(value)
-                if isinstance(parsed, (list, tuple)):
-                    return [self._strip_quotes(str(v)) for v in parsed]
-            except Exception:
-                pass
 
-        # Cas simple CSV
-        parts = re.split(r",\s*", value)
-        return [self._strip_quotes(p) for p in parts if p.strip()]
-
-    # ---------------------------------------------------------
-    # METADATA PARSER (robuste et strict)
-    # ---------------------------------------------------------
-
-    def _parse_metadata(self) -> Tuple[str,SQLObjectType,List[str],List[Dict[str, Any]],bool]:
-        """
-        Parse SQL metadata headers:
-            -- @name: my_object
-            -- @type: table
-            -- @depends: other_table
-            -- @indexes:
-            --   - columns: ["id"]
-            --     unique: true
-
-        Returns:
-            name, type, depends, indexes, auto_depends
-        """
-
-        name = None
-        obj_type = None
-        depends: List[str] = []
-        indexes: List[Dict[str, Any]] = []
-        auto_depends = False
-
-        lines = self.content.splitlines()
-        clean_lines: List[str] = []
-        i = 0
-
-        while i < len(lines):
-            line = lines[i].strip()
-
-            if not line.startswith("-- @"):
-                i += 1
-                continue
-
-            # meta_match = re.match(r"--\s*@(\w+):\s*(.*)", line)
-            meta_match = re.match(r"-- @(\w+):(.*)", line)
-
-            if not meta_match:
-                clean_lines.append(lines[i])
-                raise SQLMetadataError(f"Invalid metadata format in {self.path}: {line}")
-
-            key = meta_match.group(1).strip().lower()
-            value = meta_match.group(2).strip()
-
-            # -----------------------
-            # NAME
-            # -----------------------
-            if key == "name":
-                if not value:
-                    raise SQLMetadataError(f"Missing name value in {self.path}")
-                name = self._strip_quotes(value)
-
-            # -----------------------
-            # TYPE
-            # -----------------------
-            elif key == "type":
-                if not value:
-                    raise SQLMetadataError(f"Missing type value in {self.path}")
-                
-                raw_type = self._strip_quotes(value).lower()
-                try:
-                    obj_type = SQLObjectType(raw_type)
-                except ValueError:
-                    raise ValueError(f"Invalid SQL object type: {raw_type}")
-
-            # -----------------------
-            # DEPENDS
-            # -----------------------
-            elif key == "depends":
-                if value:
-                    # depends.extend(d.strip() for d in value.split(",") if d.strip())
-                    depends = self._parse_depends(value)
-
-            # -----------------------
-            # AUTO_DEPENDS
-            # -----------------------
-            elif key == "auto_depends":
-                auto_depends = self._parse_bool(value)
-
-            # -----------------------
-            # INDEXES
-            # -----------------------
-            elif key == "indexes":
-
-                yaml_lines = []
-                i += 1
-
-                while i < len(lines):
-                    raw_line = lines[i]
-
-                    # Stop si nouvelle metadata
-                    if raw_line.strip().startswith("-- @"):
-                        break
-
-                    # Stop si ligne SQL
-                    if not raw_line.strip().startswith("--"):
-                        break
-
-                    # Nettoyage
-                    # clean_line = re.sub(r"^--\s?", "", raw_line.rstrip())
-                    # clean_line = re.sub(r"^--\s*", "", raw_line.rstrip())
-                    # clean_line = raw_line.split("--", 1)[1].lstrip()
-
-                    if raw_line.startswith("-- "):
-                        clean_line = raw_line[3:]   # retire exactement "-- "
-                    elif raw_line.startswith("--"):
-                        clean_line = raw_line[2:]   # fallback
-                    else:
-                        continue
-
-
-                    yaml_lines.append(clean_line)
-                    i += 1
-
-                yaml_text = "\n".join(yaml_lines)
-
-                yaml_text = textwrap.dedent(yaml_text).strip()
-
-                try:
-                    raw_indexes = yaml.safe_load(yaml_text)
-                except yaml.YAMLError as e:
-                    raise SQLMetadataError(
-                        f"Invalid YAML in indexes block ({self.path}).\n\n"
-                        f"YAML received:\n{yaml_text}\n\nError: {e}"
-                    )
-
-                indexes = self._normalize_indexes(raw_indexes)
-                continue
-
-            i += 1
-
-        if not name:
-            raise SQLMetadataError(f"Missing @name in {self.path}")
-
-        if not obj_type:
-            raise SQLMetadataError(f"Missing @type in {self.path}")
-
-        return name, obj_type, depends, indexes, auto_depends
-
-    def _parse_metadata_from_json(self):
-        meta_path = self.path.with_suffix(".meta.json")
-
-        if not meta_path.exists():
-            raise SQLMetadataError(f"Missing metadata JSON file for {self.path.name}")
-
-        try:
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        except Exception as e:
-            raise SQLMetadataError(f"Invalid JSON metadata in {meta_path}: {e}")
-
-        name = meta.get("name")
-        obj_type_raw = meta.get("type")
-
-        if not name or not obj_type_raw:
-            raise SQLMetadataError(f"Metadata JSON missing name or type: {meta_path}")
-
-        try:
-            obj_type = SQLObjectType(obj_type_raw)
-        except ValueError:
-            raise SQLMetadataError(f"Invalid type in metadata JSON: {obj_type_raw}")
-
-        depends = meta.get("depends", [])
-        auto_depends = bool(meta.get("auto_depends", False))
-        indexes = self._normalize_indexes(meta.get("indexes", []))
-
-        return name, obj_type, depends, indexes, auto_depends
-
-    # --------------------------------------------------
-    # NORMALISATION DES INDEXES
-    # --------------------------------------------------
-    # def _normalize_indexes(self, raw_indexes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    #     """
-    #     Supporte tous les formats possibles :
-    #     - id
-    #     - (a,b)
-    #     - [a,b]
-    #     - "a","b"
-    #     - a,b
-    #     """
-
-    #     normalized = []
-
-    #     for idx in raw_indexes:
-    #         cols = idx.get("columns")
-
-    #         if isinstance(cols, str):
-    #             cols = cols.strip()
-    #             # (a,b) ou ['a','b'] ou "a", 'b'
-    #             if cols.startswith("(") and cols.endswith(")"):
-    #                 cols = [c.strip().strip("'\"") for c in cols[1:-1].split(",")]
-
-    #             elif cols.startswith("[") and cols.endswith("]"):
-    #                 # Convertir [a,b] ou ["a","b"] en liste
-    #                 try:
-    #                     # cols_list = eval(cols)
-    #                     cols_list = ast.literal_eval(cols)
-    #                     if isinstance(cols_list, list):
-    #                         cols = [str(c) for c in cols_list]
-    #                     else:
-    #                         cols = [cols]
-    #                 except Exception:
-    #                     cols = [cols]
-
-    #             else:
-    #                 # colonnes simples séparées par virgule
-    #                 cols = [c.strip() for c in cols.split(",") if c.strip()]
-
-    #         elif isinstance(cols, list):
-    #             cols = [str(c) for c in cols]
-
-    #         else:
-    #             cols = []
-
-    #         cols = [str(c).strip().strip("'\"") for c in cols if str(c).strip()]
-
-    #         normalized.append({
-    #             "columns": cols,
-    #             "unique": bool(idx.get("unique", False)),
-    #             "method": idx.get("method"),
-    #             "where": idx.get("where")
-    #         })
-
-    #     return normalized
-    
-    def _normalize_indexes(self, raw_indexes: Any) -> List[Dict[str, Any]]:
-        """
-        Normalize and validate index definitions.
-        """
-
-        if not raw_indexes:
-            return []
-
-        if not isinstance(raw_indexes, list):
-            raise SQLMetadataError("Indexes metadata must be a list")
-
-        normalized = []
-
-        for idx in raw_indexes:
-            if not isinstance(idx, dict):
-                raise SQLMetadataError("Each index must be a dictionary")
-
-            columns = idx.get("columns")
-            if not columns or not isinstance(columns, list):
-                raise SQLMetadataError(
-                    f"Index missing valid 'columns' field: {idx}"
-                )
-
-            if not all(isinstance(c, str) and c.strip() for c in columns):
-                raise SQLMetadataError(
-                    f"Invalid column names in index: {idx}"
-                )
-
-            normalized_index = {
-                "columns": columns,
-                "unique": bool(idx.get("unique", False)),
-                "method": idx.get("method", "btree"),
-                "where": idx.get("where"),
-                "concurrently": bool(idx.get("concurrently", False)),
-            }
-
-            normalized.append(normalized_index)
-
-        return normalized
-    
     # --------------------------------------------------
     # SQL EXTRACTION
     # --------------------------------------------------
     def _extract_sql_body(self) -> str:
         return "\n".join(line for line in self.content.splitlines() if not line.strip().startswith("-- @"))
 
-    
-
-    def parse_sql_file(self) -> Tuple[str, Dict]:
+    def _parse_sql_file(self) -> Tuple[str, Dict]:
         """
         Lit un fichier SQL et retourne le SQL pur + metadata.
         Supporte YAML-style comments pour metadata.
@@ -833,67 +907,6 @@ class SQLObject:
 
         sql_str = "".join(sql_lines).strip()
         return sql_str, metadata
-
-    def parse_sql_file_version2(self) -> Tuple[str, Dict[str, Any]]:
-        """
-        Parse un fichier SQL contenant des métadonnées @ directives.
-
-        Retourne:
-            clean_sql: SQL sans les directives @
-            metadata: dict contenant name, type, depends, indexes
-        """
-
-        metadata: Dict[str, Any] = {
-            "name": None,
-            "type": None,
-            "depends": [],
-            "indexes": []
-        }
-
-        lines = self.content.splitlines()
-        clean_lines = []
-
-        i = 0
-        while i < len(lines):
-            line = lines[i].strip()
-
-            # ---------- SINGLE LINE METADATA ----------
-            meta_match = re.match(r"--\s*@(\w+):\s*(.*)", line)
-            if meta_match:
-                key, value = meta_match.groups()
-
-                if key == "depends":
-                    metadata["depends"] = [
-                        v.strip() for v in value.split(",") if v.strip()
-                    ]
-
-                elif key == "indexes":
-                    # Collect YAML block
-                    yaml_lines = []
-                    i += 1
-                    while i < len(lines) and lines[i].strip().startswith("--"):
-                        yaml_lines.append(
-                            lines[i].replace("--", "", 1).rstrip()
-                        )
-                        i += 1
-
-                    yaml_text = "\n".join(yaml_lines).strip()
-                    metadata["indexes"] = yaml.safe_load(yaml_text) or []
-                    continue
-
-                else:
-                    metadata[key] = value.strip()
-
-                i += 1
-                continue
-
-            # ---------- NORMAL SQL LINE ----------
-            clean_lines.append(lines[i])
-            i += 1
-
-        clean_sql_str = "\n".join(clean_lines).strip()
-
-        return clean_sql_str, metadata
 
     def _meta(self, key):
         pattern = rf"--\s*@{key}:\s*(.*)"
@@ -927,12 +940,13 @@ class SQLObject:
         """
         Convertit un SQLObject en dictionnaire JSON-compatible
         """
+        
         return {
-            "name": obj.name,
-            "type": obj.type.value if obj.type else "",
-            "depends": obj.depends,
-            "auto_depends": obj.auto_depends,
-            "indexes": obj.indexes,
+            "name": obj.sql_metadata.name,
+            "type": obj.sql_metadata.type.value if obj.sql_metadata.type else "",
+            "depends": obj.sql_metadata.depends,
+            "auto_depends": obj.sql_metadata.auto_depends,
+            "indexes": obj.sql_metadata.indexes,
             "hash": obj.hash
         }
 
@@ -1003,6 +1017,7 @@ class SQLObject:
 
         return "\n".join(lines)
 
+
 # ----------------------------
 # APPLY / DROP / REFRESH / REBUILD /SQL MIGRATOR
 # ----------------------------
@@ -1012,7 +1027,6 @@ class SQLMigrator:
 
     def close(self):
         pass
-
 
     # ----------------------------
     # EXECUTION ORDONNEE | APPLY
@@ -1028,14 +1042,12 @@ class SQLMigrator:
         """
 
         with Session(db.engine) as session:
-
             try:
                 SQLUtils.create_project_indexes(session, self.project_name, app=app)
                 session.commit()
             except Exception as e:
                 session.rollback()
-                logger.error(f"❌ Failed to create project indexes: {e}")
-                raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.name}") from e
+                raise SQLMetadataConversionError(f"❌ Failed to create project indexes: {e}") from e
 
             # Assure la table de migrations
             logger.info(f"{session.execute(text("SELECT current_database()")).scalar()}\n")
@@ -1048,63 +1060,66 @@ class SQLMigrator:
                 session.commit()
             except Exception as e:
                 session.rollback()
-                logger.error(f"❌ Failed to ensure migration table: {e}")
-                raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.name}") from e
+                raise SQLMetadataConversionError(f"❌ Failed to ensure migration table: {e}") from e
 
             ordered = SQLUtils.topo_sort(objects)
 
             for obj in ordered:
                 try:
+                    
                     if SQLUtils.is_up_to_date(session, obj, self.project_name, app=app):
-                        logger.info(f"✓ {obj.name} up to date")
+                        logger.info(f"✓ {obj.sql_metadata.name} up to date")
                         continue
 
                     if not obj.sql_str or not obj.sql_str.strip():
                         continue
 
-                    logger.info(f"Applying {obj.name} ({obj.type.value}) ...")
+                    logger.info(f"Applying {obj.sql_metadata.name} ({obj.sql_metadata.type.value}) ...")
+
+                    print(obj.sql_metadata.to_dict())
 
                     # --- EXECUTE OBJECT ---
                     session.execute(text(obj.sql_str))
 
                     # --- CREATE INDEXES ---
-                    if obj.type in {SQLObjectType.TABLE,SQLObjectType.VIEW,SQLObjectType.MATVIEW}:
+                    if obj.sql_metadata.type in {SQLObjectType.TABLE,SQLObjectType.VIEW,SQLObjectType.MATVIEW}:
                         view_index_sql = SQLUtils.create_indexes(session, obj, self.project_name, app=app)
                         
                         if view_index_sql and len(view_index_sql) > 0:
                             logger.info(f"Index Créé avec sucess: \n{f"{', '.join(view_index_sql)}"}")
                         else:
-                            logger.info(f"No index create for : {f"{obj.name}"}")
+                            logger.info(f"No index create for : {f"{obj.sql_metadata.name}"}")
                     
                     # --- RECORD MIGRATION ---
                     SQLUtils.record_migration(session, obj, self.project_name, app=app)
 
                     # --- COMMIT OBJECT ---
                     session.commit()
-                    logger.info(f"✅ Committed {obj.name}\n")
+                    logger.info(f"✅ Committed {obj.sql_metadata.name}\n")
 
                 except Exception as e:
                     session.rollback()
-                    logger.error(f"❌ Failed {obj.name} — rolled back. Error: {e}")
-                    raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.name}") from e
+                    logger.error(f"❌ Failed {obj.sql_metadata.name} — rolled back. Error: {e}")
+                    raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.sql_metadata.name}") from e
 
 
             # --- Phase 2 : refresh matviews (hors transaction pour CONCURRENTLY) ---
             for obj in ordered:
-                if obj.type == SQLObjectType.MATVIEW:
+                
+                if obj.sql_metadata.type == SQLObjectType.MATVIEW:
                     try:
                         concurrent = " CONCURRENTLY" if refresh_concurrently else ""
-                        safe_name = SQLUtils.validate_identifier(obj.name)
+                        safe_name = SQLUtils.validate_identifier(obj.sql_metadata.name)
 
                         session.execute(text(f"REFRESH MATERIALIZED VIEW{concurrent} {safe_name}"))
 
                         session.commit()
-                        logger.info(f"🔄 Refreshed matview {obj.name}")
+                        logger.info(f"🔄 Refreshed matview {concurrent.lower()} {obj.sql_metadata.name}")
 
                     except Exception as e:
                         session.rollback()
-                        logger.error(f"❌ Failed to refresh matview {obj.name}: {e}")
-                        raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.name}") from e
+                        logger.error(f"❌ Failed to refresh matview {obj.sql_metadata.name}: {e}")
+                        raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.sql_metadata.name}") from e
 
     # ----------------------------
     # DROP
@@ -1116,9 +1131,10 @@ class SQLMigrator:
 
         with Session(db.engine) as session:
             for obj in ordered:
+                
                 try:
-                    safe_name = SQLUtils.validate_identifier(obj.name)
-                    type_name = obj.type.value if obj.type else None
+                    safe_name = SQLUtils.validate_identifier(obj.sql_metadata.name)
+                    type_name = obj.sql_metadata.type.value if obj.sql_metadata.type else None
 
                     logger.info(f"Dropping {type_name} {safe_name} ...")
 
@@ -1129,20 +1145,20 @@ class SQLMigrator:
                         SQLObjectType.FUNCTION: "DROP FUNCTION IF EXISTS {}",
                     }
                     
-                    # if obj.type == SQLObjectType.TABLE:
+                    # if obj.sql_metadata.type == SQLObjectType.TABLE:
                     #     sql_str = f"DROP TABLE IF EXISTS {safe_name} CASCADE"
-                    # elif obj.type == SQLObjectType.VIEW:
+                    # elif obj.sql_metadata.type == SQLObjectType.VIEW:
                     #     sql_str = f"DROP VIEW IF EXISTS {safe_name} CASCADE"
-                    # elif obj.type == SQLObjectType.MATVIEW:
+                    # elif obj.sql_metadata.type == SQLObjectType.MATVIEW:
                     #     sql_str = f"DROP MATERIALIZED VIEW IF EXISTS {safe_name} CASCADE"
-                    # elif obj.type == SQLObjectType.FUNCTION:
+                    # elif obj.sql_metadata.type == SQLObjectType.FUNCTION:
                     #     sql_str = f"DROP FUNCTION IF EXISTS {safe_name} CASCADE"
                     #     # sql_str = f"DROP FUNCTION {safe_name} CASCADE"
 
                     # if not sql_str:
                     #     continue
 
-                    template = sql_map.get(obj.type)
+                    template = sql_map.get(obj.sql_metadata.type)
 
                     if not template:
                         continue
@@ -1168,11 +1184,11 @@ class SQLMigrator:
         """
 
         with Session(db.engine) as session:
-
+            
             try:
-                safe_name = SQLUtils.validate_identifier(obj.name)
+                safe_name = SQLUtils.validate_identifier(obj.sql_metadata.name)
 
-                logger.info(f"Dropping {obj.type.value} {safe_name} with CASCADE ...")
+                logger.info(f"Dropping {obj.sql_metadata.type.value} {safe_name} with CASCADE ...")
 
                 # -----------------------------
                 # 1️⃣ Récupérer dépendances AVANT DROP
@@ -1184,10 +1200,10 @@ class SQLMigrator:
                     JOIN pg_class parent ON d.refobjid = parent.oid
                     WHERE parent.relname = :name
                     AND c.relkind IN ('v', 'm', 'r', 'f')
-                """), {"name": obj.name}).fetchall()
+                """), {"name": obj.sql_metadata.name}).fetchall()
 
                 dependent_names = {row[0] for row in dependencies}
-                dependent_names.add(obj.name)  # inclure lui-même
+                dependent_names.add(obj.sql_metadata.name)  # inclure lui-même
 
                 # -----------------------------
                 # 2️⃣ DROP CASCADE
@@ -1199,13 +1215,13 @@ class SQLMigrator:
                     SQLObjectType.FUNCTION: "DROP FUNCTION IF EXISTS {} CASCADE",
                 }
 
-                template = drop_map.get(obj.type)
+                template = drop_map.get(obj.sql_metadata.type)
 
                 if not template:
-                    raise ValueError(f"Unsupported object type {obj.type}")
+                    raise ValueError(f"Unsupported object type {obj.sql_metadata.type}")
                 
                 # query = text(template.format(safe_name))
-                query = sql.SQL(template).format(sql.Identifier(obj.name))
+                query = sql.SQL(template).format(sql.Identifier(obj.sql_metadata.name))
                 session.execute(query)
 
                 # -----------------------------
@@ -1227,7 +1243,7 @@ class SQLMigrator:
 
             except Exception as e:
                 session.rollback()
-                logger.error(f"❌ Failed to drop {obj.name}: {e}")
+                logger.error(f"❌ Failed to drop {obj.sql_metadata.name}: {e}")
                 raise
 
     # ----------------------------
@@ -1241,21 +1257,23 @@ class SQLMigrator:
         """
         with Session(db.engine) as session:
             for obj in objects:
-                if obj.type != SQLObjectType.MATVIEW:
+                
+
+                if obj.sql_metadata.type != SQLObjectType.MATVIEW:
                     continue
 
-                safe_name = SQLUtils.validate_identifier(obj.name)
+                safe_name = SQLUtils.validate_identifier(obj.sql_metadata.name)
                 concurrent = " CONCURRENTLY" if concurrently else ""
 
                 try:
                     session.execute(text(f"REFRESH MATERIALIZED VIEW{concurrent} {safe_name}"))
 
                     session.commit()
-                    logger.info(f"🔄 Matview {obj.name} refreshed successfully")
+                    logger.info(f"🔄 Matview {obj.sql_metadata.name} refreshed successfully")
 
                 except Exception as e:
                     session.rollback()
-                    logger.error(f"❌ Failed to refresh matview {obj.name}: {e}")
+                    logger.error(f"❌ Failed to refresh matview {obj.sql_metadata.name}: {e}")
                     raise
 
     # ----------------------------

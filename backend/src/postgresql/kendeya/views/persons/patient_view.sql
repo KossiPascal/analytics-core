@@ -43,6 +43,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS patient_view AS
         (b.doc->>'_id')::TEXT AS id,
         (b.doc->>'_rev')::TEXT AS rev,
         (b.doc->>'name')::TEXT AS name,
+        (doc->>'firstname')::TEXT AS firstname,
+        (doc->>'lastname')::TEXT AS lastname,
         (b.doc->>'external_id')::TEXT AS external_id,
         (b.doc->>'code')::TEXT AS code,
 

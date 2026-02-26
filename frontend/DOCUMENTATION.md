@@ -258,7 +258,7 @@ webapp-react/
     │   ├── maps/           # Cartes géographiques
     │   │
     │   ├── users/          # Gestion utilisateurs
-    │   │   ├── pages/      # UsersPage, RolesPage, etc.
+    │   │   ├── pages/      # IdentitiesPage, RolesPage, etc.
     │   │   └── components/
     │   │
     │   ├── admin/          # Administration
@@ -856,7 +856,7 @@ export const MonthlyDashboardPage = lazy(() => import('@pages/dashboards/pages/M
 export const RealtimeDashboardPage = lazy(() => import('@pages/dashboards/pages/RealtimeDashboard'));
 export const ReportsPage = lazy(() => import('@pages/reports/pages/ReportsPage'));
 export const MapsPage = lazy(() => import('@pages/maps/pages/MapsPage'));
-export const UsersPage = lazy(() => import('@pages/users/pages/UsersPage'));
+export const IdentitiesPage = lazy(() => import('@pages/users/pages/IdentitiesPage'));
 export const RolesPage = lazy(() => import('@pages/users/pages/RolesPage'));
 export const PermissionsPage = lazy(() => import('@pages/users/pages/PermissionsPage'));
 export const OrganizationsPage = lazy(() => import('@pages/users/pages/OrganizationsPage'));
@@ -880,7 +880,7 @@ export const ServerErrorPage = lazy(() => import('@pages/errors/pages/ServerErro
 | `/dashboards/realtime/*` | RealtimeDashboard | Privé | Dashboard temps réel |
 | `/reports/*` | ReportsPage | Privé | Rapports |
 | `/maps/*` | MapsPage | Privé | Cartes géographiques |
-| `/users/list` | UsersPage | Privé | Liste des utilisateurs |
+| `/users/list` | IdentitiesPage | Privé | Liste des utilisateurs |
 | `/users/roles` | RolesPage | Privé | Gestion des rôles |
 | `/users/permissions` | PermissionsPage | Privé | Gestion permissions |
 | `/users/organizations` | OrganizationsPage | Privé | Gestion organisations |

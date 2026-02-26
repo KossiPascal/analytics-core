@@ -1,14 +1,11 @@
 # auth.py
-import uuid
 import random
 import string
 from backend.src.config import Config
 from datetime import datetime, timezone
-from backend.src.databases.extensions import db
-from sqlalchemy.exc import IntegrityError
+from backend.src.helpers.hasher import hash_token
 from backend.src.models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g, current_app
-from backend.src.helpers.hasher import hash_password, verify_password, hash_token
 from backend.src.security.access_security import require_auth
 
 from backend.src.logger import get_backend_logger
@@ -27,7 +24,6 @@ def available_uid(existing_ids: set) -> str:
         new_id = generate_short_id()
     return new_id
 
-
 def utc(dt: datetime) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
@@ -44,7 +40,7 @@ def login():
             return jsonify({"error": "username anpostd password required"}), 400
 
         user: User = User.query.filter_by(username=username).first()
-        if not user or not user.is_active or user.is_deleted:
+        if not user or not user.is_active or user.deleted:
             return jsonify({"error": "Invalid credentials or inactive account"}), 401
 
         if not user.check_password(password):
@@ -76,108 +72,6 @@ def login():
     except Exception as e:
         current_app.logger.error(f"Login error: {str(e)}")
         return jsonify({"error": f"Login failed: {str(e)}"}), 500
-
-
-# ===================== REGISTER =====================
-@bp.post("/register")
-@require_auth  # optionally, only admin can create users
-def register():
-    """
-    Register a new user.
-    JSON body: { "username": "", "password": "", "fullname": "", "email": "", "phone": "", "roles": [] }
-    """
-    try:
-        data = request.get_json(silent=True) or {}
-        username = data.get("username")
-        password = data.get("password")
-        fullname = data.get("fullname")
-        email = data.get("email")
-        phone = data.get("phone")
-        roles = data.get("roles", [])
-
-        if not username or not password:
-            return jsonify({"error": "Username and password are required"}), 400
-
-        # check duplicates
-        existing = User.query.filter((User.username == username) | (User.email == email)).first()
-        if existing:
-            return jsonify({"error": "Username or email already exists"}), 409
-
-        # Hash password
-        salt, hashed = hash_password(password)
-
-        # Generate unique ID
-        user_id = uuid.uuid4()
-
-        new_user = User(
-            id=user_id,
-            username=username,
-            fullname=fullname,
-            email=email,
-            phone=phone,
-            password=hashed,
-            salt=salt,
-            roles=roles,
-            is_active=True,
-            is_deleted=False,
-            must_login=True,
-            has_changed_default_password=False,
-            created_by=g.current_user.get("id") if g.get("current_user") else None
-        )
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        return jsonify({"message": "User registered successfully", "user_id": str(user_id)}), 201
-
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify({"error": "Database integrity error"}), 500
-    except Exception as e:
-        logger.error(f"Register error: {str(e)}")
-        return jsonify({"error": "Registration failed", "details": str(e)}), 500
-
-# ===================== UPDATE PASSWORD =====================
-@bp.post("/update-password")
-@require_auth
-def update_password():
-    """
-    Update user password.
-    JSON body: { "oldPassword": "...", "newPassword": "..." }
-    """
-    try:
-        user: User = User.query.get(g.current_user["id"])
-        if not user or not user.is_active or user.is_deleted:
-            return jsonify({"error": "User not found or inactive"}), 404
-
-        data = request.get_json(silent=True) or {}
-        old_password = data.get("oldPassword")
-        new_password = data.get("newPassword")
-
-        if not old_password or not new_password:
-            return jsonify({"error": "Both old and new passwords are required"}), 400
-
-        if not verify_password(old_password, user.salt, user.password):
-            return jsonify({"error": "Old password is incorrect"}), 401
-
-        # Hash new password
-        salt, hashed = hash_password(new_password)
-        user.password_hash = hashed
-        user.salt = salt
-        user.has_changed_default_password = True
-        user.must_login = True
-
-        db.session.commit()
-
-        # Optionally issue new access token
-        token, exp, payload = user.generate_permission_payload()
-
-
-        return jsonify({"message": "Password updated successfully", "token": token}), 200
-
-    except Exception as e:
-        logger.error(f"Update password error: {str(e)}")
-        return jsonify({"error": "Failed to update password", "details": str(e)}), 500
 
 # ===================== REFRESH TOKEN =====================
 @bp.post("/refresh")
@@ -213,7 +107,7 @@ def refresh():
 
         # print(f"Refresh token is valid. Issuing new tokens for user_id {rt.user_id}")
         user: User = User.query.get(rt.user_id)
-        if not user or not user.is_active or user.is_deleted:
+        if not user or not user.is_active or user.deleted:
             return jsonify({"error": "User not found or inactive"}), 401
 
         # Issue new refresh token

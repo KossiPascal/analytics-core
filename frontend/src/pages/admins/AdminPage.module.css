@@ -1,8 +1,63 @@
+/* ==========================================
+   USERS PAGE STYLES
+   Styles spécifiques aux onglets de la page IdentitiesPage
+   Les styles communs sont dans @components/ui/styles/shared.module.css
+   ========================================== */
+
+/* ===================
+   TABS NAVIGATION
+   =================== */
+   
 /* Tabs Container */
 .tabsContainer {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   overflow-x: auto;
   /* -webkit-overflow-scrolling: touch; */
+}
+
+.tabsList {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+
+.tabItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+
+.tabItem:hover {
+  color: var(--text-primary, #1e293b);
+  background: var(--bg-hover, #f8fafc);
+}
+
+.tabItem.active {
+  color: var(--primary, #3b82f6);
+  border-bottom-color: var(--primary, #3b82f6);
+}
+
+.tabItem svg {
+  flex-shrink: 0;
+}
+
+.tabContent {
+  padding-top: 1rem;
 }
 
 .tabs {
@@ -335,26 +390,8 @@
   grid-template-columns: repeat(1, 1fr);
 }
 
-@media (min-width: 768px) {
-  .grid2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 .grid3 {
   grid-template-columns: repeat(1, 1fr);
-}
-
-@media (min-width: 768px) {
-  .grid3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .grid3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 /* Token display */
@@ -390,6 +427,25 @@
 
 .actionBtnDanger:hover {
   color: var(--danger, #ef4444);
+}
+
+
+@media (min-width: 768px) {
+  .grid2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .grid3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* Responsive */

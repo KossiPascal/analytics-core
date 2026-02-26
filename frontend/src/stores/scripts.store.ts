@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { encryptedStorage, RETRY_MILLIS, networkManager } from '@/stores/stores.config';
-import { qbService, Script } from '@/services/scripts.service';
+import { scriptService, Script } from '@/services/scripts.service';
 import { extractErrorMessage } from '@/utils/error.utils';
 
 const getTheme = () => {
@@ -42,7 +42,7 @@ interface ScriptState {
   result: { parsed: string; stdout: string; rows: any[] } | null;
   show_result_table: boolean;
   error: string | null;
-  copiedId: string | null;
+  copiedId: number | null;
   search: string;
   loading: boolean;
   executing: boolean;
@@ -58,7 +58,7 @@ interface ScriptState {
   setSearch: (search: string) => void;
   setScript: (script: Script) => void;
   clearError: () => void;
-  select: (script_id: string) => void;
+  select: (script_id: number) => void;
   updateField: (field: string, value: any) => void;
   copy: (script: Script) => Promise<void>;
   resetEditor: () => void;
@@ -69,9 +69,9 @@ interface ScriptState {
   fetchAll: () => Promise<void>;
   /* SAVE */
   save: () => Promise<void>;
-  update: (script_id: string) => Promise<void>;
+  update: (script_id: number) => Promise<void>;
   /* DELETE */
-  remove: (script_id?: string, script_name?: string) => Promise<void>;
+  remove: (script_id?: number, script_name?: string) => Promise<void>;
   /* EXECUTE */
   execute: (options?: Record<string, any>) => Promise<void>;
   cancelExecution: () => void;
@@ -115,7 +115,7 @@ export const scriptStore = create<ScriptState>((set, get) => ({
     set({ error: null })
   },
 
-  select: (script_id: string) => {
+  select: (script_id: number) => {
     const { scripts } = get();
     if (!scripts || scripts.length === 0 || !script_id) return;
 
@@ -215,9 +215,9 @@ export const scriptStore = create<ScriptState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const isOnline = networkManager.isOnline();
-      const res = await qbService.getALl();
+      const res = await scriptService.all();
 
-      set({ scripts: res.data || templates });
+      set({ scripts: res || templates });
     } catch (err: any) {
       set({ error: makeError(err, "Failed to fetch scripts") });
     } finally {
@@ -232,8 +232,8 @@ export const scriptStore = create<ScriptState>((set, get) => ({
 
     set({ loading: true, error: null });
     try {
-      const res = await qbService.save(script);
-      set({ script: res.data, isDirty: false });
+      const res = await scriptService.create(script);
+      // set({ script: res.data, isDirty: false });
     } catch (err: any) {
       set({ error: makeError(err, "Failed to save scripts") });
     } finally {
@@ -241,14 +241,14 @@ export const scriptStore = create<ScriptState>((set, get) => ({
     }
   },
 
-  update: async (id: string) => {
+  update: async (id: number) => {
     const { script, isDirty } = get();
     if (!script || !isDirty) return;
 
     set({ loading: true, error: null });
     try {
-      const res = await qbService.update(`${script.id}`, script);
-      set({ script: res.data, isDirty: false });
+      const res = await scriptService.update(id, script);
+      // set({ script: res.data, isDirty: false });
     } catch (err) {
       set({ error: makeError(err, "Failed to update scripts") });
     } finally {
@@ -268,9 +268,9 @@ export const scriptStore = create<ScriptState>((set, get) => ({
     set({ loading: true, error: null });
 
     try {
-      const res = await qbService.delete(`${script_id}`);
+      const res = await scriptService.remove(id_to_remove);
       if (res) {
-        const scriptsToSet = scripts.filter((s) => s.id !== script_id)
+        const scriptsToSet = scripts.filter((s) => s.id !== id_to_remove)
         set({ script: null, scripts: scriptsToSet, result: null });
       }
     } catch (err: any) {
@@ -290,8 +290,8 @@ export const scriptStore = create<ScriptState>((set, get) => ({
     set({ executing: true, loading: true, result: null, error: null, abortController: controller });
 
     try {
-      const res = await qbService.execute({ ...script, ...options }, controller.signal);
-      set({ result: res });
+      const res = await scriptService.execute({ ...script, ...options }, controller.signal);
+      set({ result: res as any });
     } catch (err: any) {
       set({ error: err.name === "CanceledError" ? "Execution cancelled by user" : makeError(err, "Execution failed") });
     } finally {

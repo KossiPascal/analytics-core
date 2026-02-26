@@ -24,7 +24,7 @@ export interface Role {
 }
 
 
-export interface RolePermission {
+export interface RolePermissionLink {
   role_id: string;
   permission_id: string;
 }

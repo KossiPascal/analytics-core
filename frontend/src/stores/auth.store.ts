@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true, error: null });
         try {
           const isOnline = networkManager.isOnline();
-          const session = await authService.login(username, password, isOnline);
+          const session:LoginResponse = await authService.login(username, password, isOnline) as any;
           set({ user: session.payload, token: session.access_token });
         } catch (err) {
           set({ error: extractErrorMessage(err, "Login failed") });
@@ -62,7 +62,7 @@ export const useAuthStore = create<AuthState>()(
 
       async refresh(refresh_token) {
         try {
-          const session = await authService.refresh(refresh_token);
+          const session:LoginResponse = await authService.refresh(refresh_token) as any;
           set({ user: session.payload, token: session.access_token });
         } catch {
           await get().logout();
