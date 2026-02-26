@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { RefreshCw, Table, Eye, Layers3 } from "lucide-react";
-import { connectionService as API } from "@services/connection.service";
+import { datasourceService as API } from "@/services/datasource.service";
 
 export default function SchemaViewer({ onRunSql }: { onRunSql: any }) {
   const [tables, setTables] = useState([]);
@@ -19,11 +19,11 @@ export default function SchemaViewer({ onRunSql }: { onRunSql: any }) {
 
     try {
       const res = await API.schemaInfo();
-      if (!res.data) throw new Error("Format de réponse inattendu or Réponse invalide");
+      // if (!res.data) throw new Error("Format de réponse inattendu or Réponse invalide");
 
-      setTables(res.data.tables || []);
-      setViews(res.data.views || []);
-      setMatviews(res.data.matviews || []);
+      // setTables(res.data.tables || []);
+      // setViews(res.data.views || []);
+      // setMatviews(res.data.matviews || []);
 
     } catch (err: any) {
       setError(err.response?.data?.error || err.message || "Erreur inconnue");

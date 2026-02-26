@@ -7,7 +7,6 @@ import { FormInput } from "@/components/forms/FormInput/FormInput";
 
 export default function SavedScriptList() {
   const { loading, scripts, copiedId, search, error, fetchAll, remove, select, copy, setSearch, clearError } = scriptStore();
-
   const { isAdmin, isSuperAdmin } = useAuth();
 
   /* ----------------------------------------------------
@@ -44,7 +43,7 @@ export default function SavedScriptList() {
   /* ----------------------------------------------------
      HANDLERS
   ---------------------------------------------------- */
-  const handleDelete = useCallback(async (id: string | null, name: string) => {
+  const handleDelete = useCallback(async (id: number | null, name: string) => {
     if (!id) return;
     clearError();
     await remove(id, name);
@@ -52,7 +51,7 @@ export default function SavedScriptList() {
     [clearError, remove]
   );
 
-  const handleSelect = useCallback((id: string | null) => {
+  const handleSelect = useCallback((id: number | null) => {
     if (!id) return;
     clearError();
     select(id);

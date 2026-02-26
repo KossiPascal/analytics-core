@@ -44,14 +44,17 @@ export function FormField({
   return (
     <div className={fieldClasses}>
       {label && (
-        <label className={styles.label} htmlFor={htmlFor}>
-          {label}
-          {required && <span className={styles.required}>*</span>}
-        </label>
+        <>
+          <label className={styles.label} htmlFor={htmlFor}>
+            {label}
+            {required && <span className={styles.required}>*</span>}
+          </label>
+          {hint && !error && <span className={styles.hint}>{hint}</span>}
+        </>
       )}
       <div className={layout === 'inline' ? styles.formFieldInlineContent : undefined}>
         {children}
-        {hint && !error && <span className={styles.hint}>{hint}</span>}
+        
         {error && (
           <span className={styles.errorMessage}>
             <AlertCircle size={12} />

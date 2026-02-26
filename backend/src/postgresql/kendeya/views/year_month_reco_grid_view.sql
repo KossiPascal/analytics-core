@@ -29,6 +29,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS year_month_reco_grid_view AS
             WHEN ym.month = '01' THEN ym.year - 1
             ELSE ym.year
         END AS prev_year
+        
     FROM reco_view r
     CROSS JOIN year_month_grid_view ym
     ORDER BY r.id, ym.year, ym.month;

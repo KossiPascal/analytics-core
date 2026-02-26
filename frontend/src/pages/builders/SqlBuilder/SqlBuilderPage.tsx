@@ -5,10 +5,11 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { SqlBuilder } from './components/SqlBuilder';
-import type { AnalyticsModel, AttributDef, DatabaseDef, DbConnection, DimensionDef, MetricDef, QueryJSON, TableDef } from '../builders.models';
-import { } from '@/services/connection.service';
-import { connectionService as API } from '@/services/connection.service';
+import type { AnalyticsModel, AttributDef, DatabaseDef, DataSourceConnection, DimensionDef, MetricDef, QueryJSON, TableDef } from '../../../models/builders.models';
+import { } from '@/services/datasource.service';
+import { datasourceService as API } from '@/services/datasource.service';
 import { boolean } from 'zod';
+import { DataSource } from '@/models/datasource.models';
 
 // ============================================================================
 // DEMO ANALYTICS MODEL
@@ -151,7 +152,7 @@ const SqlBuilderPage: React.FC = () => {
     setLoading(true);
     setIsLoadError(false);
     try {
-      const { data } = await API.listWithDetails<DbConnection>();
+      const data = await API.all(1,true);
      
       const connList: DatabaseDef[] = [];
       const TablesList: TableDef[] = [];
@@ -165,7 +166,7 @@ const SqlBuilderPage: React.FC = () => {
           id: db.id!,
           label: db.name,
           description: db.description,
-          type: db.type,
+          type: db.type?.code,
           // icon?: string,
           // color?: string,
         })

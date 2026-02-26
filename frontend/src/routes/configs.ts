@@ -29,10 +29,16 @@ export const PAGES = {
     CustomBuilderPage: lazy(() => import('@/pages/builders/CustomBuilder/CustomBuilderPage')) as any,
 
     // Users pages
-    UsersPage: lazy(() => import('@pages/users/UsersPage')),
+    IdentitiesPage: lazy(() => import('@/pages/admins/IdentitiePage')),
+
+    // DataSources Page
+    DatasourcesPage: lazy(() => import('@/pages/admins/DatasourcePage')),
+
+    // Dataset Page
+    DatasetsPage: lazy(() => import('@/pages/admins/DatasetPage')),
 
     // Admin pages
-    AdminPage: lazy(() => import('@/pages/admins/AdminPage')),
+    AdminPage: lazy(() => import('@/pages/admins/ManagementPage')),
 
     // Managements page
     ManagementsPage: lazy(() => import('@pages/managements/ManagementsPage')),
@@ -101,6 +107,17 @@ export const ROUTES = {
         permissions: () => '/users/permissions',
         roles: () => '/users/roles',
         roleDetail: (roleId: string | number) => buildUrl('/users/roles/:roleId', { roleId }),
+    },
+
+    // USERS
+    datasources: {
+        root: () => '/datasources',
+        list: () => '/datasources/list',
+    },
+
+    datasets: {
+        root: () => '/datasets',
+        list: () => '/datasets/list',
     },
 
     // ADMINISTRATION

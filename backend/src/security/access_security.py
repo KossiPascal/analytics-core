@@ -42,7 +42,10 @@ def require_auth(f=None, *, roles: Optional[list[str]] = None):
                 raise Unauthorized("[REQUIRE_AUTH] Invalid token payload")
 
             # 4. Validate user exists & is active
-            user: User | None = (User.query.filter_by(id=user_id, username=username).first())
+            user: User | None = (User.query.filter(
+                User.id==user_id, 
+                User.username==username
+            ).first())
             if not user:
                 raise Unauthorized("[REQUIRE_AUTH] User not found")
 
@@ -52,7 +55,7 @@ def require_auth(f=None, *, roles: Optional[list[str]] = None):
             # 5. Role / permission validation
             if roles:
                 user_roles = set(user.roles or [])
-                required_roles = set(roles)
+                required_roles = [set(role.id) for role in roles]
 
                 if user_roles.isdisjoint(required_roles):
                     raise Forbidden("[REQUIRE_AUTH] Insufficient permissions")

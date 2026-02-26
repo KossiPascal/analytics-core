@@ -30,6 +30,7 @@ class Config:
     BACKEND_DIR = BASE_DIR / "backend"
     SSL_DIR = BASE_DIR / "configs/nginx/certs/default"
     SRC_FOLDER = BACKEND_DIR / "src"
+    ALCHEMY_MIGRATION_FOLDER = BACKEND_DIR / "migrations"
     PUBLIC_DIR = SRC_FOLDER / "public"
     WEBAPP_DIR = BACKEND_DIR / "web" #os.path.join(os.path.dirname(__file__), "..", "web")
     EJS_DIR = SRC_FOLDER / "ejs"
@@ -70,8 +71,10 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS", "false") == 'true'
     SCHEDULER_API_ENABLED = os.getenv("SCHEDULER_API_ENABLED", "false") == 'true'
 
+    PASSWORD_MIN_LENGHT = int(os.getenv("PASSWORD_MIN_LENGHT", 8))
     DEFAULT_ADMIN = {
-        "fullname": "Super Admin",
+        "lastname": "Super",
+        "firstname": "Admin",
         "username": os.getenv("DEFAULT_USERNAME", "admin"),
         "password": os.getenv("DEFAULT_PASSWORD", "district"),
         "role": "superadmin",

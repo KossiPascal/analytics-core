@@ -1245,4 +1245,4 @@ export function initializeTestData(): void {
 }
 
 // Auto-initialisation
-initializeTestData();
+// initializeTestData();

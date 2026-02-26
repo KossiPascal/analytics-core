@@ -18,12 +18,12 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from backend.src.config import Config
 from backend.src.databases.extensions import db
-from backend.src.models.connection import CouchdbSyncCible, DbConnection
-from backend.src.models.worker_control import WorkerControl
+from backend.src.models.datasource import DataSourceTarget, DataSourceType, DataSource
+from backend.src.models.controls import WorkerControl
 from backend.src.server import create_flask_app
 
 from workers.couchdb.models import CreateTableModel
-from workers.couchdb.sql_migration import SQLStarter
+from workers.couchdb.sql_migration import SQLStarter, SQLUtils
 from workers.couchdb.utils import with_app_context
 from workers.logger import get_workers_logger
 
@@ -57,9 +57,7 @@ WORKER_CONTROL_NAME = "couchdb_worker"
 SOURCE_LOCKS = {}  # Verrouillage par source_id
 
 
-# -------------------------------
 # UPSERT / DELETE thread-safe
-# -------------------------------
 @with_app_context
 def _upsert_chunk(DataModel: Type[Any], chunk: List[dict], source_name: str, app=None) -> tuple[int, int]:
     created, updated = 0, 0
@@ -128,9 +126,7 @@ def bulk_apply_changes(source_name: str, DataModel: Type[Any], rows_upsert: List
 
     return created, updated, deleted
 
-# -------------------------------
 # FETCH CHANGES
-# -------------------------------
 async def fetch_changes(client: ClientSession, base_url: str, host_db: str, last_seq: str, auth: tuple) -> dict:
     url = f"{base_url}/{host_db}/_changes"
     params = {
@@ -146,37 +142,34 @@ async def fetch_changes(client: ClientSession, base_url: str, host_db: str, last
         resp.raise_for_status()
         return await resp.json()
 
-# -------------------------------
 # SYNC SINGLE DB
-# -------------------------------
-async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataModel: Type[Any], SyncStateModel: Type[Any], SyncStatusModel: Type[Any]) -> dict:
+async def sync_db_once(app: Flask, source: dict, source_type: DataSourceType, DataModel: Type[Any], SyncStateModel: Type[Any], SyncStatusModel: Type[Any]) -> dict:
     """Sync CouchDB → Postgres pour une DB, async & thread-safe."""
     created = updated = deleted = 0
 
     source_id = source["id"]
     source_name = source["name"]
 
-    lock_key = f"{source_id}_{cible.id}"
+    lock_key = f"{source_id}_{source_type.id}"
     lock = SOURCE_LOCKS.setdefault(lock_key, threading.Lock())
     if not lock.acquire(blocking=False):
-        logger.warning(f"[source={source_id} | cible={cible.id}] Sync already running, skipping...")
-        # return {"cible": cible.local_name, "status": "skipped"}
+        logger.warning(f"[source={source_id} | cible={source_type.id}] Sync already running, skipping...")
         return created + updated + deleted
     
     try:
         with app.app_context():
             # --- Load last_seq and create RUNNING log ---
             with Session(db.engine) as session:
-                sync_state = session.query(SyncStateModel).filter_by(source_id=source["id"], cible_id=cible.id).first()
+                sync_state = session.query(SyncStateModel).filter_by(source_id=source["id"], cible_id=source_type.id).first()
                 if not sync_state:
-                    sync_state = SyncStateModel(source_id=source["id"], cible_id=cible.id, last_seq="0")
+                    sync_state = SyncStateModel(source_id=source["id"], cible_id=source_type.id, last_seq="0")
                     session.add(sync_state)
                     session.commit()
                     last_seq = "0"
                 else:
                     last_seq = sync_state.last_seq or "0"
 
-                sync_status = SyncStatusModel(source_id=source["id"], cible_id=cible.id, status="RUNNING", started_at=datetime.now(timezone.utc))
+                sync_status = SyncStatusModel(source_id=source["id"], cible_id=source_type.id, status="RUNNING", started_at=datetime.now(timezone.utc))
                 session.add(sync_status)
                 session.commit()
 
@@ -184,12 +177,12 @@ async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataMo
         while retry_count < MAX_RETRIES:
             try:
                 async with ClientSession(timeout=ClientTimeout(total=Config.TIMEOUT)) as client:
-                    payload = await fetch_changes(client, source["base_url"], cible.host_name, last_seq, source["auth"])
+                    payload = await fetch_changes(client, source["base_url"], source_type.name, last_seq, source["auth"])
                 break
             except (ClientError, asyncio.TimeoutError) as e:
                 retry_count += 1
                 wait = ERROR_RETRY_BASE * (2 ** (retry_count - 1)) + random.uniform(0, 1)
-                logger.warning(f"[source={source_id}:{cible.local_name}] network error, retry {retry_count}/{MAX_RETRIES} in {wait:.1f}s: {e}")
+                logger.warning(f"[source={source_id}:{source_type.id}] network error, retry {retry_count}/{MAX_RETRIES} in {wait:.1f}s: {e}")
                 await asyncio.sleep(wait)
         else:
             raise RuntimeError("Max retries exceeded")
@@ -212,7 +205,7 @@ async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataMo
                     "form": doc.get("form"),
                     "type": doc.get("type"),
                     "source_id": source["id"],
-                    "cible_id": cible.id,
+                    "cible_id": source_type.id,
                     "reported_date": doc.get("reported_date"),
                 })
 
@@ -226,13 +219,13 @@ async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataMo
         # --- Update last_seq and SUCCESS log ---
         with app.app_context():
             with Session(db.engine) as session:
-                sync_state = session.query(SyncStateModel).filter_by(source_id=source["id"], cible_id=cible.id).first()
+                sync_state = session.query(SyncStateModel).filter_by(source_id=source["id"], cible_id=source_type.id).first()
                 if sync_state:
                     sync_state.last_seq = payload.get("last_seq", last_seq)
                     sync_state.last_sync_at = datetime.now(timezone.utc)
 
                 session.add(SyncStatusModel(
-                    source_id=source["id"], cible_id=cible.id,
+                    source_id=source["id"], cible_id=source_type.id,
                     status="SUCCESS",
                     message=f"CREATED({created}) UPDATED({updated}) DELETED({deleted})",
                     started_at=datetime.now(timezone.utc),
@@ -243,7 +236,7 @@ async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataMo
         if not results:
             await asyncio.sleep(SYNC_IDLE_SLEEP)
 
-        # return {"cible": cible.local_name, "status": "success"}
+        # return {"cible": cible.id, "status": "success"}
         return created + updated + deleted
 
     except (ClientError, asyncio.TimeoutError) as e:
@@ -251,16 +244,16 @@ async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataMo
             with Session(db.engine) as session:
                 session.add(SyncStatusModel(
                     source_id=source["id"], 
-                    cible_id=cible.id,
+                    cible_id=source_type.id,
                     status="ERROR", 
                     message=str(e),
                     started_at=datetime.now(timezone.utc), 
                     finished_at=datetime.now(timezone.utc)
                 ))
                 session.commit()
-        logger.warning(f"[source={source['id']}:{cible.local_name}] network error → retry", extra={"source": source["id"], "cible": cible.local_name})
+        logger.warning(f"[source={source['id']}:{source_type.id}] network error → retry", extra={"source": source["id"], "cible": source_type.id})
         await asyncio.sleep(ERROR_RETRY_BASE + random.uniform(0, 2))
-        # return {"cible": cible.local_name, "status": "error", "error": str(e)}
+        # return {"cible": cible.id, "status": "error", "error": str(e)}
         return created + updated + deleted
 
     except Exception as e:
@@ -268,28 +261,26 @@ async def sync_db_once(app: Flask, source: dict, cible: CouchdbSyncCible, DataMo
             with Session(db.engine) as session:
                 session.add(SyncStatusModel(
                     source_id=source["id"], 
-                    cible_id=cible.id,
+                    cible_id=source_type.id,
                     status="ERROR", 
                     message=str(e),
                     started_at=datetime.now(timezone.utc), 
                     finished_at=datetime.now(timezone.utc)
                 ))
                 session.commit()
-        logger.error(f"[source={source['id']}:{cible.local_name}] unexpected error: {str(e)}", extra={"source": source["id"], "cible": cible.local_name})
-        # return {"cible": cible.local_name, "status": "error", "error": str(e)}
+        logger.error(f"[source={source['id']}:{source_type.id}] unexpected error: {str(e)}", extra={"source": source["id"], "cible": source_type.id})
+        # return {"cible": cible.id, "status": "error", "error": str(e)}
         return created + updated + deleted
     
     finally:
         lock.release()
 
-# -------------------------------
 # SYNC SINGLE SOURCE
-# -------------------------------
 @with_app_context
 def start_async_single_source(source_id: int, app: Flask = None) -> dict:
     """Sync CouchDB → Postgres pour une source complète, async & thread-safe."""
     with Session(db.engine) as session:
-        source = session.get(DbConnection, source_id)
+        source = session.get(DataSource, source_id)
         if not source or not source.is_active:
             logger.warning(f"[SYNC] Source {source_id} inactive", extra={"source": source_id})
             # return {"status": "skipped", "reason": "inactive"}
@@ -304,27 +295,27 @@ def start_async_single_source(source_id: int, app: Flask = None) -> dict:
 
     try:
         ModelMgr = CreateTableModel(db, project_name=source_data["name"])
-        CibleDbList = CouchdbSyncCible.couchdb_names()
+        DataSourceTypes:List[DataSourceType] = DataSourceType.list_by_target(target=DataSourceTarget.COUCHDB)
         SyncStateModel, _ = ModelMgr.create_sync_states_table()
         SyncStatusModel, _ = ModelMgr.create_sync_status_table()
 
         async def runner():
             tasks = []
-            for cible in CibleDbList:
-                DataModel, _ = ModelMgr.create_source_table(cible.local_name)
-                tasks.append(sync_db_once(app, source_data, cible, DataModel, SyncStateModel, SyncStatusModel))
+            for source_type in DataSourceTypes:
+                DataModel, _ = ModelMgr.create_source_table(source_type.id)
+                tasks.append(sync_db_once(app, source_data, source_type, DataModel, SyncStateModel, SyncStatusModel))
             return await asyncio.gather(*tasks, return_exceptions=True)
 
         results = asyncio.run(runner())
 
         # --- Update last_sync safely ---
         with Session(db.engine) as session:
-            s = session.get(DbConnection, source_id)
+            s = session.get(DataSource, source_id)
             s.last_used_at = datetime.now(timezone.utc)
             s.last_sync = datetime.now(timezone.utc)
             session.commit()
 
-        # return {"status": "success", "synced_dbs": len(CibleDbList), "details": results}
+        # return {"status": "success", "synced_dbs": len(DataSourceTypes), "details": results}
         return results
 
     except Exception as e:
@@ -340,9 +331,7 @@ def is_worker_paused(session: Session) -> bool:
         session.commit()
     return control.status.lower() == "stop"
 
-# -------------------------------
 # CouchDB Worker encapsulé
-# -------------------------------
 @with_app_context
 def run_workers_logger_loop(poll_interval: int = 5, app: Flask=None):
     logger.info("🚀 CouchDB Sync Worker started")
@@ -353,8 +342,8 @@ def run_workers_logger_loop(poll_interval: int = 5, app: Flask=None):
                     logger.info("⏸ Worker paused", extra={"worker": WORKER_CONTROL_NAME})
                     time.sleep(poll_interval)
                     continue
-
-                source_ids = [s.id for s in session.query(DbConnection.id).filter_by(is_active=True).all()]
+                dataSources:List[DataSource] = session.query(DataSource.id).filter_by(is_active=True,type_id="couchdb").all()
+                source_ids:List[int] = [s.id for s in dataSources]
 
             if not source_ids:
                 logger.debug("⏸️ No active sources", extra={"worker": WORKER_CONTROL_NAME})
@@ -387,16 +376,17 @@ def stop_workers_logger_loop():
     STOP_EVENT.set()
 
 
-# -------------------------------
 # Entrée principale
-# -------------------------------
 if __name__ == "__main__":
     try:
-        app = create_flask_app(create_default_elements=False)
+        app = create_flask_app(initialize_database=False)
         # run_workers_logger_loop(app=app)
-        starter = SQLStarter(project_name="kendeya", app=app)
-        starter.run("init")
+        # starter = SQLStarter(project_name="kendeya", app=app)
+        # starter.run("init")
         # starter.run("rebuild")
+
+        # SQLUtils.convert_all_sql_metadata(project_name="kendeya")
+        # SQLUtils.delete_all_meta_json(project_name="kendeya")
     except KeyboardInterrupt:
         stop_workers_logger_loop()
         logger.info("👋 CouchDB Sync Worker stopped manually")

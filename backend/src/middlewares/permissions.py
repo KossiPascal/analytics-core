@@ -18,7 +18,7 @@ def require_permission(permission: str):
             # user_repo = get_users_repository()
             # user = user_repo.find_one(id=user_id)
 
-            # if not user or not user.is_active or user.is_deleted:
+            # if not user or not user.is_active or user.deleted:
             #     return jsonify(status=403, data="Utilisateur non autorisé ou inactif"), 403
 
             # token = user_token_generated(user)

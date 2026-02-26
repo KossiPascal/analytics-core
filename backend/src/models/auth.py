@@ -3,210 +3,342 @@ import time
 import secrets
 import hashlib
 import hmac
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.exc import IntegrityError
-from backend.src.databases.extensions import db
+from backend.src.databases.extensions import ADMIN, SUPERADMIN, db
 from backend.src.config import Config
 from backend.src.helpers.hasher import hash_password, verify_password
 from sqlalchemy.exc import SQLAlchemyError
 from itsdangerous import BadSignature, SignatureExpired
 
+from backend.src.models.controls import MetaxMixin
 
 rate_limit_store: Dict[str, Tuple[int, int]] = {}  # client_id -> (count, first_ts)
 
 
+def apply_tenant_scope(query, model, current_user):
+    if current_user and current_user.is_superadmin:
+        return query
+
+    if hasattr(model, "tenant_id"):
+        return query.filter(model.tenant_id == current_user.tenant_id)
+
+    return query
+
 # -------------------- TENANT --------------------
-class Tenant(db.Model):
+class Tenant(db.Model, MetaxMixin):
     __tablename__ = "tenants"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    description = db.Column(db.String(255), nullable=True)
 
-    users = db.relationship("User", back_populates="tenant", cascade="all, delete-orphan")
-    datasets = db.relationship("Dataset", back_populates="tenant", cascade="all, delete-orphan")
-    data_sources = db.relationship("DataSource", back_populates="tenant", cascade="all, delete-orphan")
-    visualizations = db.relationship("Visualization", back_populates="tenant", cascade="all, delete-orphan")
-    deleted = db.Column(db.Boolean, default=False)
-    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    users = db.relationship("User", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    datasets = db.relationship("Dataset", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    datasources = db.relationship("DataSource", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    visualizations = db.relationship("Visualization", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    visualization_charts = db.relationship("VisualizationChart", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    permissions = db.relationship("DataSourcePermission", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    fields = db.relationship("DatasetField", back_populates="tenant", cascade="all, delete-orphan")
+    connections = db.relationship("DataSourceConnection", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    ssh_configs = db.relationship("DataSourceSSHConfig", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    credentials = db.relationship("DataSourceCredential", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    histories = db.relationship("DataSourceHistory", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    visualization_execution_logs = db.relationship("VisualizationExecutionLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    dhis2_validations = db.relationship("VisualizationDhis2Validation", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    data_lineages = db.relationship("DataLineage", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    ai_query_logs = db.relationship("AIQueryLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    scripts = db.relationship("Script", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    orgunits = db.relationship("UserOrgunit",back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
+    roles = db.relationship("UserRole",back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
+    queries = db.relationship("DatasetQuery", back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
+    charts = db.relationship("DatasetChart", back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
 
-    def to_dict_safe(self):
-        return {
-            "id": str(self.id), 
+
+    def to_dict(self, include_relations:bool=False):
+        data = {
+            "id": self.id, 
             "name": self.name, 
-            "created_at": self.created_at.isoformat()
+            "description": self.description, 
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
         }
+
+        if include_relations:
+            data.update({
+                "users": [d.to_dict() for d in self.users],
+                "datasets": [d.to_dict() for d in self.datasets],
+                "datasources": [d.to_dict() for d in self.datasources],
+                "visualizations": [d.to_dict() for d in self.visualizations],
+                "visualization_charts": [d.to_dict() for d in self.visualization_charts],
+                "permissions": [d.to_dict() for d in self.permissions],
+                "fields": [d.to_dict() for d in self.fields],
+                "connections": [d.to_dict() for d in self.connections],
+                "ssh_configs": [d.to_dict() for d in self.ssh_configs],
+                "credentials": [d.to_dict() for d in self.credentials],
+                "histories": [d.to_dict() for d in self.histories],
+                "visualization_execution_logs": [d.to_dict() for d in self.visualization_execution_logs],
+                "dhis2_validations": [d.to_dict() for d in self.dhis2_validations],
+                "data_lineages": [d.to_dict() for d in self.data_lineages],
+                "ai_query_logs": [d.to_dict() for d in self.ai_query_logs],
+                "scripts": [d.to_dict() for d in self.scripts],
+                "scripts_execution_logs": [d.to_dict() for d in self.scripts_execution_logs],
+                "orgunits": [d.to_dict() for d in self.orgunits],
+                "roles": [d.to_dict() for d in self.roles],
+                "queries": [d.to_dict() for d in self.queries],
+                "charts": [d.to_dict() for d in self.charts],
+            })
+
+        return data
     
     @classmethod
     def active(cls):
-        return cls.query.filter_by(deleted=False)
+        return cls.query.filter(cls.deleted.is_(False),cls.deleted_at.is_(None))
 
     
     def __repr__(self):
         return f"<Tenant {self.name}>"
+
+class UserOrgunit(db.Model, MetaxMixin):
+    __tablename__ = "user_orgunits"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    code = db.Column(db.String(100), nullable=False)
+    parent_id = db.Column(db.BigInteger, db.ForeignKey('user_orgunits.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
+    description = db.Column(db.String(255), nullable=True)
     
-class Permission(db.Model):
-    __tablename__ = "permissions"
+    # Relations auto-référentielles
+    parent = db.relationship("UserOrgunit",remote_side=[id],backref=db.backref("children", lazy="selectin"),uselist=False)
+    tenant = db.relationship("Tenant", back_populates="orgunits",lazy="selectin",foreign_keys=[tenant_id])
+    users_link = db.relationship("UserOrgunitLink", back_populates="orgunit", lazy="selectin", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        db.CheckConstraint("tenant_id IS NOT NULL", name="ck_orgunit_tenant_not_null"),
+    )
+
+    def get_descendants(self):
+        """Récupère tous les enfants récursivement"""
+        result = set()
+        for child in self.children:
+            if not child.deleted:
+                result.add(child)
+                result.update(child.get_descendants())
+        return result
+    
+    def to_dict(self, include_children=False, include_descendants=False):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "code": self.code,
+            "tenant_id": self.tenant_id,
+            "tenant": self.tenant.to_dict() if self.tenant else None,
+            "parent_id": self.parent_id,
+            "parent": self.parent.to_dict() if self.parent else None,
+            "description": self.description,
+            "is_active": self.is_active
+        }
+
+        if include_children:
+            data["children"] = [
+                child.to_dict(include_children=True)
+                for child in self.children
+                if not child.deleted
+            ]
+
+        if include_descendants:
+            data["descendants"] = [
+                org.to_dict()
+                for org in sorted([o for o in self.get_descendants() if not o.deleted], key=lambda x: x.id)
+            ]
+
+        return data
+    
+    def __repr__(self):
+        return f"<Orgunit {self.name}>"
+
+class UserPermission(db.Model, MetaxMixin):
+    __tablename__ = "user_permissions"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), nullable=False)   # dashboard:read, report:create, chart:update
     description = db.Column(db.String(255), nullable=True)
-    deleted = db.Column(db.Boolean, default=False)
-    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
-    def to_dict_safe(self):
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "description": self.description
+    def to_dict(self):
+        return { 
+            "id": self.id, 
+            "name": self.name, 
+            "description": self.description 
         }
 
     def __repr__(self):
         return f"<Permission {self.name}>"
     
-class Role(db.Model):
-    __tablename__ = "roles"
+class UserRole(db.Model, MetaxMixin):
+    __tablename__ = "user_roles"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(100), nullable=False)
-    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
     is_system = db.Column(db.Boolean, default=False)
-    deleted = db.Column(db.Boolean, default=False)
-    deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
-    permissions = db.relationship(Permission,secondary="role_permissions",lazy="selectin")
 
-    def to_dict_safe(self):
+    permissions = db.relationship("UserPermission", secondary="user_role_permission_links", lazy="selectin")
+    tenant = db.relationship("Tenant", back_populates="roles",lazy="selectin",foreign_keys=[tenant_id])
+
+    __table_args__ = (
+        db.UniqueConstraint("tenant_id", "name", name="uq_role_tenant_name"),
+    )
+
+    def to_dict(self):
+        permissions:List[UserPermission] = self.permissions
+        tenant:Tenant = self.tenant
         return {
-            "id": str(self.id), 
+            "id": self.id, 
             "name": self.name, 
-            "tenant_id": str(self.tenant_id) if self.tenant_id else None, 
+            "description": self.description, 
+            "tenant_id": self.tenant_id,
+            "tenant": tenant.to_dict() if tenant else None, 
+            "permission_ids": [p.id for p in permissions if not p.deleted],
+            "permissions": [p.to_dict() for p in permissions if not p.deleted],
             "is_system": self.is_system
         }
 
     def __repr__(self):
         return f"<Role {self.name}>"
     
-class RolePermission(db.Model):
-    __tablename__ = "role_permissions"
+class RolePermissionLink(db.Model):
+    __tablename__ = "user_role_permission_links"
 
-    role_id = db.Column(db.BigInteger, db.ForeignKey("roles.id"), primary_key=True)
-    permission_id = db.Column(db.BigInteger, db.ForeignKey("permissions.id"), primary_key=True)
+    role_id = db.Column(db.BigInteger, db.ForeignKey("user_roles.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+    permission_id = db.Column(db.BigInteger, db.ForeignKey("user_permissions.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
 
-# UsersLog model
-class UsersLog(db.Model):
-    __tablename__ = "users_log"
-
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
-    user = db.relationship("User", back_populates="logs", lazy="joined")
-
-    method = db.Column(db.String(10), nullable=False)
-    url = db.Column(db.String(1024), nullable=False)
-    user_agent = db.Column(db.String(255), nullable=True)
-    client_ip = db.Column(db.String(45), nullable=True)  # IPv4 + IPv6
-    referer = db.Column(db.String(1024), nullable=True)
-    accept_language = db.Column(db.String(255), nullable=True)
-    browser = db.Column(db.String(100), nullable=True)
-    os = db.Column(db.String(100), nullable=True)
-    platform = db.Column(db.String(100), nullable=True)
-    device = db.Column(db.String(100), nullable=True)
-    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    role = db.relationship("UserRole", backref="role_permission_links", lazy="selectin")
+    permission = db.relationship("UserPermission", backref="role_permission_links", lazy="selectin")
 
     def to_dict(self):
+        role:UserRole = self.role
+        permission:UserPermission = self.permission
         return {
-            "id": str(self.id),
-            "user_id": str(self.user_id),
-            "method": self.method,
-            "url": self.url,
-            "client_ip": self.client_ip,
-            "browser": self.browser,
-            "os": self.os,
-            "device": self.device,
-            "timestamp": self.timestamp.isoformat(),
+            "role_id": self.role_id,
+            "role": role.to_dict() if role else None,
+            "permission_id": self.permission_id,
+            "permission": permission.to_dict() if permission else None
         }
 
     def __repr__(self):
-        return f"<UsersLog {self.method} {self.url}>"
-
-
-# class PermissionsPayload:
-#     def __init__(self, token: str, payload: str):
-#         self.token = token
-#         self.payload = payload
-
-# User model
-class User(db.Model):
+        return f"<RolePermissionLink role={self.role_id} permission={self.permission_id}>"
+    
+class User(db.Model, MetaxMixin):
     __tablename__ = "users"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id'), nullable=False)
-
-    fullname = db.Column(db.String(255), nullable=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    lastname = db.Column(db.String(255), nullable=True)
+    firstname = db.Column(db.String(255), nullable=True)
     username = db.Column(db.String(150), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-
-    # Optional fields
     email = db.Column(db.String(255), unique=True, nullable=True)
     email_verified_at = db.Column(db.DateTime(timezone=True), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
-
     token = db.Column(db.String(255), nullable=True)
     remember_token = db.Column(db.String(255), nullable=True)
     salt = db.Column(db.String(255), nullable=True)
-    
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
-    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
     must_login = db.Column(db.Boolean, nullable=False, default=True)
     has_changed_default_password = db.Column(db.Boolean, nullable=False, default=False)
-
-    # List of orgunit dictionaries
-    orgunits = db.Column(db.JSON, nullable=True, default=list)  # e.g., [{"id1": [...]}, {"id2": [...]}]
-
-    # Audit fields
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    created_by = db.Column(db.BigInteger, nullable=True)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc), nullable=True)
-    updated_by = db.Column(db.BigInteger, nullable=True)
-
+    # orgunits = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))  # e.g., [{"id1": [...]}, {"id2": [...]}]
+    
     # Relationships
-    refresh_tokens = db.relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
-    logs = db.relationship(UsersLog, back_populates="user", cascade="all, delete-orphan")
-    tenant = db.relationship(Tenant, back_populates="users")
-    roles = db.relationship(Role,secondary="user_roles",lazy="selectin")
+    tenant = db.relationship("Tenant", back_populates="users",lazy="selectin",foreign_keys=[tenant_id])
+    datasource_permissions = db.relationship("DataSourcePermission",back_populates="user",lazy="selectin",cascade="all, delete-orphan",foreign_keys="DataSourcePermission.user_id")
+    refresh_tokens = db.relationship("RefreshToken", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
+    logs = db.relationship("UsersLog", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
+    roles = db.relationship("UserRole",secondary="user_role_links",lazy="selectin",backref=db.backref("users", lazy="selectin"))
+    orgunits = db.relationship("UserOrgunit",secondary="user_orgunit_links",lazy="selectin",backref=db.backref("users", lazy="selectin"))
+
+    histories = db.relationship("DataSourceHistory",lazy="selectin",cascade="all, delete-orphan",foreign_keys="DataSourceHistory.user_id")
+
+    # roles_link = db.relationship("UserRole",secondary="user_role_links",lazy="selectin",backref="users")
+    # orgunits_link = db.relationship("UserOrgunitLink",back_populates="user",lazy="selectin",cascade="all, delete-orphan")
+
+    @property
+    def fullname(self):
+        return " ".join(filter(None, [self.lastname, self.firstname]))
+
+    @property
+    def all_orgunits(self):
+        """Retourne la liste des orgunits assignées + tous leurs descendants."""
+        result = set()
+        orgunits:List[UserOrgunit] = self.orgunits or []
+        for ou in orgunits:
+            if not ou or ou.deleted:
+                continue
+            result.add(ou)
+            result.update(o for o in ou.get_descendants() if not o.deleted)  # méthode à ajouter dans Orgunit
+        return sorted(result, key=lambda x: x.id)
+    
+    @property
+    def is_superadmin(self):
+        roles:List[UserRole] = self.roles or []
+        return any(role.is_system and role.name.lower() == "superadmin" for role in roles)
 
     def __repr__(self):
-        return f"<User(username={self.username},roles={self.roles})>"
+        return f"<User(username={self.username})>"
    
-    # Utility methods
+    def to_dict(self) -> dict:
+        roles:List[UserRole] = [r for r in self.roles or [] if not r.deleted]
+        permissions:List[UserPermission] = [p for r in roles for p in r.permissions or [] if not p.deleted]
+        orgunits:List[UserOrgunit] = [o for o in self.orgunits or [] if not o.deleted]
+
+        return {
+            "id": self.id,
+            "username": self.username,
+            "lastname": self.lastname,
+            "firstname": self.firstname,
+            "fullname": self.fullname,
+            "email": self.email,
+            "phone": self.phone,
+            "is_active": self.is_active,
+            "deleted": self.deleted,
+            "tenant_id": self.tenant_id,
+            "tenant": self.tenant.to_dict() if self.tenant else None,
+            "role_ids": [r.id for r in roles],
+            "roles": [r.to_dict() for r in roles],
+            "permission_ids": [p.id for p in permissions],
+            "permissions": [p.to_dict() for p in permissions],
+            "orgunit_ids": [o.id for o in orgunits],
+            "orgunits": [o.to_dict() for o in orgunits],
+        }
+
     def to_dict_safe(self):
         payload = self.generate_permission_payload(onlyPayload = True)
-        return {**payload, "created_at": self.created_at.isoformat() }
+        return {**payload, "created_at": self.created_at.isoformat() if self.created_at else None }
 
     def set_password(self, password: str):
-        self.password_hash = hash_password(password)
+        salt, hashed = hash_password(password)
+        self.salt = salt
+        self.password_hash = hashed
     
     def check_password(self, password: str) -> bool:
-        return verify_password(password,self.password_hash)
+        return verify_password(password,self.salt,self.password_hash)
     
     def permissions_roles(self):
         """ Génère le payload JWT basé sur les rôles / permissions (caps). """
         roles: set[str] = set()
         permissions: set[str] = set()
-
-        for role in self.roles or []:
-            if not role or role.deleted:
+        roles_list:List[UserRole] = self.roles or []
+        for r in roles_list:
+            if not r or r.deleted:
                 continue
-            
-            roles.add(role.name.lower())
-            
-            for perm in role.permissions or []:
-                if perm and perm.name and not perm.deleted:
-                    permissions.add(perm.name.strip().lower())
-
-        permissions.add("_admin")
-        permissions.add("_superadmin")
-
+            roles.add(r.name.lower())
+            perms:List[UserPermission] = r.permissions or []
+            for p in perms:
+                if p and p.name and not p.deleted:
+                    permissions.add(p.name.strip().lower())
         return sorted(roles), sorted(permissions)
 
     def has_permission(self, name: str) -> bool:
@@ -217,10 +349,12 @@ class User(db.Model):
     def build_access_payload(self) -> dict:
         roles, permissions = self.permissions_roles()
         return {
-            "id": str(self.id),
+            "id": self.id,
             "username": self.username,
+            "lastname": self.lastname,
+            "firstname": self.firstname,
             "fullname": self.fullname,
-            "tenant_id": str(self.tenant_id) if self.tenant_id else None,
+            "tenant_id": self.tenant_id if self.tenant_id else None,
             "roles": roles,
             "permissions": permissions,
             "is_active": self.is_active,
@@ -236,7 +370,10 @@ class User(db.Model):
         return payload if onlyPayload else (token, exp, payload)
     
     def has_role(self, name: str) -> bool:
-        return any(role.name.lower() == name.lower() for role in self.roles)
+        return any(
+            role and role.name.lower() == name.lower()
+            for role in (self.roles or [])
+        )
 
     def is_admin(self) -> bool:
         return self.has_role("admin") or self.has_role("superadmin")
@@ -247,7 +384,6 @@ class User(db.Model):
     def is_viewer(self) -> bool:
         return self.has_role("viewer")
 
- 
     @classmethod
     def create_default_admin(cls):
         cfg = Config.DEFAULT_ADMIN or {}
@@ -259,10 +395,11 @@ class User(db.Model):
         # Check if admin already exists
         existing = cls.query.filter_by(username=username).first()
         if existing:
-            return existing
+            return False
         
         password = cfg.get("password")
-        fullname = cfg.get("fullname", "Super Admin")
+        lastname = cfg.get("lastname", "Super")
+        firstname = cfg.get("firstname", "Admin")
         tenant_name = cfg.get("tenant_name", "Admin Tenant")
         
         if not password:
@@ -270,28 +407,59 @@ class User(db.Model):
 
         # Resolve or create tenant
         tenant = Tenant.query.filter_by(name=tenant_name).first()
-
         if not tenant:
             tenant = Tenant(name=tenant_name)
             db.session.add(tenant)
             db.session.flush()  # safely get tenant.id
 
-        # -----------------------------
-        # Create admin
-        # -----------------------------
-        admin = cls(username=username,fullname=fullname,tenant_id=tenant.id,is_active=True,must_login=True)
-        admin.set_password(password)
+        perm1 = UserPermission.query.filter_by(name=SUPERADMIN).first()
+        if not perm1:
+            perm1 = UserPermission(name=SUPERADMIN)
+            db.session.add(perm1)
+            db.session.flush()
 
+        perm2 = UserPermission.query.filter_by(name=ADMIN).first()
+        if not perm2:
+            perm2 = UserPermission(name=ADMIN)
+            db.session.add(perm2)
+            db.session.flush()
+        
+        role_name="Administration"
+        role:UserRole = UserRole.query.filter_by(name=role_name).first()
+        if not role:
+            role = UserRole(name=role_name,tenant_id=tenant.id,is_system=True)
+            role.tenant = tenant
+            permission1 = UserPermission.query.filter_by(name=SUPERADMIN).first()
+            permission2 = UserPermission.query.filter_by(name=ADMIN).first()
+            role.permissions = [permission1, permission2]
+            db.session.add(role)
+            db.session.flush()
+
+        # Create admin
+        admin:User = cls(
+            username=username,
+            lastname=lastname,
+            firstname=firstname,
+            tenant_id=tenant.id,
+            has_changed_default_password=True,
+            must_login=False,
+            is_active=True,
+        )
+        admin.set_password(password)
+        admin.tenant = tenant
+        admin_role = UserRole.query.filter_by(name=role_name).first()
+        admin.roles = [admin_role]
+        
         db.session.add(admin)
+
         try:
             db.session.commit()
-            return admin
+            return True
         except IntegrityError:
             db.session.rollback()
-            # race-condition safety
             existing = cls.query.filter_by(username=username).first()
             if existing:
-                return existing
+                return False
             raise
 
     @staticmethod
@@ -301,18 +469,19 @@ class User(db.Model):
         Returns: token: encoded token, exp: expiration timestamp (seconds), full_payload
         """
         now = int(time.time())  # seconds
-
         ttl_minutes = (expires_in_minutes if expires_in_minutes is not None else Config.ACCESS_TOKEN_EXPIRES_MINUTES)
-        if not ttl_minutes:
+        if ttl_minutes is None:
             raise ValueError("ACCESS_TOKEN_EXPIRES_MINUTES is not configured")
 
         ttl_seconds = ttl_minutes * 60
         exp = now + ttl_seconds
-
         full_payload = { **payload, "iat": now, "exp": exp, "jti": secrets.token_hex(8), "typ": "access" }
-
         if useJWT:
-            token = jwt.encode(full_payload, Config.JWT_SECRET_KEY, algorithm=Config.JWT_ALGORITHM)
+            token = jwt.encode(
+                full_payload, 
+                Config.JWT_SECRET_KEY, 
+                algorithm=Config.JWT_ALGORITHM
+            )
         else:
             token = Config.SERIALISER.dumps(full_payload)
 
@@ -345,37 +514,83 @@ class User(db.Model):
         """ Check expiration from exp timestamp (seconds) """
         return int(time.time()) >= exp
 
+class UsersLog(db.Model):
+    __tablename__ = "user_logs"
 
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
+    user = db.relationship("User", back_populates="logs",lazy="selectin",foreign_keys=[user_id])
 
-class UserRole(db.Model):
-    __tablename__ = "user_roles"
+    method = db.Column(db.String(10), nullable=False)
+    url = db.Column(db.String(1024), nullable=False)
+    user_agent = db.Column(db.String(255), nullable=True)
+    client_ip = db.Column(db.String(45), nullable=True)  # IPv4 + IPv6
+    referer = db.Column(db.String(1024), nullable=True)
+    accept_language = db.Column(db.String(255), nullable=True)
+    browser = db.Column(db.String(100), nullable=True)
+    os = db.Column(db.String(100), nullable=True)
+    platform = db.Column(db.String(100), nullable=True)
+    device = db.Column(db.String(100), nullable=True)
+    timestamp = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
 
-    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), primary_key=True)
-    role_id = db.Column(db.BigInteger, db.ForeignKey("roles.id"), primary_key=True)
+    __table_args__ = (
+        db.Index("idx_user_logs_timestamp", "timestamp"),
+    )
 
+    def to_dict(self):
+        return { 
+            "user_id": self.user_id, 
+            "user_agent": self.user_agent 
+        }
+
+class UserRoleLink(db.Model):
+    __tablename__ = "user_role_links"
+
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+    role_id = db.Column(db.BigInteger, db.ForeignKey("user_roles.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+
+    user = db.relationship("User", lazy="selectin")
+    role = db.relationship("UserRole", lazy="selectin")
+
+    def to_dict(self):
+        return { 
+            "role_id": self.role_id,
+            "role": self.role.to_dict() if self.role else None,
+            "user_id": self.user_id,
+            "user": self.user.to_dict() if self.user else None,
+        }
 
 class RefreshToken(db.Model):
-    __tablename__ = "refresh_tokens"
+    __tablename__ = "user_refresh_tokens"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     token = db.Column(db.String(255), unique=True, nullable=False)  # hashed
-    issued_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    issued_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
     expires_at = db.Column(db.DateTime(timezone=True), nullable=False)
     revoked = db.Column(db.Boolean, default=False, nullable=False)
     revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     # Foreign key to user
-    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    user = db.relationship("User", back_populates="refresh_tokens")
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
+    user = db.relationship("User", back_populates="refresh_tokens",lazy="selectin",foreign_keys=[user_id])
 
     def is_valid(self):
         return not self.revoked and self.expires_at > datetime.now(timezone.utc)
 
     @staticmethod
-    def hash_token(raw_token: str) -> str:
-        # return sha256(raw_token.encode()).hexdigest()
-        return hashlib.pbkdf2_hmac("sha256",raw_token.encode(),Config.REFRESH_TOKEN_SALT,Config.HASH_ITERATIONS).hex()
-
+    def hash_token(raw_token: str | bytes) -> str:
+        if isinstance(raw_token, str):
+            raw_token = raw_token.encode("utf-8")
+        salt = Config.REFRESH_TOKEN_SALT
+        if isinstance(salt, str):
+            salt = salt.encode("utf-8")
+        return hashlib.pbkdf2_hmac(
+            "sha256",
+            raw_token,
+            salt,
+            Config.HASH_ITERATIONS,
+        ).hex()
+    
     def __repr__(self):
         return f"<RefreshToken user={self.user_id} revoked={self.revoked}>"
 
@@ -393,19 +608,16 @@ class RefreshToken(db.Model):
         return raw_token, hashed_token, expires_at
 
     @staticmethod
-    def isDecoded(raw_token: str,hashed_token_from_db: str,expires_at: datetime,revoked_at: datetime | None = None) -> bool:
-        """
-        Validate refresh token using DB state. Raises ValueError if invalid.
-        """
-        if revoked_at is not None:
+    def isDecoded(raw_token: str, hashed_token_from_db: str, expires_at: datetime, revoked_at: datetime | None = None) -> bool:
+        if revoked_at:
             raise ValueError("Refresh token revoked")
 
-        now = datetime.now(timezone.utc)
-        if expires_at <= now:
+        if expires_at <= datetime.now(timezone.utc):
             raise ValueError("Refresh token expired")
 
         computed_hash = RefreshToken.hash_token(raw_token)
-        if not hmac.compare_digest(computed_hash,hashed_token_from_db):
+
+        if not hmac.compare_digest(computed_hash, hashed_token_from_db):
             raise ValueError("Invalid refresh token")
 
         return True
@@ -451,7 +663,7 @@ class RefreshToken(db.Model):
         return True
     
 
-
+    @staticmethod
     def revoke_refresh_token(rt_obj: "RefreshToken") -> None:
         """Revoke an existing refresh token."""
         try:
@@ -462,3 +674,20 @@ class RefreshToken(db.Model):
             db.session.rollback()
             # logger.error(f"Failed to revoke refresh token: {str(e)}")
             raise e
+        
+class UserOrgunitLink(db.Model):
+    __tablename__ = "user_orgunit_links"
+
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+    orgunit_id = db.Column(db.BigInteger, db.ForeignKey("user_orgunits.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
+
+    user = db.relationship("User", lazy="selectin")
+    orgunit = db.relationship("UserOrgunit", lazy="selectin")
+
+    def to_dict(self):
+        return { 
+            "user_id": self.user_id,
+            "user": self.user.to_dict() if self.user else None,
+            "orgunit_id": self.orgunit_id,
+            "orgunit": self.orgunit.to_dict() if self.orgunit else None,
+        }

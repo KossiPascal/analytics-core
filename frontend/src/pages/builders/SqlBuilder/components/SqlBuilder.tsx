@@ -4,9 +4,9 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import type { AnalyticsModel, SqlBuilderProps, DimensionDef, MetricDef, JoinType, OrderDirection } from '../../builders.models';
+import type { AnalyticsModel, SqlBuilderProps, DimensionDef, MetricDef, JoinType, OrderDirection } from '../../../../models/builders.models';
 import { useSqlBuilder } from '@contexts/OLD/useSqlBuilder';
-import { ALLOWED_JOIN_TYPES, JOIN_TYPE_LABELS, DEFAULT_LIMIT } from '../../builders.models';
+import { ALLOWED_JOIN_TYPES, JOIN_TYPE_LABELS, DEFAULT_LIMIT } from '../../../../models/builders.models';
 import FieldPalette from './FieldPalette';
 import CollapsibleSection from './CollapsibleSection';
 import DropZone from './DropZone';
@@ -15,13 +15,13 @@ import FilterBuilder from './FilterBuilder';
 import JSONPreview from './JSONPreview';
 import styles from '@pages/builders/SqlBuilder/SqlBuilder.module.css';
 import { Modal } from '@components/ui/Modal/Modal';
-import { Button } from '@/components/ui/Button/Button';
-import { DatabaseConnectionTab } from '@/pages/admins/components/DatabaseConnectionTab';
-import { FormRadio, FormRadioGroup } from '@/components/forms/FormRadio/FormRadio';
-import { FormInput } from '@/components/forms/FormInput/FormInput';
-import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
-import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
-import { RemoveIcon } from '@/components/ui/icons/RemoveIcon';
+import { Button } from '@components/ui/Button/Button';
+import { DatabaseConnectionTab } from '@pages/admins/components/datasources/DatabaseConnectionTab';
+import { FormRadio, FormRadioGroup } from '@components/forms/FormRadio/FormRadio';
+import { FormInput } from '@components/forms/FormInput/FormInput';
+import { FormSelect } from '@components/forms/FormSelect/FormSelect';
+import { FormCheckbox } from '@components/forms/FormCheckbox/FormCheckbox';
+import { RemoveIcon } from '@components/ui/icons/RemoveIcon';
 import { DefinitionItemForm, buildAlias, FORMULA_OPTIONS, type DimensionEntry, type MetricEntry } from './DefinitionItemForm';
 
 type AggregationType = 'sum' | 'avg' | 'count' | 'min' | 'max';

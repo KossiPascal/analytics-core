@@ -4,13 +4,13 @@ import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
 
 export interface SelectOption {
-  value: string;
+  value: any;
   label: string;
   icon?: ReactNode;
   disabled?: boolean;
 }
 
-export interface FormSelectProps {
+export interface FormSelectProps <T>{
   name?: string;
   /** Label du champ */
   label?: string;
@@ -23,9 +23,9 @@ export interface FormSelectProps {
   /** Options du select */
   options: SelectOption[];
   /** Valeur sélectionnée */
-  value?: string;
+  value?: T;
   /** Callback de changement */
-  onChange?: (value: string) => void;
+  onChange?: (value: T) => void;
   /** Placeholder */
   placeholder?: string;
   /** Activer la recherche/autocomplétion */
@@ -46,7 +46,7 @@ export interface FormSelectProps {
   layout?: 'vertical' | 'inline';
 }
 
-export function FormSelect({
+export function FormSelect<T=any>({
   name,
   label,
   required,
@@ -64,7 +64,7 @@ export function FormSelect({
   className = '',
   wrapperClassName = '',
   layout = 'vertical',
-}: FormSelectProps) {
+}: FormSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -95,7 +95,7 @@ export function FormSelect({
 
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange?.('');
+    onChange?.('' as T);
   };
 
   // Close on click outside

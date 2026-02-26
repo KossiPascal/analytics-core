@@ -10,16 +10,12 @@ class ApiToken(db.Model):
     __tablename__ = "api_tokens"
 
     id = db.Column(db.BigInteger,primary_key=True, autoincrement=True)
-    # Token hashé (SHA256 hex)
     token_hash = db.Column(db.String(64),unique=True,nullable=False,index=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
     last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
     revoked_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
-    # -------------------------
-    # Static helpers
-    # -------------------------
     @staticmethod
     def hash_token(token: str) -> str:
         """Hash sécurisé du token (SHA256)"""
@@ -30,9 +26,6 @@ class ApiToken(db.Model):
         """Créer un token API depuis une valeur brute"""
         return cls(token_hash=cls.hash_token(raw_token),is_active=True)
 
-    # -------------------------
-    # Business logic
-    # -------------------------
     def revoke(self):
         self.is_active = False
         self.revoked_at = datetime.now(timezone.utc)
@@ -46,9 +39,6 @@ class ApiToken(db.Model):
     def matches(self, raw_token: str) -> bool:
         return self.token_hash == self.hash_token(raw_token)
 
-    # -------------------------
-    # Serialization
-    # -------------------------
     def to_dict(self):
         return {
             "id": str(self.id),

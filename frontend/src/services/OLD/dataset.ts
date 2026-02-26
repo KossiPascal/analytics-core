@@ -1,6 +1,6 @@
 // src/api/dataset.ts
 import { api } from "../../apis/api";
-import { Dataset } from "@models/OLD/dataset";
+import { Dataset } from "@/models/dataset.models";
 
 /* ----------------------------------
  * Types

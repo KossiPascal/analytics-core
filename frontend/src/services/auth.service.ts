@@ -1,27 +1,20 @@
-import { api } from "@/apis/api";
 import { IndexedDbStorage } from "@services/storages/indexed-db.service";
 import { tokenProvider } from "@/apis/token.provider";
 import { authScheduler } from "@/services/auth.scheduler";
-import { onlineOrOffline } from "@/stores/stores.config";
 import type { LoginResponse } from "@/models/auth.model";
+import { CRUDService } from "@services/acrud.service";
 
 const AUTH_KEY = "session";
 const db = new IndexedDbStorage("auth");
 
+const auth = new CRUDService("/auth");
+
 export const authService = {
   async login(username: string, password: string, isOnline: boolean) {
-    return onlineOrOffline({
-      online: async () => {
-        const res = await api.post<LoginResponse>("/auth/login", { username, password });
-        if (!res.success || !res.data) throw new Error(res.message);
-
-        await this.persistSession(res.data);
-        return res.data;
-      },
-      offline: async () => {
-        throw new Error("LOGIN_OFFLINE_NOT_ALLOWED");
-      },
-    });
+    const res = await auth.post<LoginResponse>("/login", { username, password } as any);
+    if (!res) throw new Error("ERREUR");
+    await this.persistSession(res as LoginResponse);
+    return res;
   },
 
   async restore() {
@@ -33,11 +26,10 @@ export const authService = {
   },
 
   async refresh(refresh_token: string | null) {
-    const res = await api.post<LoginResponse>("/auth/refresh", { refresh_token });
-    if (!res.success || !res.data) throw new Error(res.message);
-
-    await this.persistSession(res.data);
-    return res.data;
+    const res = await auth.post<LoginResponse>("/refresh", { refresh_token } as any);
+    if (!res) throw new Error("ERREUR");
+    await this.persistSession(res as LoginResponse);
+    return res;
   },
 
   async logout() {

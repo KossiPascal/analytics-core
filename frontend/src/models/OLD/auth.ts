@@ -22,7 +22,7 @@ export interface User {
   // [key: string]: any;       // pour propriétés supplémentaires dynamiques
   phone?: string;
   is_active?: boolean;
-  is_deleted?: boolean;
+  deleted?: boolean;
   must_login?: boolean;
   has_changed_default_password?: boolean;
   created_at?: string;      // ISO timestamp

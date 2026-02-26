@@ -66,6 +66,8 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB
         // navigateFallback: "/offline.html",
         navigateFallback: "/index.html", // ✅ SPA fallback
         runtimeCaching: [
@@ -118,10 +120,11 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("monaco-editor")) {
-              return "monaco";
-            }
-            return "vendor";
+            // if (id.includes("monaco-editor")) {
+            //   return "monaco";
+            // }
+            // return "vendor";
+            return id.toString().split('node_modules/')[1].split('/')[0];
           }
 
           // if (id.includes("framer-motion")) {
