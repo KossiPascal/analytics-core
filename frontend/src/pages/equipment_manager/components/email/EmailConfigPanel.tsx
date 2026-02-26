@@ -31,12 +31,12 @@ export function EmailConfigPanel() {
     if (res.success && res.data) {
       const c = res.data;
       setConfig(c);
-      setHost(c.host);
-      setPort(String(c.port));
-      setUsername(c.username);
-      setFromEmail(c.from_email);
+      setHost(c.host || '');
+      setPort(c.port != null ? String(c.port) : '587');
+      setUsername(c.username || '');
+      setFromEmail(c.from_email || '');
       setFromName(c.from_name || 'IH Equipment Manager');
-      setUseTls(c.use_tls ? 'true' : 'false');
+      setUseTls(c.use_tls !== false ? 'true' : 'false');
       setPassword(''); // never pre-fill password
     }
     setLoading(false);
