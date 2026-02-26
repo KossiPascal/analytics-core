@@ -10,6 +10,7 @@ import type {
   Department, Position, Employee,
   RepairTicket, ProblemType, TicketComment,
   DelayAlertRecipient,
+  EmailConfig, AlertConfig, AlertRecipientConfig,
   DashboardStats, TicketsByStatus, TicketsByDelay, BlockagePoint,
   SyncResult,
 } from './types';
@@ -216,6 +217,46 @@ export const dashboardApi = {
   getTicketsByDelay: () => api.get<TicketsByDelay>(`${BASE}/dashboard/tickets-by-delay`),
   getBlockagePoints: () => api.get<BlockagePoint[]>(`${BASE}/dashboard/blockage-points`),
   getRecentOverdue: () => api.get<RepairTicket[]>(`${BASE}/dashboard/recent-overdue`),
+};
+
+// ─── EMAIL CONFIG ────────────────────────────────────────────────────────────
+
+export const emailConfigApi = {
+  get: () => api.get<EmailConfig | null>(`${BASE}/email-config`),
+  save: (data: { host: string; port: number; username: string; password: string; from_email: string; from_name?: string; use_tls?: boolean }) =>
+    api.post<EmailConfig>(`${BASE}/email-config`, data),
+  delete: (id: string) => api.delete(`${BASE}/email-config/${id}`),
+  test: (data: { host: string; port: number; username: string; password: string; use_tls?: boolean }) =>
+    api.post<{ message: string }>(`${BASE}/email-config/test`, data),
+};
+
+// ─── ALERT CONFIG ────────────────────────────────────────────────────────────
+
+export const alertConfigApi = {
+  get: () => api.get<AlertConfig>(`${BASE}/alert-config`),
+  update: (data: { warning_days?: number; escalation_days?: number; frequency_hours?: number }) =>
+    api.put<AlertConfig>(`${BASE}/alert-config`, data),
+};
+
+// ─── ALERT RECIPIENT CONFIGS ─────────────────────────────────────────────────
+
+export const alertRecipientConfigsApi = {
+  getAll: (params?: { level?: string; stage?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.level) query.set('level', params.level);
+    if (params?.stage) query.set('stage', params.stage);
+    const qs = query.toString();
+    return api.get<AlertRecipientConfig[]>(`${BASE}/tickets/alert-recipient-configs${qs ? `?${qs}` : ''}`);
+  },
+  create: (data: {
+    alert_level: string;
+    recipient_type: string;
+    stage?: string | null;
+    employee_id?: string | null;
+    position_id?: string | null;
+  }) => api.post<AlertRecipientConfig>(`${BASE}/tickets/alert-recipient-configs`, data),
+  delete: (id: string) => api.delete(`${BASE}/tickets/alert-recipient-configs/${id}`),
+  toggle: (id: string) => api.patch<AlertRecipientConfig>(`${BASE}/tickets/alert-recipient-configs/${id}`),
 };
 
 // ─── SYNC ───────────────────────────────────────────────────────────────────

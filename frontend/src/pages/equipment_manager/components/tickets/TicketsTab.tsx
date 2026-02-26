@@ -15,10 +15,12 @@ import { TicketRepairModal } from './TicketRepairModal';
 import { TicketCancelModal } from './TicketCancelModal';
 import { ProblemTypesManager } from './ProblemTypesManager';
 import { AlertRecipientsManager } from './AlertRecipientsManager';
+import { AlertConfigPanel } from '../alerts/AlertConfigPanel';
+import { EmailConfigPanel } from '../email/EmailConfigPanel';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
-type SubView = 'tickets' | 'problem-types' | 'alerts';
+type SubView = 'tickets' | 'problem-types' | 'alerts' | 'alert-config' | 'email';
 
 export function TicketsTab() {
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
@@ -81,7 +83,9 @@ export function TicketsTab() {
   const SUB_VIEWS: { key: SubView; label: string }[] = [
     { key: 'tickets', label: 'Tickets' },
     { key: 'problem-types', label: 'Types de problemes' },
-    { key: 'alerts', label: 'Alertes' },
+    { key: 'alerts', label: 'Destinataires (ancien)' },
+    { key: 'alert-config', label: 'Alertes automatiques' },
+    { key: 'email', label: 'Email SMTP' },
   ];
 
   return (
@@ -131,6 +135,8 @@ export function TicketsTab() {
 
       {subView === 'problem-types' && <ProblemTypesManager />}
       {subView === 'alerts' && <AlertRecipientsManager />}
+      {subView === 'alert-config' && <AlertConfigPanel />}
+      {subView === 'email' && <EmailConfigPanel />}
 
       {/* Modals */}
       <TicketCreateModal isOpen={createOpen} onClose={() => setCreateOpen(false)} onSuccess={loadTickets} />

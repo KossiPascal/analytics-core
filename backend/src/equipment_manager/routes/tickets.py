@@ -569,3 +569,83 @@ def toggle_alert_recipient(id):
     recipient.is_active = not recipient.is_active
     db.session.commit()
     return jsonify(recipient.to_dict_safe()), 200
+
+
+# ─── ALERT RECIPIENT CONFIGS (new per-stage/level system) ────────────────────
+
+@bp.get("/alert-recipient-configs")
+@require_auth
+def list_alert_recipient_configs():
+    from backend.src.equipment_manager.models.email_config import AlertRecipientConfig
+    query = AlertRecipientConfig.query
+
+    level = request.args.get("level")
+    stage = request.args.get("stage")
+    if level:
+        query = query.filter(AlertRecipientConfig.alert_level == level)
+    if stage:
+        query = query.filter(AlertRecipientConfig.stage == stage)
+
+    configs = query.order_by(AlertRecipientConfig.alert_level, AlertRecipientConfig.created_at).all()
+    return jsonify([c.to_dict_safe() for c in configs]), 200
+
+
+@bp.post("/alert-recipient-configs")
+@require_auth
+def create_alert_recipient_config():
+    from backend.src.equipment_manager.models.email_config import AlertRecipientConfig
+    data = request.get_json(silent=True) or {}
+
+    alert_level = data.get("alert_level", "").strip()
+    recipient_type = data.get("recipient_type", "").strip()
+
+    if alert_level not in ("WARNING", "ESCALATION", "BCC"):
+        return error_response("alert_level must be WARNING, ESCALATION or BCC", 400)
+    if recipient_type not in ("EMPLOYEE", "POSITION"):
+        return error_response("recipient_type must be EMPLOYEE or POSITION", 400)
+
+    employee_id = data.get("employee_id")
+    position_id = data.get("position_id")
+
+    if recipient_type == "EMPLOYEE" and not employee_id:
+        return error_response("employee_id required for EMPLOYEE recipient_type", 400)
+    if recipient_type == "POSITION" and not position_id:
+        return error_response("position_id required for POSITION recipient_type", 400)
+
+    stage = data.get("stage") or None  # null = all stages
+
+    cfg = AlertRecipientConfig(
+        stage=stage,
+        alert_level=alert_level,
+        recipient_type=recipient_type,
+        employee_id=int(employee_id) if employee_id else None,
+        position_id=int(position_id) if position_id else None,
+        is_active=True,
+    )
+    db.session.add(cfg)
+    db.session.commit()
+    return jsonify(cfg.to_dict_safe()), 201
+
+
+@bp.delete("/alert-recipient-configs/<int:id>")
+@require_auth
+def delete_alert_recipient_config(id):
+    from backend.src.equipment_manager.models.email_config import AlertRecipientConfig
+    cfg = db.session.get(AlertRecipientConfig, id)
+    if not cfg:
+        return error_response("Configuration introuvable", 404)
+    db.session.delete(cfg)
+    db.session.commit()
+    return jsonify(success=True), 200
+
+
+@bp.patch("/alert-recipient-configs/<int:id>")
+@require_auth
+def toggle_alert_recipient_config(id):
+    from backend.src.equipment_manager.models.email_config import AlertRecipientConfig
+    cfg = db.session.get(AlertRecipientConfig, id)
+    if not cfg:
+        return error_response("Configuration introuvable", 404)
+    cfg.is_active = not cfg.is_active
+    db.session.commit()
+    return jsonify(cfg.to_dict_safe()), 200

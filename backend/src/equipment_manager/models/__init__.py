@@ -7,3 +7,6 @@ from backend.src.equipment_manager.models.tickets import (
     ProblemType, RepairTicket, Issue, TicketEvent, TicketComment,
     DelayAlertRecipient, DelayAlertLog,
 )
+from backend.src.equipment_manager.models.email_config import (
+    EmailConfig, AlertConfig, AlertRecipientConfig,
+)

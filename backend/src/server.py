@@ -43,6 +43,8 @@ from backend.src.equipment_manager.routes import (
     employees as em_employees,
     dashboard as em_dashboard,
     dhis2_sync as em_dhis2_sync,
+    email_config as em_email_config,
+    alert_config as em_alert_config,
 )
 
 # Meeting Intelligence module - import models so SQLAlchemy registers them
@@ -134,6 +136,11 @@ def create_flask_app(create_default_elements = True) -> Flask:
     JWTManager(app)
     Session(app)
 
+    # Celery
+    from backend.src.celery_app import celery, init_celery
+    init_celery(app)
+    app.extensions["celery"] = celery
+
     if create_default_elements == True:
         init_database(app)
 
@@ -152,6 +159,7 @@ def create_flask_app(create_default_elements = True) -> Flask:
     for em_bp in (
         em_locations, em_ascs, em_supervisors, em_equipment,
         em_tickets, em_employees, em_dashboard, em_dhis2_sync,
+        em_email_config, em_alert_config,
     ):
         app.register_blueprint(em_bp.bp)
 

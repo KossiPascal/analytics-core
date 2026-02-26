@@ -421,6 +421,46 @@ export interface TicketComment {
   created_at: string | null;
 }
 
+// ─── EMAIL & ALERT CONFIG ────────────────────────────────────────────────────
+
+export interface EmailConfig {
+  id: string;
+  host: string;
+  port: number;
+  username: string;
+  from_email: string;
+  from_name: string;
+  use_tls: boolean;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface AlertConfig {
+  id: string | null;
+  warning_days: number;
+  escalation_days: number;
+  frequency_hours: number;
+  is_active: boolean;
+}
+
+export type AlertLevel = 'WARNING' | 'ESCALATION' | 'BCC';
+export type RecipientType = 'EMPLOYEE' | 'POSITION';
+
+export interface AlertRecipientConfig {
+  id: string;
+  stage: string | null;
+  stage_label: string;
+  alert_level: AlertLevel;
+  recipient_type: RecipientType;
+  employee_id: string | null;
+  employee_name: string | null;
+  position_id: string | null;
+  position_name: string | null;
+  is_active: boolean;
+  created_at: string | null;
+}
+
 // ─── ALERTS ─────────────────────────────────────────────────────────────────
 
 export interface DelayAlertRecipient {

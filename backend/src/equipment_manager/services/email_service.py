@@ -36,6 +36,30 @@ def _get_smtp_config():
     return host, port, user, password, from_addr, use_tls, site_url
 
 
+def get_smtp_config_from_db():
+    """
+    Return SMTP config with DB priority over .env.
+    Returns (host, port, user, password, from_addr, use_tls, site_url).
+    """
+    try:
+        from backend.src.equipment_manager.models.email_config import EmailConfig, decrypt_password
+        config = EmailConfig.query.filter_by(is_active=True).first()
+        if config:
+            site_url = os.environ.get("SITE_URL", "http://localhost:8000")
+            return (
+                config.host,
+                config.port,
+                config.username,
+                decrypt_password(config.password_encrypted),
+                config.from_email,
+                config.use_tls,
+                site_url,
+            )
+    except Exception as e:
+        logger.warning(f"Could not load SMTP config from DB: {e}")
+    return _get_smtp_config()
+
+
 def _build_smtp_connection():
     """Create an SMTP connection. Returns None if not configured."""
     host, port, user, password, _, use_tls, _ = _get_smtp_config()
@@ -231,4 +255,133 @@ def send_delay_alert(ticket, recipients, stage, days):
 
     except Exception as e:
         logger.error(f"Failed to send delay alert: {e}")
+        return False
+
+
+def _build_smtp_connection_from_db():
+    """Create an SMTP connection using DB config (with .env fallback). Returns (server, error)."""
+    host, port, user, password, _, use_tls, _ = get_smtp_config_from_db()
+    if not host or not user:
+        logger.warning("SMTP not configured")
+        return None, "SMTP non configuré"
+    try:
+        server = smtplib.SMTP(host, port)
+        if use_tls:
+            server.starttls()
+        server.login(user, password)
+        return server, None
+    except Exception as e:
+        logger.error(f"SMTP connection failed: {e}")
+        return None, str(e)
+
+
+def send_delay_alert_v2(ticket, to_emails, bcc_emails, stage, days, level):
+    """
+    Send a delay alert email (WARNING or ESCALATION) with optional BCC.
+
+    Args:
+        ticket: RepairTicket instance
+        to_emails: list of TO email addresses
+        bcc_emails: list of BCC email addresses (hidden from TO recipients)
+        stage: current stage code
+        days: number of days in stage
+        level: 'WARNING' | 'ESCALATION'
+    Returns:
+        bool: True if sent successfully
+    """
+    _, _, _, _, from_addr, _, site_url = get_smtp_config_from_db()
+
+    all_recipients = list(set(to_emails + bcc_emails))
+    if not all_recipients:
+        return False
+
+    try:
+        from backend.src.equipment_manager.models.tickets import RepairTicket
+        stage_label = RepairTicket.STAGE_LABELS.get(stage, stage)
+
+        is_escalation = level == "ESCALATION"
+        color = "#c0392b" if is_escalation else "#e67e22"
+        level_label = "ESCALADE" if is_escalation else "RAPPEL"
+        level_text = (
+            "Ce ticket dépasse les délais critiques et nécessite une attention immédiate des responsables."
+            if is_escalation
+            else "Merci de prendre les mesures nécessaires pour faire avancer ce ticket."
+        )
+
+        employee_name = ticket.employee.get_full_name() if ticket.employee else ""
+        equipment_info = (
+            f"{ticket.equipment.brand} {ticket.equipment.model_name} ({ticket.equipment.imei})"
+            if ticket.equipment else ""
+        )
+
+        subject = (
+            f"[{'ESCALADE' if is_escalation else 'ALERTE'}] "
+            f"Ticket {ticket.ticket_number} — {days} jours à {stage_label}"
+        )
+
+        html_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: {color}; color: white; padding: 15px; border-radius: 4px 4px 0 0;">
+                <h2 style="margin: 0;">{level_label} — {ticket.ticket_number}</h2>
+                <p style="margin: 4px 0 0;">{days} jours à l'étape <strong>{stage_label}</strong></p>
+            </div>
+
+            <div style="padding: 20px; border: 1px solid #dee2e6; border-top: none;">
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                    <tr style="background: #f8f9fa;">
+                        <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Équipement</strong></td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">{equipment_info}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Employé</strong></td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">{employee_name}</td>
+                    </tr>
+                    <tr style="background: #f8f9fa;">
+                        <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Étape actuelle</strong></td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;">{stage_label}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #dee2e6;"><strong>Jours en attente</strong></td>
+                        <td style="padding: 8px; border: 1px solid #dee2e6; color: {color}; font-weight: bold;">{days} jours</td>
+                    </tr>
+                </table>
+
+                <p>{level_text}</p>
+
+                <p style="margin-top: 20px;">
+                    <a href="{site_url}/equipment/tickets/{ticket.id}"
+                       style="background: {color}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+                        Voir le ticket
+                    </a>
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_addr
+        msg["To"] = ", ".join(to_emails) if to_emails else ""
+        if bcc_emails:
+            msg["Bcc"] = ", ".join(bcc_emails)
+        msg.attach(MIMEText(html_body, "html"))
+
+        server, err = _build_smtp_connection_from_db()
+        if not server:
+            logger.warning(f"SMTP unavailable for delay alert: {err}")
+            return False
+
+        server.sendmail(from_addr, all_recipients, msg.as_string())
+        server.quit()
+
+        logger.info(
+            f"Delay alert v2 [{level}] sent for {ticket.ticket_number} "
+            f"({days}j at {stage}) → TO={to_emails}, BCC={bcc_emails}"
+        )
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send delay alert v2: {e}")
         return False
