@@ -6,7 +6,7 @@
   min-height: unset;      /* 🔥 clé */
   height: auto;
   line-height: 1.3;       /* important */
-  padding: 0.500rem 1rem;
+  padding: 0.300rem 0.8rem;
   font-size: 0.9375rem;
   font-family: inherit;
   color: var(--form-text);

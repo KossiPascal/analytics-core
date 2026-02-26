@@ -29,6 +29,8 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
+
+  { id: 'ORGANIZATIONS', label: 'Tenants', icon: <Building2 size={18} />, color: '#8b5cf6' },
   { id: 'API_ACCESS', label: "API d'accès", icon: <Key size={18} />, color: '#3b82f6' },
   // { id: 'DB_CONNECTION', label: 'Connexion BD', icon: <Plug size={18} />, color: '#0ea5e9' },
   { id: 'DATABASE', label: 'Base de données', icon: <Database size={18} />, color: '#22c55e' },

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Search, X } from 'lucide-react';
 
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
@@ -14,6 +14,9 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   selectedItems,
   onSelectionChange,
   searchPlaceholder = 'Rechercher...',
+  singleSelect = false,
+  editableItemIds,
+  onEditItem,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +31,12 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   }, [items, searchTerm]);
 
   const handleToggleItem = (itemId: string) => {
+    if (singleSelect) {
+      // In single-select mode, toggle off if already selected, otherwise select only this one
+      onSelectionChange(selectedItems.includes(itemId) ? [] : [itemId]);
+      return;
+    }
+
     if (selectedItems.includes(itemId)) {
       onSelectionChange(selectedItems.filter((id) => id !== itemId));
       return;
@@ -37,6 +46,7 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
   };
 
   const handleSelectAll = () => {
+    if (singleSelect) return;
     onSelectionChange(filteredItems.map((item) => item.id));
   };
 
@@ -78,9 +88,11 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
           </div>
 
           <div className={styles.dimensionActions}>
-            <button type="button" onClick={handleSelectAll}>
-              Tout sélectionner
-            </button>
+            {!singleSelect && (
+              <button type="button" onClick={handleSelectAll}>
+                Tout sélectionner
+              </button>
+            )}
             <button type="button" onClick={handleDeselectAll}>
               Tout désélectionner
             </button>
@@ -88,13 +100,24 @@ export const DimensionSelector: React.FC<DimensionSelectorProps> = ({
 
           <div className={styles.dimensionItems}>
             {filteredItems.map((item) => (
-              <FormCheckbox
-                key={item.id}
-                label={item.code ? `${item.name} (${item.code})` : item.name}
-                checked={selectedItems.includes(item.id)}
-                onChange={() => handleToggleItem(item.id)}
-                wrapperClassName={styles.dimensionItem}
-              />
+              <div key={item.id} className={styles.dimensionItemRow}>
+                <FormCheckbox
+                  label={item.code ? `${item.name} (${item.code})` : item.name}
+                  checked={selectedItems.includes(item.id)}
+                  onChange={() => handleToggleItem(item.id)}
+                  wrapperClassName={styles.dimensionItem}
+                />
+                {editableItemIds?.has(item.id) && onEditItem && (
+                  <button
+                    type="button"
+                    // className={styles.editItemBtn}
+                    onClick={() => onEditItem(item.id)}
+                    aria-label={`Modifier ${item.name}`}
+                  >
+                    <Pencil size={12} />
+                  </button>
+                )}
+              </div>
             ))}
             {filteredItems.length === 0 && <div className={styles.noResults}>Aucun résultat</div>}
           </div>

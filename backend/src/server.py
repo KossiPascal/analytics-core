@@ -37,6 +37,25 @@ from backend.src.routes.datasets import dataset, dataset_chart,dataset_field,dat
 
 
 
+# Equipment Manager module - import models so SQLAlchemy registers them
+import backend.src.equipment_manager.models  # noqa: F401
+from backend.src.equipment_manager.routes import (
+    locations as em_locations,
+    ascs as em_ascs,
+    supervisors as em_supervisors,
+    equipment as em_equipment,
+    tickets as em_tickets,
+    employees as em_employees,
+    dashboard as em_dashboard,
+    dhis2_sync as em_dhis2_sync,
+    email_config as em_email_config,
+    alert_config as em_alert_config,
+)
+
+# Meeting Intelligence module - import models so SQLAlchemy registers them
+import backend.src.meeting_intelligence.models  # noqa: F401
+from backend.src.meeting_intelligence.routes import meeting as mi_meeting
+
 from backend.src.databases.extensions import db
                 
 from alembic import command
@@ -55,6 +74,31 @@ logger = get_backend_logger(__name__)
 # DATABASE INIT
 # -----------------------------------------------------------------------------
 
+
+def init_em_db(app: Flask) -> None:
+    with app.app_context():
+        try:
+            if Config.IS_DEBUG_MODE:
+                logger.warning("⚠ DEV MODE: creating tables directly")
+                # Advisory lock (session-level) pour sérialiser les workers Gunicorn.
+                # Seul le premier worker effectue le DROP/CREATE/create_all().
+                # Les suivants attendent, puis détectent que les tables existent et passent.
+                with db.engine.connect() as lock_conn:
+                    lock_conn.execute(db.text("SELECT pg_advisory_lock(42424242)"))
+                    try:
+                        with db.engine.connect() as conn:
+                            conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS em"))
+                            conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS mi"))
+                    finally:
+                        lock_conn.execute(db.text("SELECT pg_advisory_unlock(42424242)"))
+                        lock_conn.commit()
+            else:
+                if Path("migrations").exists():
+                    logger.info("Applying database migrations")
+                    upgrade()
+        except OperationalError:
+            logger.critical("Database initialization failed", exc_info=True)
+            raise
 
 # flask db revision --autogenerate -m "Add connection_id to datasets"
 # flask db upgrade
@@ -133,7 +177,7 @@ def init_database(app: Flask) -> None:
                 raise e
             finally:
                 conn.execute(text("SELECT pg_advisory_unlock(123456);"))
-
+    init_em_db(app)
 
 def create_flask_app(initialize_database = True) -> Flask:
     Config.validate()
@@ -181,6 +225,10 @@ def create_flask_app(initialize_database = True) -> Flask:
 
     if initialize_database == True:
         init_database(app)
+    # Celery
+    from backend.src.celery_app import celery, init_celery
+    init_celery(app)
+    app.extensions["celery"] = celery        
 
     # ⚠️ OPTIONAL SYNC (ENABLE EXPLICITLY)
     # if Config.AUTO_SYNC_COUCHDB_TO_POSTGRES:
@@ -192,8 +240,20 @@ def create_flask_app(initialize_database = True) -> Flask:
         permission, role, tenant, user, user_utils, orgunit, 
         datasource, datasource_permission, datasource_type,
         dataset, dataset_chart,dataset_field,dataset_query
+
     ):
         app.register_blueprint(bp.bp if hasattr(bp, "bp") else bp)
+
+    # Equipment Manager blueprints
+    for em_bp in (
+        em_locations, em_ascs, em_supervisors, em_equipment,
+        em_tickets, em_employees, em_dashboard, em_dhis2_sync,
+        em_email_config, em_alert_config,
+    ):
+        app.register_blueprint(em_bp.bp)
+
+    # Meeting Intelligence blueprint
+    app.register_blueprint(mi_meeting.bp)
 
     # -----------------------------------------------------------------------------
     # ROUTES

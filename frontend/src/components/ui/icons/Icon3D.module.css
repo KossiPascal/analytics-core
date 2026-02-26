@@ -1,0 +1,116 @@
+/* ============================================
+   ICON 3D — Styles communs
+   ============================================ */
+
+/* --- Base --- */
+.icon3d {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex-shrink: 0;
+  transition:
+    transform var(--transition-fast),
+    filter   var(--transition-fast),
+    opacity  var(--transition-fast);
+}
+
+/* --- Variantes --- */
+.gradient {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+.solid {
+  filter: none;
+}
+
+.glass {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.1));
+}
+
+/* --- Couleurs (halos au hover) --- */
+.primary:hover   { filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.45)); }
+.success:hover   { filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.45)); }
+.danger:hover    { filter: drop-shadow(0 0 6px rgba(153, 3, 3, 0.45)); }
+.warning:hover   { filter: drop-shadow(0 0 6px rgba(158, 101, 2, 0.45)); }
+.info:hover      { filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.45)); }
+.secondary:hover { filter: drop-shadow(0 0 6px rgba(100, 116, 139, 0.35)); }
+.navbar:hover    { filter: drop-shadow(0 0 6px rgba(0, 68, 34, 0.45)); }
+
+/* --- Tailles prédéfinies --- */
+.xs { width: 12px; height: 12px; }
+.sm { width: 16px; height: 16px; }
+.md { width: 24px; height: 24px; }
+.lg { width: 32px; height: 32px; }
+.xl { width: 48px; height: 48px; }
+
+/* --- États interactifs --- */
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  transform: scale(1.15);
+}
+
+.clickable:active {
+  transform: scale(0.92);
+}
+
+/* --- Inline (à côté de texte) --- */
+.inline {
+  margin-right: 6px;
+}
+
+/* --- Animations --- */
+.spin {
+  animation: icon3d-spin 1s linear infinite;
+}
+
+.pulse {
+  animation: icon3d-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.bounce {
+  animation: icon3d-bounce 1s infinite;
+}
+
+@keyframes icon3d-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes icon3d-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+@keyframes icon3d-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-15%);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* --- Disabled --- */
+.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
+/* --- Reduced motion --- */
+@media (prefers-reduced-motion: reduce) {
+  .icon3d {
+    transition: none;
+  }
+  .spin,
+  .pulse,
+  .bounce {
+    animation: none;
+  }
+}

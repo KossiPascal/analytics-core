@@ -2,33 +2,33 @@
 // CHART THEME - Couleurs et configurations par défaut
 // ============================================================================
 
-// Palette de couleurs professionnelles
+// Palette de couleurs vives et modernes
 export const CHART_COLORS = {
   primary: [
-    '#3b82f6', // Blue
-    '#10b981', // Emerald
-    '#f59e0b', // Amber
-    '#ef4444', // Red
-    '#8b5cf6', // Violet
-    '#ec4899', // Pink
-    '#06b6d4', // Cyan
-    '#84cc16', // Lime
-    '#f97316', // Orange
-    '#6366f1', // Indigo
+    '#7c3aed', // Violet profond
+    '#0ea5e9', // Bleu ciel vif
+    '#f43f5e', // Rose corail
+    '#10b981', // Emeraude
+    '#f59e0b', // Ambre doré
+    '#e879f9', // Fuchsia
+    '#06b6d4', // Cyan turquoise
+    '#fb923c', // Orange brûlé
+    '#84cc16', // Lime vert
+    '#3b82f6', // Bleu électrique
   ],
 
   // Palettes thématiques
-  blue: ['#dbeafe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb', '#1d4ed8'],
-  green: ['#dcfce7', '#86efac', '#4ade80', '#22c55e', '#16a34a', '#15803d'],
-  red: ['#fee2e2', '#fca5a5', '#f87171', '#ef4444', '#dc2626', '#b91c1c'],
-  amber: ['#fef3c7', '#fcd34d', '#fbbf24', '#f59e0b', '#d97706', '#b45309'],
-  purple: ['#f3e8ff', '#d8b4fe', '#a78bfa', '#8b5cf6', '#7c3aed', '#6d28d9'],
+  blue: ['#bae6fd', '#38bdf8', '#0ea5e9', '#0284c7', '#0369a1', '#075985'],
+  green: ['#bbf7d0', '#4ade80', '#10b981', '#059669', '#047857', '#065f46'],
+  red: ['#fecdd3', '#fb7185', '#f43f5e', '#e11d48', '#be123c', '#9f1239'],
+  amber: ['#fde68a', '#fbbf24', '#f59e0b', '#d97706', '#b45309', '#92400e'],
+  purple: ['#e9d5ff', '#c084fc', '#a855f7', '#9333ea', '#7c3aed', '#6d28d9'],
 
   // Couleurs sémantiques
   success: '#10b981',
   warning: '#f59e0b',
-  danger: '#ef4444',
-  info: '#3b82f6',
+  danger: '#f43f5e',
+  info: '#0ea5e9',
 
   // Neutres
   text: {
@@ -44,7 +44,7 @@ export const CHART_COLORS = {
   },
 
   border: '#e2e8f0',
-  grid: '#e2e8f0',
+  grid: '#e8edf4',
 };
 
 // Configuration par défaut des animations

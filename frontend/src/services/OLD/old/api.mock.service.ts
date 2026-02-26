@@ -906,6 +906,10 @@ export interface StoredVisualization {
     animation: boolean;
     colors?: string[];
   };
+  selectedDataElements: string[];
+  selectedIndicators: string[];
+  selectedPeriods: string[];
+  selectedOrgUnits: string[];
   createdAt: string;
   updatedAt: string;
 }

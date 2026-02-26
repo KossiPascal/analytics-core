@@ -318,6 +318,7 @@ class User(db.Model, MetaxMixin):
         payload = self.generate_permission_payload(onlyPayload = True)
         return {**payload, "created_at": self.created_at.isoformat() if self.created_at else None }
 
+
     def set_password(self, password: str):
         salt, hashed = hash_password(password)
         self.salt = salt
@@ -348,6 +349,24 @@ class User(db.Model, MetaxMixin):
    
     def build_access_payload(self) -> dict:
         roles, permissions = self.permissions_roles()
+
+        # Lier l'employé associé à cet utilisateur (import local pour éviter les imports circulaires)
+        employee_id: str | None = None
+        position_id: str | None = None
+        department_code: str | None = None
+        try:
+            from backend.src.equipment_manager.models.employees import Employee as _Emp, Position as _Pos
+            emp = _Emp.query.filter_by(user_id=self.id).first()
+            if emp:
+                employee_id = str(emp.id)
+                position_id = str(emp.position_id) if emp.position_id else None
+                if emp.position_id:
+                    pos = _Pos.query.get(emp.position_id)
+                    if pos and pos.department:
+                        department_code = pos.department.code
+        except Exception:
+            pass
+
         return {
             "id": self.id,
             "username": self.username,
@@ -358,6 +377,9 @@ class User(db.Model, MetaxMixin):
             "roles": roles,
             "permissions": permissions,
             "is_active": self.is_active,
+            "employee_id": employee_id,
+            "position_id": position_id,
+            "department_code": department_code,
             "token_type": "access",
             "ver": 1,  # token versioning
         }

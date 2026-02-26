@@ -1,0 +1,169 @@
+/* ═══════════════════════════════════════════════════════════════
+   Fiche d'Accusé de Réception — WeasyPrint — UNE SEULE PAGE A4
+   ═══════════════════════════════════════════════════════════════ */
+
+@page {
+  size: A4;
+  margin: 1.4cm 2cm 1.4cm 2cm;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "DejaVu Sans", Arial, sans-serif;
+  font-size: 10pt;
+  color: #000;
+  line-height: 1.45;
+}
+
+.page {
+  width: 100%;
+}
+
+/* ─── EN-TÊTE ─────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.4cm;
+  gap: 0.5cm;
+}
+
+.header-logo img {
+  width: 3cm;
+  height: auto;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+}
+
+.header-title h1 {
+  font-size: 13pt;
+  font-weight: bold;
+  text-decoration: underline;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ─── CHAMPS ───────────────────────────────────────────────────── */
+
+.fields {
+  margin-bottom: 0.3cm;
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 0.2cm;
+  gap: 0;
+}
+
+.label {
+  white-space: nowrap;
+  font-weight: normal;
+}
+
+.ml {
+  margin-left: 0.5cm;
+}
+
+.value {
+  border-bottom: 0.6pt solid #000;
+  min-height: 1em;
+  padding: 0 4pt;
+  text-align: center;
+}
+
+.value.short  { width: 3.5cm; }
+.value.mid    { width: 5.5cm; }
+.value.flex1  { flex: 1; }
+
+.value.bold-underline {
+  font-weight: bold;
+  text-decoration: underline;
+  border-bottom: none;
+}
+
+.value.mono {
+  font-family: "DejaVu Sans Mono", "Courier New", monospace;
+  font-size: 9.5pt;
+}
+
+/* ─── TITRE SECTION MATÉRIEL ───────────────────────────────────── */
+
+.section-title {
+  text-align: center;
+  font-weight: bold;
+  text-decoration: underline;
+  margin-bottom: 0.25cm;
+  font-size: 10.5pt;
+}
+
+/* ─── TEXTE D'ENGAGEMENT ───────────────────────────────────────── */
+
+.body-text {
+  margin-bottom: 0.3cm;
+  text-align: justify;
+}
+
+.body-text p {
+  margin-bottom: 0.18cm;
+  font-size: 10pt;
+}
+
+/* ─── SIGNATURES ───────────────────────────────────────────────── */
+
+.signatures {
+  display: flex;
+  gap: 0.4cm;
+  margin-bottom: 0.3cm;
+  page-break-inside: avoid;
+}
+
+.sig-col {
+  flex: 1;
+  text-align: center;
+  border: 0.5pt solid #000;
+  padding: 0.2cm 0.2cm;
+}
+
+.sig-header {
+  font-weight: bold;
+  font-size: 9.5pt;
+  border-bottom: 0.5pt solid #000;
+  padding-bottom: 3pt;
+  margin-bottom: 3pt;
+}
+
+.sig-role {
+  font-size: 9.5pt;
+  margin-bottom: 0.1cm;
+}
+
+.sig-space {
+  height: 1.5cm;
+  border-bottom: 0.5pt solid #000;
+  margin-bottom: 0.1cm;
+}
+
+.sig-name-line {
+  font-size: 9pt;
+  min-height: 1em;
+}
+
+/* ─── PIED DE PAGE ─────────────────────────────────────────────── */
+
+.footer {
+  font-size: 8pt;
+  font-style: italic;
+  text-align: justify;
+  border-top: 0.5pt solid #000;
+  padding-top: 0.15cm;
+  color: #222;
+}

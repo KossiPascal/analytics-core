@@ -5,6 +5,8 @@
 
 export type VisualizationType = 'dashboard' | 'report';
 
+export type DataSourceMode = 'matview' | 'indicators';
+
 export type ChartVariant =
   | 'line'
   | 'area'
@@ -48,6 +50,10 @@ export type ChartVariant =
   rows: LayoutDimension[];
   filters: LayoutDimension[];
   options: VisualizationOptions;
+  selectedDataElements: string[];
+  selectedIndicators: string[];
+  selectedPeriods: string[];
+  selectedOrgUnits: string[];
 }
 
  export interface VisualizationOptions {
@@ -88,12 +94,20 @@ export type ChartVariant =
   selectedItems: string[];
   onSelectionChange: (items: string[]) => void;
   searchPlaceholder?: string;
+  singleSelect?: boolean;
+  editableItemIds?: Set<string>;
+  onEditItem?: (itemId: string) => void;
 }
 
+export type LayoutZone = 'column' | 'row' | 'filter';
+
  export interface LayoutDropZoneProps {
+  zone: LayoutZone;
   title: string;
   items: string[];
   allItems: DimensionItem[];
   onRemove: (itemId: string) => void;
+  onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
   placeholder?: string;
+  children?: React.ReactNode;
 }

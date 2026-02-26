@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Fiche d'Accusé de Réception</title>
+  <link rel="stylesheet" href="fiche_reception.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- ─── EN-TÊTE ─────────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="{{ logo_uri }}" alt="Integrate Health">
+    </div>
+    <div class="header-title">
+      <h1>FICHE D'ACCUSÉ DE RÉCEPTION</h1>
+    </div>
+  </div>
+
+  <!-- ─── CHAMPS IDENTITÉ ──────────────────────────────────────────── -->
+  <div class="fields">
+
+    <div class="field-row">
+      <span class="label">Date de réception :</span>
+      <span class="value short">{{ date_reception }}</span>
+      <span class="label ml">Réf IH :</span>
+      <span class="value flex1">{{ ref_ih }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Nom et prénoms :</span>
+      <span class="value flex1">{{ employee_name }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Fonction :</span>
+      <span class="value flex1">{{ employee_position }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">District :</span>
+      <span class="value mid">{{ employee_district }}</span>
+      <span class="label ml">ZONE :</span>
+      <span class="value mid">{{ employee_zone }}</span>
+    </div>
+
+  </div>
+
+  <!-- ─── SECTION MATÉRIEL ─────────────────────────────────────────── -->
+  <div class="section-title">Détails du Matériel</div>
+
+  <div class="fields">
+
+    <div class="field-row">
+      <span class="label">Type du matériel :</span>
+      <span class="value flex1 bold-underline">{{ equipment_type }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Marque :</span>
+      <span class="value short">{{ equipment_brand }}</span>
+      <span class="label ml">Modèle :</span>
+      <span class="value flex1">{{ equipment_model }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Autre description</span>
+      <span class="value flex1">{{ equipment_description }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">IMEI (1 et 2) :</span>
+      <span class="value flex1 mono">{{ equipment_imei }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Accessoires Inclus :</span>
+      <span class="value flex1 bold-underline">{{ accessories_str }}</span>
+    </div>
+
+    <div class="field-row">
+      <span class="label">Numéros de téléphone :</span>
+      <span class="value flex1">{{ employee_phone }}</span>
+    </div>
+
+  </div>
+
+  <!-- ─── TEXTE D'ENGAGEMENT ───────────────────────────────────────── -->
+  <div class="body-text">
+    <p>
+      Le Matériel décrit ci-dessus a été réceptionné en bon état, sans dommage
+      apparent. Tous les accessoires mentionnés ont été inclus.
+    </p>
+    <p>
+      Je suis responsable du Matériel reçu. Je m'engage à l'utiliser dans le cadre des
+      activités professionnelle. Lors de mon départ de la société je m'engage à le
+      retourner dans un état fonctionnel. En cas de panne je m'engage à le signaler
+      dans un délai de soixante-douze heures.
+    </p>
+    <p>
+      En cas de panne ou ma responsabilité est prouvée je rembourserai de mes
+      deniers
+    </p>
+  </div>
+
+  <!-- ─── SIGNATURES ───────────────────────────────────────────────── -->
+  <div class="signatures">
+    <div class="sig-col">
+      <div class="sig-header">Nom et Signature</div>
+      <div class="sig-role">{{ employee_role_label }}</div>
+      <div class="sig-space"></div>
+      <div class="sig-name-line">{{ employee_name }}</div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-header">Nom et Signature</div>
+      <div class="sig-role">Superviseur</div>
+      <div class="sig-space"></div>
+      <div class="sig-name-line">&nbsp;</div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-header">Nom et signature</div>
+      <div class="sig-role">chef d'équipe</div>
+      <div class="sig-space"></div>
+      <div class="sig-name-line">&nbsp;</div>
+    </div>
+  </div>
+
+  <!-- ─── PIED DE PAGE ─────────────────────────────────────────────── -->
+  <div class="footer">
+    Cette fiche d'accusé de réception atteste de la réception du matériel mentionné
+    ci-dessus en bon état. Veuillez conserver ce document pour référence future.
+  </div>
+
+</div>
+</body>
+</html>

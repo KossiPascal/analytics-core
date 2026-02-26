@@ -11,7 +11,7 @@ interface ColumnVisibilityToggleProps<T> {
   className?: string;
 }
 
-export const ColumnVisibilityToggle = <T extends Record<string, unknown>>({
+export const ColumnVisibilityToggle = <T extends object>({
   columns,
   visibleColumns,
   onVisibilityChange,

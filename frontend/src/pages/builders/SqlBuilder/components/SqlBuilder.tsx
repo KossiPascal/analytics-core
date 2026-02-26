@@ -255,7 +255,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQ
   const [editMetData, setEditMetData] = useState<{ label: string; formula: string; unique: boolean }>({ label: '', formula: '', unique: false });
   const [sourceTypeFilter, setSourceTypeFilter] = useState<SourceType>('all');
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
-  const [selectedDatabaseIds, setSelectedDatabaseIds] = useState<Set<string|number>>(() => {
+  const [selectedDatabaseIds, setSelectedDatabaseIds] = useState<Set<string | number>>(() => {
     // Select all databases by default
     const allDbIds = model.databases?.map((db) => db.id) || [];
     return new Set(allDbIds);
@@ -432,7 +432,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQ
   }, [model.databases]);
 
   // Toggle database selection
-  const toggleDatabase = useCallback((databaseId: string|number) => {
+  const toggleDatabase = useCallback((databaseId: string | number) => {
     setSelectedDatabaseIds((prev) => {
       const next = new Set(prev);
       if (next.has(databaseId)) {
@@ -748,7 +748,7 @@ export const SqlBuilder: React.FC<SqlBuilderProps> = ({ model, initialQuery, onQ
                   const tableDatabase = (table as { database?: string }).database;
                   const databaseLabel = getDatabaseLabel(tableDatabase);
                   const isSelected = selectedSourceId === table.id;
-                  
+
                   const iconClass = tableType === 'view'
                     ? styles.dataSourceIconView
                     : tableType === 'materialized_view'
