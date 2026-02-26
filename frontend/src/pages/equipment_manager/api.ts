@@ -191,12 +191,13 @@ export const employeesApi = {
   updatePosition: (id: string, data: Record<string, unknown>) => api.put<Position>(`${BASE}/employees/positions/${id}`, data),
 
   // Employees
-  getAll: (params?: { tenant_id?: string; active?: string; search?: string; position_code?: string }) => {
+  getAll: (params?: { tenant_id?: string; active?: string; search?: string; position_code?: string; department_code?: string }) => {
     const query = new URLSearchParams();
-    if (params?.tenant_id)      query.set('tenant_id', params.tenant_id);
-    if (params?.active)         query.set('active', params.active);
-    if (params?.search)         query.set('search', params.search);
-    if (params?.position_code)  query.set('position_code', params.position_code);
+    if (params?.tenant_id)       query.set('tenant_id', params.tenant_id);
+    if (params?.active)          query.set('active', params.active);
+    if (params?.search)          query.set('search', params.search);
+    if (params?.position_code)   query.set('position_code', params.position_code);
+    if (params?.department_code) query.set('department_code', params.department_code);
     const qs = query.toString();
     return api.get<Employee[]>(`${BASE}/employees${qs ? `?${qs}` : ''}`);
   },

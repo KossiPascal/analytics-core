@@ -6,6 +6,7 @@ import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { FormMultiSelect } from '@/components/forms/FormSelect/FormMultiSelect';
 import { FormDatePicker } from '@/components/forms/FormDatePicker/FormDatePicker';
 import { useFormValidation } from '@/components/forms/useFormValidation';
+import { useAuth } from '@/contexts/AuthContext';
 import { Save, Plus } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import formStyles from '@/components/forms/styles/forms.module.css';
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
+  const { user } = useAuth();
   const [employees, setEmployees]           = useState<Employee[]>([]);
   const [equipment, setEquipment]           = useState<Equipment[]>([]);
   const [problemTypes, setProblemTypes]     = useState<ProblemType[]>([]);
@@ -67,7 +69,7 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
 
   const loadData = async () => {
     const [empRes, ptRes] = await Promise.all([
-      employeesApi.getAll({ active: 'true' }),
+      employeesApi.getAll({ active: 'true', ...(user?.department_code ? { department_code: user.department_code } : {}) }),
       ticketsApi.getProblemTypes(),
     ]);
     if (empRes.success) setEmployees(empRes.data ?? []);

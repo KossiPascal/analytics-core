@@ -265,6 +265,7 @@ def list_employees():
     active = request.args.get("active")
     search = request.args.get("search", "").strip()
     position_code = request.args.get("position_code", "").strip()
+    department_code = request.args.get("department_code", "").strip()
 
     if tenant_id:
         query = query.filter(Employee.tenant_id == int(tenant_id))
@@ -272,6 +273,14 @@ def list_employees():
         query = query.filter_by(is_active=active.lower() == "true")
     if position_code:
         query = query.join(Position).filter(Position.code == position_code)
+    if department_code:
+        dept_pos_ids = (
+            db.session.query(Position.id)
+            .join(Department, Position.department_id == Department.id)
+            .filter(Department.code == department_code)
+            .subquery()
+        )
+        query = query.filter(Employee.position_id.in_(dept_pos_ids))
     if search:
         query = query.filter(
             db.or_(

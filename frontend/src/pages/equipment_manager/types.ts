@@ -405,6 +405,8 @@ export interface TicketEvent {
   to_role_label: string;
   user_id: string | null;
   user_name: string | null;
+  recipient_employee_id: string | null;
+  recipient_name: string | null;
   timestamp: string | null;
   comment: string;
   attachment_path: string;

@@ -263,6 +263,7 @@ def send_ticket(id):
         from_role=ticket.current_stage,
         to_role=to_role,
         comment=comment,
+        recipient_employee_id=int(recipient_employee_id) if recipient_employee_id else None,
     )
     db.session.add(event)
 

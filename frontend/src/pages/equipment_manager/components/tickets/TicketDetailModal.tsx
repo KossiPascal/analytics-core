@@ -175,11 +175,27 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onAction, onSend,
                   <div key={ev.id} className={`${styles.timelineItem} ${styles[EVENT_CLASS[ev.event_type] || ''] || ''}`}>
                     <div className={styles.timelineContent}>
                       <span className={styles.timelineTitle}>
-                        {ev.event_type === 'SENT' && `Envoyé par ${ev.user_name || '—'} : ${ev.from_role_label} → ${ev.to_role_label}`}
-                        {ev.event_type === 'RECEIVED' && `Reçu par ${ev.user_name || '—'} à l'étape ${ev.to_role_label}`}
-                        {ev.event_type === 'CREATED' && `Créé par ${ev.user_name || '—'}`}
-                        {ev.event_type === 'REPAIRED' && `Réparé par ${ev.user_name || '—'}`}
-                        {ev.event_type === 'CANCELLED' && `Annulé par ${ev.user_name || '—'}`}
+                        {ev.event_type === 'SENT' && (
+                          <>
+                            <strong>{ev.from_role_label}</strong>
+                            {' → '}
+                            <strong>{ev.to_role_label}</strong>
+                            {' · Envoyé par '}
+                            <strong>{ev.user_name || '—'}</strong>
+                            {ev.recipient_name && <>{' à '}<strong>{ev.recipient_name}</strong></>}
+                          </>
+                        )}
+                        {ev.event_type === 'RECEIVED' && (
+                          <>
+                            {'Réceptionné par '}
+                            <strong>{ev.user_name || '—'}</strong>
+                            {' à l\'étape '}
+                            <strong>{ev.to_role_label}</strong>
+                          </>
+                        )}
+                        {ev.event_type === 'CREATED' && <>{'Créé par '}<strong>{ev.user_name || '—'}</strong></>}
+                        {ev.event_type === 'REPAIRED' && <>{'Réparé par '}<strong>{ev.user_name || '—'}</strong></>}
+                        {ev.event_type === 'CANCELLED' && <>{'Annulé par '}<strong>{ev.user_name || '—'}</strong></>}
                         {!['SENT','RECEIVED','CREATED','REPAIRED','CANCELLED'].includes(ev.event_type) && (
                           `${ev.event_type} — ${ev.from_role_label} → ${ev.to_role_label}${ev.user_name ? ` (${ev.user_name})` : ''}`
                         )}

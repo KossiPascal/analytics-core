@@ -198,14 +198,17 @@ class TicketEvent(db.Model):
     from_role = db.Column(db.String(30), default="")
     to_role = db.Column(db.String(30), default="")
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    recipient_employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
     timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     comment = db.Column(db.Text, default="")
     attachment_path = db.Column(db.String(500), default="")
 
     ticket = db.relationship("RepairTicket", back_populates="events", lazy="selectin")
     user = db.relationship("User", foreign_keys=[user_id], lazy="selectin")
+    recipient_employee = db.relationship("Employee", foreign_keys=[recipient_employee_id], lazy="selectin")
 
     def to_dict_safe(self):
+        recipient = self.recipient_employee
         return {
             "id": str(self.id),
             "ticket_id": str(self.ticket_id),
@@ -216,6 +219,8 @@ class TicketEvent(db.Model):
             "to_role_label": RepairTicket.STAGE_LABELS.get(self.to_role, self.to_role),
             "user_id": str(self.user_id) if self.user_id else None,
             "user_name": (self.user.fullname or self.user.username) if self.user else None,
+            "recipient_employee_id": str(self.recipient_employee_id) if self.recipient_employee_id else None,
+            "recipient_name": recipient.get_full_name() if recipient else None,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "comment": self.comment,
             "attachment_path": self.attachment_path,
