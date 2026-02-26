@@ -26,7 +26,6 @@ class Region(db.Model):
     def __repr__(self):
         return f"<Region(id={self.id}, name={self.name})>"
 
-
 class District(db.Model):
     __tablename__ = "districts"
     __table_args__ = (
@@ -57,7 +56,6 @@ class District(db.Model):
 
     def __repr__(self):
         return f"<District(id={self.id}, name={self.name})>"
-
 
 class Site(db.Model):
     __tablename__ = "sites"

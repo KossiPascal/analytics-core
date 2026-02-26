@@ -2,9 +2,7 @@
 Models for email/alert configuration in the Equipment Manager.
 """
 from datetime import datetime, timezone
-
 from cryptography.fernet import Fernet
-
 from backend.src.databases.extensions import db
 from backend.src.config import Config
 
@@ -55,7 +53,6 @@ class EmailConfig(db.Model):
     def __repr__(self):
         return f"<EmailConfig(id={self.id}, host={self.host})>"
 
-
 class AlertConfig(db.Model):
     """Global alert parameters (one active row at a time)."""
     __tablename__ = "alert_config"
@@ -82,7 +79,6 @@ class AlertConfig(db.Model):
 
     def __repr__(self):
         return f"<AlertConfig(id={self.id}, warning={self.warning_days}j, escalation={self.escalation_days}j)>"
-
 
 class AlertRecipientConfig(db.Model):
     """
