@@ -68,18 +68,23 @@ def init_database(app: Flask) -> None:
     - En prod, applique les migrations Alembic si nécessaire.
     """
     with app.app_context():
+        # Les schemas PostgreSQL doivent être créés et committés AVANT db.create_all(),
+        # car db.create_all() ouvre sa propre connexion et ne voit pas une transaction
+        # non committée. On utilise une connexion séparée avec commit explicite.
+        with db.engine.connect() as schema_conn:
+            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS em"))
+            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS mi"))
+            schema_conn.commit()
+
         with db.engine.begin() as conn:
             try:
                 conn.execute(text("SELECT pg_advisory_lock(123456);"))
 
                 inspector = inspect(db.engine)
                 existing_tables = inspector.get_table_names()
-                
+
                 # === DB vierge ou mode dev ===
                 if Config.IS_DEBUG_MODE or not existing_tables:
-
-                    conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS em"))
-                    conn.execute(db.text("CREATE SCHEMA IF NOT EXISTS mi"))
 
                     logger.warning("⚠ DEV MODE or empty DB: creating tables directly")
                     db.create_all()
