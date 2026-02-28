@@ -60,7 +60,8 @@ interface AdminEntityCrudModuleProps<T> {
     enableDelete?: boolean;
     customActions?: (row: T) => React.ReactNode;
 
-    beforeSave?: (entity: T) => Promise<T> | T;
+    onBeforeSave?: (entity: T) => Promise<T> | T;
+    submitValidation?: (entity: T) => Promise<boolean>;
     afterSave?: (entity: T) => void;
 }
 
@@ -87,7 +88,8 @@ const AdminEntityCrudModuleInner = <
         enableEdit = true,
         enableDelete = true,
         customActions,
-        beforeSave,
+        onBeforeSave,
+        submitValidation,
         afterSave,
     }: AdminEntityCrudModuleProps<T>,
     ref: React.Ref<AdminEntityCrudModuleRef>
@@ -155,14 +157,23 @@ const AdminEntityCrudModuleInner = <
             showError("Formulaire invalide");
             return;
         }
+        let isFormValided = true;
+        if (submitValidation) {
+            isFormValided = await submitValidation?.(entity)
+        }
+
+        if (!isFormValided) {
+            showError("Formulaire invalide");
+            return;
+        }
 
         try {
             setSaving(true);
 
             let dataToSave = entity;
 
-            if (beforeSave) {
-                dataToSave = await beforeSave(entity);
+            if (onBeforeSave) {
+                dataToSave = await onBeforeSave(entity);
             }
 
             if (editing && dataToSave.id) {
