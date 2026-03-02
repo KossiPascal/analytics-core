@@ -63,8 +63,9 @@ gunicorn==21.2.0
 # Azure
 azure-synapse-artifacts==0.21.0
 
-# Image Processing
+# Image Processing/ Video backend (required by imageio / whisperx)
 Pillow==10.4.0
+imageio-ffmpeg>=0.4.9,<0.5
 
 # Data Science / AI
 numpy==1.26.4

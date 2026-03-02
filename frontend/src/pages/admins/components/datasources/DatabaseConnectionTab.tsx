@@ -109,7 +109,6 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
     fetchDataSourceConnections();
   }, []);
 
-
   const showResError = useCallback((msg: string) => {
     setResponse({ type: 'error', msg });
     showError(msg);
@@ -220,7 +219,6 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
     //   showResError('Erreur lors de la suppression');
     // }
   };
-
 
   const handleTest = async (type: TestType) => {
     if (!isFormValid) return;

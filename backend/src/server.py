@@ -211,7 +211,6 @@ def create_flask_app(initialize_database = True) -> Flask:
         app.register_blueprint(bp.bp if hasattr(bp, "bp") else bp)
 
     if initialize_database != True:
-        print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
         # Equipment Manager module - import models so SQLAlchemy registers them
         from backend.src.equipment_manager.routes import (
             locations as em_locations,

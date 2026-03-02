@@ -6,7 +6,8 @@ export type SqlChartType = "bar" | "line" | "pie" | "table" | "area" | "kpi";
 export type SqlFieldType = "dimension" | "metric" | "calculated_metric";
 export type SqlDataType = "string" | "integer" | "bigint" | "numeric" | "float" | "decimal" | "boolean" | "date" | "datetime" | "time" | "json";
 export type SqlAggType = "sum" | "avg" | "count" | "min" | "max" | "distinct";
-export type SqlOperators = "=" | "!=" | ">" | "<" | "IN" | "BETWEEN" | "LIKE" | "IS NULL" | "IS NOT NULL" | "IS TRUE" | "IS NOT TRUE";
+export type SqlOperators = "=" | "!=" | ">" | "<" | ">=" | "<=" | "IN" | "BETWEEN" | "LIKE" | "IS NULL" | "IS NOT NULL" | "IS TRUE" | "IS NOT TRUE";
+export type SqlLogicalOperator = "AND" | "OR";
 
 export const SqlDatasetTypeList: SqlDatasetType[] = ["table", "view", "matview", "function", "index"] as const;
 export const SqlFieldTypeList: SqlFieldType[] = ["dimension", "metric", "calculated_metric"] as const;
@@ -18,7 +19,10 @@ export const SqlDataTypeList: SqlDataType[] = ["string", ...SqlDataNumericTypeLi
 export const SqlAggTypeList: SqlAggType[] = ["sum", "avg", "count", "min", "max", "distinct"] as const;
 
 export const SqlOperatorsNoValueList:SqlOperators[] = ["IS NULL", "IS NOT NULL", "IS TRUE", "IS NOT TRUE"] as const;
-export const SqlOperatorsList:SqlOperators[] = ["=", "!=", ">", "<", "IN", "BETWEEN", "LIKE", ...SqlOperatorsNoValueList] as const;
+export const SqlAggragateOperatorsList:SqlOperators[] = ["=", "!=", ">", "<", ">=", "<="] as const;
+export const SqlOperatorsList:SqlOperators[] = [...SqlAggragateOperatorsList, "IN", "BETWEEN", "LIKE", ...SqlOperatorsNoValueList] as const;
+export const SqlLogicalOperatorList:SqlLogicalOperator[] = ["AND", "OR"] as const;
+
 
 export interface DatasetColumn {
   name: string;
@@ -100,19 +104,35 @@ export interface DatasetQuery {
 }
 
 export interface QueryFilter {
+  type: "condition";
   field: string;
   operator: SqlOperators;
   value: any;
   value2?:any
 }
 
+export type QueryFilterNode = QueryFilter | QueryFilterGroup;
+
+export interface QueryFilterGroup {
+  type: "group";
+  operator: SqlLogicalOperator;
+  children: QueryFilterNode[];
+};
+
+export interface LinkedFilterGroup {
+    linkWithPrevious?: SqlLogicalOperator;
+    node: QueryFilterNode;
+}
 export interface QueryJson {
   // dataset_id: number;
   select: {
     dimensions: string[];
     metrics: string[];
   };
-  filters: QueryFilter[];
+  filters: {
+    where: LinkedFilterGroup[],
+    having: LinkedFilterGroup[],
+  };
   order_by: {
     field: string;
     direction: "asc" | "desc";
