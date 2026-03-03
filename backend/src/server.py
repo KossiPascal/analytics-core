@@ -144,6 +144,45 @@ def init_database(app: Flask) -> None:
                 conn.execute(text("SELECT pg_advisory_unlock(123456);"))
     
 
+def _reset_em_tables(app: Flask) -> None:
+    """Vide les tables de référence Equipment Manager (dev uniquement)."""
+    tables = [
+        "em.alert_recipient_configs",
+        "em.alert_config",
+        "em.email_config",
+        "em.issues",
+        "em.ticket_events",
+        "em.ticket_comments",
+        "em.delay_alert_logs",
+        "em.repair_tickets",
+        "em.delay_alert_recipients",
+        "em.accessories",
+        "em.equipment_imeis",
+        "em.equipment_history",
+        "em.equipment",
+        "em.equipment_brands",
+        "em.equipment_categories",
+        "em.equipment_category_groups",
+        "em.problem_types",
+        "em.employee_profile",
+        "em.employee_history",
+        "em.employees",
+        "em.positions",
+        "em.departments",
+        "em.sites",
+        "em.districts",
+        "em.regions",
+    ]
+    with app.app_context():
+        for table in tables:
+            try:
+                db.session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
+            except Exception:
+                db.session.rollback()
+        db.session.commit()
+    logger.warning("⚠️  Tables EM vidées (reset)")
+
+
 def create_flask_app(initialize_database = True) -> Flask:
     Config.validate()
 
@@ -190,6 +229,38 @@ def create_flask_app(initialize_database = True) -> Flask:
 
     if initialize_database == True:
         init_database(app)
+
+    # ── Equipment Manager CLI commands ────────────────────────────────────────
+    import click
+
+    @app.cli.group("em")
+    def em_cli():
+        """Commandes Equipment Manager."""
+
+    @em_cli.command("seed")
+    @click.option("--module", default=None, help="Seeder spécifique à lancer (ex: locations, brands…)")
+    @click.option("--reset", is_flag=True, default=False, help="Vide les tables avant de seeder (dev uniquement)")
+    def em_seed(module, reset):
+        """Insère les données de référence du module Equipment Manager."""
+        from backend.src.equipment_manager.seeds import seed_all, SEEDERS, SEED_ORDER
+
+        if reset:
+            if not click.confirm("⚠️  Êtes-vous sûr de vouloir vider les tables avant de seeder ?"):
+                click.echo("Annulé.")
+                return
+            _reset_em_tables(app)
+
+        if module:
+            if module not in SEEDERS:
+                click.echo(f"Module inconnu : '{module}'. Disponibles : {', '.join(SEED_ORDER)}")
+                return
+            click.echo(f"▶ Seeding [{module}]…")
+            n = SEEDERS[module]()
+            click.echo(f"✓ {n} enregistrements créés")
+        else:
+            click.echo("▶ Seeding all modules…")
+            total = seed_all()
+            click.echo(f"✅ Terminé — {total} enregistrements créés")
 
     # Celery
     from backend.src.celery_app import celery, init_celery

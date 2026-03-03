@@ -221,10 +221,14 @@ export const dashboardApi = {
 
 // ─── EMAIL CONFIG ────────────────────────────────────────────────────────────
 
+type SmtpPayload = { host: string; port: number; username: string; password: string; from_email: string; from_name?: string; use_tls?: boolean; use_ssl?: boolean };
+
 export const emailConfigApi = {
   get: () => api.get<EmailConfig | null>(`${BASE}/email-config`),
-  save: (data: { host: string; port: number; username: string; password: string; from_email: string; from_name?: string; use_tls?: boolean; use_ssl?: boolean }) =>
-    api.post<EmailConfig>(`${BASE}/email-config`, data),
+  getAll: () => api.get<EmailConfig[]>(`${BASE}/email-config/list`),
+  save: (data: SmtpPayload) => api.post<EmailConfig>(`${BASE}/email-config`, data),
+  update: (id: string, data: SmtpPayload) => api.put<EmailConfig>(`${BASE}/email-config/${id}`, data),
+  activate: (id: string) => api.post<EmailConfig>(`${BASE}/email-config/${id}/activate`, {}),
   delete: (id: string) => api.delete(`${BASE}/email-config/${id}`),
   test: (data: { host: string; port: number; username: string; password: string; use_tls?: boolean; use_ssl?: boolean }) =>
     api.post<{ message: string }>(`${BASE}/email-config/test`, data),

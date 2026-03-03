@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
+import { Badge } from '@components/ui/Badge/Badge';
+import { Table, type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
-import { Badge } from '@components/ui/Badge/Badge';
-import { Save, Wifi } from 'lucide-react';
+import { FormModal } from '@/components/forms/FormModal/FormModal';
+import { Plus, Save, Wifi, Trash2 } from 'lucide-react';
 import { emailConfigApi } from '../../api';
 import type { EmailConfig } from '../../types';
 import shared from '@components/ui/styles/shared.module.css';
@@ -23,6 +25,12 @@ const DEFAULT_PORTS: Record<TlsMode, string> = {
   none:     '25',
 };
 
+const TLS_MODE_LABEL: Record<TlsMode, string> = {
+  starttls: 'STARTTLS',
+  ssl:      'SSL/TLS',
+  none:     'Non chiffré',
+};
+
 function tlsModeFromConfig(c: EmailConfig): TlsMode {
   if (c.port === 465) return 'ssl';
   if (!c.use_tls)    return 'none';
@@ -30,11 +38,14 @@ function tlsModeFromConfig(c: EmailConfig): TlsMode {
 }
 
 export function EmailConfigPanel() {
-  const [config, setConfig] = useState<EmailConfig | null>(null);
+  const [configs, setConfigs] = useState<EmailConfig[]>([]);
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Form modal state
+  const [formOpen, setFormOpen] = useState(false);
+  const [editConfig, setEditConfig] = useState<EmailConfig | null>(null);
   const [host, setHost] = useState('');
   const [port, setPort] = useState('587');
   const [tlsMode, setTlsMode] = useState<TlsMode>('starttls');
@@ -47,19 +58,29 @@ export function EmailConfigPanel() {
 
   const load = async () => {
     setLoading(true);
-    const res = await emailConfigApi.get();
-    if (res.success && res.data) {
-      const c = res.data;
-      setConfig(c);
-      setHost(c.host || '');
-      setPort(c.port != null ? String(c.port) : '587');
-      setTlsMode(tlsModeFromConfig(c));
-      setUsername(c.username || '');
-      setFromEmail(c.from_email || '');
-      setFromName(c.from_name || 'IH Equipment Manager');
-      setPassword(''); // never pre-fill password
-    }
+    const res = await emailConfigApi.getAll();
+    if (res.success) setConfigs(res.data ?? []);
     setLoading(false);
+  };
+
+  const openCreate = () => {
+    setEditConfig(null);
+    setHost(''); setPort('587'); setTlsMode('starttls');
+    setUsername(''); setPassword(''); setFromEmail('');
+    setFromName('IH Equipment Manager');
+    setFormOpen(true);
+  };
+
+  const openEdit = (c: EmailConfig) => {
+    setEditConfig(c);
+    setHost(c.host || '');
+    setPort(c.port != null ? String(c.port) : '587');
+    setTlsMode(tlsModeFromConfig(c));
+    setUsername(c.username || '');
+    setFromEmail(c.from_email || '');
+    setFromName(c.from_name || 'IH Equipment Manager');
+    setPassword('');
+    setFormOpen(true);
   };
 
   const handleTlsModeChange = (mode: string) => {
@@ -73,23 +94,27 @@ export function EmailConfigPanel() {
       toast.error('Host, utilisateur et adresse expéditeur requis');
       return;
     }
-    if (!password && !config) {
+    if (!password && !editConfig) {
       toast.error('Mot de passe requis pour une nouvelle configuration');
       return;
     }
     setSaving(true);
-    const res = await emailConfigApi.save({
+    const payload = {
       host,
       port: parseInt(port, 10),
       username,
-      password,       // vide = conserver l'ancien (géré côté backend)
+      password,
       from_email: fromEmail,
       from_name: fromName,
       use_tls: tlsMode === 'starttls',
       use_ssl: tlsMode === 'ssl',
-    });
+    };
+    const res = editConfig
+      ? await emailConfigApi.update(editConfig.id, payload)
+      : await emailConfigApi.save(payload);
     if (res.success) {
-      toast.success('Configuration SMTP enregistrée');
+      toast.success(editConfig ? 'Configuration mise à jour' : 'Configuration SMTP enregistrée');
+      setFormOpen(false);
       load();
     } else {
       toast.error(res.message || 'Erreur lors de l\'enregistrement');
@@ -119,37 +144,119 @@ export function EmailConfigPanel() {
     setTesting(false);
   };
 
-  const handleDelete = async () => {
-    if (!config) return;
-    if (!confirm('Supprimer la configuration SMTP active ?')) return;
-    const res = await emailConfigApi.delete(config.id);
-    if (res.success) {
-      toast.success('Configuration supprimée');
-      setConfig(null);
-      setHost(''); setPort('587'); setUsername(''); setPassword('');
-      setFromEmail(''); setFromName('IH Equipment Manager'); setTlsMode('starttls');
-    } else {
-      toast.error(res.message || 'Erreur');
-    }
+  const handleActivate = async (c: EmailConfig) => {
+    const res = await emailConfigApi.activate(c.id);
+    if (res.success) { toast.success('Configuration activée'); load(); }
+    else toast.error(res.message || 'Erreur');
   };
 
+  const handleDelete = async (c: EmailConfig) => {
+    if (!confirm(`Supprimer la configuration ${c.host} ?`)) return;
+    const res = await emailConfigApi.delete(c.id);
+    if (res.success) { toast.success('Configuration supprimée'); load(); }
+    else toast.error(res.message || 'Erreur');
+  };
+
+  const columns: Column<EmailConfig>[] = [
+    {
+      key: 'server',
+      header: 'Serveur',
+      render: (c) => `${c.host}:${c.port}`,
+    },
+    {
+      key: 'mode',
+      header: 'Mode',
+      render: (c) => TLS_MODE_LABEL[tlsModeFromConfig(c)],
+    },
+    { key: 'username', header: 'Utilisateur', render: (c) => c.username },
+    { key: 'from', header: 'Expéditeur', render: (c) => c.from_email },
+    {
+      key: 'status',
+      header: 'Statut',
+      render: (c) => (
+        <Badge variant={c.is_active ? 'success' : 'secondary'}>
+          {c.is_active ? 'Active' : 'Inactive'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      render: (c) => (
+        <div style={{ display: 'flex', gap: '0.25rem', justifyContent: 'flex-end' }}>
+          {!c.is_active && (
+            <Button size="sm" variant="ghost" onClick={() => handleActivate(c)}>
+              Activer
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => openEdit(c)}>
+            Modifier
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => handleDelete(c)}>
+            <Trash2 size={14} />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const formFooter = (
+    <div className={shared.modalFooter}>
+      <Button type="button" variant="outline" size="sm" onClick={() => setFormOpen(false)}>
+        Annuler
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleTest}
+        isLoading={testing}
+        leftIcon={<Wifi size={16} />}
+      >
+        Tester
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        onClick={handleSave}
+        isLoading={saving}
+        leftIcon={<Save size={16} />}
+      >
+        {editConfig ? 'Mettre à jour' : 'Enregistrer'}
+      </Button>
+    </div>
+  );
+
   return (
-    <div style={{ maxWidth: 560 }}>
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600 }}>Configuration SMTP</h4>
-        {config ? (
-          <Badge variant="success">Configuration active en DB</Badge>
-        ) : (
-          <Badge variant="secondary">Fallback sur .env</Badge>
-        )}
+        <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600 }}>
+          Configurations SMTP
+        </h4>
+        <Button size="sm" leftIcon={<Plus size={16} />} onClick={openCreate}>
+          Ajouter
+        </Button>
       </div>
 
-      {loading ? (
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Chargement...</p>
-      ) : (
-        <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+      <Table<EmailConfig>
+        data={configs}
+        columns={columns}
+        keyExtractor={(c) => c.id}
+        isLoading={loading}
+        emptyMessage="Aucune configuration SMTP enregistrée"
+      />
 
-          {/* Mode de chiffrement — détermine le port par défaut */}
+      <FormModal
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        title={editConfig ? 'Modifier la configuration SMTP' : 'Nouvelle configuration SMTP'}
+        size="md"
+        onSubmit={handleSave}
+        isLoading={saving}
+        footer={formFooter}
+      >
+        <div className={shared.form}>
           <FormSelect
             label="Mode de connexion"
             value={tlsMode}
@@ -184,13 +291,12 @@ export function EmailConfigPanel() {
             placeholder="user@gmail.com"
           />
           <FormInput
-            label={config ? 'Nouveau mot de passe (laisser vide pour conserver)' : 'Mot de passe SMTP'}
+            label={editConfig ? 'Nouveau mot de passe (laisser vide pour conserver)' : 'Mot de passe SMTP'}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder={config ? '••••••••' : 'Mot de passe ou App Password'}
+            placeholder={editConfig ? '••••••••' : 'Mot de passe ou App Password'}
           />
-
           <FormInput
             label="Adresse expéditeur"
             required
@@ -205,21 +311,6 @@ export function EmailConfigPanel() {
             placeholder="IH Equipment Manager"
           />
 
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-            <Button type="button" variant="outline" size="sm" onClick={handleTest} isLoading={testing} leftIcon={<Wifi size={16} />}>
-              Tester la connexion
-            </Button>
-            <Button type="submit" size="sm" isLoading={saving} leftIcon={<Save size={16} />}>
-              Enregistrer
-            </Button>
-            {config && (
-              <Button type="button" variant="danger" size="sm" onClick={handleDelete}>
-                Supprimer
-              </Button>
-            )}
-          </div>
-
-          {/* Aide contextuelle Gmail */}
           {host.includes('gmail') && (
             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.5rem', lineHeight: 1.5 }}>
               <strong>Gmail :</strong> utilisez un{' '}
@@ -230,8 +321,8 @@ export function EmailConfigPanel() {
               Si le port 587 est bloqué, essayez le mode <strong>SSL/TLS — port 465</strong>.
             </p>
           )}
-        </form>
-      )}
+        </div>
+      </FormModal>
     </div>
   );
 }

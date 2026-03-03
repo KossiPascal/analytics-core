@@ -60,23 +60,6 @@ def get_smtp_config_from_db():
     return _get_smtp_config()
 
 
-def _build_smtp_connection():
-    """Create an SMTP connection. Returns None if not configured."""
-    host, port, user, password, _, use_tls, _ = _get_smtp_config()
-    if not host or not user:
-        logger.warning("SMTP not configured (EMAIL_HOST / EMAIL_HOST_USER manquants)")
-        return None, None
-    try:
-        server = smtplib.SMTP(host, port)
-        if use_tls:
-            server.starttls()
-        server.login(user, password)
-        return server, None
-    except Exception as e:
-        logger.error(f"SMTP connection failed: {e}")
-        return None, str(e)
-
-
 def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment=""):
     """
     Send email notification when a ticket is sent to the next stage.
@@ -90,7 +73,7 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
     Returns:
         bool: True if email sent successfully
     """
-    host, _, _, _, from_addr, _, site_url = _get_smtp_config()
+    host, _, _, _, from_addr, _, site_url = get_smtp_config_from_db()
 
     if not host:
         logger.info("SMTP not configured, skipping ticket notification email")
@@ -159,7 +142,7 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
         msg["To"] = recipient_email
         msg.attach(MIMEText(html_body, "html"))
 
-        server, _ = _build_smtp_connection()
+        server, _ = _build_smtp_connection_from_db()
         if not server:
             return False
 
@@ -186,7 +169,7 @@ def send_delay_alert(ticket, recipients, stage, days):
     Returns:
         bool: True if email sent successfully
     """
-    host, _, _, _, from_addr, _, _ = _get_smtp_config()
+    host, _, _, _, from_addr, _, _ = get_smtp_config_from_db()
 
     if not host or not recipients:
         return False
@@ -243,7 +226,7 @@ def send_delay_alert(ticket, recipients, stage, days):
         msg["To"] = ", ".join(recipients)
         msg.attach(MIMEText(html_body, "html"))
 
-        server, _ = _build_smtp_connection()
+        server, _ = _build_smtp_connection_from_db()
         if not server:
             return False
 

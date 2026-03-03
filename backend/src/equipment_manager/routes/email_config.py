@@ -26,6 +26,13 @@ def get_email_config():
     return jsonify(success=True, data=config.to_dict_safe())
 
 
+@bp.get("/list")
+@require_auth
+def list_email_configs():
+    configs = EmailConfig.query.order_by(EmailConfig.created_at.desc()).all()
+    return jsonify([c.to_dict_safe() for c in configs]), 200
+
+
 @bp.post("/")
 @require_auth
 def save_email_config():
@@ -65,6 +72,42 @@ def save_email_config():
     db.session.add(config)
     db.session.commit()
     return jsonify(success=True, data=config.to_dict_safe()), 201
+
+
+@bp.put("/<int:config_id>")
+@require_auth
+def update_email_config(config_id):
+    config = db.session.get(EmailConfig, config_id)
+    if not config:
+        return jsonify(success=False, message="Configuration introuvable"), 404
+    data = request.get_json() or {}
+    required_fields = ["host", "port", "username", "from_email"]
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return jsonify(success=False, message=f"Champs requis : {', '.join(missing)}"), 400
+    password_plain = data.get("password", "").strip()
+    if password_plain:
+        config.password_encrypted = encrypt_password(password_plain)
+    config.host = data["host"].strip()
+    config.port = int(data["port"])
+    config.username = data["username"].strip()
+    config.from_email = data["from_email"].strip()
+    config.from_name = data.get("from_name", "IH Equipment Manager").strip()
+    config.use_tls = bool(data.get("use_tls", True))
+    db.session.commit()
+    return jsonify(success=True, data=config.to_dict_safe())
+
+
+@bp.post("/<int:config_id>/activate")
+@require_auth
+def activate_email_config(config_id):
+    config = db.session.get(EmailConfig, config_id)
+    if not config:
+        return jsonify(success=False, message="Configuration introuvable"), 404
+    EmailConfig.query.filter_by(is_active=True).update({"is_active": False})
+    config.is_active = True
+    db.session.commit()
+    return jsonify(success=True, data=config.to_dict_safe())
 
 
 @bp.delete("/<int:config_id>")
