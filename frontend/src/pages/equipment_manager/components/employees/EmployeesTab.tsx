@@ -13,6 +13,7 @@ import { EmployeeDetailModal } from './EmployeeDetailModal';
 import { EmployeeTransferModal } from './EmployeeTransferModal';
 import { ConfirmToggleEmployeeModal } from './ConfirmToggleEmployeeModal';
 import { CredentialsModal } from './CredentialsModal';
+import { EmployeeUserModal } from './EmployeeUserModal';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
@@ -45,6 +46,9 @@ export function EmployeesTab() {
   const [empTransferTarget, setEmpTransferTarget] = useState<Employee | null>(null);
   const [toggleModalOpen, setToggleModalOpen] = useState(false);
   const [toggleTarget, setToggleTarget] = useState<Employee | null>(null);
+
+  // User account modal
+  const [userModalEmployee, setUserModalEmployee] = useState<Employee | null>(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -136,6 +140,7 @@ export function EmployeesTab() {
           onView={(e) => { setEmpDetailId(e.id); setEmpDetailOpen(true); }}
           onToggleActive={handleToggleActive}
           onTransfer={(e) => { setEmpTransferTarget(e); setEmpTransferOpen(true); }}
+          onManageUser={(e) => setUserModalEmployee(e)}
         />
       )}
 
@@ -201,6 +206,15 @@ export function EmployeesTab() {
         onSuccess={loadAll}
         employee={toggleTarget}
       />
+
+      {userModalEmployee && (
+        <EmployeeUserModal
+          employee={userModalEmployee}
+          isOpen={true}
+          onClose={() => setUserModalEmployee(null)}
+          onSuccess={() => { setUserModalEmployee(null); loadAll(); }}
+        />
+      )}
     </div>
   );
 }

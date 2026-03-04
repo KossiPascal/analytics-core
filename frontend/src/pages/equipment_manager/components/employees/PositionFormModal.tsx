@@ -33,6 +33,7 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
   const [departmentId, setDepartmentId] = useState('');
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [isZoneAssignable, setIsZoneAssignable] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const isEdit = !!editData;
@@ -46,8 +47,9 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
       setDepartmentId(editData.department_id ?? '');
       setDescription(editData.description);
       setIsActive(editData.is_active);
+      setIsZoneAssignable(editData.is_zone_assignable);
     } else {
-      setName(''); setCode(''); setParentId(''); setDepartmentId(''); setDescription(''); setIsActive(true);
+      setName(''); setCode(''); setParentId(''); setDepartmentId(''); setDescription(''); setIsActive(true); setIsZoneAssignable(false);
     }
     reset();
   }, [editData, isOpen]);
@@ -72,6 +74,7 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
         department_id: departmentId || null,
         description,
         is_active: isActive,
+        is_zone_assignable: isZoneAssignable,
       };
       const res = isEdit
         ? await employeesApi.updatePosition(editData!.id, data)
@@ -153,6 +156,11 @@ export function PositionFormModal({ isOpen, onClose, onSuccess, editData, onCrea
         />
 
         <FormTextarea label="Description" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <FormCheckbox
+          label="Assignable à une zone d'intervention"
+          checked={isZoneAssignable}
+          onChange={(e) => setIsZoneAssignable(e.target.checked)}
+        />
         <FormCheckbox label="Actif" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
       </form>
     </FormModal>

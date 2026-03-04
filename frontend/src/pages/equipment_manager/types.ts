@@ -251,6 +251,7 @@ export interface Position {
   code: string;
   description: string;
   is_active: boolean;
+  is_zone_assignable: boolean;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -290,6 +291,7 @@ export interface Employee {
   position_id: string | null;
   position_name: string | null;
   position_code: string | null;
+  position_is_zone_assignable: boolean;
   hire_date: string | null;
   // end_date: string | null;
   is_active: boolean;
@@ -527,4 +529,38 @@ export interface SyncResult {
   errors: number;
   message?: string;
   error?: string;
+}
+
+// ─── IDENTITIES (orgunits, roles, comptes) ───────────────────────────────────
+
+export interface OrgUnit {
+  id: string;
+  name: string;
+  code: string;
+  parent_id: string | null;
+  description: string;
+  is_active: boolean;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  tenant_id: string;
+}
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  firstname: string;
+  lastname: string;
+  fullname: string;
+  email: string;
+  phone: string;
+  is_active: boolean;
+  tenant_id: string;
+  role_ids: string[];
+  roles: Role[];
+  orgunit_ids: string[];
+  orgunits: OrgUnit[];
 }

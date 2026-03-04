@@ -72,6 +72,7 @@ class Position(db.Model):
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    is_zone_assignable = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
@@ -91,6 +92,7 @@ class Position(db.Model):
             "code": self.code,
             "description": self.description,
             "is_active": self.is_active,
+            "is_zone_assignable": self.is_zone_assignable,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -139,6 +141,7 @@ class Employee(db.Model):
             "position_id": str(self.position_id) if self.position_id else None,
             "position_name": pos.name if pos else None,
             "position_code": pos.code if pos else None,
+            "position_is_zone_assignable": pos.is_zone_assignable if pos else False,
             "user_id": str(self.user_id) if self.user_id else None,
             "first_name": self.first_name,
             "last_name": self.last_name,

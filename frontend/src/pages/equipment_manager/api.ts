@@ -13,6 +13,7 @@ import type {
   EmailConfig, AlertConfig, AlertRecipientConfig,
   DashboardStats, TicketsByStatus, TicketsByDelay, BlockagePoint,
   SyncResult,
+  OrgUnit, Role, UserAccount,
 } from './types';
 
 const BASE = '/equipment';
@@ -206,7 +207,16 @@ export const employeesApi = {
   get: (id: string) => api.get<Employee & { history: import('./types').EmployeeHistory[]; equipments: Equipment[] }>(`${BASE}/employees/${id}`),
   update: (id: string, data: Record<string, unknown>) => api.put<Employee>(`${BASE}/employees/${id}`, data),
   toggleActive: (id: string, data?: { notes?: string; action_date?: string }) => api.patch<Employee>(`${BASE}/employees/${id}/toggle-active`, data),
-  createAccount: (id: string, data: { username: string; password: string }) => api.post<Employee>(`${BASE}/employees/${id}/create-account`, data),
+  createAccount: (id: string, data: Record<string, unknown>) => api.post<UserAccount>(`${BASE}/employees/${id}/create-account`, data),
+  getAccount:    (id: string) => api.get<UserAccount>(`${BASE}/employees/${id}/account`),
+  updateAccount: (id: string, data: Record<string, unknown>) => api.put<UserAccount>(`${BASE}/employees/${id}/update-account`, data),
+};
+
+// ─── IDENTITIES (orgunits, rôles) ────────────────────────────────────────────
+
+export const identityApi = {
+  getOrgUnits: () => api.get<OrgUnit[]>('/identities/orgunits'),
+  getRoles:    () => api.get<Role[]>('/identities/roles'),
 };
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────────

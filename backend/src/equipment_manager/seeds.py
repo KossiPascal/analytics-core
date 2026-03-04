@@ -212,31 +212,31 @@ def seed_departments():
 # ─────────────────────────────────────────────────────────────────────────────
 
 POSITIONS_DATA = [
-    # (code, name, dept_code, parent_code)
-    ("DIR-PROG",  "Directeur de Programme",            "PROG",   None),
-    ("COORD-PROG","Coordinateur Programme",             "PROG",   "DIR-PROG"),
-    ("SUP-PROG",  "Superviseur de Zone Programme",      "PROG",   "COORD-PROG"),
-    ("AGT-PROG",  "Agent de Programme",                 "PROG",   "SUP-PROG"),
+    # (code, name, dept_code, parent_code, is_zone_assignable)
+    ("DIR-PROG",  "Directeur de Programme",            "PROG",   None,         False),
+    ("COORD-PROG","Coordinateur Programme",             "PROG",   "DIR-PROG",   False),
+    ("SUP-PROG",  "Superviseur de Zone Programme",      "PROG",   "COORD-PROG", False),
+    ("AGT-PROG",  "Agent de Programme",                 "PROG",   "SUP-PROG",   False),
 
-    ("DIR-LOG",   "Directeur Logistique",               "LOG",    None),
-    ("COORD-LOG", "Coordinateur Logistique",            "LOG",    "DIR-LOG"),
-    ("GEST-EQ",   "Gestionnaire Équipements",           "LOG",    "COORD-LOG"),
-    ("TECH-LOG",  "Technicien Logistique",              "LOG",    "COORD-LOG"),
-    ("CHAUF",     "Chauffeur",                          "LOG",    "COORD-LOG"),
+    ("DIR-LOG",   "Directeur Logistique",               "LOG",    None,         False),
+    ("COORD-LOG", "Coordinateur Logistique",            "LOG",    "DIR-LOG",    False),
+    ("GEST-EQ",   "Gestionnaire Équipements",           "LOG",    "COORD-LOG",  False),
+    ("TECH-LOG",  "Technicien Logistique",              "LOG",    "COORD-LOG",  False),
+    ("CHAUF",     "Chauffeur",                          "LOG",    "COORD-LOG",  False),
 
-    ("DIR-FIN",   "Directeur Financier",                "FIN",    None),
-    ("COMPTA",    "Comptable",                          "FIN",    "DIR-FIN"),
+    ("DIR-FIN",   "Directeur Financier",                "FIN",    None,         False),
+    ("COMPTA",    "Comptable",                          "FIN",    "DIR-FIN",    False),
 
-    ("DIR-RH",    "Directeur des Ressources Humaines",  "RH",     None),
-    ("CHG-RH",    "Chargé RH",                         "RH",     "DIR-RH"),
+    ("DIR-RH",    "Directeur des Ressources Humaines",  "RH",     None,         False),
+    ("CHG-RH",    "Chargé RH",                         "RH",     "DIR-RH",     False),
 
-    ("DIR-ES",    "Directeur eSanté",                   "ESANTE", None),
-    ("COORD-ES",  "Coordinateur eSanté",                "ESANTE", "DIR-ES"),
-    ("SUP-ES",    "Superviseur eSanté",                 "ESANTE", "COORD-ES"),
-    ("AGT-ES",    "Agent eSanté / ASC",                 "ESANTE", "SUP-ES"),
+    ("DIR-ES",    "Directeur eSanté",                   "ESANTE", None,         False),
+    ("COORD-ES",  "Coordinateur eSanté",                "ESANTE", "DIR-ES",     False),
+    ("SUP-ES",    "Superviseur eSanté",                 "ESANTE", "COORD-ES",   True),   # assignable à une zone
+    ("AGT-ES",    "Agent eSanté / ASC",                 "ESANTE", "SUP-ES",     True),   # assignable à une zone
 
-    ("DIR-SE",    "Directeur Suivi-Évaluation",         "SUIVI",  None),
-    ("CHG-SE",    "Chargé Suivi-Évaluation",            "SUIVI",  "DIR-SE"),
+    ("DIR-SE",    "Directeur Suivi-Évaluation",         "SUIVI",  None,         False),
+    ("CHG-SE",    "Chargé Suivi-Évaluation",            "SUIVI",  "DIR-SE",     False),
 ]
 
 
@@ -248,7 +248,7 @@ def seed_positions():
     created_total = 0
     pos_map: dict[str, Position] = {}
 
-    for code, name, dept_code, parent_code in POSITIONS_DATA:
+    for code, name, dept_code, parent_code, is_zone_assignable in POSITIONS_DATA:
         dept = dept_map.get(dept_code)
         parent = pos_map.get(parent_code) if parent_code else None
         obj, created = _upsert(
@@ -258,9 +258,12 @@ def seed_positions():
                 "name": name,
                 "department_id": dept.id if dept else None,
                 "parent_id": parent.id if parent else None,
+                "is_zone_assignable": is_zone_assignable,
                 "is_active": True,
             },
         )
+        # Mettre à jour les enregistrements existants également
+        obj.is_zone_assignable = is_zone_assignable
         pos_map[code] = obj
         _flush()
         if created:
@@ -500,7 +503,7 @@ EMPLOYEES_DATA = [
     ("EMP-010", "Sena",    "Amouzou",    "F", "+22890111010", "s.amouzou@integh.org",    "SUP-ES",    "2019-08-15"),
     ("EMP-011", "Kokou",   "Boevi",      "M", "+22890111011", "k.boevi@integh.org",      "SUP-ES",    "2020-01-08"),
     ("EMP-012", "Afi",     "Gameli",     "F", "+22890111012", "a.gameli@integh.org",     "SUP-ES",    "2020-04-12"),
-    ("EMP-013", "Koku",    "Soglo",      "M", "+22890111013", "k.soglo@integh.org",      "COORD-ES",  "2018-09-01"),
+    ("EMP-013", "Koku",    "Soglo",      "M", "+22890111013", "djakpo.gado@gmail.com",      "COORD-ES",  "2018-09-01"),
     ("EMP-014", "Dela",    "Attisso",    "F", "+22890111014", "d.attisso@integh.org",    "COORD-ES",  "2018-11-20"),
     ("EMP-015", "Kodzo",   "Apevon",     "M", "+22890111015", "k.apevon@integh.org",     "DIR-ES",    "2017-03-01"),
     ("EMP-016", "Teko",    "Dandjinou",  "M", "+22890111016", "t.dandjinou@integh.org",  "GEST-EQ",   "2019-06-15"),
