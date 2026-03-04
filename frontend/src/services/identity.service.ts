@@ -77,7 +77,18 @@ export interface SyncResult {
     total: number;
 }
 
+export interface AscSyncResult {
+    created_users: number;
+    updated_users: number;
+    created_employees: number;
+    updated_employees: number;
+    skipped: number;
+    total: number;
+}
+
 export const identitySyncService = {
     syncLevels:   (tenant_id?: number | null) => identity.create<SyncResult>("/sync/levels",   { tenant_id }),
     syncOrgunits: (tenant_id?: number | null) => identity.create<SyncResult>("/sync/orgunits", { tenant_id }),
+    syncAscs:     (tenant_id: number, position_code?: string) =>
+        identity.create<AscSyncResult>("/sync/ascs", { tenant_id, position_code }),
 }

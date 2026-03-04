@@ -1,14 +1,15 @@
-import { User as UserIcon } from 'lucide-react';
+import { RefreshCw, User as UserIcon } from 'lucide-react';
 import { StatusBadge } from '@components/ui/Badge/Badge';
 import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { Tenant, Role, User, Orgunit } from '@models/identity.model';
-import { tenantService, roleService, userService,orgunitService } from '@services/identity.service';
+import { tenantService, roleService, userService, orgunitService, identitySyncService, AscSyncResult } from '@services/identity.service';
 import { forwardRef, useEffect, useState } from 'react';
 import { FormCheckbox } from '@components/forms/FormCheckbox/FormCheckbox';
 import { FormMultiSelect } from '@components/forms/FormSelect/FormMultiSelect';
 import { FormSelect } from '@components/forms/FormSelect/FormSelect';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
+import { Modal } from '@components/ui/Modal/Modal';
 
 const defaultUser: User = {
   id: null,
@@ -105,6 +106,33 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
   const [orgunits, setOrgunits] = useState<Orgunit[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ── Sync ASC ──────────────────────────────────────────────────────────────
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
+  const [syncTenantId, setSyncTenantId] = useState<number | null>(null);
+  const [syncPositionCode, setSyncPositionCode] = useState('ASC');
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  const handleSyncAscs = async () => {
+    if (!syncTenantId) return;
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res: AscSyncResult = await identitySyncService.syncAscs(syncTenantId, syncPositionCode || 'ASC');
+      const skippedPart = res.skipped ? `, ${res.skipped} ignorés (username pris)` : '';
+      setSyncMsg(
+        `✓ ${res.created_users} users créés, ${res.updated_users} mis à jour${skippedPart} — ` +
+        `${res.created_employees} employés créés, ${res.updated_employees} mis à jour (${res.total} total DHIS2)`
+      );
+      setSyncModalOpen(false);
+      fetchInitialData();
+    } catch (e) {
+      setSyncMsg(`Erreur : ${e instanceof Error ? e.message : 'Synchronisation DHIS2 échouée'}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const fetchInitialData = async () => {
     setLoading(true);
     try {
@@ -126,7 +154,96 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
     fetchInitialData();
   }, []);
 
+  const tenantOptions = tenants.map((t) => ({ value: t.id, label: t.name }));
+
   return (
+    <>
+    {/* ── Modal de synchronisation ASC ──────────────────────────────────────── */}
+    <Modal
+      isOpen={syncModalOpen}
+      onClose={() => { setSyncModalOpen(false); setSyncMsg(null); }}
+      title="Synchroniser les ASC depuis DHIS2"
+      size="sm"
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.25rem 0' }}>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary, #64748b)', margin: 0 }}>
+          Cette opération importe les utilisateurs DHIS2 comme comptes système
+          et crée simultanément un profil employé pour chacun.
+        </p>
+
+        <FormSelect
+          label="Tenant cible"
+          required
+          value={syncTenantId}
+          options={tenantOptions}
+          onChange={(v) => setSyncTenantId(v as number | null)}
+          placeholder="Sélectionner un tenant"
+        />
+
+        <FormInput
+          label="Code du poste ASC"
+          value={syncPositionCode}
+          onChange={(e) => setSyncPositionCode(e.target.value)}
+          hint="Le poste avec ce code sera assigné aux employés créés (ex : ASC)"
+        />
+
+        {syncMsg && (
+          <div style={{
+            padding: '0.5rem 0.75rem',
+            borderRadius: '0.375rem',
+            fontSize: '0.82rem',
+            background: syncMsg.startsWith('✓') ? 'var(--color-success-bg, #f0fdf4)' : 'var(--color-error-bg, #fef2f2)',
+            color: syncMsg.startsWith('✓') ? 'var(--color-success, #16a34a)' : 'var(--color-error, #dc2626)',
+          }}>
+            {syncMsg}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+          <button
+            onClick={() => { setSyncModalOpen(false); setSyncMsg(null); }}
+            disabled={syncing}
+            style={{ padding: '0.4rem 1rem', borderRadius: '0.375rem', border: '1px solid var(--border-color, #e2e8f0)', background: 'transparent', cursor: 'pointer', fontSize: '0.85rem' }}
+          >
+            Annuler
+          </button>
+          <button
+            onClick={handleSyncAscs}
+            disabled={syncing || !syncTenantId}
+            style={{
+              padding: '0.4rem 1rem',
+              borderRadius: '0.375rem',
+              border: 'none',
+              background: (!syncing && syncTenantId) ? 'var(--color-primary, #3b82f6)' : 'var(--border-muted, #cbd5e1)',
+              color: '#fff',
+              cursor: (!syncing && syncTenantId) ? 'pointer' : 'not-allowed',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+            }}
+          >
+            <RefreshCw size={13} style={syncing ? { animation: 'spin 1s linear infinite' } : undefined} />
+            {syncing ? 'Synchronisation…' : 'Lancer la synchronisation'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+
+    {/* ── Message résultat (hors modal) ─────────────────────────────────────── */}
+    {syncMsg && !syncModalOpen && (
+      <div style={{
+        marginBottom: '0.75rem',
+        padding: '0.5rem 0.75rem',
+        borderRadius: '0.375rem',
+        fontSize: '0.82rem',
+        background: syncMsg.startsWith('✓') ? 'var(--color-success-bg, #f0fdf4)' : 'var(--color-error-bg, #fef2f2)',
+        color: syncMsg.startsWith('✓') ? 'var(--color-success, #16a34a)' : 'var(--color-error, #dc2626)',
+      }}>
+        {syncMsg}
+      </div>
+    )}
+
     <AdminEntityCrudModule<User>
       ref={ref}
       title="Gestion des utilisateurs"
@@ -135,6 +252,27 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
       columns={userColumns}
       defaultValue={defaultUser}
       service={userService}
+      headerActions={
+        <button
+          onClick={() => { setSyncMsg(null); setSyncModalOpen(true); }}
+          title="Synchroniser les ASC depuis DHIS2"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            padding: '0.3rem 0.75rem',
+            borderRadius: '0.375rem',
+            border: '1px solid var(--color-primary, #3b82f6)',
+            background: 'transparent',
+            color: 'var(--color-primary, #3b82f6)',
+            cursor: 'pointer',
+            fontSize: '0.8rem',
+          }}
+        >
+          <RefreshCw size={13} />
+          Sync ASC DHIS2
+        </button>
+      }
       isValid={(u) =>{
         if(!u.username || !u.lastname|| !u.firstname) return false;
         const isVaid = (
@@ -225,6 +363,7 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
         </>
       )}
     />
+    </>
   );
 });
 
