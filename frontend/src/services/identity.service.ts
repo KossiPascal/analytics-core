@@ -1,4 +1,4 @@
-import { Tenant, User, Role, Permission, RolePermissionLink, UserRole, UsersLog, Orgunit } from '@/models/identity.model';
+import { Tenant, User, Role, Permission, RolePermissionLink, UserRole, UsersLog, Orgunit, OrgUnitLevel } from '@/models/identity.model';
 import { CRUDService } from '@services/acrud.service';
 
 const identity = new CRUDService("/identities");
@@ -16,10 +16,17 @@ export const tenantService = {
 }
 
 export const orgunitService = {
-    all: (tenant_id?:number) => identity.all<Orgunit>("/orgunits",),
+    all: (tenant_id?:number) => identity.all<Orgunit>("/orgunits"),
     create: (ou: Orgunit) => identity.create("/orgunits", ou),
     update: (id: number, ou: Orgunit) => identity.update("/orgunits", id, ou),
     remove: (id: number) => identity.remove("/orgunits", id),
+}
+
+export const levelService = {
+    all: () => identity.all<OrgUnitLevel>("/levels"),
+    create: (lv: OrgUnitLevel) => identity.create("/levels", lv),
+    update: (id: number, lv: OrgUnitLevel) => identity.update("/levels", id, lv),
+    remove: (id: number) => identity.remove("/levels", id),
 }
 
 export const userService = {
@@ -62,4 +69,15 @@ export const userRoleService = {
     create: (ur: UserRole) => test(),
     update: (id: number, ur: UserRole) => test(),
     remove: (id: number) => test(),
+}
+
+export interface SyncResult {
+    created: number;
+    updated: number;
+    total: number;
+}
+
+export const identitySyncService = {
+    syncLevels:   (tenant_id?: number | null) => identity.create<SyncResult>("/sync/levels",   { tenant_id }),
+    syncOrgunits: (tenant_id?: number | null) => identity.create<SyncResult>("/sync/orgunits", { tenant_id }),
 }

@@ -12,18 +12,32 @@ export interface Coordinates {
   longitude: number;
 }
 
+/** Niveau hiérarchique de l'arborescence (style DHIS2). */
+export interface OrgUnitLevel {
+  id: number | null;
+  tenant_id: number | null;
+  name: string;
+  code: string;            // code DHIS2
+  level: number;           // 1 = National, 2 = Régional, …
+  display_name?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Orgunit {
   id: number | null;
   name: string;
   tenant_id: number | null;
   tenant?: Tenant;
+  level_id?: number | null;
+  level?: OrgUnitLevel;
   code?: string;
   external_id?: string;
   parent_id?: number | null;
   parent?: Orgunit;
   children_ids?: number[];
   children?: Orgunit[];
-  level?: number;
   path?: string;
   description?: string;
   is_active?: boolean;

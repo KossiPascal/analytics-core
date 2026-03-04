@@ -14,6 +14,7 @@ import urllib3
 from pathlib import Path
 
 from flask import Flask, jsonify, send_from_directory, send_file, render_template, request
+from werkzeug.exceptions import HTTPException
 from flask_cors import CORS
 from flask_compress import Compress
 from flask_talisman import Talisman
@@ -31,7 +32,7 @@ from backend.src.security.api_security import api_security
 
 from backend.src.routes import auth, database, worker_controller
 from backend.src.routes.visualizations import script, visualization
-from backend.src.routes.identities import permission, role, tenant, user, user_utils, orgunit
+from backend.src.routes.identities import permission, role, tenant, user, user_utils, orgunit, level, dhis2_sync as identities_dhis2_sync
 from backend.src.routes.datasources import datasource, datasource_permission, datasource_type
 from backend.src.routes.datasets import dataset, dataset_chart,dataset_field,dataset_query
 
@@ -83,55 +84,33 @@ def init_database(app: Flask) -> None:
                 inspector = inspect(db.engine)
                 existing_tables = inspector.get_table_names()
 
-                # === DB vierge ou mode dev ===
+                # === 1. Création des tables manquantes (db.create_all n'altère pas l'existant) ===
                 if Config.IS_DEBUG_MODE or not existing_tables:
-
                     logger.warning("⚠ DEV MODE or empty DB: creating tables directly")
                     db.create_all()
-                    
-                    # Crée un admin par défaut si la table User existe
+
+                # === 2. ALEMBIC MIGRATIONS (ALTER TABLE, nouvelles colonnes, …) ===
+                migrations_path = Config.ALCHEMY_MIGRATION_FOLDER
+                alembic_ini = migrations_path / "alembic.ini"
+
+                if not migrations_path.exists():
+                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
+                if not alembic_ini.exists():
+                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
+
+                alembic_cfg = AlembicConfig(str(alembic_ini))
+                alembic_cfg.set_main_option("script_location", str(migrations_path))
+                command.upgrade(alembic_cfg, "head")
+                logger.info("✅ Database migrations applied")
+
+                # === 3. Données initiales — APRÈS migrations (schéma à jour) ===
+                if Config.IS_DEBUG_MODE or not existing_tables:
                     if "users" in db.metadata.tables:
                         success = User.create_default_admin()
                         if success:
                             logger.info("✅ Default admin created")
-                            # from sqlalchemy.orm import configure_mappers
-                            # configure_mappers()
                     else:
                         logger.warning("User table not found, skipping default admin creation")
-
-                # ALEMBIC MIGRATIONS
-                migrations_path = Config.ALCHEMY_MIGRATION_FOLDER
-                alembic_ini = migrations_path / "alembic.ini"
-
-                # Création du dossier migrations si absent
-                if not migrations_path.exists():
-                    # logger.info("📦 Creating migrations folder")
-                    # migrations_path.mkdir(parents=True, exist_ok=True)
-                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
-
-                # Initialiser alembic.ini si absent
-                if not alembic_ini.exists():
-                    # logger.info("📦 Creating alembic.ini")
-                    # with open(alembic_ini, "w") as f:
-                    #     f.write("[alembic]\nscript_location = %s\n" % migrations_path)
-                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
-
-                # Créer alembic.ini temporaire
-                alembic_cfg = AlembicConfig(str(alembic_ini))
-                alembic_cfg.set_main_option("script_location", str(migrations_path))
-
-                # # Vérifie si des migrations existent
-                # if not any(migrations_path.glob("versions/*.py")):
-                #     logger.info("📦 Creating initial migration")
-                #     # Générer la révision initiale
-                #     command.revision(alembic_cfg, message="initial migration", autogenerate=True)
-
-
-                # Init folder
-                # command.init(alembic_cfg, str(migrations_path))
-                # Appliquer la migration
-                command.upgrade(alembic_cfg, "head")
-                logger.info("✅ Database migrations applied")
 
 
             except OperationalError as e:
@@ -274,7 +253,7 @@ def create_flask_app(initialize_database = True) -> Flask:
     # Blueprints
     for bp in (
         auth, database, worker_controller, script, visualization,
-        permission, role, tenant, user, user_utils, orgunit, 
+        permission, role, tenant, user, user_utils, orgunit, level, identities_dhis2_sync,
         datasource, datasource_permission, datasource_type,
         dataset, dataset_chart,dataset_field,dataset_query
 
@@ -348,8 +327,15 @@ def create_flask_app(initialize_database = True) -> Flask:
     # ERROR HANDLING
     # -----------------------------------------------------------------------------
 
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e):
+        # Retourner les erreurs HTTP (404, 405…) proprement en JSON
+        return jsonify(error=e.name, message=e.description), e.code
+
     @app.errorhandler(Exception)
     def handle_exception(e):
+        if isinstance(e, HTTPException):
+            return jsonify(error=e.name, message=e.description), e.code
         logger.error(f"Unhandled exception: {str(e)}")
         return jsonify(error="internal server error"), 500
 

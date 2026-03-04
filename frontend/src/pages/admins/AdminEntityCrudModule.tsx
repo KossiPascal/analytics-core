@@ -63,6 +63,9 @@ interface AdminEntityCrudModuleProps<T> {
     onBeforeSave?: (entity: T) => Promise<T> | T;
     submitValidation?: (entity: T) => Promise<boolean>;
     afterSave?: (entity: T) => void;
+
+    /** Actions supplémentaires affichées à droite du titre */
+    headerActions?: React.ReactNode;
 }
 
 /* ============================= */
@@ -91,6 +94,7 @@ const AdminEntityCrudModuleInner = <
         onBeforeSave,
         submitValidation,
         afterSave,
+        headerActions,
     }: AdminEntityCrudModuleProps<T>,
     ref: React.Ref<AdminEntityCrudModuleRef>
 ) => {
@@ -303,10 +307,11 @@ const AdminEntityCrudModuleInner = <
     return (
         <>
             <div className={styles.card}>
-                <div className={styles.cardHeader}>
+                <div className={styles.cardHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <h3 className={styles.cardTitle}>
                         {icon} {title}
                     </h3>
+                    {headerActions && <div style={{ display: 'flex', gap: '0.5rem' }}>{headerActions}</div>}
                 </div>
 
                 {loading ? (
