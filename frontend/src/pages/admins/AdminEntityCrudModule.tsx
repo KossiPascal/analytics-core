@@ -21,6 +21,7 @@ interface CrudService<T> {
 
 export interface AdminEntityCrudModuleRef {
     handleNew: () => void;
+    refresh: () => void;
 }
 
 interface AdminEntityCrudModuleProps<T> {
@@ -255,6 +256,7 @@ const AdminEntityCrudModuleInner = <
 
     useImperativeHandle(ref, () => ({
         handleNew,
+        refresh: fetchData,
     }));
 
     /* ============================= */

@@ -1,15 +1,17 @@
-import { RefreshCw, User as UserIcon } from 'lucide-react';
+import { RefreshCw, User as UserIcon, Network } from 'lucide-react';
 import { StatusBadge } from '@components/ui/Badge/Badge';
 import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { Tenant, Role, User, Orgunit } from '@models/identity.model';
 import { tenantService, roleService, userService, orgunitService, identitySyncService, AscSyncResult } from '@services/identity.service';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { FormCheckbox } from '@components/forms/FormCheckbox/FormCheckbox';
 import { FormMultiSelect } from '@components/forms/FormSelect/FormMultiSelect';
 import { FormSelect } from '@components/forms/FormSelect/FormSelect';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
 import { Modal } from '@components/ui/Modal/Modal';
+import { Button } from '@components/ui/Button/Button';
+import styles from '@pages/admins/AdminPage.module.css';
 
 const defaultUser: User = {
   id: null,
@@ -105,11 +107,48 @@ const userColumns: Column<User>[] = [
   },
 ];
 
-export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
+export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((_props, ref) => {
+  const moduleRef = useRef<AdminEntityCrudModuleRef>(null);
+
+  useImperativeHandle(ref, () => ({
+    handleNew: () => moduleRef.current?.handleNew(),
+    refresh:   () => moduleRef.current?.refresh(),
+  }));
+
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [orgunits, setOrgunits] = useState<Orgunit[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // ── Assign Orgunits ───────────────────────────────────────────────────────
+  const [orgunitModalUser, setOrgunitModalUser] = useState<User | null>(null);
+  const [selectedOrgunitIds, setSelectedOrgunitIds] = useState<number[]>([]);
+  const [savingOrgunits, setSavingOrgunits] = useState(false);
+  const [orgunitMsg, setOrgunitMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (orgunitModalUser) {
+      setSelectedOrgunitIds(orgunitModalUser.orgunit_ids ?? []);
+      setOrgunitMsg(null);
+    }
+  }, [orgunitModalUser]);
+
+  const handleSaveOrgunits = async () => {
+    if (!orgunitModalUser?.id) return;
+    setSavingOrgunits(true);
+    setOrgunitMsg(null);
+    try {
+      await userService.update(orgunitModalUser.id, { ...orgunitModalUser, orgunit_ids: selectedOrgunitIds });
+      setOrgunitMsg('✓ Zones d\'intervention mises à jour');
+      setTimeout(() => {
+        setOrgunitModalUser(null);
+        moduleRef.current?.refresh();
+      }, 800);
+    } catch {
+      setOrgunitMsg('Erreur lors de la sauvegarde');
+    } finally {
+      setSavingOrgunits(false);
+    }
+  };
 
   // ── Sync ASC ──────────────────────────────────────────────────────────────
   const [syncModalOpen, setSyncModalOpen] = useState(false);
@@ -139,19 +178,17 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
   };
 
   const fetchInitialData = async () => {
-    setLoading(true);
     try {
-      const tenantRes = await tenantService.all();
-      const roleRes = await roleService.all();
-      const orgunitRes = await orgunitService.all();
-      // const orgunitRes = [{ "id": 1, "name": "Country" }, { "id": 2, "name": "Region" }];
+      const [tenantRes, roleRes, orgunitRes] = await Promise.all([
+        tenantService.all(),
+        roleService.all(),
+        orgunitService.all(),
+      ]);
       setTenants(tenantRes || []);
       setRoles(roleRes || []);
       setOrgunits(orgunitRes || []);
     } catch {
       // showError(`Erreur chargement`);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -163,6 +200,47 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
 
   return (
     <>
+    {/* ── Modal attribution des zones d'intervention ───────────────────────── */}
+    <Modal
+      isOpen={!!orgunitModalUser}
+      onClose={() => setOrgunitModalUser(null)}
+      title={`Zones d'intervention — ${orgunitModalUser?.firstname} ${orgunitModalUser?.lastname}`}
+      size="sm"
+      footer={
+        <div className={styles.buttonGroup}>
+          <Button variant="outline" size="sm" onClick={() => setOrgunitModalUser(null)} disabled={savingOrgunits}>
+            Annuler
+          </Button>
+          <Button variant="primary" size="sm" onClick={handleSaveOrgunits} disabled={savingOrgunits}>
+            {savingOrgunits ? 'Enregistrement…' : 'Enregistrer'}
+          </Button>
+        </div>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <FormMultiSelect
+          label="Zones d'intervention"
+          value={selectedOrgunitIds}
+          options={orgunits.map((o) => ({ value: o.id, label: o.name }))}
+          onChange={(values) => setSelectedOrgunitIds(values.filter((v): v is number => v !== null))}
+          placeholder="Sélectionner les zones"
+          searchable
+          searchPlaceholder="Rechercher une zone..."
+        />
+        {orgunitMsg && (
+          <div style={{
+            padding: '0.5rem 0.75rem',
+            borderRadius: '0.375rem',
+            fontSize: '0.82rem',
+            background: orgunitMsg.startsWith('✓') ? 'var(--color-success-bg, #f0fdf4)' : 'var(--color-error-bg, #fef2f2)',
+            color: orgunitMsg.startsWith('✓') ? 'var(--color-success, #16a34a)' : 'var(--color-error, #dc2626)',
+          }}>
+            {orgunitMsg}
+          </div>
+        )}
+      </div>
+    </Modal>
+
     {/* ── Modal de synchronisation ASC ──────────────────────────────────────── */}
     <Modal
       isOpen={syncModalOpen}
@@ -250,7 +328,7 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
     )}
 
     <AdminEntityCrudModule<User>
-      ref={ref}
+      ref={moduleRef}
       title="Gestion des utilisateurs"
       icon={<UserIcon size={20} />}
       entityName="User"
@@ -278,6 +356,15 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
           Sync ASC DHIS2
         </button>
       }
+      customActions={(user) => (
+        <button
+          className={styles.actionBtn}
+          title="Attribuer des zones d'intervention"
+          onClick={() => setOrgunitModalUser(user)}
+        >
+          <Network size={16} />
+        </button>
+      )}
       isValid={(u) =>{
         if(!u.username || !u.lastname|| !u.firstname) return false;
         const isVaid = (
