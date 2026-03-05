@@ -14,10 +14,85 @@ from backend.src.logger import get_backend_logger
 from backend.src.equipment_manager.services.dhis2_service import (
     DHIS2_URL,
     DHIS2_USERNAME,
+    DHIS2_PROGRAM_ID,
     _get_dhis2_session,
 )
+from backend.src.services.getdata import export_program_events_reusable
 
 logger = get_backend_logger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Adaptateur : bridge requests.Session → interface dhis2.Api
+# ─────────────────────────────────────────────────────────────────────────────
+class _Dhis2ApiAdapter:
+    """
+    Adapte un requests.Session pour être utilisé comme un dhis2.Api.
+    Préfixe les chemins relatifs avec <base_url>/api/.
+    """
+
+    def __init__(self, session, base_url: str):
+        self._session  = session
+        self._base_api = f"{base_url.rstrip('/')}/api"
+
+    def get(self, endpoint: str, params=None):
+        return self._session.get(f"{self._base_api}/{endpoint}", params=params)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers ASC — parsing des champs programme
+# ─────────────────────────────────────────────────────────────────────────────
+def _parse_asc_field(value: str) -> dict | None:
+    """
+    Parse un champ ASC au format 'dhis2_uid<==>CODE NOM PRENOM[<==>employee_code]'.
+    Retourne {dhis2_uid, name, employee_code} ou None.
+    """
+    if not value or "<==>" not in value:
+        return None
+    parts = [p.strip() for p in value.split("<==>")]
+    return {
+        "dhis2_uid":     parts[0],
+        "name":          parts[1] if len(parts) > 1 else "",
+        "employee_code": parts[2] if len(parts) > 2 else None,
+    }
+
+
+def _extract_asc_event_map(
+    events: list,
+    asc_field: str = "admin_org_unit_asc",
+    zone_fields: tuple = ("admin_org_unit_site", "admin_org_unit_district"),
+) -> dict:
+    """
+    Construit un index {dhis2_uid: {employee_code, name, orgunit_codes}} à partir
+    des événements programme. Agrège TOUS les événements d'un même ASC pour
+    collecter l'ensemble de ses zones d'intervention (codes des sites/districts).
+    """
+    result: dict[str, dict] = {}
+    for event in events:
+        raw = event.get(asc_field)
+        if not raw:
+            continue
+        parsed = _parse_asc_field(raw)
+        if not parsed or not parsed["dhis2_uid"]:
+            continue
+
+        dhis2_uid = parsed["dhis2_uid"]
+        if dhis2_uid not in result:
+            result[dhis2_uid] = {
+                "employee_code": parsed["employee_code"],
+                "name":          parsed["name"],
+                "orgunit_codes": set(),
+            }
+
+        # Collecter les codes de zones depuis cet événement (site en priorité, puis district)
+        for field in zone_fields:
+            val = event.get(field)
+            if val and "<==>" in val:
+                code = val.split("<==>")[0].strip()
+                if code:
+                    result[dhis2_uid]["orgunit_codes"].add(code)
+
+    return result
 
 bp = Blueprint("identities_dhis2_sync", __name__, url_prefix="/api/identities/sync")
 
@@ -242,22 +317,53 @@ def sync_ascs():
         session = _get_dhis2_session()
         base    = DHIS2_URL.rstrip("/")
 
-        # ── Récupérer les utilisateurs DHIS2 ────────────────────────────────
+        # ── 1. Utilisateurs DHIS2 (/api/users) indexés par id DHIS2 ────────────
         resp = session.get(
             f"{base}/api/users",
             params={
-                "fields": "id,username,firstName,lastName,email,phoneNumber,organisationUnits[id,name,code]",
+                "fields": "id,username,firstName,lastName,email,phoneNumber",
                 "paging": "false",
             },
         )
         resp.raise_for_status()
-        users_data = resp.json().get("users", [])
+        users_by_dhis2_id: dict[str, dict] = {
+            u["id"]: u for u in resp.json().get("users", []) if u.get("id")
+        }
 
-        # ── Résoudre le poste ASC dans la DB ────────────────────────────────
+        # ── 2. Événements programme → index {dhis2_uid: {employee_code, name}} ──
+        adapter       = _Dhis2ApiAdapter(session, base)
+        events_data   = export_program_events_reusable(adapter, DHIS2_PROGRAM_ID)
+        asc_event_map = _extract_asc_event_map(events_data["events"])
+
+        # ── Diagnostic : vérifier les champs org_unit dans les events ────────
+        raw_events = events_data.get("events", [])
+        if raw_events:
+            sample = raw_events[0]
+            ou_fields = sorted(k for k in sample.keys() if "org_unit" in k.lower() or "orgunit" in k.lower())
+            logger.info(f"DHIS2 champs org_unit disponibles dans les events: {ou_fields}")
+            logger.info(f"DHIS2 exemple event[0] keys: {sorted(sample.keys())}")
+        asc_with_zones = sum(1 for v in asc_event_map.values() if v.get("orgunit_codes"))
+        logger.info(
+            f"DHIS2 sources: {len(users_by_dhis2_id)} users API, "
+            f"{len(asc_event_map)} ASC dans les événements programme, "
+            f"{asc_with_zones} avec zones d'intervention"
+        )
+
+        # ── 3. Union des deux sources — les events sont la référence principale ──
+        all_dhis2_ids = set(asc_event_map.keys()) | set(users_by_dhis2_id.keys())
+
+        # ── 4. Résoudre le poste ASC dans la DB ─────────────────────────────
         asc_position = Position.query.filter_by(code=position_code).first()
         asc_position_id = asc_position.id if asc_position else None
 
-        # ── Index des entités existantes ────────────────────────────────────
+        # ── 4b. Index des orgunits du tenant (code → objet) ──────────────────
+        orgunits_by_code: dict[str, UserOrgunit] = {
+            ou.code: ou
+            for ou in UserOrgunit.query.filter_by(tenant_id=tenant_id, deleted=False).all()
+            if ou.code
+        }
+
+        # ── 5. Index des entités existantes ──────────────────────────────────
         # username est globalement unique → on indexe tous les tenants pour éviter
         # les violations de contrainte sur les usernames déjà pris par d'autres tenants.
         existing_users_by_username: dict[str, User] = {
@@ -279,18 +385,36 @@ def sync_ascs():
         created_users = created_employees = updated_users = updated_employees = 0
         skipped = 0
 
-        for ud in users_data:
-            dhis2_id  = ud.get("id", "")
-            username  = (ud.get("username") or dhis2_id).strip()
-            firstname = (ud.get("firstName") or "").strip()
-            lastname  = (ud.get("lastName") or "").strip()
-            email_raw = (ud.get("email") or "").strip()
-            phone_val = (ud.get("phoneNumber") or "").strip() or None
+        for dhis2_id in all_dhis2_ids:
+            event_info = asc_event_map.get(dhis2_id, {})
+            api_user   = users_by_dhis2_id.get(dhis2_id, {})
+
+            employee_code = event_info.get("employee_code")
+
+            # Prénom / nom : API en priorité, sinon parsing du champ événement
+            firstname = (api_user.get("firstName") or "").strip()
+            lastname  = (api_user.get("lastName")  or "").strip()
+            if not firstname and not lastname:
+                name_parts = (event_info.get("name") or "").split()
+                if len(name_parts) >= 3:
+                    # Format "CODE NOM PRENOM" → on ignore le code
+                    lastname  = name_parts[1]
+                    firstname = " ".join(name_parts[2:])
+                elif len(name_parts) == 2:
+                    lastname  = name_parts[0]
+                    firstname = name_parts[1]
+                elif len(name_parts) == 1:
+                    lastname  = name_parts[0]
+
+            # Username : API > employee_code > dhis2_id (toujours unique)
+            username  = (api_user.get("username") or employee_code or dhis2_id).strip()
+            email_raw = (api_user.get("email") or "").strip()
+            phone_val = (api_user.get("phoneNumber") or "").strip() or None
 
             if not username:
                 continue
 
-            # Éviter les doublons d'email : ignorer si déjà pris par un autre user
+            # Éviter les doublons d'email
             email_val = email_raw if email_raw and email_raw not in existing_emails else None
 
             # ── Upsert User ──────────────────────────────────────────────────
@@ -328,6 +452,14 @@ def sync_ascs():
                     existing_emails.add(email_val)
                 created_users += 1
 
+            # ── Assigner les orgunits au user ────────────────────────────────
+            orgunit_codes = event_info.get("orgunit_codes") or set()
+            if orgunit_codes:
+                matched = [orgunits_by_code[c] for c in orgunit_codes if c in orgunits_by_code]
+                if matched:
+                    # Remplace (sync complet) : supprime les anciennes assignations puis réassigne
+                    user.orgunits = matched
+
             # ── Upsert Employee ──────────────────────────────────────────────
             emp = existing_employees_by_user_id.get(user.id)
             if emp:
@@ -337,6 +469,8 @@ def sync_ascs():
                     emp.email = email_val
                 if phone_val:
                     emp.phone = phone_val
+                if employee_code and not emp.employee_id_code:
+                    emp.employee_id_code = employee_code
                 updated_employees += 1
             else:
                 emp = Employee(
@@ -345,6 +479,7 @@ def sync_ascs():
                     last_name=lastname or "",
                     email=email_val or "",
                     phone=phone_val or "",
+                    employee_id_code=employee_code or "",
                     user_id=user.id,
                     position_id=asc_position_id,
                     is_active=True,
@@ -365,7 +500,7 @@ def sync_ascs():
             "created_employees": created_employees,
             "updated_employees": updated_employees,
             "skipped":           skipped,
-            "total":             len(users_data),
+            "total":             len(all_dhis2_ids),
         }), 200
 
     except Exception as e:
