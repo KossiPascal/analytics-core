@@ -47,6 +47,7 @@ def export_program_events_reusable(api, program_id, org_unit_id=None, ou_mode="D
     program_name = program_data.get("name", "")
 
     # Mapping data elements: de_id -> {code,name,valueType}
+    #der
     data_elements = {}
     for stage in program_data.get("programStages", []):
         for psde in stage.get("programStageDataElements", []):
