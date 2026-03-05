@@ -15,14 +15,15 @@ interface Props {
 
 export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive, onTransfer, onManageUser }: Props) {
   const columns: Column<Employee>[] = [
-    { key: 'code', header: 'Code', render: (e) => e.employee_id_code, sortable: true },
-    { key: 'name', header: 'Nom', render: (e) => e.full_name, sortable: true },
-    { key: 'tenant', header: 'Tenant', render: (e) => e.tenant_name || '-', sortable: true },
-    { key: 'position', header: 'Poste', render: (e) => e.position_name || '-' },
+    { key: 'employee_id_code', header: 'Code', render: (e) => e.employee_id_code, sortable: true },
+    { key: 'full_name', header: 'Nom', render: (e) => e.full_name, sortable: true },
+    { key: 'tenant_name', header: 'Tenant', render: (e) => e.tenant_name || '-', sortable: true },
+    { key: 'position_name', header: 'Poste', render: (e) => e.position_name || '-', searchable: false },
     { key: 'phone', header: 'Telephone', render: (e) => e.phone || '-' },
     {
-      key: 'status',
+      key: 'is_active',
       header: 'Statut',
+      searchable: false,
       render: (e) => <Badge variant={e.is_active ? 'success' : 'danger'}>{e.is_active ? 'Actif' : 'Inactif'}</Badge>,
     },
     {

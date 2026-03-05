@@ -30,10 +30,12 @@ const defaultUser: User = {
 const userColumns: Column<User>[] = [
   {
     key: "tenant",
-    header: "tenant",
-    render: (user) => user?.tenant ? user.tenant.name : "",
+    header: "Tenant",
+    render: (u) => u.tenant?.name || "-",
     sortable: true,
-    searchable: false,
+    searchable: true,
+    getSearchValue: (u) => u.tenant?.name || "",
+    getSortValue:   (u) => u.tenant?.name || "",
   },
   {
     key: "username",
@@ -63,40 +65,43 @@ const userColumns: Column<User>[] = [
     key: "phone",
     header: "Téléphone",
     sortable: true,
+    searchable: true,
   },
   {
     key: "roles",
     header: "Rôles",
-    render: (u) => {
-      if(!u.roles || u.roles.length === 0) return "-";
-      return u.roles.map((r) => r.name).join(", ");
-    },
-    searchable: false,
+    render: (u) => u.roles?.length ? u.roles.map((r) => r.name).join(", ") : "-",
+    sortable: true,
+    searchable: true,
+    getSearchValue: (u) => u.roles?.map((r) => r.name).join(" ") || "",
+    getSortValue:   (u) => u.roles?.map((r) => r.name).join(", ") || "",
   },
   {
     key: "permissions",
     header: "Permissions",
-    render: (u) => {
-      if(!u.permissions || u.permissions.length === 0) return "-";
-      return u.permissions.map((p) => p.name).join(", ");
-    },
-    searchable: false,
+    render: (u) => u.permissions?.length ? u.permissions.map((p) => p.name).join(", ") : "-",
+    sortable: true,
+    searchable: true,
+    getSearchValue: (u) => u.permissions?.map((p) => p.name).join(" ") || "",
+    getSortValue:   (u) => u.permissions?.map((p) => p.name).join(", ") || "",
   },
   {
     key: "orgunits",
     header: "Orgunits",
-    render: (u) => {
-      if(!u.orgunits || u.orgunits.length === 0) return "-";
-      return u.orgunits.map((o) => o.name).join(", ");
-    },
-    searchable: false,
+    render: (u) => u.orgunits?.length ? u.orgunits.map((o) => o.name).join(", ") : "-",
+    sortable: true,
+    searchable: true,
+    getSearchValue: (u) => u.orgunits?.map((o) => o.name).join(" ") || "",
+    getSortValue:   (u) => u.orgunits?.map((o) => o.name).join(", ") || "",
   },
   {
     key: "is_active",
     header: "Statut",
     align: "center",
-    render: (u) => (<StatusBadge isActive={u.is_active === true} />),
+    sortable: true,
     searchable: false,
+    render: (u) => (<StatusBadge isActive={u.is_active === true} />),
+    getSortValue: (u) => u.is_active ? 1 : 0,
   },
 ];
 

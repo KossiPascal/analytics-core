@@ -298,7 +298,11 @@ const AdminEntityCrudModuleInner = <
         ),
     };
 
-    const finalColumns = enableActions ? [...columns, actionColumn] : columns;
+    const finalColumns = useMemo(
+        () => enableActions ? [...columns, actionColumn] : columns,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [columns, enableActions]
+    );
 
     /* ============================= */
     /* ========= RENDER ============ */
