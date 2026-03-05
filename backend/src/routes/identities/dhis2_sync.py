@@ -354,7 +354,7 @@ def sync_ascs():
         resp = session.get(
             f"{base}/api/users",
             params={
-                "fields": "id,username,firstName,lastName,email,phoneNumber",
+                "fields": "id,username,firstName,lastName,email,phoneNumber,organisationUnits[id,name]",
                 "paging": "false",
             },
         )
@@ -548,7 +548,13 @@ def sync_ascs():
                 created_users += 1
 
             # ── Assigner les orgunits au user via UserOrgunitLink ────────────
-            orgunit_codes = event_info.get("orgunit_codes") or set()
+            # Source 1 : admin_org_unit_site depuis les événements programme
+            orgunit_codes = set(event_info.get("orgunit_codes") or set())
+            # Source 2 : organisationUnits du profil utilisateur DHIS2
+            for ou in api_user.get("organisationUnits") or []:
+                uid = ou.get("id")
+                if uid:
+                    orgunit_codes.add(uid)
             if orgunit_codes:
                 nb_links = _assign_orgunits(user.id, orgunit_codes, orgunits_by_code)
                 orgunit_links_total += nb_links
