@@ -30,7 +30,7 @@ ua-parser==0.18.0
 PyYAML==6.0.1
 
 # Database
-psycopg2-binary==2.9.9
+psycopg2-binary
 couchdb==1.2
 
 # Task Scheduling
@@ -68,9 +68,9 @@ Pillow==10.4.0
 imageio-ffmpeg>=0.4.9,<0.5
 
 # Data Science / AI
-numpy==1.26.4
-scikit-learn==1.5.1
-openai==1.12.0
+numpy
+scikit-learn
+#openai==1.12.0
 
 # Monitoring & Observability
 prometheus-client==0.18.0
@@ -94,12 +94,12 @@ weasyprint
 # WhisperX (transcription audio locale avec timestamps)
 # Pré-requis système : ffmpeg  →  sudo apt install ffmpeg
 # GPU (optionnel)    : pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-whisperx
+#whisperx
 
 # Providers AI pour le résumé (installer uniquement ceux que tu utilises)
-google-generativeai>=0.8.0    # Gemini Flash — GEMINI_API_KEY requis
-groq>=0.11.0                  # Groq Llama  — GROQ_API_KEY requis
-ollama>=0.3.0                 # Ollama local — aucune clé, serveur local requis
+#google-generativeai>=0.8.0    # Gemini Flash — GEMINI_API_KEY requis
+#groq>=0.11.0                  # Groq Llama  — GROQ_API_KEY requis
+#ollama>=0.3.0                 # Ollama local — aucune clé, serveur local requis
 
 
 # pip install pip-tools
