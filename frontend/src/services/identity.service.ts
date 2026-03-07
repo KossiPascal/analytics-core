@@ -87,8 +87,8 @@ export interface AscSyncResult {
 }
 
 export const identitySyncService = {
-    syncLevels:   (tenant_id?: number | null) => identity.create<SyncResult>("/sync/levels",   { tenant_id }),
-    syncOrgunits: (tenant_id?: number | null) => identity.create<SyncResult>("/sync/orgunits", { tenant_id }),
+    syncLevels:   (tenant_id?: number | null) => identity.create<SyncResult>("/sync/levels",   { tenant_id } as any),
+    syncOrgunits: (tenant_id?: number | null) => identity.create<SyncResult>("/sync/orgunits", { tenant_id } as any),
     syncAscs:     (tenant_id: number, position_code?: string) =>
-        identity.create<AscSyncResult>("/sync/ascs", { tenant_id, position_code }),
+        identity.create<AscSyncResult>("/sync/ascs", { tenant_id, position_code } as any),
 }

@@ -126,6 +126,10 @@ export const OrgunitsTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
       if (activeTab === 'levels') levelModuleRef.current?.handleNew();
       else orgunitModuleRef.current?.handleNew();
     },
+    refresh: () => {
+      if (activeTab === 'levels') levelModuleRef.current?.refresh();
+      else orgunitModuleRef.current?.refresh();
+    },
   }), [activeTab]);
 
   // ── Chargement initial ──────────────────────────────────────────────────

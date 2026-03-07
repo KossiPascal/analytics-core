@@ -8,7 +8,7 @@ import string
 from flask import Blueprint, request, jsonify
 
 from backend.src.databases.extensions import db, error_response
-from backend.src.models.auth import OrgUnitLevel, UserOrgunit, Tenant, User
+from backend.src.models.auth import OrgUnitLevel, UserOrgunit, UserOrgunitLink, Tenant, User
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
 from backend.src.equipment_manager.services.dhis2_service import (
@@ -60,12 +60,12 @@ def _parse_asc_field(value: str) -> dict | None:
 def _extract_asc_event_map(
     events: list,
     asc_field: str = "admin_org_unit_asc",
-    zone_fields: tuple = ("admin_org_unit_site", "admin_org_unit_district"),
+    site_field: str = "admin_org_unit_site",
 ) -> dict:
     """
     Construit un index {dhis2_uid: {employee_code, name, orgunit_codes}} à partir
     des événements programme. Agrège TOUS les événements d'un même ASC pour
-    collecter l'ensemble de ses zones d'intervention (codes des sites/districts).
+    collecter l'ensemble de ses sites d'intervention (admin_org_unit_site).
     """
     result: dict[str, dict] = {}
     for event in events:
@@ -84,15 +84,40 @@ def _extract_asc_event_map(
                 "orgunit_codes": set(),
             }
 
-        # Collecter les codes de zones depuis cet événement (site en priorité, puis district)
-        for field in zone_fields:
-            val = event.get(field)
-            if val and "<==>" in val:
-                code = val.split("<==>")[0].strip()
-                if code:
-                    result[dhis2_uid]["orgunit_codes"].add(code)
-
+        # Collecter le site d'intervention (admin_org_unit_site) de cet événement
+        val = event.get(site_field)
+        if val and "<==>" in val:
+            code = val.split("<==>")[0].strip()
+            if code:
+                result[dhis2_uid]["orgunit_codes"].add(code)
     return result
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper — résolution d'un orgunit par son code
+# ─────────────────────────────────────────────────────────────────────────────
+def _get_orgunit_by_code(code: str, tenant_id: int) -> UserOrgunit | None:
+    """
+    Retourne le UserOrgunit dont le code correspond au OrgUnitCode DHIS2
+    (première partie du format 'OrgUnitCode<==>OrgUnitName') pour un tenant donné.
+    """
+    return UserOrgunit.query.filter_by(code=code, tenant_id=tenant_id, deleted=False).first()
+
+
+def _assign_orgunits(user_id: int, orgunit_codes: set, orgunits_by_code: dict) -> int:
+    """
+    Synchronise les liens User ↔ UserOrgunit dans user_orgunit_links.
+    Supprime d'abord les liens existants, puis recrée uniquement les liens valides.
+    Retourne le nombre de liens effectivement créés.
+    """
+    UserOrgunitLink.query.filter_by(user_id=user_id).delete(synchronize_session="fetch")
+    count = 0
+    for code in orgunit_codes:
+        ou = orgunits_by_code.get(code)
+        if ou:
+            db.session.add(UserOrgunitLink(user_id=user_id, orgunit_id=ou.id))
+            count += 1
+    return count
+
 
 bp = Blueprint("identities_dhis2_sync", __name__, url_prefix="/api/identities/sync")
 
@@ -232,18 +257,20 @@ def sync_orgunits():
         # Mapping uid DHIS2 → id DB (résolution des parents)
         dhis2_id_to_db_id: dict[str, int] = {}
 
-        # Orgunits existantes indexées par code
-        existing_by_code: dict[str, UserOrgunit] = {
-            ou.code: ou
-            for ou in UserOrgunit.query.filter_by(tenant_id=tenant_id, deleted=False).all()
-        }
+        # Index principal : code (UID DHIS2) → objet
+        # Index secondaire : nom → objet (migration depuis l'ancien indexage par code DHIS2 humain)
+        all_existing = UserOrgunit.query.filter_by(tenant_id=tenant_id, deleted=False).all()
+        existing_by_code: dict[str, UserOrgunit] = {ou.code: ou for ou in all_existing}
+        existing_by_name: dict[str, UserOrgunit] = {ou.name: ou for ou in all_existing}
 
         created = updated = 0
 
         for ou_data in orgunits_data:
             dhis2_id     = ou_data.get("id", "")
             name         = ou_data.get("name", "")
-            code         = ou_data.get("code") or dhis2_id   # fallback sur uid DHIS2
+            # Toujours utiliser le UID DHIS2 comme code — c'est ce que stockent les
+            # valeurs de données programme (admin_org_unit_site = "UID<==>Nom")
+            code         = dhis2_id
             level_num    = ou_data.get("level")
             parent_dhis2 = (ou_data.get("parent") or {}).get("id")
 
@@ -251,13 +278,18 @@ def sync_orgunits():
             level_id  = level_map.get(level_num)
             parent_id = dhis2_id_to_db_id.get(parent_dhis2) if parent_dhis2 else None
 
-            existing = existing_by_code.get(code)
+            # Cherche d'abord par UID (cas normal / re-sync), puis par nom (migration)
+            existing = existing_by_code.get(code) or existing_by_name.get(name)
 
             if existing:
                 existing.name      = name
+                existing.code      = code   # migre l'ancien code humain → UID DHIS2
                 existing.level_id  = level_id
                 existing.parent_id = parent_id
                 dhis2_id_to_db_id[dhis2_id] = existing.id
+                # Mettre à jour les deux index
+                existing_by_code[code] = existing
+                existing_by_name[name] = existing
                 updated += 1
             else:
                 ou = UserOrgunit(
@@ -272,6 +304,7 @@ def sync_orgunits():
                 db.session.flush()
                 dhis2_id_to_db_id[dhis2_id] = ou.id
                 existing_by_code[code] = ou
+                existing_by_name[name] = ou
                 created += 1
 
         db.session.commit()
@@ -321,7 +354,7 @@ def sync_ascs():
         resp = session.get(
             f"{base}/api/users",
             params={
-                "fields": "id,username,firstName,lastName,email,phoneNumber",
+                "fields": "id,username,firstName,lastName,email,phoneNumber,organisationUnits[id,name]",
                 "paging": "false",
             },
         )
@@ -333,21 +366,23 @@ def sync_ascs():
         # ── 2. Événements programme → index {dhis2_uid: {employee_code, name}} ──
         adapter       = _Dhis2ApiAdapter(session, base)
         events_data   = export_program_events_reusable(adapter, DHIS2_PROGRAM_ID)
-        asc_event_map = _extract_asc_event_map(events_data["events"])
+        raw_events    = events_data.get("events", [])
+        asc_event_map = _extract_asc_event_map(raw_events)
 
-        # ── Diagnostic : vérifier les champs org_unit dans les events ────────
-        raw_events = events_data.get("events", [])
-        if raw_events:
-            sample = raw_events[0]
-            ou_fields = sorted(k for k in sample.keys() if "org_unit" in k.lower() or "orgunit" in k.lower())
-            logger.info(f"DHIS2 champs org_unit disponibles dans les events: {ou_fields}")
-            logger.info(f"DHIS2 exemple event[0] keys: {sorted(sample.keys())}")
-        asc_with_zones = sum(1 for v in asc_event_map.values() if v.get("orgunit_codes"))
+        # ── Diagnostic events ────────────────────────────────────────────────
+        events_with_site = sum(1 for e in raw_events if e.get("admin_org_unit_site"))
+        asc_with_codes   = sum(1 for v in asc_event_map.values() if v.get("orgunit_codes"))
         logger.info(
-            f"DHIS2 sources: {len(users_by_dhis2_id)} users API, "
-            f"{len(asc_event_map)} ASC dans les événements programme, "
-            f"{asc_with_zones} avec zones d'intervention"
+            f"DHIS2 events: {len(raw_events)} filtrés (avec ASC) "
+            f"| {events_with_site} avec admin_org_unit_site"
         )
+        logger.info(
+            f"DHIS2 ASC map: {len(asc_event_map)} ASC uniques "
+            f"| {asc_with_codes} avec orgunit_codes extraits"
+        )
+        if raw_events:
+            sample_keys = sorted(k for k in raw_events[0].keys() if "org_unit" in k.lower())
+            logger.info(f"DHIS2 champs org_unit dans les events: {sample_keys}")
 
         # ── 3. Union des deux sources — les events sont la référence principale ──
         all_dhis2_ids = set(asc_event_map.keys()) | set(users_by_dhis2_id.keys())
@@ -356,12 +391,71 @@ def sync_ascs():
         asc_position = Position.query.filter_by(code=position_code).first()
         asc_position_id = asc_position.id if asc_position else None
 
-        # ── 4b. Index des orgunits du tenant (code → objet) ──────────────────
+        # ── 4b. Index global des orgunits par UID DHIS2 ──────────────────────
+        # Les UIDs DHIS2 sont globaux : on cherche dans toutes les UserOrgunit
+        # (quel que soit le tenant) pour trouver la correspondance.
         orgunits_by_code: dict[str, UserOrgunit] = {
             ou.code: ou
-            for ou in UserOrgunit.query.filter_by(tenant_id=tenant_id, deleted=False).all()
+            for ou in UserOrgunit.query.filter_by(deleted=False).all()
             if ou.code
         }
+        logger.info(
+            f"DHIS2 orgunits_by_code: {len(orgunits_by_code)} orgunits indexés (tous tenants)"
+        )
+
+        # ── 4c. Auto-créer les orgunits manquants depuis DHIS2 ───────────────
+        # Collecte tous les UIDs nécessaires absents de la DB et les crée à la volée.
+        # Élimine la dépendance envers un appel préalable à /sync/orgunits.
+        needed_codes: set[str] = set()
+        for ev_info in asc_event_map.values():
+            for code in (ev_info.get("orgunit_codes") or set()):
+                if code and code not in orgunits_by_code:
+                    needed_codes.add(code)
+
+        if needed_codes:
+            logger.info(
+                f"DHIS2 auto-sync orgunits: {len(needed_codes)} UIDs manquants → création à la volée"
+            )
+            try:
+                # Lire le level_map depuis la DB (ne pas ré-appeler _sync_levels_for_tenant
+                # qui ferait des INSERT en doublon si les niveaux existent déjà).
+                level_map: dict[int, int] = {
+                    lv.level: lv.id
+                    for lv in OrgUnitLevel.query.filter_by(tenant_id=tenant_id, deleted=False).all()
+                }
+                ids_param = ",".join(needed_codes)
+                ou_resp = session.get(
+                    f"{base}/api/organisationUnits",
+                    params={
+                        "filter": f"id:in:[{ids_param}]",
+                        "fields": "id,name,level",
+                        "paging": "false",
+                    },
+                )
+                ou_resp.raise_for_status()
+                missing_ous = ou_resp.json().get("organisationUnits", [])
+                for ou_data in missing_ous:
+                    dhis2_id = ou_data.get("id", "")
+                    if not dhis2_id:
+                        continue
+                    name      = ou_data.get("name", "")
+                    level_num = ou_data.get("level")
+                    level_id  = level_map.get(level_num)
+                    ou = UserOrgunit(
+                        tenant_id=tenant_id,
+                        name=name,
+                        code=dhis2_id,
+                        level_id=level_id,
+                        parent_id=None,
+                        is_active=True,
+                    )
+                    db.session.add(ou)
+                    db.session.flush()
+                    orgunits_by_code[dhis2_id] = ou
+                logger.info(f"DHIS2 auto-sync orgunits: {len(missing_ous)} créés dans user_orgunits")
+            except Exception as auto_err:
+                logger.error(f"DHIS2 auto-sync orgunits error: {auto_err}")
+                # Ne pas bloquer la sync des ASC pour autant
 
         # ── 5. Index des entités existantes ──────────────────────────────────
         # username est globalement unique → on indexe tous les tenants pour éviter
@@ -383,6 +477,7 @@ def sync_ascs():
         }
 
         created_users = created_employees = updated_users = updated_employees = 0
+        orgunit_links_total = 0
         skipped = 0
 
         for dhis2_id in all_dhis2_ids:
@@ -452,13 +547,22 @@ def sync_ascs():
                     existing_emails.add(email_val)
                 created_users += 1
 
-            # ── Assigner les orgunits au user ────────────────────────────────
-            orgunit_codes = event_info.get("orgunit_codes") or set()
+            # ── Assigner les orgunits au user via UserOrgunitLink ────────────
+            # Source 1 : admin_org_unit_site depuis les événements programme
+            orgunit_codes = set(event_info.get("orgunit_codes") or set())
+            # Source 2 : organisationUnits du profil utilisateur DHIS2
+            for ou in api_user.get("organisationUnits") or []:
+                uid = ou.get("id")
+                if uid:
+                    orgunit_codes.add(uid)
             if orgunit_codes:
-                matched = [orgunits_by_code[c] for c in orgunit_codes if c in orgunits_by_code]
-                if matched:
-                    # Remplace (sync complet) : supprime les anciennes assignations puis réassigne
-                    user.orgunits = matched
+                nb_links = _assign_orgunits(user.id, orgunit_codes, orgunits_by_code)
+                orgunit_links_total += nb_links
+                if nb_links == 0:
+                    logger.warning(
+                        f"ASC {username}: {len(orgunit_codes)} code(s) non trouvés "
+                        f"dans UserOrgunit → {orgunit_codes}"
+                    )
 
             # ── Upsert Employee ──────────────────────────────────────────────
             emp = existing_employees_by_user_id.get(user.id)
@@ -495,12 +599,13 @@ def sync_ascs():
             f"{created_employees} employees créés, {updated_employees} mis à jour"
         )
         return jsonify({
-            "created_users":     created_users,
-            "updated_users":     updated_users,
-            "created_employees": created_employees,
-            "updated_employees": updated_employees,
-            "skipped":           skipped,
-            "total":             len(all_dhis2_ids),
+            "created_users":      created_users,
+            "updated_users":      updated_users,
+            "created_employees":  created_employees,
+            "updated_employees":  updated_employees,
+            "orgunit_links":      orgunit_links_total,
+            "skipped":            skipped,
+            "total":              len(all_dhis2_ids),
         }), 200
 
     except Exception as e:

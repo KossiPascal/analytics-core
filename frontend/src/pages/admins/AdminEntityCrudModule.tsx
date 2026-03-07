@@ -21,6 +21,7 @@ interface CrudService<T> {
 
 export interface AdminEntityCrudModuleRef {
     handleNew: () => void;
+    refresh: () => void;
 }
 
 interface AdminEntityCrudModuleProps<T> {
@@ -255,6 +256,7 @@ const AdminEntityCrudModuleInner = <
 
     useImperativeHandle(ref, () => ({
         handleNew,
+        refresh: fetchData,
     }));
 
     /* ============================= */
@@ -298,7 +300,11 @@ const AdminEntityCrudModuleInner = <
         ),
     };
 
-    const finalColumns = enableActions ? [...columns, actionColumn] : columns;
+    const finalColumns = useMemo(
+        () => enableActions ? [...columns, actionColumn] : columns,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [columns, enableActions]
+    );
 
     /* ============================= */
     /* ========= RENDER ============ */
