@@ -2,6 +2,15 @@
    EQUIPMENT MANAGER PAGE STYLES
    ========================================== */
 
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: var(--text-muted, #94a3b8);
+}
+
 /* TABS NAVIGATION */
 .tabsContainer {
   margin-bottom: 0.5rem;

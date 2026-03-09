@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { locationsApi } from '../../api';
 import type { Region, District, Site, ZoneASC } from '../../types';
 import { RegionsTable } from './RegionsTable';
@@ -22,6 +22,7 @@ export function LocationsTab() {
   const [sites, setSites] = useState<Site[]>([]);
   const [zones, setZones] = useState<ZoneASC[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // Modal state
   const [formOpen, setFormOpen] = useState(false);
@@ -48,6 +49,7 @@ export function LocationsTab() {
       toast.error('Erreur de chargement');
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -93,17 +95,23 @@ export function LocationsTab() {
         </Button>
       </div>
 
-      {subTab === 'regions' && (
-        <RegionsTable
-          data={regions}
-          isLoading={loading}
-          onEdit={handleEdit}
-          onDelete={(r) => { setDeleteTarget(r); setDeleteOpen(true); }}
-        />
+      {!initialized && loading ? (
+        <div className={styles.loading}><RefreshCw size={28} className="animate-spin" /></div>
+      ) : (
+        <>
+          {subTab === 'regions' && (
+            <RegionsTable
+              data={regions}
+              isLoading={loading && initialized}
+              onEdit={handleEdit}
+              onDelete={(r) => { setDeleteTarget(r); setDeleteOpen(true); }}
+            />
+          )}
+          {subTab === 'districts' && <DistrictsTable data={districts} isLoading={loading && initialized} onEdit={handleEdit} />}
+          {subTab === 'sites' && <SitesTable data={sites} isLoading={loading && initialized} onEdit={handleEdit} />}
+          {subTab === 'zones' && <ZonesTable data={zones} isLoading={loading && initialized} onEdit={handleEdit} />}
+        </>
       )}
-      {subTab === 'districts' && <DistrictsTable data={districts} isLoading={loading} onEdit={handleEdit} />}
-      {subTab === 'sites' && <SitesTable data={sites} isLoading={loading} onEdit={handleEdit} />}
-      {subTab === 'zones' && <ZonesTable data={zones} isLoading={loading} onEdit={handleEdit} />}
 
       <LocationFormModal
         isOpen={formOpen}

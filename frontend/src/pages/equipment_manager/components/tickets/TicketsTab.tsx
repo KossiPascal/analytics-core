@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { ticketsApi } from '../../api';
 import type { RepairTicket } from '../../types';
 import { STATUS_LABELS, STAGE_LABELS } from '../../types';
@@ -25,6 +25,7 @@ type SubView = 'tickets' | 'problem-types' | 'alerts' | 'alert-config' | 'email'
 export function TicketsTab() {
   const [tickets, setTickets] = useState<RepairTicket[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [stageFilter, setStageFilter] = useState('');
   const [subView, setSubView] = useState<SubView>('tickets');
@@ -58,6 +59,7 @@ export function TicketsTab() {
       toast.error('Erreur de chargement');
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -120,16 +122,20 @@ export function TicketsTab() {
             </div>
           </div>
 
-          <TicketsTable
-            data={tickets}
-            isLoading={loading}
-            onView={(t) => { setDetailId(t.id); setDetailOpen(true); }}
-            onSend={(id) => { setSendId(id); setSendOpen(true); }}
-            onReceive={(id) => { setReceiveId(id); setReceiveOpen(true); }}
-            onReceiveFromRepairer={(id) => { setReceiveFromRepairerId(id); setReceiveFromRepairerOpen(true); }}
-            onRepair={(id) => { setRepairId(id); setRepairOpen(true); }}
-            onCancel={(id) => { setCancelId(id); setCancelOpen(true); }}
-          />
+          {!initialized && loading ? (
+            <div className={styles.loading}><RefreshCw size={28} className="animate-spin" /></div>
+          ) : (
+            <TicketsTable
+              data={tickets}
+              isLoading={loading && initialized}
+              onView={(t) => { setDetailId(t.id); setDetailOpen(true); }}
+              onSend={(id) => { setSendId(id); setSendOpen(true); }}
+              onReceive={(id) => { setReceiveId(id); setReceiveOpen(true); }}
+              onReceiveFromRepairer={(id) => { setReceiveFromRepairerId(id); setReceiveFromRepairerOpen(true); }}
+              onRepair={(id) => { setRepairId(id); setRepairOpen(true); }}
+              onCancel={(id) => { setCancelId(id); setCancelOpen(true); }}
+            />
+          )}
         </>
       )}
 

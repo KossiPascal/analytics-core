@@ -7,7 +7,7 @@ import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { FormSwitch } from '@/components/forms/FormSwitch/FormSwitch';
 import { Badge } from '@components/ui/Badge/Badge';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { equipmentApi, ascsApi, employeesApi } from '../../api';
 import type {
@@ -39,6 +39,8 @@ export function EquipmentTab() {
   const [employees, setEmployees]           = useState<Employee[]>([]);
   const [brands, setBrands]                 = useState<EquipmentBrand[]>([]);
   const [loading, setLoading]               = useState(false);
+  const [initialized, setInitialized]       = useState(false);
+  const [eqLoading, setEqLoading]           = useState(false);
   const [formOpen, setFormOpen]             = useState(false);
   const [editData, setEditData]             = useState<Equipment | null>(null);
   const [detailOpen, setDetailOpen]         = useState(false);
@@ -92,6 +94,19 @@ export function EquipmentTab() {
       toast.error('Erreur de chargement');
     } finally {
       setLoading(false);
+      setInitialized(true);
+    }
+  };
+
+  const loadEquipment = async () => {
+    setEqLoading(true);
+    try {
+      const res = await equipmentApi.getAll();
+      if (res.success) setEquipment(res.data!);
+    } catch {
+      toast.error('Erreur de chargement des équipements');
+    } finally {
+      setEqLoading(false);
     }
   };
 
@@ -232,55 +247,67 @@ export function EquipmentTab() {
 
       {/* ── Équipements ── */}
       {subTab === 'equipment' && (
-        <EquipmentTable
-          data={equipment}
-          isLoading={loading}
-          onEdit={async (e) => {
-            const res = await equipmentApi.get(e.id);
-            setEditData(res.success && res.data ? res.data : e);
-            setFormOpen(true);
-          }}
-          onView={(e) => { setDetailId(e.id); setDetailOpen(true); }}
-          onAssign={(e) => { setAssignTarget(e); setAssignOpen(true); }}
-          onDeclare={(e) => { setDeclareTarget(e); setDeclareOpen(true); }}
-          onGeneratePdf={async (e) => {
-            try { await equipmentApi.downloadReceptionPdf(e.id); }
-            catch { toast.error('Erreur lors de la génération du PDF'); }
-          }}
-        />
+        !initialized ? (
+          <div className={styles.loading}><RefreshCw size={28} className="animate-spin" /></div>
+        ) : (
+          <EquipmentTable
+            data={equipment}
+            isLoading={eqLoading}
+            onEdit={async (e) => {
+              const res = await equipmentApi.get(e.id);
+              setEditData(res.success && res.data ? res.data : e);
+              setFormOpen(true);
+            }}
+            onView={(e) => { setDetailId(e.id); setDetailOpen(true); }}
+            onAssign={(e) => { setAssignTarget(e); setAssignOpen(true); }}
+            onDeclare={(e) => { setDeclareTarget(e); setDeclareOpen(true); }}
+            onGeneratePdf={async (e) => {
+              try { await equipmentApi.downloadReceptionPdf(e.id); }
+              catch { toast.error('Erreur lors de la génération du PDF'); }
+            }}
+          />
+        )
       )}
 
       {/* ── Catégories ── */}
       {subTab === 'categories' && (
-        <Table<EquipmentCategory>
-          data={categories}
-          columns={catColumns}
-          keyExtractor={(c) => c.id}
-          isLoading={loading}
-          emptyMessage="Aucune catégorie"
-          features={{ search: true, pagination: true }}
-          searchPlaceholder="Rechercher une catégorie..."
-        />
+        !initialized ? (
+          <div className={styles.loading}><RefreshCw size={28} className="animate-spin" /></div>
+        ) : (
+          <Table<EquipmentCategory>
+            data={categories}
+            columns={catColumns}
+            keyExtractor={(c) => c.id}
+            isLoading={loading}
+            emptyMessage="Aucune catégorie"
+            features={{ search: true, pagination: true }}
+            searchPlaceholder="Rechercher une catégorie..."
+          />
+        )
       )}
 
       {/* ── Types (Category Groups) ── */}
       {subTab === 'category_groups' && (
-        <Table<EquipmentCategoryGroup>
-          data={categoryGroups}
-          columns={grpColumns}
-          keyExtractor={(g) => g.id}
-          isLoading={loading}
-          emptyMessage="Aucun type"
-          features={{ search: true, pagination: true }}
-          searchPlaceholder="Rechercher un type..."
-        />
+        !initialized ? (
+          <div className={styles.loading}><RefreshCw size={28} className="animate-spin" /></div>
+        ) : (
+          <Table<EquipmentCategoryGroup>
+            data={categoryGroups}
+            columns={grpColumns}
+            keyExtractor={(g) => g.id}
+            isLoading={loading}
+            emptyMessage="Aucun type"
+            features={{ search: true, pagination: true }}
+            searchPlaceholder="Rechercher un type..."
+          />
+        )
       )}
 
       {/* ── Modals équipement ── */}
       <EquipmentFormModal
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
-        onSuccess={loadAll}
+        onSuccess={loadEquipment}
         editData={editData}
         ascs={ascs}
         categories={categories}
@@ -291,18 +318,18 @@ export function EquipmentTab() {
         isOpen={detailOpen}
         onClose={() => setDetailOpen(false)}
         equipmentId={detailId}
-        onStatusChange={loadAll}
+        onStatusChange={loadEquipment}
       />
       <DeclareStatusModal
         isOpen={declareOpen}
         onClose={() => setDeclareOpen(false)}
-        onSuccess={loadAll}
+        onSuccess={loadEquipment}
         equipment={declareTarget}
       />
       <AssignEquipmentModal
         isOpen={assignOpen}
         onClose={() => setAssignOpen(false)}
-        onSuccess={loadAll}
+        onSuccess={loadEquipment}
         equipment={assignTarget}
         employees={employees}
       />

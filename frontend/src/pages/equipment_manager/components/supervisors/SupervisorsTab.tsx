@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { supervisorsApi, locationsApi } from '../../api';
 import type { Supervisor, District, Site } from '../../types';
 import { SupervisorsTable } from './SupervisorsTable';
 import { SupervisorFormModal } from './SupervisorFormModal';
 import { SupervisorDetailModal } from './SupervisorDetailModal';
+import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
 export function SupervisorsTab() {
@@ -13,6 +14,7 @@ export function SupervisorsTab() {
   const [districts, setDistricts] = useState<District[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editData, setEditData] = useState<Supervisor | null>(null);
@@ -36,6 +38,7 @@ export function SupervisorsTab() {
       toast.error('Erreur de chargement');
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -47,12 +50,16 @@ export function SupervisorsTab() {
         </Button>
       </div>
 
-      <SupervisorsTable
-        data={supervisors}
-        isLoading={loading}
-        onEdit={(s) => { setEditData(s); setFormOpen(true); }}
-        onView={(s) => { setDetailData(s); setDetailOpen(true); }}
-      />
+      {!initialized && loading ? (
+        <div className={styles.loading}><RefreshCw size={28} className="animate-spin" /></div>
+      ) : (
+        <SupervisorsTable
+          data={supervisors}
+          isLoading={loading && initialized}
+          onEdit={(s) => { setEditData(s); setFormOpen(true); }}
+          onView={(s) => { setDetailData(s); setDetailOpen(true); }}
+        />
+      )}
 
       <SupervisorFormModal
         isOpen={formOpen}
