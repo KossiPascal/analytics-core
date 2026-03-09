@@ -1,5 +1,5 @@
 import { Shield } from 'lucide-react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { StatusBadge } from '@components/ui/Badge/Badge';
 import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
@@ -159,33 +159,42 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
 
     const sourceColumns = getSourceColumns(openSqlModal, openSqlColumnsModal);
 
+    const didLoad = useRef(false);
+    const didLoad2 = useRef(false);
 
     useEffect(() => {
-        const loadTenants = async () => {
-            const tenantRes = await tenantService.all();
-            setTenants(tenantRes || []);
-            if (tenantRes && tenantRes.length > 0) {
-                const firstTenantId = tenantRes[0].id || undefined;
-                setTenantId(firstTenantId);
-            }
-        };
-        loadTenants();
+        if (didLoad.current) return;
+        didLoad.current = true;
+        tenantService.all().then(t=>setTenants(t || []));
     }, []);
 
     useEffect(() => {
         if (!tenant_id) return;
-        const loadDatasources = async () => {
-            const datasourceRes = await datasourceService.all(tenant_id);
-            setDataSources(datasourceRes || []);
-            const getLocalViews = await datasetService.getLocalViews();
-            setLocalViews(getLocalViews as any || []);
-        };
+        datasourceService.all(tenant_id).then(d=>setDataSources(d || []));
+    }, [tenant_id]);
 
-        loadDatasources();
+    useEffect(() => {
+        if (didLoad2.current) return;
+        didLoad2.current = true;
+        datasetService.getLocalViews().then(l=>setLocalViews(l as any || []));
+    }, []);
+
+    const defaultTenant = useMemo(() => {
+        return { required: true, ids: [tenant_id] };
     }, [tenant_id]);
 
     return (
         <>
+            <FormSelect
+                label={`Tenant List`}
+                value={tenant_id}
+                options={tenants.map((c) => ({ value: c.id, label: c.name }))}
+                onChange={(value) => setTenantId(value)}
+                placeholder="Sélectionner Tenant"
+                leftIcon={<FaDatabase />}
+                required={true}
+            />
+            <br />
             <AdminEntityCrudModule<Dataset>
                 ref={ref}
                 title="Gestion des Dataset"
@@ -194,7 +203,7 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
                 columns={sourceColumns}
                 defaultValue={DEFAULT_FORM}
                 service={datasetService}
-                defaultTenant={{ required: true, id: tenant_id }}
+                defaultTenant={defaultTenant}
                 isValid={(r) => r.name.trim().length > 0}
                 renderForm={(dataset, setValue, saving) => (
                     <>

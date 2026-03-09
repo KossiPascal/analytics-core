@@ -265,12 +265,12 @@ class DataSourceType(db.Model, AuditMixin):
 
         if include_relations:
             data.update({
-                "datasources": [d.to_dict() for d in self.datasources] if self.datasources else None,
-                "connections": [d.to_dict() for d in self.connections] if self.connections else None,
-                "ssh_configs": [d.to_dict() for d in self.ssh_configs] if self.ssh_configs else None,
-                "credentials": [d.to_dict() for d in self.credentials] if self.credentials else None,
-                "permissions": [d.to_dict() for d in self.permissions] if self.permissions else None,
-                "histories": [d.to_dict() for d in self.histories] if self.histories else None,
+                "datasources": [d.to_dict(include_relations=False) for d in self.datasources] if self.datasources else None,
+                "connections": [d.to_dict(include_relations=False) for d in self.connections] if self.connections else None,
+                "ssh_configs": [d.to_dict(include_relations=False) for d in self.ssh_configs] if self.ssh_configs else None,
+                "credentials": [d.to_dict(include_relations=False) for d in self.credentials] if self.credentials else None,
+                "permissions": [d.to_dict(include_relations=False) for d in self.permissions] if self.permissions else None,
+                "histories": [d.to_dict(include_relations=False) for d in self.histories] if self.histories else None,
             })
 
             
@@ -452,12 +452,12 @@ class DataSource(db.Model, AuditMixin):
         }
     
     # {
-#   "name": "Prod Database",
-#   "description": "Main production DB",
-#   "connection": { "host": "10.0.0.10", "port": 5432, "dbname": "prod_db","username": "admin", "password": "secret" },
-#   "ssh": { "enabled": true, "host": "52.12.45.10", "port": 22, "username": "ubuntu", "private_key": "-----BEGIN PRIVATE KEY-----..." },
-#   "permissions": [ { "user_id": 1, "role": ["read"] }, { "user_id": 5, "role": [read] } ]
-# }
+    #   "name": "Prod Database",
+    #   "description": "Main production DB",
+    #   "connection": { "host": "10.0.0.10", "port": 5432, "dbname": "prod_db","username": "admin", "password": "secret" },
+    #   "ssh": { "enabled": true, "host": "52.12.45.10", "port": 22, "username": "ubuntu", "private_key": "-----BEGIN PRIVATE KEY-----..." },
+    #   "permissions": [ { "user_id": 1, "role": ["read"] }, { "user_id": 5, "role": [read] } ]
+    # }
 
     @staticmethod
     def to_forms_conf(param: dict, use_docker:bool = False):
@@ -693,7 +693,7 @@ class DataSource(db.Model, AuditMixin):
             return None
         return cred
 
-    def to_dict(self):
+    def to_dict(self,include_relations:bool=False):
         status = ConnectionStatus.PROD
         conn = self.get_connection(status)
         ssh_config = self.get_ssh_config(status)
@@ -789,7 +789,7 @@ class DataSourceConnection(db.Model, AuditMixin):
         db.Index("ix_connection_env_active", "datasource_id", "status", "is_active"),
     )
 
-    def to_dict(self):
+    def to_dict(self, include_relations:bool=False):
         return {
             "id": self.id,
             "tenant_id": self.tenant_id,
@@ -833,22 +833,28 @@ class DataSourceSSHConfig(db.Model, AuditMixin):
    
     credential = db.relationship("DataSourceCredential", back_populates="ssh_config", uselist=False, cascade="all, delete-orphan")
 
-    def to_dict(self):
-        return {
-        "id": self.id,
-        "tenant_id": self.tenant_id,
-        "type_id": self.type_id,
-        "datasource_id": self.datasource_id,
-        "connection_id": self.connection_id,
-        "use_ssh_key": self.use_ssh_key,
-        "host": self.host,
-        "port": self.port,
-        "tenant": self.tenant.to_dict() if self.tenant else None,
-        "type": self.type.to_dict() if self.type else None,
-        "datasource": self.datasource.to_dict() if self.datasource else None,
-        "connection": self.connection.to_dict() if self.connection else None,
-        "credential": self.credential.to_dict() if self.credential else None,
-    }
+    def to_dict(self, include_relations=False):
+        data = {
+            "id": self.id,
+            "tenant_id": self.tenant_id,
+            "type_id": self.type_id,
+            "datasource_id": self.datasource_id,
+            "connection_id": self.connection_id,
+            "use_ssh_key": self.use_ssh_key,
+            "host": self.host,
+            "port": self.port,
+            "tenant": self.tenant.to_dict() if self.tenant else None,
+            "type": self.type.to_dict() if self.type else None,
+        }
+
+        if include_relations:
+            data.update({
+                "datasource": self.datasource.to_dict(include_relations=False) if self.datasource else None,
+                "connection": self.connection.to_dict(include_relations=False) if self.connection else None,
+                "credential": self.credential.to_dict(include_relations=False) if self.credential else None,
+            })
+
+        return data
 
 # CREDENTIAL
 class DataSourceCredential(db.Model, AuditMixin):
@@ -894,27 +900,33 @@ class DataSourceCredential(db.Model, AuditMixin):
     #     if not self.ssh_password_enc:
     #         raise ValueError("SSH password required")
 
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "tenant_id": self.tenant_id,
-            "type_id": self.type_id,
-            "datasource_id": self.datasource_id,
-            "ssh_config_id": self.ssh_config_id,
-            "connection_id": self.connection_id,
-            "username": decrypt(self.username_enc) if self.username_enc else None,
-            "password": decrypt(self.password_enc) if self.password_enc else None,
-            "ssh_username": decrypt(self.ssh_username_enc) if self.ssh_username_enc else None,
-            "ssh_password": decrypt(self.ssh_password_enc) if self.ssh_password_enc else None,
-            "ssh_key": decrypt(self.ssh_key_enc) if self.ssh_key_enc else None,
-            "ssh_key_pass": decrypt(self.ssh_key_pass_enc) if self.ssh_key_pass_enc else None,
-            "tenant": self.tenant.to_dict() if self.tenant else None,
-            "type": self.type.to_dict() if self.type else None,
-            "datasource": self.datasource.to_dict() if self.datasource else None,
-            "ssh_config": self.ssh_config.to_dict() if self.ssh_config else None,
-            "connection": self.connection.to_dict() if self.connection else None,
-            "is_active": self.is_active,
-        }
+    def to_dict(self, include_relations:bool=True):
+        data = {
+                "id": self.id,
+                "tenant_id": self.tenant_id,
+                "type_id": self.type_id,
+                "datasource_id": self.datasource_id,
+                "ssh_config_id": self.ssh_config_id,
+                "connection_id": self.connection_id,
+                "username": decrypt(self.username_enc) if self.username_enc else None,
+                "password": decrypt(self.password_enc) if self.password_enc else None,
+                "ssh_username": decrypt(self.ssh_username_enc) if self.ssh_username_enc else None,
+                "ssh_password": decrypt(self.ssh_password_enc) if self.ssh_password_enc else None,
+                "ssh_key": decrypt(self.ssh_key_enc) if self.ssh_key_enc else None,
+                "ssh_key_pass": decrypt(self.ssh_key_pass_enc) if self.ssh_key_pass_enc else None,
+                "tenant": self.tenant.to_dict() if self.tenant else None,
+                "type": self.type.to_dict() if self.type else None,
+                "is_active": self.is_active,
+            }
+
+        if include_relations:
+            data.update({
+                "datasource": self.datasource.to_dict(include_relations=False) if self.datasource else None,
+                "ssh_config": self.ssh_config.to_dict(include_relations=False) if self.ssh_config else None,
+                "connection": self.connection.to_dict(include_relations=False) if self.connection else None,
+            })
+
+        return data
 
 # PERMISSION (1-1 AVEC CONNECTION)
 class DataSourcePermission(db.Model, AuditMixin):
@@ -948,8 +960,8 @@ class DataSourcePermission(db.Model, AuditMixin):
         # db.UniqueConstraint("connection_id", "user_id"),
     )
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_relations:bool=True):
+        data = {
             "id": self.id,
             "tenant_id": self.tenant_id,
             "type_id": self.type_id,
@@ -961,10 +973,16 @@ class DataSourcePermission(db.Model, AuditMixin):
             "user": self.user if self.user else None,
             "datasource": self.datasource if self.datasource else None,
             "connection": self.connection if self.connection else None,
-            "histories": [h.to_dict() for h in self.histories] if self.histories else None,
             "role": self.role if self.role else None,
             "is_active": self.is_active,
         }
+
+        if include_relations:
+            data.update({
+                "histories": [h.to_dict(include_relations=False) for h in self.histories] if self.histories else None,
+            })
+
+        return data
 
     def assign_role(self, role: str):
         role_enum = DataSourceRole(role)
@@ -1033,12 +1051,12 @@ class DataSourceHistory(db.Model):
 
         if include_relations:
             data.update({
-                "tenant": self.tenant.to_dict() if self.tenant else None,
-                "type": self.type.to_dict() if self.type else None,
-                "connection": self.connection.to_dict() if self.connection else None,
-                "permission": self.permission.to_dict() if self.permission else None,
-                "datasource": self.datasource.to_dict() if self.datasource else None,
-                "user": self.user.to_dict() if self.user else None,
+                "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
+                "type": self.type.to_dict(include_relations=False) if self.type else None,
+                "connection": self.connection.to_dict(include_relations=False) if self.connection else None,
+                "permission": self.permission.to_dict(include_relations=False) if self.permission else None,
+                "datasource": self.datasource.to_dict(include_relations=False) if self.datasource else None,
+                "user": self.user.to_dict(include_relations=False) if self.user else None,
             })
 
         return data

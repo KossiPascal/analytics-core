@@ -12,7 +12,12 @@ import { ROUTES } from "@routes/configs";
 import styles from "./LoginPage.module.css";
 
 export default function LoginPage() {
-  const { login, error, loading } = useAuth();
+  const { login, error, loading, isAuthenticated, redirectToPage } = useAuth();
+
+  if (isAuthenticated) {
+    redirectToPage();
+    return <></>;
+  }
 
   const { register, handleSubmit, formState: { errors, isValid } } = useForm<LoginFormData>({
     resolver: zodResolver(loginFormSchema),

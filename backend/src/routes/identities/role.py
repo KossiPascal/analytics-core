@@ -2,11 +2,13 @@
 from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
-from sqlalchemy.exc import SQLAlchemyError
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.models.auth import UserRole, UserPermission
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -21,7 +23,7 @@ def list_roles():
         return jsonify([r.to_dict() for r in roles if r is not None]), 200
     except Exception as e:
         logger.error(f"List roles error: {str(e)}")
-        return error_response("Failed to list roles", 500, str(e))
+        raise BadRequest("Failed to list roles", 500)
 
 
 @bp.get("/<int:role_id>")
@@ -30,13 +32,13 @@ def get_role(role_id: int):
     try:
         role:UserRole = UserRole.query.get(role_id)
         if not role or role.deleted:
-            return error_response(f"Role with id={role_id} not found", 404)
+            raise BadRequest(f"Role with id={role_id} not found", 404)
         data = role.to_dict()
         data["permissions"] = [p.to_dict() for p in role.permissions]
         return jsonify(data), 200
     except Exception as e:
         logger.error(f"Get role error: {str(e)}")
-        return error_response("Failed to get role", 500, str(e))
+        raise BadRequest("Failed to get role", 500)
 
 
 @bp.post("")
@@ -52,14 +54,14 @@ def create_role():
         is_active = bool(data.get("is_active", False))
 
         if not name:
-            return jsonify({"error": "Role name is required"}), 400
+            raise BadRequest("Role name is required", 400)
 
         existing = UserRole.query.filter(
             UserRole.name==name, 
             UserRole.tenant_id==tenant_id
         ).first()
         if existing:
-            return jsonify({"error": "Role already exists for this tenant"}), 409
+            raise BadRequest("Role already exists for this tenant", 409)
 
         role = UserRole(name=name, tenant_id=tenant_id, description=description, is_system=is_system, is_active=is_active)
         if permission_ids:
@@ -74,7 +76,7 @@ def create_role():
     except Exception as e:
         db.session.rollback()
         logger.error(f"Create role error: {str(e)}")
-        return error_response("Failed to create role", 500, str(e))
+        raise BadRequest("Failed to create role", 500)
 
 
 @bp.put("/<int:role_id>")
@@ -83,7 +85,7 @@ def update_role(role_id: int):
     try:
         role:UserRole = UserRole.query.get(role_id)
         if not role or role.deleted:
-            return error_response(f"Role with id={role_id} not found", 404)
+            raise BadRequest(f"Role with id={role_id} not found", 404)
 
         data = request.get_json(silent=True) or {}
         if "name" in data:
@@ -105,7 +107,7 @@ def update_role(role_id: int):
         return jsonify({"message": "Role updated"}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
-        return error_response("Failed to update role", 500, str(e))
+        raise BadRequest("Failed to update role", 500)
 
 
 @bp.delete("/<int:role_id>")
@@ -114,7 +116,7 @@ def delete_role(role_id: int):
     try:
         role:UserRole = UserRole.query.get(role_id)
         if not role or role.deleted:
-            return error_response(f"Role with id={role_id} not found", 404)
+            raise BadRequest(f"Role with id={role_id} not found", 404)
 
         role.deleted = True
         role.deleted_at = datetime.now(timezone.utc)
@@ -125,5 +127,5 @@ def delete_role(role_id: int):
         return jsonify({"message": "Role deleted"}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
-        return error_response("Failed to delete role", 500, str(e))
+        raise BadRequest("Failed to delete role", 500)
 

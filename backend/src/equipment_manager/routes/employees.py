@@ -2,15 +2,15 @@ import re
 import secrets
 import string
 import unicodedata
-
 from flask import Blueprint, request, jsonify, g
-from sqlalchemy.exc import IntegrityError
-
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.employees import Department, Position, Employee, EmployeeHistory
 from backend.src.models.auth import Tenant, User
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -73,13 +73,13 @@ def create_department():
     parent_id = data.get("parent_id")
 
     if not name or not code:
-        return error_response("name and code are required", 400)
+        raise BadRequest("name and code are required")
 
     # Validate parent if provided
     if parent_id:
         parent = Department.query.get(int(parent_id))
         if not parent:
-            return error_response("Parent department not found", 404)
+            raise BadRequest("Parent department not found")
 
     try:
         dept = Department(
@@ -94,7 +94,7 @@ def create_department():
         return jsonify(dept.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Department with this name or code already exists", 409)
+        raise BadRequest("Department with this name or code already exists")
 
 
 @bp.get("/departments/<int:id>")
@@ -102,7 +102,8 @@ def create_department():
 def get_department(id):
     dept = Department.query.get(id)
     if not dept:
-        return error_response("Department not found", 404)
+        raise BadRequest("Department not found")
+    
     result = dept.to_dict_safe()
     result["children"] = [c.to_dict_safe() for c in dept.children]
     result["employees"] = [e.to_dict_safe() for e in dept.employees]
@@ -114,7 +115,7 @@ def get_department(id):
 def update_department(id):
     dept = Department.query.get(id)
     if not dept:
-        return error_response("Department not found", 404)
+        raise BadRequest("Department not found")
 
     data = request.get_json(silent=True) or {}
     for field in ("name", "code", "description"):
@@ -130,7 +131,7 @@ def update_department(id):
         return jsonify(dept.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Department with this name or code already exists", 409)
+        raise BadRequest("Department with this name or code already exists")
 
 
 # ─── POSITIONS ────────────────────────────────────────────────────────────────
@@ -155,20 +156,20 @@ def create_position():
     parent_id = data.get("parent_id")
 
     if not name or not code:
-        return error_response("Le nom et le code sont requis", 400)
+        raise BadRequest("Le nom et le code sont requis", 400)
 
     # Validate parent if provided
     # Un nouveau poste ne peut pas créer de référence circulaire (il n'a pas encore d'enfants)
     if parent_id:
         parent = Position.query.get(int(parent_id))
         if not parent:
-            return error_response("Poste parent introuvable", 404)
+            raise BadRequest("Poste parent introuvable", 404)
 
     department_id = data.get("department_id")
     if department_id:
         dept = Department.query.get(int(department_id))
         if not dept:
-            return error_response("Département introuvable", 404)
+            raise BadRequest("Département introuvable", 404)
 
     try:
         pos = Position(
@@ -184,7 +185,7 @@ def create_position():
         return jsonify(pos.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Un poste avec ce nom ou ce code existe déjà", 409)
+        raise BadRequest("Un poste avec ce nom ou ce code existe déjà", 409)
 
 
 @bp.put("/positions/<int:id>")
@@ -192,7 +193,7 @@ def create_position():
 def update_position(id):
     pos = Position.query.get(id)
     if not pos:
-        return error_response("Position not found", 404)
+        raise BadRequest("Position not found", 404)
 
     data = request.get_json(silent=True) or {}
 
@@ -200,7 +201,7 @@ def update_position(id):
         new_parent_id = int(data["parent_id"]) if data["parent_id"] else None
         # Prevent a position from becoming its own ancestor
         if new_parent_id and (new_parent_id == id or _has_ancestor(Position.query.get(new_parent_id), id)):
-            return error_response("Référence circulaire détectée", 400)
+            raise BadRequest("Référence circulaire détectée", 400)
         pos.parent_id = new_parent_id
 
     if "department_id" in data:
@@ -217,7 +218,7 @@ def update_position(id):
         return jsonify(pos.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Un poste avec ce nom ou ce code existe déjà", 409)
+        raise BadRequest("Un poste avec ce nom ou ce code existe déjà", 409)
 
 
 def _has_ancestor(position: "Position | None", ancestor_id: int) -> bool:
@@ -314,21 +315,21 @@ def create_employee():
     # Required: first_name, last_name, phone, position_id
     # Le département est déduit du poste — plus de department_id direct
     if not first_name or not last_name:
-        return error_response("Le prénom et le nom sont requis", 400)
+        raise BadRequest("Le prénom et le nom sont requis", 400)
     if not phone:
-        return error_response("Le téléphone est requis", 400)
+        raise BadRequest("Le téléphone est requis", 400)
     if not position_id:
-        return error_response("Le poste est requis", 400)
+        raise BadRequest("Le poste est requis", 400)
 
     pos = Position.query.get(int(position_id))
     if not pos:
-        return error_response("Poste introuvable", 404)
+        raise BadRequest("Poste introuvable", 404)
 
     # Tenant (optional)
     tenant_id = data.get("tenant_id")
     if tenant_id:
         if not Tenant.query.filter_by(id=int(tenant_id), deleted=False).first():
-            return error_response("Tenant introuvable", 404)
+            raise BadRequest("Tenant introuvable", 404)
 
     # employee_id_code is optional — use None if not provided
     raw_code = (data.get("employee_id_code") or "").strip()
@@ -391,7 +392,7 @@ def create_employee():
 
     except IntegrityError:
         db.session.rollback()
-        return error_response("Un employé avec ce code existe déjà", 409)
+        raise BadRequest("Un employé avec ce code existe déjà", 409)
 
 
 @bp.get("/<int:id>")
@@ -399,7 +400,7 @@ def create_employee():
 def get_employee(id):
     emp = Employee.query.get(id)
     if not emp:
-        return error_response("Employee not found", 404)
+        raise BadRequest("Employee not found", 404)
 
     result = emp.to_dict_safe()
     result["history"] = [h.to_dict_safe() for h in sorted(emp.history, key=lambda h: h.timestamp, reverse=True)]
@@ -412,10 +413,10 @@ def get_employee(id):
 def update_employee(id):
     emp = Employee.query.get(id)
     if not emp:
-        return error_response("Employee not found", 404)
+        raise BadRequest("Employee not found", 404)
 
     if not emp.is_active:
-        return error_response(
+        raise BadRequest(
             "Employé inactif. Activez l'employé avant toute modification.",
             409
         )
@@ -425,9 +426,9 @@ def update_employee(id):
 
     # Validate required fields if provided
     if "phone" in data and not (data.get("phone") or "").strip():
-        return error_response("Le téléphone est requis", 400)
+        raise BadRequest("Le téléphone est requis", 400)
     if "position_id" in data and not data.get("position_id"):
-        return error_response("Le poste est requis", 400)
+        raise BadRequest("Le poste est requis", 400)
 
     for field in ("first_name", "last_name", "gender", "phone", "email", "notes"):
         if field in data:
@@ -438,7 +439,7 @@ def update_employee(id):
         new_tenant_id = data["tenant_id"]
         if new_tenant_id:
             if not Tenant.query.filter_by(id=int(new_tenant_id), deleted=False).first():
-                return error_response("Tenant introuvable", 404)
+                raise BadRequest("Tenant introuvable", 404)
             emp.tenant_id = int(new_tenant_id)
         else:
             emp.tenant_id = None
@@ -481,7 +482,7 @@ def update_employee(id):
         return jsonify(emp.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Employee with this ID code already exists", 409)
+        raise BadRequest("Employee with this ID code already exists", 409)
 
 
 @bp.patch("/<int:id>/toggle-active")
@@ -489,7 +490,7 @@ def update_employee(id):
 def toggle_active(id):
     emp = Employee.query.get(id)
     if not emp:
-        return error_response("Employee not found", 404)
+        raise BadRequest("Employee not found", 404)
 
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
@@ -531,31 +532,31 @@ def create_account(id):
     """Crée le compte utilisateur pour un employé (appelé après confirmation des credentials)."""
     emp = Employee.query.get(id)
     if not emp:
-        return error_response("Employé introuvable", 404)
+        raise BadRequest("Employé introuvable", 404)
 
     if emp.user_id and User.query.get(emp.user_id):
-        return error_response("Un compte utilisateur existe déjà pour cet employé", 409)
+        raise BadRequest("Un compte utilisateur existe déjà pour cet employé", 409)
 
     data     = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
 
     if not username:
-        return error_response("Le nom d'utilisateur est requis", 400)
+        raise BadRequest("Le nom d'utilisateur est requis", 400)
     if not re.fullmatch(r'[a-zA-Z0-9_-]+', username):
-        return error_response("Le nom d'utilisateur ne peut contenir que des lettres, chiffres, tirets et underscores", 400)
+        raise BadRequest("Le nom d'utilisateur ne peut contenir que des lettres, chiffres, tirets et underscores", 400)
     if len(password) < 6:
-        return error_response("Le mot de passe doit contenir au moins 6 caractères", 400)
+        raise BadRequest("Le mot de passe doit contenir au moins 6 caractères", 400)
 
     if User.query.filter_by(username=username).first():
-        return error_response("Ce nom d'utilisateur est déjà pris", 409)
+        raise BadRequest("Ce nom d'utilisateur est déjà pris", 409)
 
     # Tenant : celui de l'employé ou celui de l'admin connecté
     tenant_id = emp.tenant_id
     if not tenant_id and g.current_user and g.current_user.get("tenant_id"):
         tenant_id = int(g.current_user["tenant_id"])
     if not tenant_id:
-        return error_response("Impossible de déterminer le tenant pour ce compte", 400)
+        raise BadRequest("Impossible de déterminer le tenant pour ce compte", 400)
 
     try:
         user_account = User(
@@ -578,4 +579,4 @@ def create_account(id):
 
     except IntegrityError:
         db.session.rollback()
-        return error_response("Ce nom d'utilisateur ou email est déjà utilisé", 409)
+        raise BadRequest("Ce nom d'utilisateur ou email est déjà utilisé", 409)

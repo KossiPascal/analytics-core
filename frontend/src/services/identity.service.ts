@@ -9,6 +9,7 @@ const test = async (): Promise<boolean> => {
 }
 
 export const tenantService = {
+    full: () => identity.all<Tenant>("/tenants",),
     all: (tenant_id?:number) => identity.all<Tenant>("/tenants",),
     create: (tenant: Tenant) => identity.create("/tenants", tenant),
     update: (id: number, tenant: Tenant) => identity.update("/tenants", id, tenant),
@@ -16,6 +17,7 @@ export const tenantService = {
 }
 
 export const orgunitService = {
+    full: () => identity.all<Orgunit>("/orgunits",),
     all: (tenant_id?:number) => identity.all<Orgunit>("/orgunits",),
     create: (ou: Orgunit) => identity.create("/orgunits", ou),
     update: (id: number, ou: Orgunit) => identity.update("/orgunits", id, ou),
@@ -23,6 +25,7 @@ export const orgunitService = {
 }
 
 export const userService = {
+    full: () => identity.all<User>("/users"),
     all: (tenant_id?:number) => identity.all<User>("/users"),
     create: (user: User) => identity.create("/users", user),
     update: (id: number, user: User) => identity.update("/users", id, user),
@@ -30,6 +33,7 @@ export const userService = {
 }
 
 export const roleService = {
+    full: () => identity.all<Role>("/roles"),
     all: (tenant_id?:number) => identity.all<Role>("/roles"),
     create: (role: Role) => identity.create("/roles", role),
     update: (id: number, role: Role) => identity.update("/roles", id, role),
@@ -37,6 +41,7 @@ export const roleService = {
 }
 
 export const permissionService = {
+    full: () => identity.all<Permission>("/permissions"),
     all: (tenant_id?:number) => identity.all<Permission>("/permissions"),
     create: (permission: Permission) => identity.create("/permissions", permission),
     update: (id: number, permission: Permission) => identity.update("/permissions", id, permission),
@@ -44,6 +49,7 @@ export const permissionService = {
 }
 
 export const rolePermissionService = {
+    full: () => identity.all<RolePermissionLink>("/utils/roles-permissions"),
     all: (tenant_id?:number) => identity.all<RolePermissionLink>("/utils/roles-permissions"),
     create: (rp: RolePermissionLink) => test(),
     update: (id: number, rp: RolePermissionLink) => test(),
@@ -51,6 +57,7 @@ export const rolePermissionService = {
 }
 
 export const usersLogService = {
+    full: () => identity.all<UsersLog>("/utils/users-logs"),
     all: (tenant_id?:number) => identity.all<UsersLog>("/utils/users-logs"),
     create: (ul: UsersLog) => test(),
     update: (id: number, ul: UsersLog) => test(),
@@ -58,6 +65,7 @@ export const usersLogService = {
 }
 
 export const userRoleService = {
+    full: () => identity.all<UserRole>("/utils/users-roles"),
     all: (tenant_id?:number) => identity.all<UserRole>("/utils/users-roles"),
     create: (ur: UserRole) => test(),
     update: (id: number, ur: UserRole) => test(),

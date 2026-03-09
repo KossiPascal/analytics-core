@@ -5,6 +5,9 @@ from backend.src.databases.extensions import db
 from backend.src.models.datasource import (DataSource,DataSourcePermission)
 from backend.src.security.access_security import require_auth
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 bp = Blueprint("datasource_permissions",__name__,url_prefix="/api/datasource-permissions")
 
 # { "datasource_id": 1, "user_id": 25, "roles": ["write"] }
@@ -14,7 +17,7 @@ bp = Blueprint("datasource_permissions",__name__,url_prefix="/api/datasource-per
 def list_datasource_permissions(tenant_id):
     try:
         if not tenant_id:
-            return jsonify({"error": "tenant_id is required"}), 400
+            raise BadRequest("tenant_id is required", 400)
 
         permissions:List[DataSourcePermission] = DataSourcePermission.query.filter(
             DataSourcePermission.is_active==True, 
@@ -24,9 +27,9 @@ def list_datasource_permissions(tenant_id):
         return jsonify([p.to_dict() for p in permissions]), 200
 
     except ValueError:
-        return jsonify({"error": "Datasource not found"}), 404
+        raise BadRequest("Datasource not found", 404)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 @bp.post("")
 @require_auth
@@ -40,7 +43,7 @@ def create_or_update_permission():
 
         ds:DataSource = DataSource.query.get(datasource_id)
         if not ds:
-            return jsonify({"error": "Datasource not found"}), 404
+            raise BadRequest("Datasource not found", 404)
 
         existing:DataSourcePermission = DataSourcePermission.query.filter(
             DataSourcePermission.datasource_id == datasource_id,
@@ -73,9 +76,9 @@ def create_or_update_permission():
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        raise
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 @bp.put("/<int:permission_id>")
 @require_auth
@@ -83,7 +86,7 @@ def update_permission(permission_id):
     try:
         permission:DataSourcePermission = DataSourcePermission.query.get(permission_id)
         if not permission:
-            return jsonify({"error": "Permission not found"}), 404
+            raise BadRequest("Permission not found", 404)
 
         data = request.get_json()
         if "role" in data:
@@ -97,7 +100,7 @@ def update_permission(permission_id):
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        raise
 
 @bp.delete("/<int:permission_id>")
 @require_auth
@@ -105,7 +108,7 @@ def delete_permission(permission_id):
     try:
         permission:DataSourcePermission = DataSourcePermission.query.get(permission_id)
         if not permission:
-            return jsonify({"error": "Permission not found"}), 404
+            raise BadRequest("Permission not found", 404)
 
         permission.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None
         
@@ -116,7 +119,7 @@ def delete_permission(permission_id):
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        raise
 
 
 @bp.get("/datasource/<int:tenant_id>/<int:datasource_id>")
@@ -124,7 +127,7 @@ def delete_permission(permission_id):
 def list_permissions_for_datasource(tenant_id,datasource_id):
     try:
         if not tenant_id:
-            return jsonify({"error": "tenant_id is required"}), 400
+            raise BadRequest("tenant_id is required", 400)
 
         permissions:List[DataSourcePermission] = DataSourcePermission.query.filter(
             DataSourcePermission.datasource_id==datasource_id, 
@@ -134,16 +137,16 @@ def list_permissions_for_datasource(tenant_id,datasource_id):
         return jsonify([p.to_dict() for p in permissions]), 200
 
     except ValueError:
-        return jsonify({"error": "Datasource not found"}), 404
+        raise BadRequest("Datasource not found", 404)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 @bp.get("/user/<int:tenant_id>/<int:user_id>")
 @require_auth
 def list_permissions_for_user(tenant_id,user_id):
     try:
         if not tenant_id:
-            return jsonify({"error": "tenant_id is required"}), 400
+            raise BadRequest("tenant_id is required", 400)
 
         permissions:List[DataSourcePermission] = DataSourcePermission.query.filter(
             DataSourcePermission.user_id == user_id, 
@@ -153,6 +156,6 @@ def list_permissions_for_user(tenant_id,user_id):
         return jsonify([p.to_dict() for p in permissions]), 200
 
     except ValueError:
-        return jsonify({"error": "Datasource not found"}), 404
+        raise BadRequest("Datasource not found", 404)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise

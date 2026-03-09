@@ -185,7 +185,7 @@ export const DataSourceTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) =
             columns={sourceColumns}
             defaultValue={DEFAULT_FORM}
             service={datasourceService}
-            defaultTenant={({ required: true, id: tenant_id })}
+            defaultTenant={({ required: true, ids: [tenant_id] })}
             isValid={(r) => r.name.trim().length > 0}
             modalSize={"lg"}
 

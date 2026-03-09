@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
-from sqlalchemy.exc import IntegrityError
-
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.security.access_security import require_auth
 import re
 from backend.src.equipment_manager.models.equipment import (
@@ -14,6 +12,9 @@ from backend.src.equipment_manager.models.employees import Employee
 from backend.src.equipment_manager.routes.employees import get_allowed_employee_ids
 from backend.src.docs_generetor.pdf_generator import pdf_response
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -63,7 +64,7 @@ def create_category_group():
     name = data.get("name", "").strip()
     code = data.get("code", "").strip()
     if not name or not code:
-        return error_response("Le nom et le code sont requis", 400)
+        raise BadRequest("Le nom et le code sont requis", 400)
     try:
         grp = EquipmentCategoryGroup(
             name=name, code=code,
@@ -75,7 +76,7 @@ def create_category_group():
         return jsonify(grp.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Une catégorie avec ce nom ou ce code existe déjà", 409)
+        raise BadRequest("Une catégorie avec ce nom ou ce code existe déjà", 409)
 
 
 @bp.put("/category-groups/<int:id>")
@@ -83,7 +84,7 @@ def create_category_group():
 def update_category_group(id):
     grp = EquipmentCategoryGroup.query.get(id)
     if not grp:
-        return error_response("Catégorie introuvable", 404)
+        raise BadRequest("Catégorie introuvable", 404)
     data = request.get_json(silent=True) or {}
     for field in ("name", "code", "description"):
         if field in data:
@@ -95,7 +96,7 @@ def update_category_group(id):
         return jsonify(grp.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Une catégorie avec ce nom ou ce code existe déjà", 409)
+        raise BadRequest("Une catégorie avec ce nom ou ce code existe déjà", 409)
 
 
 # ─── CATEGORIES (Types d'équipement, FK → category_group) ────────────────────
@@ -114,7 +115,7 @@ def create_category():
     name = data.get("name", "").strip()
     code = data.get("code", "").strip()
     if not name or not code:
-        return error_response("Le nom et le code sont requis", 400)
+        raise BadRequest("Le nom et le code sont requis", 400)
     category_group_id = data.get("category_group_id")
     try:
         cat = EquipmentCategory(
@@ -128,7 +129,7 @@ def create_category():
         return jsonify(cat.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Un type avec ce nom ou ce code existe déjà", 409)
+        raise BadRequest("Un type avec ce nom ou ce code existe déjà", 409)
 
 
 @bp.put("/categories/<int:id>")
@@ -136,7 +137,7 @@ def create_category():
 def update_category(id):
     cat = EquipmentCategory.query.get(id)
     if not cat:
-        return error_response("Type introuvable", 404)
+        raise BadRequest("Type introuvable", 404)
     data = request.get_json(silent=True) or {}
     for field in ("name", "code", "description"):
         if field in data:
@@ -150,7 +151,7 @@ def update_category(id):
         return jsonify(cat.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Un type avec ce nom ou ce code existe déjà", 409)
+        raise BadRequest("Un type avec ce nom ou ce code existe déjà", 409)
 
 
 # ─── BRANDS (Marques) ────────────────────────────────────────────────────────
@@ -169,7 +170,7 @@ def create_brand():
     name = data.get("name", "").strip()
     code = data.get("code", "").strip()
     if not name or not code:
-        return error_response("name and code are required", 400)
+        raise BadRequest("name and code are required", 400)
     try:
         brand = EquipmentBrand(
             name=name, code=code,
@@ -181,7 +182,7 @@ def create_brand():
         return jsonify(brand.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Brand with this name or code already exists", 409)
+        raise BadRequest("Brand with this name or code already exists", 409)
 
 
 @bp.put("/brands/<int:id>")
@@ -189,7 +190,7 @@ def create_brand():
 def update_brand(id):
     brand = EquipmentBrand.query.get(id)
     if not brand:
-        return error_response("Brand not found", 404)
+        raise BadRequest("Brand not found", 404)
     data = request.get_json(silent=True) or {}
     for field in ("name", "code", "description"):
         if field in data:
@@ -201,7 +202,7 @@ def update_brand(id):
         return jsonify(brand.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Brand with this name or code already exists", 409)
+        raise BadRequest("Brand with this name or code already exists", 409)
 
 
 # ─── EQUIPMENT ────────────────────────────────────────────────────────────────
@@ -282,7 +283,7 @@ def create_equipment():
     brand_id = data.get("brand_id")
 
     if not model_name:
-        return error_response("Le modèle est requis", 400)
+        raise BadRequest("Le modèle est requis", 400)
 
     # Déterminer si la catégorie est électronique
     cat = EquipmentCategory.query.get(int(category_id)) if category_id else None
@@ -298,11 +299,11 @@ def create_equipment():
 
     if has_sim:
         if not imeis_list:
-            return error_response("Au moins un IMEI est requis pour les équipements avec carte SIM", 400)
+            raise BadRequest("Au moins un IMEI est requis pour les équipements avec carte SIM", 400)
         for idx, raw_imei in enumerate(imeis_list):
             valid, msg = validate_imei(str(raw_imei))
             if not valid:
-                return error_response(f"IMEI {idx + 1}: {msg}", 400)
+                raise BadRequest(f"IMEI {idx + 1}: {msg}", 400)
 
     # Générer le code unique
     cat_id_int = int(category_id) if category_id else None
@@ -361,7 +362,7 @@ def create_equipment():
 
     except IntegrityError:
         db.session.rollback()
-        return error_response("Un équipement avec cet IMEI ou ce code existe déjà", 409)
+        raise BadRequest("Un équipement avec cet IMEI ou ce code existe déjà", 409)
 
 
 @bp.get("/<int:id>")
@@ -369,7 +370,7 @@ def create_equipment():
 def get_equipment(id):
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     result = eq.to_dict_safe()
     result["history"] = [h.to_dict_safe() for h in sorted(eq.history, key=lambda h: h.created_at, reverse=True)]
@@ -402,11 +403,11 @@ def get_equipment(id):
 def update_equipment(id):
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     # Block edits on inactive equipment (use cancel-declaration first)
     if not eq.is_active:
-        return error_response(
+        raise BadRequest(
             f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute modification.",
             409
         )
@@ -453,7 +454,7 @@ def update_equipment(id):
         return jsonify(eq.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Equipment with this IMEI already exists", 409)
+        raise BadRequest("Equipment with this IMEI already exists", 409)
 
 
 @bp.post("/<int:id>/assign")
@@ -461,10 +462,10 @@ def update_equipment(id):
 def assign_equipment(id):
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     if not eq.is_active:
-        return error_response(
+        raise BadRequest(
             f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute assignation.",
             409
         )
@@ -473,7 +474,7 @@ def assign_equipment(id):
     # (utiliser la modification pour changer de propriétaire)
     if eq.is_unique and (eq.owner_id or eq.employee_id):
         current = eq.owner.get_full_name() if eq.owner else (eq.employee.get_full_name() if eq.employee else "quelqu'un")
-        return error_response(
+        raise BadRequest(
             f"Cet équipement unique est déjà assigné à {current}. "
             "Pour changer de propriétaire, utilisez la modification de l'équipement.",
             409
@@ -489,7 +490,7 @@ def assign_equipment(id):
     if asc_id:
         owner = Employee.query.get(int(asc_id))
         if not owner:
-            return error_response("Employee not found", 404)
+            raise BadRequest("Employee not found", 404)
         eq.owner_id = owner.id
         eq.employee_id = None
         eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
@@ -498,14 +499,14 @@ def assign_equipment(id):
     elif employee_id:
         employee = Employee.query.get(int(employee_id))
         if not employee:
-            return error_response("Employee not found", 404)
+            raise BadRequest("Employee not found", 404)
         eq.employee_id = employee.id
         eq.owner_id = None
         eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
         new_owner = employee.get_full_name()
         action = "ASSIGNED_TO_EMPLOYEE"
     else:
-        return error_response("owner_id or employee_id is required", 400)
+        raise BadRequest("owner_id or employee_id is required", 400)
 
     history = EquipmentHistory(
         equipment_id=eq.id,
@@ -539,10 +540,10 @@ def transfer_equipment(id):
     """Transfère un équipement d'un employé à un autre (autorisé même pour les équipements uniques)."""
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     if not eq.is_active:
-        return error_response(
+        raise BadRequest(
             f"Équipement inactif ({eq.status}). Annulez la déclaration avant tout transfert.",
             409
         )
@@ -550,14 +551,14 @@ def transfer_equipment(id):
     data = request.get_json(silent=True) or {}
     employee_id = data.get("employee_id")
     if not employee_id:
-        return error_response("employee_id est requis", 400)
+        raise BadRequest("employee_id est requis", 400)
 
     target = Employee.query.get(int(employee_id))
     if not target:
-        return error_response("Employé cible introuvable", 404)
+        raise BadRequest("Employé cible introuvable", 404)
 
     if not target.is_active:
-        return error_response("L'employé cible est inactif", 409)
+        raise BadRequest("L'employé cible est inactif", 409)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
     old_holder = eq.employee.get_full_name() if eq.employee else (eq.owner.get_full_name() if eq.owner else "Aucun")
@@ -591,13 +592,13 @@ def declare_reserve():
     action_date = data.get("action_date")
 
     if not employee_id or not equipment_ids:
-        return error_response("employee_id et equipment_ids sont requis", 400)
+        raise BadRequest("employee_id et equipment_ids sont requis", 400)
 
     employee = Employee.query.get(int(employee_id))
     if not employee:
-        return error_response("Employé introuvable", 404)
+        raise BadRequest("Employé introuvable", 404)
     if not employee.is_active:
-        return error_response("L'employé est inactif", 409)
+        raise BadRequest("L'employé est inactif", 409)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
     assignment_date = action_date or datetime.now(timezone.utc).date().isoformat()
@@ -637,10 +638,10 @@ def declare_equipment(id):
 
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     if not eq.is_active:
-        return error_response(
+        raise BadRequest(
             f"Équipement déjà inactif ({eq.status}). Annulez la déclaration existante pour en créer une nouvelle.",
             409
         )
@@ -653,9 +654,9 @@ def declare_equipment(id):
 
     valid = {"LOST", "STOLEN", "TAKEN_AWAY", "COMPLETELY_DAMAGED"}
     if declaration not in valid:
-        return error_response(f"declaration doit être l'une de : {', '.join(sorted(valid))}", 400)
+        raise BadRequest(f"declaration doit être l'une de : {', '.join(sorted(valid))}", 400)
     if not reason:
-        return error_response("reason est obligatoire", 400)
+        raise BadRequest("reason est obligatoire", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
     old_status = eq.status
@@ -701,10 +702,10 @@ def cancel_declaration(id):
     """Annule une déclaration (LOST/STOLEN/TAKEN_AWAY/COMPLETELY_DAMAGED) → PENDING."""
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     if eq.is_active:
-        return error_response("Cet équipement n'a pas de déclaration active à annuler.", 409)
+        raise BadRequest("Cet équipement n'a pas de déclaration active à annuler.", 409)
 
     data = request.get_json(silent=True) or {}
     notes = data.get("notes", "").strip()
@@ -734,7 +735,7 @@ def cancel_declaration(id):
 def get_equipment_history(id):
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     history = sorted(eq.history, key=lambda h: h.created_at, reverse=True)
     return jsonify([h.to_dict_safe() for h in history]), 200
@@ -747,7 +748,7 @@ def get_equipment_history(id):
 def list_accessories(id):
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
     return jsonify([a.to_dict_safe() for a in eq.accessories]), 200
 
 
@@ -756,12 +757,12 @@ def list_accessories(id):
 def create_accessory(id):
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     data = request.get_json(silent=True) or {}
     name = data.get("name", "").strip()
     if not name:
-        return error_response("name is required", 400)
+        raise BadRequest("name is required", 400)
 
     acc = Accessory(
         equipment_id=eq.id,
@@ -780,7 +781,7 @@ def create_accessory(id):
 def update_accessory(id, acc_id):
     acc = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
     if not acc:
-        return error_response("Accessory not found", 404)
+        raise BadRequest("Accessory not found", 404)
 
     data = request.get_json(silent=True) or {}
     for field in ("name", "description", "serial_number", "status"):
@@ -796,7 +797,7 @@ def update_accessory(id, acc_id):
 def delete_accessory(id, acc_id):
     acc = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
     if not acc:
-        return error_response("Accessory not found", 404)
+        raise BadRequest("Accessory not found", 404)
 
     db.session.delete(acc)
     db.session.commit()
@@ -824,7 +825,7 @@ def generate_reception_pdf(id):
 
     eq = Equipment.query.get(id)
     if not eq:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     employee = eq.owner or eq.employee
     accessories = [a.name for a in eq.accessories]

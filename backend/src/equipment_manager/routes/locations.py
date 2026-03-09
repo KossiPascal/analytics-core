@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify
-from sqlalchemy.exc import IntegrityError
-
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.locations import Region, District, Site
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -28,16 +29,17 @@ def create_region():
     code = data.get("code", "").strip()
 
     if not name or not code:
-        return error_response("name and code are required", 400)
+        raise BadRequest("name and code are required", 400)
 
     try:
         region = Region(name=name, code=code)
         db.session.add(region)
         db.session.commit()
         return jsonify(region.to_dict_safe()), 201
+    
     except IntegrityError:
         db.session.rollback()
-        return error_response("Region with this name or code already exists", 409)
+        raise BadRequest("Region with this name or code already exists", 409)
 
 
 @bp.get("/regions/<int:id>")
@@ -45,7 +47,8 @@ def create_region():
 def get_region(id):
     region = Region.query.get(id)
     if not region:
-        return error_response("Region not found", 404)
+        raise BadRequest("Region not found", 404)
+    
     result = region.to_dict_safe()
     result["districts"] = [d.to_dict_safe() for d in region.districts]
     return jsonify(result), 200
@@ -56,7 +59,7 @@ def get_region(id):
 def update_region(id):
     region = Region.query.get(id)
     if not region:
-        return error_response("Region not found", 404)
+        raise BadRequest("Region not found", 404)
 
     data = request.get_json(silent=True) or {}
     if "name" in data:
@@ -69,7 +72,7 @@ def update_region(id):
         return jsonify(region.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Region with this name or code already exists", 409)
+        raise BadRequest("Region with this name or code already exists", 409)
 
 
 @bp.delete("/regions/<int:id>")
@@ -77,7 +80,7 @@ def update_region(id):
 def delete_region(id):
     region = Region.query.get(id)
     if not region:
-        return error_response("Region not found", 404)
+        raise BadRequest("Region not found", 404)
     db.session.delete(region)
     db.session.commit()
     return jsonify({"message": "Region deleted"}), 200
@@ -105,11 +108,11 @@ def create_district():
     region_id = data.get("region_id")
 
     if not name or not code or not region_id:
-        return error_response("name, code and region_id are required", 400)
+        raise BadRequest("name, code and region_id are required", 400)
 
     region = Region.query.get(int(region_id))
     if not region:
-        return error_response("Region not found", 404)
+        raise BadRequest("Region not found", 404)
 
     try:
         district = District(name=name, code=code, region_id=region.id)
@@ -118,7 +121,7 @@ def create_district():
         return jsonify(district.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("District with this code already exists in this region", 409)
+        raise BadRequest("District with this code already exists in this region", 409)
 
 
 @bp.get("/districts/<int:id>")
@@ -126,7 +129,7 @@ def create_district():
 def get_district(id):
     district = District.query.get(id)
     if not district:
-        return error_response("District not found", 404)
+        raise BadRequest("District not found", 404)
     result = district.to_dict_safe()
     result["sites"] = [s.to_dict_safe() for s in district.sites]
     return jsonify(result), 200
@@ -137,7 +140,7 @@ def get_district(id):
 def update_district(id):
     district = District.query.get(id)
     if not district:
-        return error_response("District not found", 404)
+        raise BadRequest("District not found", 404)
 
     data = request.get_json(silent=True) or {}
     if "name" in data:
@@ -152,7 +155,7 @@ def update_district(id):
         return jsonify(district.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("District with this code already exists in this region", 409)
+        raise BadRequest("District with this code already exists in this region", 409)
 
 
 # ─── SITES ───────────────────────────────────────────────────────────────────
@@ -177,11 +180,11 @@ def create_site():
     district_id = data.get("district_id")
 
     if not name or not code or not district_id:
-        return error_response("name, code and district_id are required", 400)
+        raise BadRequest("name, code and district_id are required", 400)
 
     district = District.query.get(int(district_id))
     if not district:
-        return error_response("District not found", 404)
+        raise BadRequest("District not found", 404)
 
     try:
         site = Site(
@@ -194,7 +197,7 @@ def create_site():
         return jsonify(site.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Site with this code already exists", 409)
+        raise BadRequest("Site with this code already exists", 409)
 
 
 @bp.get("/sites/<int:id>")
@@ -202,7 +205,7 @@ def create_site():
 def get_site(id):
     site = Site.query.get(id)
     if not site:
-        return error_response("Site not found", 404)
+        raise BadRequest("Site not found", 404)
     return jsonify(site.to_dict_safe()), 200
 
 
@@ -211,7 +214,7 @@ def get_site(id):
 def update_site(id):
     site = Site.query.get(id)
     if not site:
-        return error_response("Site not found", 404)
+        raise BadRequest("Site not found", 404)
 
     data = request.get_json(silent=True) or {}
     for field in ("name", "code", "address", "phone"):
@@ -225,4 +228,4 @@ def update_site(id):
         return jsonify(site.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Site with this code already exists", 409)
+        raise BadRequest("Site with this code already exists", 409)

@@ -102,10 +102,10 @@ export class CRUDService {
         });
     }
 
-    post = async <T = any>(url: string, data?: T, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T | T[] | undefined) => Promise<boolean>, }): Promise<T | T[] | undefined> => {
+    post = async <T = any>(url: string, data?: any, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T | undefined) => Promise<boolean>, }) => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.post<T | T[] | undefined>(`${this.base_url}${url}`, {...(data??{})}, { ...(params?.options ?? {}) });
+                const res = await api.post<T>(`${this.base_url}${url}`, {...(data??{})}, { ...(params?.options ?? {}) });
                 if (!res.success) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;

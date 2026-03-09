@@ -2,11 +2,13 @@
 from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
-from sqlalchemy.exc import SQLAlchemyError
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.models.auth import Tenant
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -22,7 +24,7 @@ def list_tenants():
         return jsonify([t.to_dict() for t in tenants if t is not None]), 200
     except Exception as e:
         logger.error(f"List tenants error: {str(e)}")
-        return error_response("Failed to list tenants", 500, str(e))
+        raise BadRequest("Failed to list tenants", 500)
 
 
 @bp.get("/<int:tenant_id>")
@@ -31,11 +33,11 @@ def get_tenant(tenant_id: int):
     try:
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:
-            return error_response(f"Tenant with id={tenant_id} not found", 404)
+            raise BadRequest(f"Tenant with id={tenant_id} not found", 404)
         return jsonify(tenant.to_dict()), 200
     except Exception as e:
         logger.error(f"Get tenant error: {str(e)}")
-        return error_response("Failed to get tenant", 500, str(e))
+        raise BadRequest("Failed to get tenant", 500)
 
 
 @bp.post("")
@@ -48,11 +50,11 @@ def create_tenant():
         is_active = bool(data.get("is_active", False))
 
         if not name:
-            return jsonify({"error": "Tenant name is required"}), 400
+            raise BadRequest("Tenant name is required", 400)
 
         existing = Tenant.query.filter_by(name=name).first()
         if existing:
-            return jsonify({"error": "Tenant already exists"}), 409
+            raise BadRequest("Tenant already exists", 409)
 
         tenant = Tenant(name=name,description=description,is_active=is_active)
         tenant.created_by=g.current_user.get("id") if g.get("current_user") else None
@@ -63,7 +65,7 @@ def create_tenant():
     except Exception as e:
         db.session.rollback()
         logger.error(f"Create tenant error: {str(e)}")
-        return error_response("Failed to create tenant", 500, str(e))
+        raise BadRequest("Failed to create tenant", 500)
 
 
 @bp.put("/<int:tenant_id>")
@@ -72,7 +74,7 @@ def update_tenant(tenant_id: int):
     try:
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:
-            return error_response(f"Tenant with id={tenant_id} not found", 404)
+            raise BadRequest(f"Tenant with id={tenant_id} not found", 404)
 
         data = request.get_json(silent=True) or {}
         if "name" in data:
@@ -88,7 +90,7 @@ def update_tenant(tenant_id: int):
         return jsonify({"message": "Tenant updated"}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
-        return error_response("Failed to update tenant", 500, str(e))
+        raise BadRequest("Failed to update tenant", 500)
 
 
 @bp.delete("/<int:tenant_id>")
@@ -97,7 +99,7 @@ def delete_tenant(tenant_id: int):
     try:
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:
-            return error_response(f"Tenant with id={tenant_id} not found", 404)
+            raise BadRequest(f"Tenant with id={tenant_id} not found", 404)
 
         tenant.deleted = True
         tenant.deleted_at = datetime.now(timezone.utc)
@@ -107,5 +109,5 @@ def delete_tenant(tenant_id: int):
         return jsonify({"message": "Tenant deleted"}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
-        return error_response("Failed to delete tenant", 500, str(e))
+        raise BadRequest("Failed to delete tenant", 500)
 

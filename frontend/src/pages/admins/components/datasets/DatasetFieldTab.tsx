@@ -1,5 +1,5 @@
 import { Shield } from 'lucide-react';
-import { forwardRef, useEffect, useMemo, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { StatusBadge } from '@components/ui/Badge/Badge';
 import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
@@ -8,7 +8,7 @@ import { Tenant } from '@models/identity.model';
 import { tenantService } from '@/services/identity.service';
 import { FormSelect } from '@components/forms/FormSelect/FormSelect';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
-import { Dataset, DatasetColumn, DatasetField, SqlAggType, SqlAggTypeList, SqlDataNumericTypeList, SqlDataType, SqlDataTypeList, SqlFieldType, SqlFieldTypeList } from '@/models/dataset.models';
+import { Dataset, DatasetColumn, DatasetField, SqlAggType, AGGRAGATE_TYPES, NUMERIC_DATA_TYPES, SqlDataType, FULL_DATA_TYPES, SqlFieldType, SqlFieldTypeList, NUMERIC_DATA_TYPE } from '@/models/dataset.models';
 import { datasetService, fieldService } from '@/services/dataset.service';
 import { FaCalculator, FaCalendarAlt, FaCode, FaDatabase, FaHashtag, FaLayerGroup, FaTable, FaToggleOn, FaRuler, FaChartLine, FaAlignLeft } from 'react-icons/fa';
 import { motion } from 'framer-motion';
@@ -33,10 +33,10 @@ const DEFAULT_FORM = Object.freeze<DatasetField>({
     is_filterable: false,
     is_groupable: false,
     is_sortable: false,
+    is_selectable: false,
+    is_hidden: false,
     is_active: false,
 });
-
-const NUMERIC_DATA_TYPE: Set<string> = new Set(SqlDataNumericTypeList);
 
 
 const datafieldColumns: Column<DatasetField>[] = [
@@ -127,6 +127,7 @@ interface DatasetFieldFormProps {
     saving: boolean;
     showColumns: boolean;
     setShowColumns: (val: boolean) => void;
+    onValidationChange: (hasError: boolean) => void;
 }
 
 // Icons helpers
@@ -139,19 +140,21 @@ const getFieldTypeIcon = (type: SqlFieldType | null) => {
 const getDataTypeIcon = (dataType: SqlDataType) => {
     if (!dataType) return <FaLayerGroup size={14} />;
 
-    if (NUMERIC_DATA_TYPE.has(dataType.toLowerCase()))
+    const vDataType = dataType.toLowerCase() as SqlDataType
+
+    if (NUMERIC_DATA_TYPE.has(vDataType))
         return <FaHashtag size={14} />;
 
-    if (["varchar", "text", "char", "string"].includes(dataType.toLowerCase()))
+    if (["varchar", "text", "char", "string"].includes(vDataType))
         return <FaAlignLeft size={14} />;
 
-    if (["date", "time", "datetime", "timestamp"].includes(dataType.toLowerCase()))
+    if (["date", "time", "datetime", "timestamp"].includes(vDataType))
         return <FaLayerGroup size={14} />; // return <FaCalendarAlt />;
 
-    if (["boolean", "bool"].includes(dataType.toLowerCase()))
+    if (["boolean", "bool"].includes(vDataType))
         return <FaToggleOn size={14} />;
 
-    if (["json", "jsonb"].includes(dataType.toLowerCase()))
+    if (["json", "jsonb"].includes(vDataType))
         return <FaTable size={14} />;
 
     return <FaLayerGroup size={14} />; // return <FaFont />;
@@ -357,7 +360,7 @@ const isNumericExpression = (expr: string, aggregation: SqlAggType | null, colum
 
     for (const id of identifiers) {
         const col = columns.find(c => c.name?.toLowerCase() === id.toLowerCase());
-        if (col && NUMERIC_DATA_TYPE.has(col.type?.toLowerCase())) {
+        if (col && NUMERIC_DATA_TYPE.has(col.type?.toLowerCase() as SqlDataType)) {
             return true;
         }
     }
@@ -465,42 +468,75 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
 
     // 🔢 Vérification compatibilité numérique
     const isNumeric = isNumericExpression(trimmed, aggregation, columns);
-    if (isNumeric && !NUMERIC_DATA_TYPE.has(dataType?.toLowerCase())) {
+    if (isNumeric && !NUMERIC_DATA_TYPE.has(dataType?.toLowerCase() as SqlDataType)) {
         return { valid: false, error: "Data Type non compatible avec expression numérique." };
     }
 
     return { valid: true };
 }
 
-const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, saving, showColumns, setShowColumns }: DatasetFieldFormProps) => {
+const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, saving, showColumns, setShowColumns, onValidationChange }: DatasetFieldFormProps) => {
 
     const [errors, setErrors] = useState<{ expression?: string, data_type?: string }>({});
-    const [isNameEdited, setIsNameEdited] = useState(false);
+    const [disabled, setDisabled] = useState<{ expression?: boolean, data_type?: boolean }>({});
+    const [dataTypes, setDataTypes] = useState<SqlDataType[]>([]);
+    const [autoName, setAutoName] = useState<string | null>(null);
+    const [manuallyEdited, setManuallyEdited] = useState(false);
 
     const datasetColumns = useMemo(() => {
         if (!field.dataset_id) return [];
         return datasetMap.get(field.dataset_id)?.columns ?? [];
     }, [field.dataset_id, datasetMap]);
 
-    useEffect(() => {
-        if (isNameEdited) return;
-        const { expression, field_type, aggregation } = field;
-        const auto = generateFieldName({
-            fieldType: field_type,
-            expression: expression,
-            aggregation: aggregation
-        });
-        if (auto && auto !== field.name) {
-            setValue("name", auto);
+    const mappedColumns = useMemo(() => {
+        const mapped: Record<string, SqlDataType> = {};
+        for (const c of datasetColumns) {
+            mapped[c.name] = c.type as SqlDataType
         }
-    }, [field.field_type, field.expression, field.aggregation, isNameEdited]);
+        return mapped;
+    }, [datasetColumns]);
+    datasetColumns.map(c => c.name)
+
+
+    useEffect(() => {
+        setDataTypes(FULL_DATA_TYPES);
+    }, [FULL_DATA_TYPES]);
+
+    // Génération automatique contrôlée
+    useEffect(() => {
+        const generated = generateFieldName({
+            fieldType: field.field_type,
+            expression: field.expression,
+            aggregation: field.aggregation
+        });
+
+        if (!generated) return;
+
+        // Première génération
+        if (!autoName) {
+            setAutoName(generated);
+
+            // Si name vide → set
+            if (!field.name) {
+                setValue("name", generated);
+            }
+
+            return;
+        }
+
+        // Si utilisateur n’a jamais modifié ET
+        // le name actuel correspond à l'ancien auto
+        if (!manuallyEdited && field.name === autoName) {
+            setValue("name", generated);
+            setAutoName(generated);
+        }
+    }, [field.field_type, field.expression, field.aggregation]);
 
 
     // Fonction de validation réactive
-    const validateField = ({ expression = field.expression, field_type = field.field_type, aggregation = field.aggregation, data_type = field.data_type }: Partial<DatasetField> = {}) => {
-        const datasetColumns = field.dataset_id
-            ? datasetMap.get(field.dataset_id)?.columns ?? []
-            : [];
+    const validateField = ({ expression = field.expression, field_type = field.field_type, aggregation = field.aggregation, data_type = field.data_type, dataset_id = field.dataset_id }: Partial<DatasetField> = {}) => {
+        const datasetColumns = dataset_id ? datasetMap.get(dataset_id)?.columns ?? [] : [];
+
         const { valid, error } = validateExpression({
             expr: expression,
             fieldType: field_type,
@@ -510,12 +546,24 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
         });
 
         const isNumeric = isNumericExpression(expression, aggregation, datasetColumns);
-        const isValidNumeric = NUMERIC_DATA_TYPE.has(data_type?.toLowerCase());
+        const isValidNumeric = NUMERIC_DATA_TYPE.has(data_type?.toLowerCase() as SqlDataType);
+        const numericDataTypeError = isNumeric && !isValidNumeric ? "Le type est incorrect" : undefined;
 
         setErrors({
             expression: valid ? undefined : error,
-            data_type: isNumeric && !isValidNumeric ? "Le type est incorrect" : undefined
+            data_type: numericDataTypeError
         });
+
+        if (numericDataTypeError) {
+            setDataTypes(Array.from(NUMERIC_DATA_TYPE));
+        } else {
+            setDataTypes(FULL_DATA_TYPES);
+        }
+
+
+        const hasError = Boolean((!valid) || numericDataTypeError);
+
+        onValidationChange?.(hasError);
     };
 
     // Handlers pour chaque champ
@@ -539,6 +587,13 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
         if (val === "dimension") setValue("aggregation", null);
         validateField({ field_type: val });
     };
+
+    useEffect(() => {
+        const dataType = mappedColumns[field.expression];
+        if (field.expression in mappedColumns && field.data_type !== dataType) {
+            handleDataTypeChange(dataType);
+        }
+    }, [field.expression, mappedColumns]);
 
     return (
         <motion.div
@@ -578,10 +633,11 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
             <FormSelect
                 label={`Data Type`}
                 value={field.data_type}
-                options={SqlDataTypeList.map((c) => ({ value: c, label: c }))}
+                options={dataTypes.map((c) => ({ value: c, label: c }))}
                 onChange={handleDataTypeChange}
                 leftIcon={getDataTypeIcon(field.data_type)}
                 error={errors.data_type}
+                disabled={field.expression in mappedColumns}
                 required
             />
 
@@ -598,8 +654,11 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
                 <FormTextarea
                     label="Expression SQL"
                     value={field.expression}
-                    onChange={e => handleExpressionChange(e.target.value)}
-                    hint="Ex: COUNT(id) CASE WHEN sex = 'M' THEN 1 END"
+                    hint="Ex: COUNT(id) CASE WHEN sex = 'M' THEN 1 END | Ex: DATE_TRUNC('month', created_at)"
+                    onChange={e => {
+                        const val = e.target.value;
+                        handleExpressionChange(val);
+                    }}
                     // leftIcon={getExpressionIcon(field.expression)}
                     error={errors.expression}
                     rows={0} cols={0}
@@ -610,7 +669,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
                 <FormSelect
                     label="Aggregation"
                     value={field.aggregation}
-                    options={SqlAggTypeList.map((c) => ({ value: c, label: c }))}
+                    options={AGGRAGATE_TYPES.map((c) => ({ value: c, label: c }))}
                     onChange={handleAggregationChange}
                     leftIcon={getAggregationIcon(field.aggregation)}
                     required
@@ -620,7 +679,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
                 label="Nom"
                 value={field.name}
                 onChange={(e) => {
-                    setIsNameEdited(true);
+                    setManuallyEdited(true);
                     setValue("name", e.target.value);
                 }}
                 // leftIcon={<FaHashtag size={16} />}
@@ -664,6 +723,22 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
                 </div>
                 <div className="flex items-center justify-between">
                     <FormSwitch
+                        label="Selectable"
+                        checked={Boolean(field.is_selectable)}
+                        onChange={(e) => setValue("is_selectable", e.target.checked)}
+                    // icon={<FaSortAmountDown />}
+                    />
+                </div>
+                <div className="flex items-center justify-between">
+                    <FormSwitch
+                        label="Hidden"
+                        checked={Boolean(field.is_hidden)}
+                        onChange={(e) => setValue("is_hidden", e.target.checked)}
+                    // icon={<FaSortAmountDown />}
+                    />
+                </div>
+                <div className="flex items-center justify-between">
+                    <FormSwitch
                         label="Active"
                         checked={Boolean(field.is_active)}
                         onChange={(e) => setValue("is_active", e.target.checked)}
@@ -686,34 +761,71 @@ const DatasetFieldForm = ({ field, setValue, tenants, datasets, datasetMap, savi
 export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
+    const [dataset_id, setDatasetId] = useState<number | undefined>(undefined);
     const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [showColumns, setShowColumns] = useState<boolean>(false);
+    const [hasFormError, setHasFormError] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    const didLoad = useRef(false);
+
+
     useEffect(() => {
-        const load = async () => {
-            const res = await tenantService.all();
-            setTenants(res || []);
-            if (res?.length) setTenantId(res[0].id ?? undefined);
-        };
-        load();
+        if (didLoad.current) return;
+        didLoad.current = true;
+        tenantService.all().then(t => setTenants(t || []));
     }, []);
 
     useEffect(() => {
         if (!tenant_id) return;
-        const load = async () => {
-            const res = await datasetService.all(tenant_id);
-            setDatasets(res || []);
-        };
-        load();
+        datasetService.all(tenant_id).then(d => setDatasets(d || []));
     }, [tenant_id]);
 
+    const defaultTenant = useMemo(() => {
+        return { required: true, ids: [tenant_id, dataset_id] };
+    }, [tenant_id, dataset_id]);
+
+    // const datasetMap = useMemo(() => {
+    //     return new Map(
+    //         datasets.filter(d => d.id !== null).map(d => [d.id!, d])
+    //     );
+    // }, [datasets]);
+
     const datasetMap = useMemo(() => {
-        return new Map(datasets.filter(d => d.id !== null).map(d => [d.id!, d]));
+        const map = new Map<number, Dataset>();
+        for (const d of datasets) {
+            if (d.id != null) map.set(d.id, d);
+        }
+        return map;
     }, [datasets]);
+
 
     return (
         <>
+            <div className="grid grid-cols-3 gap-4 mt-4">
+                <FormSelect
+                    label={`Tenant List`}
+                    value={tenant_id}
+                    options={tenants.map((c) => ({ value: c.id, label: c.name }))}
+                    onChange={(value) => { setTenantId(value); setDatasetId(undefined); }}
+                    placeholder="Sélectionner Tenant"
+                    leftIcon={<FaDatabase />}
+                    required={true}
+                />
+
+                <FormSelect
+                    label={`Dataset List`}
+                    value={dataset_id}
+                    options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+                    onChange={(value) => setDatasetId(value)}
+                    placeholder="Sélectionner Dataset"
+                    leftIcon={<FaDatabase />}
+                    required={true}
+                />
+            </div>
+            
+            <br />
+
             <AdminEntityCrudModule<DatasetField>
                 ref={ref}
                 title="Gestion des Fields"
@@ -722,8 +834,9 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
                 columns={datafieldColumns}
                 defaultValue={DEFAULT_FORM}
                 service={fieldService}
-                defaultTenant={{ required: true, id: tenant_id }}
+                defaultTenant={defaultTenant}
                 isValid={df =>
+                    !hasFormError &&
                     Boolean(
                         df.name.trim() &&
                         df.expression.trim() &&
@@ -744,6 +857,7 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
                         saving={saving}
                         showColumns={showColumns}
                         setShowColumns={setShowColumns}
+                        onValidationChange={setHasFormError}
                     />
                 )}
             />

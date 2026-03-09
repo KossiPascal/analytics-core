@@ -1,11 +1,10 @@
 from flask import Blueprint, request, jsonify
-
-from backend.src.databases.extensions import error_response
 from backend.src.security.access_security import require_auth
-from backend.src.equipment_manager.services.dhis2_service import (
-    sync_organizational_units, sync_ascs,
-)
+from backend.src.equipment_manager.services.dhis2_service import sync_organizational_units, sync_ascs
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -18,15 +17,11 @@ def sync_org_units():
     data = request.get_json(silent=True) or {}
     program_id = data.get("program_id")
     org_unit_id = data.get("org_unit_id")
-
-    try:
-        result = sync_organizational_units(program_id=program_id, org_unit_id=org_unit_id)
-        if "error" in result:
-            return error_response(result["error"], 400)
-        return jsonify(result), 200
-    except Exception as e:
-        logger.error(f"DHIS2 org unit sync error: {e}")
-        return error_response(f"Sync failed: {str(e)}", 500)
+    
+    result = sync_organizational_units(program_id=program_id, org_unit_id=org_unit_id)
+    if "error" in result:
+        raise BadRequest(result["error"])
+    return jsonify(result), 200
 
 
 @bp.post("/ascs")
@@ -36,11 +31,7 @@ def sync_ascs_route():
     program_id = data.get("program_id")
     org_unit_id = data.get("org_unit_id")
 
-    try:
-        result = sync_ascs(program_id=program_id, org_unit_id=org_unit_id)
-        if "error" in result:
-            return error_response(result["error"], 400)
-        return jsonify(result), 200
-    except Exception as e:
-        logger.error(f"DHIS2 ASC sync error: {e}")
-        return error_response(f"Sync failed: {str(e)}", 500)
+    result = sync_ascs(program_id=program_id, org_unit_id=org_unit_id)
+    if "error" in result:
+        raise BadRequest(result["error"])
+    return jsonify(result), 200

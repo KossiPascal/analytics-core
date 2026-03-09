@@ -1,0 +1,225 @@
+
+
+const updateQueryJson = useCallback((patch: Partial<QueryJson>) => {
+    let updated: QueryJson = { ...query.query_json, ...patch };
+
+    // Clean order_by ONLY if select changed
+    if (updated.select) {
+        const allowedFields = [
+            ...updated.select.dimensions,
+            ...updated.select.metrics
+        ];
+
+        updated = {
+            ...updated,
+            order_by: (updated.order_by || []).filter(o => !o.field || allowedFields.includes(o.field))
+        };
+    }
+    setValue("query_json", updated);
+
+    if (!dataset) return;
+
+    try {
+        // QueryJsonSchema.parse(updated);
+        const { sql, values, error } = compileDatasetQuery(dataset, fields, updated);
+
+        setErrors(error);
+
+        if (Object.keys(error).length === 0) {
+            setValue("compiled_sql", sql);
+            setValue("values", values);
+        } else {
+            setValue("compiled_sql", "");
+            setValue("values", {});
+            console.log(error)
+
+        }
+    } catch (err) {
+        // console.warn("Query invalid:" + err);
+        console.error(err);
+    }
+}, [query, dataset, fields, setValue]);
+
+
+
+
+
+export const ColorSchemePicker = ({ value, onChange, label, placeholder, maxColors = 10 }: ColorSchemePickerProps) => {
+    const [showPicker, setShowPicker] = useState(false);
+    const [currentColor, setCurrentColor] = useState("#000000");
+
+    const addColor = () => {
+        if (value.length >= maxColors) return;
+        if (!value.includes(currentColor)) {
+            onChange([...value, currentColor]);
+        }
+        setShowPicker(false);
+    };
+
+    const removeColor = (color: string) => {
+        onChange(value.filter(c => c !== color));
+    };
+
+    return (
+        <div className="mt-2">
+            <label className="font-semibold block mb-1">Color Scheme</label>
+
+            <div className="flex flex-wrap gap-2 mb-2">
+                {value.map(color => (
+                    <div key={color} className="flex items-center gap-1">
+                        <div title={color} style={{ backgroundColor: color }} className="w-6 h-6 rounded border border-gray-300"/>
+                        <button type="button" onClick={() => removeColor(color)} className="text-red-500 hover:text-red-700">
+                            <FaTrash size={12} />
+                        </button>
+                    </div>
+                ))}
+
+                <Button type="button" onClick={() => setShowPicker(true)} className="flex items-center gap-1 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    <FaPlus /> Add Color
+                </Button>
+            </div>
+
+            <Modal isOpen={showPicker} onClose={()=>setShowPicker(false)  }>
+                <div className="bg-white p-4 rounded shadow-lg">
+                    <HexColorPicker color={currentColor} onChange={setCurrentColor} />
+                    <div className="flex justify-between mt-2">
+                        <Button onClick={() => setShowPicker(false)} className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400">
+                            Cancel
+                        </Button>
+                        <Button onClick={addColor} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            Add
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+        </div>
+    );
+};
+
+
+
+
+const ColumnEditor = ({ columns, onChange }: ColumnEditorProps) => {
+    const [localCols, setLocalCols] = useState(columns);
+    const [error, setError] = useState<string>("");
+
+    useEffect(() => {
+        setLocalCols(columns);
+    }, [columns]);
+
+    const updateCol = (index: number, key: "field" | "label", value: string) => {
+        const newCols = [...localCols];
+        newCols[index][key] = value;
+        setLocalCols(newCols);
+        onChange(newCols);
+    };
+
+    const addCol = () => {
+        setLocalCols([...localCols, { field: "", label: "" }]);
+        onChange([...localCols, { field: "", label: "" }]);
+    };
+
+    const removeCol = (index: number) => {
+        const newCols = localCols.filter((_, i) => i !== index);
+        setLocalCols(newCols);
+        onChange(newCols);
+    };
+
+    return (
+        <div className="border rounded p-3 bg-gray-50 mt-2">
+            <label className="font-semibold mb-2 block">Columns</label>
+
+            {localCols.length === 0 && (
+                <div className="text-gray-400 mb-2">Aucune colonne définie</div>
+            )}
+
+            {localCols.map((col, idx) => (
+                <div key={`${col.field}-${col.label}-${idx}`} className="flex gap-2 mb-2 items-center">
+                    <FormInput
+                        label="Field"
+                        value={col.field}
+                        onChange={e => updateCol(idx, "field", e.target.value)}
+                        placeholder="Ex: name"
+                        className="flex-1"
+                    />
+                    <FormInput
+                        label="Label"
+                        value={col.label}
+                        onChange={e => updateCol(idx, "label", e.target.value)}
+                        placeholder="Ex: Nom"
+                        className="flex-1"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => removeCol(idx)}
+                        className="text-red-500 hover:text-red-700 mt-6"
+                    >
+                        <FaTrash />
+                    </button>
+                </div>
+            ))}
+
+            <Button type="button" onClick={addCol} className="mt-2 flex items-center gap-2">
+                <FaPlus /> Ajouter une colonne
+            </Button>
+
+            {error && <div className="text-red-500 mt-2">{error}</div>}
+        </div>
+    );
+};
+
+
+
+
+
+
+
+                {!NO_VALUE_OPERATORS.includes(node.operator) && (
+                    <>
+                        {node.operator === "BETWEEN" ? (
+                            <>
+                                <FormInput
+                                    type={inputType}
+                                    value={node.value}
+                                    onChange={(e) => onChange({ ...node, value: e.target.value })}
+                                />
+                                <FormInput
+                                    type={inputType}
+                                    value={node.value2}
+                                    onChange={(e) => onChange({ ...node, value2: e.target.value })}
+                                />
+                            </>
+                        ) : (
+                            <>
+                                {inputType === "select" &&  && (
+                                    <FormSelect
+                                        label="Value"
+                                        value={node.value}
+                                        options={[
+                                            { value: "true", label: "TRUE" },
+                                            { value: "false", label: "FALSE" },
+                                        ]}
+                                        onChange={(v) => onChange({ ...node, value: v })}
+                                    />
+                                )}
+
+                                {inputType === "textarea" && (
+                                    <FormTextarea
+                                        label="Value"
+                                        value={node.value}
+                                        onChange={(e) => onChange({ ...node, value: e.target.value })}
+                                    />
+                                )}
+
+                                {["text", "number", "date", "datetime-local", "time"].includes(inputType) && (
+                                    <FormInput
+                                        label="Value"
+                                        type={inputType}
+                                        value={node.value}
+                                        onChange={(e) => onChange({ ...node, value: e.target.value })}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </>
+                )}

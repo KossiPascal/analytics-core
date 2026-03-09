@@ -29,7 +29,7 @@ export interface User {
   updated_at?: string;
 }
 
-export interface PayloadUser {
+export interface UserPayload {
     id: string;
     username: string;
     fullname: string;
@@ -44,7 +44,7 @@ export interface LoginResponse {
   access_token_exp: number,
   refresh_token: string;
   refresh_token_exp: number,
-  payload: PayloadUser
+  payload: UserPayload
 }
 
 export type ApiResponse<T> = {

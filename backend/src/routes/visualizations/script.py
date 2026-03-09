@@ -14,6 +14,9 @@ from backend.src.services.json_executor import validate_json
 from typing import Optional, List
 import time
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 from backend.src.logger import get_backend_logger, audit_log
 from shared_libs.helpers.utils import serializeContent
 logger = get_backend_logger(__name__)
@@ -32,7 +35,7 @@ def list_scripts():
         # 🔐 Authentification
         current = g.get("current_user")
         if not current:
-            return jsonify({"error": "Unauthorized"}), 401
+            raise BadRequest("Unauthorized", 401)
 
         user_id = current.get("id")
         role = current.get("role")
@@ -41,7 +44,7 @@ def list_scripts():
         # 🚫 Autorisation
         if not isAdmin(role, permissions):
             audit_log(action="ACCESS_DENIED",details={"resource": "list_scripts"},level="WARNING")
-            return jsonify({"error": "Access denied"}), 403
+            raise BadRequest("Access denied", 403)
 
         result = []
 
@@ -54,14 +57,14 @@ def list_scripts():
 
                 if not os.path.isfile(full_path):
                     logger.warning(f"Missing script file: {full_path}")
-                    return jsonify({"error": f"Database error: {str(e)}"}), 500
+                    raise BadRequest(f"Database error: {str(e)}", 500)
 
                 try:
                     with open(full_path, "r", encoding="utf-8") as f:
                         content = json.load(f) if language == "json" else f.read()
                 except Exception as e:
                     logger.error(f"Failed to read {full_path}: {e}")
-                    return jsonify({"error": f"Database error: {str(e)}"}), 500
+                    raise BadRequest(f"Database error: {str(e)}", 500)
 
                 if not content:
                     continue
@@ -96,13 +99,13 @@ def list_scripts():
     except SQLAlchemyError as e:
         db.session.rollback()
         logger.error(f"Database error while fetching scripts: {str(e)}")
-        return jsonify({"error": f"Database error: {str(e)}"}), 500
+        raise BadRequest(f"Database error: {str(e)}", 500)
 
     # ❌ ERREURS GÉNÉRALES
     except Exception as e:
         db.session.rollback()
         logger.error(f"Unexpected error in list_scripts: {str(e)}")
-        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+        raise BadRequest(f"Internal server error: {str(e)}", 500)
 
 # RÉCUPÉRER UN SCRIPT PAR ID
 @bp.get("/<int:script_id>")
@@ -111,11 +114,11 @@ def get_script(script_id):
     try:
         script:Optional[Script] = Script.query.get(script_id)
         if not script:
-            return jsonify({"error": f"Script with id {script_id} not found"}), 404
+            raise BadRequest(f"Script with id {script_id} not found", 404)
 
         return jsonify(script.to_dict_safe()), 200
     except SQLAlchemyError as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 # CRÉER OU METTRE À JOUR UN SCRIPT
 @bp.post("")
@@ -125,7 +128,7 @@ def save_script(script_id=None):
     try:
         payload = request.get_json(silent=True)
         if not payload:
-            return jsonify({"error": "Invalid JSON payload"}), 400
+            raise BadRequest("Invalid JSON payload", 400)
 
         # Validation des champs
         name = payload.get("name")
@@ -134,26 +137,26 @@ def save_script(script_id=None):
         script_id = script_id or payload.get("id")
 
         if not name or not language or not content:
-            return jsonify({"error": "Missing required fields: name, language, content"}), 422
+            raise BadRequest("Missing required fields: name, language, content", 422)
         
         language_lower = language.lower()
         if language_lower not in Config.ALLOWED_LANGUAGES:
-            return jsonify({"error": f"Language '{language}' is not allowed"}), 422
+            raise BadRequest(f"Language '{language}' is not allowed", 422)
         
         user_id = g.current_user["id"]
 
         if not user_id:
-            return jsonify({"error": "Action non autorisée !"}), 409
+            raise BadRequest("Action non autorisée !", 409)
 
         # Mise à jour si l'ID existe
         if script_id:
             script:Optional[Script] = Script.query.get(script_id)
             if not script:
-                return jsonify({"error": f"Script with id {script_id} not found"}), 404
+                raise BadRequest(f"Script with id {script_id} not found", 404)
             
             for rel_name, rel_path, rel_language in LOCAL_SCRIPT_FILES:
                 if name == rel_name and language_lower != rel_language:
-                    return jsonify({"error": f"Modification impossible du script {rel_name}"}), 400
+                    raise BadRequest(f"Modification impossible du script {rel_name}", 400)
             
             script.name = name
             script.language = language_lower
@@ -167,7 +170,7 @@ def save_script(script_id=None):
                 for rel_name, rel_path, rel_language in LOCAL_SCRIPT_FILES:
                     if name == rel_name:
                         if language_lower != rel_language:
-                            return jsonify({"error": f"Modification impossible du script {rel_name}"}), 400
+                            raise BadRequest(f"Modification impossible du script {rel_name}", 400)
                         
                         full_path = os.path.join(base_dir, rel_path)
                         if os.path.exists(full_path):
@@ -175,7 +178,7 @@ def save_script(script_id=None):
                                 f.write(serialized_content)
         else:
             if name in SCRIPT_NAMES:
-                return jsonify({"error": "Modification interdite pour ce script"}), 403
+                raise BadRequest("Modification interdite pour ce script", 403)
             
             # Création d'un nouveau script
             script = Script(name=name,language=language_lower,content=content,owner_id=user_id)
@@ -188,10 +191,10 @@ def save_script(script_id=None):
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        raise
 
     except Exception as e:
-        return jsonify({"error": "Unexpected error", "details": str(e)}), 500
+        raise BadRequest("Unexpected error",500)
 
 # SUPPRIMER UN SCRIPT PAR ID
 @bp.delete("/<int:script_id>")
@@ -200,10 +203,10 @@ def delete_script(script_id):
     try:
         script = Script.query.get(script_id)
         if not script:
-            return jsonify({"error": f"Script with id {script_id} not found"}), 404
+            raise BadRequest(f"Script with id {script_id} not found", 404)
         
         if script.name in SCRIPT_NAMES:
-            return jsonify({"error": "Modification interdite pour ce script"}), 403
+            raise BadRequest("Modification interdite pour ce script", 403)
 
         db.session.delete(script)
         db.session.commit()
@@ -214,9 +217,9 @@ def delete_script(script_id):
         return jsonify({"status": "deleted", "id": script_id}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        raise
     except Exception as e:
-        return jsonify({"error": "Unexpected error", "details": str(e)}), 500
+        raise BadRequest("Unexpected error", 500)
 
 
 @bp.post("/execute")
@@ -244,11 +247,11 @@ def execute_script():
     permissions = g.current_user["permissions"]
     
     if not user_id or not permissions:
-        return jsonify({"error": "Missing user (authorization)"}), 409
+        raise BadRequest("Missing user (authorization)", 409)
 
     # user:Optional[User] = User.query.filter_by(id=user_id).first()
     # if not user:
-    #     return jsonify({"error": "User not found / unauthorized"}), 401
+    #     raise BadRequest("User not found / unauthorized", 401)
 
     script_id = payload.get("script_id")
     content = serializeContent(payload.get("content"))
@@ -264,24 +267,24 @@ def execute_script():
     if script_id:
         script = Script.query.get(script_id)
         if not script:
-            return jsonify({"error": "Script not found"}), 404
+            raise BadRequest("Script not found", 404)
         content = serializeContent(script.content)
         language = script.language
 
     # Ensure content and language exist
     if not content or not language:
-        return jsonify({"error": "Missing content or language"}), 400
+        raise BadRequest("Missing content or language", 400)
 
     # Validate type
     if not isinstance(content, str):
-        return jsonify({"error": "Content must be a string"}), 400
+        raise BadRequest("Content must be a string", 400)
     
     if not isinstance(language, str):
-        return jsonify({"error": "Language must be a string"}), 400
+        raise BadRequest("Language must be a string", 400)
 
     language = language.lower()
     if language not in Config.ALLOWED_LANGUAGES:
-        return jsonify({"error": f"Language '{language}' is not allowed"}), 403
+        raise BadRequest(f"Language '{language}' is not allowed", 403)
 
     # ---------------- SECURITY LIMITS ----------------
     try:
@@ -314,7 +317,7 @@ def execute_script():
 
         else:
             # should never happen
-            return jsonify({"error": f"Unsupported language '{language}'"}), 400
+            raise BadRequest(f"Unsupported language '{language}'", 400)
 
         # ---------------- LOGGING ----------------
         elapsed = round(time.time() - start_time, 3)
@@ -324,5 +327,5 @@ def execute_script():
     
     except Exception as e:
         logger.error(f"Error executing content: {str(e)}")
-        return jsonify({"error": "Execution failed", "details": str(e)}), 500
+        raise BadRequest("Execution failed", 500)
 

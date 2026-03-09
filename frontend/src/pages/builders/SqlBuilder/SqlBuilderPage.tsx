@@ -152,7 +152,7 @@ const SqlBuilderPage: React.FC = () => {
     setLoading(true);
     setIsLoadError(false);
     try {
-      const data = await API.all(1,true);
+      const data = await API.allWithDetails(1,true);
      
       const connList: DatabaseDef[] = [];
       const TablesList: TableDef[] = [];

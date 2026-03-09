@@ -1,11 +1,11 @@
 import React, { useEffect, createContext, useContext, ReactNode } from "react";
-import { PayloadUser } from "@/models/auth.model";
+import { UserPayload } from "@/models/auth.model";
 import { useAuthStore } from "@/stores/auth.store";
 import { DEFAULT_AUTHENTICATED_ROUTE, ROUTES } from "@/routes";
 import { useLocation, useNavigate } from "react-router-dom";
 
 interface AuthContextType {
-    user: PayloadUser | null;
+    user: UserPayload | null;
     isAuthenticated: boolean;
     isSuperAdmin: boolean;
     isAdmin: boolean;
@@ -14,9 +14,10 @@ interface AuthContextType {
     login: (username: string, password: string, callback?: () => Promise<void>) => Promise<void>;
     logout: (callback?: () => Promise<void>) => Promise<void>;
     restore: (callback?: () => Promise<void>) => Promise<void>;
-    refresh: (refresh_token: string | null, callback?: () => void) => Promise<void>;
+    refresh: (callback?: () => void) => Promise<void>;
     changePassword: (oldPass: string, newPass: string, callback?: () => Promise<void>) => Promise<void>;
     hasPermission: (perms: string | string[], all?: boolean) => boolean;
+    redirectToPage: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,9 +44,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return () => window.removeEventListener(logoutKey, onLogout);
     }, [navigate]); // 👈 UNE FOIS
 
-    const login = async (username: string, password: string, callback?: () => Promise<void>) => {
-        await store.login(username, password);
-        if (callback) await callback();
+    const redirectToPage = () => {
 
         // 📍 Redirection après login
         // const redirectTo = (location.state as { from?: Location })?.from?.pathname || ROUTES.dashboards.root();
@@ -58,6 +57,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
             navigate(DEFAULT_AUTHENTICATED_ROUTE, { replace: true });
         }
+
+    }
+
+    const login = async (username: string, password: string, callback?: () => Promise<void>) => {
+        await store.login(username, password);
+        if (callback) await callback();
+        redirectToPage();
     };
 
     const logout = async (callback?: () => Promise<void>) => {
@@ -82,19 +88,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await store.restore();
         callback?.();
     }
-    const refresh = async (refresh_token: string | null, callback?: () => void) => {
-        await store.refresh(refresh_token);
+    const refresh = async (callback?: () => void) => {
+        await store.refresh();
         callback?.();
     }
 
     // const hasPermission = (perms: string | string[], all: boolean = false) => store.hasPermission(perms, all);
     const hasPermission = (perms: string | string[], all: boolean = false) => {
-    const userPerms = store.user?.permissions ?? [];
-    const required = Array.isArray(perms) ? perms : [perms];
+        const userPerms = store.user?.permissions ?? [];
+        const required = Array.isArray(perms) ? perms : [perms];
 
-    return all
-        ? required.every(p => userPerms.includes(p))
-        : required.some(p => userPerms.includes(p));
+        return all
+            ? required.every(p => userPerms.includes(p))
+            : required.some(p => userPerms.includes(p));
     };
     const contextValue: AuthContextType = {
         user: store.user,
@@ -109,6 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         refresh,
         changePassword,
         hasPermission,
+        redirectToPage
     };
 
     return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

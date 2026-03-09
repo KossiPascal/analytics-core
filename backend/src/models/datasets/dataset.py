@@ -5,12 +5,22 @@ from enum import Enum as PyEnum
 from datetime import datetime, timezone
 from backend.src.databases.extensions import db
 from backend.src.models.controls import AuditMixin
-from backend.src.models.datasets.query_validator import QueryValidator
 from sqlalchemy.dialects.postgresql import JSONB
 
 from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
+from jsonschema import validate, ValidationError
 
+BASE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "semantic": {"type": "object"},
+        "visual": {"type": "object"},
+        "interaction": {"type": "object"},
+        "advanced": {"type": "object"}
+    },
+    "required": ["semantic"]
+}
 
 # ENUMS
 class DatasetSqlType(str, PyEnum):
@@ -124,11 +134,6 @@ class Dataset(db.Model, AuditMixin):
             "columns": self.columns,
             "version": self.version,
             "parent_id": self.parent_id,
-            "tenant": self.tenant.to_dict() if self.tenant else None,
-            "connection": self.connection.to_dict() if self.connection else None,
-            "datasource": self.datasource.to_dict() if self.datasource else None,
-            # "fields": [f.to_dict() for f in self.fields],
-            # "queries": [q.to_dict() for q in self.queries],
         }
 
         # # hasEngine = bool(self.sql is None and self.view_name)
@@ -140,8 +145,11 @@ class Dataset(db.Model, AuditMixin):
             
         if include_relations:
             data.update({
-                "fields": [f.to_dict() for f in self.fields],
-                "queries": [q.to_dict() for q in self.queries],
+                "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
+                "connection": self.connection.to_dict(include_relations=False) if self.connection else None,
+                "datasource": self.datasource.to_dict(include_relations=False) if self.datasource else None,
+                "fields": [f.to_dict(include_relations=False) for f in self.fields],
+                "queries": [q.to_dict(include_relations=False) for q in self.queries],
                 # "children": [c.id for c in self.children],
             })
 
@@ -197,52 +205,52 @@ class Dataset(db.Model, AuditMixin):
             "columns": columns if columns else []
         }
 
-    @staticmethod  
-    def manage_materialized_view(engine, dataset, replace_if_exists: bool = False, refresh: bool = False):
-        """
-        Crée ou met à jour une materialized view PostgreSQL de façon sécurisée.
+    # @staticmethod  
+    # def manage_materialized_view(engine, dataset, replace_if_exists: bool = False, refresh: bool = False):
+    #     """
+    #     Crée ou met à jour une materialized view PostgreSQL de façon sécurisée.
 
-        Args:
-            engine: SQLAlchemy engine
-            dataset: instance Dataset (dataset.sql doit être validé)
-            replace_if_exists: si True, remplace la MATVIEW existante
-            refresh: si True, rafraîchit la MATVIEW existante
-        """
-        view_name = dataset.name.lower()
+    #     Args:
+    #         engine: SQLAlchemy engine
+    #         dataset: instance Dataset (dataset.sql doit être validé)
+    #         replace_if_exists: si True, remplace la MATVIEW existante
+    #         refresh: si True, rafraîchit la MATVIEW existante
+    #     """
+    #     view_name = dataset.name.lower()
 
-        # 1️⃣ Vérifier existence de la MATVIEW
-        check_sql = text("""
-            SELECT 1
-            FROM pg_matviews
-            WHERE schemaname = 'public' AND matviewname = :view_name
-        """)
+    #     # 1️⃣ Vérifier existence de la MATVIEW
+    #     check_sql = text("""
+    #         SELECT 1
+    #         FROM pg_matviews
+    #         WHERE schemaname = 'public' AND matviewname = :view_name
+    #     """)
         
-        with engine.connect() as conn:
-            exists = conn.execute(check_sql, {"view_name": view_name}).fetchone() is not None
+    #     with engine.connect() as conn:
+    #         exists = conn.execute(check_sql, {"view_name": view_name}).fetchone() is not None
 
-            if exists:
-                logger.info(f"Materialized view '{view_name}' exists in DB")
-                if replace_if_exists:
-                    # ✅ Remplacer en validant le SQL
-                    validator = QueryValidator(query_json=None, fields=dataset.fields)
-                    compiled_sql = validator.validate_and_compile(dataset.sql)
-                    create_sql = f"CREATE OR REPLACE MATERIALIZED VIEW {view_name} AS {compiled_sql}"
-                    logger.info(f"Replacing MATVIEW '{view_name}'")
-                    conn.execute(text(create_sql))
-                elif refresh:
-                    # ✅ Rafraîchir la vue existante
-                    refresh_sql = f"REFRESH MATERIALIZED VIEW CONCURRENTLY {view_name}"
-                    logger.info(f"Refreshing MATVIEW '{view_name}'")
-                    conn.execute(text(refresh_sql))
-                else:
-                    logger.info(f"No action taken for MATVIEW '{view_name}'")
-            else:
-                # 2️⃣ Créer la MATVIEW si absente
-                validator = QueryValidator(query_json=None, fields=dataset.fields)
-                compiled_sql = validator.validate_and_compile(dataset.sql)
-                create_sql = f"CREATE MATERIALIZED VIEW {view_name} AS {compiled_sql}"
-                logger.info(f"Creating MATVIEW '{view_name}'")
-                conn.execute(text(create_sql))
+    #         if exists:
+    #             logger.info(f"Materialized view '{view_name}' exists in DB")
+    #             if replace_if_exists:
+    #                 # ✅ Remplacer en validant le SQL
+    #                 validator = QueryValidator(query_json=None, fields=dataset.fields)
+    #                 compiled_sql = validator.validate_and_compile(dataset.sql)
+    #                 create_sql = f"CREATE OR REPLACE MATERIALIZED VIEW {view_name} AS {compiled_sql}"
+    #                 logger.info(f"Replacing MATVIEW '{view_name}'")
+    #                 conn.execute(text(create_sql))
+    #             elif refresh:
+    #                 # ✅ Rafraîchir la vue existante
+    #                 refresh_sql = f"REFRESH MATERIALIZED VIEW CONCURRENTLY {view_name}"
+    #                 logger.info(f"Refreshing MATVIEW '{view_name}'")
+    #                 conn.execute(text(refresh_sql))
+    #             else:
+    #                 logger.info(f"No action taken for MATVIEW '{view_name}'")
+    #         else:
+    #             # 2️⃣ Créer la MATVIEW si absente
+    #             validator = QueryValidator(query_json=None, fields=dataset.fields)
+    #             compiled_sql = validator.validate_and_compile(dataset.sql)
+    #             create_sql = f"CREATE MATERIALIZED VIEW {view_name} AS {compiled_sql}"
+    #             logger.info(f"Creating MATVIEW '{view_name}'")
+    #             conn.execute(text(create_sql))
 
     @staticmethod
     def dataset_columns(view_name: str,schema: str = "public") -> List[Dict[str, str]]:
@@ -289,7 +297,6 @@ class Dataset(db.Model, AuditMixin):
             return "boolean"
         return "string"
 
-
 # DATASET FIELD
 class DatasetField(db.Model, AuditMixin):
     __tablename__ = "dataset_fields"
@@ -315,6 +322,8 @@ class DatasetField(db.Model, AuditMixin):
     is_filterable = db.Column(db.Boolean, nullable=False, default=False)
     is_groupable = db.Column(db.Boolean, nullable=False, default=False)
     is_sortable = db.Column(db.Boolean, nullable=False, default=False)
+    # is_selectable = db.Column(db.Boolean, nullable=False, default=False)
+    # is_hidden = db.Column(db.Boolean, nullable=False, default=False)
 
     tenant = db.relationship("Tenant", back_populates="fields", lazy="selectin",foreign_keys=[tenant_id])
     dataset = db.relationship("Dataset", back_populates="fields", lazy="selectin",foreign_keys=[dataset_id])
@@ -342,7 +351,7 @@ class DatasetField(db.Model, AuditMixin):
     def is_metric(self):
         return self.field_type == FieldType.METRIC.value or self.field_type == FieldType.CALCUL_METRIC.value
 
-    def to_dict(self, include_relations:bool=False):
+    def to_dict(self, include_relations:bool=True):
         data = {
             "id": self.id,
             "name": self.name,
@@ -360,14 +369,16 @@ class DatasetField(db.Model, AuditMixin):
             "is_filterable": self.is_filterable,
             "is_groupable": self.is_groupable,
             "is_sortable": self.is_sortable,
+            # "is_selectable": self.is_selectable,
+            # "is_hidden": self.is_hidden,
             "is_active": self.is_active,
-            "dataset": self.dataset.to_dict(include_relations=False) if self.dataset else None,
-            "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
         }
 
-        # if include_relations:
-        #     data.update({
-        #     })
+        if include_relations:
+            data.update({
+                "dataset": self.dataset.to_dict(include_relations=False) if self.dataset else None,
+                "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
+            })
 
         return data
 
@@ -385,7 +396,11 @@ class DatasetQuery(db.Model, AuditMixin):
     dataset_id = db.Column(db.BigInteger,db.ForeignKey("datasets.id", ondelete="CASCADE"),nullable=False,index=True)
     query_json = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
     values = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
+    
     compiled_sql = db.Column(db.Text)
+
+    sql_type = db.Column(db.String(50), nullable=False, default=DatasetSqlType.MATVIEW.value)
+
     is_validated = db.Column(db.Boolean, nullable=False, default=False)
     validated_at = db.Column(db.DateTime(timezone=True))
 
@@ -444,10 +459,8 @@ class DatasetQuery(db.Model, AuditMixin):
     #     self.compiled_sql = engine.compile(self.query_json,self.dataset.fields)
     #     return self.compiled_sql
 
-
-
-    def to_dict(self):
-        return {
+    def to_dict(self, include_relations=True):
+        data = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -460,97 +473,17 @@ class DatasetQuery(db.Model, AuditMixin):
             "validated_at": self.validated_at,
             "is_active": self.is_active,
             "cache": self.cache,
-            "dataset": self.dataset.to_dict(include_relations=False) if self.dataset else None,
-            "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
-            # "charts": [c.to_dict() for c in self.charts] if self.charts else None,
-        }
-
-    def __repr__(self):
-        return f"<DatasetQuery id={self.id} validated={self.is_validated}>"
-
-# DATASET CHART
-class DatasetChart(db.Model, AuditMixin):
-    __tablename__ = "dataset_charts"
-
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
-    tenant_id = db.Column(db.BigInteger,db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False,index=True)
-    query_id = db.Column(db.BigInteger,db.ForeignKey("dataset_queries.id", ondelete="CASCADE"),nullable=False,index=True)
-    dataset_id = db.Column(db.BigInteger,db.ForeignKey("datasets.id", ondelete="CASCADE"),nullable=False,index=True)
-    type = db.Column(db.Enum(ChartType, name="chart_type_enum", native_enum=False),nullable=False)
-    options = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
-    
-    tenant = db.relationship("Tenant", back_populates="charts",lazy="selectin",foreign_keys=[tenant_id])
-    dataset = db.relationship("Dataset", back_populates="charts",lazy="selectin",foreign_keys=[dataset_id])
-    dataset_query = db.relationship("DatasetQuery", back_populates="charts",lazy="selectin",foreign_keys=[query_id])
-
-    visualizations = db.relationship("VisualizationChart", back_populates="chart", cascade="all, delete-orphan")
-    
-    __table_args__ = (
-        db.UniqueConstraint("tenant_id", "name", name="uq_chart_name_per_tenant"),
-        db.ForeignKeyConstraint(
-            ["query_id", "dataset_id"],
-            ["dataset_queries.id", "dataset_queries.dataset_id"],
-            ondelete="CASCADE",
-            name="fk_chart_query_dataset_match",
-        ),
-    )
-
-    def ensure_same_tenant(self):
-        if self.dataset and self.dataset.tenant_id != self.tenant_id:
-            raise ValueError("Tenant mismatch")
-
-    def validate_options(self):
-        """
-        Validation minimale de la structure options
-        Peut être étendue selon le type du chart
-        """
-        if not isinstance(self.options, dict):
-            raise ValueError("Chart options must be a JSON object")
-
-        # Exemple validation simple
-        if self.type == ChartType.KPI:
-            if "metric" not in self.options:
-                raise ValueError("KPI chart requires 'metric' in options")
-
-    def render_config(self, data: list):
-        """
-        Retourne la configuration prête pour frontend
-        """
-        self.validate_options()
-
-        return {
-            "id": self.id,
-            "name": self.name,
-            "type": self.type.value,
-            "data": data,
-            "options": self.options or {},
-        }
-
-    def to_dict(self, include_relations=False):
-        data = {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "tenant_id": self.tenant_id,
-            "query_id": self.query_id,
-            "dataset_id": self.dataset_id,
-            "type": self.type.value if self.type else None,
-            "options": self.options or {},
-            "is_active": self.is_active,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
         }
 
         if include_relations:
-            data["tenant"] = self.tenant.to_dict() if self.tenant else None
-            data["dataset"] = self.dataset.to_dict() if self.dataset else None,
-            data["query"] = self.dataset_query.to_dict() if self.dataset_query else None,
-            data["visualizations"] = [v.to_dict() for v in self.visualizations] if self.visualizations else None,
-        
+            data.update({
+                "fields": [f.to_dict(include_relations=False) for f in self.dataset.fields] if self.dataset and self.dataset.fields else None,
+                "dataset": self.dataset.to_dict(include_relations=False) if self.dataset else None,
+                "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
+                # "charts": [c.to_dict() for c in self.charts] if self.charts else None,
+            })
+
         return data
 
     def __repr__(self):
-        return f"<DatasetChart id={self.id} name={self.name} type={self.type.value}>"
-    
+        return f"<DatasetQuery id={self.id} validated={self.is_validated}>"

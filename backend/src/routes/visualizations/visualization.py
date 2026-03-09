@@ -7,6 +7,9 @@ from backend.src.models.visualization import Visualization,VisualizationExecutio
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("visualizations", __name__, url_prefix="/api/visualizations")
@@ -20,7 +23,7 @@ def create_visualization():
     vtype = data.get("type")
 
     if vtype not in ("dashboard", "report"):
-        return jsonify({"error": "Invalid visualization type"}), 400
+        raise BadRequest("Invalid visualization type", 400)
 
     try:
         vis = Visualization(
@@ -44,7 +47,7 @@ def create_visualization():
     except Exception as e:
         db.session.rollback()
         logger.error(f"Create visualization failed: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        raise
 
 # 📄 GET ONE
 @bp.get("/<uuid:vid>")
@@ -52,7 +55,7 @@ def create_visualization():
 def get_visualization(vid):
     v:Visualization = Visualization.query.get(vid)
     if not v:
-        return jsonify({"error": "Visualization not found"}), 404
+        raise BadRequest("Visualization not found", 404)
     return jsonify(v.full_serialize()), 200
 
 # 📚 LIST Visualization
@@ -91,7 +94,7 @@ def list_visualizations():
 def update_visualization(vid):
     v = Visualization.query.get(vid)
     if not v:
-        return jsonify({"error": "Visualization not found"}), 404
+        raise BadRequest("Visualization not found", 404)
 
     data = request.get_json() or {}
     for field in ["name", "description", "config","filters", "layout", "status", "generated_data"]:
@@ -107,7 +110,7 @@ def update_visualization(vid):
 def delete_visualization(vid):
     v = Visualization.query.get(vid)
     if not v:
-        return jsonify({"error": "Not found"}), 404
+        raise BadRequest("Not found", 404)
 
     db.session.delete(v)
     db.session.commit()
@@ -118,7 +121,7 @@ def delete_visualization(vid):
 def bulk_delete():
     ids = request.json.get("ids", [])
     if not ids:
-        return jsonify({"error": "Invalid input"}), 400
+        raise BadRequest("Invalid input", 400)
 
     objs = Visualization.query.filter(Visualization.id.in_(ids)).all()
     for o in objs:
@@ -133,13 +136,13 @@ def bulk_delete():
 def create_execution_log(vid):
     v = Visualization.query.get(vid)
     if not v:
-        return jsonify({"error": "Not found"}), 404
+        raise BadRequest("Not found", 404)
 
     data = request.get_json() or {}
     status = data.get("status")
 
     if status not in ("success", "failed"):
-        return jsonify({"error": "Invalid status"}), 400
+        raise BadRequest("Invalid status", 400)
 
     log = VisualizationExecutionLog(
         id=uuid.uuid4(),

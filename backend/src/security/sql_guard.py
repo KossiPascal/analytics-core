@@ -4,6 +4,8 @@ from uuid import UUID
 from decimal import Decimal
 from datetime import datetime, timezone, date
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 # Commandes à bloquer globalement (tu peux assouplir pour superadmin)
 BLOCKED_SQL = [
@@ -136,23 +138,23 @@ def validate_sql(sql_text,is_admin,is_superadmin):
 
     # Block multi-statements for non-admin; even admins can be restricted if you prefer
     if has_multiple_statements(sql_text) and not is_admin:
-        return ({"error": "Multiple statements are not allowed"},None,403)
+        raise BadRequest("Multiple statements are not allowed",403)
 
     # Block dangerous keywords presence for non-superadmin
     if not is_superadmin:
         blocked_kw = contains_blocked_keyword(sql_text)
         if blocked_kw:
-            return ({"error": f"Command '{blocked_kw}' is not allowed for your role"},None,403)
+            raise BadRequest(f"Command '{blocked_kw}' is not allowed for your role",403)
 
     # If non-admin: only allow SELECT or EXPLAIN (explain handled separately)
     if not is_superadmin:
         first = first_kw.strip().upper()
         if first not in ("SELECT", "WITH", "EXPLAIN"):
-            return ({"error": "Only SELECT/EXPLAIN queries are allowed for your role"},None,403)
+            raise BadRequest("Only SELECT/EXPLAIN queries are allowed for your role",403)
 
         # Disallow any reference to excluded tables
         if contains_excluded_table(sql_text):
-            return ({"error": "Operation on a protected table is not allowed"},None,403)
+            raise BadRequest("Operation on a protected table is not allowed",403)
         
 
     return (sql_text,first_kw,200)

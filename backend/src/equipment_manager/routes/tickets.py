@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
-from sqlalchemy.exc import IntegrityError
-
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.tickets import (
     RepairTicket, Issue, TicketEvent, TicketComment, ProblemType,
@@ -11,11 +9,12 @@ from backend.src.equipment_manager.models.tickets import (
 from backend.src.equipment_manager.models.equipment import Equipment
 from backend.src.equipment_manager.models.employees import Employee, Position
 from backend.src.equipment_manager.routes.employees import get_allowed_employee_ids
-from backend.src.equipment_manager.services.ticket_workflow import (
-    generate_ticket_number, validate_transition, get_next_stages,
-)
+from backend.src.equipment_manager.services.ticket_workflow import generate_ticket_number, validate_transition, get_next_stages
 from backend.src.equipment_manager.services.email_service import send_ticket_notification
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -60,14 +59,14 @@ def create_ticket():
     initial_send_date_str = data.get("initial_send_date", "").strip()
 
     if not equipment_id or not problem_description:
-        return error_response("equipment_id and problem_description are required", 400)
+        raise BadRequest("equipment_id and problem_description are required", 400)
 
     equipment = Equipment.query.get(int(equipment_id))
     if not equipment:
-        return error_response("Equipment not found", 404)
+        raise BadRequest("Equipment not found", 404)
 
     if not equipment.is_active:
-        return error_response(
+        raise BadRequest(
             f"Impossible de créer un ticket : l'équipement est inactif ({equipment.status}).",
             409
         )
@@ -80,7 +79,7 @@ def create_ticket():
         employee = equipment.owner
 
     if not employee:
-        return error_response("employee_id is required (or assign equipment to an employee first)", 400)
+        raise BadRequest("employee_id is required (or assign equipment to an employee first)", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
 
@@ -137,7 +136,7 @@ def create_ticket():
 
     except IntegrityError:
         db.session.rollback()
-        return error_response("Failed to create ticket", 409)
+        raise BadRequest("Failed to create ticket", 409)
 
 
 @bp.get("/<int:id>")
@@ -145,7 +144,7 @@ def create_ticket():
 def get_ticket(id):
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     result = ticket.to_dict_safe()
     result["events"] = [e.to_dict_safe() for e in sorted(ticket.events, key=lambda e: e.timestamp)]
@@ -160,7 +159,7 @@ def ticket_candidates(id):
     """Return next stages + all active employees for this ticket's send form."""
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     next_stages = get_next_stages(ticket.current_stage)
     is_final = next_stages == ["RETURNED_ASC"]
@@ -186,7 +185,7 @@ def ticket_candidates(id):
 def receive_ticket(id):
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
@@ -203,7 +202,7 @@ def receive_ticket(id):
 
     # Block the sender from confirming their own dispatch (only admin can bypass)
     if last_sent and last_sent.user_id == user_id and not is_admin:
-        return error_response(
+        raise BadRequest(
             "Vous ne pouvez pas confirmer la réception d'un ticket que vous venez d'envoyer.", 403
         )
 
@@ -229,7 +228,7 @@ def receive_ticket(id):
 def send_ticket(id):
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     data = request.get_json(silent=True) or {}
     to_role = data.get("to_role", "").strip()
@@ -245,12 +244,12 @@ def send_ticket(id):
         recipient_email = (ticket.employee.email or "").strip()
 
     if not to_role:
-        return error_response("to_role is required", 400)
+        raise BadRequest("to_role is required", 400)
 
     # Validate transition
     if not validate_transition(ticket.current_stage, to_role):
         valid = get_next_stages(ticket.current_stage)
-        return error_response(f"Invalid transition. Valid next stages: {valid}", 400)
+        raise BadRequest(f"Invalid transition. Valid next stages: {valid}", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
     sender_name = g.current_user.get("fullname", g.current_user.get("username", ""))
@@ -303,15 +302,15 @@ def receive_from_repairer(id):
     """
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     if ticket.current_stage != "RETURNING_LOGISTICS":
-        return error_response(
+        raise BadRequest(
             "Cette action n'est disponible qu'à l'étape Retour - Logistique.", 400
         )
 
     if ticket.current_holder_id is not None:
-        return error_response("Le ticket a déjà été réceptionné à cette étape.", 400)
+        raise BadRequest("Le ticket a déjà été réceptionné à cette étape.", 400)
 
     # Vérification du département (LOG / ETH / TIC) ou admin
     user_id = int(g.current_user["id"]) if g.current_user else None
@@ -327,7 +326,7 @@ def receive_from_repairer(id):
             if pos and pos.department and pos.department.code in LOGISTICS_DEPT_CODES:
                 authorized = True
         if not authorized:
-            return error_response(
+            raise BadRequest(
                 "Accès réservé aux départements Logistique (LOG), E-Santé (ETH) ou TIC.", 403
             )
 
@@ -336,7 +335,7 @@ def receive_from_repairer(id):
     comment = data.get("comment", "").strip()
 
     if equipment_state not in ("REPAIRED", "COMPLETELY_DAMAGED"):
-        return error_response(
+        raise BadRequest(
             "equipment_state doit être REPAIRED (réparé) ou COMPLETELY_DAMAGED (non récupérable).", 400
         )
 
@@ -380,7 +379,7 @@ def receive_from_repairer(id):
 def mark_repaired(id):
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     data = request.get_json(silent=True) or {}
     user_id = int(g.current_user["id"]) if g.current_user else None
@@ -408,16 +407,16 @@ def mark_repaired(id):
 def cancel_ticket(id):
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     if ticket.status in ("CLOSED", "CANCELLED"):
-        return error_response(f"Ticket is already {ticket.status}", 400)
+        raise BadRequest(f"Ticket is already {ticket.status}", 400)
 
     data = request.get_json(silent=True) or {}
     cancellation_reason = data.get("cancellation_reason", "").strip()
 
     if not cancellation_reason:
-        return error_response("cancellation_reason is required", 400)
+        raise BadRequest("cancellation_reason is required", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
 
@@ -447,13 +446,13 @@ def cancel_ticket(id):
 def add_comment(id):
     ticket = RepairTicket.query.get(id)
     if not ticket:
-        return error_response("Ticket not found", 404)
+        raise BadRequest("Ticket not found", 404)
 
     data = request.get_json(silent=True) or {}
     comment_text = data.get("comment", "").strip()
 
     if not comment_text:
-        return error_response("comment is required", 400)
+        raise BadRequest("comment is required", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
 
@@ -504,10 +503,10 @@ def create_problem_type():
     category = data.get("category", "").strip()
 
     if not name or not code or not category:
-        return error_response("name, code and category are required", 400)
+        raise BadRequest("name, code and category are required", 400)
 
     if category not in ("HARDWARE", "SOFTWARE", "OTHER"):
-        return error_response("category must be HARDWARE, SOFTWARE or OTHER", 400)
+        raise BadRequest("category must be HARDWARE, SOFTWARE or OTHER", 400)
 
     try:
         pt = ProblemType(
@@ -522,7 +521,7 @@ def create_problem_type():
         return jsonify(pt.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Problem type with this code already exists", 409)
+        raise BadRequest("Problem type with this code already exists", 409)
 
 
 # ─── ALERT RECIPIENTS ────────────────────────────────────────────────────────
@@ -542,7 +541,7 @@ def create_alert_recipient():
     email = data.get("email", "").strip()
 
     if not user_id or not email:
-        return error_response("user_id and email are required", 400)
+        raise BadRequest("user_id and email are required", 400)
 
     try:
         recipient = DelayAlertRecipient(
@@ -556,7 +555,7 @@ def create_alert_recipient():
         return jsonify(recipient.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("This user is already an alert recipient", 409)
+        raise BadRequest("This user is already an alert recipient", 409)
 
 
 @bp.patch("/alert-recipients/<int:id>")
@@ -564,7 +563,7 @@ def create_alert_recipient():
 def toggle_alert_recipient(id):
     recipient = DelayAlertRecipient.query.get(id)
     if not recipient:
-        return error_response("Recipient not found", 404)
+        raise BadRequest("Recipient not found", 404)
 
     recipient.is_active = not recipient.is_active
     db.session.commit()
@@ -600,17 +599,17 @@ def create_alert_recipient_config():
     recipient_type = data.get("recipient_type", "").strip()
 
     if alert_level not in ("WARNING", "ESCALATION", "BCC"):
-        return error_response("alert_level must be WARNING, ESCALATION or BCC", 400)
+        raise BadRequest("alert_level must be WARNING, ESCALATION or BCC", 400)
     if recipient_type not in ("EMPLOYEE", "POSITION"):
-        return error_response("recipient_type must be EMPLOYEE or POSITION", 400)
+        raise BadRequest("recipient_type must be EMPLOYEE or POSITION", 400)
 
     employee_id = data.get("employee_id")
     position_id = data.get("position_id")
 
     if recipient_type == "EMPLOYEE" and not employee_id:
-        return error_response("employee_id required for EMPLOYEE recipient_type", 400)
+        raise BadRequest("employee_id required for EMPLOYEE recipient_type", 400)
     if recipient_type == "POSITION" and not position_id:
-        return error_response("position_id required for POSITION recipient_type", 400)
+        raise BadRequest("position_id required for POSITION recipient_type", 400)
 
     stage = data.get("stage") or None  # null = all stages
 
@@ -633,7 +632,7 @@ def delete_alert_recipient_config(id):
     from backend.src.equipment_manager.models.email_config import AlertRecipientConfig
     cfg = db.session.get(AlertRecipientConfig, id)
     if not cfg:
-        return error_response("Configuration introuvable", 404)
+        raise BadRequest("Configuration introuvable", 404)
     db.session.delete(cfg)
     db.session.commit()
     return jsonify(success=True), 200
@@ -645,7 +644,7 @@ def toggle_alert_recipient_config(id):
     from backend.src.equipment_manager.models.email_config import AlertRecipientConfig
     cfg = db.session.get(AlertRecipientConfig, id)
     if not cfg:
-        return error_response("Configuration introuvable", 404)
+        raise BadRequest("Configuration introuvable", 404)
     cfg.is_active = not cfg.is_active
     db.session.commit()
     return jsonify(cfg.to_dict_safe()), 200

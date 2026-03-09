@@ -1,10 +1,12 @@
 # identities.py
 from typing import List
 from flask import Blueprint, jsonify
-from backend.src.databases.extensions import error_response
 from backend.src.models.auth import RolePermissionLink, UserRoleLink, UsersLog
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -19,7 +21,7 @@ def list_role_permissions():
         return jsonify([r.to_dict() for r in rolePermission if r is not None]), 200
     except Exception as e:
         logger.error(f"List roles error: {str(e)}")
-        return error_response("Failed to list roles", 500, str(e))
+        raise BadRequest("Failed to list roles", 500)
 
 
 @bp.get("/users-logs")
@@ -30,7 +32,7 @@ def list_users_log():
         return jsonify([r.to_dict() for r in usersLog]), 200
     except Exception as e:
         logger.error(f"List roles error: {str(e)}")
-        return error_response("Failed to list roles", 500, str(e))
+        raise BadRequest("Failed to list roles", 500)
     
 
 @bp.get("/users-roles")
@@ -41,4 +43,4 @@ def list_user_roles():
         return jsonify([r.to_dict() for r in userRole]), 200
     except Exception as e:
         logger.error(f"List roles error: {str(e)}")
-        return error_response("Failed to list roles", 500, str(e))
+        raise BadRequest("Failed to list roles", 500)

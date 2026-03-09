@@ -1,68 +1,83 @@
-// let accessToken: string | null = null;
-// let accessTokenExp: number | null = null; // UNIX timestamp (seconds)
-// let refreshAccessToken: string | null = null;
-// let refreshAccessTokenExp: number | null = null;
+// TOKEN PROVIDER (PURE, DUMB, RELIABLE)
 
+export type TokenStrParam = string | null | undefined
+export type TokenIntParam = number | null | undefined
 
-// export const tokenProvider = {
-//   set: (token: string | null, tokenExp?: number,refreshToken?: string | null, refreshTokenExp?: number) => {
-//     accessToken = token;
-//     accessTokenExp = tokenExp ?? null;
-//     refreshAccessToken = refreshToken ?? null;
-//     refreshAccessTokenExp = refreshTokenExp ?? null;
-//   },
-//   get: () => accessToken,
-//   getRefreshToken: () => refreshAccessToken,
-//   getTokenExpiration: () => accessTokenExp,
-//   getRefreshTokenExpiration: () => refreshAccessTokenExp,
-//   clear: () => {
-//     accessToken = null;
-//     accessTokenExp = null;
-//     refreshAccessToken = null;
-//     refreshAccessTokenExp = null;
-//   },
-// };
-/* ============================================================================
-   TOKEN PROVIDER (PURE, DUMB, RELIABLE)
-   ============================================================================ */
-
-
+// token.provider.ts
+let accessToken: TokenStrParam = undefined;
+let accessTokenExp: TokenIntParam = undefined;
+let refreshToken: TokenStrParam = undefined;
+let refreshTokenExp: TokenIntParam = undefined;
 
 export const tokenProvider = {
-  getAccessToken(): string | null {
-    return localStorage.getItem("access_token");
+  getAccessToken(): TokenStrParam{
+    return accessToken;
   },
 
-  getRefreshToken(): string | null {
-    return localStorage.getItem("refresh_token");
+  getRefreshToken(): TokenStrParam {
+    return refreshToken;
   },
 
-  isAccessTokenExpired(): boolean {
-    const exp = Number(localStorage.getItem("access_token_exp"));
-    const refreshExp = Number(localStorage.getItem("refresh_token_exp"));
-    if (!exp) return true;
+  set(token: TokenStrParam, exp: TokenIntParam, newRefreshToken?: TokenStrParam, refreshExp?: TokenIntParam) {
+    accessToken = token;
+    accessTokenExp = exp;
+    if (newRefreshToken !== undefined) refreshToken = newRefreshToken;
+    if (refreshExp !== undefined) refreshTokenExp = refreshExp;
+  },
 
-    const expMs = exp * 1000; // secondes → millisecondes
+  clear() {
+    accessToken = null;
+    accessTokenExp = null;
+    refreshToken = null;
+    refreshTokenExp = null;
+  },
+
+  isExpired(): boolean {
+    if (!accessToken || !accessTokenExp) return true;
+    const expMs = Number(accessTokenExp) * 1000; // secondes → millisecondes
     const nowMs = Date.now();
-    const diffMin = (expMs - nowMs) / 60000; // minutes restantes
-    const refreshDiffMin = (refreshExp * 1000 - nowMs) / 60000; // minutes avant expiration du refresh token
-    console.log(`[TOKEN_PROVIDER]: exp=${expMs}, now=${nowMs} | diff=${diffMin.toFixed(2)} min | refreshDiff=${refreshDiffMin.toFixed(2)} min`);
+
+    if (refreshTokenExp) {
+      const refreshExpMs = Number(refreshTokenExp) * 1000;
+      const diffMin = (expMs - nowMs) / 60000; // minutes restantes
+      const refreshDiffMin = (refreshExpMs - nowMs) / 60000; // minutes avant expiration du refresh token
+      console.log(`[TOKEN_PROVIDER]: exp=${expMs}, now=${nowMs} | diff=${diffMin.toFixed(2)} min | refreshDiff=${refreshDiffMin.toFixed(2)} min`);
+    }
+
     return nowMs >= expMs;
-
-
     // const nowSec = Math.floor(Date.now() / 1000);
     // console.log(`[TOKEN_PROVIDER] Checking access token expiration: exp=${exp}, now=${nowSec}`);
     // return nowSec >= exp;
   },
 
-  set(access: string,accessExp: number,refresh: string,refreshExp: number) {
-    localStorage.setItem("access_token", access);
-    localStorage.setItem("access_token_exp", String(accessExp));
-    localStorage.setItem("refresh_token", refresh);
-    localStorage.setItem("refresh_token_exp", String(refreshExp));
+  /**
+   * Check if token will expire soon.
+   * @param bufferSeconds - seconds before expiration to consider as expiring
+   */
+  isExpiringSoon(bufferSeconds: number = 30): boolean {
+    if (!accessToken || !accessTokenExp) return true;
+
+    const nowMs = Date.now();
+    const expMs = Number(accessTokenExp) * 1000;
+
+    const bufferMs = bufferSeconds * 1000;
+
+    const remainingMs = expMs - nowMs;
+
+    // Optional debug
+    // console.log(`[TOKEN] Remaining: ${(remainingMs / 1000).toFixed(1)}s`);
+
+    return remainingMs <= bufferMs;
   },
 
-  clear() {
-    localStorage.clear();
-  },
+  /**
+   * Check if refresh token is still valid
+   */
+  isRefreshValid(): boolean {
+    if (!refreshToken || !refreshTokenExp) return false;
+
+    const expMs = Number(refreshTokenExp) * 1000;
+    return Date.now() < expMs;
+  }
 };
+

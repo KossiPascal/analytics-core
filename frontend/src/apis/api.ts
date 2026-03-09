@@ -1,14 +1,12 @@
-/* ============================================================================
-   ENTERPRISE API MODULE (SINGLE FILE)
-   ============================================================================ */
+// ENTERPRISE API MODULE (SINGLE FILE)
+
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { tokenProvider } from "@/apis/token.provider";
 import { extractErrorMessage } from "@/utils/error.utils";
+import { AuthManager } from "./auth.manager";
+// import { authScheduler } from "@/services/auth.scheduler";
 
-/* ============================================================================
-   CONFIG
-   ============================================================================ */
-
+// CONFIG
 const API_URL = import.meta.env.VITE_API_URL ?? "/api";
 const TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT ?? 120) * 1000;
 
@@ -18,10 +16,8 @@ const PUBLIC_ENDPOINTS = [
   "/auth/logout",
 ];
 
-/* ============================================================================
-   API RESPONSE CONTRACT
-   ============================================================================ */
-export interface PayloadUser {
+// API RESPONSE CONTRACT
+export interface UserPayload {
   id: string;
   username: string;
   fullname: string;
@@ -35,7 +31,7 @@ export interface LoginResponse {
   access_token_exp: number;
   refresh_token: string;
   refresh_token_exp: number;
-  payload: PayloadUser;
+  payload: UserPayload;
 }
 
 export type ApiResponse<T = any> = {
@@ -56,86 +52,38 @@ export type ApiMethods<UseFetch extends boolean> = {
   head: <T = any>(url: string, config?: UseFetch extends true ? RequestInit : AxiosRequestConfig) => Promise<ApiResponse<T>>;
 };
 
-/* ============================================================================
-   GLOBAL AUTH STATE (CRITICAL SECTION)
-   ============================================================================ */
-
-let isRefreshing = false;
-let authFailed = false;
+// GLOBAL AUTH STATE (CRITICAL SECTION)
 let isLoggingOut = false;
+let refreshQueue: ((token: string) => void)[] = [];
 
-type RefreshSubscriber = (token: string) => void;
-let refreshQueue: RefreshSubscriber[] = [];
+// LOGOUT (SINGLE SOURCE OF TRUTH)
 
-/* ============================================================================
-   LOGOUT (SINGLE SOURCE OF TRUTH)
-   ============================================================================ */
 
-const logout = () => {
-  if (isLoggingOut) return;
+// GENERATE HEADERS
+const generateHeaders = (original: AxiosRequestConfig<any> & { _retry?: boolean; }, token: string) => {
+  return { ...(original.headers || {}), Authorization: `Bearer ${token}`, };
+}
 
-  isLoggingOut = true;
-  authFailed = true;
-  refreshQueue = [];
-
-  tokenProvider.clear();
-
-  // UI layer decides what to do
-  window.dispatchEvent(new Event("auth:logout"));
-};
-
-/* ============================================================================
-   TOKEN REFRESH (HARD GUARANTEES)
-   ============================================================================ */
-
-const refreshAccessToken = async (): Promise<string> => {
-  const refreshToken = tokenProvider.getRefreshToken();
-  if (!refreshToken) {
-    logout();
-    throw new Error("NO_REFRESH_TOKEN");
-  }
-
-  try {
-    const res = await axios.post(`${API_URL}/auth/refresh`,{ refresh_token: refreshToken },{ withCredentials: true });
-
-    const {access_token,access_token_exp,refresh_token,refresh_token_exp} = res.data ?? {};
-
-    if (!access_token ||!access_token_exp ||!refresh_token ||!refresh_token_exp) {
-      throw new Error("INVALID_REFRESH_RESPONSE");
-    }
-
-    tokenProvider.set(access_token,access_token_exp,refresh_token,refresh_token_exp);
-
-    return access_token;
-  } catch (err) {
-    logout();
-    throw err;
-  }
-};
-
-/* ============================================================================
-   AXIOS INSTANCE
-   ============================================================================ */
+// AXIOS INSTANCE
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: API_URL,
   timeout: TIMEOUT,
   withCredentials: true,
 });
 
-/* ============================================================================
-   REQUEST INTERCEPTOR
-   ============================================================================ */
-axiosInstance.interceptors.request.use((config: any) => {
+// REQUEST INTERCEPTOR
+axiosInstance.interceptors.request.use(async (config) => {
   const url = config.url ?? "";
 
-  // Don't force JSON Content-Type for FormData — let the browser set
-  // multipart/form-data with the correct boundary automatically.
-  if (config.data instanceof FormData) {
-    config.headers = { ...(config.headers || {}) };
-  } else {
-    config.headers = { "Content-Type": "application/json", ...(config.headers || {}) };
-  }
-  
+  // // Don't force JSON Content-Type for FormData — let the browser set
+  // // multipart/form-data with the correct boundary automatically.
+  // if (!(config.data instanceof FormData)) {
+  //   config.headers = { 
+  //     "Content-Type": "application/json", 
+  //     ...(config.headers || {}) 
+  //   };
+  // }
+
   // 🚫 PAS DE TOKEN pour les routes publiques
   if (PUBLIC_ENDPOINTS.some(p => url.includes(p))) {
     // console.log(`[API] Public endpoint, no auth needed: ${url}`);
@@ -147,20 +95,24 @@ axiosInstance.interceptors.request.use((config: any) => {
   //   return Promise.reject(new Error("AUTH_FAILED"));
   // }
 
-  const token = tokenProvider.getAccessToken();
+  if (tokenProvider.isExpiringSoon(30)) {
+    console.log("REFRESH TRIGGERED REQUEST")
+    await AuthManager.ensureValidToken(axiosInstance);
+  }
 
-  if (token && !tokenProvider.isAccessTokenExpired()) {
+  const token = tokenProvider.getAccessToken();
+  // if (token && !tokenProvider.isExpired()) {
+  if (token) {
     // console.log(`[API] Attaching access token to request: ${url}`);
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers = generateHeaders(config, token) as any;
   }
 
   // console.log(`[API] Request config for ${url}:`, config);
   return config;
 });
 
-/* ============================================================================
-   RESPONSE INTERCEPTOR (REFRESH CORE)
-   ============================================================================ */
+// RESPONSE INTERCEPTOR (REFRESH CORE)
+
 axiosInstance.interceptors.response.use(
   (res: AxiosResponse) => res,
   async (error: AxiosError) => {
@@ -168,59 +120,42 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status;
     const url = original?.url ?? "";
 
+    if (!original) return Promise.reject(error);
+
     // Refresh endpoint itself failed → logout immediately
     if (status === 401 && url.includes("/auth/refresh")) {
-      logout();
+      AuthManager.logout();
       return Promise.reject(error);
     }
 
-    // if (status !== 401 || original._retry || PUBLIC_ENDPOINTS.some(p => url.includes(p)) || authFailed) {
+    // Only refresh on 401
     if (status !== 401 || original._retry || PUBLIC_ENDPOINTS.some(p => url.includes(p))) {
       return Promise.reject(error);
     }
 
-    original._retry = true;
-
     try {
-      if (isRefreshing) {
-        return new Promise(resolve => {
-          refreshQueue.push(token => {
-            original.headers = {
-              ...(original.headers || {}),
-              Authorization: `Bearer ${token}`,
-            };
-            resolve(axiosInstance(original));
-          });
-        });
+      original._retry = true;
+
+      if (tokenProvider.isExpiringSoon(30)) {
+        console.log("REFRESH TRIGGERED RESPONSE")
+        await AuthManager.ensureValidToken(axiosInstance);
       }
+      
+      const token = tokenProvider.getAccessToken();
+      if (!token) throw new Error("NO_TOKEN_AFTER_REFRESH");
 
-      isRefreshing = true;
-
-      const newToken = await refreshAccessToken();
-
-      refreshQueue.forEach(cb => cb(newToken));
-      refreshQueue = [];
-
-      original.headers = {
-        ...(original.headers || {}),
-        Authorization: `Bearer ${newToken}`,
-      };
+      original.headers = generateHeaders(original, token);
 
       return axiosInstance(original);
 
     } catch (err) {
-      logout();
+      AuthManager.logout();
       return Promise.reject(err);
-    } finally {
-      isRefreshing = false;
     }
   }
 );
 
-
-/* ============================================================================
-   ERROR NORMALIZATION
-   ============================================================================ */
+// ERROR NORMALIZATION
 const normalizeError = (err: unknown): ApiResponse => {
   if (axios.isAxiosError(err)) {
     const status = err.response?.status ?? 0;
@@ -231,10 +166,7 @@ const normalizeError = (err: unknown): ApiResponse => {
   return { status: 0, success: false, message: "Unknown error" };
 };
 
-
-/* ============================================================================
-   SAFE API WRAPPER
-   ============================================================================ */
+// SAFE API WRAPPER
 async function wrap<T>(fn: () => Promise<AxiosResponse<T>>): Promise<ApiResponse<T>> {
   try {
     const res = await fn();
@@ -244,10 +176,7 @@ async function wrap<T>(fn: () => Promise<AxiosResponse<T>>): Promise<ApiResponse
   }
 }
 
-/* ============================================================================
-   PUBLIC API
-   ============================================================================ */
-
+// PUBLIC API
 export const api = {
   get: <T = any>(url: string, config?: AxiosRequestConfig) =>
     wrap(() => axiosInstance.get<T>(url, config)),

@@ -2,22 +2,15 @@ from typing import List
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from sqlalchemy.exc import SQLAlchemyError
 from flask import Blueprint, request, jsonify, g
-from datetime import datetime, timezone
-
-from backend.src.databases.extensions import db, error_response
-from backend.src.models.datasets.dataset import (
-    Dataset,
-    DatasetField,
-    DatasetQuery,
-    DatasetChart,
-    DatasetSqlType,
-    FieldType,
-    ChartType,
-)
+from backend.src.databases.extensions import db
+from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DatasetSqlType, FieldType
+from backend.src.models.datasets.dataset_chart import DatasetChart
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -44,7 +37,7 @@ def create_dataset_aggregate():
     charts_data = payload.get("charts") or []
 
     if not dataset_data.get("name"):
-        return error_response("Dataset name required", 400)
+        raise BadRequest("Dataset name required", 400)
 
     try:
         # ================= DATASET =================
@@ -109,7 +102,7 @@ def create_dataset_aggregate():
                 tenant_id=tenant_id,
                 dataset_id=dataset.id,
                 query_id=created_queries[query_index].id,
-                type=ChartType(c["type"]),
+                type=c["type"],
                 options=c.get("options", {}),
                 description=c.get("description"),
                 created_by_id=user_id,
@@ -125,7 +118,7 @@ def create_dataset_aggregate():
     except (ValueError, SQLAlchemyError) as e:
         db.session.rollback()
         logger.exception("Aggregate creation failed")
-        return error_response("Failed to create dataset aggregate", 400, str(e))
+        raise BadRequest("Failed to create dataset aggregate", 400)
 
 
 # READ ONE
@@ -152,7 +145,7 @@ def get_dataset(dataset_id: int):
     dataset = db.session.execute(stmt).scalar_one_or_none()
 
     if not dataset:
-        return error_response("Dataset not found", 404)
+        raise BadRequest("Dataset not found", 404)
 
     return jsonify(dataset.to_dict(include_relations=True))
 
@@ -176,7 +169,7 @@ def list_datasets():
     except (ValueError, SQLAlchemyError) as e:
         db.session.rollback()
         logger.exception("Aggregate creation failed")
-        return error_response("Failed to create dataset aggregate", 400, str(e))
+        raise BadRequest("Failed to create dataset aggregate", 400)
 
 # UPDATE FULL AGGREGATE
 @bp.put("/<int:dataset_id>")
@@ -303,7 +296,7 @@ def update_full_aggregate(dataset_id: int):
                 received_c_ids.add(cid)
 
                 chart.name = c["name"]
-                chart.type = ChartType(c["type"])
+                chart.type = c["type"]
                 chart.options = c.get("options", {})
                 chart.description = c.get("description")
                 chart.updated_by_id=user_id,
@@ -315,7 +308,7 @@ def update_full_aggregate(dataset_id: int):
                         tenant_id=tenant_id,
                         dataset_id=dataset.id,
                         query_id=c["query_id"],
-                        type=ChartType(c["type"]),
+                        type=c["type"],
                         options=c.get("options", {}),
                         description=c.get("description"),
                         created_by_id=user_id,
@@ -333,7 +326,7 @@ def update_full_aggregate(dataset_id: int):
     except (ValueError, SQLAlchemyError) as e:
         db.session.rollback()
         logger.exception("Aggregate update failed")
-        return error_response("Failed to update dataset aggregate", 400, str(e))
+        raise BadRequest("Failed to update dataset aggregate", 400)
 
 # DELETE (SOFT CASCADE)
 @bp.delete("/<int:dataset_id>")
@@ -360,7 +353,7 @@ def delete_aggregate(dataset_id: int):
 
         dataset = db.session.execute(stmt).scalar_one_or_none()
         if not dataset:
-            raise error_response("Dataset not found", 404)
+            raise BadRequest("Dataset not found", 404)
 
         dataset.soft_delete(user_id)
         db.session.commit()
@@ -370,4 +363,4 @@ def delete_aggregate(dataset_id: int):
     except (ValueError, SQLAlchemyError) as e:
         db.session.rollback()
         logger.exception("Aggregate delete failed")
-        return error_response("Failed to delete dataset aggregate", 400, str(e))
+        raise BadRequest("Failed to delete dataset aggregate", 400)

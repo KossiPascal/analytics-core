@@ -13,7 +13,8 @@ import styles from "@pages/admins/AdminPage.module.css";
 /* ============================= */
 
 interface CrudService<T> {
-    all(tenantId?: number): Promise<T[]>;
+    full(tenantId?: number): Promise<T[]>;
+    all(tenantId?: number, v2?: number, v3?: number, v4?: number, v5?: number): Promise<T[]>;
     create(data: T): Promise<any>;
     update(id: number, data: T): Promise<any>;
     remove(id: number): Promise<any>;
@@ -31,7 +32,7 @@ interface AdminEntityCrudModuleProps<T> {
     defaultValue?: T;
     service: CrudService<T>;
     defaultTenant?: {
-        id: number | undefined
+        ids: (number | undefined)[]
         required: boolean
     };
     renderForm?: (
@@ -40,6 +41,8 @@ interface AdminEntityCrudModuleProps<T> {
         saving: boolean,
     ) => React.ReactNode;
     modalSize?: ModalSize;
+
+    formatedEntity?: (entity: T) => Promise<T>,
 
     /** Custom buttons rendered inside modal footer */
     formButtons?: (
@@ -81,6 +84,7 @@ const AdminEntityCrudModuleInner = <
         service,
         defaultTenant,
         renderForm,
+        formatedEntity,
         modalSize = "sm",
         formButtons,
         isValid,
@@ -109,37 +113,49 @@ const AdminEntityCrudModuleInner = <
 
     const { showError, showSuccess } = useNotification();
 
-    /* ============================= */
     /* ========== FETCH ============ */
-    /* ============================= */
-
     const fetchData = useCallback(async () => {
+        if (defaultTenant && defaultTenant.required) {
+            const ids = defaultTenant.ids ?? [];
+
+            // 1️⃣ Vérifier longueur valide
+            if (ids.length < 1 || ids.length > 5) {
+                console.warn(`defaultTenant.ids must have between 1 and 5 elements. Got ${ids.length}`);
+                setLoading(false);
+                return;
+            }
+
+            // 2️⃣ Return si une valeur est undefined ou null
+            if (ids.some(id => id === undefined || id === null)) {
+                setLoading(false);
+                return; // attend que tous les ids soient définis
+            }
+        }
+
         setLoading(true);
+
         try {
             let res: T[] = [];
             if (defaultTenant && defaultTenant.required) {
-                if (defaultTenant.id) {
-                    res = await service.all(defaultTenant.id);
-                }
+                const ids = defaultTenant.ids as number[];
+                res = await service.all(...(ids as [number, number?, number?, number?, number?]));
             } else {
-                res = await service.all();
+                res = await service.full();
             }
+
             setList(res ?? []);
         } catch {
             showError(`Erreur chargement ${entityName}`);
         } finally {
             setLoading(false);
         }
-    }, [service, defaultTenant?.id, entityName, showError]);
 
+    }, [service, defaultTenant?.ids, defaultTenant?.required, entityName, showError]);
     useEffect(() => {
         fetchData();
-    }, [fetchData, defaultTenant?.id]);
+    }, [fetchData, defaultTenant?.ids]);
 
-    /* ============================= */
     /* ========= FORM LOGIC ======== */
-    /* ============================= */
-
     const setValue = (key: keyof T, value: any) => {
         setEntity((prev) => ({ ...prev, [key]: value }));
     };
@@ -148,18 +164,19 @@ const AdminEntityCrudModuleInner = <
         return isValid ? isValid(entity) : true;
     }, [entity, isValid]);
 
-    /* ============================= */
     /* ========= SAVE ============== */
-    /* ============================= */
-
     const handleSave = async () => {
         if (!isFormValid) {
             showError("Formulaire invalide");
             return;
         }
         let isFormValided = true;
+
+
+        const formatedDataToSave = formatedEntity ? await formatedEntity(entity) : entity;
+
         if (submitValidation) {
-            isFormValided = await submitValidation?.(entity)
+            isFormValided = await submitValidation?.(formatedDataToSave)
         }
 
         if (!isFormValided) {
@@ -170,8 +187,7 @@ const AdminEntityCrudModuleInner = <
         try {
             setSaving(true);
 
-            let dataToSave = entity;
-
+            let dataToSave = formatedDataToSave;
             if (onBeforeSave) {
                 dataToSave = await onBeforeSave(entity);
             }
@@ -185,7 +201,6 @@ const AdminEntityCrudModuleInner = <
             }
 
             afterSave?.(dataToSave);
-
             setOpenModal(false);
             setEntity(finalDefaultValue);
             setEditing(false);
@@ -198,10 +213,7 @@ const AdminEntityCrudModuleInner = <
         }
     };
 
-    /* ============================= */
     /* ========= CUSTOM ACTION ===== */
-    /* ============================= */
-
     const handleAction = async (action: () => Promise<void>, fethAfterAction: boolean) => {
         if (!isFormValid) {
             showError("Formulaire invalide");
@@ -222,10 +234,7 @@ const AdminEntityCrudModuleInner = <
         }
     };
 
-    /* ============================= */
     /* ========= DELETE ============ */
-    /* ============================= */
-
     const handleDelete = async () => {
         if (!entity.id) return;
 
@@ -239,10 +248,7 @@ const AdminEntityCrudModuleInner = <
         }
     };
 
-    /* ============================= */
     /* ========= NEW =============== */
-    /* ============================= */
-
     const handleNew = () => {
         setEditing(false);
         setEntity(finalDefaultValue);
@@ -253,10 +259,7 @@ const AdminEntityCrudModuleInner = <
         handleNew,
     }));
 
-    /* ============================= */
     /* ========= ACTION COLUMN ===== */
-    /* ============================= */
-
     const actionColumn: Column<T> = {
         key: "actions",
         header: "Actions",
@@ -296,10 +299,7 @@ const AdminEntityCrudModuleInner = <
 
     const finalColumns = enableActions ? [...columns, actionColumn] : columns;
 
-    /* ============================= */
     /* ========= RENDER ============ */
-    /* ============================= */
-
     return (
         <>
             <div className={styles.card}>

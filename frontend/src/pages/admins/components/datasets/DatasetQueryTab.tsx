@@ -1,5 +1,5 @@
 import { Shield, Copy, X, RefreshCw } from "lucide-react";
-import { useEffect, useMemo, useState, forwardRef, useCallback, Key } from "react";
+import { useEffect, useMemo, useState, forwardRef, useCallback, useRef } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from "@pages/admins/AdminEntityCrudModule";
@@ -13,11 +13,14 @@ import { Button } from "@components/ui/Button/Button";
 import { tenantService } from "@/services/identity.service";
 import { datasetService, queryService } from "@/services/dataset.service";
 import { Tenant } from "@/models/identity.model";
-import { Dataset, DatasetField, DatasetQuery, QueryFilterGroup, QueryFilter, QueryJson, SqlAggType, SqlOperatorsList, SqlOperatorsNoValueList, LinkedFilterGroup, SqlLogicalOperatorList, QueryFilterNode, SqlLogicalOperator, SqlOperators } from "@/models/dataset.models";
+import { Dataset, DatasetField, DatasetQuery, QueryFilterGroup, QueryFilter, QueryJson, SqlAggType, LinkedFilterGroup, QueryFilterNode, SqlOperators, SqlDataType, getInputTypeForField, getOperatorsForField, BOOLEAN_ONLY_OPERATORS } from "@/models/dataset.models";
+import { FULL_OPERATORS, NO_VALUE_OPERATORS, LOGICAL_OPERATORS, NUMERIC_DATA_TYPES, DATETIME_DATA_TYPES, ARRAY_REQUIRED_OPERATORS, DATE_OPERATORS, NULL_ONLY_OPERATORS, NUMERIC_OPERATORS, RANGE_REQUIRED_OPERATORS, STRING_OPERATORS } from "@/models/dataset.models";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { z } from "zod";
 
 import styles from '@pages/admins/AdminPage.module.css';
+import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
+import { FaDatabase } from "react-icons/fa";
 
 interface CompileError {
     view_name?: string;
@@ -27,18 +30,17 @@ interface CompileError {
     order_by?: string;
     limit?: string;
     offset?: string;
+    error?: string;
 
     query_tenant?: string;
     query_dataset?: string;
     query_name?: string;
 }
-
 interface CompiledQuery {
     sql: string;
     values: Record<string, any>;
     error: CompileError
 }
-
 interface SqlPreviewProps {
     title: string;
     open: boolean;
@@ -46,14 +48,12 @@ interface SqlPreviewProps {
     type: "sql" | "json";
     onClose: () => void;
 }
-
 interface OrderByBuilderProps {
     fields: DatasetField[];
     orderBy: QueryJson["order_by"];
     onChange: (orderBy: QueryJson["order_by"]) => void;
     error: string | undefined;
 }
-
 interface FilterNodeBuilderProps {
     index: number
     node: QueryFilterNode;
@@ -62,18 +62,40 @@ interface FilterNodeBuilderProps {
     onRemove?: () => void;
     error: string | undefined;
 }
-
 interface FilterBuilderProps {
     name: String;
     fields: DatasetField[];
     node: LinkedFilterGroup[];
     onChange: (node: LinkedFilterGroup[]) => void;
 }
+type BuiltFilter = {
+    wheres: string[];
+    havings: string[];
+    values: Record<string, any>;
+}
+interface InValuesModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    values: string[];
+    onChange: (values: string[]) => void;
+    inputType: string;
+}
+interface RenderFormProp {
+    datasets: Dataset[],
+    // queries: DatasetQuery[],
+    query: DatasetQuery,
+    tenants: Tenant[],
+    errors: CompileError,
+    setValue: (k: keyof DatasetQuery, v: any) => void,
+    setTenantId: (tenant: number | undefined) => void,
+    setPreviewSql: (sql: string | null) => void
+    setErrors: (error: CompileError) => void
+}
 
 export const QueryFilterConditionSchema = z.object({
     type: z.literal("condition"),
     field: z.string().min(1),
-    operator: z.enum(SqlOperatorsList),
+    operator: z.enum(FULL_OPERATORS),
     value: z.any().optional(),
     value2: z.any().optional()
     // value: z.union([z.string(), z.number(), z.boolean(), z.array(z.any())]),
@@ -120,7 +142,6 @@ export const QueryJsonSchema = z.object({
     offset: z.number().int().nonnegative().nullable().optional()
 });
 
-
 // DEFAULT FORM
 const createDefaultForm = (): DatasetQuery => ({
     id: null,
@@ -164,55 +185,111 @@ const createDefaultForm = (): DatasetQuery => ({
 
 const DEFAULT_FORM = createDefaultForm();
 
+// ---------- SANITIZE & IDENTIFIERS ----------
 const sanitizeIdentifier = (name: string) => {
     // Autorise uniquement lettres, chiffres, underscore, pas de SQL injection
     if (!name) throw new Error("Identifier cannot be empty");
     return name.replace(/[^a-zA-Z0-9_]/g, "_");
 };
-
-
-const escapeSqlString = (val: string): string => val.replace(/'/g, "''");
-const isNumeric = (val: string): boolean => val.trim() !== "" && !isNaN(Number(val.replace(",", ".")));
-const normalizeNumber = (val: string): number => Number(val.replace(",", "."));
-const isISODate = (val: string): boolean => !isNaN(Date.parse(val));
-const stripWrappers = (value: string): string => value.replace(/^[\(\[\{]\s*/, "").replace(/\s*[\)\]\}]$/, "");
-const removeQuotes = (value: string): string => value.replace(/^['"]+/, "").replace(/['"]+$/, "").trim();
-
-// SMART LIST NORMALIZER 
-const normalizeListInput = (input: unknown): string[] => {
-    if (Array.isArray(input)) return input.map(v => String(v).trim()).filter(Boolean);
-    let value = String(input).trim();
-    if (!value) return [];
-    // Remove (), [], {}
-    value = stripWrappers(value);
-    // Normalize separators
-    value = value.replace(/;/g, ",");
-    // Collapse multiple spaces
-    value = value.replace(/\s+/g, " ").trim();
-    let parts: string[];
-    if (value.includes(",")) {
-        parts = value.split(",");
-    } else if (value.includes(" ")) {
-        parts = value.split(" ");
-    } else {
-        parts = [value];
-    }
-    return parts.map(v => removeQuotes(v)).filter(Boolean);
-};
-// IN CLAUSE FORMATTER
-const formatInClause = (input: unknown): string => {
-    const values = normalizeListInput(input);
-    if (!values.length) return "()";
-    const formatted = values.map(v => {
-        if (isNumeric(v)) return normalizeNumber(v);
-        return `'${escapeSqlString(v)}'`;
-    });
-    return `(${formatted.join(", ")})`;
-};
-
-
 const quoteIdentifier = (name: string) => `"${name.replace(/"/g, "")}"`;
 
+// ---------- NULL / EMPTY CHECK ----------
+const isNullLike = (val: unknown): boolean => {
+    if (val === null || val === undefined) return true;
+    const s = String(val).trim().toLowerCase();
+    return s === "null" || s === "undefined" || s === "";
+};
+
+// ---------- STRING / SQL ----------
+const removeQuotes = (val: string) => val.replace(/^['"]+|['"]+$/g, "").trim();
+const stripWrappers = (val: string) => val.replace(/^[\(\[\{]\s*/, "").replace(/\s*[\)\]\}]$/, "");
+const escapeSqlString = (val: string) => val.replace(/'/g, "''");
+
+// ---------- NUMERIC ----------
+const isNumeric = (val: string) => {
+    if (!val.trim()) return false;
+    const normalized = val.replace(",", ".").replace(" ", "");
+    return !Number.isNaN(Number(normalized));
+};
+const normalizeNumber = (val: string): number => {
+    const normalized = Number(val.replace(",", ".").replace(" ", "."));
+    return Number(normalized);
+}
+
+// ---------- BOOLEAN ----------
+const parseBoolean = (val: unknown): boolean | null => {
+    if (typeof val === "boolean") return val;
+    if (val === null || val === undefined) return null;
+    const v = String(val).trim().toLowerCase();
+    if (["true", "1", "yes"].includes(v)) return true;
+    if (["false", "0", "no"].includes(v)) return false;
+    return null;
+};
+
+// ---------- DATE & JSON ----------
+const isValidDate = (val: string) => !Number.isNaN(Date.parse(val));
+const isValidJSON = (val: string) => {
+    try { JSON.parse(val); return true; } catch { return false; }
+};
+
+// ---------- PARSE VALUE & FORMAT SQL ----------
+const parseValue = (raw: unknown, dataType: SqlDataType): unknown => {
+    if (isNullLike(raw)) return null;
+
+    const value = String(raw).trim();
+
+    if (NUMERIC_DATA_TYPES.includes(dataType)) {
+        if (!isNumeric(value)) throw new Error(`Invalid numeric value: ${raw}`);
+        const numericValue = normalizeNumber(value);
+        if (!Number.isFinite(numericValue)) throw new Error(`Invalid numeric value: ${raw}`);
+        return numericValue;
+    }
+
+    if (dataType === "boolean") {
+        const b = parseBoolean(value);
+        if (b === null) throw new Error(`Invalid boolean value: ${raw}`);
+        return b;
+    }
+
+    if (DATETIME_DATA_TYPES.includes(dataType)) {
+        if (!isValidDate(value)) throw new Error(`Invalid date value: ${raw}`);
+        return value;
+    }
+
+    if (dataType === "json") {
+        const str = typeof raw === "object" ? JSON.stringify(raw) : value;
+        if (!isValidJSON(str)) throw new Error(`Invalid JSON value: ${raw}`);
+        return str;
+    }
+
+    // Default string
+    return removeQuotes(value);
+};
+
+const formatSqlValue = (raw: unknown, dataType: SqlDataType): string | number => {
+    if (isNullLike(raw)) return "NULL";
+    const parsed = parseValue(raw, dataType);
+
+    if (typeof parsed === "number") return parsed;
+    if (typeof parsed === "boolean") return parsed ? "TRUE" : "FALSE";
+
+    return escapeSqlString(String(parsed));
+};
+
+// ---------- NORMALISE LIST & FORMAT IN CLAUSE ----------
+const normalizeListInput = (input: unknown, dataType: SqlDataType): unknown[] => {
+    const values = Array.isArray(input) ? input : String(input ?? "").split(/[, ]+/);
+    return values.map(v => parseValue(v, dataType)).filter(v => v !== null);
+};
+
+const formatInClause = (input: unknown, dataType: SqlDataType): string => {
+    const values = normalizeListInput(input, dataType);
+    if (values.length === 0) return "()";
+    const formatted = values.map(v =>
+        typeof v === "number" ? v : escapeSqlString(String(v))
+    );
+    return `(${formatted.join(", ")})`;
+};
 
 const generateSqlExpression = (expression: string, aggregation: SqlAggType | null, isDistinct: boolean = false) => {
     if (!expression) return "";
@@ -224,310 +301,284 @@ const generateSqlExpression = (expression: string, aggregation: SqlAggType | nul
     }
 }
 
-const formatSqlValue = (rawValue: any): string | number => {
-    // NULL direct
-    if ([null, "null", undefined, "undefined"].includes(rawValue)) return "NULL";
-    // Boolean
-    if (typeof rawValue === "boolean") return rawValue ? "TRUE" : "FALSE";
-    // Number direct
-    if (typeof rawValue === "number") return rawValue;
+const assertOperatorCompatibility = (operator: SqlOperators, dataType: SqlDataType, value: any, value2?: any) => {
+    // NULL operators accept any type
+    if (NULL_ONLY_OPERATORS.includes(operator)) return;
 
-    const value = String(rawValue).trim();
-    if (!value) return "''";
+    // BOOLEAN specific
+    if (BOOLEAN_ONLY_OPERATORS.includes(operator)) {
+        if (dataType !== "boolean") {
+            throw new Error(`Operator "${operator}" only allowed on boolean fields`);
+        }
+        return;
+    }
 
-    /* --------------- AUTO NUMBER ----------------- */
-    if (isNumeric(value)) return normalizeNumber(value);
-    /* ------------------ DATE --------------------- */
-    if (isISODate(value)) return `'${escapeSqlString(value)}'`;
-    /* ---------------- DEFAULT STRING ------------- */
-    return `'${escapeSqlString(removeQuotes(value))}'`;
-};
+    // BETWEEN requires two values
+    if (RANGE_REQUIRED_OPERATORS.includes(operator)) {
+        if (value === undefined || value2 === undefined) {
+            throw new Error(`Operator "${operator}" requires two values`);
+        }
+    }
 
-type BuiltFilter = {
-    where: string[];
-    having: string[];
-};
+    // IN requires array
+    if (ARRAY_REQUIRED_OPERATORS.includes(operator)) {
+        if (!Array.isArray(normalizeListInput(value, dataType))) {
+            throw new Error(`Operator "${operator}" requires list value`);
+        }
+    }
 
-const buildFilterTree = (node: QueryFilterGroup | QueryFilter, fieldMap: Map<string, DatasetField>, values: Record<string, any>, paramIndex: { current: number }): BuiltFilter => {
+    // Numeric
+    if (NUMERIC_DATA_TYPES.includes(dataType)) {
+        if (!NUMERIC_OPERATORS.includes(operator)) {
+            throw new Error(`Operator "${operator}" not compatible with numeric type`);
+        }
+        return;
+    }
 
-    const result: BuiltFilter = { where: [], having: [] };
+    // Date
+    if (DATETIME_DATA_TYPES.includes(dataType)) {
+        if (!DATE_OPERATORS.includes(operator)) {
+            throw new Error(`Operator "${operator}" not compatible with date type`);
+        }
+        return;
+    }
+
+    // String
+    if (["string", "json", "jsonb"].includes(dataType)) {
+        if (!STRING_OPERATORS.includes(operator)) {
+            throw new Error(`Operator "${operator}" not compatible with string type`);
+        }
+        return;
+    }
+
+    // Boolean normal comparisons
+    if (dataType === "boolean") {
+        if (!["=", "!=", "<>"].includes(operator) && !BOOLEAN_ONLY_OPERATORS.includes(operator)) {
+            throw new Error(`Operator "${operator}" not compatible with boolean type`);
+        }
+        return;
+    }
+}
+
+// CALCULATE VALUES
+const buildFilterTree = (node: QueryFilterGroup | QueryFilter, fieldMap: Map<string, DatasetField>, paramIndex: { current: number }, useSqlInClause: boolean = false): BuiltFilter => {
+    const result: BuiltFilter = { wheres: [], havings: [], values: {} };
 
     if (!node) return result;
 
-    if (node.type === "condition") {
-        const field = fieldMap.get(node.field);
-        if (!field) {
-            return result;
-            // throw new Error(`Unknown field: ${node.field}`);
-        }
+    const nextKey = () => `p_${paramIndex.current++}`;
 
-        if (!SqlOperatorsList.includes(node.operator)) {
-            return result;
-            // throw new Error(`Opérateur non autorisé: ${node.operator}`);
-        }
-
-        if (!field.field_type) {
-            return result;
-        }
+    const buildClause = (field: DatasetField, operator: SqlOperators, val: unknown, val2?: unknown): { clause: string; values: Record<string, any> } => {
+        const values: Record<string, any> = {};
 
         const isAggregated = Boolean(field.aggregation);
         const isDimension = field.field_type === "dimension" && !isAggregated;
-        const isMetric = ["metric", "calculated_metric"].includes(field.field_type) || isAggregated;
 
-        const baseKey = () => `p_${paramIndex.current++}`;
+        const expr = isDimension ? field.expression : generateSqlExpression(field.expression, field.aggregation);
 
-        const sqlExpression = isDimension ? field.expression : generateSqlExpression(field.expression, field.aggregation);
-        let clause = "";
-
-        // SqlAggragateOperatorsList
-
-        if (node.operator === "BETWEEN") {
-            const k1 = baseKey();
-            const k2 = baseKey();
-
-            const formattedValue = formatSqlValue(node.value);
-            const formattedValue2 = formatSqlValue(node.value2);
-
-            values[k1] = formattedValue;
-            values[k2] = formattedValue2;
-            clause = `${sqlExpression} BETWEEN :${k1} AND :${k2}`;
-        } else if (node.operator === "IN") {
-            const normalizedValues = normalizeListInput(node.value);
-            if (!Array.isArray(normalizedValues)) {
-                throw new Error("IN operator requires array value.");
+        // ---- BETWEEN ----
+        if (operator === "BETWEEN") {
+            if (val === undefined || val2 === undefined) {
+                throw new Error("BETWEEN requires two values");
             }
 
-            const keys = normalizedValues.map((v, idx: number) => {
-                const key = baseKey();
-                values[key] = formatSqlValue(v);
-                return `:${key}`;
-            });
-            clause = `${sqlExpression} IN (${keys.join(", ")})`;
-        } else if (SqlOperatorsNoValueList.includes(node.operator)) {
-            // "IS NULL", "IS NOT NULL", "IS TRUE", "IS NOT TRUE"
-            clause = `${sqlExpression} ${node.operator}`;
-        } else {
-            const formatedValue = formatSqlValue(node.value);
-            if (formatedValue === "NULL") {
-                clause = `${sqlExpression} ${node.operator} NULL`;
-            } else if (formatedValue === "TRUE") {
-                clause = `${sqlExpression} ${node.operator} TRUE`;
-            } else if (formatedValue === "FALSE") {
-                clause = `${sqlExpression} ${node.operator} FALSE`;
+            const k1 = nextKey();
+            const k2 = nextKey();
+
+            values[k1] = parseValue(val, field.data_type);
+            values[k2] = parseValue(val2, field.data_type);
+
+            return { clause: `${expr} BETWEEN :${k1} AND :${k2}`, values };
+        }
+
+        // ---- IN ----
+        if (operator === "IN") {
+            const arr = Array.isArray(val) ? val : [val];
+            if (arr.length === 0) {
+                throw new Error("IN operator requires at least one value");
+            }
+
+            if (useSqlInClause) {
+                const keys = arr.map(v => {
+                    const k = nextKey();
+                    values[k] = parseValue(v, field.data_type);
+                    return `:${k}`;
+                });
+
+                return { clause: `${expr} IN (${keys.join(", ")})`, values };
             } else {
-                values[baseKey()] = formatSqlValue(node.value);
-                clause = `${sqlExpression} ${node.operator} :${baseKey()}`;
+                const k = nextKey();
+                values[k] = arr.map(v => parseValue(v, field.data_type));
+                return { clause: `${expr} = ANY(:${k})`, values };
             }
         }
 
-        if (!clause) return result;
+        // NO VALUE
+        if (NO_VALUE_OPERATORS.includes(operator)) {
+            return { clause: `${expr} ${operator}`, values };
+        }
 
-        if (isMetric) {
-            result.having.push(clause);
-        } else {
-            result.where.push(clause);
+        // NULL / TRUE / FALSE
+        const formatted = formatSqlValue(val, field.data_type);
+        if (["NULL", "TRUE", "FALSE"].includes(String(formatted))) {
+            return { clause: `${expr} ${operator} ${formatted}`, values };
+        }
+
+        const k = nextKey();
+        values[k] = parseValue(val, field.data_type);
+
+        return { clause: `${expr} ${operator} :${k}`, values };
+    };
+
+    // ---------------- CONDITION ----------------
+    if (node.type === "condition") {
+        const field = fieldMap.get(node.field);
+        if (!field) throw new Error(`Unknown field: ${node.field}`);
+        if (!field.field_type) throw new Error(`Field type missing for ${node.field}`);
+        if (!FULL_OPERATORS.includes(node.operator)) throw new Error(`Opérateur non autorisé: ${node.operator}`);
+
+        assertOperatorCompatibility(node.operator, field.data_type, node.value, node.value2);
+
+        const { clause, values } = buildClause(field, node.operator, node.value, node.value2);
+
+        const isMetric = ["metric", "calculated_metric"].includes(field.field_type) || Boolean(field.aggregation);
+
+        if (!clause) throw new Error(`Invalid filter clause generated`);
+
+        if (isMetric) result.havings.push(clause);
+        else result.wheres.push(clause);
+
+        Object.assign(result.values, values);
+
+        return result;
+    }
+
+    // ---------------- GROUP ----------------
+    if (node.type === "group") {
+
+        const whereParts: string[] = [];
+        const havingParts: string[] = [];
+
+        for (const child of node.children) {
+            const { wheres, havings, values } = buildFilterTree(child, fieldMap, paramIndex);
+
+            if (wheres.length > 0) {
+                whereParts.push(wheres.join(" "));
+            }
+
+            if (havings.length > 0) {
+                havingParts.push(havings.join(" "));
+            }
+
+            Object.assign(result.values, values);
+        }
+
+        if (whereParts.length > 1) {
+            result.wheres.push(`(${whereParts.join(` ${node.operator} `)})`);
+        } else if (whereParts.length) {
+            result.wheres.push(whereParts[0]);
+        }
+
+        if (havingParts.length > 1) {
+            result.havings.push(`(${havingParts.join(` ${node.operator} `)})`);
+        } else if (havingParts.length) {
+            result.havings.push(havingParts[0]);
         }
 
         return result;
     }
 
-    // ----- GROUP
-    if (node.type === "group") {
-        const whereParts: string[] = [];
-        const havingParts: string[] = [];
-
-        for (const child of node.children) {
-            const built = buildFilterTree(child, fieldMap, values, paramIndex);
-
-            if (built.where.length > 0) {
-                whereParts.push(built.where.join(" "));
-            }
-
-            if (built.having.length > 0) {
-                havingParts.push(built.having.join(" "));
-            }
-        }
-
-        if (whereParts.length === 1) {
-            result.where.push(whereParts[0]);
-        } else if (whereParts.length > 1) {
-            result.where.push(`(${whereParts.join(` ${node.operator} `)})`);
-        }
-
-        if (havingParts.length === 1) {
-            result.having.push(havingParts[0]);
-        } else if (havingParts.length > 1) {
-            result.having.push(`(${havingParts.join(` ${node.operator} `)})`);
-        }
-    }
-
     return result;
 };
 
-// --- BUILD MULTI-GROUPS ---
-// const buildLinkedFilterGroups = (groups: LinkedFilterGroup[], fieldMap: Map<string, DatasetField>, values: Record<string, any>, paramIndex: { current: number }): BuiltFilter => {
+const buildLinkedFilterGroups = (groups: LinkedFilterGroup[], fieldMap: Map<string, DatasetField>, paramIndex: { current: number }): BuiltFilter => {
 
-//     const result: BuiltFilter = { where: [], having: [] };
-
-//     if (!groups || groups.length === 0) return result;
-
-//     let whereParts: string[] = [];
-//     let havingParts: string[] = [];
-
-//     groups.forEach((group, i) => {
-
-//         if (i === 0 && group.linkWithPrevious) {
-//             throw new Error("First group cannot have linkWithPrevious");
-//         }
-
-//         const built = buildFilterTree(group.node, fieldMap, values, paramIndex);
-
-//         // const whereClause = built.where.length > 0
-//         //     ? `(${built.where.join(` ${group.node.operator || "AND"} `)})`
-//         //     : "";
-
-//         // const havingClause = built.having.length > 0
-//         //     ? `(${built.having.join(` ${group.node.operator || "AND"} `)})`
-//         //     : "";
-
-//         // if (whereClause) {
-//         //     if (i === 0) {
-//         //         whereParts.push(whereClause);
-//         //     } else {
-//         //         const link = group.linkWithPrevious || "AND";
-//         //         whereParts.push(` ${link} ${whereClause}`);
-//         //     }
-//         // }
-
-//         // if (havingClause) {
-//         //     if (i === 0) {
-//         //         havingParts.push(havingClause);
-//         //     } else {
-//         //         const link = group.linkWithPrevious || "AND";
-//         //         havingParts.push(` ${link} ${havingClause}`);
-//         //     }
-//         // }
-
-
-//         const link = i === 0 ? "" : ` ${group.linkWithPrevious || "AND"} `;
-
-//         if (built.where.length > 0) {
-//             whereParts.push(
-//                 `${link}${built.where.length > 1 ? `(${built.where.join(` ${group.node.operator || "AND"} `)})` : built.where[0]}`
-//             );
-//         }
-
-//         if (built.having.length > 0) {
-//             havingParts.push(
-//                 `${link}${built.having.length > 1 ? `(${built.having.join(` ${group.node.operator || "AND"} `)})` : built.having[0]}`
-//             );
-//         }
-//     });
-
-//     if (whereParts.length > 0) {
-//         result.where.push(whereParts.join(""));
-//     }
-//     if (havingParts.length > 0) {
-//         result.having.push(havingParts.join(""));
-//     }
-
-//     return result;
-// };
-
-const buildLinkedFilterGroups = (groups: LinkedFilterGroup[], fieldMap: Map<string, DatasetField>, values: Record<string, any>, paramIndex: { current: number }): BuiltFilter => {
-
-    const result: BuiltFilter = { where: [], having: [] };
+    const result: BuiltFilter = { wheres: [], havings: [], values: {} };
 
     if (!groups?.length) return result;
 
-    // ---- WHERE ----
-    const whereGroups = groups.filter(g =>
-        buildFilterTree(g.node, fieldMap, values, { current: paramIndex.current }).where.length > 0
-    );
-
     let whereExpr = "";
-
-    whereGroups.forEach((group, i) => {
-        const built = buildFilterTree(group.node, fieldMap, values, paramIndex);
-        const clause = built.where.length > 1
-            ? `(${built.where.join(` ${group.node.operator || "AND"} `)})`
-            : built.where[0];
-
-        if (i === 0) {
-            whereExpr = clause;
-        } else {
-            const link = group.linkWithPrevious || "AND";
-            whereExpr += ` ${link} ${clause}`;
-        }
-    });
-
-    if (whereExpr) result.where.push(whereExpr);
-
-    // ---- HAVING ----
-    const havingGroups = groups.filter(g =>
-        buildFilterTree(g.node, fieldMap, values, { current: paramIndex.current }).having.length > 0
-    );
-
     let havingExpr = "";
 
-    havingGroups.forEach((group, i) => {
-        const built = buildFilterTree(group.node, fieldMap, values, paramIndex);
-        const clause = built.having.length > 1
-            ? `(${built.having.join(` ${group.node.operator || "AND"} `)})`
-            : built.having[0];
-
-        if (i === 0) {
-            havingExpr = clause;
-        } else {
-            const link = group.linkWithPrevious || "AND";
-            havingExpr += ` ${link} ${clause}`;
-        }
+    const wheresGroup = groups.filter(g => {
+        const res = buildFilterTree(g.node, fieldMap, { current: 0 });
+        return res.wheres.length > 0;
     });
 
-    if (havingExpr) result.having.push(havingExpr);
+    const havingGroup = groups.filter(g => {
+        const res = buildFilterTree(g.node, fieldMap, { current: 0 });
+        return res.havings.length > 0;
+    });
+
+    wheresGroup.forEach((group, index) => {
+        const { wheres, values } = buildFilterTree(group.node, fieldMap, paramIndex);
+        const link = group.linkWithPrevious || "AND";
+        const operator = ` ${group.node.operator || "AND"} `;
+        // WHERE
+        if (wheres.length) {
+            const wClause = wheres.length > 1 ? `(${wheres.join(operator)})` : wheres[0];
+            whereExpr = index === 0 ? wClause : `${whereExpr} ${link} ${wClause}`;
+        }
+        Object.assign(result.values, values);
+    });
+
+    havingGroup.forEach((group, index) => {
+        const { havings, values } = buildFilterTree(group.node, fieldMap, paramIndex);
+        const link = group.linkWithPrevious || "AND";
+        const operator = ` ${group.node.operator || "AND"} `;
+        // HAVING
+        if (havings.length) {
+            const hClause = havings.length > 1 ? `(${havings.join(operator)})` : havings[0];
+            havingExpr = index === 0 ? hClause : `${havingExpr} ${link} ${hClause}`;
+        }
+        Object.assign(result.values, values);
+    });
+
+    if (whereExpr) result.wheres.push(whereExpr);
+    if (havingExpr) result.havings.push(havingExpr);
 
     return result;
 };
-
 // SQL COMPILER
 const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], query: QueryJson): CompiledQuery => {
-
     // QueryJsonSchema.parse(query);
-
     const compile: CompiledQuery = { sql: "", values: {}, error: {} }
 
     if (!dataset?.view_name) {
         compile.error.view_name = "Dataset invalide.";
+        console.log("Dataset invalide.");
         return compile;
     }
 
-    const aliasMap = new Map<string, string>();
-
     const fieldMap = new Map(fields.map(f => [f.name, f]));
-    const values: Record<string, unknown> = {};
     const paramIndex = { current: 0 };
 
-    const select: string[] = [];
-    const groupBy: string[] = [];
-    const where: string[] = [];
-    const having: string[] = [];
+    const selectPart: string[] = [];
+    const groupByPart: string[] = [];
+    const wherePart: string[] = [];
+    const havingPart: string[] = [];
+
     const { dimensions = [], metrics = [] } = query.select;
 
-    if (dimensions.length === 0 && metrics.length === 0) {
+    const aliasMap = new Map<string, string>();
+
+    if (!dimensions.length && !metrics.length) {
         const errorMsg = "At least one dimension or metric required.";
-        compile.error.dimensions = errorMsg;
-        compile.error.metrics = errorMsg;
+        compile.error["select"] = errorMsg;
+        compile.error["dimensions"] = errorMsg;
+        compile.error["metrics"] = errorMsg;
+        console.log(errorMsg);
         return compile;
     }
 
     // ---- SELECT DIMENSIONS
     for (const dim of dimensions) {
         const field = fieldMap.get(dim);
-        if (!field || !field.field_type || field.field_type !== "dimension") continue;
+        if (!field || field.field_type !== "dimension") continue;
 
         const alias = quoteIdentifier(field.name);
-        select.push(`${field.expression} AS ${alias}`);
-        groupBy.push(field.expression);
+        selectPart.push(`${field.expression} AS ${alias}`);
+        groupByPart.push(field.expression);
 
         aliasMap.set(field.name, alias);
     }
@@ -539,37 +590,43 @@ const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], query: Qu
 
         const alias = quoteIdentifier(field.name);
         const sqlExpression = generateSqlExpression(field.expression, field.aggregation);
-        select.push(`${sqlExpression} AS ${alias}`);
 
+        selectPart.push(`${sqlExpression} AS ${alias}`);
         aliasMap.set(field.name, alias);
     }
 
-    if (select.length === 0) {
-        compile.error.select = "Au moins un champ doit être sélectionné.";
+    if (selectPart.length === 0) {
+        const errorMsg = "Au moins un champ doit être sélectionné.";
+        compile.error.select = errorMsg;
+        console.log(errorMsg);
         return compile;
     }
 
-    const queryFilters = [...(query.filters?.where ?? []), ...(query.filters?.having ?? [])];
+    // FILTERS
+    const queryFilters = [
+        ...(query.filters?.where ?? []),
+        ...(query.filters?.having ?? [])
+    ];
 
     if (queryFilters.length > 0) {
-        const built = buildLinkedFilterGroups(
-            queryFilters,
-            fieldMap,
-            values,
-            paramIndex
-        );
-        where.push(...built.where);
-        having.push(...built.having);
+        const { wheres, havings, values } = buildLinkedFilterGroups(queryFilters, fieldMap, paramIndex);
+        wherePart.push(...wheres);
+        havingPart.push(...havings);
+        compile.values = values;
     }
 
     const order_by_errors: string[] = [];
 
+    const hasOrderBy = query.order_by && query.order_by.length > 0;
+
     // ---- ORDER BY
-    const orderBy = query.order_by && query.order_by.length > 0
+    const orderBy = hasOrderBy
         ? `ORDER BY ${query.order_by
             .filter(o => {
                 if (!fieldMap.get(o.field)) {
-                    order_by_errors.push(`Invalid ORDER BY field: ${o.field}`);
+                    const errorMsg = `Invalid ORDER BY field: ${o.field}`;
+                    order_by_errors.push(errorMsg);
+                    console.log(errorMsg);
                     return false
                 }
                 return true
@@ -587,14 +644,32 @@ const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], query: Qu
         return compile;
     }
 
-    if (typeof query.limit === "number" && query.limit <= 0) {
-        compile.error.limit = "Limit doit être un entier positif!";
-        return compile;
+    // if (typeof query.limit === "number" && query.limit <= 0) {
+    //     // compile.error.limit = "Limit doit être un entier positif!";
+    //     query.limit = null;
+    //     // return compile;
+    // }
+
+    // if (typeof query.offset === "number" && query.offset < 0) {
+    //     // compile.error.offset = "Offset doit être ≥ 0!";
+    //     // return compile;
+    //     query.offset = null;
+    // }
+
+    // Vérifier limit
+    if (query.limit !== undefined && query.limit !== null) {
+        if (typeof query.limit !== "number" || query.limit <= 0) {
+            compile.error.limit = "Limit doit être un entier positif!";
+            return compile;
+        }
     }
 
-    if (typeof query.offset === "number" && query.offset < 0) {
-        compile.error.offset = "Offset doit être ≥ 0!";
-        return compile;
+    // Vérifier offset
+    if (query.offset !== undefined && query.offset !== null) {
+        if (typeof query.offset !== "number" || query.offset < 0) {
+            compile.error.offset = "Offset doit être ≥ 0!";
+            return compile;
+        }
     }
 
     // ---- LIMIT / OFFSET
@@ -604,16 +679,16 @@ const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], query: Qu
     const isOffset = typeof query.offset === "number" && query.offset >= 0;
     const offset = isOffset ? `OFFSET ${query.offset}` : "";
 
-    const hasGroupBy = metrics.length > 0 && groupBy.length;
+    const hasGroupBy = metrics.length > 0 && groupByPart.length;
 
     // ---- FINAL SQL
     const sql = [
         "SELECT",
-        `  ${select.join(",\n  ")}`,
+        `  ${selectPart.join(",\n  ")}`,
         `FROM ${quoteIdentifier(dataset.view_name)}`,
-        where.length ? `WHERE ${where.join(" \n ")}` : "",
-        hasGroupBy ? `GROUP BY ${groupBy.join(", ")}` : "",
-        having.length > 0 ? `HAVING ${having.join(" \n ")}` : "",
+        wherePart.length ? `WHERE ${wherePart.join(" \n ")}` : "",
+        hasGroupBy ? `GROUP BY ${groupByPart.join(", ")}` : "",
+        havingPart.length > 0 ? `HAVING ${havingPart.join(" \n ")}` : "",
         orderBy,
         limit,
         offset
@@ -621,7 +696,6 @@ const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], query: Qu
 
     compile.error = {};
     compile.sql = sql;
-    compile.values = values;
 
     return compile;
 }
@@ -773,96 +847,249 @@ const DatasetOrderByBuilder = ({ fields, orderBy = [], onChange, error }: OrderB
                 <Button size="sm" onClick={add}>+ Add Order</Button>
             </div>
 
-            {orderBy?.map((o, i) => (
-                <div key={i} className="flex gap-2 items-center">
+            <table>
+                <tbody>
+                    {orderBy?.map((o, i) => (
+                        // <tr key={i} className="flex gap-2 items-center">
+                        <tr key={i}>
+                            <th>
+                                <span className="text-xs text-gray-500 w-6">
+                                    {i + 1}
+                                </span>
+                            </th>
 
-                    <span className="text-xs text-gray-500 w-6">
-                        {i + 1}
-                    </span>
+                            <th>
+                                <FormSelect
+                                    value={o.field}
+                                    options={fields.map(f => ({
+                                        value: f.name,
+                                        label: f.name
+                                    }))}
+                                    onChange={(v) => update(i, { field: v })}
+                                    error={error}
+                                />
+                            </th>
 
-                    <FormSelect
-                        value={o.field}
-                        options={fields.map(f => ({
-                            value: f.name,
-                            label: f.name
-                        }))}
-                        onChange={(v) => update(i, { field: v })}
-                        error={error}
-                    />
+                            <th>
+                                <FormSelect
+                                    value={o.direction}
+                                    options={[
+                                        { value: "asc", label: "ASC" },
+                                        { value: "desc", label: "DESC" }
+                                    ]}
+                                    onChange={(v) => update(i, { direction: v })}
+                                />
+                            </th>
 
-                    <FormSelect
-                        value={o.direction}
-                        options={[
-                            { value: "asc", label: "ASC" },
-                            { value: "desc", label: "DESC" }
-                        ]}
-                        onChange={(v) => update(i, { direction: v })}
-                    />
-
-                    <Button size="sm" variant="outline" onClick={() => remove(i)}>
-                        ✕
-                    </Button>
-                </div>
-            ))}
+                            <th>
+                                <Button style={{ "padding": "6px 8px", "marginBottom": "12px" }} size="sm" variant="danger" onClick={() => remove(i)}>
+                                    ✕
+                                </Button>
+                            </th>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 };
 
+const InValuesModal = ({ isOpen, onClose, values, onChange, inputType }: InValuesModalProps) => {
+
+    const [tempValue, setTempValue] = useState("");
+
+    const addValue = () => {
+        if (!tempValue.trim()) return;
+        onChange([...values, tempValue.trim()]);
+        setTempValue("");
+    };
+
+    const removeValue = (index: number) => {
+        onChange(values.filter((_, i) => i !== index));
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <Modal title="Add IN values" isOpen={true} onClose={onClose} size="sm">
+            <div style={{ "height": "30px" }} className="flex gap-2">
+                <FormInput type={inputType} value={tempValue} onChange={(e) => setTempValue(e.target.value)} />
+                <Button size="sm" style={{ "padding": "0px 5px" }} onClick={addValue}>Add</Button>
+            </div>
+
+            <br />
+
+            <table>
+                {values.map((v, i) => (
+                    <tr key={i}>
+                        <th>{v}</th>
+                        <th><Button size="sm" style={{ "padding": "1px 5px" }} onClick={() => removeValue(i)} variant="danger">✕</Button></th>
+                    </tr>
+                ))}
+            </table>
+
+            <br />
+
+            <div className="flex justify-end">
+                <Button size="sm" style={{ "padding": "5px 10px" }} variant="outline" onClick={onClose}>
+                    Close
+                </Button>
+            </div>
+        </Modal>
+    );
+};
+
 const FilterNodeBuilder = ({ index, node, fields, onChange, onRemove }: FilterNodeBuilderProps) => {
+    const [isInModalOpen, setIsInModalOpen] = useState(false);
 
-    const defaultCondition: QueryFilter = {
-        type: "condition",
-        field: "",
-        operator: "=",
-        value: ""
-    };
+    const defaultCondition: QueryFilter = { type: "condition", field: "", operator: "=", value: "" };
 
-    const defaultGroup: QueryFilterGroup = {
-        type: "group",
-        operator: "AND",
-        children: []
-    };
+    const defaultGroup: QueryFilterGroup = { type: "group", operator: "AND", children: [] };
 
-    if (!node) return null;
+    if (!node) return <tr><th>No Node Available !</th></tr>;
 
     if (node.type === "condition") {
-        return (
-            <div className="flex gap-2 items-center">
-                <span className="text-xs text-gray-500 w-6">{index}</span>
-                <FormSelect
-                    value={node.field}
-                    options={fields.map(f => ({ value: f.name, label: f.name }))}
-                    onChange={(v) => onChange({ ...node, field: v })}
-                />
+        const selectedField = fields.find(f => f.name === node.field);
+        const operators = getOperatorsForField(selectedField?.data_type);
+        const inputType = getInputTypeForField(selectedField?.data_type);
 
-                <FormSelect
-                    value={node.operator}
-                    options={SqlOperatorsList.map(o => ({ value: o, label: o }))}
-                    onChange={(v) => onChange({ ...node, operator: v })}
-                />
+        const renderValueInput = () => {
+            if (NO_VALUE_OPERATORS.includes(node.operator)) return null;
 
-                {!SqlOperatorsNoValueList.includes(node.operator) && (
+            if (node.operator === "BETWEEN") {
+                return (
                     <>
-                        <FormInput
-                            value={node.value ?? ""}
-                            onChange={(e: any) => onChange({ ...node, value: e.target.value })}
-                        />
+                        <FormInput type={inputType} value={node.value}
+                            onChange={(e) => onChange({ ...node, value: e.target.value })} />
 
-                        {node.operator === "BETWEEN" && (
-                            <FormInput
-                                value={node.value2 ?? ""}
-                                onChange={(e: any) => onChange({ ...node, value2: e.target.value })}
-                            />
-                        )}
+                        <FormInput type={inputType} value={node.value2 ?? ""}
+                            onChange={(e) => onChange({ ...node, value2: e.target.value })} />
                     </>
-                )}
+                );
+            }
 
-                {onRemove && (
-                    <Button style={{ "padding": "6px 8px", "marginBottom": "12px" }} size="sm" variant="danger" onClick={onRemove}>
-                        ✕
-                    </Button>
-                )}
-            </div>
+            if (node.operator === "IN") {
+                const values = Array.isArray(node.value) ? node.value : [];
+
+                return (
+                    <>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsInModalOpen(true)}
+                        >
+                            Edit values ({values.length})
+                        </Button>
+
+                        <InValuesModal
+                            isOpen={isInModalOpen}
+                            onClose={() => setIsInModalOpen(false)}
+                            values={values}
+                            inputType={inputType}
+                            onChange={(newValues) =>
+                                onChange({ ...node, value: newValues })
+                            }
+                        />
+                    </>
+                );
+            }
+
+            switch (inputType) {
+                case "select":
+                    return (
+                        <>
+                            {selectedField?.data_type === "boolean" ? (
+                                <FormSelect
+                                    // label="Value"
+                                    value={node.value}
+                                    options={[
+                                        { value: "true", label: "TRUE" },
+                                        { value: "false", label: "FALSE" },
+                                    ]}
+                                    onChange={(v) => onChange({ ...node, value: v })}
+                                />
+                            ) : (<>Erreur</>)}
+                        </>
+                    );
+
+                case "textarea":
+                    return (
+                        <FormTextarea
+                            // label="Value"
+                            value={node.value}
+                            onChange={(e) => onChange({ ...node, value: e.target.value })}
+                        />
+                    );
+
+                default:
+                    return (
+                        <FormInput
+                            // label="Value"
+                            type={inputType}
+                            value={node.value}
+                            onChange={(e) => onChange({ ...node, value: e.target.value })}
+                        />
+                    );
+            }
+        };
+
+        return (
+            <tr>
+                <th>
+                    <span className="text-xs text-gray-500 w-6">{index}</span>
+                </th>
+                <td>
+                    <FormSelect
+                        value={node.field}
+                        options={fields.map(f => ({ value: f.name, label: f.name }))}
+                        // onChange={(v) => onChange({ ...node, field: v })}
+                        onChange={(v) => {
+                            const newField = fields.find(f => f.name === v);
+                            const newOperators = getOperatorsForField(newField?.data_type);
+
+                            onChange({
+                                ...node,
+                                field: v,
+                                operator: newOperators[0] ?? "=",
+                                value: "",
+                                value2: undefined
+                            });
+                        }}
+                    />
+                </td>
+
+                <td>
+                    <FormSelect
+                        // label="Operator"
+                        value={node.operator}
+                        options={operators.map(o => ({ value: o, label: o }))}
+                        // onChange={(v) => onChange({ ...node, operator: v })}
+                        onChange={(v) => {
+                            const isBetween = v === "BETWEEN";
+                            const isIn = v === "IN";
+
+                            onChange({
+                                ...node,
+                                operator: v,
+                                value: isIn ? [] : "",
+                                value2: isBetween ? "" : undefined
+                            });
+                        }}
+                    />
+                </td>
+
+                <td colSpan={2} className="flex gap-2 items-center">
+                    {renderValueInput()}
+                </td>
+
+                <td>
+                    {onRemove && (
+                        <Button style={{ "padding": "6px 8px", "marginBottom": "12px" }} size="sm" variant="danger" onClick={onRemove}>
+                            ✕
+                        </Button>
+                    )}
+                </td>
+            </tr>
         );
     }
 
@@ -894,15 +1121,16 @@ const FilterNodeBuilder = ({ index, node, fields, onChange, onRemove }: FilterNo
     };
 
     return (
-        <div className="p-3 border rounded bg-gray-100 space-y-3">
-
+        <>
+            {/* <div className="p-3 border rounded bg-gray-100 space-y-3"> */}
             <div className="flex justify-between items-center">
                 <strong className="font-semibold">
                     Group {index} : ({node.children.length})
                 </strong>
+
                 <FormSelect
                     value={node.operator}
-                    options={SqlLogicalOperatorList.map(o => ({ value: o, label: o }))}
+                    options={LOGICAL_OPERATORS.map(o => ({ value: o, label: o }))}
                     onChange={(v) => onChange({ ...node, operator: v })}
                 />
 
@@ -917,21 +1145,25 @@ const FilterNodeBuilder = ({ index, node, fields, onChange, onRemove }: FilterNo
                 </div>
             </div>
 
-            {node.children.map((child, i) => (
-                <FilterNodeBuilder
-                    key={i}
-                    index={i + 1}
-                    node={child}
-                    fields={fields}
-                    onChange={(updated) => updateChild(i, updated)}
-                    onRemove={() => removeChild(i)}
-                    error={undefined}
-                />
-            ))}
-        </div>
+            <table className="w-full">
+                <tbody>
+                    {node.children.map((child, i) => (
+                        <FilterNodeBuilder
+                            key={i}
+                            index={i + 1}
+                            node={child}
+                            fields={fields}
+                            onChange={(updated) => updateChild(i, updated)}
+                            onRemove={() => removeChild(i)}
+                            error={undefined}
+                        />
+                    ))}
+                </tbody>
+            </table>
+            {/* </div> */}
+        </>
     );
 };
-
 
 const DatasetFilterBuilder = ({ name, fields, node, onChange }: FilterBuilderProps) => {
 
@@ -945,7 +1177,7 @@ const DatasetFilterBuilder = ({ name, fields, node, onChange }: FilterBuilderPro
     };
 
     const removeLinkedGroup = (index: number) => {
-        if (node.length <= 1) return;
+        if (node.length <= 0) return;
         onChange(node.filter((_, i) => i !== index));
     };
 
@@ -967,31 +1199,33 @@ const DatasetFilterBuilder = ({ name, fields, node, onChange }: FilterBuilderPro
         <div className="space-y-6">
             <h6 className="font-semibold">{name}</h6>
 
-            {node.map((linkedGroup, i) => (
-                <div key={i} className="p-4 border rounded-xl bg-gray-50">
+            {node.map((linkedGroup, i) => {
+                return (
+                    <div key={i} className="p-4 border rounded-xl bg-gray-50">
 
-                    {i > 0 && (
-                        <FormSelect
-                            value={linkedGroup.linkWithPrevious || "AND"}
-                            options={SqlLogicalOperatorList.map(o => ({ value: o, label: o }))}
-                            onChange={(v) => {
-                                const updated = [...node];
-                                updated[i] = { ...updated[i], linkWithPrevious: v };
-                                onChange(updated);
-                            }}
+                        {i > 0 && (
+                            <FormSelect
+                                value={linkedGroup.linkWithPrevious || "AND"}
+                                options={LOGICAL_OPERATORS.map(o => ({ value: o, label: o }))}
+                                onChange={(v) => {
+                                    const updated = [...node];
+                                    updated[i] = { ...updated[i], linkWithPrevious: v };
+                                    onChange(updated);
+                                }}
+                            />
+                        )}
+
+                        <FilterNodeBuilder
+                            index={i + 1}
+                            node={linkedGroup.node}
+                            fields={fields}
+                            onChange={(updated) => updateLinkedGroup(i, updated)}
+                            onRemove={() => removeLinkedGroup(i)}
+                            error={undefined}
                         />
-                    )}
-
-                    <FilterNodeBuilder
-                        index={i + 1}
-                        node={linkedGroup.node}
-                        fields={fields}
-                        onChange={(updated) => updateLinkedGroup(i, updated)}
-                        onRemove={() => removeLinkedGroup(i)}
-                        error={undefined}
-                    />
-                </div>
-            ))}
+                    </div>
+                );
+            })}
 
             <Button size="sm" variant="dark-success" onClick={addLinkedGroup}>
                 + New {name} Group
@@ -1000,23 +1234,12 @@ const DatasetFilterBuilder = ({ name, fields, node, onChange }: FilterBuilderPro
     );
 };
 
-interface RenderFormProp {
-    datasets: Dataset[],
-    query: DatasetQuery,
-    tenants: Tenant[],
-    errors: CompileError,
-    setValue: (k: keyof DatasetQuery, v: any) => void,
-    setTenantId: (tenant: number | undefined) => void,
-    setPreviewSql: (sql: string | null) => void
-    setErrors: (error: CompileError) => void
-}
-
 // FORM RENDER
 const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setValue, setTenantId, setPreviewSql }: RenderFormProp) => {
 
+    const [buildError, setBuildError] = useState<string | null>(null);
 
     const dataset = datasets.find(d => d.id === query.dataset_id) ?? null;
-
     const fields = dataset?.fields || [];
 
     const dimensionFields = useMemo(
@@ -1029,11 +1252,54 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
         [fields]
     );
 
+    const validateQuery = useMemo(() => {
+        const queryErrors: CompileError = {};
+        if (!query?.name?.trim()) queryErrors["query_name"] = "Nom obligatoire !";
+        if (!query?.dataset_id) queryErrors["query_dataset"] = "Dataset obligatoire !";
+
+        const hasDimension = (query?.query_json?.select?.dimensions ?? []).length > 0;
+        const hasMetric = (query?.query_json?.select?.metrics ?? []).length > 0;
+
+        if (!hasDimension && !hasMetric) {
+            queryErrors["dimensions"] = "Dimensions ou Metrics obligatoire !";
+            queryErrors["metrics"] = "Metrics ou Dimensions obligatoire !";
+        }
+        return queryErrors;
+    }, [query?.query_json?.select?.dimensions, query?.query_json?.select?.metrics]);
+
+    const SQL_RESERVED = new Set([
+        "select", "from", "where", "table",
+        "view", "insert", "delete", "update",
+        "drop", "create", "alter"
+    ]);
+
+    const normalizeName = (value: string) => {
+        return value
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, "_")
+            .replace(/[^a-z0-9_]/g, "")
+            .replace(/_+/g, "_")
+            .replace(/^_+|_+$/g, "");
+    };
+
+    const NAME_REGEX = /^[a-z]+(?:_[a-z0-9]+)*$/;
+
+    const validateName = (value: string) => {
+        if (value.length < 3) return "Minimum 3 caractères";
+        if (value.length > 63) return "Maximum 63 caractères";
+        if (!NAME_REGEX.test(value))
+            return "Lettres minuscules, chiffres et underscore uniquement";
+        if (SQL_RESERVED.has(value))
+            return "Mot réservé SQL";
+        return undefined;
+    };
+
     const updateQueryJson = useCallback((patch: Partial<QueryJson>) => {
         let updated: QueryJson = { ...query.query_json, ...patch };
 
         // Clean order_by ONLY if select changed
-        if (patch.select) {
+        if (updated.select) {
             const allowedFields = [
                 ...updated.select.dimensions,
                 ...updated.select.metrics
@@ -1044,27 +1310,32 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
                 order_by: (updated.order_by || []).filter(o => !o.field || allowedFields.includes(o.field))
             };
         }
+
         setValue("query_json", updated);
 
-        console.log("UPDATE")
-        console.log(updated)
-
         if (!dataset) return;
+
+        const queryErrors = validateQuery;
 
         try {
             // QueryJsonSchema.parse(updated);
             const { sql, values, error } = compileDatasetQuery(dataset, fields, updated);
 
-            setErrors(error);
+            setErrors({ ...error, ...queryErrors });
 
             if (Object.keys(error).length === 0) {
                 setValue("compiled_sql", sql);
                 setValue("values", values);
             } else {
                 setValue("compiled_sql", "");
+                setValue("values", {});
+                console.log(error)
             }
-        } catch (err) {
+        } catch (err: any) {
             // console.warn("Query invalid:" + err);
+            console.log(err);
+            setBuildError(err.message);
+            setErrors({ ...errors, ...queryErrors, error: err.message });
         }
     }, [query, dataset, fields, setValue]);
 
@@ -1073,14 +1344,39 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
         setValue("compiled_sql", "");
     }, [DEFAULT_FORM.query_json, setValue]);
 
-    const hasSelectJson = (): boolean => {
-        const hasDimension = query.query_json.select.dimensions.length > 0;
-        const hasMetric = query.query_json.select.metrics.length > 0;
+    const hasSelectJson = useMemo((): boolean => {
+        const hasDimension = query?.query_json?.select?.dimensions?.length > 0;
+        const hasMetric = query?.query_json?.select?.metrics?.length > 0;
         return hasDimension || hasMetric;
-    }
+    }, [query?.query_json?.select?.dimensions, query?.query_json?.select?.metrics]);
+
+    const handlenameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const err = { ...errors };
+        delete err.query_name;
+        setErrors(err);
+
+        const val = e.target.value;
+        const invalidName = validateName(val);
+        if (invalidName) {
+            setErrors({ ...err, query_name: invalidName });
+            // return;
+        }
+        const normalized = normalizeName(val);
+        setValue("name", normalized);
+    };
+
+    const dimensions = useMemo((): DatasetField[] => {
+        return fields.filter(f => f.field_type === "dimension" && !f.aggregation)
+    }, [fields]);
+
+    const metrics = useMemo((): DatasetField[] => {
+        return fields.filter(f => f.field_type !== "dimension" || f.aggregation)
+    }, [fields]);
 
     return (
         <div className="space-y-6 max-w-5xl">
+
+            {buildError && (<p className="text-red-500 text-sm mt-1">{buildError}</p>)}
 
             <div className={styles.grid + ' ' + styles.grid3}>
                 <FormSelect
@@ -1119,13 +1415,7 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
                 <FormInput
                     label="Nom"
                     value={query.name}
-                    onChange={e => {
-                        const oldError = { ...errors };
-                        delete oldError.query_name;
-                        setErrors(oldError);
-
-                        setValue("name", e.target.value)
-                    }}
+                    onChange={e => handlenameChange(e)}
                     required
                     error={errors.query_name}
                 />
@@ -1136,30 +1426,30 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
                 <FormMultiSelect
                     label="Dimensions (Group By)"
                     value={query.query_json.select.dimensions}
-                    options={fields.filter(f => f.field_type === "dimension").map(f => ({ value: f.name, label: f.name }))}
+                    options={dimensions.map(f => ({ value: f.name, label: f.name }))}
                     onChange={(vals) => {
                         const oldError = { ...errors };
-                        delete oldError.dimensions;
-                        delete oldError.metrics;
+                        delete oldError["dimensions"];
+                        delete oldError["metrics"];
                         setErrors(oldError);
 
-                        updateQueryJson({ select: { ...query.query_json.select, dimensions: vals || [] } })
+                        updateQueryJson({ select: { ...query.query_json.select, dimensions: vals || [] } });
                     }}
-                    error={errors.dimensions}
+                    error={errors["dimensions"]}
                 />
 
                 {/* Metrics */}
                 <FormMultiSelect
                     label="Metrics"
                     value={query.query_json.select.metrics}
-                    options={fields.filter(f => f.field_type !== "dimension").map(f => ({ value: f.name, label: f.name }))}
+                    options={metrics.map(f => ({ value: f.name, label: f.name }))}
                     onChange={(vals) => {
                         const oldError = { ...errors };
-                        delete oldError.dimensions;
-                        delete oldError.metrics;
+                        delete oldError["dimensions"];
+                        delete oldError["metrics"];
                         setErrors(oldError);
 
-                        updateQueryJson({ select: { ...query.query_json.select, metrics: vals || [] } })
+                        updateQueryJson({ select: { ...query.query_json.select, metrics: vals || [] } });
                     }}
                     error={errors.metrics}
                 />
@@ -1169,12 +1459,11 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
             {dataset && (
                 // <div className="space-y-6 max-w-4xl">
                 <>
-
-                    {hasSelectJson() && (
+                    {hasSelectJson && (
                         <>
                             <div key={"filters_where"} className="p-4 border rounded-xl bg-gray-50">
                                 <DatasetFilterBuilder
-                                    name="Where Filter"
+                                    name="Where Filters"
                                     fields={dimensionFields}
                                     node={query.query_json.filters.where}
                                     onChange={(node) => {
@@ -1187,7 +1476,7 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
 
                             <div key={"filters_having"} className="p-4 border rounded-xl bg-gray-50">
                                 <DatasetFilterBuilder
-                                    name="Having Filter"
+                                    name="Having Filters"
                                     fields={metricFields}
                                     node={query.query_json.filters.having}
                                     onChange={(node) => {
@@ -1205,7 +1494,6 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
                                     const oldError = { ...errors };
                                     delete oldError.order_by;
                                     setErrors(oldError);
-
                                     updateQueryJson({ order_by });
                                 }}
                                 error={errors.order_by}
@@ -1265,6 +1553,7 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
                             Preview
                         </Button>
                     </div>
+
                     {/* <FormTextarea label="Compiled SQL" value={query.compiled_sql} disabled rows={6} /> */}
                 </>
             )}
@@ -1277,102 +1566,121 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
 // MAIN PAGE
 export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
     const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [tenantId, setTenantId] = useState<number | undefined>();
+    const [tenant_id, setTenantId] = useState<number | undefined>();
+    const [dataset_id, setDatasetId] = useState<number | undefined>();
     const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [previewSql, setPreviewSql] = useState<string | null>(null);
     const [previewJson, setPreviewJson] = useState<QueryJson | null>(null);
     const [previewValues, setPreviewValues] = useState<Record<string, any> | null>(null);
     const [errors, setErrors] = useState<CompileError>({});
 
-    const loadDatasets = async (tenant_id: number | undefined) => {
-        if (!tenant_id) return;
-        const ds = await datasetService.all(tenant_id);
-        setDatasets(ds || []);
-    };
-
-    const loadTenants = async () => {
-        const t = await tenantService.all();
-        setTenants(t || []);
-        if (t?.length) setTenantId(t[0].id ?? undefined);
-    };
+    const didLoad = useRef(false);
 
     // LOAD DATA
     useEffect(() => {
-        loadTenants();
+        if (didLoad.current) return;
+        didLoad.current = true;
+        tenantService.all().then(t => setTenants(t || []));
     }, []);
 
     useEffect(() => {
-        loadDatasets(tenantId);
-    }, [tenantId]);
+        if (!tenant_id) return;
+        datasetService.all(tenant_id).then(d => setDatasets(d || []));
+    }, [tenant_id]);
 
     // TABLE COLUMNS
     const queryColumns = useMemo(() => getQueryColumns(setPreviewJson, setPreviewSql, setPreviewValues), []);
 
-    const defaultTenantConfig = useMemo(() => ({
-        required: true,
-        id: tenantId
-    }), [tenantId]);
+    const defaultTenant = useMemo(() => {
+        return { required: true, ids: [tenant_id, dataset_id] };
+    }, [tenant_id, dataset_id]);
 
-    const renderForm = useCallback((query: DatasetQuery, setValue: any, saving: boolean) => (
-        <RenderFormBuilder
-            datasets={datasets}
-            query={query}
-            tenants={tenants}
-            errors={errors}
-            setValue={setValue}
-            setTenantId={setTenantId}
-            setPreviewSql={setPreviewSql}
-            setErrors={setErrors}
-        />
-    ),
-        [datasets, tenants, errors]
-    );
 
-    const validateQuery = (q: DatasetQuery): CompileError => {
-        const errors: CompileError = {};
+    const validateQuery = (q: DatasetQuery) => {
+        const queryErrors: CompileError = {};
+        if (!q?.name?.trim()) queryErrors["query_name"] = "Nom obligatoire !";
+        if (!q?.dataset_id) queryErrors["query_dataset"] = "Dataset obligatoire !";
 
-        if (!q.name?.trim()) {
-            errors.query_name = "Nom obligatoire !";
+        const hasDimension = (q?.query_json?.select?.dimensions ?? []).length > 0;
+        const hasMetric = (q?.query_json?.select?.metrics ?? []).length > 0;
+
+        if (!hasDimension && !hasMetric) {
+            queryErrors["dimensions"] = "Dimensions ou Metrics obligatoire !";
+            queryErrors["metrics"] = "Metrics ou Dimensions obligatoire !";
         }
-
-        if (!q.dataset_id) {
-            errors.query_dataset = "Dataset obligatoire !";
-        }
-
-        const hasSelect =
-            q.query_json.select.dimensions.length > 0 ||
-            q.query_json.select.metrics.length > 0;
-
-        if (!hasSelect) {
-            errors.dimensions = "Dimensions ou Metrics obligatoire !";
-            errors.metrics = "Metrics ou Dimensions obligatoire !";
-        }
-
-        return errors;
+        return queryErrors;
     };
 
+    const formatJsonWithInlineArrays = (obj: any, applyPretty: boolean = false) => {
+        const pretty = JSON.stringify(obj, null, 2);
+
+        if (!applyPretty) return pretty;
+        return pretty.replace(/\[\s+([\s\S]*?)\s+\]/g, (match) => {
+            return match
+                .replace(/\n/g, "")
+                .replace(/\s+/g, " ")
+                .replace(/\s?,\s?/g, ", ");
+        }
+        );
+    };
 
     // RENDER
     return (
         <>
+            <div className="grid grid-cols-3 gap-4 mt-4">
+
+                <FormSelect
+                    label={`Tenant List`}
+                    value={tenant_id}
+                    options={tenants.map((c) => ({ value: c.id, label: c.name }))}
+                    onChange={(value) => { setTenantId(value); setDatasetId(undefined) }}
+                    placeholder="Sélectionner Tenant"
+                    leftIcon={<FaDatabase />}
+                    required={true}
+                />
+
+                <FormSelect
+                    label={`Dataset List`}
+                    value={dataset_id}
+                    options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+                    onChange={(value) => setDatasetId(value)}
+                    placeholder="Sélectionner Dataset"
+                    leftIcon={<FaDatabase />}
+                    required={true}
+                />
+            </div>
+
+            <br />
             <AdminEntityCrudModule<DatasetQuery>
                 ref={ref}
-                modalSize="lg"
+                modalSize="yl"
+                entityName="DatasetQuery"
                 title="Dataset Query Management"
                 icon={<Shield size={18} />}
-                entityName="DatasetQuery"
                 columns={queryColumns}
-                defaultValue={useMemo(() => DEFAULT_FORM, [])}
                 service={queryService}
-                defaultTenant={defaultTenantConfig}
-                isValid={(q) => Object.keys(validateQuery(q)).length === 0}
+                defaultTenant={defaultTenant}
+                defaultValue={useMemo(() => DEFAULT_FORM, [])}
+                isValid={(q) => {
+                    return Object.keys(errors).length === 0
+                }}
                 submitValidation={async (q) => {
                     const validationErrors = validateQuery(q);
                     setErrors(validationErrors);
-
                     return Object.keys(validationErrors).length === 0;
                 }}
-                renderForm={renderForm}
+                renderForm={(query, setValue, saving) => (
+                    <RenderFormBuilder
+                        datasets={datasets}
+                        query={query}
+                        tenants={tenants}
+                        errors={errors}
+                        setValue={setValue}
+                        setTenantId={setTenantId}
+                        setPreviewSql={setPreviewSql}
+                        setErrors={setErrors}
+                    />
+                )}
             />
 
             {/* SQL PREVIEW *MODAL */}
@@ -1380,25 +1688,25 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
                 title="SQL Preview"
                 open={Boolean(previewSql)}
                 data={previewSql || ""}
-                type="sql"
                 onClose={() => setPreviewSql(null)}
+                type="sql"
             />
 
             {/* JSON PREVIEW MODAL */}
             <DatasetPreviewModal
                 title="Query JSON"
                 open={Boolean(previewJson)}
-                data={JSON.stringify(previewJson ?? {}, null, 2)}
-                type="json"
+                data={formatJsonWithInlineArrays(previewJson ?? {})}
                 onClose={() => setPreviewJson(null)}
+                type="json"
             />
 
             <DatasetPreviewModal
                 title="Query VALUES"
                 open={Boolean(previewValues)}
-                data={JSON.stringify(previewValues ?? {}, null, 2)}
-                type="json"
+                data={formatJsonWithInlineArrays(previewValues ?? {}, true)}
                 onClose={() => setPreviewValues(null)}
+                type="json"
             />
 
         </>
