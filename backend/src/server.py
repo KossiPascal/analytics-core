@@ -10,8 +10,6 @@ from backend.src.routes.datasets import dataset_query
 from backend.src.routes.visualizations import script, visualization
 from backend.src.security.ssh_crypto import harden_ssh_crypto
 
-harden_ssh_crypto()
-
 import warnings
 import urllib3
 from pathlib import Path

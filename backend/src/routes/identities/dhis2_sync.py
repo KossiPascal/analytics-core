@@ -7,10 +7,12 @@ import string
 
 from flask import Blueprint, request, jsonify
 
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.models.auth import OrgUnitLevel, UserOrgunit, UserOrgunitLink, Tenant, User
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
 from backend.src.equipment_manager.services.dhis2_service import (
     DHIS2_URL,
     DHIS2_USERNAME,
@@ -191,9 +193,9 @@ def sync_levels():
     tenant_id = _resolve_tenant(data.get("tenant_id"))
 
     if not tenant_id:
-        return error_response("Aucun tenant disponible", 400)
+        raise BadRequest("Aucun tenant disponible", 400)
     if not DHIS2_USERNAME:
-        return error_response("Identifiants DHIS2 non configurés (DHIS2_USERNAME)", 400)
+        raise BadRequest("Identifiants DHIS2 non configurés (DHIS2_USERNAME)", 400)
 
     try:
         session = _get_dhis2_session()
@@ -209,7 +211,7 @@ def sync_levels():
     except Exception as e:
         db.session.rollback()
         logger.error(f"DHIS2 levels sync error: {e}")
-        return error_response(f"Échec de la synchronisation des niveaux : {str(e)}", 500)
+        raise BadRequest(f"Échec de la synchronisation des niveaux : {str(e)}", 500)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -227,9 +229,9 @@ def sync_orgunits():
     org_unit_id = data.get("org_unit_id")   # uid DHIS2 racine (optionnel)
 
     if not tenant_id:
-        return error_response("Aucun tenant disponible", 400)
+        raise BadRequest("Aucun tenant disponible", 400)
     if not DHIS2_USERNAME:
-        return error_response("Identifiants DHIS2 non configurés (DHIS2_USERNAME)", 400)
+        raise BadRequest("Identifiants DHIS2 non configurés (DHIS2_USERNAME)", 400)
 
     try:
         session = _get_dhis2_session()
@@ -319,7 +321,7 @@ def sync_orgunits():
     except Exception as e:
         db.session.rollback()
         logger.error(f"DHIS2 orgunits sync error: {e}")
-        return error_response(f"Échec de la synchronisation des orgunits : {str(e)}", 500)
+        raise BadRequest(f"Échec de la synchronisation des orgunits : {str(e)}", 500)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -340,11 +342,11 @@ def sync_ascs():
     position_code = (data.get("position_code") or "ASC").strip()
 
     if not tenant_id:
-        return error_response("Le tenant_id est requis pour la synchronisation des ASC", 400)
+        raise BadRequest("Le tenant_id est requis pour la synchronisation des ASC", 400)
     if not Tenant.query.filter_by(id=tenant_id, deleted=False).first():
-        return error_response("Tenant introuvable", 404)
+        raise BadRequest("Tenant introuvable", 404)
     if not DHIS2_USERNAME:
-        return error_response("Identifiants DHIS2 non configurés (DHIS2_USERNAME)", 400)
+        raise BadRequest("Identifiants DHIS2 non configurés (DHIS2_USERNAME)", 400)
 
     try:
         session = _get_dhis2_session()
@@ -611,4 +613,4 @@ def sync_ascs():
     except Exception as e:
         db.session.rollback()
         logger.error(f"DHIS2 ASC sync error: {e}")
-        return error_response(f"Échec de la synchronisation des ASC : {str(e)}", 500)
+        raise BadRequest(f"Échec de la synchronisation des ASC : {str(e)}", 500)

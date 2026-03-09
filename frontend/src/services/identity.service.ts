@@ -25,7 +25,8 @@ export const orgunitService = {
 }
 
 export const levelService = {
-    all: () => identity.all<OrgUnitLevel>("/levels"),
+    full: () => identity.all<OrgUnitLevel>("/levels"),
+    all: (tenant_id?:number) => identity.all<OrgUnitLevel>("/levels"),
     create: (lv: OrgUnitLevel) => identity.create("/levels", lv),
     update: (id: number, lv: OrgUnitLevel) => identity.update("/levels", id, lv),
     remove: (id: number) => identity.remove("/levels", id),
