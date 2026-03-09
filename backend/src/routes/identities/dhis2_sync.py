@@ -583,7 +583,7 @@ def sync_ascs():
                     last_name=lastname or "",
                     email=email_val or "",
                     phone=phone_val or "",
-                    employee_id_code=employee_code or "",
+                    employee_id_code=employee_code or None,
                     user_id=user.id,
                     position_id=asc_position_id,
                     is_active=True,
