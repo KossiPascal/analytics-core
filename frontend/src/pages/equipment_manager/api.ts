@@ -162,7 +162,7 @@ export const ticketsApi = {
   receive: (id: string, data?: { comment?: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/receive`, data),
   receiveFromRepairer: (id: string, data: { equipment_state: 'REPAIRED' | 'COMPLETELY_DAMAGED'; comment?: string }) =>
     api.post<RepairTicket>(`${BASE}/tickets/${id}/receive-from-repairer`, data),
-  send: (id: string, data: { to_role: string; comment?: string; recipient_employee_id?: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/send`, data),
+  send: (id: string, data: { to_role: string; comment?: string; recipient_employee_id?: string; cc_employee_ids?: string[] }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/send`, data),
   markRepaired: (id: string, data: { resolution_notes: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/mark-repaired`, data),
   cancel: (id: string, data: { cancellation_reason: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/cancel`, data),
   addComment: (id: string, data: { comment: string }) => api.post<TicketComment>(`${BASE}/tickets/${id}/comment`, data),

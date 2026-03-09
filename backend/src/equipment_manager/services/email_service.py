@@ -60,7 +60,7 @@ def get_smtp_config_from_db():
     return _get_smtp_config()
 
 
-def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment=""):
+def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment="", cc_emails: list | None = None):
     """
     Send email notification when a ticket is sent to the next stage.
 
@@ -136,20 +136,26 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
         </html>
         """
 
+        valid_cc = [e for e in (cc_emails or []) if e and e != recipient_email]
+
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = from_addr
         msg["To"] = recipient_email
+        if valid_cc:
+            msg["Cc"] = ", ".join(valid_cc)
         msg.attach(MIMEText(html_body, "html"))
 
         server, _ = _build_smtp_connection_from_db()
         if not server:
             return False
 
-        server.sendmail(from_addr, [recipient_email], msg.as_string())
+        all_recipients = [recipient_email] + valid_cc
+        server.sendmail(from_addr, all_recipients, msg.as_string())
         server.quit()
 
-        logger.info(f"Ticket notification sent for {ticket.ticket_number} to {recipient_email}")
+        logger.info(f"Ticket notification sent for {ticket.ticket_number} to {recipient_email}" +
+                    (f" (CC: {', '.join(valid_cc)})" if valid_cc else ""))
         return True
 
     except Exception as e:

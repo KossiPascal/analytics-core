@@ -6,9 +6,9 @@ import { useFormValidation } from '@/components/forms/useFormValidation';
 import { Send } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
-import { ticketsApi } from '../../api';
+import { ticketsApi, employeesApi } from '../../api';
 import { STAGE_LABELS } from '../../types';
-import type { Employee } from '../../types';
+import type { Employee, Department } from '../../types';
 
 const VALIDATION_RULES = {
   recipientId: { required: true, message: 'Sélectionner un destinataire' },
@@ -22,14 +22,18 @@ interface Props {
 }
 
 export function TicketSendModal({ isOpen, onClose, onSuccess, ticketId }: Props) {
-  const [comment, setComment]           = useState('');
-  const [recipientId, setRecipientId]   = useState('');
-  const [toRole, setToRole]             = useState('');       // auto ou choisi
-  const [nextStages, setNextStages]     = useState<string[]>([]);
-  const [employees, setEmployees]       = useState<Employee[]>([]);
-  const [isFinal, setIsFinal]           = useState(false);
-  const [loading, setLoading]           = useState(false);
-  const [saving, setSaving]             = useState(false);
+  const [comment, setComment]               = useState('');
+  const [recipientId, setRecipientId]       = useState('');
+  const [toRole, setToRole]                 = useState('');
+  const [nextStages, setNextStages]         = useState<string[]>([]);
+  const [allEmployees, setAllEmployees]     = useState<Employee[]>([]);
+  const [departments, setDepartments]       = useState<Department[]>([]);
+  const [deptCode, setDeptCode]             = useState('');
+  const [deptEmployees, setDeptEmployees]   = useState<Employee[]>([]);
+  const [deptLoading, setDeptLoading]       = useState(false);
+  const [isFinal, setIsFinal]               = useState(false);
+  const [loading, setLoading]               = useState(false);
+  const [saving, setSaving]                 = useState(false);
 
   const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } =
     useFormValidation(isFinal ? {} : VALIDATION_RULES);
@@ -44,30 +48,63 @@ export function TicketSendModal({ isOpen, onClose, onSuccess, ticketId }: Props)
     if (!isOpen || !ticketId) return;
 
     setLoading(true);
-    setEmployees([]);
+    setAllEmployees([]);
+    setDeptEmployees([]);
+    setDepartments([]);
     setRecipientId('');
+    setDeptCode('');
     setToRole('');
     setNextStages([]);
     setIsFinal(false);
 
-    ticketsApi.getCandidates(ticketId)
-      .then((res) => {
-        if (!res.success || !res.data) return;
-        const { is_final, next_stages, employees: emps } = res.data;
+    Promise.all([
+      ticketsApi.getCandidates(ticketId),
+      employeesApi.getDepartments(),
+    ]).then(([candRes, deptRes]) => {
+      if (candRes.success && candRes.data) {
+        const { is_final, next_stages, employees: emps } = candRes.data;
         setIsFinal(is_final);
         setNextStages(next_stages);
-        setEmployees(emps);
-        // Auto-sélectionner le to_role si une seule étape suivante
+        setAllEmployees(emps);
         if (!is_final && next_stages.length === 1) setToRole(next_stages[0]);
-      })
-      .finally(() => setLoading(false));
+      }
+      if (deptRes.success && deptRes.data) {
+        // Aplatir l'arborescence en liste simple
+        const flatDepts: Department[] = [];
+        const flatten = (depts: Department[]) => {
+          depts.forEach((d) => { flatDepts.push(d); if (d.children) flatten(d.children); });
+        };
+        flatten(deptRes.data);
+        setDepartments(flatDepts);
+      }
+    }).finally(() => setLoading(false));
   }, [isOpen, ticketId]);
+
+  /* ── filtre employés par département ────────────────────────────── */
+  useEffect(() => {
+    setRecipientId('');
+    if (!deptCode) {
+      setDeptEmployees([]);
+      return;
+    }
+    setDeptLoading(true);
+    employeesApi.getAll({ active: 'true', department_code: deptCode })
+      .then((res) => {
+        if (res.success) {
+          // Intersectionner avec les candidats valides (allEmployees)
+          const candidateIds = new Set(allEmployees.map((e) => e.id));
+          setDeptEmployees((res.data ?? []).filter((e) => candidateIds.has(e.id)));
+        }
+      })
+      .finally(() => setDeptLoading(false));
+  }, [deptCode]);
 
   /* ── reset à la fermeture ─────────────────────────────────────────── */
   useEffect(() => {
     if (!isOpen) {
-      setComment(''); setRecipientId(''); setToRole('');
-      setNextStages([]); setEmployees([]); setIsFinal(false);
+      setComment(''); setRecipientId(''); setToRole(''); setDeptCode('');
+      setNextStages([]); setAllEmployees([]); setDeptEmployees([]);
+      setDepartments([]); setIsFinal(false);
       reset();
     }
   }, [isOpen]);
@@ -83,10 +120,16 @@ export function TicketSendModal({ isOpen, onClose, onSuccess, ticketId }: Props)
 
     setSaving(true);
     try {
+      // CC = tous les membres du département sélectionné sauf le destinataire
+      const ccIds = deptEmployees
+        .filter((e) => e.id !== recipientId)
+        .map((e) => e.id);
+
       const res = await ticketsApi.send(ticketId, {
         to_role: isFinal ? 'RETURNED_ASC' : toRole,
         comment,
         recipient_employee_id: isFinal ? undefined : recipientId,
+        cc_employee_ids: ccIds.length ? ccIds : undefined,
       });
       if (res.success) {
         toast.success('Ticket envoyé');
@@ -103,17 +146,25 @@ export function TicketSendModal({ isOpen, onClose, onSuccess, ticketId }: Props)
     }
   };
 
+  /* ── options du select département ────────────────────────────────── */
+  const deptOptions = [
+    { value: '', label: 'Sélectionner un département' },
+    ...departments.map((d) => ({ value: d.code, label: d.name })),
+  ];
+
   /* ── options du select destinataire ──────────────────────────────── */
   const recipientOptions = [
     {
       value: '',
-      label: loading
+      label: !deptCode
+        ? 'Sélectionner d\'abord un département'
+        : deptLoading
         ? 'Chargement...'
-        : employees.length === 0
-        ? 'Aucun employé actif trouvé'
+        : deptEmployees.length === 0
+        ? 'Aucun employé trouvé dans ce département'
         : 'Sélectionner un destinataire',
     },
-    ...employees.map((e) => ({
+    ...deptEmployees.map((e) => ({
       value: e.id,
       label: `${e.full_name}${e.position_name ? ` — ${e.position_name}` : ''}${e.email ? ` (${e.email})` : ''}`,
     })),
@@ -159,14 +210,27 @@ export function TicketSendModal({ isOpen, onClose, onSuccess, ticketId }: Props)
             )}
 
             <FormSelect
+              label="Département"
+              value={deptCode}
+              onChange={(v) => setDeptCode(v)}
+              options={deptOptions}
+              disabled={loading}
+            />
+
+            <FormSelect
               label="Destinataire"
               required
               value={recipientId}
               onChange={(v) => { setRecipientId(v); touchField('recipientId', v); }}
               error={getFieldError('recipientId')}
               options={recipientOptions}
-              disabled={loading}
+              disabled={loading || !deptCode || deptLoading}
             />
+            {deptCode && recipientId && deptEmployees.length > 1 && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted, #6b7280)', margin: '-0.25rem 0 0' }}>
+                Les {deptEmployees.length - 1} autre(s) membre(s) du département recevront une copie de l'email.
+              </p>
+            )}
           </>
         )}
 

@@ -235,6 +235,7 @@ def send_ticket(id):
     to_role = data.get("to_role", "").strip()
     comment = data.get("comment", "")
     recipient_employee_id = data.get("recipient_employee_id")
+    cc_employee_ids = data.get("cc_employee_ids") or []
 
     # Resolve recipient email: prefer explicitly chosen recipient, fallback to ticket owner
     recipient_email = ""
@@ -243,6 +244,18 @@ def send_ticket(id):
         recipient_email = (dest_emp.email or "").strip() if dest_emp else ""
     elif ticket.employee:
         recipient_email = (ticket.employee.email or "").strip()
+
+    # Collect CC emails from department members
+    cc_emails: list[str] = []
+    for emp_id in cc_employee_ids:
+        try:
+            cc_emp = Employee.query.get(int(emp_id))
+            if cc_emp and cc_emp.email:
+                email = cc_emp.email.strip()
+                if email and email != recipient_email:
+                    cc_emails.append(email)
+        except (ValueError, TypeError):
+            pass
 
     if not to_role:
         return error_response("to_role is required", 400)
@@ -284,7 +297,7 @@ def send_ticket(id):
 
     # Send email notification (non-blocking)
     try:
-        send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment)
+        send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment, cc_emails=cc_emails)
     except Exception as e:
         logger.error(f"Email notification failed: {e}")
 
