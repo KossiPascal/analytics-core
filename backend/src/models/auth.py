@@ -398,6 +398,8 @@ class User(db.Model, MetaxMixin):
         # Lier l'employé associé à cet utilisateur (import local pour éviter les imports circulaires)
         employee_id: str | None = None
         position_id: str | None = None
+        position_code: str | None = None
+        position_is_zone_assignable: bool = False
         department_code: str | None = None
         try:
             from backend.src.equipment_manager.models.employees import Employee as _Emp, Position as _Pos
@@ -407,8 +409,11 @@ class User(db.Model, MetaxMixin):
                 position_id = str(emp.position_id) if emp.position_id else None
                 if emp.position_id:
                     pos = _Pos.query.get(emp.position_id)
-                    if pos and pos.department:
-                        department_code = pos.department.code
+                    if pos:
+                        position_code = pos.code
+                        position_is_zone_assignable = bool(getattr(pos, 'is_zone_assignable', False))
+                        if pos.department:
+                            department_code = pos.department.code
         except Exception:
             pass
 
@@ -424,6 +429,8 @@ class User(db.Model, MetaxMixin):
             "is_active": self.is_active,
             "employee_id": employee_id,
             "position_id": position_id,
+            "position_code": position_code,
+            "position_is_zone_assignable": position_is_zone_assignable,
             "department_code": department_code,
             "token_type": "access",
             "ver": 1,  # token versioning

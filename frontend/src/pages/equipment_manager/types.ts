@@ -367,6 +367,8 @@ export interface RepairTicket {
   status: TicketStatus;
   current_stage: TicketStage;
   current_stage_label: string;
+  current_department_code: string | null;
+  current_department_name: string | null;
   current_holder_id: string | null;
   initial_send_date: string | null;
   repair_completed_date: string | null;
@@ -405,6 +407,7 @@ export interface TicketEvent {
   to_role: string;
   from_role_label: string;
   to_role_label: string;
+  department_code: string | null;
   user_id: string | null;
   user_name: string | null;
   recipient_employee_id: string | null;
