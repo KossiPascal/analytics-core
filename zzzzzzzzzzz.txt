@@ -1,0 +1,489 @@
+
+📊 2️⃣ CONFIGURATION COMPLÈTE PAR TYPE
+
+
+🔵 A) BAR / LINE / AREA
+{
+  "semantic": {
+    "dimension": "month",
+    "metrics": [
+      {
+        "field": "revenue",
+        "aggregation": "sum",
+        "label": "Total Revenue"
+      },
+      {
+        "field": "users",
+        "aggregation": "count",
+        "label": "Users"
+      }
+    ],
+    "filters": [],
+    "sort_by": "revenue",
+    "sort_order": "desc",
+    "limit": 100
+  },
+  "visual": {
+    "orientation": "vertical",
+    "stacked": false,
+    "show_legend": true,
+    "show_grid": true,
+    "show_labels": false,
+    "color_scheme": "default",
+    "custom_colors": {
+      "revenue": "#4CAF50",
+      "users": "#2196F3"
+    },
+    "x_axis": {
+      "label": "Month",
+      "rotate": 0
+    },
+    "y_axis": {
+      "label": "Value",
+      "min": null,
+      "max": null,
+      "format": "number"
+    }
+  },
+  "interaction": {
+    "tooltip": true,
+    "drilldown": true,
+    "highlight_on_hover": true
+  },
+  "advanced": {
+    "cache_ttl": 300
+  }
+}
+
+🥧 B) PIE
+{
+  "semantic": {
+    "dimension": "country",
+    "metric": {
+      "field": "revenue",
+      "aggregation": "sum",
+      "label": "Revenue"
+    },
+    "limit": 10
+  },
+  "visual": {
+    "inner_radius": 0,
+    "show_labels": true,
+    "label_format": "percentage",
+    "show_legend": true,
+    "color_scheme": "pastel"
+  },
+  "interaction": {
+    "tooltip": true,
+    "explode_on_click": true
+  }
+}
+
+🟢 C) KPI
+{
+  "semantic": {
+    "metric": {
+      "field": "revenue",
+      "aggregation": "sum",
+      "label": "Revenue"
+    },
+    "comparison_metric": {
+      "field": "revenue_last_month",
+      "aggregation": "sum"
+    }
+  },
+  "visual": {
+    "format": "currency",
+    "prefix": "$",
+    "suffix": "",
+    "show_trend": true,
+    "positive_color": "#4CAF50",
+    "negative_color": "#F44336"
+  },
+  "interaction": {
+    "tooltip": false
+  }
+}
+
+📋 D) TABLE
+{
+  "semantic": {
+    "columns": [
+      {
+        "field": "country",
+        "type": "dimension",
+        "label": "Country"
+      },
+      {
+        "field": "revenue",
+        "type": "metric",
+        "aggregation": "sum",
+        "label": "Revenue"
+      }
+    ],
+    "limit": 1000
+  },
+  "visual": {
+    "pagination": true,
+    "page_size": 25,
+    "sortable": true,
+    "show_totals": true,
+    "column_format": {
+      "revenue": {
+        "format": "currency",
+        "prefix": "$"
+      }
+    }
+  },
+  "interaction": {
+    "row_click": "drilldown",
+    "exportable": true
+  }
+}
+
+########################################
+
+A) BAR / LINE / AREA
+{
+  "semantic": {
+    "dimension": "month",
+    "metrics": [
+      {"field": "revenue", "agg": "sum", "label": "Revenue"},
+      {"field": "users", "agg": "count", "label": "Users"}
+    ]
+  },
+  "visual": {
+    "type": "bar",
+    "orientation": "vertical",
+    "stacked": false,
+    "color_scheme": "custom",
+    "custom_colors": {"Revenue": "#4CAF50", "Users": "#2196F3"},
+    "x_axis": {"label": "Month", "rotate": 45},
+    "y_axis": {"label": "Amount", "format": "currency"},
+    "legend": {"show": true, "position": "top"},
+    "grid": true,
+    "show_labels": false
+  },
+  "interaction": {
+    "tooltip": true,
+    "drilldown": true,
+    "highlight_on_hover": true
+  },
+  "advanced": {
+    "cache_ttl": 300,
+    "animation": true
+  }
+}
+
+
+
+B) PIE
+{
+  "semantic": {"dimension": "country", "metric": {"field": "revenue", "agg": "sum"}},
+  "visual": {
+    "type": "pie",
+    "inner_radius": 0,
+    "show_labels": true,
+    "label_format": "percentage",
+    "legend": {"show": true, "position": "right"},
+    "color_scheme": "pastel"
+  },
+  "interaction": {"tooltip": true, "explode_on_click": true}
+}
+
+
+
+C) KPI
+{
+  "semantic": {
+    "metric": {"field": "revenue", "agg": "sum"},
+    "comparison_metric": {"field": "revenue_last_month", "agg": "sum"}
+  },
+  "visual": {
+    "type": "kpi",
+    "format": "currency",
+    "prefix": "$",
+    "show_trend": true,
+    "positive_color": "#4CAF50",
+    "negative_color": "#F44336"
+  },
+  "interaction": {"tooltip": false}
+}
+
+
+D) TABLE
+{
+  "semantic": {
+    "columns": [
+      {"field": "country", "type": "dimension", "label": "Country"},
+      {"field": "revenue", "type": "metric", "agg": "sum", "label": "Revenue"}
+    ]
+  },
+  "visual": {
+    "type": "table",
+    "sortable": true,
+    "pagination": true,
+    "page_size": 25,
+    "show_totals": true,
+    "column_format": {"revenue": {"format": "currency", "prefix": "$"}}
+  },
+  "interaction": {"row_click": "drilldown", "exportable": true}
+}
+
+
+
+def validate_options(self):
+    from jsonschema import validate, ValidationError
+
+    BASE_SCHEMA = {
+        "type": "object",
+        "properties": {
+            "semantic": {"type": "object"},
+            "visual": {"type": "object"},
+            "interaction": {"type": "object"},
+            "advanced": {"type": "object"}
+        },
+        "required": ["semantic", "visual"]
+    }
+
+    try:
+        validate(instance=self.options, schema=BASE_SCHEMA)
+    except ValidationError as e:
+        raise ValueError(f"Invalid chart config: {e.message}")
+
+    semantic = self.options["semantic"]
+    visual = self.options["visual"]
+
+    if self.type in [ChartType.BAR, ChartType.LINE, ChartType.AREA]:
+        if "dimension" not in semantic or "metrics" not in semantic:
+            raise ValueError("BAR/LINE/AREA charts require dimension + metrics")
+    elif self.type == ChartType.PIE:
+        if "dimension" not in semantic or "metric" not in semantic:
+            raise ValueError("PIE chart requires dimension + metric")
+    elif self.type == ChartType.KPI:
+        if "metric" not in semantic:
+            raise ValueError("KPI requires a metric")
+    elif self.type == ChartType.TABLE:
+        if "columns" not in semantic:
+            raise ValueError("TABLE requires columns list")
+
+
+
+
+
+
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "environment": "development",
+    "tenant_id": "default",
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z"
+  },
+  "dataset": {
+    "id": "sales_dataset",
+    "name": "sales_dataset_2026",
+    "description": "Dataset consolidé des ventes internationales",
+    "sql_type": "matview",
+    "datasource_id": 12,
+    "connection_id": 3,
+    "sql": "SELECT country, product, amount, created_at FROM sales",
+    "columns": [
+      { "name": "country", "data_type": "string" },
+      { "name": "product", "data_type": "string" },
+      { "name": "amount", "data_type": "number" },
+      { "name": "created_at", "data_type": "datetime" }
+    ],
+    "refresh": {
+      "strategy": "manual",
+      "schedule": "0 2 * * *",
+      "cache_ttl_seconds": 3600
+    },
+    "security": {
+      "is_public": false,
+      "roles_allowed": ["admin", "analyst"]
+    },
+    "version": 1,
+    "is_active": true
+  },
+  "fields": [
+    {
+      "id": 1,
+      "name": "country",
+      "expression": "country",
+      "field_type": "dimension",
+      "data_type": "string",
+      "capabilities": {
+        "filterable": true,
+        "groupable": true,
+        "sortable": true
+      },
+      "format": {}
+    },
+    {
+      "id": 2,
+      "name": "product",
+      "expression": "product",
+      "field_type": "dimension",
+      "data_type": "string",
+      "is_public": true,
+      "format": {}
+    },
+    {
+      "id": 3,
+      "label": "Total Sales",
+      "name": "total_sales",
+      "expression": "amount",
+      "field_type": "metric",
+      "aggregation": "sum",
+      "data_type": "number",
+      "precision": 2,
+      "is_public": true,
+      "format": {
+        "type": "currency",
+        "currency": "USD",
+        "precision": 2
+      }
+    },
+    {
+      "id": 4,
+      "name": "avg_sales",
+      "expression": "amount",
+      "field_type": "metric",
+      "aggregation": "avg",
+      "data_type": "number",
+      "precision": 2,
+      "is_public": false
+    }
+  ],
+  "queries": [
+    {
+      "id": 1,
+      "name": "sales_by_country",
+      "description": "Somme des ventes par pays",
+      "dataset_id": "sales_dataset",
+      "query_json": {
+        "table": "",
+        "dimensions": ["country"],
+        "metrics": ["total_sales"],
+        "filters": [],
+        "order_by": [
+          {
+            "field": "total_sales",
+            "direction": "desc"
+          }
+        ],
+        "limit": 100
+      },
+      "values": {},
+      "cache": { "enabled": true, "ttl_seconds": 300 }
+    },
+    {
+      "id": 2,
+      "name": "sales_trend",
+      "description": "Evolution mensuelle des ventes",
+      "dataset_id": "sales_dataset",
+      "query_json": {
+        "table": "",
+        "dimensions": ["created_at"],
+        "metrics": ["total_sales"],
+        "granularity": "month",
+        "filters": [],
+        "order_by": [
+          {
+            "field": "created_at",
+            "direction": "asc"
+          }
+        ]
+      },
+      "values": {},
+      "cache": {
+        "enabled": true,
+        "ttl_seconds": 300
+      }
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "sales_by_country_bar",
+      "name": "sales_by_country_bar",
+      "description": "Bar chart ventes par pays",
+      "type": "bar",
+      "query_index": 0,
+      "encoding": {
+        "x": "country",
+        "y": "total_sales"
+      },
+      "options": {
+        "responsive": true,
+        "legend": {
+          "display": true,
+          "position": "top"
+        },
+        "xAxis": {
+          "label": "Country"
+        },
+        "yAxis": {
+          "label": "Total Sales"
+        },
+        "stacked": false
+      }
+    },
+    {
+      "id": "sales_trend_line",
+      "name": "sales_trend_line",
+      "description": "Courbe évolution ventes",
+      "type": "line",
+      "query_index": 1,
+      "options": {
+        "responsive": true,
+        "legend": {
+          "display": true
+        },
+        "xAxis": {
+          "type": "time"
+        },
+        "smooth": true,
+        "area": false
+      }
+    },
+    {
+      "id": "sales_table",
+      "name": "sales_table",
+      "type": "table",
+      "query_id": "sales_by_country",
+      "columns": [
+        {
+          "field": "country",
+          "sortable": true
+        },
+        {
+          "field": "total_sales",
+          "sortable": true,
+          "format": {
+            "type": "currency",
+            "currency": "USD"
+          }
+        }
+      ],
+      "pagination": {
+        "enabled": true,
+        "page_size": 20
+      }
+    }
+  ],
+  "visualizations_page": {
+    "id": "sales_dashboard",
+    "type": "dashboard",
+    "layout": [
+      {
+        "visualization_id": "sales_by_country_bar",
+        "position": { "x": 0, "y": 0, "w": 6, "h": 4 }
+      },
+      {
+        "visualization_id": "sales_table",
+        "position": { "x": 0, "y": 4, "w": 12, "h": 6 }
+      }
+    ]
+  }
+}

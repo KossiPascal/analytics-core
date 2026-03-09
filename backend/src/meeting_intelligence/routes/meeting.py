@@ -24,21 +24,16 @@ import uuid
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-
 from flask import Blueprint, request, jsonify, g, current_app
 from werkzeug.utils import secure_filename
-
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.security.access_security import require_auth
-from backend.src.meeting_intelligence.models.meeting import (
-    Meeting, MeetingTranscription, MeetingSummary,
-)
-from backend.src.meeting_intelligence.services.transcription_service import (
-    get_transcription_service,
-)
-from backend.src.meeting_intelligence.services.summarization_service import (
-    get_summarization_service, SUPPORTED_PROVIDERS,
-)
+from backend.src.meeting_intelligence.models.meeting import Meeting, MeetingSummary
+from backend.src.meeting_intelligence.services.summarization_service import get_summarization_service, SUPPORTED_PROVIDERS
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
+
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
@@ -93,7 +88,7 @@ def create_meeting():
 
     title = data.get("title", "").strip()
     if not title:
-        return error_response("title est requis", 400)
+        raise BadRequest("title est requis", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
 
@@ -102,7 +97,7 @@ def create_meeting():
         try:
             meeting_date = datetime.fromisoformat(data["meeting_date"])
         except ValueError:
-            return error_response("Format de meeting_date invalide (ISO 8601 attendu)", 400)
+            raise BadRequest("Format de meeting_date invalide (ISO 8601 attendu)", 400)
 
     meeting = Meeting(
         title=title,
@@ -120,7 +115,7 @@ def create_meeting():
 def get_meeting(meeting_id: int):
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     result = meeting.to_dict_safe()
 
@@ -142,7 +137,7 @@ def get_meeting(meeting_id: int):
 def delete_meeting(meeting_id: int):
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     db.session.delete(meeting)
     db.session.commit()
@@ -165,17 +160,17 @@ def transcribe_meeting(meeting_id: int):
     """
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     if "audio" not in request.files:
-        return error_response("Champ 'audio' manquant dans le formulaire", 400)
+        raise BadRequest("Champ 'audio' manquant dans le formulaire", 400)
 
     audio_file = request.files["audio"]
     if not audio_file.filename:
-        return error_response("Aucun fichier sélectionné", 400)
+        raise BadRequest("Aucun fichier sélectionné", 400)
 
     if not _is_allowed_audio(audio_file.filename):
-        return error_response(
+        raise BadRequest(
             f"Format audio non supporté. Formats acceptés : "
             f"{', '.join(ALLOWED_AUDIO_EXTENSIONS)}",
             415,
@@ -247,10 +242,10 @@ def _bg_transcribe(app, meeting_id: int, audio_path: str, audio_filename: str, l
 def get_transcription(meeting_id: int):
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     if not meeting.transcriptions:
-        return error_response("Aucune transcription disponible", 404)
+        raise BadRequest("Aucune transcription disponible", 404)
 
     latest = sorted(meeting.transcriptions, key=lambda t: t.created_at)[-1]
     return jsonify(latest.to_dict_safe()), 200
@@ -265,7 +260,7 @@ def get_status(meeting_id: int):
     """
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     return jsonify({
         "id":               meeting.id,
@@ -292,16 +287,16 @@ def summarize_meeting(meeting_id: int):
     """
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     data     = request.get_json(silent=True) or {}
     provider = data.get("provider", "").strip().lower()
     if not provider:
-        return error_response(
+        raise BadRequest(
             f"Le champ 'provider' est requis. Valeurs acceptées : {SUPPORTED_PROVIDERS}", 400
         )
     if provider not in SUPPORTED_PROVIDERS:
-        return error_response(
+        raise BadRequest(
             f"Provider '{provider}' invalide. Valeurs acceptées : {SUPPORTED_PROVIDERS}", 400
         )
 
@@ -311,7 +306,7 @@ def summarize_meeting(meeting_id: int):
     transcription_text = data.get("transcription_text", "").strip()
     if not transcription_text:
         if not meeting.transcriptions:
-            return error_response(
+            raise BadRequest(
                 "Aucune transcription trouvée. Transcris d'abord le fichier audio "
                 "via POST /api/meetings/<id>/transcribe",
                 400,
@@ -320,7 +315,7 @@ def summarize_meeting(meeting_id: int):
         transcription_text = latest_t.transcription_text or ""
 
     if not transcription_text:
-        return error_response("La transcription est vide, impossible de résumer", 400)
+        raise BadRequest("La transcription est vide, impossible de résumer", 400)
 
     # Update meeting status
     meeting.status = "SUMMARIZING"
@@ -364,7 +359,7 @@ def summarize_meeting(meeting_id: int):
         meeting.status = "FAILED"
         db.session.commit()
         logger.error(f"Summarization failed for meeting {meeting_id}: {exc}", exc_info=True)
-        return error_response(f"Échec du résumé : {str(exc)}", 500)
+        raise BadRequest(f"Échec du résumé : {str(exc)}", 500)
 
 
 @bp.get("/<int:meeting_id>/summary")
@@ -373,10 +368,10 @@ def get_latest_summary(meeting_id: int):
     """Retourne le dernier résumé généré (peu importe le provider)."""
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     if not meeting.summaries:
-        return error_response("Aucun résumé disponible", 404)
+        raise BadRequest("Aucun résumé disponible", 404)
 
     latest = sorted(meeting.summaries, key=lambda s: s.created_at)[-1]
     return jsonify(latest.to_dict_safe()), 200
@@ -388,7 +383,7 @@ def list_summaries(meeting_id: int):
     """Retourne l'historique complet de tous les résumés (multi-providers)."""
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     summaries = sorted(meeting.summaries, key=lambda s: s.created_at, reverse=True)
     return jsonify([s.to_dict_safe() for s in summaries]), 200
@@ -410,11 +405,11 @@ def update_summary(meeting_id: int, summary_id: int):
     """
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     summary = MeetingSummary.query.get(summary_id)
     if not summary or summary.meeting_id != meeting_id:
-        return error_response("Résumé introuvable", 404)
+        raise BadRequest("Résumé introuvable", 404)
 
     data = request.get_json(silent=True) or {}
 
@@ -450,10 +445,10 @@ def download_pdf(meeting_id: int):
 
     meeting = Meeting.query.get(meeting_id)
     if not meeting:
-        return error_response("Réunion introuvable", 404)
+        raise BadRequest("Réunion introuvable", 404)
 
     if not meeting.summaries:
-        return error_response(
+        raise BadRequest(
             "Aucun résumé disponible. Génère d'abord un résumé IA.", 400
         )
 

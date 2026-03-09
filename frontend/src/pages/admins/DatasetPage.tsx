@@ -10,7 +10,7 @@ import styles from '@pages/admins/AdminPage.module.css';
 import { DatasetTab } from './components/datasets/DatasetTab';
 import { DatasetFieldTab } from './components/datasets/DatasetFieldTab';
 import { DatasetQueryTab } from './components/datasets/DatasetQueryTab';
-import { DatasetChartTab } from './components/datasets/DatasetChartTab';
+import { DatasetChartTab } from './components/datasets/DatasetCharts/DatasetChartTab';
 
 
 type TabType =

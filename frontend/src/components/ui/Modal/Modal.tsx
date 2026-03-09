@@ -6,7 +6,8 @@ import { cn } from '@utils/cn';
 import { backdropVariants, modalVariants } from '@animations/modal.variants';
 import styles from './Modal.module.css';
 
-export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'yl' | 'zl' | 'fl' | 'full';
+
 
 export interface ModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ export interface ModalProps {
   className?: string;
 }
 
-export function Modal({isOpen,onClose,title,leftIcon,children,size = 'md',showCloseButton = true,closeOnBackdrop = false,closeOnEscape = false,footer,className}: ModalProps) {
+export function Modal({ isOpen, onClose, title, leftIcon, children, size = 'md', showCloseButton = true, closeOnBackdrop = false, closeOnEscape = false, footer, className }: ModalProps) {
   // Handle escape key
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -81,7 +82,7 @@ export function Modal({isOpen,onClose,title,leftIcon,children,size = 'md',showCl
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-               {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
+              {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
               {(title || showCloseButton) && (
                 <div className={styles.header}>
                   {title && (

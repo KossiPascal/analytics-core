@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import List
 
 from flask import Blueprint, g, request, jsonify
 from sqlalchemy.exc import IntegrityError
@@ -8,6 +9,9 @@ from backend.src.databases.extensions import db
 from backend.src.models.datasets.dataset import Dataset, DatasetSqlType
 from backend.src.logger import get_backend_logger
 from backend.src.security.access_security import require_auth
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -21,64 +25,71 @@ def get_pagination():
     per_page = min(per_page, 100)
     return page, per_page
 
-
 # LIST DATASETS
 @bp.get("/<int:tenant_id>")
 @require_auth
 def list_datasets(tenant_id):
-    try:
-        if not tenant_id:
-            return jsonify({"error": "tenant_id is required"}), 400
-        
-        query = Dataset.query.options(
-            selectinload(Dataset.fields),
-            selectinload(Dataset.queries),
-        ).filter(Dataset.tenant_id == tenant_id, Dataset.deleted == False)
+    include_relations = request.args.get("include_relations", "false").lower() == "true"
 
-        page, per_page = get_pagination()
-        pagination = query.order_by(Dataset.id.desc()).paginate(
-            page=page,
-            per_page=per_page,
-            error_out=False,
-        )
-        
-        return jsonify([d.to_dict() for d in pagination.items if d is not None])
-        # return jsonify({
-        #     "items": [d.to_dict() for d in pagination.items],
-        #     "total": pagination.total,
-        #     "page": pagination.page,
-        #     "pages": pagination.pages,
-        # }), 200
+    query: List[Dataset] = Dataset.query.filter(
+        Dataset.tenant_id == tenant_id,
+        Dataset.deleted == False
+    )
 
-    except Exception as e:
-        logger.exception("Error listing datasets")
-        return jsonify({"error": str(e)}), 500
+    return jsonify([
+        # d.to_dict(include_relations=include_relations)
+        d.to_dict()
+        for d in query
+    ])
+
+# LIST DATASETS PAGINATE
+@bp.get("/paginate/<int:tenant_id>")
+@require_auth
+def list_datasets_paginate(tenant_id):
+    if not tenant_id:
+        raise BadRequest("tenant_id is required", 400)
+    
+    query = Dataset.query.options(
+        selectinload(Dataset.fields),
+        selectinload(Dataset.queries),
+    ).filter(Dataset.tenant_id == tenant_id, Dataset.deleted == False)
+
+    page, per_page = get_pagination()
+    pagination = query.order_by(Dataset.id.desc()).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False,
+    )
+    
+    return jsonify([d.to_dict() for d in pagination.items if d is not None])
+    # return jsonify({
+    #     "items": [d.to_dict() for d in pagination.items],
+    #     "total": pagination.total,
+    #     "page": pagination.page,
+    #     "pages": pagination.pages,
+    # }), 200
+
 
 # GET ONE DATASET
 @bp.get("/<int:tenant_id>/<int:dataset_id>")
 @require_auth
 def get_dataset(tenant_id, dataset_id):
-    try:
-        if not tenant_id:
-            return jsonify({"error": "tenant_id is required"}), 400
-        
-        dataset = Dataset.query.options(
-            selectinload(Dataset.fields),
-            selectinload(Dataset.queries),
-        ).filter(
-            Dataset.id == dataset_id, 
-            Dataset.tenant_id == tenant_id, 
-            Dataset.deleted == False
-        ).first()
+    if not tenant_id:
+        raise BadRequest("tenant_id is required", 400)
+    
+    dataset = Dataset.query.options(
+        selectinload(Dataset.fields),
+        selectinload(Dataset.queries),
+    ).filter(
+        Dataset.id == dataset_id, 
+        Dataset.tenant_id == tenant_id, 
+        Dataset.deleted == False
+    ).first()
 
-        if not dataset:
-            return jsonify({"error": "Dataset not found"}), 404
+    if not dataset:
+        raise BadRequest("Dataset not found", 404)
 
-        return jsonify(dataset.to_dict(include_relations=True)), 200
-
-    except Exception as e:
-        logger.exception("Error listing datasets")
-        return jsonify({"error": str(e)}), 500
+    return jsonify(dataset.to_dict(include_relations=True)), 200
 
 # CREATE DATASET
 @bp.post("")
@@ -110,12 +121,12 @@ def create_dataset():
 
     except IntegrityError as e:
         db.session.rollback()
-        return jsonify({"error": f"Duplicate dataset name for tenant: {str(e)}"}), 400
+        raise BadRequest(f"Duplicate dataset name for tenant: {str(e)}", 400)
 
     except Exception as e:
         db.session.rollback()
-        logger.exception("Error creating dataset")
-        return jsonify({"error": str(e)}), 500
+        logger.error("Error creating dataset")
+        raise
 
 
 @bp.get("/local-views")
@@ -126,7 +137,7 @@ def get_local_views():
         return jsonify(local_views), 201
 
     except IntegrityError as e:
-        return jsonify({"error": f"Error local_views: {str(e)}"}), 400
+        raise BadRequest(f"Error local_views: {str(e)}", 400)
 
 @bp.get("/view-sql/<string:view_name>/<string:sql_type>")
 @require_auth
@@ -136,7 +147,7 @@ def get_view_sql_columns(view_name:str, sql_type:str):
         return jsonify(sql_from_db), 201
 
     except IntegrityError as e:
-        return jsonify({"error": f"Error local_views: {str(e)}"}), 400
+        raise BadRequest(f"Error local_views: {str(e)}", 400)
 
 # UPDATE DATASET
 @bp.put("/<int:dataset_id>")
@@ -145,7 +156,7 @@ def update_dataset(dataset_id):
     try:
         dataset:Dataset = Dataset.query.get(dataset_id)
         if not dataset:
-            return jsonify({"error": "Dataset not found"}), 404
+            raise BadRequest("Dataset not found", 404)
 
         data = request.get_json()
 
@@ -178,12 +189,12 @@ def update_dataset(dataset_id):
 
     except IntegrityError:
         db.session.rollback()
-        return jsonify({"error": "Duplicate dataset name"}), 400
+        raise BadRequest("Duplicate dataset name", 400)
 
     except Exception as e:
         db.session.rollback()
         logger.exception("Error updating dataset")
-        return jsonify({"error": str(e)}), 500
+        raise
 
 # DELETE DATASET
 @bp.delete("/<int:dataset_id>")
@@ -192,7 +203,7 @@ def delete_dataset(dataset_id):
     try:
         dataset:Dataset = Dataset.query.get(dataset_id)
         if not dataset:
-            return jsonify({"error": "Dataset not found"}), 404
+            raise BadRequest("Dataset not found", 404)
         
         dataset.is_active = False
         dataset.deleted_at = datetime.now(timezone.utc)
@@ -205,4 +216,4 @@ def delete_dataset(dataset_id):
     except Exception as e:
         db.session.rollback()
         logger.exception("Error deleting dataset")
-        return jsonify({"error": str(e)}), 500
+        raise

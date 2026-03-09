@@ -1,4 +1,4 @@
-export interface PayloadUser {
+export interface UserPayload {
     id: string;
     username: string;
     fullname: string;
@@ -24,11 +24,11 @@ export interface PayloadUser {
 }
 
 export interface LoginResponse {
+    payload: UserPayload
     access_token: string;
     access_token_exp: number,
     refresh_token: string;
     refresh_token_exp: number,
-    payload: PayloadUser
 }
 
 export type ApiResponse<T = any> = {

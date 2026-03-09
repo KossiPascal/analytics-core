@@ -203,12 +203,12 @@ def run_javascript(content: str, timeout: int = 3):
 #             if parsed.get("success"):
 #                 return (parsed, 200)
 #             else:
-#                 return ({"error": parsed.get("error")}, 400)
+#                 raise BadRequest(parsed.get("error")}, 400)
 #         except json.JSONDecodeError:
-#             return ({"error": "Invalid JS output", "raw": output}, 400)
+#             raise BadRequest("Invalid JS output", "raw": output}, 400)
 
 #     except subprocess.TimeoutExpired:
-#         return ({"error": "JavaScript execution timeout"}, 408)
+#         raise BadRequest("JavaScript execution timeout"}, 408)
 
 #     finally:
 #         os.remove(file_path)

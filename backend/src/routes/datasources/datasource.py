@@ -2,15 +2,17 @@
 from typing import List
 
 from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 from flask import Blueprint, request, jsonify
 from flask import Blueprint, g, jsonify, request
 from workers.couchdb.models import CreateTableModel
 from backend.src.security.access_security import require_auth
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.services.datasource_service import DataSourceProvisioningService
 from backend.src.models.datasource import DataSource, DataSourceConnection, DataSourcePermission, DataSourceTarget, DataSourceType, SSHTunnelManager
 from backend.src.utils.connection import create_ssh_tunnel, explore_schema, get_engine, inspect_full_postgres_schema, inspect_source
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
@@ -45,11 +47,11 @@ def create_datasource():
     required = ["tenant_id", "type_id", "name", "technical_name", "host", "dbname", "username"]
     missing = [f for f in required if f not in payload]
     if missing:
-        return error_response(f"Missing fields: {', '.join(missing)}")
+        raise BadRequest(f"Missing fields: {', '.join(missing)}")
 
     data = DataSource.to_object_conf(payload) if payload else None
     if not data:
-        return error_response("Invalid JSON body")
+        raise BadRequest("Invalid JSON body")
     
     type_id=data.get("type_id")
 
@@ -98,11 +100,9 @@ def create_datasource():
         return jsonify({"id": ds.id, "message": "Datasource created"}), 201
 
     except SQLAlchemyError as e:
-        error_response(f"SQLAlchemyError: {str(e)}")
-        return jsonify({"error": str(e)}), 400
+        raise BadRequest(f"SQLAlchemyError: {str(e)}",400)
     except Exception as e:
-        error_response(f"Exception: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        raise
 
 # GET ALL
 @bp.get("/<int:tenant_id>")
@@ -110,7 +110,7 @@ def create_datasource():
 def list_datasources(tenant_id):
     try:
         if not tenant_id:
-            return jsonify({"error": "tenant_id is required"}), 400
+            raise BadRequest("tenant_id is required", 400)
 
         datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
         if len(datasources) == 0:
@@ -124,7 +124,9 @@ def list_datasources(tenant_id):
         return jsonify(results), 200
     except SQLAlchemyError as e:
         logger.error(f"Failed to list connections: {str(e)}")
-        return error_response("Failed to list connections", 500, str(e))
+        raise BadRequest("Failed to list connections", 500)
+    except Exception as e:
+        raise
 
 # GET WITH DETAIL
 @bp.get("/with-details/<int:tenant_id>")
@@ -132,7 +134,7 @@ def list_datasources(tenant_id):
 def list_connections_with_details(tenant_id):
     try:
         if not tenant_id:
-            return jsonify({"error": "tenant_id is required"}), 400
+            raise BadRequest("tenant_id is required", 400)
         
         dataSources:list[DataSource] = DataSource.query.filter(
             DataSource.tenant_id == tenant_id,
@@ -152,7 +154,7 @@ def list_connections_with_details(tenant_id):
         return jsonify(results)
     except SQLAlchemyError as e:
         logger.error(f"Failed to list connections: {str(e)}")
-        return error_response("Failed to list connections", 500, str(e))
+        raise BadRequest("Failed to list connections", 500)
     
 # GET ONE
 @bp.get("/<int:tenant_id>/<int:datasource_id>")
@@ -191,9 +193,9 @@ def get_datasource(tenant_id,datasource_id):
         }), 200
 
     except ValueError:
-        return jsonify({"error": "Datasource not found"}), 404
+        raise BadRequest("Datasource not found", 404)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 # UPDATE
 @bp.put("/<int:datasource_id>")
@@ -208,11 +210,11 @@ def update_datasource(datasource_id):
         required = ["tenant_id", "type_id", "name", "technical_name", "host", "dbname", "username"]
         missing = [f for f in required if f not in payload]
         if missing:
-            return error_response(f"Missing fields: {', '.join(missing)}")
+            raise BadRequest(f"Missing fields: {', '.join(missing)}")
 
         data = DataSource.to_object_conf(payload) if payload else None
         if not data:
-            return error_response("Invalid JSON body")
+            raise BadRequest("Invalid JSON body")
         
         type_id=data.get("type_id")
 
@@ -254,11 +256,9 @@ def update_datasource(datasource_id):
         return jsonify({"message": "Datasource updated", "id": ds.id}), 200
 
     except ValueError:
-        error_response(f"SQLAlchemyError: {str(e)}")
-        return jsonify({"error": "Datasource not found"}), 404
-    except Exception as e:
-        error_response(f"Exception: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return BadRequest("Datasource not found")
+    except Exception:
+        raise
 
 # DELETE
 @bp.delete("/<int:datasource_id>")
@@ -275,9 +275,9 @@ def delete_datasource(datasource_id):
         return jsonify({"message": "Datasource deleted"}), 200
 
     except ValueError:
-        return jsonify({"error": "Datasource not found"}), 404
+        raise BadRequest("Datasource not found", 404)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 # Test SSH tunnel
 @bp.post("/test-ssh")
@@ -288,12 +288,12 @@ def test_ssh():
     tunnel_conf = DataSource.to_forms_conf(param=payload) if payload else None
 
     if not tunnel_conf or not tunnel_conf.get("ssh_enabled"):
-        return error_response("SSH not enabled for this connection")
+        raise BadRequest("SSH not enabled for this connection")
 
     required = ["ssh_host", "ssh_host"]
     missing = [k for k in required if not tunnel_conf.get(k)]
     if missing:
-        return error_response(f"Missing SSH fields: {', '.join(missing)}")
+        raise BadRequest(f"Missing SSH fields: {', '.join(missing)}")
 
     tunnel = None
     try:
@@ -301,7 +301,7 @@ def test_ssh():
         return jsonify({"status": "SSH tunnel OK"})
     except Exception as e:
         logger.error(f"SSH test failed: {str(e)}")
-        return error_response("SSH tunnel failed", 400, str(e))
+        raise BadRequest("SSH tunnel failed", 400)
     finally:
         if tunnel:
             tunnel.stop()
@@ -322,10 +322,10 @@ def test_ssh_db():
                 connData:DataSource = DataSource.query.filter_by(id=connId).first()
                 tunnel_conf = connData.to_secure_forms_conf() if connData else None
         except Exception as e:
-            return error_response(f"Data getting failed ({e})", 404, str(e))
+            raise BadRequest(f"Data getting failed ({e})", 404)
         
     if not tunnel_conf:
-        return error_response("Invalid JSON body or payload")
+        raise BadRequest("Invalid JSON body or payload")
 
     ssh_enabled = bool(tunnel_conf.get("ssh_enabled", False))
     tunnel = None
@@ -334,14 +334,14 @@ def test_ssh_db():
     required_db = ["host", "port", "dbname", "username", "password"]
     missing_db = [k for k in required_db if not tunnel_conf.get(k)]
     if missing_db:
-        return error_response(f"Missing DB fields: {', '.join(missing_db)}")
+        raise BadRequest(f"Missing DB fields: {', '.join(missing_db)}")
 
     # Validate SSH fields
     if ssh_enabled:
         required_ssh = ["ssh_host", "ssh_port", "ssh_user"]
         missing_ssh = [k for k in required_ssh if not tunnel_conf.get(k)]
         if missing_ssh:
-            return error_response(f"Missing SSH fields: {', '.join(missing_ssh)}")
+            raise BadRequest(f"Missing SSH fields: {', '.join(missing_ssh)}")
 
     try:
         if ssh_enabled:
@@ -372,7 +372,7 @@ def test_ssh_db():
             user_message = "Database connection failed"
 
         logger.warning("DB connection test failed: %s", user_message)
-        return error_response(user_message, 500)
+        raise BadRequest(user_message, 500)
 
     finally:
         if tunnel:
@@ -385,19 +385,14 @@ def get_schema_info():
 
     conn = DataSource.ensure_default_connection()
     if not conn:
-        return jsonify({"error": "PostgreSQL connection failed"}), 500
+        raise BadRequest("PostgreSQL connection failed", 500)
     
     conn_conf = conn.to_secure_forms_conf(use_docker=True)
-    
-    try:
-        EXCLUDED_TABLES = ["users","refresh_tokens","saved_queries"]
-        
-        schemas_list = inspect_full_postgres_schema(conn_conf=conn_conf,excluded_tables=EXCLUDED_TABLES)
+    EXCLUDED_TABLES = ["users","refresh_tokens","saved_queries"]
+    schemas_list = inspect_full_postgres_schema(conn_conf=conn_conf,excluded_tables=EXCLUDED_TABLES)
 
-        return jsonify(schemas_list), 200
-    
-    except Exception as e:
-        return jsonify(str(e)), 500
+    return jsonify(schemas_list), 200
+
 
 # Explore schema
 @bp.get("/schema/<int:source_id>")

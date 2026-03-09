@@ -4,6 +4,9 @@ from backend.src.databases.extensions import db
 from backend.src.models.api_token import ApiToken  # the ApiToken model you already defined
 from backend.src.services.api_token import ApiTokenService
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
 
@@ -25,7 +28,7 @@ def access_key_list():
         action = data.get("action")
 
         if not user_id:
-            return jsonify({"status": 400, "data": "Aucun utilisateur sélectionné"}), 400
+            raise BadRequest("Aucun utilisateur sélectionné", 400)
 
         success = False
 
@@ -50,33 +53,32 @@ def access_key_list():
 
         elif action == "update":
             if not token_id:
-                return jsonify({"status": 400, "data": "ID manquant pour update"}), 400
+                raise BadRequest("ID manquant pour update", 400)
             api = ApiToken.query.get(token_id)
             if not api:
-                return jsonify({"status": 404, "data": "Token introuvable"}), 404
+                raise BadRequest("Token introuvable", 404)
             api.is_active = bool(is_active)
             db.session.commit()
             success = True
 
         elif action == "delete":
             if not token_id:
-                return jsonify({"status": 400, "data": "ID manquant pour delete"}), 400
+                raise BadRequest("ID manquant pour delete", 400)
             api = ApiToken.query.get(token_id)
             if not api:
-                return jsonify({"status": 404, "data": "Token introuvable"}), 404
+                raise BadRequest("Token introuvable", 404)
             db.session.delete(api)
             db.session.commit()
             success = True
 
         else:
-            return jsonify({"status": 400, "data": "Action inconnue"}), 400
+            raise BadRequest("Action inconnue", 400)
 
         if success:
             apis = ApiToken.query.all()
             return jsonify({"status": 200, "data": [a.to_dict() for a in apis]}), 200
 
-        return jsonify({"status": 400, "data": "Impossible de réaliser l’action demandée"}), 400
+        raise BadRequest("Impossible de réaliser l’action demandée", 400)
 
-    except Exception as e:
-        logger.error(f"AccessKeyList error: {str(e)}")
-        return jsonify({"status": 500, "data": f"Erreur serveur: {str(e)}"}), 500
+    except Exception:
+        raise 

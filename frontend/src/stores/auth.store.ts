@@ -1,13 +1,14 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { authService } from "@/services/auth.service";
-import { encryptedStorage, RETRY_MILLIS, networkManager } from "@/stores/stores.config";
-import type { LoginResponse, PayloadUser } from "@/models/auth.model";
+import { networkManager } from "@/stores/stores.config";
+import type { LoginResponse, UserPayload } from "@/models/auth.model";
 import { extractErrorMessage } from "@/utils/error.utils";
+import { tokenProvider } from "@/apis/token.provider";
+import { IndexedDbStorage } from "@services/storages/indexed-db.service";
 
 interface AuthState {
-  user: PayloadUser | null;
-  token: string | null;
+  user: UserPayload | null;
+  // token: string | null;
   loading: boolean;
   error: string | null;
 
@@ -15,82 +16,98 @@ interface AuthState {
   logout: () => Promise<void>;
 
   restore: () => Promise<void>;
-  refresh: (refresh_token: string | null) => Promise<void>;
+  refresh: () => Promise<void>;
 
   isAuthenticated: () => boolean;
   hasPermission: (perms: string | string[], all?: boolean) => boolean;
   changePassword(oldPass: string, newPass: string): unknown;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      token: null,
-      loading: false,
-      error: null,
 
-      async login(username, password) {
-        set({ loading: true, error: null });
-        try {
-          const isOnline = networkManager.isOnline();
-          const session:LoginResponse = await authService.login(username, password, isOnline) as any;
-          set({ user: session.payload, token: session.access_token });
-        } catch (err) {
-          set({ error: extractErrorMessage(err, "Login failed") });
-        } finally {
-          set({ loading: false });
-        }
 
-        console.log("AUTH STATE", useAuthStore.getState());
-      },
+const AUTH_KEY = "session";
+const db = new IndexedDbStorage("auth");
 
-      async changePassword(oldPass, newPass) {
+const persistSession = async (session: LoginResponse, saveInDB: boolean = true) => {
+  if (saveInDB) {
+    await db.save({ ...session, id: AUTH_KEY });
+  }
 
-      },
+  const { access_token, access_token_exp, refresh_token_exp, refresh_token } = session;
+  if (!access_token || !access_token_exp) {
+    throw new Error("INVALID_REFRESH_RESPONSE");
+  }
+  tokenProvider.set(access_token, access_token_exp, refresh_token, refresh_token_exp);
+}
 
-      async restore() {
-        set({ loading: true });
-        try {
-          const session = await authService.restore();
-          if (!session) return;
-          set({ user: session.payload, token: session.access_token });
-        } finally {
-          set({ loading: false });
-        }
-      },
 
-      async refresh(refresh_token) {
-        try {
-          const session:LoginResponse = await authService.refresh(refresh_token) as any;
-          set({ user: session.payload, token: session.access_token });
-        } catch {
-          await get().logout();
-        }
-      },
 
-      async logout() {
-        try {
-          await authService.logout();
-        } finally {
-          set({ user: null, token: null, loading: false, error: null });
-        }
-      },
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  // token: null,
+  loading: false,
+  error: null,
 
-      isAuthenticated: () => !!get().user,
-
-      hasPermission(perms, all = false) {
-        const user = get().user;
-        if (!user) return false;
-        const owned = new Set(user.permissions ?? []);
-        const required = Array.isArray(perms) ? perms : [perms];
-        return all ? required.every(p => owned.has(p)) : required.some(p => owned.has(p));
-      }
-    }),
-    {
-      name: "auth-store",
-      storage: encryptedStorage,
-      partialize: (s) => ({ user: s.user, token: s.token }),
+  async login(username, password) {
+    set({ loading: true, error: null });
+    try {
+      const isOnline = networkManager.isOnline();
+      const session = await authService.login(username, password, isOnline);
+      set({ user: session.payload });
+      await persistSession(session);
+    } catch (err) {
+      set({ error: extractErrorMessage(err, "Login failed") });
+    } finally {
+      set({ loading: false });
     }
-  )
-);
+
+    console.log("AUTH STATE", useAuthStore.getState());
+  },
+
+  async changePassword(oldPass, newPass) {
+
+  },
+
+  async restore() {
+    set({ loading: true });
+
+    try {
+      const session = await db.getOne<LoginResponse>(AUTH_KEY);
+      if (!session) return;
+      set({ user: session.payload });
+      await persistSession(session, false);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  async refresh() {
+    try {
+      const session = await authService.refresh();
+      set({ user: session.payload });
+      await persistSession(session);
+    } catch {
+      await get().logout();
+    }
+  },
+
+  async logout() {
+    try {
+      tokenProvider.clear();
+      await db.delete(AUTH_KEY);
+      await authService.logout();
+    } finally {
+      set({ user: null, loading: false, error: null });
+    }
+  },
+
+  isAuthenticated: () => !!get().user,
+
+  hasPermission(perms, all = false) {
+    const user = get().user;
+    if (!user) return false;
+    const owned = new Set(user.permissions ?? []);
+    const required = Array.isArray(perms) ? perms : [perms];
+    return all ? required.every(p => owned.has(p)) : required.some(p => owned.has(p));
+  }
+}));

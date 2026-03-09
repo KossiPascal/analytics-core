@@ -7,6 +7,9 @@ from backend.src.security.access_security import require_auth
 from backend.src.databases.extensions import db
 from backend.src.models.datasource import DataSourceTarget, DataSourceType
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 bp = Blueprint("datasource_types", __name__, url_prefix="/api/datasource-types")
 
 # { "code": "postgresql", "name": "PostgreSQL", "target": "db", "config": { "default_port": 5432 } }
@@ -50,16 +53,16 @@ def create_datasource_type():
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        raise
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 @bp.get("/<int:type_id>")
 @require_auth
 def get_datasource_type(type_id):
     obj = DataSourceType.query.get(type_id)
     if not obj:
-        return jsonify({"error": "DatasourceType not found"}), 404
+        raise BadRequest("DatasourceType not found", 404)
 
     return jsonify(obj.to_dict()), 200
 
@@ -69,7 +72,7 @@ def update_datasource_type(type_id):
     try:
         obj:DataSourceType = DataSourceType.query.get(type_id)
         if not obj:
-            return jsonify({"error": "DatasourceType not found"}), 404
+            raise BadRequest("DatasourceType not found", 404)
 
         data = request.get_json()
         if "code" in data:
@@ -88,9 +91,9 @@ def update_datasource_type(type_id):
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        raise
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise
 
 @bp.delete("/<int:type_id>")
 @require_auth
@@ -98,7 +101,7 @@ def delete_datasource_type(type_id):
     try:
         obj:DataSourceType = DataSourceType.query.get(type_id)
         if not obj:
-            return jsonify({"error": "DatasourceType not found"}), 404
+            raise BadRequest("DatasourceType not found", 404)
 
         obj.is_active = False
         obj.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None,
@@ -108,4 +111,4 @@ def delete_datasource_type(type_id):
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        raise

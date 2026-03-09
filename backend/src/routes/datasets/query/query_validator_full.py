@@ -10,7 +10,7 @@ class QueryValidationError(ValueError):
     pass
 
 
-class QueryValidator:
+class QueryValidatorFull:
     """
     QueryValidator Senior - BI-ready / JSON-safe / Multi-table
     ----------------------------------------------------------
@@ -255,8 +255,13 @@ class QueryValidator:
                 raise QueryValidationError("limit must be a positive integer")
             if limit > self.MAX_LIMIT:
                 raise QueryValidationError("limit too high")
-        if not isinstance(offset, int) or offset < 0:
-            raise QueryValidationError("offset must be >= 0")
+        
+        if offset is not None:
+            if not isinstance(offset, int) or offset < 0:
+                raise QueryValidationError("offset must be >= 0")
+            if offset > self.MAX_LIMIT:
+                raise QueryValidationError("offset out of range")
+            
         if offset and not limit:
             raise QueryValidationError("offset cannot be used without limit")
 

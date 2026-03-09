@@ -1,13 +1,14 @@
 from __future__ import annotations
+from ast import List
 from functools import wraps
 from typing import Optional, Callable, Awaitable
 from flask import request, g
 from werkzeug.exceptions import Unauthorized, Forbidden
-from backend.src.models.auth import User
+from backend.src.models.auth import User, UserPermission, UserRole
 import inspect
 
 # Decorator to protect routes (uses JWT access token)
-def require_auth(f=None, *, roles: Optional[list[str]] = None):
+def require_auth(f=None, *, roles_names: Optional[list[str]] = None, permissions_names: Optional[list[str]] = None):
     """ 
     @require_auth -> any logged-in user 
     @require_auth(roles=["admin", "super_admin"]) -> only roles allowed
@@ -42,7 +43,7 @@ def require_auth(f=None, *, roles: Optional[list[str]] = None):
                 raise Unauthorized("[REQUIRE_AUTH] Invalid token payload")
 
             # 4. Validate user exists & is active
-            user: User | None = (User.query.filter(
+            user: User = (User.query.filter(
                 User.id==user_id, 
                 User.username==username
             ).first())
@@ -53,12 +54,29 @@ def require_auth(f=None, *, roles: Optional[list[str]] = None):
                 raise Forbidden("[REQUIRE_AUTH] User account is disabled")
 
             # 5. Role / permission validation
-            if roles:
-                user_roles = set(user.roles or [])
-                required_roles = [set(role.id) for role in roles]
+            if roles_names or permissions_names: 
+                # permissions_names
+                mainRoles:list[UserRole] = user.roles or []
 
-                if user_roles.isdisjoint(required_roles):
-                    raise Forbidden("[REQUIRE_AUTH] Insufficient permissions")
+                if roles_names:
+                    user_roles:set[str] = set([r.name for r in mainRoles if r.name])
+                    required_roles = [role for role in roles_names]
+                    if user_roles.isdisjoint(required_roles):
+                        raise Forbidden("[REQUIRE_AUTH] Insufficient permissions")
+                    
+                if permissions_names:
+                    mainPermissions:list[str] = []
+                    for rp in mainRoles:
+                        permissions:list[UserPermission] = rp.permissions
+                        for p in permissions:
+                            mainPermissions.append(p.name)
+
+                    user_permissions:set[str] = set(mainPermissions)
+                    required_permissions = [perm for perm in permissions_names]
+
+                    if user_permissions.isdisjoint(required_permissions):
+                        raise Forbidden("[REQUIRE_AUTH] Insufficient permissions")
+
 
             # 6. Attach security context
             g.current_user = payload

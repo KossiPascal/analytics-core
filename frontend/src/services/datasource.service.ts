@@ -3,11 +3,22 @@ import { DataSource, DataSourceParams, DataSourcePermission, DataSourceType, Tes
 
 const datasource = new CRUDService("/datasources");
 export const datasourceService = {
-  all: (tenant_id: number, with_details: boolean = false) => {
+  full: (tenant_id: number) => {
+    if (!tenant_id) throw Error("tenant_id is required");
+    return datasource.all<DataSource>(`/${tenant_id}`)
+  },
+  all: (tenant_id: number) => {
+    if (!tenant_id) throw Error("tenant_id is required");
+    return datasource.all<DataSource>(`/${tenant_id}`)
+  },
+  allWithRelations: (tenant_id: number) => {
+    if (!tenant_id) throw Error("tenant_id is required");
+    return datasource.all<DataSource>(`/${tenant_id}`, { options: { params: { include_relations: true } } })
+  },
+  allWithDetails: (tenant_id: number, with_details: boolean = false) => {
     if (!tenant_id) throw Error("tenant_id is required");
     return datasource.all<DataSource>(`${with_details ? "/with-details" : ""}/${tenant_id}`)
   },
-
   getOne: (tenant_id: number, id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
     return datasource.all<DataSource>(`/${tenant_id}/${id}`)
@@ -32,6 +43,7 @@ export const datasourceService = {
 
 const types = new CRUDService("/datasource-types");
 export const dsTypeService = {
+  full: () => types.all<DataSourceType>(""),
   all: () => types.all<DataSourceType>(""),
   create: (data: DataSourceType) => types.create("", data),
   update: (id: number, data: DataSourceType) => types.update("", id, data),
@@ -40,9 +52,17 @@ export const dsTypeService = {
 
 const permissions = new CRUDService("/datasource-permissions");
 export const dsPermissionService = {
+  full: (tenant_id?: number) => {
+    if (!tenant_id) throw Error("tenant_id is required");
+    return permissions.all<DataSourcePermission>(`/${tenant_id}`);
+  },
   all: (tenant_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
     return permissions.all<DataSourcePermission>(`/${tenant_id}`);
+  },
+  allWithRelations: (tenant_id: number) => {
+    if (!tenant_id) throw Error("tenant_id is required");
+    return permissions.all<DataSourcePermission>(`/${tenant_id}`, { options: { params: { include_relations: true } } })
   },
   listDatasources: (tenant_id: number, datasource_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");

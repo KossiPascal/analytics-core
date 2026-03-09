@@ -9,7 +9,6 @@
 # from sqlalchemy.exc import SQLAlchemyError
 # from backend.src.databases.extensions import db
 # from backend.src.models.auth import RefreshToken
-# from backend.src.helpers.hasher import hash_token
 # from datetime import datetime, timedelta, timezone
 
 # from backend.src.logger import get_backend_logger

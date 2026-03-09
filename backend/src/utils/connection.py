@@ -386,7 +386,7 @@ def inspect_source(conn: Dict[str, Any]) -> Dict[str, Any]:
 #     try:
 #         conn = get_connection()
 #         if not conn:
-#             return jsonify({"error": "PostgreSQL connection failed"}), 500
+#             raise BadRequest("PostgreSQL connection failed", 500)
 
 #         result = {
 #             "schemas": [],

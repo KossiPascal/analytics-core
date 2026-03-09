@@ -34,7 +34,7 @@ export function Navbar({ onMenuClick, isMenuOpen = false, userName = 'Utilisateu
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [topNavItems, setTopNavItems] = useState<NavItem[]>([]);
 
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
@@ -163,15 +163,15 @@ export function Navbar({ onMenuClick, isMenuOpen = false, userName = 'Utilisateu
                     <Settings size={16} />
                     <span>Paramètres</span>
                   </Link>
+
                   <div className={styles.userMenuDivider} />
-                  <button
-                    type="button"
-                    className={cn(styles.userMenuItem, styles.logoutItem)}
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      onLogout?.();
-                    }}
-                  >
+                  <button type="button" className={cn(styles.userMenuItem)} onClick={() => { setUserMenuOpen(false); refresh(); }}>
+                    <LogOut size={16} />
+                    <span>Refresh</span>
+                  </button>
+
+                  <div className={styles.userMenuDivider} />
+                  <button type="button" className={cn(styles.userMenuItem, styles.logoutItem)} onClick={() => { setUserMenuOpen(false); onLogout?.(); }}>
                     <LogOut size={16} />
                     <span>Déconnexion</span>
                   </button>

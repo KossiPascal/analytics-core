@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify
-from sqlalchemy.exc import IntegrityError
-
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.employees import Employee, EmployeeProfile, Position
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -18,7 +19,6 @@ def _asc_query():
     return Employee.query.join(Position, Employee.position_id == Position.id).filter(
         Position.code == ASC_POSITION_CODE
     )
-
 
 @bp.get("")
 @require_auth
@@ -44,7 +44,6 @@ def list_ascs():
     ascs = query.order_by(Employee.last_name, Employee.first_name).all()
     return jsonify([a.to_dict_safe() for a in ascs]), 200
 
-
 @bp.post("")
 @require_auth
 def create_asc():
@@ -55,12 +54,12 @@ def create_asc():
     code = data.get("code", "").strip()
 
     if not first_name or not last_name or not code:
-        return error_response("first_name, last_name and code are required", 400)
+        raise BadRequest("first_name, last_name and code are required")
 
     # Resolve ASC position
     position = Position.query.filter_by(code=ASC_POSITION_CODE).first()
     if not position:
-        return error_response(f"Position '{ASC_POSITION_CODE}' not found in database", 500)
+        raise BadRequest(f"Position '{ASC_POSITION_CODE}' not found in database")
 
     supervisor_employee_id = int(data["supervisor_id"]) if data.get("supervisor_id") else None
 
@@ -91,28 +90,34 @@ def create_asc():
         return jsonify(employee.to_dict_safe()), 201
     except IntegrityError:
         db.session.rollback()
-        return error_response("Employee with this code already exists", 409)
+        raise BadRequest("Employee with this code already exists")
 
+    except ValueError:
+        db.session.rollback()
+        raise BadRequest("Invalid chart type")
+
+    except Exception:
+        db.session.rollback()
+        raise  # Let global handler return 500
 
 @bp.get("/<int:id>")
 @require_auth
 def get_asc(id):
     employee = Employee.query.get(id)
     if not employee:
-        return error_response("ASC not found", 404)
+        raise BadRequest("ASC not found")
 
     result = employee.to_dict_safe()
     result["equipments"] = [e.to_dict_safe() for e in employee.owned_equipments]
     result["tickets"] = [t.to_dict_safe() for t in employee.repair_tickets]
     return jsonify(result), 200
 
-
 @bp.put("/<int:id>")
 @require_auth
 def update_asc(id):
     employee = Employee.query.get(id)
     if not employee:
-        return error_response("ASC not found", 404)
+        raise BadRequest("ASC not found")
 
     data = request.get_json(silent=True) or {}
 
@@ -143,15 +148,22 @@ def update_asc(id):
         return jsonify(employee.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Employee with this code already exists", 409)
+        raise BadRequest("Employee with this code already exists")
 
+    except ValueError:
+        db.session.rollback()
+        raise BadRequest("Invalid action")
+
+    except Exception:
+        db.session.rollback()
+        raise  # Let global handler return 500
 
 @bp.delete("/<int:id>")
 @require_auth
 def delete_asc(id):
     employee = Employee.query.get(id)
     if not employee:
-        return error_response("ASC not found", 404)
+        raise BadRequest("ASC not found")
 
     # Soft delete
     employee.is_active = False

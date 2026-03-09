@@ -7,6 +7,9 @@ from backend.src.databases.extensions import isAdmin, isSuperAdmin
 from backend.src.security.sql_guard import validate_sql
 from backend.src.security.sql_guard import jsonify_value
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 from backend.src.logger import get_backend_logger, audit_log
 
 logger = get_backend_logger(__name__)
@@ -25,7 +28,7 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
     Uses statement_timeout and, for read_only, sets transaction read-only.
     """
     if not conn:
-        return ({"error": "PostgreSQL connection failed"}, 500)
+        raise BadRequest("PostgreSQL connection failed", 500)
 
     start_ts = time.time()
     cur = None
@@ -96,7 +99,8 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
             conn.rollback()
         except Exception:
             pass
-        return ({"error": "Query timeout", "details": str(e), "timeout_ms": STATEMENT_TIMEOUT_MS}, 408)
+
+        raise BadRequest("Query timeout", 408)
 
     except psycopg2.Error as e:
         try:
@@ -105,7 +109,7 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
             pass
         # Provide sanitized error to user
         pg_err = getattr(e, "pgerror", None) or str(e)
-        return ({"error": "Database error", "details": pg_err}, 400)
+        raise BadRequest("Database error", 400)
 
     except Exception as e:
         try:
@@ -113,7 +117,7 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
         except Exception:
             pass
         logger.error(f"Unexpected error executing SQL: {str(e)}")
-        return ({"error": "Internal server error", "details": str(e)}, 500)
+        raise BadRequest("Internal server error", 500)
 
     finally:
         try:
@@ -163,12 +167,12 @@ def extract_user_context(user=None):
 
 def run_sql(conn,sql_text,user=None,max_rows=None,explain=False):
     if not sql_text or not isinstance(sql_text, str):
-        return ({"error": "A valid SQL string is required"}, 400)
+        raise BadRequest("A valid SQL string is required", 400)
     
     user_id, user_roles, user_permissions, is_admin, is_superadmin = extract_user_context(user)
 
     if not user_id:
-        return ({"error": "Unauthorized"}, 401)
+        raise BadRequest("Unauthorized", 401)
 
     resp, first_kw, stat = validate_sql(sql_text,is_admin,is_superadmin)
 
@@ -185,7 +189,7 @@ def run_sql(conn,sql_text,user=None,max_rows=None,explain=False):
 
     # safety upper bound
     if max_rows is not None and max_rows > MAX_ALLOWED_ROWS:
-        return ({"error": f"max_rows too large (>{MAX_ALLOWED_ROWS})", "hint": "Use pagination"}, 400)
+        raise BadRequest(f"max_rows too large (>{MAX_ALLOWED_ROWS})", 400)
 
     # For non-admins, enforce read_only and a safe fetch limit
     read_only = not is_admin

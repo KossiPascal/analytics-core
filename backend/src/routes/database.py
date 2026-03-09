@@ -9,6 +9,9 @@ from backend.src.config import Config
 from backend.src.security.access_security import require_auth
 from backend.src.logger import get_backend_logger
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("databases", __name__, url_prefix="/api/databases")
@@ -61,7 +64,7 @@ def drop_or_truncate(entities: list, action: str, user: str, procide: bool):
     except SQLAlchemyError as e:
         db.session.rollback()
         logger.error(f"Drop/Truncate Error: {e}")
-        return {"status": 500, "success": False, "data": str(e)}
+        raise
 
 # -----------------------------
 # Routes
@@ -72,8 +75,8 @@ def database_entities_list():
     try:
         entities = db.inspect(db.engine).get_table_names()
         return jsonify({"status": 200, "data": [{"name": t, "table": t} for t in entities]})
-    except Exception as e:
-        return jsonify({"status": 500, "data": str(e)})
+    except Exception:
+        raise
 
 @bp.route("/delete", methods=["POST"])
 @require_auth
@@ -96,7 +99,7 @@ def get_reco_data():
     end_date = body.get("end_date")
 
     if not (cible and type_ and start_date and end_date):
-        return jsonify({"status": 201, "data": "Invalid parameters"}), 201
+        raise BadRequest("Invalid parameters",404)
 
     try:
         if not isinstance(cible, list):
@@ -125,7 +128,7 @@ def get_reco_data():
 
         return jsonify({"status": 200, "data": results})
     except Exception as e:
-        return jsonify({"status": 201, "data": f"Error: {str(e)}"}), 201
+        raise
 
 @bp.route("/couchdb/delete", methods=["POST"])
 @require_auth
@@ -136,7 +139,7 @@ def delete_from_couchdb():
     user = body.get("user", "system")
 
     if not to_delete or not req_type:
-        return jsonify({"status": 201, "data": "No Data Provided"}), 201
+        raise BadRequest("No Data Provided", 404)
 
     try:
         response = requests.post(f"https://{Config.COUCHDB_BASE_URL}/medic/_bulk_docs", json={"docs": to_delete}, headers=http_headers())
@@ -153,7 +156,7 @@ def delete_from_couchdb():
         return jsonify({"status": 200, "data": response.json()})
     except Exception as e:
         db.session.rollback()
-        return jsonify({"status": 201, "data": str(e)}), 201
+        raise
 
 def update_reco_village_secteur(contact, new_parent):
     """
@@ -186,14 +189,14 @@ def update_user_facility():
         new_parent = data.get("new_parent")
 
         if not all([code, role, parent, contact, new_parent]):
-            return jsonify({"status": 400, "message": "Missing parameters"}), 400
+            raise BadRequest("Missing parameters", 400)
 
         # Fetch user FROM kendeya_docs repository
         # user = CouchDBUsers.query.filter(type=role, roles=role, code=code, place=parent, contact=contact).first()
 
         user:Any=None
         if not user:
-            return jsonify({"status": 404, "message": "Pas d'ASC trouvé pour procéder à l'opération, Réessayer !"}), 404
+            raise BadRequest("Pas d'ASC trouvé pour procéder à l'opération, Réessayer !", 404)
 
         # 1️⃣ Update user's facility in CouchDB
         resp = requests.post(
@@ -235,16 +238,16 @@ def update_user_facility():
         if update_success:
             user.place = new_parent
             db.session.commit()
-            return jsonify({"status": 200, "message": "Vous avez changé la zone de l'ASC avec succès !"})
+            return jsonify("Vous avez changé la zone de l'ASC avec succès !")
         else:
-            return jsonify({"status": 500, "message": "Erreur trouvée, contacter immédiatement l'administrateur!"}), 500
+            return BadRequest("Erreur trouvée, contacter immédiatement l'administrateur!", 500)
 
     except requests.HTTPError as e:
         logger.error(f"CouchDB request failed: {e}")
-        return jsonify({"status": 500, "message": f"CouchDB Error: {str(e)}"}), 500
+        raise BadRequest(f"CouchDB Error: {str(e)}", 500)
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
-        return jsonify({"status": 500, "message": f"Server Error: {str(e)}"}), 500
+        raise
 
 # -----------------------------
 # Additional secure routes (for full CRUD and audit)
@@ -262,7 +265,7 @@ def get_history():
         # return jsonify({"status": 200, "data": [a.__dict__ for a in audits]})
     except Exception as e:
         logger.error(f"Error fetching audit history: {e}")
-        return jsonify({"status": 500, "data": str(e)})
+        raise
 
 @bp.route("/database/truncate-all", methods=["POST"])
 @require_auth

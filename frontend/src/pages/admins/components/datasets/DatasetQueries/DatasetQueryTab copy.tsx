@@ -235,7 +235,7 @@
 //                 columns={queryColumns}
 //                 defaultValue={DEFAULT_FORM}
 //                 service={queryService}
-//                 defaultTenant={{ required: true, id: tenant_id }}
+//                 defaultTenant={{ required: true, ids: [tenant_id] }}
 //                 isValid={(q) => Boolean(q.name.trim() && q.dataset_id && q.query_json)}
 //                 renderForm={(query, setValue, saving) => (
 //                     <DatasetQueryForm

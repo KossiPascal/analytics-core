@@ -6,8 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from backend.src.config import Config
-import json
-import ast
+from flask_apscheduler import APScheduler
 
 from backend.src.logger import get_backend_logger
 from shared_libs.helpers.utils import normalize_base_url
@@ -15,6 +14,8 @@ logger = get_backend_logger(__name__)
 
 # Flask ORM (SYNC)
 db = SQLAlchemy()
+
+scheduler = APScheduler()
 
 # Roles
 ADMIN = "_admin"
@@ -66,12 +67,12 @@ def get_connection():
 # -------------------------------------------------------------------
 # Utils
 # -------------------------------------------------------------------
-def error_response(message:str, status:int=400, details:Any=None):
-    logger.error(message)
-    payload = {"error": message}
-    if details:
-        payload["details"] = details
-    return jsonify(payload), status
+# def error_response(message:str, status:int=400, details:Any=None):
+#     logger.error(message)
+#     payload = {"error": message}
+#     if details:
+#         payload["details"] = details
+#     return jsonify(payload), status
 
 def success_response(data: Any = None, status: int = 200):
     return jsonify({"status": "success","data": data}), status

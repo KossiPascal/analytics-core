@@ -1,9 +1,12 @@
 import warnings
-from sqlalchemy.exc import SAWarning
+from sqlalchemy.exc import SAWarning, OperationalError
 from cryptography.utils import CryptographyDeprecationWarning
+
+from backend.src.routes.datasets.chart import dataset_chart
 warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 warnings.filterwarnings("ignore", category=SAWarning)
 
+from backend.src.routes.datasets import dataset_query
 from backend.src.routes.visualizations import script, visualization
 from backend.src.security.ssh_crypto import harden_ssh_crypto
 
@@ -12,8 +15,10 @@ harden_ssh_crypto()
 import warnings
 import urllib3
 from pathlib import Path
+from werkzeug.exceptions import HTTPException
+import traceback
 
-from flask import Flask, jsonify, send_from_directory, send_file, render_template, request
+from flask import Flask, jsonify, send_from_directory, send_file, render_template, current_app
 from flask_cors import CORS
 from flask_compress import Compress
 from flask_talisman import Talisman
@@ -22,24 +27,17 @@ from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate, upgrade
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import inspect, text
-from sqlalchemy.exc import OperationalError
 from cryptography.utils import CryptographyDeprecationWarning
 
 from backend.src.config import Config
 from backend.src.models.auth import User
 from backend.src.security.api_security import api_security
-
 from backend.src.routes import auth, database, worker_controller
 from backend.src.routes.visualizations import script, visualization
 from backend.src.routes.identities import permission, role, tenant, user, user_utils, orgunit
 from backend.src.routes.datasources import datasource, datasource_permission, datasource_type
-from backend.src.routes.datasets import dataset, dataset_chart,dataset_field,dataset_query
-
-
-
-
-
-from backend.src.databases.extensions import db
+from backend.src.routes.datasets import dataset, dataset_field
+from backend.src.databases.extensions import db, scheduler
                 
 from alembic import command
 from alembic.config import Config as AlembicConfig
@@ -165,7 +163,19 @@ def create_flask_app(initialize_database = True) -> Flask:
     )
 
     # Middlewares
-    CORS(app, supports_credentials=True)
+    CORS(
+        app,
+        supports_credentials=True,
+        origins=[
+            f"https://{Config.HOST}:{Config.PORT}", 
+            f"http://{Config.HOST}:{Config.PORT}"
+            "http://localhost:5173",
+            # "https://ton-frontend.com"
+        ],
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    )
+
     Compress(app)
 
     # Core config
@@ -187,6 +197,9 @@ def create_flask_app(initialize_database = True) -> Flask:
     Migrate(app, db)
     JWTManager(app)
     Session(app)
+    
+    scheduler.init_app(app)
+    scheduler.start()
 
     if initialize_database == True:
         init_database(app)
@@ -277,10 +290,45 @@ def create_flask_app(initialize_database = True) -> Flask:
     # ERROR HANDLING
     # -----------------------------------------------------------------------------
 
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e: HTTPException):
+        """
+        Handle all HTTP errors (401, 403, 404, 405, etc.)
+        Keeps original status code.
+        Always returns JSON.
+        """
+        response = {
+            "success": False,
+            "error": e.name,
+            "message": e.description,
+            "status": e.code,
+            "details": str(e)
+        }
+
+        # Log only server-side errors (5xx)
+        if 500 <= e.code < 600:
+            current_app.logger.error(f"[HTTPException {e.code}] {e.name} - {e.description}")
+
+        return jsonify(response), e.code
+
+
     @app.errorhandler(Exception)
-    def handle_exception(e):
-        logger.error(f"Unhandled exception: {str(e)}")
-        return jsonify(error="internal server error"), 500
+    def handle_unexpected_exception(e: Exception):
+        """
+        Catch unhandled exceptions.
+        Never leak stacktrace to client.
+        """
+
+        current_app.logger.error("[Unhandled Exception]\n%s",traceback.format_exc())
+
+        return jsonify({
+            "success": False,
+            "error": "Internal Server Error",
+            "message": "An unexpected error occurred.",
+            "status": 500,
+            "details": str(e)
+        }), 500
+
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

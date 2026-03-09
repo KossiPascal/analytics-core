@@ -2,13 +2,13 @@
 // import { persist } from 'zustand/middleware';
 // import { authService } from '@services/auth.service';
 // import { encryptedStorage, RETRY_MILLIS, networkManager } from '@/stores/stores.config';
-// import { LoginResponse, PayloadUser } from '@/models/auth.model';
+// import { LoginResponse, UserPayload } from '@/models/auth.model';
 // import { extractErrorMessage } from '@/utils/error.utils';
 
 
 
 // interface AuthState {
-//   user: PayloadUser | null;
+//   user: UserPayload | null;
 //   token: string | null;
 //   loading: boolean;
 //   error: string | null;

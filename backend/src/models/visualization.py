@@ -4,28 +4,44 @@ from datetime import datetime, timezone
 from backend.src.databases.extensions import db
 from backend.src.models.datasource import AuditMixin
 from backend.src.logger import get_backend_logger
+from sqlalchemy.dialects.postgresql import JSONB
 
 logger = get_backend_logger(__name__)
 
 
-class VisualizationStatus(PyEnum):
+class VisualizationStatus(str, PyEnum):
     DRAFT = "draft"
     SUBMITTED = "submitted"
     REVIEWED = "reviewed"
     APPROVED = "approved"
     PUBLISHED = "published"
     ARCHIVED = "archived"
-    EXECUTED = "executed"
-    FAILED = "failed"
 
-class LineageOperation(PyEnum):
+class VisualizationExecutionState(str, PyEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCESS = "success"
+    FAILED = "failed"
+    CANCELED = "canceled"
+
+# class VisualizationStatus(str, PyEnum):
+#     DRAFT = "draft"
+#     SUBMITTED = "submitted"
+#     REVIEWED = "reviewed"
+#     APPROVED = "approved"
+#     PUBLISHED = "published"
+#     ARCHIVED = "archived"
+#     EXECUTED = "executed"
+#     FAILED = "failed"
+
+class LineageOperation(str, PyEnum):
     DERIVED_FROM = "derived_from"
     AGGREGATED = "aggregated"
     FILTERED = "filtered"
 
+
 class Visualization(db.Model, AuditMixin):
     __tablename__ = "visualizations"
-    __table_args__ = (db.UniqueConstraint("tenant_id", "name", "status", name="uq_viz_role"),)
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -33,18 +49,24 @@ class Visualization(db.Model, AuditMixin):
     type = db.Column(db.String(50), nullable=False)  # dashboard | report
     description = db.Column(db.Text)
 
-    status = db.Column(
-        db.Enum(VisualizationStatus, name="visualization_workflow_status"), 
-        default=VisualizationStatus.DRAFT, native_enum=True, 
-        create_constraint=True, validate_strings=True, nullable=False
-    )
+    # status = db.Column(
+    #     db.Enum(VisualizationStatus, name="visualization_workflow_status"), 
+    #     default=VisualizationStatus.DRAFT, native_enum=True, 
+    #     create_constraint=True, validate_strings=True, nullable=False
+    # )
+
+    status = db.Column(db.String(50),default=VisualizationStatus.DRAFT.value,nullable=False)
+
+    state = db.Column(db.String(50),default=VisualizationExecutionState.PENDING.value,nullable=False)
+
 
     parent_id = db.Column(db.BigInteger, db.ForeignKey("visualizations.id"))
 
-    layout = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
-    filters = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
-    config = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
-    generated_data = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
+    layout = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+
+    filters = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+    config = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+    generated_data = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
     executed_at = db.Column(db.DateTime(timezone=True))
     executed_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
@@ -65,7 +87,8 @@ class Visualization(db.Model, AuditMixin):
     dhis2_validations = db.relationship("VisualizationDhis2Validation", back_populates="visualization", cascade="all, delete-orphan")
 
     __table_args__ = (
-        db.Index("idx_viz_status", "status"),
+        db.UniqueConstraint("tenant_id", "name", name="uq_visualization_tenant_name"),
+        db.Index("idx_visualization_tenant_status", "tenant_id", "status"),
     )
     
     def serialize(self):
@@ -74,7 +97,8 @@ class Visualization(db.Model, AuditMixin):
             "type": self.type,
             "description": self.description,
             "name": self.name,
-            "status": self.status.value,
+            "status": VisualizationStatus(self.status).value,
+            "state": VisualizationExecutionState(self.state).value,
             "created_by": {"id": self.created_by.id, "name": self.created_by.name} if self.created_by else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
@@ -106,39 +130,38 @@ class Visualization(db.Model, AuditMixin):
         if vc:
             db.session.delete(vc)
 
-    def publish(self):
-        self.status = VisualizationStatus.PUBLISHED
+# state
+    def setPublish(self):
+        self.status = VisualizationStatus.PUBLISHED.value
 
-    def archive(self):
-        self.status = VisualizationStatus.ARCHIVED
+    def setArchive(self):
+        self.status = VisualizationStatus.ARCHIVED.value
 
-    def is_editable(self):
-        return self.status == VisualizationStatus.DRAFT
-
-    def refresh(self):
-        self.updated_at = datetime.now(timezone.utc)
+    def setDraft(self):
+        self.status == VisualizationStatus.DRAFT.value
 
     def mark_executed(self, data=None):
         self.executed_at = datetime.now(timezone.utc)
-        self.status = VisualizationStatus.EXECUTED
+        self.state = VisualizationExecutionState.PENDING.value
         if data is not None:
             self.generated_data = data
+            self.state = VisualizationExecutionState.SUCCESS.value
 
     def mark_failed(self):
-        self.status = VisualizationStatus.FAILED
+        self.state = VisualizationExecutionState.FAILED.value
 
-    def can_transition(self, user, target_status: str):
-        allowed_transitions = {
-            "draft": ["submitted"],
-            "submitted": ["reviewed", "archived"],
-            "reviewed": ["approved", "archived"],
-            "approved": ["published", "archived"],
-            "published": ["archived"],
-            "archived": [],
-            "executed": ["archived", "failed"],
-            "failed": ["draft"]
-        }
-        return target_status in allowed_transitions.get(self.status.value, [])
+    # def can_transition(self, user, target_status: str):
+    #     allowed_transitions = {
+    #         "draft": ["submitted"],
+    #         "submitted": ["reviewed", "archived"],
+    #         "reviewed": ["approved", "archived"],
+    #         "approved": ["published", "archived"],
+    #         "published": ["archived"],
+    #         "archived": [],
+    #         "executed": ["archived", "failed"],
+    #         "failed": ["draft"]
+    #     }
+    #     return target_status in allowed_transitions.get(self.status.value, [])
 
     def __repr__(self):
         return f"<Visualization {self.type} id={self.id} name={self.name}>"
@@ -155,7 +178,7 @@ class VisualizationChart(db.Model, AuditMixin):
     chart_id = db.Column(db.BigInteger, db.ForeignKey("dataset_charts.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     chart = db.relationship("DatasetChart", back_populates="visualizations")
     
-    position = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
+    position = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
     def __repr__(self):
         return f"<VisualizationChart viz={self.visualization_id} chart={self.chart_id}>"
@@ -175,9 +198,9 @@ class VisualizationExecutionLog(db.Model, AuditMixin):
     executed_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=True)
     executed_by = db.relationship("User", foreign_keys=[executed_by_id], lazy="joined")
 
-    status = db.Column(db.Enum("success", "failed", name="visualization_execution_status"), nullable=False, server_default="success")
+    status = db.Column(db.Enum("success", "failed", name="visualization_state"), nullable=False, server_default="success")
     message = db.Column(db.Text)
-    details = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
+    details = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
     def __repr__(self):
         return f"<VisualizationExecutionLog viz={self.visualization_id} status={self.status}>"
@@ -298,7 +321,7 @@ class AIQueryLog(db.Model, AuditMixin):
     tenant = db.relationship("Tenant", back_populates="ai_query_logs")
 
     prompt = db.Column(db.Text, nullable=False)
-    generated_query_json = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
+    generated_query_json = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
     validated = db.Column(db.Boolean, default=False)
     rejected_reason = db.Column(db.Text)

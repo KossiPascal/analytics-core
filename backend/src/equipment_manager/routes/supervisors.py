@@ -1,11 +1,12 @@
 from flask import Blueprint, request, jsonify, g
-from sqlalchemy.exc import IntegrityError
-
-from backend.src.databases.extensions import db, error_response
+from backend.src.databases.extensions import db
 from backend.src.security.access_security import require_auth
 from backend.src.equipment_manager.models.employees import Employee, Position
 from backend.src.models.auth import User
 from backend.src.logger import get_backend_logger
+
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import IntegrityError
 
 logger = get_backend_logger(__name__)
 
@@ -40,12 +41,12 @@ def create_supervisor():
     code = data.get("code", "").strip()
 
     if not first_name or not last_name:
-        return error_response("first_name and last_name are required", 400)
+        raise BadRequest("first_name and last_name are required", 400)
 
     # Resolve supervisor position
     position = Position.query.filter_by(code=SUPERVISOR_POSITION_CODE).first()
     if not position:
-        return error_response(f"Position '{SUPERVISOR_POSITION_CODE}' not found in database", 500)
+        raise BadRequest(f"Position '{SUPERVISOR_POSITION_CODE}' not found in database", 500)
 
     if not code:
         # Auto-generate code from name
@@ -111,11 +112,11 @@ def create_supervisor():
 
     except IntegrityError:
         db.session.rollback()
-        return error_response("Supervisor creation failed (duplicate data)", 409)
+        raise BadRequest("Supervisor creation failed (duplicate data)", 409)
     except Exception as e:
         db.session.rollback()
         logger.error(f"Supervisor creation error: {e}")
-        return error_response(f"Supervisor creation failed: {str(e)}", 500)
+        raise BadRequest(f"Supervisor creation failed: {str(e)}", 500)
 
 
 @bp.get("/<int:id>")
@@ -123,7 +124,7 @@ def create_supervisor():
 def get_supervisor(id):
     employee = Employee.query.get(id)
     if not employee:
-        return error_response("Supervisor not found", 404)
+        raise BadRequest("Supervisor not found", 404)
     return jsonify(employee.to_dict_safe()), 200
 
 
@@ -132,7 +133,7 @@ def get_supervisor(id):
 def update_supervisor(id):
     employee = Employee.query.get(id)
     if not employee:
-        return error_response("Supervisor not found", 404)
+        raise BadRequest("Supervisor not found", 404)
 
     data = request.get_json(silent=True) or {}
 
@@ -156,4 +157,4 @@ def update_supervisor(id):
         return jsonify(employee.to_dict_safe()), 200
     except IntegrityError:
         db.session.rollback()
-        return error_response("Update failed (duplicate data)", 409)
+        raise BadRequest("Update failed (duplicate data)", 409)

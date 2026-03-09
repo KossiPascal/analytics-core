@@ -3,13 +3,16 @@ from backend.src.databases.extensions import db
 from backend.src.models.controls import WorkerControl
 # from workers.couchdb.sync_manager import start_async_single_source
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 bp = Blueprint("workers", __name__, url_prefix="/api/workers")
 
 @bp.get("/status/<worker_name>")
 def get_status(worker_name: str):
     control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
     if not control:
-        return jsonify({"error": "Worker not found"}), 404
+        raise BadRequest("Worker not found", 404)
     return jsonify({"worker": worker_name, "status": control.status})
 
 @bp.post("/stop/<worker_name>")
@@ -41,4 +44,4 @@ def trigger_sync(worker_name: str, source_id: int):
         # start_async_single_source(source_id)
         return jsonify({"worker": worker_name, "source_id": source_id, "status": "sync triggered"})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        raise

@@ -3,6 +3,9 @@ from backend.src.logger import get_backend_logger
 from backend.src.security.access_security import require_auth
 from backend.src.config import Config
 
+from werkzeug.exceptions import BadRequest
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
 logger = get_backend_logger(__name__)
 bp = Blueprint("sms_providers", __name__, url_prefix="/api/sms")
 
@@ -25,9 +28,9 @@ def send_sms_twilio():
         message = data.get("message")
 
         if not phone_numbers or not isinstance(phone_numbers, list) or len(phone_numbers) == 0:
-            return jsonify({"status": 400, "data": "Recipient list is empty"}), 400
+            raise BadRequest("Recipient list is empty", 400)
         if not message or message.strip() == "":
-            return jsonify({"status": 400, "data": "Message is empty"}), 400
+            raise BadRequest("Message is empty", 400)
 
         responses = []
         errors = []
@@ -46,7 +49,7 @@ def send_sms_twilio():
         return jsonify({"status": 200, "data": responses, "errors": errors})
     except Exception as e:
         logger.error(f"Twilio route error: {e}")
-        return jsonify({"status": 500, "data": str(e)}), 500
+        raise
 
 # # Vonage / Nexmo
 # try:
@@ -71,7 +74,7 @@ def send_sms_twilio():
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Vonage route error: {e}")
-#         return jsonify({"status": 500, "data": str(e)}), 500
+#         raise BadRequest(str(e)}), 500
 
 # # Plivo
 # try:
@@ -96,7 +99,7 @@ def send_sms_twilio():
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Plivo route error: {e}")
-#         return jsonify({"status": 500, "data": str(e)}), 500
+#         raise BadRequest(str(e)}), 500
 
 # # Africa's Talking
 # try:
@@ -122,7 +125,7 @@ def send_sms_twilio():
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Africa's Talking route error: {e}")
-#         return jsonify({"status": 500, "data": str(e)}), 500
+#         raise BadRequest(str(e)}), 500
 
 # # Textlocal
 # try:
@@ -145,7 +148,7 @@ def send_sms_twilio():
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Textlocal route error: {e}")
-#         return jsonify({"status": 500, "data": str(e)}), 500
+#         raise BadRequest(str(e)}), 500
 
 # # Sendinblue
 # try:
@@ -168,7 +171,7 @@ def send_sms_twilio():
 #         return jsonify({"status": 200, "data": response})
 #     except ApiException as e:
 #         logger.error(f"Sendinblue API error: {e}")
-#         return jsonify({"status": 500, "data": str(e)}), 500
+#         raise BadRequest(str(e)}), 500
 
 # # Telesign
 # try:
@@ -189,4 +192,4 @@ def send_sms_twilio():
 #         return jsonify({"status": 200, "data": response})
 #     except Exception as e:
 #         logger.error(f"Telesign route error: {e}")
-#         return jsonify({"status": 500, "data": str(e)}), 500
+#         raise BadRequest(str(e)}), 500

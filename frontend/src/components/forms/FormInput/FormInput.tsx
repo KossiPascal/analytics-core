@@ -21,7 +21,7 @@ export interface FormInputProps extends Omit<InputHTMLAttributes<HTMLInputElemen
   /** Icône à droite */
   rightIcon?: ReactNode;
   /** Type de champ (avec support password toggle) */
-  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search';
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | string;
   /** Classes CSS additionnelles pour le wrapper */
   wrapperClassName?: string;
   /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */

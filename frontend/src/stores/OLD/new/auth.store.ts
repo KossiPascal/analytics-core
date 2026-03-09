@@ -1,14 +1,14 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { PayloadUser } from "@/models/auth.model";
+import type { UserPayload } from "@/models/auth.model";
 
 interface AuthState {
-  user: PayloadUser | null;
+  user: UserPayload | null;
   accessToken: string | null;
   refreshToken: string | null;
 
   setSession: (data: {
-    user: PayloadUser;
+    user: UserPayload;
     accessToken: string;
     refreshToken?: string;
   }) => void;
