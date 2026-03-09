@@ -122,7 +122,6 @@ def update_orgunit(orgunit_id: int):
         if "is_active" in data:
             orgunit.is_active = bool(data.get("is_active", True))
         if "parent_id" in data:
-<<<<<<< HEAD
             new_parent:UserOrgunit = UserOrgunit.query.get(data["parent_id"])
             if not new_parent or new_parent.deleted:
                 raise BadRequest("Parent not found", 404)
@@ -131,18 +130,7 @@ def update_orgunit(orgunit_id: int):
             if orgunit in new_parent.get_descendants():
                 raise BadRequest("Circular hierarchy not allowed", 400)
             orgunit.parent_id = new_parent.id
-=======
-            new_parent_id = data["parent_id"]
-            if new_parent_id is None:
-                orgunit.parent_id = None  # passer en racine
-            else:
-                new_parent: UserOrgunit = UserOrgunit.query.get(new_parent_id)
-                if not new_parent or new_parent.deleted:
-                    return jsonify({"error": "Parent not found"}), 404
-                if new_parent.id == orgunit.id:
-                    return jsonify({"error": "Cannot self-parent"}), 400
-                orgunit.parent_id = new_parent.id
->>>>>>> gado
+
 
         orgunit.updated_by = g.current_user.get("id") if g.get("current_user") else None
 
@@ -151,13 +139,8 @@ def update_orgunit(orgunit_id: int):
 
     except Exception as e:
         db.session.rollback()
-<<<<<<< HEAD
+        #logger.error(f"Update orgunit error: {e}")
         raise BadRequest("Failed to update orgunit", 500)
-=======
-        logger.error(f"Update orgunit error: {e}")
-        return error_response("Failed to update orgunit", 500, str(e))
->>>>>>> gado
-
 
 
 @bp.delete("/<int:orgunit_id>")
