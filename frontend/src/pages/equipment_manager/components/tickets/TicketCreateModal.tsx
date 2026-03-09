@@ -62,14 +62,15 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
     }
     setEquipLoading(true);
     setEquipmentId('');
-    equipmentApi.getAll({ employee_id: employeeId }).then((res) => {
+    equipmentApi.getAll({ employee_id: employeeId, exclude_status: 'UNDER_REPAIR' }).then((res) => {
       if (res.success) setEquipment(res.data ?? []);
     }).finally(() => setEquipLoading(false));
   }, [employeeId]);
 
   const loadData = async () => {
     const [empRes, ptRes] = await Promise.all([
-      employeesApi.getAll({ active: 'true', ...(user?.department_code ? { department_code: user.department_code } : {}) }),
+      // Filtre côté serveur : équipement actif + restriction hiérarchique/orgunits de l'appelant
+      employeesApi.getAll({ active: 'true', has_equipment: 'true' }),
       ticketsApi.getProblemTypes(),
     ]);
     if (empRes.success) setEmployees(empRes.data ?? []);

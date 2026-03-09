@@ -244,6 +244,7 @@ def list_equipment():
     owner_id = request.args.get("owner_id") or request.args.get("asc_id")
     employee_id = request.args.get("employee_id")
     status = request.args.get("status")
+    exclude_status = request.args.get("exclude_status")
     eq_type = request.args.get("type")
 
     if owner_id:
@@ -252,6 +253,8 @@ def list_equipment():
         query = query.filter_by(employee_id=int(employee_id))
     if status:
         query = query.filter_by(status=status)
+    if exclude_status:
+        query = query.filter(Equipment.status != exclude_status)
     if eq_type:
         query = query.filter_by(equipment_type=eq_type)
 

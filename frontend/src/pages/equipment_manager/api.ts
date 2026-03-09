@@ -94,11 +94,12 @@ export const equipmentApi = {
   createBrand: (data: Record<string, unknown>) => api.post<EquipmentBrand>(`${BASE}/assets/brands`, data),
   updateBrand: (id: string, data: Record<string, unknown>) => api.put<EquipmentBrand>(`${BASE}/assets/brands/${id}`, data),
 
-  getAll: (params?: { asc_id?: string; employee_id?: string; status?: string; type?: string }) => {
+  getAll: (params?: { asc_id?: string; employee_id?: string; status?: string; exclude_status?: string; type?: string }) => {
     const query = new URLSearchParams();
     if (params?.asc_id) query.set('asc_id', params.asc_id);
     if (params?.employee_id) query.set('employee_id', params.employee_id);
     if (params?.status) query.set('status', params.status);
+    if (params?.exclude_status) query.set('exclude_status', params.exclude_status);
     if (params?.type) query.set('type', params.type);
     const qs = query.toString();
     return api.get<Equipment[]>(`${BASE}/assets${qs ? `?${qs}` : ''}`);
@@ -193,13 +194,14 @@ export const employeesApi = {
   updatePosition: (id: string, data: Record<string, unknown>) => api.put<Position>(`${BASE}/employees/positions/${id}`, data),
 
   // Employees
-  getAll: (params?: { tenant_id?: string; active?: string; search?: string; position_code?: string; department_code?: string }) => {
+  getAll: (params?: { tenant_id?: string; active?: string; search?: string; position_code?: string; department_code?: string; has_equipment?: string }) => {
     const query = new URLSearchParams();
     if (params?.tenant_id)       query.set('tenant_id', params.tenant_id);
     if (params?.active)          query.set('active', params.active);
     if (params?.search)          query.set('search', params.search);
     if (params?.position_code)   query.set('position_code', params.position_code);
     if (params?.department_code) query.set('department_code', params.department_code);
+    if (params?.has_equipment)   query.set('has_equipment', params.has_equipment);
     const qs = query.toString();
     return api.get<Employee[]>(`${BASE}/employees${qs ? `?${qs}` : ''}`);
   },

@@ -269,6 +269,7 @@ def list_employees():
     search = request.args.get("search", "").strip()
     position_code = request.args.get("position_code", "").strip()
     department_code = request.args.get("department_code", "").strip()
+    has_equipment = request.args.get("has_equipment", "").lower()
 
     if tenant_id:
         query = query.filter(Employee.tenant_id == int(tenant_id))
@@ -293,11 +294,40 @@ def list_employees():
             )
         )
 
-    # Restriction hiérarchique : si l'appelant a un poste, il ne voit que ses subordonnés
+    # Filtre équipement actif : uniquement les employés avec au moins un équipement actif assigné
+    if has_equipment == "true":
+        from backend.src.equipment_manager.models.equipment import Equipment, ACTIVE_STATUSES
+        active_owner_subq = (
+            db.session.query(Equipment.owner_id)
+            .filter(Equipment.owner_id.isnot(None), Equipment.status.in_(ACTIVE_STATUSES))
+            .subquery()
+        )
+        query = query.filter(Employee.id.in_(active_owner_subq))
+
+    # Restriction hiérarchique + orgunits (union) :
+    # - si l'appelant a un poste → ses subordonnés (descendants dans l'arbre des postes)
+    # - si l'appelant a des orgunits → les employés dans ces orgunits (via leur compte user)
     caller_position_id = g.current_user.get("position_id")
+    caller_orgunit_ids = [int(i) for i in (g.current_user.get("orgunit_ids") or []) if i]
+
+    scope_filters = []
+
     if caller_position_id:
         allowed_pos_ids = get_descendant_position_ids(int(caller_position_id))
-        query = query.filter(Employee.position_id.in_(allowed_pos_ids))
+        if allowed_pos_ids:
+            scope_filters.append(Employee.position_id.in_(allowed_pos_ids))
+
+    if caller_orgunit_ids:
+        from backend.src.models.auth import UserOrgunitLink
+        user_ids_in_orgunits = (
+            db.session.query(UserOrgunitLink.user_id)
+            .filter(UserOrgunitLink.orgunit_id.in_(caller_orgunit_ids))
+            .subquery()
+        )
+        scope_filters.append(Employee.user_id.in_(user_ids_in_orgunits))
+
+    if scope_filters:
+        query = query.filter(db.or_(*scope_filters))
 
     employees = query.order_by(Employee.last_name, Employee.first_name).all()
     return jsonify([e.to_dict_safe() for e in employees]), 200
