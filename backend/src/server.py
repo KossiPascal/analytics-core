@@ -18,13 +18,15 @@ from pathlib import Path
 from werkzeug.exceptions import HTTPException
 import traceback
 
-from flask import Flask, jsonify, send_from_directory, send_file, render_template, current_app
+from flask import Flask, jsonify, send_from_directory, send_file, render_template
+from werkzeug.exceptions import HTTPException
+
 from flask_cors import CORS
 from flask_compress import Compress
 from flask_talisman import Talisman
 from flask_session import Session
 from flask_jwt_extended import JWTManager
-from flask_migrate import Migrate, upgrade
+from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import inspect, text
 from cryptography.utils import CryptographyDeprecationWarning
@@ -34,7 +36,7 @@ from backend.src.models.auth import User
 from backend.src.security.api_security import api_security
 from backend.src.routes import auth, database, worker_controller
 from backend.src.routes.visualizations import script, visualization
-from backend.src.routes.identities import permission, role, tenant, user, user_utils, orgunit
+from backend.src.routes.identities import permission, role, tenant, user, user_utils, orgunit, level, dhis2_sync as identities_dhis2_sync
 from backend.src.routes.datasources import datasource, datasource_permission, datasource_type
 from backend.src.routes.datasets import dataset, dataset_field
 from backend.src.databases.extensions import db, scheduler
@@ -81,55 +83,33 @@ def init_database(app: Flask) -> None:
                 inspector = inspect(db.engine)
                 existing_tables = inspector.get_table_names()
 
-                # === DB vierge ou mode dev ===
+                # === 1. Création des tables manquantes (db.create_all n'altère pas l'existant) ===
                 if Config.IS_DEBUG_MODE or not existing_tables:
-
                     logger.warning("⚠ DEV MODE or empty DB: creating tables directly")
                     db.create_all()
-                    
-                    # Crée un admin par défaut si la table User existe
+
+                # === 2. ALEMBIC MIGRATIONS (ALTER TABLE, nouvelles colonnes, …) ===
+                migrations_path = Config.ALCHEMY_MIGRATION_FOLDER
+                alembic_ini = migrations_path / "alembic.ini"
+
+                if not migrations_path.exists():
+                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
+                if not alembic_ini.exists():
+                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
+
+                alembic_cfg = AlembicConfig(str(alembic_ini))
+                alembic_cfg.set_main_option("script_location", str(migrations_path))
+                command.upgrade(alembic_cfg, "head")
+                logger.info("✅ Database migrations applied")
+
+                # === 3. Données initiales — APRÈS migrations (schéma à jour) ===
+                if Config.IS_DEBUG_MODE or not existing_tables:
                     if "users" in db.metadata.tables:
                         success = User.create_default_admin()
                         if success:
                             logger.info("✅ Default admin created")
-                            # from sqlalchemy.orm import configure_mappers
-                            # configure_mappers()
                     else:
                         logger.warning("User table not found, skipping default admin creation")
-
-                # ALEMBIC MIGRATIONS
-                migrations_path = Config.ALCHEMY_MIGRATION_FOLDER
-                alembic_ini = migrations_path / "alembic.ini"
-
-                # Création du dossier migrations si absent
-                if not migrations_path.exists():
-                    # logger.info("📦 Creating migrations folder")
-                    # migrations_path.mkdir(parents=True, exist_ok=True)
-                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
-
-                # Initialiser alembic.ini si absent
-                if not alembic_ini.exists():
-                    # logger.info("📦 Creating alembic.ini")
-                    # with open(alembic_ini, "w") as f:
-                    #     f.write("[alembic]\nscript_location = %s\n" % migrations_path)
-                    raise RuntimeError("Migrations folder missing. Deployment is broken.")
-
-                # Créer alembic.ini temporaire
-                alembic_cfg = AlembicConfig(str(alembic_ini))
-                alembic_cfg.set_main_option("script_location", str(migrations_path))
-
-                # # Vérifie si des migrations existent
-                # if not any(migrations_path.glob("versions/*.py")):
-                #     logger.info("📦 Creating initial migration")
-                #     # Générer la révision initiale
-                #     command.revision(alembic_cfg, message="initial migration", autogenerate=True)
-
-
-                # Init folder
-                # command.init(alembic_cfg, str(migrations_path))
-                # Appliquer la migration
-                command.upgrade(alembic_cfg, "head")
-                logger.info("✅ Database migrations applied")
 
 
             except OperationalError as e:
@@ -141,6 +121,45 @@ def init_database(app: Flask) -> None:
             finally:
                 conn.execute(text("SELECT pg_advisory_unlock(123456);"))
     
+
+def _reset_em_tables(app: Flask) -> None:
+    """Vide les tables de référence Equipment Manager (dev uniquement)."""
+    tables = [
+        "em.alert_recipient_configs",
+        "em.alert_config",
+        "em.email_config",
+        "em.issues",
+        "em.ticket_events",
+        "em.ticket_comments",
+        "em.delay_alert_logs",
+        "em.repair_tickets",
+        "em.delay_alert_recipients",
+        "em.accessories",
+        "em.equipment_imeis",
+        "em.equipment_history",
+        "em.equipment",
+        "em.equipment_brands",
+        "em.equipment_categories",
+        "em.equipment_category_groups",
+        "em.problem_types",
+        "em.employee_profile",
+        "em.employee_history",
+        "em.employees",
+        "em.positions",
+        "em.departments",
+        "em.sites",
+        "em.districts",
+        "em.regions",
+    ]
+    with app.app_context():
+        for table in tables:
+            try:
+                db.session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
+            except Exception:
+                db.session.rollback()
+        db.session.commit()
+    logger.warning("⚠️  Tables EM vidées (reset)")
+
 
 def create_flask_app(initialize_database = True) -> Flask:
     Config.validate()
@@ -204,6 +223,38 @@ def create_flask_app(initialize_database = True) -> Flask:
     if initialize_database == True:
         init_database(app)
 
+    # ── Equipment Manager CLI commands ────────────────────────────────────────
+    import click
+
+    @app.cli.group("em")
+    def em_cli():
+        """Commandes Equipment Manager."""
+
+    @em_cli.command("seed")
+    @click.option("--module", default=None, help="Seeder spécifique à lancer (ex: locations, brands…)")
+    @click.option("--reset", is_flag=True, default=False, help="Vide les tables avant de seeder (dev uniquement)")
+    def em_seed(module, reset):
+        """Insère les données de référence du module Equipment Manager."""
+        from backend.src.equipment_manager.seeds import seed_all, SEEDERS, SEED_ORDER
+
+        if reset:
+            if not click.confirm("⚠️  Êtes-vous sûr de vouloir vider les tables avant de seeder ?"):
+                click.echo("Annulé.")
+                return
+            _reset_em_tables(app)
+
+        if module:
+            if module not in SEEDERS:
+                click.echo(f"Module inconnu : '{module}'. Disponibles : {', '.join(SEED_ORDER)}")
+                return
+            click.echo(f"▶ Seeding [{module}]…")
+            n = SEEDERS[module]()
+            click.echo(f"✓ {n} enregistrements créés")
+        else:
+            click.echo("▶ Seeding all modules…")
+            total = seed_all()
+            click.echo(f"✅ Terminé — {total} enregistrements créés")
+
     # Celery
     from backend.src.celery_app import celery, init_celery
     init_celery(app)
@@ -216,7 +267,7 @@ def create_flask_app(initialize_database = True) -> Flask:
     # Blueprints
     for bp in (
         auth, database, worker_controller, script, visualization,
-        permission, role, tenant, user, user_utils, orgunit, 
+        permission, role, tenant, user, user_utils, orgunit, level, identities_dhis2_sync,
         datasource, datasource_permission, datasource_type,
         dataset, dataset_chart,dataset_field,dataset_query
 
@@ -307,10 +358,9 @@ def create_flask_app(initialize_database = True) -> Flask:
 
         # Log only server-side errors (5xx)
         if 500 <= e.code < 600:
-            current_app.logger.error(f"[HTTPException {e.code}] {e.name} - {e.description}")
+            logger.error(f"[HTTPException {e.code}] {e.name} - {e.description}")
 
         return jsonify(response), e.code
-
 
     @app.errorhandler(Exception)
     def handle_unexpected_exception(e: Exception):
@@ -319,7 +369,7 @@ def create_flask_app(initialize_database = True) -> Flask:
         Never leak stacktrace to client.
         """
 
-        current_app.logger.error("[Unhandled Exception]\n%s",traceback.format_exc())
+        logger.error("[Unhandled Exception]\n%s",traceback.format_exc())
 
         return jsonify({
             "success": False,
@@ -328,7 +378,6 @@ def create_flask_app(initialize_database = True) -> Flask:
             "status": 500,
             "details": str(e)
         }), 500
-
 
     @app.teardown_appcontext
     def shutdown_session(exception=None):

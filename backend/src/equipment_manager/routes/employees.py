@@ -179,6 +179,7 @@ def create_position():
             department_id=int(department_id) if department_id else None,
             description=data.get("description", ""),
             is_active=True,
+            is_zone_assignable=bool(data.get("is_zone_assignable", False)),
         )
         db.session.add(pos)
         db.session.commit()
@@ -212,6 +213,8 @@ def update_position(id):
             setattr(pos, field, data[field].strip() if isinstance(data[field], str) else data[field])
     if "is_active" in data:
         pos.is_active = bool(data["is_active"])
+    if "is_zone_assignable" in data:
+        pos.is_zone_assignable = bool(data["is_zone_assignable"])
 
     try:
         db.session.commit()
@@ -267,6 +270,7 @@ def list_employees():
     search = request.args.get("search", "").strip()
     position_code = request.args.get("position_code", "").strip()
     department_code = request.args.get("department_code", "").strip()
+    has_equipment = request.args.get("has_equipment", "").lower()
 
     if tenant_id:
         query = query.filter(Employee.tenant_id == int(tenant_id))
@@ -291,11 +295,40 @@ def list_employees():
             )
         )
 
-    # Restriction hiérarchique : si l'appelant a un poste, il ne voit que ses subordonnés
+    # Filtre équipement actif : uniquement les employés avec au moins un équipement actif assigné
+    if has_equipment == "true":
+        from backend.src.equipment_manager.models.equipment import Equipment, ACTIVE_STATUSES
+        active_owner_subq = (
+            db.session.query(Equipment.owner_id)
+            .filter(Equipment.owner_id.isnot(None), Equipment.status.in_(ACTIVE_STATUSES))
+            .subquery()
+        )
+        query = query.filter(Employee.id.in_(active_owner_subq))
+
+    # Restriction hiérarchique + orgunits (union) :
+    # - si l'appelant a un poste → ses subordonnés (descendants dans l'arbre des postes)
+    # - si l'appelant a des orgunits → les employés dans ces orgunits (via leur compte user)
     caller_position_id = g.current_user.get("position_id")
+    caller_orgunit_ids = [int(i) for i in (g.current_user.get("orgunit_ids") or []) if i]
+
+    scope_filters = []
+
     if caller_position_id:
         allowed_pos_ids = get_descendant_position_ids(int(caller_position_id))
-        query = query.filter(Employee.position_id.in_(allowed_pos_ids))
+        if allowed_pos_ids:
+            scope_filters.append(Employee.position_id.in_(allowed_pos_ids))
+
+    if caller_orgunit_ids:
+        from backend.src.models.auth import UserOrgunitLink
+        user_ids_in_orgunits = (
+            db.session.query(UserOrgunitLink.user_id)
+            .filter(UserOrgunitLink.orgunit_id.in_(caller_orgunit_ids))
+            .subquery()
+        )
+        scope_filters.append(Employee.user_id.in_(user_ids_in_orgunits))
+
+    if scope_filters:
+        query = query.filter(db.or_(*scope_filters))
 
     employees = query.order_by(Employee.last_name, Employee.first_name).all()
     return jsonify([e.to_dict_safe() for e in employees]), 200
@@ -558,25 +591,103 @@ def create_account(id):
     if not tenant_id:
         raise BadRequest("Impossible de déterminer le tenant pour ce compte", 400)
 
+    role_ids    = data.get("role_ids") or []
+    orgunit_ids = data.get("orgunit_ids") or []
+    firstname   = (data.get("firstname") or "").strip() or emp.first_name
+    lastname    = (data.get("lastname")  or "").strip() or emp.last_name
+
     try:
         user_account = User(
             username=username,
-            fullname=emp.get_full_name(),
             tenant_id=tenant_id,
             email=emp.email or None,
             phone=emp.phone or None,
             is_active=True,
             has_changed_default_password=False,
         )
+        user_account.firstname = firstname
+        user_account.lastname  = lastname
         user_account.set_password(password)
         db.session.add(user_account)
         db.session.flush()
 
+        if role_ids:
+            from backend.src.models.auth import UserRole
+            user_account.roles = UserRole.query.filter(UserRole.id.in_(role_ids)).all()
+        if orgunit_ids:
+            from backend.src.models.auth import UserOrgunit
+            user_account.orgunits = UserOrgunit.query.filter(UserOrgunit.id.in_(orgunit_ids)).all()
+
         emp.user_id = user_account.id
         db.session.commit()
 
-        return jsonify(emp.to_dict_safe()), 200
+        return jsonify(user_account.to_dict()), 200
 
     except IntegrityError:
         db.session.rollback()
         raise BadRequest("Ce nom d'utilisateur ou email est déjà utilisé", 409)
+
+
+
+# ─── GET ACCOUNT ─────────────────────────────────────────────────────────────
+
+@bp.get("/<int:id>/account")
+@require_auth
+def get_employee_account(id):
+    """Retourne les données du compte utilisateur lié à l'employé."""
+    emp = Employee.query.get(id)
+    if not emp:
+        raise BadRequest("Employé introuvable", 404)
+    if not emp.user_id:
+        raise BadRequest("Cet employé n'a pas encore de compte utilisateur", 404)
+    user = User.query.get(emp.user_id)
+    if not user:
+        raise BadRequest("Compte utilisateur introuvable", 404)
+    return jsonify(user.to_dict()), 200
+
+
+# ─── UPDATE ACCOUNT ───────────────────────────────────────────────────────────
+
+@bp.put("/<int:id>/update-account")
+@require_auth
+def update_employee_account(id):
+    """Met à jour le compte utilisateur lié à l'employé."""
+    emp = Employee.query.get(id)
+    if not emp:
+        raise BadRequest("Employé introuvable", 404)
+    if not emp.user_id:
+        raise BadRequest("Cet employé n'a pas encore de compte utilisateur", 400)
+    user = User.query.get(emp.user_id)
+    if not user:
+        raise BadRequest("Compte utilisateur introuvable", 404)
+
+    data = request.get_json(silent=True) or {}
+
+    for field in ("firstname", "lastname", "email", "phone"):
+        if field in data:
+            setattr(user, field, data[field] or None)
+
+    if "is_active" in data:
+        user.is_active = bool(data["is_active"])
+
+    if "role_ids" in data:
+        from backend.src.models.auth import UserRole
+        user.roles = UserRole.query.filter(UserRole.id.in_(data["role_ids"])).all()
+
+    if "orgunit_ids" in data:
+        from backend.src.models.auth import UserOrgunit
+        user.orgunits = UserOrgunit.query.filter(UserOrgunit.id.in_(data["orgunit_ids"])).all()
+
+    if data.get("password"):
+        if data["password"] != data.get("password_confirm", ""):
+            raise BadRequest("Les mots de passe ne concordent pas", 400)
+        if len(data["password"]) < 6:
+            raise BadRequest("Le mot de passe doit contenir au moins 6 caractères", 400)
+        user.set_password(data["password"])
+
+    try:
+        db.session.commit()
+        return jsonify(user.to_dict()), 200
+    except IntegrityError:
+        db.session.rollback()
+        raise BadRequest("Cet email est déjà utilisé par un autre compte", 409)

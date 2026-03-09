@@ -17,7 +17,6 @@ import type { Employee, Equipment, ProblemType } from '../../types';
 const VALIDATION_RULES = {
   employeeId:  { required: true, message: "Sélectionner un employé" },
   equipmentId: { required: true, message: "Sélectionner un équipement" },
-  description: { required: true, message: 'La description du problème est requise' },
 };
 
 interface Props {
@@ -62,14 +61,15 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
     }
     setEquipLoading(true);
     setEquipmentId('');
-    equipmentApi.getAll({ employee_id: employeeId }).then((res) => {
+    equipmentApi.getAll({ employee_id: employeeId, exclude_status: 'UNDER_REPAIR' }).then((res) => {
       if (res.success) setEquipment(res.data ?? []);
     }).finally(() => setEquipLoading(false));
   }, [employeeId]);
 
   const loadData = async () => {
     const [empRes, ptRes] = await Promise.all([
-      employeesApi.getAll({ active: 'true', ...(user?.department_code ? { department_code: user.department_code } : {}) }),
+      // Filtre côté serveur : équipement actif + restriction hiérarchique/orgunits de l'appelant
+      employeesApi.getAll({ active: 'true', has_equipment: 'true' }),
       ticketsApi.getProblemTypes(),
     ]);
     if (empRes.success) setEmployees(empRes.data ?? []);
@@ -128,11 +128,11 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
     }
   };
 
-  const canSubmit = isFormValid({ employeeId, equipmentId, description });
+  const canSubmit = isFormValid({ employeeId, equipmentId });
   const errorMessages = getErrorMessages();
 
   const handleSave = async () => {
-    if (!validateAll({ employeeId, equipmentId, description })) return;
+    if (!validateAll({ employeeId, equipmentId })) return;
 
     setSaving(true);
     try {
@@ -263,12 +263,9 @@ export function TicketCreateModal({ isOpen, onClose, onSuccess }: Props) {
         {/* Description */}
         <FormTextarea
           label="Description du problème"
-          required
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          onBlur={() => touchField('description', description)}
-          error={getFieldError('description')}
         />
       </form>
     </FormModal>

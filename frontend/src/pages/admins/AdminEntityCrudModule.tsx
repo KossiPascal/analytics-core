@@ -22,6 +22,7 @@ interface CrudService<T> {
 
 export interface AdminEntityCrudModuleRef {
     handleNew: () => void;
+    refresh: () => void;
 }
 
 interface AdminEntityCrudModuleProps<T> {
@@ -66,6 +67,9 @@ interface AdminEntityCrudModuleProps<T> {
     onBeforeSave?: (entity: T) => Promise<T> | T;
     submitValidation?: (entity: T) => Promise<boolean>;
     afterSave?: (entity: T) => void;
+
+    /** Actions supplémentaires affichées à droite du titre */
+    headerActions?: React.ReactNode;
 }
 
 /* ============================= */
@@ -95,6 +99,7 @@ const AdminEntityCrudModuleInner = <
         onBeforeSave,
         submitValidation,
         afterSave,
+        headerActions,
     }: AdminEntityCrudModuleProps<T>,
     ref: React.Ref<AdminEntityCrudModuleRef>
 ) => {
@@ -257,6 +262,7 @@ const AdminEntityCrudModuleInner = <
 
     useImperativeHandle(ref, () => ({
         handleNew,
+        refresh: fetchData,
     }));
 
     /* ========= ACTION COLUMN ===== */
@@ -297,16 +303,21 @@ const AdminEntityCrudModuleInner = <
         ),
     };
 
-    const finalColumns = enableActions ? [...columns, actionColumn] : columns;
+    const finalColumns = useMemo(
+        () => enableActions ? [...columns, actionColumn] : columns,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [columns, enableActions]
+    );
 
     /* ========= RENDER ============ */
     return (
         <>
             <div className={styles.card}>
-                <div className={styles.cardHeader}>
+                <div className={styles.cardHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <h3 className={styles.cardTitle}>
                         {icon} {title}
                     </h3>
+                    {headerActions && <div style={{ display: 'flex', gap: '0.5rem' }}>{headerActions}</div>}
                 </div>
 
                 {loading ? (

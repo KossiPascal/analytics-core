@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { employeesApi } from '../../api';
 import type { Employee, Department, Position, GeneratedCredentials } from '../../types';
 import { DepartmentsTable } from './DepartmentsTable';
@@ -13,6 +13,7 @@ import { EmployeeDetailModal } from './EmployeeDetailModal';
 import { EmployeeTransferModal } from './EmployeeTransferModal';
 import { ConfirmToggleEmployeeModal } from './ConfirmToggleEmployeeModal';
 import { CredentialsModal } from './CredentialsModal';
+import { EmployeeUserModal } from './EmployeeUserModal';
 import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
@@ -24,6 +25,7 @@ export function EmployeesTab() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
+  const [empLoading, setEmpLoading] = useState(false);
 
   // Department modal
   const [deptFormOpen, setDeptFormOpen] = useState(false);
@@ -46,6 +48,9 @@ export function EmployeesTab() {
   const [toggleModalOpen, setToggleModalOpen] = useState(false);
   const [toggleTarget, setToggleTarget] = useState<Employee | null>(null);
 
+  // User account modal
+  const [userModalEmployee, setUserModalEmployee] = useState<Employee | null>(null);
+
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
@@ -63,6 +68,18 @@ export function EmployeesTab() {
       toast.error('Erreur de chargement');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadEmployees = async () => {
+    setEmpLoading(true);
+    try {
+      const res = await employeesApi.getAll();
+      if (res.success) setEmployees(res.data!);
+    } catch {
+      toast.error('Erreur de chargement des employés');
+    } finally {
+      setEmpLoading(false);
     }
   };
 
@@ -129,14 +146,21 @@ export function EmployeesTab() {
       )}
 
       {subTab === 'employees' && (
-        <EmployeesTable
-          data={employees}
-          isLoading={loading}
-          onEdit={(e) => { setEmpEditData(e); setEmpFormOpen(true); }}
-          onView={(e) => { setEmpDetailId(e.id); setEmpDetailOpen(true); }}
-          onToggleActive={handleToggleActive}
-          onTransfer={(e) => { setEmpTransferTarget(e); setEmpTransferOpen(true); }}
-        />
+        loading ? (
+          <div className={styles.loading}>
+            <RefreshCw size={28} className="animate-spin" />
+          </div>
+        ) : (
+          <EmployeesTable
+            data={employees}
+            isLoading={empLoading}
+            onEdit={(e) => { setEmpEditData(e); setEmpFormOpen(true); }}
+            onView={(e) => { setEmpDetailId(e.id); setEmpDetailOpen(true); }}
+            onToggleActive={handleToggleActive}
+            onTransfer={(e) => { setEmpTransferTarget(e); setEmpTransferOpen(true); }}
+            onManageUser={(e) => setUserModalEmployee(e)}
+          />
+        )
       )}
 
       <DepartmentFormModal
@@ -201,6 +225,15 @@ export function EmployeesTab() {
         onSuccess={loadAll}
         employee={toggleTarget}
       />
+
+      {userModalEmployee && (
+        <EmployeeUserModal
+          employee={userModalEmployee}
+          isOpen={true}
+          onClose={() => setUserModalEmployee(null)}
+          onSuccess={() => { setUserModalEmployee(null); loadEmployees(); }}
+        />
+      )}
     </div>
   );
 }

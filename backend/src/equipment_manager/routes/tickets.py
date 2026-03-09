@@ -10,9 +10,8 @@ from backend.src.equipment_manager.models.equipment import Equipment
 from backend.src.equipment_manager.models.employees import Employee, Position
 from backend.src.equipment_manager.routes.employees import get_allowed_employee_ids
 from backend.src.equipment_manager.services.ticket_workflow import generate_ticket_number, validate_transition, get_next_stages
-from backend.src.equipment_manager.services.email_service import send_ticket_notification
+from backend.src.equipment_manager.services.email_service import send_ticket_notification, send_cc_failure_notification
 from backend.src.logger import get_backend_logger
-
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import IntegrityError
 
@@ -37,11 +36,56 @@ def list_tickets():
     if search:
         query = query.filter(RepairTicket.ticket_number.ilike(f"%{search}%"))
 
-    # Restriction hiérarchique : si l'appelant a un poste, il ne voit que les tickets de ses subordonnés
-    caller_position_id = g.current_user.get("position_id")
-    if caller_position_id:
-        allowed_ids = get_allowed_employee_ids(int(caller_position_id))
-        query = query.filter(RepairTicket.employee_id.in_(allowed_ids))
+    # ── Règles de visibilité ──────────────────────────────────────────────────
+    user_roles = set(g.current_user.get("roles", []))
+    is_admin   = bool(user_roles & {"admin", "superadmin"})
+
+    if not is_admin:
+        caller_employee_id          = g.current_user.get("employee_id")
+        caller_position_id          = g.current_user.get("position_id")
+        caller_position_is_asc      = bool(g.current_user.get("position_is_zone_assignable"))
+        caller_orgunit_ids          = [int(i) for i in (g.current_user.get("orgunit_ids") or []) if i]
+        caller_dept_code            = g.current_user.get("department_code")
+
+        if caller_position_is_asc and caller_employee_id:
+            # ASC : uniquement leurs propres tickets
+            query = query.filter(RepairTicket.employee_id == int(caller_employee_id))
+
+        else:
+            scope_filters = []
+
+            # Superviseur/mentor avec zones → tickets des employés dans leurs zones
+            if caller_orgunit_ids:
+                from backend.src.models.auth import UserOrgunitLink
+                user_ids_in_zones = (
+                    db.session.query(UserOrgunitLink.user_id)
+                    .filter(UserOrgunitLink.orgunit_id.in_(caller_orgunit_ids))
+                    .subquery()
+                )
+                emp_ids_in_zones = (
+                    db.session.query(Employee.id)
+                    .filter(Employee.user_id.in_(user_ids_in_zones))
+                    .subquery()
+                )
+                scope_filters.append(RepairTicket.employee_id.in_(emp_ids_in_zones))
+
+            # Manager avec sous-postes → tickets des subordonnés
+            if caller_position_id:
+                sub_pos_ids = get_allowed_employee_ids(int(caller_position_id))
+                if sub_pos_ids:
+                    scope_filters.append(RepairTicket.employee_id.in_(sub_pos_ids))
+
+            # Tickets ayant un jour transité dans le département de l'appelant
+            if caller_dept_code:
+                dept_ticket_ids = (
+                    db.session.query(TicketEvent.ticket_id)
+                    .filter(TicketEvent.department_code == caller_dept_code)
+                    .subquery()
+                )
+                scope_filters.append(RepairTicket.id.in_(dept_ticket_ids))
+
+            if scope_filters:
+                query = query.filter(db.or_(*scope_filters))
 
     tickets = query.order_by(RepairTicket.created_at.desc()).all()
     return jsonify([t.to_dict_safe() for t in tickets]), 200
@@ -82,6 +126,12 @@ def create_ticket():
         raise BadRequest("employee_id is required (or assign equipment to an employee first)", 400)
 
     user_id = int(g.current_user["id"]) if g.current_user else None
+    creator_dept_code = g.current_user.get("department_code") if g.current_user else None
+    creator_dept_name = None
+    if creator_dept_code:
+        from backend.src.equipment_manager.models.employees import Department as _Dept
+        dept_obj = _Dept.query.filter_by(code=creator_dept_code).first()
+        creator_dept_name = dept_obj.name if dept_obj else creator_dept_code
 
     from datetime import date as _date
     initial_send_date = datetime.now(timezone.utc)
@@ -102,6 +152,8 @@ def create_ticket():
             initial_send_date=initial_send_date,
             current_stage="SUPERVISOR",
             current_holder_id=user_id,
+            current_department_code=creator_dept_code,
+            current_department_name=creator_dept_name,
         )
         db.session.add(ticket)
         db.session.flush()
@@ -234,6 +286,7 @@ def send_ticket(id):
     to_role = data.get("to_role", "").strip()
     comment = data.get("comment", "")
     recipient_employee_id = data.get("recipient_employee_id")
+    cc_employee_ids = data.get("cc_employee_ids") or []
 
     # Resolve recipient email: prefer explicitly chosen recipient, fallback to ticket owner
     recipient_email = ""
@@ -242,6 +295,18 @@ def send_ticket(id):
         recipient_email = (dest_emp.email or "").strip() if dest_emp else ""
     elif ticket.employee:
         recipient_email = (ticket.employee.email or "").strip()
+
+    # Collect CC emails from department members
+    cc_emails: list[str] = []
+    for emp_id in cc_employee_ids:
+        try:
+            cc_emp = Employee.query.get(int(emp_id))
+            if cc_emp and cc_emp.email:
+                email = cc_emp.email.strip()
+                if email and email != recipient_email:
+                    cc_emails.append(email)
+        except (ValueError, TypeError):
+            pass
 
     if not to_role:
         raise BadRequest("to_role is required", 400)
@@ -253,8 +318,20 @@ def send_ticket(id):
 
     user_id = int(g.current_user["id"]) if g.current_user else None
     sender_name = g.current_user.get("fullname", g.current_user.get("username", ""))
+    sender_dept_code = g.current_user.get("department_code")
 
-    # Create SENT event
+    # Résoudre le département du destinataire (pour current_department)
+    recipient_dept_code = None
+    recipient_dept_name = None
+    if recipient_employee_id:
+        dest_emp = Employee.query.get(int(recipient_employee_id))
+        if dest_emp and dest_emp.position_id:
+            dest_pos = Position.query.get(dest_emp.position_id)
+            if dest_pos and dest_pos.department:
+                recipient_dept_code = dest_pos.department.code
+                recipient_dept_name = dest_pos.department.name
+
+    # Create SENT event (avec le département de l'expéditeur)
     event = TicketEvent(
         ticket_id=ticket.id,
         event_type="SENT",
@@ -263,11 +340,16 @@ def send_ticket(id):
         to_role=to_role,
         comment=comment,
         recipient_employee_id=int(recipient_employee_id) if recipient_employee_id else None,
+        department_code=sender_dept_code,
     )
     db.session.add(event)
 
     ticket.current_stage = to_role
     ticket.current_holder_id = None  # Will be set on receive
+    # Mettre à jour le département courant du ticket
+    if recipient_dept_code:
+        ticket.current_department_code = recipient_dept_code
+        ticket.current_department_name = recipient_dept_name
 
     # Update status based on direction
     if to_role.startswith("RETURNING"):
@@ -283,7 +365,19 @@ def send_ticket(id):
 
     # Send email notification (non-blocking)
     try:
-        send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment)
+        failed_cc = send_ticket_notification(
+            ticket, recipient_email, sender_name, to_role, comment, cc_emails=cc_emails
+        )
+        # Si des CC ont échoué, notifier l'expéditeur
+        if failed_cc and user_id:
+            from backend.src.models.auth import User as AuthUser
+            sender = AuthUser.query.get(user_id)
+            sender_email = (sender.email or "").strip() if sender else ""
+            if sender_email:
+                try:
+                    send_cc_failure_notification(sender_email, sender_name, ticket, failed_cc)
+                except Exception as notif_err:
+                    logger.error(f"CC failure notification error: {notif_err}")
     except Exception as e:
         logger.error(f"Email notification failed: {e}")
 

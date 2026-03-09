@@ -60,45 +60,22 @@ def get_smtp_config_from_db():
     return _get_smtp_config()
 
 
-def _build_smtp_connection():
-    """Create an SMTP connection. Returns None if not configured."""
-    host, port, user, password, _, use_tls, _ = _get_smtp_config()
-    if not host or not user:
-        logger.warning("SMTP not configured (EMAIL_HOST / EMAIL_HOST_USER manquants)")
-        return None, None
-    try:
-        server = smtplib.SMTP(host, port)
-        if use_tls:
-            server.starttls()
-        server.login(user, password)
-        return server, None
-    except Exception as e:
-        logger.error(f"SMTP connection failed: {e}")
-        return None, str(e)
-
-
-def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment=""):
+def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comment="", cc_emails: list | None = None) -> list[str]:
     """
     Send email notification when a ticket is sent to the next stage.
 
-    Args:
-        ticket: RepairTicket instance
-        recipient_email: primary recipient email (or None)
-        sender_name: name of the person sending
-        to_role: destination stage/role
-        comment: optional comment
     Returns:
-        bool: True if email sent successfully
+        list[str]: emails CC qui ont échoué (vide = tout a réussi)
     """
-    host, _, _, _, from_addr, _, site_url = _get_smtp_config()
+    host, _, _, _, from_addr, _, site_url = get_smtp_config_from_db()
 
     if not host:
         logger.info("SMTP not configured, skipping ticket notification email")
-        return False
+        return []
 
     if not recipient_email:
         logger.warning(f"No recipient email for ticket {ticket.ticket_number}")
-        return False
+        return []
 
     try:
         from backend.src.equipment_manager.models.tickets import RepairTicket
@@ -153,24 +130,90 @@ def send_ticket_notification(ticket, recipient_email, sender_name, to_role, comm
         </html>
         """
 
+        valid_cc = [e for e in (cc_emails or []) if e and e != recipient_email]
+
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = from_addr
         msg["To"] = recipient_email
+        if valid_cc:
+            msg["Cc"] = ", ".join(valid_cc)
         msg.attach(MIMEText(html_body, "html"))
 
-        server, _ = _build_smtp_connection()
+        server, _ = _build_smtp_connection_from_db()
         if not server:
-            return False
+            return valid_cc  # tous les CC échouent si pas de serveur
 
-        server.sendmail(from_addr, [recipient_email], msg.as_string())
+        all_recipients = [recipient_email] + valid_cc
+        refused = server.sendmail(from_addr, all_recipients, msg.as_string())
         server.quit()
 
-        logger.info(f"Ticket notification sent for {ticket.ticket_number} to {recipient_email}")
-        return True
+        # refused = {email: (code, msg)} pour chaque destinataire refusé
+        failed_cc = [e for e in valid_cc if e in refused]
+
+        logger.info(
+            f"Ticket notification sent for {ticket.ticket_number} to {recipient_email}"
+            + (f" (CC: {', '.join(valid_cc)})" if valid_cc else "")
+        )
+        if failed_cc:
+            logger.warning(f"CC delivery failed for {ticket.ticket_number}: {failed_cc}")
+
+        return failed_cc
 
     except Exception as e:
         logger.error(f"Failed to send ticket notification: {e}")
+        return cc_emails or []
+
+
+def send_cc_failure_notification(sender_email: str, sender_name: str, ticket, failed_cc: list[str]) -> bool:
+    """
+    Notifie l'expéditeur d'un ticket que certains emails CC n'ont pas pu être délivrés.
+    """
+    host, _, _, _, from_addr, _, _ = get_smtp_config_from_db()
+
+    if not host or not sender_email:
+        return False
+
+    try:
+        subject = f"[IH Equipment Manager] Echec d'envoi CC - Ticket {ticket.ticket_number}"
+
+        failed_list = "".join(f"<li>{e}</li>" for e in failed_cc)
+        html_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #e74c3c;">Echec de notification — Ticket {ticket.ticket_number}</h2>
+            <p>Bonjour <strong>{sender_name}</strong>,</p>
+            <p>
+                L'envoi du ticket <strong>{ticket.ticket_number}</strong> a réussi pour le destinataire principal,
+                mais les adresses email suivantes en copie (CC) n'ont pas pu être jointes :
+            </p>
+            <ul style="color: #c0392b;">{failed_list}</ul>
+            <p style="color: #7f8c8d; font-size: 0.9em;">
+                Veuillez vérifier que ces membres du département ont bien une adresse email valide
+                configurée dans le système.
+            </p>
+        </body>
+        </html>
+        """
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = from_addr
+        msg["To"] = sender_email
+        msg.attach(MIMEText(html_body, "html"))
+
+        server, _ = _build_smtp_connection_from_db()
+        if not server:
+            return False
+
+        server.sendmail(from_addr, [sender_email], msg.as_string())
+        server.quit()
+
+        logger.info(f"CC failure notification sent to {sender_email} for ticket {ticket.ticket_number}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Failed to send CC failure notification: {e}")
         return False
 
 
@@ -186,7 +229,7 @@ def send_delay_alert(ticket, recipients, stage, days):
     Returns:
         bool: True if email sent successfully
     """
-    host, _, _, _, from_addr, _, _ = _get_smtp_config()
+    host, _, _, _, from_addr, _, _ = get_smtp_config_from_db()
 
     if not host or not recipients:
         return False
@@ -243,7 +286,7 @@ def send_delay_alert(ticket, recipients, stage, days):
         msg["To"] = ", ".join(recipients)
         msg.attach(MIMEText(html_body, "html"))
 
-        server, _ = _build_smtp_connection()
+        server, _ = _build_smtp_connection_from_db()
         if not server:
             return False
 

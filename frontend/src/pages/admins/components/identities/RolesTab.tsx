@@ -30,18 +30,19 @@ const roleColumns: Column<Role>[] = [
   {
     key: "tenant",
     header: "Tenant",
-    render: (r) => r.tenant ? r.tenant.name : "",
+    render: (r) => r.tenant?.name || "-",
     sortable: true,
     searchable: true,
+    getSearchValue: (r) => r.tenant?.name || "",
+    getSortValue:   (r) => r.tenant?.name || "",
   },
   {
     key: "authorizations",
     header: "Permissions",
-    render: (r) =>{
-      if(!r.permissions || r.permissions.length === 0) return "-";
-      return r.permissions.map(p=>p.name).join(", ");
-    },
-    searchable: false,
+    render: (r) => r.permissions?.length ? r.permissions.map(p => p.name).join(", ") : "-",
+    sortable: false,
+    searchable: true,
+    getSearchValue: (r) => r.permissions?.map(p => p.name).join(" ") || "",
   },
   {
     key: "description",
@@ -50,14 +51,15 @@ const roleColumns: Column<Role>[] = [
     searchable: true,
     render: (r) => r.description || "-",
   },
-    {
-      key: "is_system",
-      header: "Is System",
-      sortable: true,
-      align: "center",
-      render: (ou) => (<StatusBadge isActive={ou.is_system === true} />),
-      searchable: false,
-    },
+  {
+    key: "is_system",
+    header: "Is System",
+    sortable: true,
+    align: "center",
+    searchable: false,
+    render: (r) => (<StatusBadge isActive={r.is_system === true} />),
+    getSortValue: (r) => r.is_system ? 1 : 0,
+  },
 ];
 
 export const RolesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {

@@ -51,8 +51,9 @@ class Tenant(db.Model, MetaxMixin):
     ai_query_logs = db.relationship("AIQueryLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
     scripts = db.relationship("Script", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
     scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    orgunits = db.relationship("UserOrgunit",back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
-    roles = db.relationship("UserRole",back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
+    orgunits        = db.relationship("UserOrgunit", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    orgunit_levels  = db.relationship("OrgUnitLevel", lazy="selectin", cascade="all, delete-orphan")
+    roles           = db.relationship("UserRole", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
     queries = db.relationship("DatasetQuery", back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
     charts = db.relationship("DatasetChart", back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
 
@@ -102,19 +103,61 @@ class Tenant(db.Model, MetaxMixin):
     def __repr__(self):
         return f"<Tenant {self.name}>"
 
+# -------------------- ORGUNIT LEVEL (DHIS2-style) --------------------
+class OrgUnitLevel(db.Model, MetaxMixin):
+    """
+    Représente un niveau hiérarchique dans l'arborescence des unités d'organisation,
+    à la manière de DHIS2 (niveau 1 = National, 2 = Région, 3 = District, …).
+    """
+    __tablename__ = "user_orgunit_levels"
+
+    id           = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id    = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE"), nullable=False)
+    name         = db.Column(db.String(100), nullable=False)
+    code         = db.Column(db.String(100), nullable=False, default="")  # code DHIS2
+    level        = db.Column(db.Integer, nullable=False)       # 1 = National, 2 = Régional, …
+    display_name = db.Column(db.String(100), nullable=True)    # alias d'affichage optionnel
+
+    tenant   = db.relationship("Tenant", lazy="selectin", foreign_keys=[tenant_id])
+    orgunits = db.relationship("UserOrgunit", back_populates="level_rel", lazy="selectin")
+
+    __table_args__ = (
+        db.UniqueConstraint("tenant_id", "level", name="uq_orgunit_level_tenant"),
+    )
+
+    def to_dict(self):
+        return {
+            "id":           self.id,
+            "tenant_id":    self.tenant_id,
+            "name":         self.name,
+            "code":         self.code or "",
+            "level":        self.level,
+            "display_name": self.display_name or self.name,
+            "is_active":    self.is_active,
+            "created_at":   self.created_at.isoformat() if self.created_at else None,
+            "updated_at":   self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+    def __repr__(self):
+        return f"<OrgUnitLevel level={self.level} name={self.name}>"
+
+
+# -------------------- USER ORGUNIT --------------------
 class UserOrgunit(db.Model, MetaxMixin):
     __tablename__ = "user_orgunits"
 
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    code = db.Column(db.String(100), nullable=False)
-    parent_id = db.Column(db.BigInteger, db.ForeignKey('user_orgunits.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
+    id          = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    tenant_id   = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    level_id    = db.Column(db.BigInteger, db.ForeignKey('user_orgunit_levels.id', ondelete="SET NULL"), nullable=True)
+    name        = db.Column(db.String(100), nullable=False)
+    code        = db.Column(db.String(100), nullable=False)
+    parent_id   = db.Column(db.BigInteger, db.ForeignKey('user_orgunits.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
     description = db.Column(db.String(255), nullable=True)
-    
-    # Relations auto-référentielles
-    parent = db.relationship("UserOrgunit",remote_side=[id],backref=db.backref("children", lazy="selectin"),uselist=False)
-    tenant = db.relationship("Tenant", back_populates="orgunits",lazy="selectin",foreign_keys=[tenant_id])
+
+    # Relations
+    parent     = db.relationship("UserOrgunit", remote_side=[id], backref=db.backref("children", lazy="selectin"), uselist=False)
+    tenant     = db.relationship("Tenant", back_populates="orgunits", lazy="selectin", foreign_keys=[tenant_id])
+    level_rel  = db.relationship("OrgUnitLevel", back_populates="orgunits", lazy="selectin", foreign_keys=[level_id])
     users_link = db.relationship("UserOrgunitLink", back_populates="orgunit", lazy="selectin", cascade="all, delete-orphan")
 
     __table_args__ = (
@@ -122,25 +165,27 @@ class UserOrgunit(db.Model, MetaxMixin):
     )
 
     def get_descendants(self):
-        """Récupère tous les enfants récursivement"""
+        """Récupère tous les enfants récursivement."""
         result = set()
         for child in self.children:
             if not child.deleted:
                 result.add(child)
                 result.update(child.get_descendants())
         return result
-    
+
     def to_dict(self, include_children=False, include_descendants=False):
         data = {
-            "id": self.id,
-            "name": self.name,
-            "code": self.code,
-            "tenant_id": self.tenant_id,
-            "tenant": self.tenant.to_dict() if self.tenant else None,
-            "parent_id": self.parent_id,
-            "parent": self.parent.to_dict() if self.parent else None,
+            "id":          self.id,
+            "name":        self.name,
+            "code":        self.code,
+            "tenant_id":   self.tenant_id,
+            "tenant":      self.tenant.to_dict() if self.tenant else None,
+            "level_id":    self.level_id,
+            "level":       self.level_rel.to_dict() if self.level_rel else None,
+            "parent_id":   self.parent_id,
+            "parent":      self.parent.to_dict() if self.parent else None,
             "description": self.description,
-            "is_active": self.is_active
+            "is_active":   self.is_active,
         }
 
         if include_children:
@@ -157,7 +202,7 @@ class UserOrgunit(db.Model, MetaxMixin):
             ]
 
         return data
-    
+
     def __repr__(self):
         return f"<Orgunit {self.name}>"
 
@@ -353,6 +398,8 @@ class User(db.Model, MetaxMixin):
         # Lier l'employé associé à cet utilisateur (import local pour éviter les imports circulaires)
         employee_id: str | None = None
         position_id: str | None = None
+        position_code: str | None = None
+        position_is_zone_assignable: bool = False
         department_code: str | None = None
         try:
             from backend.src.equipment_manager.models.employees import Employee as _Emp, Position as _Pos
@@ -362,8 +409,11 @@ class User(db.Model, MetaxMixin):
                 position_id = str(emp.position_id) if emp.position_id else None
                 if emp.position_id:
                     pos = _Pos.query.get(emp.position_id)
-                    if pos and pos.department:
-                        department_code = pos.department.code
+                    if pos:
+                        position_code = pos.code
+                        position_is_zone_assignable = bool(getattr(pos, 'is_zone_assignable', False))
+                        if pos.department:
+                            department_code = pos.department.code
         except Exception:
             pass
 
@@ -379,6 +429,8 @@ class User(db.Model, MetaxMixin):
             "is_active": self.is_active,
             "employee_id": employee_id,
             "position_id": position_id,
+            "position_code": position_code,
+            "position_is_zone_assignable": position_is_zone_assignable,
             "department_code": department_code,
             "token_type": "access",
             "ver": 1,  # token versioning

@@ -13,6 +13,7 @@ import type {
   EmailConfig, AlertConfig, AlertRecipientConfig,
   DashboardStats, TicketsByStatus, TicketsByDelay, BlockagePoint,
   SyncResult,
+  OrgUnit, Role, UserAccount,
 } from './types';
 
 const BASE = '/equipment';
@@ -93,11 +94,12 @@ export const equipmentApi = {
   createBrand: (data: Record<string, unknown>) => api.post<EquipmentBrand>(`${BASE}/assets/brands`, data),
   updateBrand: (id: string, data: Record<string, unknown>) => api.put<EquipmentBrand>(`${BASE}/assets/brands/${id}`, data),
 
-  getAll: (params?: { asc_id?: string; employee_id?: string; status?: string; type?: string }) => {
+  getAll: (params?: { asc_id?: string; employee_id?: string; status?: string; exclude_status?: string; type?: string }) => {
     const query = new URLSearchParams();
     if (params?.asc_id) query.set('asc_id', params.asc_id);
     if (params?.employee_id) query.set('employee_id', params.employee_id);
     if (params?.status) query.set('status', params.status);
+    if (params?.exclude_status) query.set('exclude_status', params.exclude_status);
     if (params?.type) query.set('type', params.type);
     const qs = query.toString();
     return api.get<Equipment[]>(`${BASE}/assets${qs ? `?${qs}` : ''}`);
@@ -160,7 +162,7 @@ export const ticketsApi = {
   receive: (id: string, data?: { comment?: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/receive`, data),
   receiveFromRepairer: (id: string, data: { equipment_state: 'REPAIRED' | 'COMPLETELY_DAMAGED'; comment?: string }) =>
     api.post<RepairTicket>(`${BASE}/tickets/${id}/receive-from-repairer`, data),
-  send: (id: string, data: { to_role: string; comment?: string; recipient_employee_id?: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/send`, data),
+  send: (id: string, data: { to_role: string; comment?: string; recipient_employee_id?: string; cc_employee_ids?: string[] }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/send`, data),
   markRepaired: (id: string, data: { resolution_notes: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/mark-repaired`, data),
   cancel: (id: string, data: { cancellation_reason: string }) => api.post<RepairTicket>(`${BASE}/tickets/${id}/cancel`, data),
   addComment: (id: string, data: { comment: string }) => api.post<TicketComment>(`${BASE}/tickets/${id}/comment`, data),
@@ -192,13 +194,14 @@ export const employeesApi = {
   updatePosition: (id: string, data: Record<string, unknown>) => api.put<Position>(`${BASE}/employees/positions/${id}`, data),
 
   // Employees
-  getAll: (params?: { tenant_id?: string; active?: string; search?: string; position_code?: string; department_code?: string }) => {
+  getAll: (params?: { tenant_id?: string; active?: string; search?: string; position_code?: string; department_code?: string; has_equipment?: string }) => {
     const query = new URLSearchParams();
     if (params?.tenant_id)       query.set('tenant_id', params.tenant_id);
     if (params?.active)          query.set('active', params.active);
     if (params?.search)          query.set('search', params.search);
     if (params?.position_code)   query.set('position_code', params.position_code);
     if (params?.department_code) query.set('department_code', params.department_code);
+    if (params?.has_equipment)   query.set('has_equipment', params.has_equipment);
     const qs = query.toString();
     return api.get<Employee[]>(`${BASE}/employees${qs ? `?${qs}` : ''}`);
   },
@@ -206,7 +209,16 @@ export const employeesApi = {
   get: (id: string) => api.get<Employee & { history: import('./types').EmployeeHistory[]; equipments: Equipment[] }>(`${BASE}/employees/${id}`),
   update: (id: string, data: Record<string, unknown>) => api.put<Employee>(`${BASE}/employees/${id}`, data),
   toggleActive: (id: string, data?: { notes?: string; action_date?: string }) => api.patch<Employee>(`${BASE}/employees/${id}/toggle-active`, data),
-  createAccount: (id: string, data: { username: string; password: string }) => api.post<Employee>(`${BASE}/employees/${id}/create-account`, data),
+  createAccount: (id: string, data: Record<string, unknown>) => api.post<UserAccount>(`${BASE}/employees/${id}/create-account`, data),
+  getAccount:    (id: string) => api.get<UserAccount>(`${BASE}/employees/${id}/account`),
+  updateAccount: (id: string, data: Record<string, unknown>) => api.put<UserAccount>(`${BASE}/employees/${id}/update-account`, data),
+};
+
+// ─── IDENTITIES (orgunits, rôles) ────────────────────────────────────────────
+
+export const identityApi = {
+  getOrgUnits: () => api.get<OrgUnit[]>('/identities/orgunits'),
+  getRoles:    () => api.get<Role[]>('/identities/roles'),
 };
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────────
@@ -221,12 +233,16 @@ export const dashboardApi = {
 
 // ─── EMAIL CONFIG ────────────────────────────────────────────────────────────
 
+type SmtpPayload = { host: string; port: number; username: string; password: string; from_email: string; from_name?: string; use_tls?: boolean; use_ssl?: boolean };
+
 export const emailConfigApi = {
   get: () => api.get<EmailConfig | null>(`${BASE}/email-config`),
-  save: (data: { host: string; port: number; username: string; password: string; from_email: string; from_name?: string; use_tls?: boolean }) =>
-    api.post<EmailConfig>(`${BASE}/email-config`, data),
+  getAll: () => api.get<EmailConfig[]>(`${BASE}/email-config/list`),
+  save: (data: SmtpPayload) => api.post<EmailConfig>(`${BASE}/email-config`, data),
+  update: (id: string, data: SmtpPayload) => api.put<EmailConfig>(`${BASE}/email-config/${id}`, data),
+  activate: (id: string) => api.post<EmailConfig>(`${BASE}/email-config/${id}/activate`, {}),
   delete: (id: string) => api.delete(`${BASE}/email-config/${id}`),
-  test: (data: { host: string; port: number; username: string; password: string; use_tls?: boolean }) =>
+  test: (data: { host: string; port: number; username: string; password: string; use_tls?: boolean; use_ssl?: boolean }) =>
     api.post<{ message: string }>(`${BASE}/email-config/test`, data),
 };
 

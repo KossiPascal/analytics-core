@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { ascsApi, locationsApi, supervisorsApi } from '../../api';
 import { SyncPanel } from '../sync/SyncPanel';
 import type { ASC, Site, Supervisor } from '../../types';
@@ -9,6 +9,7 @@ import { AscsTable } from './AscsTable';
 import { AscFormModal } from './AscFormModal';
 import { AscDetailModal } from './AscDetailModal';
 import shared from '@components/ui/styles/shared.module.css';
+import styles from '../../EquipmentManager.module.css';
 import toast from 'react-hot-toast';
 
 export function AscsTab() {
@@ -16,6 +17,7 @@ export function AscsTab() {
   const [sites, setSites] = useState<Site[]>([]);
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editData, setEditData] = useState<ASC | null>(null);
@@ -41,6 +43,7 @@ export function AscsTab() {
       toast.error('Erreur de chargement');
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -62,13 +65,17 @@ export function AscsTab() {
         </Button>
       </div>
 
-      <AscsTable
-        data={ascs}
-        isLoading={loading}
-        onEdit={(a) => { setEditData(a); setFormOpen(true); }}
-        onView={(a) => { setDetailId(a.id); setDetailOpen(true); }}
-        onDelete={(a) => { setDeleteTarget(a); setDeleteOpen(true); }}
-      />
+      {!initialized && loading ? (
+        <div className={styles.loading}><RefreshCw size={28} className="animate-spin" /></div>
+      ) : (
+        <AscsTable
+          data={ascs}
+          isLoading={loading && initialized}
+          onEdit={(a) => { setEditData(a); setFormOpen(true); }}
+          onView={(a) => { setDetailId(a.id); setDetailOpen(true); }}
+          onDelete={(a) => { setDeleteTarget(a); setDeleteOpen(true); }}
+        />
+      )}
 
       <AscFormModal
         isOpen={formOpen}

@@ -42,8 +42,14 @@ export function TicketsTable({ data, isLoading, onView, onSend, onReceive, onRec
     },
     {
       key: 'stage',
-      header: 'Etape',
-      render: (t) => <Badge variant="info">{t.current_stage_label}</Badge>,
+      header: 'Département',
+      render: (t) => (
+        <Badge variant="info">
+          {t.current_department_name || t.current_stage_label}
+        </Badge>
+      ),
+      sortable: true,
+      getSortValue: (t: RepairTicket) => t.current_department_name || t.current_stage_label,
     },
     {
       key: 'delay',

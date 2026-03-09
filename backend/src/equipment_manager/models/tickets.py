@@ -61,6 +61,8 @@ class RepairTicket(db.Model):
     status = db.Column(db.String(20), default="OPEN", nullable=False)
     current_stage = db.Column(db.String(30), default="SUPERVISOR", nullable=False)
     current_holder_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    current_department_code = db.Column(db.String(50), nullable=True)
+    current_department_name = db.Column(db.String(255), nullable=True)
 
     initial_send_date = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     repair_completed_date = db.Column(db.DateTime(timezone=True), nullable=True)
@@ -139,6 +141,8 @@ class RepairTicket(db.Model):
             "status": self.status,
             "current_stage": self.current_stage,
             "current_stage_label": self.STAGE_LABELS.get(self.current_stage, self.current_stage),
+            "current_department_code": self.current_department_code,
+            "current_department_name": self.current_department_name or self.STAGE_LABELS.get(self.current_stage, self.current_stage),
             "current_holder_id": str(self.current_holder_id) if self.current_holder_id else None,
             "initial_send_date": self.initial_send_date.isoformat() if self.initial_send_date else None,
             "repair_completed_date": self.repair_completed_date.isoformat() if self.repair_completed_date else None,
@@ -197,6 +201,7 @@ class TicketEvent(db.Model):
     event_type = db.Column(db.String(20), nullable=False)
     from_role = db.Column(db.String(30), default="")
     to_role = db.Column(db.String(30), default="")
+    department_code = db.Column(db.String(50), nullable=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     recipient_employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
     timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -217,6 +222,7 @@ class TicketEvent(db.Model):
             "to_role": self.to_role,
             "from_role_label": RepairTicket.STAGE_LABELS.get(self.from_role, self.from_role),
             "to_role_label": RepairTicket.STAGE_LABELS.get(self.to_role, self.to_role),
+            "department_code": self.department_code,
             "user_id": str(self.user_id) if self.user_id else None,
             "user_name": (self.user.fullname or self.user.username) if self.user else None,
             "recipient_employee_id": str(self.recipient_employee_id) if self.recipient_employee_id else None,

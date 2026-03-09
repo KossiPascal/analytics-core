@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useMemo } from 'react';
+import { type ReactNode, useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@utils/cn';
@@ -28,6 +28,10 @@ export interface Column<T> {
   width?: string | number;
   align?: 'left' | 'center' | 'right';
   searchable?: boolean;
+  /** Valeur texte utilisée pour la recherche (utile pour colonnes avec données imbriquées). */
+  getSearchValue?: (item: T) => string;
+  /** Valeur utilisée pour le tri (utile pour colonnes avec données imbriquées). */
+  getSortValue?: (item: T) => string | number;
 }
 
 export interface TableFeatures {
@@ -140,7 +144,9 @@ export function Table<T extends object>({
     return data.filter((item) =>
       columns.some((column) => {
         if (column.searchable === false) return false;
-        const value = (item as Record<string, unknown>)[column.key];
+        const value = column.getSearchValue
+          ? column.getSearchValue(item)
+          : (item as Record<string, unknown>)[column.key];
         if (value === null || value === undefined) return false;
         return String(value).toLowerCase().includes(query);
       })
@@ -149,16 +155,21 @@ export function Table<T extends object>({
 
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
+    const sortColumn = columns.find((c) => c.key === sortConfig.key);
     return [...filteredData].sort((a, b) => {
-      const aValue = (a as Record<string, unknown>)[sortConfig.key];
-      const bValue = (b as Record<string, unknown>)[sortConfig.key];
+      const aValue = sortColumn?.getSortValue
+        ? sortColumn.getSortValue(a)
+        : (a as Record<string, unknown>)[sortConfig.key];
+      const bValue = sortColumn?.getSortValue
+        ? sortColumn.getSortValue(b)
+        : (b as Record<string, unknown>)[sortConfig.key];
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [filteredData, sortConfig]);
+  }, [filteredData, sortConfig, columns]);
 
   const paginatedData = useMemo(() => {
     if (!enablePagination) return sortedData;
@@ -171,7 +182,7 @@ export function Table<T extends object>({
     [sortedData.length, pageSize]
   );
 
-  useMemo(() => { setCurrentPage(1); }, [searchQuery]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery]);
 
   const displayData = paginatedData;
 
