@@ -5,7 +5,7 @@ from sqlalchemy import text
 from flask import Blueprint, request, jsonify
 from flask import Blueprint, g, jsonify, request
 from workers.couchdb.models import CreateTableModel
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.databases.extensions import db
 from backend.src.services.datasource_service import DataSourceProvisioningService
 from backend.src.models.datasource import DataSource, DataSourceConnection, DataSourcePermission, DataSourceTarget, DataSourceType, SSHTunnelManager
@@ -84,7 +84,7 @@ def create_datasource():
             ssh_key_pass=ssh.get("key_pass"),
 
             permissions=data.get("permissions", []),
-            created_by=g.current_user.get("id") if g.get("current_user") else None,
+            created_by=currentUserId(),
         )
 
         if type_id == "couchdb":
@@ -114,7 +114,7 @@ def list_datasources(tenant_id):
 
         datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
         if len(datasources) == 0:
-            created_by = g.current_user.get("id") if g.get("current_user") else None
+            created_by = currentUserId()
             DataSource.ensure_default_datasource(created_by)
             datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
 
@@ -250,7 +250,7 @@ def update_datasource(datasource_id):
             ssh_key_pass=ssh.get("ssh_key_pass"),
 
             permissions=data.get("permissions"),
-            updated_by=g.current_user.get("id") if g.get("current_user") else None,
+            updated_by=currentUserId(),
         )
 
         return jsonify({"message": "Datasource updated", "id": ds.id}), 200
@@ -265,7 +265,7 @@ def update_datasource(datasource_id):
 @require_auth
 def delete_datasource(datasource_id):
     try:
-        deleted_by = g.current_user.get("id") if g.get("current_user") else None,
+        deleted_by = currentUserId(),
 
         DataSourceProvisioningService.delete_full_datasource(
             datasource_id=datasource_id,

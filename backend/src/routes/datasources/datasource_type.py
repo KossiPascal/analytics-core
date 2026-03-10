@@ -3,7 +3,7 @@ from typing import List
 
 from sqlalchemy.exc import SQLAlchemyError
 from flask import Blueprint, g, jsonify, request
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.databases.extensions import db
 from backend.src.models.datasource import DataSourceTarget, DataSourceType
 
@@ -44,7 +44,7 @@ def create_datasource_type():
         config=data.get("config", {})
 
         obj = DataSourceType(code=data["code"],name=data["name"],target=target, config=config)
-        obj.created_by_id=g.current_user.get("id") if g.get("current_user") else None,
+        obj.created_by_id=currentUserId(),
 
         db.session.add(obj)
         db.session.commit()
@@ -84,7 +84,7 @@ def update_datasource_type(type_id):
         if "config" in data:
             obj.config = data["config"]
 
-        obj.updated_by_id=g.current_user.get("id") if g.get("current_user") else None,
+        obj.updated_by_id=currentUserId(),
         db.session.commit()
 
         return jsonify({ "message": "DatasourceType updated", "id": obj.id }), 200
@@ -104,7 +104,7 @@ def delete_datasource_type(type_id):
             raise BadRequest("DatasourceType not found", 404)
 
         obj.is_active = False
-        obj.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None,
+        obj.deleted_by_id=currentUserId(),
         db.session.commit()
 
         return jsonify({"message": "DatasourceType deactivated"}), 200

@@ -1,11 +1,14 @@
 from __future__ import annotations
-from ast import List
 from functools import wraps
-from typing import Optional, Callable, Awaitable
+from typing import Optional
 from flask import request, g
 from werkzeug.exceptions import Unauthorized, Forbidden
 from backend.src.models.auth import User, UserPermission, UserRole
-import inspect
+
+
+def currentUserId():
+    return g.current_user.get("id") if g.get("current_user") else None
+
 
 # Decorator to protect routes (uses JWT access token)
 def require_auth(f=None, *, roles_names: Optional[list[str]] = None, permissions_names: Optional[list[str]] = None):

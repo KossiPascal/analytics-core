@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 import re
 from backend.src.equipment_manager.models.equipment import (
     EquipmentCategoryGroup, EquipmentCategory, EquipmentBrand,
@@ -56,7 +56,6 @@ def list_category_groups():
     items = EquipmentCategoryGroup.query.order_by(EquipmentCategoryGroup.name).all()
     return jsonify([g.to_dict_safe() for g in items]), 200
 
-
 @bp.post("/category-groups")
 @require_auth
 def create_category_group():
@@ -70,7 +69,9 @@ def create_category_group():
             name=name, code=code,
             description=data.get("description", ""),
             is_active=True,
+            created_by_id=currentUserId()
         )
+        
         db.session.add(grp)
         db.session.commit()
         return jsonify(grp.to_dict_safe()), 201
@@ -82,7 +83,7 @@ def create_category_group():
 @bp.put("/category-groups/<int:id>")
 @require_auth
 def update_category_group(id):
-    grp = EquipmentCategoryGroup.query.get(id)
+    grp:EquipmentCategoryGroup = EquipmentCategoryGroup.query.get(id)
     if not grp:
         raise BadRequest("Catégorie introuvable", 404)
     data = request.get_json(silent=True) or {}
@@ -91,6 +92,9 @@ def update_category_group(id):
             setattr(grp, field, data[field].strip() if isinstance(data[field], str) else data[field])
     if "is_active" in data:
         grp.is_active = bool(data["is_active"])
+    
+    grp.updated_by_id=currentUserId()
+
     try:
         db.session.commit()
         return jsonify(grp.to_dict_safe()), 200
@@ -123,6 +127,7 @@ def create_category():
             category_group_id=int(category_group_id) if category_group_id else None,
             description=data.get("description", ""),
             is_active=True,
+            created_by_id=currentUserId()
         )
         db.session.add(cat)
         db.session.commit()
@@ -135,7 +140,7 @@ def create_category():
 @bp.put("/categories/<int:id>")
 @require_auth
 def update_category(id):
-    cat = EquipmentCategory.query.get(id)
+    cat:EquipmentCategory = EquipmentCategory.query.get(id)
     if not cat:
         raise BadRequest("Type introuvable", 404)
     data = request.get_json(silent=True) or {}
@@ -146,6 +151,9 @@ def update_category(id):
         cat.category_group_id = int(data["category_group_id"]) if data["category_group_id"] else None
     if "is_active" in data:
         cat.is_active = bool(data["is_active"])
+    
+    cat.updated_by_id=currentUserId()
+
     try:
         db.session.commit()
         return jsonify(cat.to_dict_safe()), 200
@@ -176,6 +184,7 @@ def create_brand():
             name=name, code=code,
             description=data.get("description", ""),
             is_active=True,
+            created_by_id=currentUserId()
         )
         db.session.add(brand)
         db.session.commit()
@@ -188,7 +197,7 @@ def create_brand():
 @bp.put("/brands/<int:id>")
 @require_auth
 def update_brand(id):
-    brand = EquipmentBrand.query.get(id)
+    brand:EquipmentBrand = EquipmentBrand.query.get(id)
     if not brand:
         raise BadRequest("Brand not found", 404)
     data = request.get_json(silent=True) or {}
@@ -197,6 +206,9 @@ def update_brand(id):
             setattr(brand, field, data[field].strip() if isinstance(data[field], str) else data[field])
     if "is_active" in data:
         brand.is_active = bool(data["is_active"])
+
+    brand.updated_by_id=currentUserId()
+
     try:
         db.session.commit()
         return jsonify(brand.to_dict_safe()), 200
@@ -322,6 +334,8 @@ def create_equipment():
         # Premier IMEI pour le champ legacy (backward compat)
         first_imei = imeis_list[0].strip() if has_sim and imeis_list else None
 
+        user_id = currentUserId()
+
         eq = Equipment(
             equipment_code=equipment_code,
             equipment_type=cat.code if cat else "",
@@ -340,6 +354,7 @@ def create_equipment():
             warranty_expiry_date=data.get("warranty_expiry_date"),
             assignment_date=data.get("assignment_date"),
             notes=data.get("notes", ""),
+            created_by_id=user_id
         )
         db.session.add(eq)
         db.session.flush()
@@ -350,9 +365,9 @@ def create_equipment():
                 equipment_id=eq.id,
                 imei=raw_imei.strip(),
                 slot_number=slot,
+                created_by_id=user_id
             ))
 
-        user_id = int(g.current_user["id"]) if g.current_user else None
         history = EquipmentHistory(
             equipment_id=eq.id,
             action="CREATED",
@@ -404,27 +419,26 @@ def get_equipment(id):
 @bp.put("/<int:id>")
 @require_auth
 def update_equipment(id):
-    eq = Equipment.query.get(id)
+    eq:Equipment = Equipment.query.get(id)
     if not eq:
         raise BadRequest("Equipment not found", 404)
 
     # Block edits on inactive equipment (use cancel-declaration first)
     if not eq.is_active:
-        raise BadRequest(
-            f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute modification.",
-            409
-        )
+        raise BadRequest(f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute modification.",409)
 
     data = request.get_json(silent=True) or {}
 
     for field in ("equipment_type", "brand", "model_name", "imei", "serial_number", "notes", "reception_form_path"):
         if field in data:
             setattr(eq, field, data[field].strip() if isinstance(data[field], str) else data[field])
+
     if "is_unique" in data:
         eq.is_unique = bool(data["is_unique"])
 
     if "category_id" in data:
         eq.category_id = int(data["category_id"]) if data["category_id"] else None
+
     if "brand_id" in data:
         eq.brand_id = int(data["brand_id"]) if data["brand_id"] else None
 
@@ -438,13 +452,12 @@ def update_equipment(id):
             new_status = "FUNCTIONAL"
         if old_status != new_status:
             eq.status = new_status
-            user_id = int(g.current_user["id"]) if g.current_user else None
             history = EquipmentHistory(
                 equipment_id=eq.id,
                 action="STATUS_CHANGED",
                 old_value=old_status,
                 new_value=new_status,
-                created_by_id=user_id,
+                created_by_id=currentUserId(),
             )
             db.session.add(history)
 
@@ -463,15 +476,12 @@ def update_equipment(id):
 @bp.post("/<int:id>/assign")
 @require_auth
 def assign_equipment(id):
-    eq = Equipment.query.get(id)
+    eq:Equipment = Equipment.query.get(id)
     if not eq:
         raise BadRequest("Equipment not found", 404)
 
     if not eq.is_active:
-        raise BadRequest(
-            f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute assignation.",
-            409
-        )
+        raise BadRequest(f"Équipement inactif ({eq.status}). Annulez la déclaration avant toute assignation.",409)
 
     # Un équipement unique déjà assigné ne peut pas être ré-assigné via ce endpoint
     # (utiliser la modification pour changer de propriétaire)
@@ -487,7 +497,7 @@ def assign_equipment(id):
     asc_id = data.get("owner_id") or data.get("asc_id")
     employee_id = data.get("employee_id")
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     old_owner = eq.owner.get_full_name() if eq.owner else (eq.employee.get_full_name() if eq.employee else "None")
 
     if asc_id:
@@ -497,6 +507,7 @@ def assign_equipment(id):
         eq.owner_id = owner.id
         eq.employee_id = None
         eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
+        eq.updated_by_id = user_id
         new_owner = owner.get_full_name()
         action = "ASSIGNED"
     elif employee_id:
@@ -506,6 +517,7 @@ def assign_equipment(id):
         eq.employee_id = employee.id
         eq.owner_id = None
         eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
+        eq.updated_by_id = user_id
         new_owner = employee.get_full_name()
         action = "ASSIGNED_TO_EMPLOYEE"
     else:
@@ -541,7 +553,7 @@ def assign_equipment(id):
 @require_auth
 def transfer_equipment(id):
     """Transfère un équipement d'un employé à un autre (autorisé même pour les équipements uniques)."""
-    eq = Equipment.query.get(id)
+    eq:Equipment = Equipment.query.get(id)
     if not eq:
         raise BadRequest("Equipment not found", 404)
 
@@ -563,12 +575,14 @@ def transfer_equipment(id):
     if not target.is_active:
         raise BadRequest("L'employé cible est inactif", 409)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     old_holder = eq.employee.get_full_name() if eq.employee else (eq.owner.get_full_name() if eq.owner else "Aucun")
 
     eq.employee_id = target.id
     eq.owner_id = None
     eq.assignment_date = data.get("action_date") or datetime.now(timezone.utc).date()
+    eq.updated_by_id = user_id
+
     if eq.status == "PENDING":
         eq.status = "FUNCTIONAL"
 
@@ -597,18 +611,18 @@ def declare_reserve():
     if not employee_id or not equipment_ids:
         raise BadRequest("employee_id et equipment_ids sont requis", 400)
 
-    employee = Employee.query.get(int(employee_id))
+    employee:Employee = Employee.query.get(int(employee_id))
     if not employee:
         raise BadRequest("Employé introuvable", 404)
     if not employee.is_active:
         raise BadRequest("L'employé est inactif", 409)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     assignment_date = action_date or datetime.now(timezone.utc).date().isoformat()
     updated = []
 
     for eq_id in equipment_ids:
-        eq = Equipment.query.get(int(eq_id))
+        eq:Equipment = Equipment.query.get(int(eq_id))
         if not eq or not eq.is_active:
             continue
         old_holder = (
@@ -618,6 +632,7 @@ def declare_reserve():
         eq.employee_id = employee.id
         eq.owner_id = None
         eq.assignment_date = assignment_date
+        eq.updated_by_id = user_id
         # Status stays PENDING — reserve stock for distribution
         db.session.add(EquipmentHistory(
             equipment_id=eq.id,
@@ -639,7 +654,7 @@ def declare_equipment(id):
     """Déclare un équipement actif comme Perdu / Volé / Emporté / Complètement gâté."""
     from backend.src.equipment_manager.models.tickets import RepairTicket, TicketEvent
 
-    eq = Equipment.query.get(id)
+    eq:Equipment = Equipment.query.get(id)
     if not eq:
         raise BadRequest("Equipment not found", 404)
 
@@ -661,10 +676,11 @@ def declare_equipment(id):
     if not reason:
         raise BadRequest("reason est obligatoire", 400)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     old_status = eq.status
 
     eq.status = declaration  # LOST | STOLEN | TAKEN_AWAY | COMPLETELY_DAMAGED
+    eq.updated_by_id=user_id,
 
     # If COMPLETELY_DAMAGED and there is an open repair ticket → close it
     if declaration == "COMPLETELY_DAMAGED":
@@ -682,6 +698,7 @@ def declare_equipment(id):
                 from_role=active_ticket.current_stage,
                 to_role=active_ticket.current_stage,
                 comment=f"Équipement déclaré complètement gâté. {reason}",
+                created_by_id=user_id
             ))
 
     action = DECLARATION_ACTION_MAP[declaration]
@@ -703,7 +720,7 @@ def declare_equipment(id):
 @require_auth
 def cancel_declaration(id):
     """Annule une déclaration (LOST/STOLEN/TAKEN_AWAY/COMPLETELY_DAMAGED) → PENDING."""
-    eq = Equipment.query.get(id)
+    eq:Equipment = Equipment.query.get(id)
     if not eq:
         raise BadRequest("Equipment not found", 404)
 
@@ -713,9 +730,8 @@ def cancel_declaration(id):
     data = request.get_json(silent=True) or {}
     notes = data.get("notes", "").strip()
     action_date = data.get("action_date", "").strip()
-    user_id = int(g.current_user["id"]) if g.current_user else None
     old_status = eq.status
-
+    
     # Si l'équipement est assigné à quelqu'un, le remettre Fonctionnel plutôt qu'En attente
     new_status = "FUNCTIONAL" if (eq.owner_id or eq.employee_id) else "PENDING"
     eq.status = new_status
@@ -726,7 +742,7 @@ def cancel_declaration(id):
         old_value=old_status,
         new_value=new_status,
         notes=combined_notes,
-        created_by_id=user_id,
+        created_by_id=currentUserId(),
     ))
 
     db.session.commit()
@@ -773,6 +789,7 @@ def create_accessory(id):
         description=data.get("description", ""),
         serial_number=data.get("serial_number", ""),
         status=data.get("status", "FUNCTIONAL"),
+        created_by_id=currentUserId(),
     )
     db.session.add(acc)
     db.session.commit()
@@ -782,7 +799,7 @@ def create_accessory(id):
 @bp.put("/<int:id>/accessories/<int:acc_id>")
 @require_auth
 def update_accessory(id, acc_id):
-    acc = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
+    acc:Accessory = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
     if not acc:
         raise BadRequest("Accessory not found", 404)
 
@@ -791,6 +808,8 @@ def update_accessory(id, acc_id):
         if field in data:
             setattr(acc, field, data[field].strip() if isinstance(data[field], str) else data[field])
 
+    acc.updated_by_id=currentUserId(),
+
     db.session.commit()
     return jsonify(acc.to_dict_safe()), 200
 
@@ -798,11 +817,16 @@ def update_accessory(id, acc_id):
 @bp.delete("/<int:id>/accessories/<int:acc_id>")
 @require_auth
 def delete_accessory(id, acc_id):
-    acc = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
+    acc:Accessory = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
     if not acc:
         raise BadRequest("Accessory not found", 404)
 
-    db.session.delete(acc)
+    # db.session.delete(acc)
+
+    acc.deleted = True
+    acc.deleted_at = datetime.now(timezone.utc)
+    acc.deleted_by_id=currentUserId()
+    
     db.session.commit()
     return jsonify({"message": "Accessory deleted"}), 200
 

@@ -5,11 +5,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { SqlBuilder } from './components/SqlBuilder';
-import type { AnalyticsModel, AttributDef, DatabaseDef, DataSourceConnection, DimensionDef, MetricDef, QueryJSON, TableDef } from '../../../models/builders.models';
+import type { AnalyticsModel, AttributDef, DatabaseDef, DimensionDef, MetricDef, QueryJSON, TableDef } from '../../../models/builders.models';
 import { } from '@/services/datasource.service';
 import { datasourceService as API } from '@/services/datasource.service';
-import { boolean } from 'zod';
-import { DataSource } from '@/models/datasource.models';
 
 // ============================================================================
 // DEMO ANALYTICS MODEL

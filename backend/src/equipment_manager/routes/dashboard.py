@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.tickets import RepairTicket
 from backend.src.equipment_manager.models.equipment import Equipment
 from backend.src.equipment_manager.models.employees import Employee, Position

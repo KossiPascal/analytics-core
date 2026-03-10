@@ -7,7 +7,7 @@ from backend.src.databases.extensions import db
 from backend.src.models.auth import UserOrgunit, UserRole, User
 from backend.src.helpers.hasher import verify_password
 from backend.src.models.datasets.dataset_chart import DatasetChart
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
@@ -89,7 +89,7 @@ def create_user():
             deleted=False,
             must_login=True,
             has_changed_default_password=False,
-            created_by=g.current_user.get("id") if g.get("current_user") else None
+            created_by=currentUserId()
         )
         user.set_password(password)
 
@@ -101,7 +101,7 @@ def create_user():
             orgunits:List[UserOrgunit] = UserOrgunit.query.filter(UserOrgunit.id.in_(orgunit_ids), UserOrgunit.deleted == False).all()
             user.orgunits = orgunits
 
-        user.created_by=g.current_user.get("id") if g.get("current_user") else None
+        user.created_by=currentUserId()
 
         db.session.add(user)
         db.session.commit()
@@ -172,7 +172,7 @@ def update_user(user_id: int):
             orgunits:List[UserOrgunit] = UserOrgunit.query.filter(UserOrgunit.id.in_(orgunit_ids), UserOrgunit.deleted == False).all()
             user.orgunits = orgunits
 
-        user.updated_by=g.current_user.get("id") if g.get("current_user") else None
+        user.updated_by=currentUserId()
 
         db.session.commit()
         return jsonify({"message": "User updated"}), 200
@@ -203,7 +203,7 @@ def delete_user(user_id: int):
 
         user.deleted = True
         user.deleted_at = datetime.now(timezone.utc)
-        user.deleted_by=g.current_user.get("id") if g.get("current_user") else None
+        user.deleted_by=currentUserId()
         user.is_active = False
 
         user.roles = []  # supprime les relations automatiquement
@@ -243,7 +243,7 @@ def update_password():
         user.set_password(new_password)
         user.has_changed_default_password = True
         user.must_login = True
-        user.updated_by=g.current_user.get("id") if g.get("current_user") else None
+        user.updated_by=currentUserId()
 
         db.session.commit()
 

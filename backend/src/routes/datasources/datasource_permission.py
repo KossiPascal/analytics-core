@@ -3,7 +3,7 @@ from flask import Blueprint, g, request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
 from backend.src.databases.extensions import db
 from backend.src.models.datasource import (DataSource,DataSourcePermission)
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -39,7 +39,7 @@ def create_or_update_permission():
 
         datasource_id = data["datasource_id"]
         user_id = data["user_id"]
-        make_by = g.current_user.get("id") if g.get("current_user") else None
+        make_by = currentUserId()
 
         ds:DataSource = DataSource.query.get(datasource_id)
         if not ds:
@@ -93,7 +93,7 @@ def update_permission(permission_id):
             role = data["role"]
             permission.role = role
 
-        permission.updated_by_id = g.current_user.get("id") if g.get("current_user") else None
+        permission.updated_by_id = currentUserId()
         db.session.commit()
 
         return jsonify({"message": "Permission updated"}), 200
@@ -110,7 +110,7 @@ def delete_permission(permission_id):
         if not permission:
             raise BadRequest("Permission not found", 404)
 
-        permission.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None
+        permission.deleted_by_id=currentUserId()
         
         db.session.delete(permission)
         db.session.commit()

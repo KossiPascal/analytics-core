@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from cryptography.fernet import Fernet
 from backend.src.databases.extensions import db
 from backend.src.config import Config
+from backend.src.models.controls import AuditMixin
 
 
 def _fernet():
@@ -19,10 +20,10 @@ def decrypt_password(token: str) -> str:
     return _fernet().decrypt(token.encode()).decode()
 
 
-class EmailConfig(db.Model):
+class EmailConfig(db.Model, AuditMixin):
     """SMTP configuration stored in DB (takes priority over .env)."""
     __tablename__ = "email_config"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     host = db.Column(db.String(255), nullable=False)
@@ -32,9 +33,6 @@ class EmailConfig(db.Model):
     from_email = db.Column(db.String(255), nullable=False)
     from_name = db.Column(db.String(255), default="IH Equipment Manager")
     use_tls = db.Column(db.Boolean, default=True, nullable=False)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict_safe(self):
         return {
@@ -53,18 +51,15 @@ class EmailConfig(db.Model):
     def __repr__(self):
         return f"<EmailConfig(id={self.id}, host={self.host})>"
 
-class AlertConfig(db.Model):
+class AlertConfig(db.Model, AuditMixin):
     """Global alert parameters (one active row at a time)."""
     __tablename__ = "alert_config"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     warning_days = db.Column(db.Integer, default=7, nullable=False)
     escalation_days = db.Column(db.Integer, default=14, nullable=False)
     frequency_hours = db.Column(db.Integer, default=24, nullable=False)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict_safe(self):
         return {
@@ -80,7 +75,8 @@ class AlertConfig(db.Model):
     def __repr__(self):
         return f"<AlertConfig(id={self.id}, warning={self.warning_days}j, escalation={self.escalation_days}j)>"
 
-class AlertRecipientConfig(db.Model):
+
+class AlertRecipientConfig(db.Model, AuditMixin):
     """
     Recipient configuration per stage and alert level.
     - stage=None means the rule applies to all stages.
@@ -88,7 +84,7 @@ class AlertRecipientConfig(db.Model):
     - recipient_type: 'EMPLOYEE' (one person) | 'POSITION' (all active employees of that position)
     """
     __tablename__ = "alert_recipient_configs"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     stage = db.Column(db.String(30), nullable=True)  # null = all stages
@@ -96,16 +92,14 @@ class AlertRecipientConfig(db.Model):
     recipient_type = db.Column(db.String(20), nullable=False)  # EMPLOYEE | POSITION
     employee_id = db.Column(
         db.BigInteger,
-        db.ForeignKey("em.employees.id", ondelete="CASCADE"),
+        db.ForeignKey("eqpm.employees.id", ondelete="CASCADE"),
         nullable=True,
     )
     position_id = db.Column(
         db.BigInteger,
-        db.ForeignKey("em.positions.id", ondelete="CASCADE"),
+        db.ForeignKey("eqpm.positions.id", ondelete="CASCADE"),
         nullable=True,
     )
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     employee = db.relationship("Employee", foreign_keys=[employee_id], lazy="selectin")
     position = db.relationship("Position", foreign_keys=[position_id], lazy="selectin")

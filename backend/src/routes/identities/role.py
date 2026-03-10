@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
 from backend.src.models.auth import UserRole, UserPermission
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
@@ -68,7 +68,7 @@ def create_role():
             perms:List[UserPermission] = UserPermission.query.filter(UserPermission.id.in_(permission_ids), UserPermission.deleted == False).all()
             role.permissions = perms # SQLAlchemy gère la table role_permission_links
 
-        role.created_by=g.current_user.get("id") if g.get("current_user") else None
+        role.created_by=currentUserId()
 
         db.session.add(role)
         db.session.commit()
@@ -101,7 +101,7 @@ def update_role(role_id: int):
             ).all()
             role.permissions = perms
 
-        role.updated_by=g.current_user.get("id") if g.get("current_user") else None
+        role.updated_by=currentUserId()
 
         db.session.commit()
         return jsonify({"message": "Role updated"}), 200
@@ -120,7 +120,7 @@ def delete_role(role_id: int):
 
         role.deleted = True
         role.deleted_at = datetime.now(timezone.utc)
-        role.deleted_by=g.current_user.get("id") if g.get("current_user") else None
+        role.deleted_by=currentUserId()
         role.permissions = []  # supprime les relations automatiquement
     
         db.session.commit()

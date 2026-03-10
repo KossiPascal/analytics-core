@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from backend.src.databases.extensions import db
 from backend.src.models.datasets.dataset import Dataset, DatasetSqlType
 from backend.src.logger import get_backend_logger
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -111,7 +111,7 @@ def create_dataset():
             columns=data.get("columns", []),
             version=data.get("version"),
             is_active=bool(data.get("is_active",False)),
-            created_by_id=g.current_user.get("id") if g.get("current_user") else None,
+            created_by_id=currentUserId(),
         )
 
         db.session.add(dataset)
@@ -181,7 +181,7 @@ def update_dataset(dataset_id):
         if "name" in data:
             dataset.connection_id = data.get("connection_id", dataset.connection_id)
 
-        dataset.updated_by_id=g.current_user.get("id") if g.get("current_user") else None,
+        dataset.updated_by_id=currentUserId(),
 
         db.session.commit()
 
@@ -207,7 +207,7 @@ def delete_dataset(dataset_id):
         
         dataset.is_active = False
         dataset.deleted_at = datetime.now(timezone.utc)
-        dataset.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None,
+        dataset.deleted_by_id=currentUserId(),
         # db.session.delete(dataset)
         db.session.commit()
 

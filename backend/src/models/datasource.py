@@ -294,7 +294,7 @@ class DataSourceType(db.Model, AuditMixin):
             for spec in DEFAULT_DATA_SOURCE_TYPES:
                 current = existing.get(spec["code"])
                 if not current:
-                    spec["created_by_id"] = g.current_user.get("id") if g.get("current_user") else None
+                    spec["created_by_id"] = currentUserId()
                     db.session.add(DataSourceType(**spec))
                     changed = True
                 else:

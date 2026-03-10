@@ -30,6 +30,18 @@ import styles from './VisualizationHome.module.css';
 type ViewMode = 'grid' | 'list';
 type FilterType = 'all' | 'dashboard' | 'report';
 
+function CHTApp() {
+  return (
+    <iframe
+      src="https://kendeya.portal-integratehealth.org/"
+      width="100%"
+      height="900"
+      style={{ border: "none" }}
+      title="CHT"
+    />
+  );
+}
+
 export default function VisualizationHome() {
   const navigate = useNavigate();
   const { visualizations, isLoading, error, refresh, deleteVisualization } = useVisualizations();
@@ -242,7 +254,7 @@ export default function VisualizationHome() {
 
         {!isLoading && !error && (
           <AnimatePresence mode="wait">
-            {filteredVisualizations.length === 0 ? (
+            {/* {filteredVisualizations.length === 0 ? (
               <motion.div
                 key="empty"
                 className={styles.emptyState}
@@ -300,7 +312,10 @@ export default function VisualizationHome() {
                   </motion.div>
                 ))}
               </motion.div>
-            )}
+            )} */}
+
+            <CHTApp />
+
           </AnimatePresence>
         )}
       </div>

@@ -43,8 +43,6 @@ const QueryBuilderPage: React.FC = () => {
       subtitle="Créer script vos scripts ici"
     >
       <div className={styles.container}>
-
-
         {/* Main Grid Layout */}
         <div className={styles.grid}>
           {/* SIDEBAR - Saved Scripts */}

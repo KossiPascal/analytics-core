@@ -2,7 +2,7 @@
 from typing import List
 from flask import Blueprint, jsonify
 from backend.src.models.auth import RolePermissionLink, UserRoleLink, UsersLog
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest

@@ -5,7 +5,7 @@ from backend.src.config import Config
 from datetime import datetime, timezone
 from backend.src.models.auth import User, RefreshToken
 from flask import Blueprint, request, jsonify, g
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError

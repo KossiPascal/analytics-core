@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, request, jsonify
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.employees import Employee, EmployeeProfile, Position
 from backend.src.logger import get_backend_logger
 
@@ -74,6 +76,7 @@ def create_asc():
             email=data.get("email", ""),
             notes=data.get("notes", ""),
             is_active=True,
+            created_by_id=currentUserId()
         )
         db.session.add(employee)
         db.session.flush()
@@ -83,6 +86,7 @@ def create_asc():
                 employee_id=employee.id,
                 supervisor_employee_id=supervisor_employee_id,
                 start_date=data.get("start_date"),
+                created_by_id=currentUserId()
             )
             db.session.add(profile)
 
@@ -115,7 +119,7 @@ def get_asc(id):
 @bp.put("/<int:id>")
 @require_auth
 def update_asc(id):
-    employee = Employee.query.get(id)
+    employee:Employee = Employee.query.get(id)
     if not employee:
         raise BadRequest("ASC not found")
 
@@ -128,13 +132,17 @@ def update_asc(id):
 
     if "is_active" in data:
         employee.is_active = bool(data["is_active"])
+        employee.updated_by_id=currentUserId()
 
     # Update profile
     if "supervisor_id" in data or "start_date" in data or "end_date" in data:
         profile = employee.profile
         if profile is None:
-            profile = EmployeeProfile(employee_id=employee.id)
+            profile:EmployeeProfile = EmployeeProfile(employee_id=employee.id)
+            profile.created_by_id=currentUserId()
             db.session.add(profile)
+        else:
+            profile.updated_by_id=currentUserId()
 
         if "supervisor_id" in data:
             profile.supervisor_employee_id = int(data["supervisor_id"]) if data["supervisor_id"] else None
@@ -161,11 +169,16 @@ def update_asc(id):
 @bp.delete("/<int:id>")
 @require_auth
 def delete_asc(id):
-    employee = Employee.query.get(id)
+    employee:Employee = Employee.query.get(id)
     if not employee:
         raise BadRequest("ASC not found")
 
     # Soft delete
     employee.is_active = False
+    employee.deleted = True
+    employee.deleted_at = datetime.now(timezone.utc)
+    employee.deleted_by_id=currentUserId()
+
     db.session.commit()
     return jsonify({"message": "ASC deactivated"}), 200
+

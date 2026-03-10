@@ -27,7 +27,7 @@ from pathlib import Path
 from flask import Blueprint, request, jsonify, g, current_app
 from werkzeug.utils import secure_filename
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.meeting_intelligence.models.meeting import Meeting, MeetingSummary
 from backend.src.meeting_intelligence.services.summarization_service import get_summarization_service, SUPPORTED_PROVIDERS
 
@@ -90,7 +90,7 @@ def create_meeting():
     if not title:
         raise BadRequest("title est requis", 400)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
 
     meeting_date = None
     if data.get("meeting_date"):

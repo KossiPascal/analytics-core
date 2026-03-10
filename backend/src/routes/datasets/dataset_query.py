@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Set
 from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DatasetSqlType
 from backend.src.routes.datasets.query.query_validator import QueryValidatorV1
 from backend.src.routes.datasets.query.sql_compiler import MaterializedViewManager, SQLCompilerV1
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -163,7 +163,7 @@ def create_query():
             query.is_validated=is_validated,
             query.validated_at = datetime.now(timezone.utc)
 
-        query.created_by_id=g.current_user.get("id") if g.get("current_user") else None
+        query.created_by_id=currentUserId()
 
         db.session.add(query)
         db.session.commit()
@@ -232,7 +232,7 @@ def update_query(query_id: int):
                 query.is_validated = is_validated,
                 query.validated_at = datetime.now(timezone.utc)
 
-        query.updated_by_id=g.current_user.get("id") if g.get("current_user") else None
+        query.updated_by_id=currentUserId()
 
         db.session.commit()
 
@@ -253,7 +253,7 @@ def delete_query(query_id: int):
 
         query.deleted = True
         query.deleted_at = datetime.now(timezone.utc)
-        query.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None
+        query.deleted_by_id=currentUserId()
     
         db.session.commit()
         return jsonify({"message": "DatasetQuery deleted"}), 200

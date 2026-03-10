@@ -11,7 +11,7 @@ from backend.src.models.datasets.dataset import DatasetQuery, DatasetSqlType
 from backend.src.models.datasets.dataset_chart import DatasetChart
 from backend.src.routes.datasets.chart.chart_engine import ALLOWED_CHART_TYPES, CHART_MAX_ROWS, ChartExecutor, ChartFactory, ChartPivotOptions, ChartTransformer, ChartPivotEngine, ChartValidator
 from backend.src.routes.datasets.query.sql_compiler import SQLValueParser
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError, SQLAlchemyError, OperationalError
@@ -97,7 +97,7 @@ def create_chart():
             is_active=is_active,
         )
 
-        chart.created_by_id=g.current_user.get("id") if g.get("current_user") else None
+        chart.created_by_id=currentUserId()
 
         db.session.add(chart)
         db.session.commit()
@@ -152,7 +152,7 @@ def update_chart(chart_id: int):
         if "is_active" in data:
             chart.is_active = bool(data.get("is_active", True))
 
-        chart.updated_by_id=g.current_user.get("id") if g.get("current_user") else None
+        chart.updated_by_id=currentUserId()
 
         db.session.commit()
 
@@ -188,7 +188,7 @@ def delete_chart(chart_id: int):
 
         query.deleted = True
         query.deleted_at = datetime.now(timezone.utc)
-        query.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None
+        query.deleted_by_id=currentUserId()
     
         db.session.commit()
         return jsonify({"message": "DatasetChart deleted"}), 200

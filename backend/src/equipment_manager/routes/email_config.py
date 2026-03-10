@@ -1,12 +1,14 @@
 """
 Routes for SMTP email configuration management.
 """
+from datetime import datetime, timezone
 import smtplib
+from typing import List
 
 from flask import Blueprint, jsonify, request
 
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.email_config import (
     EmailConfig, encrypt_password,
 )
@@ -45,8 +47,7 @@ def save_email_config():
     password_plain = data.get("password", "").strip()
 
     # Récupérer l'ancienne config avant de la désactiver
-    existing = EmailConfig.query.filter_by(is_active=True).first()
-
+    existing:EmailConfig = EmailConfig.query.filter_by(is_active=True).first()
     if not password_plain:
         if existing:
             # Réutiliser le mot de passe chiffré déjà en base
@@ -57,8 +58,11 @@ def save_email_config():
         encrypted_pw = encrypt_password(password_plain)
 
     # Désactiver les configs existantes
-    EmailConfig.query.filter_by(is_active=True).update({"is_active": False})
-
+    configs:List[EmailConfig] = EmailConfig.query.filter_by(is_active=True)
+    for conf in configs:
+       conf.is_active = False
+       conf.updated_by_id=currentUserId()
+       
     config = EmailConfig(
         host=data["host"].strip(),
         port=int(data["port"]),
@@ -68,7 +72,9 @@ def save_email_config():
         from_name=data.get("from_name", "IH Equipment Manager").strip(),
         use_tls=bool(data.get("use_tls", True)),
         is_active=True,
+        created_by_id=currentUserId()
     )
+
     db.session.add(config)
     db.session.commit()
     return jsonify(success=True, data=config.to_dict_safe()), 201
@@ -94,6 +100,7 @@ def update_email_config(config_id):
     config.from_email = data["from_email"].strip()
     config.from_name = data.get("from_name", "IH Equipment Manager").strip()
     config.use_tls = bool(data.get("use_tls", True))
+    config.updated_by_id=currentUserId()
     db.session.commit()
     return jsonify(success=True, data=config.to_dict_safe())
 
@@ -104,8 +111,13 @@ def activate_email_config(config_id):
     config = db.session.get(EmailConfig, config_id)
     if not config:
         return jsonify(success=False, message="Configuration introuvable"), 404
-    EmailConfig.query.filter_by(is_active=True).update({"is_active": False})
+    configs:List[EmailConfig] = EmailConfig.query.filter_by(is_active=True)
+    for conf in configs:
+        conf.is_active = False
+        conf.updated_by_id=currentUserId()
+
     config.is_active = True
+    config.updated_by_id=currentUserId()
     db.session.commit()
     return jsonify(success=True, data=config.to_dict_safe())
 
@@ -116,7 +128,11 @@ def delete_email_config(config_id):
     config = db.session.get(EmailConfig, config_id)
     if not config:
         return jsonify(success=False, message="Configuration introuvable"), 404
-    db.session.delete(config)
+    # db.session.delete(config)
+    config.deleted = True
+    config.deleted_at = datetime.now(timezone.utc)
+    config.deleted_by_id=currentUserId()
+
     db.session.commit()
     return jsonify(success=True)
 
@@ -169,3 +185,4 @@ def test_email_config():
     except Exception as e:
         logger.warning(f"SMTP test failed: {e}")
         return jsonify(success=False, message=str(e)), 400
+

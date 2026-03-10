@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
 from backend.src.models.datasets.dataset import DatasetField
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -92,7 +92,7 @@ def create_field():
             is_active=is_active,
         )
 
-        field.created_by_id=g.current_user.get("id") if g.get("current_user") else None
+        field.created_by_id=currentUserId()
 
         db.session.add(field)
         db.session.commit()
@@ -147,7 +147,7 @@ def update_field(field_id: int):
         if "is_active" in data:
             field.is_active = bool(data.get("is_active", True))
 
-        field.updated_by_id=g.current_user.get("id") if g.get("current_user") else None
+        field.updated_by_id=currentUserId()
 
         db.session.commit()
         return jsonify({"message": "DatasetField updated"}), 200
@@ -166,7 +166,7 @@ def delete_field(field_id: int):
 
         field.deleted = True
         field.deleted_at = datetime.now(timezone.utc)
-        field.deleted_by_id=g.current_user.get("id") if g.get("current_user") else None
+        field.deleted_by_id=currentUserId()
     
         db.session.commit()
         return jsonify({"message": "DatasetField deleted"}), 200

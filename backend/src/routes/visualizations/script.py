@@ -1,6 +1,6 @@
 import os
 import json
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.config import Config
 from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError

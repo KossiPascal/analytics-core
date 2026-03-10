@@ -4,7 +4,7 @@ Routes for alert configuration management (warning/escalation days, frequency).
 from flask import Blueprint, jsonify, request
 
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.email_config import AlertConfig
 from backend.src.logger import get_backend_logger
 
@@ -37,7 +37,11 @@ def update_alert_config():
     config = AlertConfig.query.filter_by(is_active=True).first()
     if not config:
         config = AlertConfig(is_active=True)
+        config.created_by_id=currentUserId()
         db.session.add(config)
+    else:
+        config.updated_by_id=currentUserId()
+
 
     if "warning_days" in data:
         config.warning_days = int(data["warning_days"])

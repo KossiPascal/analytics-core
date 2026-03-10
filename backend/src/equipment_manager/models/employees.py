@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 from backend.src.databases.extensions import db
+from backend.src.models.controls import AuditMixin
 
 
-class Department(db.Model):
+class Department(db.Model, AuditMixin):
     """
     Single self-referential table for departments and sub-departments.
     A root department has parent_id = NULL.
@@ -11,17 +12,14 @@ class Department(db.Model):
     __tablename__ = "departments"
     __table_args__ = (
         db.UniqueConstraint("parent_id", "name", name="uq_departments_parent_name"),
-        {'schema': 'em'},
+        {'schema': 'eqpm'},
     )
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    parent_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="CASCADE"), nullable=True)
+    parent_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.departments.id", ondelete="CASCADE"), nullable=True)
     name = db.Column(db.String(255), nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     parent = db.relationship("Department", remote_side=[id], back_populates="children", lazy="selectin")
     children = db.relationship("Department", back_populates="parent", lazy="selectin", cascade="all, delete-orphan")
@@ -55,26 +53,22 @@ class Department(db.Model):
     def __repr__(self):
         return f"<Department(id={self.id}, name={self.name}, parent_id={self.parent_id})>"
 
-
-class Position(db.Model):
+class Position(db.Model, AuditMixin):
     """
     Self-referential table for job positions with hierarchy.
     A root position has parent_id = NULL.
     A child position has parent_id pointing to its parent, making it a subordinate role.
     """
     __tablename__ = "positions"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    parent_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id", ondelete="SET NULL"), nullable=True)
-    department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="SET NULL"), nullable=True)
+    parent_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.positions.id", ondelete="SET NULL"), nullable=True)
+    department_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.departments.id", ondelete="SET NULL"), nullable=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
     is_zone_assignable = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     parent = db.relationship("Position", remote_side=[id], back_populates="children", lazy="selectin")
     children = db.relationship("Position", back_populates="parent", lazy="selectin")
@@ -100,14 +94,13 @@ class Position(db.Model):
     def __repr__(self):
         return f"<Position(id={self.id}, name={self.name}, parent_id={self.parent_id})>"
 
-
-class Employee(db.Model):
+class Employee(db.Model, AuditMixin):
     __tablename__ = "employees"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True, index=True)
-    position_id = db.Column(db.BigInteger, db.ForeignKey("em.positions.id"), nullable=True)
+    position_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.positions.id"), nullable=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), unique=True, nullable=True)
     first_name = db.Column(db.String(150), nullable=False)
     last_name = db.Column(db.String(150), nullable=False)
@@ -116,10 +109,7 @@ class Employee(db.Model):
     phone = db.Column(db.String(20), default="")
     email = db.Column(db.String(255), default="")
     hire_date = db.Column(db.Date, nullable=True)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
     notes = db.Column(db.Text, default="")
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     position_rel = db.relationship("Position", back_populates="employees", lazy="selectin")
     tenant = db.relationship("Tenant", lazy="selectin", foreign_keys=[tenant_id])
@@ -162,14 +152,13 @@ class Employee(db.Model):
     def __repr__(self):
         return f"<Employee(id={self.id}, code={self.employee_id_code})>"
 
-
-class EmployeeProfile(db.Model):
+class EmployeeProfile(db.Model, AuditMixin):
     """Profil étendu pour les champs spécifiques (superviseur hiérarchique, dates)."""
     __tablename__ = "employee_profile"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
-    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="CASCADE"), primary_key=True)
-    supervisor_employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.employees.id", ondelete="CASCADE"), primary_key=True)
+    supervisor_employee_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.employees.id", ondelete="SET NULL"), nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
 
@@ -187,16 +176,15 @@ class EmployeeProfile(db.Model):
     def __repr__(self):
         return f"<EmployeeProfile(employee_id={self.employee_id})>"
 
-
-class EmployeeHistory(db.Model):
+class EmployeeHistory(db.Model, AuditMixin):
     __tablename__ = "employee_history"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="CASCADE"), nullable=False)
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.employees.id", ondelete="CASCADE"), nullable=False)
     action = db.Column(db.String(30), nullable=False)
-    old_department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="SET NULL"), nullable=True)
-    new_department_id = db.Column(db.BigInteger, db.ForeignKey("em.departments.id", ondelete="SET NULL"), nullable=True)
+    old_department_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.departments.id", ondelete="SET NULL"), nullable=True)
+    new_department_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.departments.id", ondelete="SET NULL"), nullable=True)
     notes = db.Column(db.Text, default="")
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)

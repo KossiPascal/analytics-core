@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
 from backend.src.models.auth import Tenant
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
@@ -57,7 +57,7 @@ def create_tenant():
             raise BadRequest("Tenant already exists", 409)
 
         tenant = Tenant(name=name,description=description,is_active=is_active)
-        tenant.created_by=g.current_user.get("id") if g.get("current_user") else None
+        tenant.created_by=currentUserId()
 
         db.session.add(tenant)
         db.session.commit()
@@ -84,7 +84,7 @@ def update_tenant(tenant_id: int):
         if "is_active" in data:
             tenant.is_active = bool(data.get("is_active", True))
 
-        tenant.updated_by=g.current_user.get("id") if g.get("current_user") else None
+        tenant.updated_by=currentUserId()
 
         db.session.commit()
         return jsonify({"message": "Tenant updated"}), 200
@@ -103,7 +103,7 @@ def delete_tenant(tenant_id: int):
 
         tenant.deleted = True
         tenant.deleted_at = datetime.now(timezone.utc)
-        tenant.deleted_by=g.current_user.get("id") if g.get("current_user") else None
+        tenant.deleted_by=currentUserId()
         # tenant.deleted_by = g.current_user.id
         db.session.commit()
         return jsonify({"message": "Tenant deleted"}), 200

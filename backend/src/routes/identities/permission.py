@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, g, request, jsonify
 from backend.src.models.auth import UserPermission
 from backend.src.logger import get_backend_logger
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.databases.extensions import db
 
 from werkzeug.exceptions import BadRequest
@@ -54,7 +54,7 @@ def create_permission():
 
         perm = UserPermission(name=name, description=description, is_active=is_active)
 
-        perm.created_by=g.current_user.get("id") if g.get("current_user") else None
+        perm.created_by=currentUserId()
 
         db.session.add(perm)
         db.session.commit()
@@ -80,7 +80,7 @@ def update_permission(permission_id: int):
         if "is_active" in data:
             perm.is_active = bool(data.get("is_active", True))
 
-        perm.updated_by=g.current_user.get("id") if g.get("current_user") else None
+        perm.updated_by=currentUserId()
 
         db.session.commit()
         return jsonify({"message": "Permission updated"}), 200
@@ -98,7 +98,7 @@ def delete_permission(permission_id: int):
 
         perm.deleted = True
         perm.deleted_at = datetime.now(timezone.utc)
-        perm.deleted_by=g.current_user.get("id") if g.get("current_user") else None
+        perm.deleted_by=currentUserId()
 
         db.session.commit()
         return jsonify({"message": "Permission deleted"}), 200

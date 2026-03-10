@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.services.dhis2_service import sync_organizational_units, sync_ascs
 from backend.src.logger import get_backend_logger
 

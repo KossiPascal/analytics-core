@@ -1,10 +1,11 @@
 import re
 import secrets
 import string
+from typing import List
 import unicodedata
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.employees import Department, Position, Employee, EmployeeHistory
 from backend.src.models.auth import Tenant, User
 from backend.src.logger import get_backend_logger
@@ -88,6 +89,7 @@ def create_department():
             parent_id=int(parent_id) if parent_id else None,
             description=data.get("description", ""),
             is_active=True,
+            created_by_id=currentUserId()
         )
         db.session.add(dept)
         db.session.commit()
@@ -100,7 +102,7 @@ def create_department():
 @bp.get("/departments/<int:id>")
 @require_auth
 def get_department(id):
-    dept = Department.query.get(id)
+    dept:Department = Department.query.get(id)
     if not dept:
         raise BadRequest("Department not found")
     
@@ -113,7 +115,7 @@ def get_department(id):
 @bp.put("/departments/<int:id>")
 @require_auth
 def update_department(id):
-    dept = Department.query.get(id)
+    dept:Department = Department.query.get(id)
     if not dept:
         raise BadRequest("Department not found")
 
@@ -125,7 +127,8 @@ def update_department(id):
         dept.parent_id = int(data["parent_id"]) if data["parent_id"] else None
     if "is_active" in data:
         dept.is_active = bool(data["is_active"])
-
+    
+    dept.updated_by_id=currentUserId()
     try:
         db.session.commit()
         return jsonify(dept.to_dict_safe()), 200
@@ -180,7 +183,9 @@ def create_position():
             description=data.get("description", ""),
             is_active=True,
             is_zone_assignable=bool(data.get("is_zone_assignable", False)),
+            created_by_id=currentUserId()
         )
+        
         db.session.add(pos)
         db.session.commit()
         return jsonify(pos.to_dict_safe()), 201
@@ -192,7 +197,7 @@ def create_position():
 @bp.put("/positions/<int:id>")
 @require_auth
 def update_position(id):
-    pos = Position.query.get(id)
+    pos:Position = Position.query.get(id)
     if not pos:
         raise BadRequest("Position not found", 404)
 
@@ -215,6 +220,8 @@ def update_position(id):
         pos.is_active = bool(data["is_active"])
     if "is_zone_assignable" in data:
         pos.is_zone_assignable = bool(data["is_zone_assignable"])
+
+    pos.updated_by_id=currentUserId()
 
     try:
         db.session.commit()
@@ -330,7 +337,7 @@ def list_employees():
     if scope_filters:
         query = query.filter(db.or_(*scope_filters))
 
-    employees = query.order_by(Employee.last_name, Employee.first_name).all()
+    employees:List[Employee] = query.order_by(Employee.last_name, Employee.first_name).all()
     return jsonify([e.to_dict_safe() for e in employees]), 200
 
 
@@ -388,6 +395,7 @@ def create_employee():
             hire_date=hire_date or None,
             notes=data.get("notes", ""),
             is_active=True,
+            created_by_id=currentUserId()
         )
         db.session.add(emp)
         db.session.flush()  # emp.id disponible
@@ -406,7 +414,7 @@ def create_employee():
             logger.warning("Employé créé sans tenant → suggestion de compte impossible.")
 
         # ── Historique ──────────────────────────────────────────────────────
-        creator_id = int(g.current_user["id"]) if g.current_user else None
+        creator_id = currentUserId()
         dept_id    = pos.department_id
         history = EmployeeHistory(
             employee_id=emp.id,
@@ -414,6 +422,7 @@ def create_employee():
             new_department_id=dept_id,
             user_id=creator_id,
             notes=f"Employé créé : {first_name} {last_name} — Poste : {pos.name}",
+            created_by_id=currentUserId()
         )
         db.session.add(history)
         db.session.commit()
@@ -444,7 +453,7 @@ def get_employee(id):
 @bp.put("/<int:id>")
 @require_auth
 def update_employee(id):
-    emp = Employee.query.get(id)
+    emp:Employee = Employee.query.get(id)
     if not emp:
         raise BadRequest("Employee not found", 404)
 
@@ -455,7 +464,7 @@ def update_employee(id):
         )
 
     data = request.get_json(silent=True) or {}
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
 
     # Validate required fields if provided
     if "phone" in data and not (data.get("phone") or "").strip():
@@ -491,23 +500,24 @@ def update_employee(id):
     if "position_id" in data:
         emp.position_id = int(data["position_id"]) if data["position_id"] else None
 
+    emp.updated_by_id=currentUserId()
+
     new_dept_id = emp.position_rel.department_id if emp.position_rel else None
+    
+    history = EmployeeHistory(
+        employee_id=emp.id,
+        user_id=user_id,
+        created_by_id=currentUserId()
+    )
 
     if old_dept_id != new_dept_id and (old_dept_id or new_dept_id):
-        history = EmployeeHistory(
-            employee_id=emp.id,
-            action="TRANSFERRED",
-            old_department_id=old_dept_id,
-            new_department_id=new_dept_id,
-            user_id=user_id,
-            notes=data.get("transfer_notes", ""),
-        )
+        history.action="TRANSFERRED"
+        history.old_department_id=old_dept_id
+        history.new_department_id=new_dept_id
+        history.notes=data.get("transfer_notes", "")
     else:
-        history = EmployeeHistory(
-            employee_id=emp.id,
-            action="UPDATED",
-            user_id=user_id,
-        )
+        history.action="UPDATED"
+
     db.session.add(history)
 
     try:
@@ -521,16 +531,17 @@ def update_employee(id):
 @bp.patch("/<int:id>/toggle-active")
 @require_auth
 def toggle_active(id):
-    emp = Employee.query.get(id)
+    emp:Employee = Employee.query.get(id)
     if not emp:
         raise BadRequest("Employee not found", 404)
 
     data = request.get_json(silent=True) or {}
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     notes = (data.get("notes") or "").strip()
     action_date = (data.get("action_date") or "").strip()
 
     emp.is_active = not emp.is_active
+    emp.updated_by_id=currentUserId()
 
     # Synchroniser le compte utilisateur lié
     if emp.user_id:
@@ -550,6 +561,7 @@ def toggle_active(id):
         action=action,
         user_id=user_id,
         notes=" — ".join(note_parts) if note_parts else "",
+        created_by_id=currentUserId()
     )
     db.session.add(history)
     db.session.commit()
@@ -563,7 +575,7 @@ def toggle_active(id):
 @require_auth
 def create_account(id):
     """Crée le compte utilisateur pour un employé (appelé après confirmation des credentials)."""
-    emp = Employee.query.get(id)
+    emp:Employee = Employee.query.get(id)
     if not emp:
         raise BadRequest("Employé introuvable", 404)
 
@@ -597,7 +609,7 @@ def create_account(id):
     lastname    = (data.get("lastname")  or "").strip() or emp.last_name
 
     try:
-        user_account = User(
+        user = User(
             username=username,
             tenant_id=tenant_id,
             email=emp.email or None,
@@ -605,23 +617,26 @@ def create_account(id):
             is_active=True,
             has_changed_default_password=False,
         )
-        user_account.firstname = firstname
-        user_account.lastname  = lastname
-        user_account.set_password(password)
-        db.session.add(user_account)
+        user.firstname = firstname
+        user.lastname  = lastname
+        user.set_password(password)
+        user.created_by=currentUserId()
+
+        db.session.add(user)
         db.session.flush()
 
         if role_ids:
             from backend.src.models.auth import UserRole
-            user_account.roles = UserRole.query.filter(UserRole.id.in_(role_ids)).all()
+            user.roles = UserRole.query.filter(UserRole.id.in_(role_ids)).all()
         if orgunit_ids:
             from backend.src.models.auth import UserOrgunit
-            user_account.orgunits = UserOrgunit.query.filter(UserOrgunit.id.in_(orgunit_ids)).all()
+            user.orgunits = UserOrgunit.query.filter(UserOrgunit.id.in_(orgunit_ids)).all()
 
-        emp.user_id = user_account.id
+        emp.user_id = user.id
+        emp.updated_by_id=currentUserId()
         db.session.commit()
 
-        return jsonify(user_account.to_dict()), 200
+        return jsonify(user.to_dict()), 200
 
     except IntegrityError:
         db.session.rollback()
@@ -635,12 +650,12 @@ def create_account(id):
 @require_auth
 def get_employee_account(id):
     """Retourne les données du compte utilisateur lié à l'employé."""
-    emp = Employee.query.get(id)
+    emp:Employee = Employee.query.get(id)
     if not emp:
         raise BadRequest("Employé introuvable", 404)
     if not emp.user_id:
         raise BadRequest("Cet employé n'a pas encore de compte utilisateur", 404)
-    user = User.query.get(emp.user_id)
+    user:User = User.query.get(emp.user_id)
     if not user:
         raise BadRequest("Compte utilisateur introuvable", 404)
     return jsonify(user.to_dict()), 200
@@ -652,12 +667,13 @@ def get_employee_account(id):
 @require_auth
 def update_employee_account(id):
     """Met à jour le compte utilisateur lié à l'employé."""
-    emp = Employee.query.get(id)
+    emp:Employee = Employee.query.get(id)
     if not emp:
         raise BadRequest("Employé introuvable", 404)
     if not emp.user_id:
         raise BadRequest("Cet employé n'a pas encore de compte utilisateur", 400)
-    user = User.query.get(emp.user_id)
+    
+    user:User = User.query.get(emp.user_id)
     if not user:
         raise BadRequest("Compte utilisateur introuvable", 404)
 
@@ -684,6 +700,8 @@ def update_employee_account(id):
         if len(data["password"]) < 6:
             raise BadRequest("Le mot de passe doit contenir au moins 6 caractères", 400)
         user.set_password(data["password"])
+
+    user.updated_by=currentUserId()
 
     try:
         db.session.commit()

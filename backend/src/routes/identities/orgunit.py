@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
 from backend.src.models.auth import UserOrgunit
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
@@ -88,7 +88,7 @@ def create_orgunit():
             level_id=level_id,
         )
 
-        orgunit.created_by=g.current_user.get("id") if g.get("current_user") else None
+        orgunit.created_by=currentUserId()
 
         db.session.add(orgunit)
         db.session.commit()
@@ -132,7 +132,7 @@ def update_orgunit(orgunit_id: int):
             orgunit.parent_id = new_parent.id
 
 
-        orgunit.updated_by = g.current_user.get("id") if g.get("current_user") else None
+        orgunit.updated_by = currentUserId()
 
         db.session.commit()
         return jsonify(orgunit.to_dict()), 200
@@ -153,7 +153,7 @@ def delete_orgunit(orgunit_id: int):
 
         orgunit.deleted = True
         orgunit.deleted_at = datetime.now(timezone.utc)
-        orgunit.deleted_by=g.current_user.get("id") if g.get("current_user") else None
+        orgunit.deleted_by=currentUserId()
 
         db.session.commit()
         return jsonify({"message": "Orgunit deleted"}), 200

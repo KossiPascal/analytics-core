@@ -70,8 +70,8 @@ def init_database(app: Flask) -> None:
         # car db.create_all() ouvre sa propre connexion et ne voit pas une transaction
         # non committée. On utilise une connexion séparée avec commit explicite.
         with db.engine.connect() as schema_conn:
-            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS em"))
-            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS mi"))
+            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS eqpm"))
+            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS meet"))
             schema_conn.commit()
 
         with db.engine.begin() as conn:
@@ -123,31 +123,31 @@ def init_database(app: Flask) -> None:
 def _reset_em_tables(app: Flask) -> None:
     """Vide les tables de référence Equipment Manager (dev uniquement)."""
     tables = [
-        "em.alert_recipient_configs",
-        "em.alert_config",
-        "em.email_config",
-        "em.issues",
-        "em.ticket_events",
-        "em.ticket_comments",
-        "em.delay_alert_logs",
-        "em.repair_tickets",
-        "em.delay_alert_recipients",
-        "em.accessories",
-        "em.equipment_imeis",
-        "em.equipment_history",
-        "em.equipment",
-        "em.equipment_brands",
-        "em.equipment_categories",
-        "em.equipment_category_groups",
-        "em.problem_types",
-        "em.employee_profile",
-        "em.employee_history",
-        "em.employees",
-        "em.positions",
-        "em.departments",
-        "em.sites",
-        "em.districts",
-        "em.regions",
+        "eqpm.alert_recipient_configs",
+        "eqpm.alert_config",
+        "eqpm.email_config",
+        "eqpm.issues",
+        "eqpm.ticket_events",
+        "eqpm.ticket_comments",
+        "eqpm.delay_alert_logs",
+        "eqpm.repair_tickets",
+        "eqpm.delay_alert_recipients",
+        "eqpm.accessories",
+        "eqpm.equipment_imeis",
+        "eqpm.equipment_history",
+        "eqpm.equipment",
+        "eqpm.equipment_brands",
+        "eqpm.equipment_categories",
+        "eqpm.equipment_category_groups",
+        "eqpm.problem_types",
+        "eqpm.employee_profile",
+        "eqpm.employee_history",
+        "eqpm.employees",
+        "eqpm.positions",
+        "eqpm.departments",
+        "eqpm.sites",
+        "eqpm.districts",
+        "eqpm.regions",
     ]
     with app.app_context():
         for table in tables:
@@ -224,7 +224,7 @@ def create_flask_app(initialize_database = True) -> Flask:
     # ── Equipment Manager CLI commands ────────────────────────────────────────
     import click
 
-    @app.cli.group("em")
+    @app.cli.group("equipment")
     def em_cli():
         """Commandes Equipment Manager."""
 

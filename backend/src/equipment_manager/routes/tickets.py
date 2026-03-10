@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
+from typing import List
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.tickets import (
     RepairTicket, Issue, TicketEvent, TicketComment, ProblemType,
     DelayAlertRecipient, DelayAlertLog,
@@ -41,11 +42,11 @@ def list_tickets():
     is_admin   = bool(user_roles & {"admin", "superadmin"})
 
     if not is_admin:
-        caller_employee_id          = g.current_user.get("employee_id")
-        caller_position_id          = g.current_user.get("position_id")
-        caller_position_is_asc      = bool(g.current_user.get("position_is_zone_assignable"))
-        caller_orgunit_ids          = [int(i) for i in (g.current_user.get("orgunit_ids") or []) if i]
-        caller_dept_code            = g.current_user.get("department_code")
+        caller_employee_id     = g.current_user.get("employee_id")
+        caller_position_id     = g.current_user.get("position_id")
+        caller_position_is_asc = bool(g.current_user.get("position_is_zone_assignable"))
+        caller_orgunit_ids     = [int(i) for i in (g.current_user.get("orgunit_ids") or []) if i]
+        caller_dept_code       = g.current_user.get("department_code")
 
         if caller_position_is_asc and caller_employee_id:
             # ASC : uniquement leurs propres tickets
@@ -105,27 +106,23 @@ def create_ticket():
     if not equipment_id or not problem_description:
         raise BadRequest("equipment_id and problem_description are required", 400)
 
-    equipment = Equipment.query.get(int(equipment_id))
+    equipment:Equipment = Equipment.query.get(int(equipment_id))
     if not equipment:
         raise BadRequest("Equipment not found", 404)
 
     if not equipment.is_active:
-        raise BadRequest(
-            f"Impossible de créer un ticket : l'équipement est inactif ({equipment.status}).",
-            409
-        )
+        raise BadRequest(f"Impossible de créer un ticket : l'équipement est inactif ({equipment.status}).",409)
 
     # Use provided employee or equipment's owner
     employee = None
     if employee_id:
-        employee = Employee.query.get(int(employee_id))
+        employee:Employee = Employee.query.get(int(employee_id))
     elif equipment.owner_id:
         employee = equipment.owner
 
     if not employee:
         raise BadRequest("employee_id is required (or assign equipment to an employee first)", 400)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
     creator_dept_code = g.current_user.get("department_code") if g.current_user else None
     creator_dept_name = None
     if creator_dept_code:
@@ -143,6 +140,7 @@ def create_ticket():
             pass
 
     try:
+        user_id = currentUserId()
         ticket = RepairTicket(
             ticket_number=generate_ticket_number(),
             equipment_id=equipment.id,
@@ -155,6 +153,7 @@ def create_ticket():
             current_department_code=creator_dept_code,
             current_department_name=creator_dept_name,
         )
+
         db.session.add(ticket)
         db.session.flush()
 
@@ -166,6 +165,7 @@ def create_ticket():
                     ticket_id=ticket.id,
                     problem_type_id=pt.id,
                     description=data.get("issue_description", ""),
+                    created_by_id=currentUserId()
                 )
                 db.session.add(issue)
 
@@ -177,7 +177,9 @@ def create_ticket():
             from_role="SUPERVISOR",
             to_role="SUPERVISOR",
             comment="Ticket cree",
+            created_by_id=currentUserId()
         )
+        
         db.session.add(event)
 
         # Mark equipment as under repair
@@ -240,7 +242,7 @@ def receive_ticket(id):
         raise BadRequest("Ticket not found", 404)
 
     data = request.get_json(silent=True) or {}
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     user_roles = set(g.current_user.get("roles", []))
     is_admin = bool(user_roles & {"admin", "superadmin"})
 
@@ -265,7 +267,9 @@ def receive_ticket(id):
         from_role=ticket.current_stage,
         to_role=ticket.current_stage,
         comment=data.get("comment", "Reception confirmee"),
+        created_by_id=currentUserId()
     )
+    
     db.session.add(event)
 
     ticket.current_holder_id = user_id
@@ -278,7 +282,7 @@ def receive_ticket(id):
 @bp.post("/<int:id>/send")
 @require_auth
 def send_ticket(id):
-    ticket = RepairTicket.query.get(id)
+    ticket:RepairTicket = RepairTicket.query.get(id)
     if not ticket:
         raise BadRequest("Ticket not found", 404)
 
@@ -316,7 +320,7 @@ def send_ticket(id):
         valid = get_next_stages(ticket.current_stage)
         raise BadRequest(f"Invalid transition. Valid next stages: {valid}", 400)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     sender_name = g.current_user.get("fullname", g.current_user.get("username", ""))
     sender_dept_code = g.current_user.get("department_code")
 
@@ -341,11 +345,14 @@ def send_ticket(id):
         comment=comment,
         recipient_employee_id=int(recipient_employee_id) if recipient_employee_id else None,
         department_code=sender_dept_code,
+        created_by_id=currentUserId()
     )
+    
     db.session.add(event)
 
     ticket.current_stage = to_role
     ticket.current_holder_id = None  # Will be set on receive
+    ticket.updated_by_id = currentUserId()
     # Mettre à jour le département courant du ticket
     if recipient_dept_code:
         ticket.current_department_code = recipient_dept_code
@@ -366,7 +373,12 @@ def send_ticket(id):
     # Send email notification (non-blocking)
     try:
         failed_cc = send_ticket_notification(
-            ticket, recipient_email, sender_name, to_role, comment, cc_emails=cc_emails
+            ticket, 
+            recipient_email, 
+            sender_name, 
+            to_role, 
+            comment, 
+            cc_emails=cc_emails
         )
         # Si des CC ont échoué, notifier l'expéditeur
         if failed_cc and user_id:
@@ -394,7 +406,7 @@ def receive_from_repairer(id):
     Action réservée Logistique/E-Santé/TIC : réceptionner l'équipement venant du réparateur
     et déclarer son état (REPAIRED → retour lancé | COMPLETELY_DAMAGED → clôture).
     """
-    ticket = RepairTicket.query.get(id)
+    ticket:RepairTicket = RepairTicket.query.get(id)
     if not ticket:
         raise BadRequest("Ticket not found", 404)
 
@@ -407,7 +419,7 @@ def receive_from_repairer(id):
         raise BadRequest("Le ticket a déjà été réceptionné à cette étape.", 400)
 
     # Vérification du département (LOG / ETH / TIC) ou admin
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
     user_roles = set(g.current_user.get("roles", []))
     is_admin = bool(user_roles & {"admin", "superadmin"})
 
@@ -429,14 +441,13 @@ def receive_from_repairer(id):
     comment = data.get("comment", "").strip()
 
     if equipment_state not in ("REPAIRED", "COMPLETELY_DAMAGED"):
-        raise BadRequest(
-            "equipment_state doit être REPAIRED (réparé) ou COMPLETELY_DAMAGED (non récupérable).", 400
-        )
+        raise BadRequest("Equipment_state doit être REPAIRED (réparé) ou COMPLETELY_DAMAGED (non récupérable).", 400)
 
     if equipment_state == "REPAIRED":
         # Confirmer réception, équipement fonctionnel → processus de retour continue
         ticket.current_holder_id = user_id
         ticket.equipment.status = "FUNCTIONAL"
+        ticket.updated_by_id=currentUserId()
 
         event = TicketEvent(
             ticket_id=ticket.id,
@@ -445,7 +456,9 @@ def receive_from_repairer(id):
             from_role=ticket.current_stage,
             to_role=ticket.current_stage,
             comment=comment or "Équipement réceptionné depuis le réparateur — état fonctionnel. Retour en cours.",
+            created_by_id=currentUserId()
         )
+        
         db.session.add(event)
     else:
         # Équipement non récupérable → clôture du ticket
@@ -453,6 +466,7 @@ def receive_from_repairer(id):
         ticket.closed_date = datetime.now(timezone.utc)
         ticket.current_holder_id = user_id
         ticket.equipment.status = "COMPLETELY_DAMAGED"
+        ticket.updated_by_id=currentUserId()
 
         event = TicketEvent(
             ticket_id=ticket.id,
@@ -461,7 +475,9 @@ def receive_from_repairer(id):
             from_role=ticket.current_stage,
             to_role=ticket.current_stage,
             comment=comment or "Équipement non récupérable — complètement endommagé. Ticket clôturé.",
+            created_by_id=currentUserId()
         )
+        
         db.session.add(event)
 
     db.session.commit()
@@ -471,16 +487,17 @@ def receive_from_repairer(id):
 @bp.post("/<int:id>/mark-repaired")
 @require_auth
 def mark_repaired(id):
-    ticket = RepairTicket.query.get(id)
+    ticket:RepairTicket = RepairTicket.query.get(id)
     if not ticket:
         raise BadRequest("Ticket not found", 404)
 
     data = request.get_json(silent=True) or {}
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
 
     ticket.status = "REPAIRED"
     ticket.repair_completed_date = datetime.now(timezone.utc)
     ticket.resolution_notes = data.get("resolution_notes", "")
+    ticket.updated_by_id=currentUserId()
 
     event = TicketEvent(
         ticket_id=ticket.id,
@@ -489,7 +506,9 @@ def mark_repaired(id):
         from_role=ticket.current_stage,
         to_role=ticket.current_stage,
         comment=f"Reparation terminee. {ticket.resolution_notes}",
+        created_by_id=currentUserId()
     )
+    
     db.session.add(event)
     db.session.commit()
 
@@ -499,7 +518,7 @@ def mark_repaired(id):
 @bp.post("/<int:id>/cancel")
 @require_auth
 def cancel_ticket(id):
-    ticket = RepairTicket.query.get(id)
+    ticket:RepairTicket = RepairTicket.query.get(id)
     if not ticket:
         raise BadRequest("Ticket not found", 404)
 
@@ -512,11 +531,12 @@ def cancel_ticket(id):
     if not cancellation_reason:
         raise BadRequest("cancellation_reason is required", 400)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
 
     ticket.status = "CANCELLED"
     ticket.cancelled_date = datetime.now(timezone.utc)
     ticket.cancellation_reason = cancellation_reason
+    ticket.updated_by_id=currentUserId()
 
     event = TicketEvent(
         ticket_id=ticket.id,
@@ -525,7 +545,9 @@ def cancel_ticket(id):
         from_role=ticket.current_stage,
         to_role=ticket.current_stage,
         comment=f"Ticket annule. Raison: {cancellation_reason}",
+        created_by_id=currentUserId()
     )
+    
     db.session.add(event)
 
     # Set equipment back to FAULTY
@@ -548,13 +570,15 @@ def add_comment(id):
     if not comment_text:
         raise BadRequest("comment is required", 400)
 
-    user_id = int(g.current_user["id"]) if g.current_user else None
+    user_id = currentUserId()
 
     comment = TicketComment(
         ticket_id=ticket.id,
         user_id=user_id,
         comment=comment_text,
+        created_by_id=user_id
     )
+    
     db.session.add(comment)
     db.session.commit()
 
@@ -564,7 +588,7 @@ def add_comment(id):
 @bp.get("/overdue")
 @require_auth
 def overdue_tickets():
-    tickets = RepairTicket.query.filter(RepairTicket.status.notin_(["CLOSED", "CANCELLED"])).all()
+    tickets:List[RepairTicket] = RepairTicket.query.filter(RepairTicket.status.notin_(["CLOSED", "CANCELLED"])).all()
     overdue = [t.to_dict_safe() for t in tickets if t.get_delay_days() > 14]
     return jsonify(overdue), 200
 
@@ -572,7 +596,7 @@ def overdue_tickets():
 @bp.get("/warning")
 @require_auth
 def warning_tickets():
-    tickets = RepairTicket.query.filter(RepairTicket.status.notin_(["CLOSED", "CANCELLED"])).all()
+    tickets:List[RepairTicket] = RepairTicket.query.filter(RepairTicket.status.notin_(["CLOSED", "CANCELLED"])).all()
     warning = [t.to_dict_safe() for t in tickets if 7 < t.get_delay_days() <= 14]
     return jsonify(warning), 200
 
@@ -582,7 +606,7 @@ def warning_tickets():
 @bp.get("/problem-types")
 @require_auth
 def list_problem_types():
-    types = ProblemType.query.filter_by(is_active=True).order_by(
+    types:List[ProblemType] = ProblemType.query.filter_by(is_active=True).order_by(
         ProblemType.category, ProblemType.display_order, ProblemType.name
     ).all()
     return jsonify([t.to_dict_safe() for t in types]), 200
@@ -609,7 +633,9 @@ def create_problem_type():
             category=category,
             display_order=data.get("display_order", 0),
             is_active=data.get("is_active", True),
+            created_by_id=currentUserId()
         )
+        
         db.session.add(pt)
         db.session.commit()
         return jsonify(pt.to_dict_safe()), 201
@@ -623,7 +649,7 @@ def create_problem_type():
 @bp.get("/alert-recipients")
 @require_auth
 def list_alert_recipients():
-    recipients = DelayAlertRecipient.query.all()
+    recipients:List[DelayAlertRecipient] = DelayAlertRecipient.query.all()
     return jsonify([r.to_dict_safe() for r in recipients]), 200
 
 
@@ -643,7 +669,9 @@ def create_alert_recipient():
             email=email,
             recipient_type=data.get("recipient_type", "PRIMARY"),
             is_active=True,
+            created_by_id=currentUserId()
         )
+        
         db.session.add(recipient)
         db.session.commit()
         return jsonify(recipient.to_dict_safe()), 201
@@ -655,7 +683,7 @@ def create_alert_recipient():
 @bp.patch("/alert-recipients/<int:id>")
 @require_auth
 def toggle_alert_recipient(id):
-    recipient = DelayAlertRecipient.query.get(id)
+    recipient:DelayAlertRecipient = DelayAlertRecipient.query.get(id)
     if not recipient:
         raise BadRequest("Recipient not found", 404)
 
@@ -679,7 +707,7 @@ def list_alert_recipient_configs():
     if stage:
         query = query.filter(AlertRecipientConfig.stage == stage)
 
-    configs = query.order_by(AlertRecipientConfig.alert_level, AlertRecipientConfig.created_at).all()
+    configs:List[AlertRecipientConfig] = query.order_by(AlertRecipientConfig.alert_level, AlertRecipientConfig.created_at).all()
     return jsonify([c.to_dict_safe() for c in configs]), 200
 
 
@@ -714,11 +742,12 @@ def create_alert_recipient_config():
         employee_id=int(employee_id) if employee_id else None,
         position_id=int(position_id) if position_id else None,
         is_active=True,
+        created_by_id=currentUserId()
     )
+    
     db.session.add(cfg)
     db.session.commit()
     return jsonify(cfg.to_dict_safe()), 201
-
 
 @bp.delete("/alert-recipient-configs/<int:id>")
 @require_auth
@@ -727,7 +756,13 @@ def delete_alert_recipient_config(id):
     cfg = db.session.get(AlertRecipientConfig, id)
     if not cfg:
         raise BadRequest("Configuration introuvable", 404)
-    db.session.delete(cfg)
+    
+    # db.session.delete(cfg)
+    cfg.is_active=False,
+    cfg.deleted = True
+    cfg.deleted_at = datetime.now(timezone.utc)
+    cfg.deleted_by_id=currentUserId()
+    
     db.session.commit()
     return jsonify(success=True), 200
 
@@ -740,5 +775,6 @@ def toggle_alert_recipient_config(id):
     if not cfg:
         raise BadRequest("Configuration introuvable", 404)
     cfg.is_active = not cfg.is_active
+    cfg.updated_by_id=currentUserId()
     db.session.commit()
     return jsonify(cfg.to_dict_safe()), 200

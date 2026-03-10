@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from backend.src.databases.extensions import db
+from backend.src.models.controls import AuditMixin
 
 # ---------------------------------------------------------------------------
 # Equipment lifecycle constants
@@ -26,18 +27,15 @@ DECLARATION_ACTION_MAP = {
 }
 
 
-class EquipmentCategoryGroup(db.Model):
+class EquipmentCategoryGroup(db.Model, AuditMixin):
     """Grande catégorie d'équipement (ex: Appareils électroniques, Meubles, Voitures…)"""
     __tablename__ = "equipment_category_groups"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     categories = db.relationship("EquipmentCategory", back_populates="category_group", lazy="selectin")
 
@@ -56,19 +54,16 @@ class EquipmentCategoryGroup(db.Model):
         return f"<EquipmentCategoryGroup(id={self.id}, name={self.name})>"
 
 
-class EquipmentCategory(db.Model):
+class EquipmentCategory(db.Model, AuditMixin):
     """Type d'équipement (ex: Téléphone, Tablette, Chaise, Voiture Toyota…)"""
     __tablename__ = "equipment_categories"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    category_group_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment_category_groups.id", ondelete="SET NULL"), nullable=True)
+    category_group_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.equipment_category_groups.id", ondelete="SET NULL"), nullable=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     category_group = db.relationship("EquipmentCategoryGroup", back_populates="categories", lazy="selectin")
     equipments = db.relationship("Equipment", back_populates="category_rel", lazy="selectin")
@@ -91,18 +86,15 @@ class EquipmentCategory(db.Model):
         return f"<EquipmentCategory(id={self.id}, name={self.name})>"
 
 
-class EquipmentBrand(db.Model):
+class EquipmentBrand(db.Model, AuditMixin):
     """Marque d'equipement (ex: Samsung, Tecno, Itel)"""
     __tablename__ = "equipment_brands"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(150), unique=True, nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     equipments = db.relationship("Equipment", back_populates="brand_rel", lazy="selectin")
 
@@ -121,23 +113,23 @@ class EquipmentBrand(db.Model):
         return f"<EquipmentBrand(id={self.id}, name={self.name})>"
 
 
-class Equipment(db.Model):
+class Equipment(db.Model, AuditMixin):
     __tablename__ = "equipment"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     equipment_type = db.Column(db.String(20), default="")
-    category_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment_categories.id"), nullable=True)
+    category_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.equipment_categories.id"), nullable=True)
     brand = db.Column(db.String(100), default="")
-    brand_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment_brands.id"), nullable=True)
+    brand_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.equipment_brands.id"), nullable=True)
     model_name = db.Column(db.String(100), nullable=False)
     equipment_code = db.Column(db.String(50), unique=True, nullable=True)
     imei = db.Column(db.String(50), unique=True, nullable=True)  # Legacy / premier IMEI
     serial_number = db.Column(db.String(100), default="")
     has_sim = db.Column(db.Boolean, default=False, nullable=False)
 
-    owner_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
-    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
+    owner_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.employees.id", ondelete="SET NULL"), nullable=True)
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.employees.id", ondelete="SET NULL"), nullable=True)
 
     # PENDING | FUNCTIONAL | FAULTY | UNDER_REPAIR | COMPLETELY_DAMAGED | LOST | STOLEN | TAKEN_AWAY
     status = db.Column(db.String(30), default="PENDING", nullable=False)
@@ -147,9 +139,6 @@ class Equipment(db.Model):
     assignment_date = db.Column(db.Date, nullable=True)
     reception_form_path = db.Column(db.String(500), default="")
     notes = db.Column(db.Text, default="")
-
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     category_rel = db.relationship("EquipmentCategory", back_populates="equipments", lazy="selectin")
     brand_rel = db.relationship("EquipmentBrand", back_populates="equipments", lazy="selectin")
@@ -161,7 +150,7 @@ class Equipment(db.Model):
     imeis = db.relationship("EquipmentImei", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan", order_by="EquipmentImei.slot_number")
 
     @property
-    def is_active(self) -> bool:
+    def is_status_active(self) -> bool:
         return self.status in ACTIVE_STATUSES
 
     def to_dict_safe(self):
@@ -182,7 +171,7 @@ class Equipment(db.Model):
             "employee_id": str(self.employee_id) if self.employee_id else None,
             "employee_name": self.employee.get_full_name() if self.employee else None,
             "status": self.status,
-            "is_active": self.is_active,
+            "is_active": self.is_status_active,
             "is_unique": self.is_unique,
             "acquisition_date": self.acquisition_date.isoformat() if self.acquisition_date else None,
             "warranty_expiry_date": self.warranty_expiry_date.isoformat() if self.warranty_expiry_date else None,
@@ -199,18 +188,16 @@ class Equipment(db.Model):
         return f"<Equipment(id={self.id}, equipment_code={self.equipment_code})>"
 
 
-class EquipmentHistory(db.Model):
+class EquipmentHistory(db.Model, AuditMixin):
     __tablename__ = "equipment_history"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.equipment.id", ondelete="CASCADE"), nullable=False)
     action = db.Column(db.String(30), nullable=False)  # CREATED, ASSIGNED, ASSIGNED_TO_EMPLOYEE, STATUS_CHANGED, TRANSFERRED, RETIRED
     old_value = db.Column(db.String(255), default="")
     new_value = db.Column(db.String(255), default="")
     notes = db.Column(db.Text, default="")
-    created_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     equipment = db.relationship("Equipment", back_populates="history", lazy="selectin")
 
@@ -230,12 +217,12 @@ class EquipmentHistory(db.Model):
         return f"<EquipmentHistory(id={self.id}, action={self.action})>"
 
 
-class Accessory(db.Model):
+class Accessory(db.Model, AuditMixin):
     __tablename__ = "accessories"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.equipment.id", ondelete="CASCADE"), nullable=False)
     name = db.Column(db.String(150), nullable=False)
     description = db.Column(db.Text, default="")
     serial_number = db.Column(db.String(100), default="")
@@ -261,16 +248,15 @@ class Accessory(db.Model):
         return f"<Accessory(id={self.id}, name={self.name})>"
 
 
-class EquipmentImei(db.Model):
+class EquipmentImei(db.Model, AuditMixin):
     """IMEI(s) d'un équipement. Un appareil peut avoir plusieurs IMEI (dual-SIM)."""
     __tablename__ = "equipment_imeis"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.equipment.id", ondelete="CASCADE"), nullable=False)
     imei = db.Column(db.String(15), unique=True, nullable=False)
     slot_number = db.Column(db.Integer, default=1, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     equipment = db.relationship("Equipment", back_populates="imeis", lazy="selectin")
 

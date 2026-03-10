@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 from backend.src.databases.extensions import db
 from backend.src.models.auth import OrgUnitLevel
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
@@ -118,7 +118,7 @@ def update_level(level_id: int):
         if "tenant_id" in data:
             lv.tenant_id = data["tenant_id"]
 
-        lv.updated_by = g.current_user.get("id") if g.get("current_user") else None
+        lv.updated_by = currentUserId()
 
         db.session.commit()
         return jsonify(lv.to_dict()), 200
@@ -144,7 +144,7 @@ def delete_level(level_id: int):
 
         lv.deleted    = True
         lv.deleted_at = datetime.now(timezone.utc)
-        lv.deleted_by = g.current_user.get("id") if g.get("current_user") else None
+        lv.deleted_by = currentUserId()
 
         db.session.commit()
         return jsonify({"message": "Niveau supprimé"}), 200

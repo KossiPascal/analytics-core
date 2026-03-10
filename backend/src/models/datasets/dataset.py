@@ -322,8 +322,8 @@ class DatasetField(db.Model, AuditMixin):
     is_filterable = db.Column(db.Boolean, nullable=False, default=False)
     is_groupable = db.Column(db.Boolean, nullable=False, default=False)
     is_sortable = db.Column(db.Boolean, nullable=False, default=False)
-    # is_selectable = db.Column(db.Boolean, nullable=False, default=False)
-    # is_hidden = db.Column(db.Boolean, nullable=False, default=False)
+    is_selectable = db.Column(db.Boolean, nullable=False, default=False)
+    is_hidden = db.Column(db.Boolean, nullable=False, default=False)
 
     tenant = db.relationship("Tenant", back_populates="fields", lazy="selectin",foreign_keys=[tenant_id])
     dataset = db.relationship("Dataset", back_populates="fields", lazy="selectin",foreign_keys=[dataset_id])

@@ -9,7 +9,7 @@ from flask import Blueprint, request, jsonify
 
 from backend.src.databases.extensions import db
 from backend.src.models.auth import OrgUnitLevel, UserOrgunit, UserOrgunitLink, Tenant, User
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest

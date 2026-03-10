@@ -4,7 +4,7 @@ from backend.src.databases.extensions import db
 
 class Meeting(db.Model):
     __tablename__ = "meetings"
-    __table_args__ = {"schema": "mi"}
+    __table_args__ = {"schema": "meet"}
 
     id              = db.Column(db.Integer, primary_key=True)
     title           = db.Column(db.String(255), nullable=False)
@@ -39,13 +39,12 @@ class Meeting(db.Model):
             "updated_at":     self.updated_at.isoformat() if self.updated_at else None,
         }
 
-
 class MeetingTranscription(db.Model):
     __tablename__ = "meeting_transcriptions"
-    __table_args__ = {"schema": "mi"}
+    __table_args__ = {"schema": "meet"}
 
     id                  = db.Column(db.Integer, primary_key=True)
-    meeting_id          = db.Column(db.Integer, db.ForeignKey("mi.meetings.id"), nullable=False)
+    meeting_id          = db.Column(db.Integer, db.ForeignKey("meet.meetings.id"), nullable=False)
     audio_filename      = db.Column(db.String(255), nullable=True)
     transcription_text  = db.Column(db.Text, nullable=True)
     language            = db.Column(db.String(10), nullable=True, default="fr")
@@ -65,13 +64,12 @@ class MeetingTranscription(db.Model):
             "created_at":         self.created_at.isoformat() if self.created_at else None,
         }
 
-
 class MeetingSummary(db.Model):
     __tablename__ = "meeting_summaries"
-    __table_args__ = {"schema": "mi"}
+    __table_args__ = {"schema": "meet"}
 
     id                = db.Column(db.Integer, primary_key=True)
-    meeting_id        = db.Column(db.Integer, db.ForeignKey("mi.meetings.id"), nullable=False)
+    meeting_id        = db.Column(db.Integer, db.ForeignKey("meet.meetings.id"), nullable=False)
     # GEMINI | GROQ | OLLAMA
     provider          = db.Column(db.String(20), nullable=False)
     model_used        = db.Column(db.String(100), nullable=True)

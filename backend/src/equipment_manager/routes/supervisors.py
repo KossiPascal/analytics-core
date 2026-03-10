@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.employees import Employee, Position
 from backend.src.models.auth import User
 from backend.src.logger import get_backend_logger
@@ -86,7 +86,9 @@ def create_supervisor():
             phone=phone,
             tenant_id=tenant_id,
             is_active=True,
+            created_by_id=currentUserId()
         )
+
         user.set_password(password)
         db.session.add(user)
         db.session.flush()
@@ -101,7 +103,9 @@ def create_supervisor():
             phone=phone,
             position_id=position.id,
             is_active=True,
+            created_by_id=currentUserId()
         )
+        
         db.session.add(employee)
         db.session.commit()
 
@@ -127,23 +131,25 @@ def get_supervisor(id):
         raise BadRequest("Supervisor not found", 404)
     return jsonify(employee.to_dict_safe()), 200
 
-
 @bp.put("/<int:id>")
 @require_auth
 def update_supervisor(id):
-    employee = Employee.query.get(id)
+    employee:Employee = Employee.query.get(id)
     if not employee:
         raise BadRequest("Supervisor not found", 404)
 
     data = request.get_json(silent=True) or {}
 
+    user_id = currentUserId()
+
     for field in ("first_name", "last_name", "email", "phone"):
         if field in data:
             setattr(employee, field, data[field].strip() if isinstance(data[field], str) else data[field])
+    employee.updated_by_id = user_id
 
     # Update associated user account
     if employee.user_id:
-        user = User.query.get(employee.user_id)
+        user:User = User.query.get(employee.user_id)
         if user:
             if "first_name" in data or "last_name" in data:
                 user.fullname = f"{employee.first_name} {employee.last_name}"
@@ -151,6 +157,8 @@ def update_supervisor(id):
                 user.email = data["email"].strip() or None
             if "phone" in data:
                 user.phone = data["phone"].strip()
+            
+            user.updated_by=user_id
 
     try:
         db.session.commit()

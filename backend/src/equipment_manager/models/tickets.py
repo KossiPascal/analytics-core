@@ -1,19 +1,17 @@
 from datetime import datetime, timezone
 from backend.src.databases.extensions import db
+from backend.src.models.controls import AuditMixin
 
 
-class ProblemType(db.Model):
+class ProblemType(db.Model, AuditMixin):
     __tablename__ = "problem_types"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
     category = db.Column(db.String(20), nullable=False)  # HARDWARE, SOFTWARE, OTHER
     display_order = db.Column(db.Integer, default=0)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     issues = db.relationship("Issue", back_populates="problem_type", lazy="selectin")
 
@@ -33,9 +31,9 @@ class ProblemType(db.Model):
         return f"<ProblemType(id={self.id}, code={self.code})>"
 
 
-class RepairTicket(db.Model):
+class RepairTicket(db.Model, AuditMixin):
     __tablename__ = "repair_tickets"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     STATUS_CHOICES = ["OPEN", "IN_PROGRESS", "REPAIRED", "RETURNING", "CLOSED", "CANCELLED"]
     STAGE_CHOICES = [
@@ -56,8 +54,8 @@ class RepairTicket(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     ticket_number = db.Column(db.String(30), unique=True, nullable=False)
-    equipment_id = db.Column(db.BigInteger, db.ForeignKey("em.equipment.id", ondelete="CASCADE"), nullable=False)
-    employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="CASCADE"), nullable=False)
+    equipment_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.equipment.id", ondelete="CASCADE"), nullable=False)
+    employee_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.employees.id", ondelete="CASCADE"), nullable=False)
     status = db.Column(db.String(20), default="OPEN", nullable=False)
     current_stage = db.Column(db.String(30), default="SUPERVISOR", nullable=False)
     current_holder_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -70,12 +68,8 @@ class RepairTicket(db.Model):
     cancelled_date = db.Column(db.DateTime(timezone=True), nullable=True)
     cancellation_reason = db.Column(db.Text, default="")
 
-    created_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     initial_problem_description = db.Column(db.Text, nullable=False)
     resolution_notes = db.Column(db.Text, default="")
-
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     equipment = db.relationship("Equipment", back_populates="repair_tickets", lazy="selectin")
     employee = db.relationship("Employee", back_populates="repair_tickets", lazy="selectin")
@@ -164,15 +158,14 @@ class RepairTicket(db.Model):
         return f"<RepairTicket(id={self.id}, number={self.ticket_number})>"
 
 
-class Issue(db.Model):
+class Issue(db.Model, AuditMixin):
     __tablename__ = "issues"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
-    problem_type_id = db.Column(db.BigInteger, db.ForeignKey("em.problem_types.id", ondelete="RESTRICT"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    problem_type_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.problem_types.id", ondelete="RESTRICT"), nullable=False)
     description = db.Column(db.Text, default="")
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     ticket = db.relationship("RepairTicket", back_populates="issues", lazy="selectin")
     problem_type = db.relationship("ProblemType", back_populates="issues", lazy="selectin")
@@ -192,18 +185,18 @@ class Issue(db.Model):
         return f"<Issue(id={self.id}, ticket_id={self.ticket_id})>"
 
 
-class TicketEvent(db.Model):
+class TicketEvent(db.Model, AuditMixin):
     __tablename__ = "ticket_events"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.repair_tickets.id", ondelete="CASCADE"), nullable=False)
     event_type = db.Column(db.String(20), nullable=False)
     from_role = db.Column(db.String(30), default="")
     to_role = db.Column(db.String(30), default="")
     department_code = db.Column(db.String(50), nullable=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    recipient_employee_id = db.Column(db.BigInteger, db.ForeignKey("em.employees.id", ondelete="SET NULL"), nullable=True)
+    recipient_employee_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.employees.id", ondelete="SET NULL"), nullable=True)
     timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     comment = db.Column(db.Text, default="")
     attachment_path = db.Column(db.String(500), default="")
@@ -236,15 +229,14 @@ class TicketEvent(db.Model):
         return f"<TicketEvent(id={self.id}, type={self.event_type})>"
 
 
-class TicketComment(db.Model):
+class TicketComment(db.Model, AuditMixin):
     __tablename__ = "ticket_comments"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.repair_tickets.id", ondelete="CASCADE"), nullable=False)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     comment = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
     ticket = db.relationship("RepairTicket", back_populates="comments", lazy="selectin")
     user = db.relationship("User", foreign_keys=[user_id], lazy="selectin")
@@ -263,17 +255,14 @@ class TicketComment(db.Model):
         return f"<TicketComment(id={self.id})>"
 
 
-class DelayAlertRecipient(db.Model):
+class DelayAlertRecipient(db.Model, AuditMixin):
     __tablename__ = "delay_alert_recipients"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     email = db.Column(db.String(255), nullable=False)
     recipient_type = db.Column(db.String(20), default="PRIMARY", nullable=False)
-    is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-    updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict_safe(self):
         return {
@@ -290,12 +279,12 @@ class DelayAlertRecipient(db.Model):
         return f"<DelayAlertRecipient(id={self.id}, email={self.email})>"
 
 
-class DelayAlertLog(db.Model):
+class DelayAlertLog(db.Model, AuditMixin):
     __tablename__ = "delay_alert_logs"
-    __table_args__ = {'schema': 'em'}
+    __table_args__ = {'schema': 'eqpm'}
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    ticket_id = db.Column(db.BigInteger, db.ForeignKey("em.repair_tickets.id", ondelete="CASCADE"), nullable=False)
+    ticket_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.repair_tickets.id", ondelete="CASCADE"), nullable=False)
     stage = db.Column(db.String(30), nullable=False)
     days_in_stage = db.Column(db.Integer, nullable=False)
     recipients = db.Column(db.Text, nullable=False)

@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
 from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DatasetSqlType, FieldType
 from backend.src.models.datasets.dataset_chart import DatasetChart
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest

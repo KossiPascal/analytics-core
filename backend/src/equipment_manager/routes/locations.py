@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, request, jsonify
 from backend.src.databases.extensions import db
-from backend.src.security.access_security import require_auth
+from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.equipment_manager.models.locations import Region, District, Site
 from backend.src.logger import get_backend_logger
 
@@ -33,6 +35,8 @@ def create_region():
 
     try:
         region = Region(name=name, code=code)
+        region.created_by_id=currentUserId()
+
         db.session.add(region)
         db.session.commit()
         return jsonify(region.to_dict_safe()), 201
@@ -67,6 +71,8 @@ def update_region(id):
     if "code" in data:
         region.code = data["code"].strip()
 
+    region.updated_by_id=currentUserId()
+
     try:
         db.session.commit()
         return jsonify(region.to_dict_safe()), 200
@@ -78,10 +84,15 @@ def update_region(id):
 @bp.delete("/regions/<int:id>")
 @require_auth
 def delete_region(id):
-    region = Region.query.get(id)
+    region:Region = Region.query.get(id)
     if not region:
         raise BadRequest("Region not found", 404)
-    db.session.delete(region)
+    # db.session.delete(region)
+
+    region.deleted = True
+    region.deleted_at = datetime.now(timezone.utc)
+    region.deleted_by_id=currentUserId()
+
     db.session.commit()
     return jsonify({"message": "Region deleted"}), 200
 
@@ -116,6 +127,8 @@ def create_district():
 
     try:
         district = District(name=name, code=code, region_id=region.id)
+        district.created_by_id=currentUserId()
+
         db.session.add(district)
         db.session.commit()
         return jsonify(district.to_dict_safe()), 201
@@ -149,6 +162,8 @@ def update_district(id):
         district.code = data["code"].strip()
     if "region_id" in data:
         district.region_id = int(data["region_id"])
+
+    district.updated_by_id=currentUserId()
 
     try:
         db.session.commit()
@@ -192,6 +207,7 @@ def create_site():
             address=data.get("address", ""),
             phone=data.get("phone", ""),
         )
+        site.created_by_id=currentUserId()
         db.session.add(site)
         db.session.commit()
         return jsonify(site.to_dict_safe()), 201
@@ -222,6 +238,8 @@ def update_site(id):
             setattr(site, field, data[field].strip() if isinstance(data[field], str) else data[field])
     if "district_id" in data:
         site.district_id = int(data["district_id"])
+    
+    site.updated_by_id=currentUserId()
 
     try:
         db.session.commit()
