@@ -117,9 +117,8 @@ class RepairTicket(db.Model, AuditMixin):
                 last_received_ts = ev.timestamp
             elif ev.event_type == "SENT":
                 last_sent_ts = ev.timestamp
-        # Bloqué si reçu ET jamais renvoyé après cette réception
         if last_received_ts and (last_sent_ts is None or last_sent_ts < last_received_ts):
-            return True  # Reçu mais pas encore renvoyé = BLOQUÉ
+            return True  
         return False
 
     def to_dict_safe(self):
