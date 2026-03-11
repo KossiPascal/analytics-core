@@ -271,8 +271,6 @@ export interface Employee {
   full_name: string;
   employee_id_code: string;
   gender: string;
-  phone: string;
-  email: string;
   position_id: string | null;
   position_name: string | null;
   position_code: string | null;

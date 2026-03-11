@@ -166,7 +166,7 @@ export function TicketSendModal({ isOpen, onClose, onSuccess, ticketId }: Props)
     },
     ...deptEmployees.map((e) => ({
       value: e.id,
-      label: `${e.full_name}${e.position_name ? ` — ${e.position_name}` : ''}${e.email ? ` (${e.email})` : ''}`,
+      label: `${e.full_name}${e.position_name ? ` — ${e.position_name}` : ''}`,
     })),
   ];
 

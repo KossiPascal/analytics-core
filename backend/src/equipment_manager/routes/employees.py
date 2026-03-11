@@ -348,16 +348,12 @@ def create_employee():
 
     first_name = (data.get("first_name") or "").strip()
     last_name = (data.get("last_name") or "").strip()
-    phone = (data.get("phone") or "").strip()
     position_id = data.get("position_id")
     hire_date = data.get("hire_date")
 
-    # Required: first_name, last_name, phone, position_id
-    # Le département est déduit du poste — plus de department_id direct
+    # Required: first_name, last_name, position_id
     if not first_name or not last_name:
         raise BadRequest("Le prénom et le nom sont requis", 400)
-    if not phone:
-        raise BadRequest("Le téléphone est requis", 400)
     if not position_id:
         raise BadRequest("Le poste est requis", 400)
 
@@ -380,8 +376,6 @@ def create_employee():
     if not user_tenant_id and g.current_user and g.current_user.get("tenant_id"):
         user_tenant_id = int(g.current_user["tenant_id"])
 
-    email_val = (data.get("email") or "").strip() or None
-
     try:
         emp = Employee(
             first_name=first_name,
@@ -390,8 +384,6 @@ def create_employee():
             tenant_id=int(tenant_id) if tenant_id else None,
             position_id=pos.id,
             gender=(data.get("gender") or ""),
-            phone=phone,
-            email=email_val or "",
             hire_date=hire_date or None,
             notes=data.get("notes", ""),
             is_active=True,
@@ -467,12 +459,10 @@ def update_employee(id):
     user_id = currentUserId()
 
     # Validate required fields if provided
-    if "phone" in data and not (data.get("phone") or "").strip():
-        raise BadRequest("Le téléphone est requis", 400)
     if "position_id" in data and not data.get("position_id"):
         raise BadRequest("Le poste est requis", 400)
 
-    for field in ("first_name", "last_name", "gender", "phone", "email", "notes"):
+    for field in ("first_name", "last_name", "gender", "notes"):
         if field in data:
             setattr(emp, field, data[field].strip() if isinstance(data[field], str) else data[field])
 
@@ -612,8 +602,6 @@ def create_account(id):
         user = User(
             username=username,
             tenant_id=tenant_id,
-            email=emp.email or None,
-            phone=emp.phone or None,
             is_active=True,
             has_changed_default_password=False,
         )

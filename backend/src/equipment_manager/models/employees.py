@@ -106,8 +106,6 @@ class Employee(db.Model, AuditMixin):
     last_name = db.Column(db.String(150), nullable=False)
     employee_id_code = db.Column(db.String(50), unique=True, nullable=True)
     gender = db.Column(db.String(1), default="")
-    phone = db.Column(db.String(20), default="")
-    email = db.Column(db.String(255), default="")
     hire_date = db.Column(db.Date, nullable=True)
     notes = db.Column(db.Text, default="")
 
@@ -138,8 +136,6 @@ class Employee(db.Model, AuditMixin):
             "full_name": self.get_full_name(),
             "employee_id_code": self.employee_id_code,
             "gender": self.gender,
-            "phone": self.phone,
-            "email": self.email,
             "hire_date": self.hire_date.isoformat() if self.hire_date else None,
             "is_active": self.is_active,
             "notes": self.notes,
