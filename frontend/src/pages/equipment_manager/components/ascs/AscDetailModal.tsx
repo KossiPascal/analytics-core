@@ -54,8 +54,6 @@ export function AscDetailModal({ isOpen, onClose, ascId }: Props) {
             <div className={styles.detailItem}><span className={styles.detailLabel}>Genre</span><span className={styles.detailValue}>{asc.gender || '-'}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Telephone</span><span className={styles.detailValue}>{asc.phone || '-'}</span></div>
             <div className={styles.detailItem}><span className={styles.detailLabel}>Email</span><span className={styles.detailValue}>{asc.email || '-'}</span></div>
-            <div className={styles.detailItem}><span className={styles.detailLabel}>Site</span><span className={styles.detailValue}>{asc.site_name || '-'}</span></div>
-            <div className={styles.detailItem}><span className={styles.detailLabel}>Zone ASC</span><span className={styles.detailValue}>{asc.zone_asc_name || '-'}</span></div>
             <div className={styles.detailItem}>
               <span className={styles.detailLabel}>Statut</span>
               <Badge variant={asc.is_active ? 'success' : 'danger'}>{asc.is_active ? 'Actif' : 'Inactif'}</Badge>

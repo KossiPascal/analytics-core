@@ -15,7 +15,6 @@ export function AscsTable({ data, isLoading, onEdit, onView, onDelete }: Props) 
   const columns: Column<ASC>[] = [
     { key: 'code', header: 'Code', render: (a) => a.code, sortable: true },
     { key: 'name', header: 'Nom', render: (a) => a.full_name, sortable: true },
-    { key: 'site', header: 'Site', render: (a) => a.site_name || '-' },
     {
       key: 'status',
       header: 'Statut',

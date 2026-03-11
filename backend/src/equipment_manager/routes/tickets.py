@@ -758,7 +758,7 @@ def delete_alert_recipient_config(id):
         raise BadRequest("Configuration introuvable", 404)
     
     # db.session.delete(cfg)
-    cfg.is_active=False,
+    cfg.is_active = False
     cfg.deleted = True
     cfg.deleted_at = datetime.now(timezone.utc)
     cfg.deleted_by_id=currentUserId()

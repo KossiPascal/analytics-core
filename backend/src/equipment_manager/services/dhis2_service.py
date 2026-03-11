@@ -37,25 +37,6 @@ def parse_dhis2_value(value):
     return {"code": code.strip(), "name": name.strip()}
 
 
-# TODO: adapter pour Employee (modèle ASC supprimé)
-def parse_asc_data(asc_string):
-    """
-    Parse ASC data from DHIS2 format.
-    Format: "ID_DHIS2<==>CODE NOM Prenom<==>CODE"
-    """
-    if not asc_string or "<==>" not in asc_string:
-        return None
-    parts = asc_string.split("<==>")
-    if len(parts) < 3:
-        return None
-    full_info = parts[1].strip()
-    code = parts[2].strip()
-    info_parts = full_info.split(" ", 2)
-    if len(info_parts) < 3:
-        return None
-    _, last_name, first_name = info_parts
-    return {"code": code, "last_name": last_name, "first_name": first_name}
-
 
 def _export_program_events(session, program_id, org_unit_id=None):
     """Export program events from DHIS2 and flatten them."""
@@ -115,23 +96,6 @@ def _extract_unique_admin_units(data, field_name):
             results[parsed["code"]] = parsed
     return list(results.values())
 
-
-# TODO: adapter pour Employee (modèle ASC supprimé)
-def _get_ascs_from_events(data):
-    """Extract unique ASCs from events data."""
-    ascs = {}
-    for event in data.get("events", []):
-        asc_string = event.get("admin_org_unit_asc")
-        if not asc_string:
-            continue
-        asc_data = parse_asc_data(asc_string)
-        if not asc_data:
-            continue
-        code = asc_data["code"]
-        site_data = parse_dhis2_value(event.get("admin_org_unit_site"))
-        if code not in ascs:
-            ascs[code] = {**asc_data, "site_code": site_data["code"] if site_data else None}
-    return list(ascs.values())
 
 
 def sync_organizational_units(program_id=None, org_unit_id=None):
@@ -223,11 +187,3 @@ def sync_organizational_units(program_id=None, org_unit_id=None):
     }
 
 
-# TODO: adapter pour Employee (modèle ASC supprimé — utiliser Employee avec Position.code='ASC')
-# La géographie (site, zone) est gérée via users_orgunits.
-def sync_ascs(program_id=None, org_unit_id=None):
-    """
-    Sync ASCs from DHIS2.
-    TEMPORAIREMENT DESACTIVE — à adapter pour le modèle Employee.
-    """
-    return {"error": "sync_ascs non implémenté pour le modèle Employee. Voir TODO."}

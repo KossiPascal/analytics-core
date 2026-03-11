@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { locationsApi } from '../../api';
 import type { Region, District, Site } from '../../types';
 
-type LocationType = 'region' | 'district' | 'site' | 'zone';
+type LocationType = 'region' | 'district' | 'site';
 
 interface LocationFormModalProps {
   isOpen: boolean;
@@ -26,7 +26,6 @@ const TYPE_LABELS: Record<LocationType, string> = {
   region: 'Region',
   district: 'District',
   site: 'Site',
-  zone: 'Zone ASC',
 };
 
 export function LocationFormModal({ isOpen, onClose, onSuccess, type, editData, regions = [], districts = [], sites = [] }: LocationFormModalProps) {
@@ -42,7 +41,6 @@ export function LocationFormModal({ isOpen, onClose, onSuccess, type, editData, 
   const parentLabel = () => {
     if (type === 'district') return 'Region';
     if (type === 'site') return 'District';
-    if (type === 'zone') return 'Site';
     return '';
   };
 
@@ -83,7 +81,6 @@ export function LocationFormModal({ isOpen, onClose, onSuccess, type, editData, 
   const parentOptions = () => {
     if (type === 'district') return regions.map((r) => ({ value: r.id, label: r.name }));
     if (type === 'site') return districts.map((d) => ({ value: d.id, label: `${d.name} (${d.region_name})` }));
-    if (type === 'zone') return sites.map((s) => ({ value: s.id, label: `${s.name} (${s.district_name})` }));
     return [];
   };
 
@@ -107,19 +104,14 @@ export function LocationFormModal({ isOpen, onClose, onSuccess, type, editData, 
         res = isEdit
           ? await locationsApi.updateSite(editData!.id, data)
           : await locationsApi.createSite(data);
-      } else {
-        const data = { name, code, site_id: parentId };
-        res = isEdit
-          ? await locationsApi.updateZone(editData!.id, data)
-          : await locationsApi.createZone(data);
       }
 
-      if (res.success) {
+      if (res!.success) {
         toast.success(`${TYPE_LABELS[type]} ${isEdit ? 'mis a jour' : 'cree'} avec succes`);
         onSuccess();
         onClose();
       } else {
-        toast.error(res.message || 'Erreur');
+        toast.error(res!.message || 'Erreur');
       }
     } catch {
       toast.error('Erreur lors de la sauvegarde');
