@@ -1,18 +1,17 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { ChartWizard } from "./chart-utils/ChartWizard";
-import { Dataset, DatasetChart, DatasetQuery, DEFAULT_CHART_FORM, ExecuteChartResponse } from "@/models/dataset.models";
+import { Dataset, DatasetChart, DatasetQuery, ExecuteChartResponse, TableChartOptions } from "@/models/dataset.models";
 import { chartService, datasetService, queryService } from "@/services/dataset.service";
 import { StatusBadge } from "@/components/ui/Badge/Badge";
 import { Column } from "@/components/ui/Table/Table";
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from "@/pages/admins/AdminEntityCrudModule";
-import { tenantService } from "@/services/identity.service";
 import { Layout } from "react-grid-layout";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { Shield } from "lucide-react";
 import { FaDatabase } from "react-icons/fa";
 import { ChartRendererPreview } from "./chart-utils/ChartRenderer";
 import { Modal } from "@/components/ui/Modal/Modal";
-
+import { Tenant } from "@/models/identity.model";
 
 // Colonnes du tableau
 const sourceColumns: Column<DatasetChart>[] = [
@@ -27,16 +26,84 @@ const sourceColumns: Column<DatasetChart>[] = [
     { key: "is_active", header: "Statut", align: "center", render: (ds) => <StatusBadge isActive={ds.is_active} />, sortable: false, searchable: false },
 ];
 
-
 interface DefaultOptions {
     tenant_id?: number;
     dataset_id?: number;
     query_id?: number;
 }
 
+interface DatasetChartTabProps {
+    tenants: Tenant[];
+    tenant_id: number
+}
 
-export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
-    const [tenants, setTenants] = useState<any[]>([]);
+const defaultTableOptions: TableChartOptions = {
+  title: "",
+  subtitle: "",
+
+  width: "100%",
+  height: 400,
+
+  color_scheme: ["#4caf50", "#2196f3", "#ff9800", "#9c27b0"],
+
+  show_legend: true,
+  show_tooltip: true,
+  show_labels: true,
+  show_grid: true,
+
+  columns: [],
+  pagination: true,
+  page_size: undefined,
+}
+
+// DatasetChartTab
+const createDefaultForm = (tenant_id:number): DatasetChart => ({
+  id: null,
+  name: "",
+  tenant_id: tenant_id,
+  query_id: null,
+  dataset_id: null,
+  type: "table",
+  description: "",
+  is_active: false,
+  options: {
+    table: defaultTableOptions,
+    bar: {},
+    line: {},
+    area: {},
+    pie: {},
+    donut: {},
+    kpi: {},
+    gauge: {},
+    heatmap: {},
+    radar: {},
+    stacked_area: {},
+    stacked_bar: {},
+  },
+  structure: {
+    rows_dimensions: [],
+    cols_dimensions: [],
+    metrics: [],
+    filters: [],
+    order_by: [],
+    limit: null,
+    offset: null,
+    pivot: {
+      acitve: true,
+      fill_value: 0,
+      rows_total: true,
+      cols_total: true,
+      rows_subtotal: true,
+      cols_subtotal: true,
+      sort_desc: true,
+      percent_metrics: [],
+      top_n: undefined,
+      sort_metric: undefined,
+    }
+  }
+});
+
+export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChartTabProps>(({ tenants, tenant_id }, ref) => {
     const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [queries, setQueries] = useState<DatasetQuery[]>([]);
     const [options, setOptions] = useState<DefaultOptions>({});
@@ -58,24 +125,17 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
 
     const didLoad = useRef(false);
 
-    // Chargement tenants
-    useEffect(() => {
-        if (didLoad.current) return;
-        didLoad.current = true;
-        tenantService.all().then(t => setTenants(t ?? []));
-    }, []);
-
     // Chargement datasets
     useEffect(() => {
-        if (!options.tenant_id) return;
-        datasetService.all(options.tenant_id).then(d => setDatasets(d ?? []));
-    }, [options.tenant_id]);
+        if (!tenant_id) return;
+        datasetService.all(tenant_id).then(d => setDatasets(d ?? []));
+    }, [tenant_id]);
 
     // Chargement queries
     useEffect(() => {
-        if (!options.tenant_id || !options.dataset_id) return;
-        queryService.all(options.tenant_id, options.dataset_id).then(q => setQueries(q || []));
-    }, [options.tenant_id, options.dataset_id]);
+        if (!tenant_id || !options.dataset_id) return;
+        queryService.all(tenant_id, options.dataset_id).then(q => setQueries(q || []));
+    }, [tenant_id, options.dataset_id]);
 
 
     // useEffect(() => {
@@ -87,9 +147,9 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
     const defaultTenant = useMemo(() => {
         return {
             required: true,
-            ids: [options.tenant_id, options.dataset_id, options.query_id]
+            ids: [tenant_id, options.dataset_id, options.query_id]
         };
-    }, [options.tenant_id, options.dataset_id, options.query_id]);
+    }, [tenant_id, options.dataset_id, options.query_id]);
 
     const mockData = useMemo(() => {
         return [
@@ -99,40 +159,10 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
         ]
     }, []);
 
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
+
     return (
         <>
-            <div className="grid grid-cols-3 gap-4 mt-4">
-                <FormSelect
-                    label={`Tenant List`}
-                    value={options.tenant_id}
-                    options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-                    onChange={(value) => setOptions({ tenant_id: value })}
-                    placeholder="Sélectionner Tenant"
-                    leftIcon={<FaDatabase />}
-                    required={true}
-                />
-                <FormSelect
-                    label={`Dataset List`}
-                    value={options.dataset_id}
-                    options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                    onChange={(value) => setOptions({ ...options, dataset_id: value, query_id: undefined })}
-                    placeholder="Sélectionner Dataset"
-                    leftIcon={<FaDatabase />}
-                    required={true}
-                />
-                <FormSelect
-                    label={`Queries List`}
-                    value={options.query_id}
-                    options={queries.map((c) => ({ value: c.id, label: c.name }))}
-                    onChange={(value) => setOptions({ ...options, query_id: value })}
-                    placeholder="Sélectionner Query"
-                    leftIcon={<FaDatabase />}
-                    required={true}
-                />
-            </div>
-
-            <br />
-
             <AdminEntityCrudModule<DatasetChart>
                 ref={ref}
                 modalSize="zl"
@@ -140,17 +170,41 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
                 icon={<Shield size={20} />}
                 entityName="DatasetChart"
                 columns={sourceColumns}
-                defaultValue={DEFAULT_CHART_FORM}
+                defaultValue={DEFAULT_FORM}
                 service={chartService}
                 defaultTenant={defaultTenant}
                 // isValid={(r) => !!r.name && !!r.dataset_id && !!r.query_id}
                 isValid={(r) => r.name.trim().length > 0 && r.dataset_id != null && r.query_id != null}
+                headerActions={(
+                    <>
+                        <FormSelect
+                            label={`Dataset List`}
+                            value={options.dataset_id}
+                            options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+                            onChange={(value) => setOptions({ ...options, dataset_id: value, query_id: undefined })}
+                            placeholder="Sélectionner Dataset"
+                            leftIcon={<FaDatabase />}
+                            required={true}
+                        />
+                        <FormSelect
+                            label={`Queries List`}
+                            value={options.query_id}
+                            options={queries.map((c) => ({ value: c.id, label: c.name }))}
+                            onChange={(value) => setOptions({ ...options, query_id: value })}
+                            placeholder="Sélectionner Query"
+                            leftIcon={<FaDatabase />}
+                            required={true}
+                        />
+                    </>
+                )}
                 renderForm={(chart, setValue, saving) => (
                     <>
                         {/* <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}> */}
                         {/* ChartWizard doit mettre à jour champ par champ */}
                         <ChartWizard
                             chart={chart}
+                            tenants={tenants}
+                            tenant_id={tenant_id}
                             onChange={(updatedChart) => {
                                 // Exemple de mise à jour de chaque champ individuellement
                                 Object.keys(updatedChart).forEach((key) => {

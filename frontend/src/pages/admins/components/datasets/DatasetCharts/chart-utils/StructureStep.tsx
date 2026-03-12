@@ -285,7 +285,7 @@ const FilterNodeBuilder = ({ index, node, fields, onChange, onRemove }: FilterNo
 
 };
 
-export const StructureStep = ({ chart, onChange, datasets, queries }: ChartFormProps) => {
+export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
   const [_chart, setChart] = useState<DatasetChart>(chart);
 
   const updateChart = (updater: DatasetChart | ((prev: DatasetChart) => DatasetChart)) => {

@@ -456,6 +456,7 @@ export interface ChartFormProps {
   onChange: (val: DatasetChart) => void;
   onExecute?: (val: ExecuteChartResponse | undefined) => void;
   tenants?: Tenant[];
+  tenant_id?: number;
   datasets?: Dataset[];
   queries?: DatasetQuery[];
 }
@@ -476,71 +477,8 @@ export interface ExecuteChartResponse {
   meta: DatasetChartMeta; // Métadonnées supplémentaires
 }
 
-const defaultTableOptions: TableChartOptions = {
-  title: "",
-  subtitle: "",
 
-  width: "100%",
-  height: 400,
 
-  color_scheme: ["#4caf50", "#2196f3", "#ff9800", "#9c27b0"],
-
-  show_legend: true,
-  show_tooltip: true,
-  show_labels: true,
-  show_grid: true,
-
-  columns: [],
-  pagination: true,
-  page_size: undefined,
-}
-
-// DatasetChartTab
-export const DEFAULT_CHART_FORM = Object.freeze<DatasetChart>({
-  id: null,
-  name: "",
-  tenant_id: null,
-  query_id: null,
-  dataset_id: null,
-  type: "table",
-  description: "",
-  is_active: false,
-  options: {
-    table: defaultTableOptions,
-    bar: {},
-    line: {},
-    area: {},
-    pie: {},
-    donut: {},
-    kpi: {},
-    gauge: {},
-    heatmap: {},
-    radar: {},
-    stacked_area: {},
-    stacked_bar: {},
-  },
-  structure: {
-    rows_dimensions: [],
-    cols_dimensions: [],
-    metrics: [],
-    filters: [],
-    order_by: [],
-    limit: null,
-    offset: null,
-    pivot: {
-      acitve: true,
-      fill_value: 0,
-      rows_total: true,
-      cols_total: true,
-      rows_subtotal: true,
-      cols_subtotal: true,
-      sort_desc: true,
-      percent_metrics: [],
-      top_n: undefined,
-      sort_metric: undefined,
-    }
-  }
-});
 
 export const suggestChartType = (dimensions: string[], metrics: string[]): SqlChartType => {
 

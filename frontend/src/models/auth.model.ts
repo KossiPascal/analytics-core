@@ -2,7 +2,7 @@ export interface UserPayload {
     id: string;
     username: string;
     fullname: string;
-    tenant_id: string | undefined;
+    tenant_id: number | undefined;
     // roles: string[];
     mustChangeDefaultPassword: boolean
     permissions: string[]

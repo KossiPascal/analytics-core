@@ -32,10 +32,7 @@ export const PAGES = {
     IdentitiesPage: lazy(() => import('@/pages/admins/IdentitiePage')),
 
     // DataSources Page
-    DatasourcesPage: lazy(() => import('@/pages/admins/DatasourcePage')),
-
-    // Dataset Page
-    DatasetsPage: lazy(() => import('@/pages/admins/DatasetPage')),
+    DataAssetsPage: lazy(() => import('@/pages/admins/DataAssetsPage')),
 
     // Admin pages
     AdminPage: lazy(() => import('@/pages/admins/ManagementPage')),
@@ -116,14 +113,9 @@ export const ROUTES = {
     },
 
     // USERS
-    datasources: {
-        root: () => '/datasources',
-        list: () => '/datasources/list',
-    },
-
-    datasets: {
-        root: () => '/datasets',
-        list: () => '/datasets/list',
+    dataassets: {
+        root: () => '/dataassets',
+        list: () => '/dataassets/list',
     },
 
     // ADMINISTRATION

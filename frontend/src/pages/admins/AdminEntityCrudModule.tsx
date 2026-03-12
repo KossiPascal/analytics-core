@@ -122,14 +122,12 @@ const AdminEntityCrudModuleInner = <
     const fetchData = useCallback(async () => {
         if (defaultTenant && defaultTenant.required) {
             const ids = defaultTenant.ids ?? [];
-
             // 1️⃣ Vérifier longueur valide
             if (ids.length < 1 || ids.length > 5) {
                 console.warn(`defaultTenant.ids must have between 1 and 5 elements. Got ${ids.length}`);
                 setLoading(false);
                 return;
             }
-
             // 2️⃣ Return si une valeur est undefined ou null
             if (ids.some(id => id === undefined || id === null)) {
                 setLoading(false);
@@ -138,7 +136,6 @@ const AdminEntityCrudModuleInner = <
         }
 
         setLoading(true);
-
         try {
             let res: T[] = [];
             if (defaultTenant && defaultTenant.required) {
@@ -147,14 +144,12 @@ const AdminEntityCrudModuleInner = <
             } else {
                 res = await service.full();
             }
-
             setList(res ?? []);
         } catch {
             showError(`Erreur chargement ${entityName}`);
         } finally {
             setLoading(false);
         }
-
     }, [service, defaultTenant?.ids, defaultTenant?.required, entityName, showError]);
     useEffect(() => {
         fetchData();
@@ -313,11 +308,10 @@ const AdminEntityCrudModuleInner = <
     return (
         <>
             <div className={styles.card}>
-                <div className={styles.cardHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <h3 className={styles.cardTitle}>
-                        {icon} {title}
-                    </h3>
-                    {headerActions && <div style={{ display: 'flex', gap: '0.5rem' }}>{headerActions}</div>}
+                {/* style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} */}
+                <div className={styles.cardHeader} >
+                    <h3 className={styles.cardTitle}>{icon} {title}</h3>
+                    {headerActions && <div style={{ display: 'flex', gap: '0.8rem' }}>{headerActions}</div>}
                 </div>
 
                 {loading ? (
@@ -328,10 +322,7 @@ const AdminEntityCrudModuleInner = <
                     <div className={styles.emptyState}>
                         <Building2 size={48} />
                         <p>Aucune donnée</p>
-                        <button
-                            className={`${styles.btn} ${styles.btnPrimary}`}
-                            onClick={handleNew}
-                        >
+                        <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleNew} >
                             Créer Nouveau
                         </button>
                     </div>

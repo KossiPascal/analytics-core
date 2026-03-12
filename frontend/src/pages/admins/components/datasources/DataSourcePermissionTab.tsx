@@ -1,22 +1,22 @@
 import { Key } from 'lucide-react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { type Column } from '@components/ui/Table/Table';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
 import { DataSource, DataSourcePermission, DataSourceType, DB_PERMISSION_ROLE_LIST } from '@/models/datasource.models';
 import { datasourceService, dsPermissionService, dsTypeService } from '@/services/datasource.service';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { Tenant, User } from '@/models/identity.model';
-import { tenantService, userService } from '@/services/identity.service';
+import { userService } from '@/services/identity.service';
 
-const defaultDsPermission: DataSourcePermission = {
+const createDefaultForm = (tenant_id: number): DataSourcePermission => ({
     id: null,
-    tenant_id: null,
+    tenant_id: tenant_id,
     type_id: null,
     datasource_id: null,
     connection_id: null,
     user_id: null,
     role: "read",
-};
+});
 
 const dsPermissionColumns: Column<DataSourcePermission>[] = [
     {
@@ -63,9 +63,12 @@ const dsPermissionColumns: Column<DataSourcePermission>[] = [
     },
 ];
 
-export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
+interface DataSourcePermissionTabProps {
+    tenants: Tenant[];
+    tenant_id: number
+}
+
+export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef, DataSourcePermissionTabProps>(({ tenants, tenant_id }, ref) => {
     const [types, setTypes] = useState<DataSourceType[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [datasources, setDatasources] = useState<DataSource[]>([]);
@@ -74,14 +77,11 @@ export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef>((pro
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const tenantRes = await tenantService.all();
             const typeRes = await dsTypeService.all();
             const userRes = await userService.all();
-            if (typeRes && typeRes.length > 0) setTenantId(typeRes[0].id ?? undefined)
             let datasourceRes: DataSource[] = [];
             if (tenant_id) datasourceRes = await datasourceService.all(tenant_id);
 
-            setTenants(tenantRes || []);
             setTypes(typeRes || []);
             setUsers(userRes || []);
             setDatasources(datasourceRes || []);
@@ -95,7 +95,9 @@ export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef>((pro
     useEffect(() => {
         fetchInitialData();
     }, []);
-    
+
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
+
     return (
         <AdminEntityCrudModule<DataSourcePermission>
             ref={ref}
@@ -103,7 +105,7 @@ export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef>((pro
             icon={<Key size={20} />}
             entityName="Permission"
             columns={dsPermissionColumns}
-            defaultValue={defaultDsPermission}
+            defaultValue={DEFAULT_FORM}
             service={dsPermissionService}
             // isValid={(p) => {
             //     return p.name.trim().length > 0;
@@ -111,14 +113,14 @@ export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef>((pro
             // }}
             renderForm={(permission, setValue) => (
                 <>
-                    <FormSelect
+                    {/* <FormSelect
                         label={`Tenant`}
-                        value={permission.tenant_id}
+                        value={permission.tenant_id || tenant_id}
                         options={tenants.map((c) => ({ value: c.id, label: c.name }))}
                         onChange={(value) => { setValue("tenant_id", value) }}
                         placeholder="Ex: postgresql"
                         required={true}
-                    />
+                    /> */}
                     <FormSelect
                         label={`Type`}
                         value={permission.type_id}

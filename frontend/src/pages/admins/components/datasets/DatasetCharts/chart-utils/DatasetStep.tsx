@@ -5,7 +5,7 @@ import { Tenant } from "@/models/identity.model";
 import { FaDatabase } from "react-icons/fa";
 
 
-export const DatasetStep = ({ chart, onChange, tenants, datasets, queries }: ChartFormProps) => {
+export const DatasetStep = ({ chart, onChange, tenants, tenant_id, datasets, queries }: ChartFormProps) => {
 
     const updateChartValue = (field: keyof DatasetChart, val: any) => {
         onChange({ ...chart, [field]: val });
@@ -22,15 +22,15 @@ export const DatasetStep = ({ chart, onChange, tenants, datasets, queries }: Cha
                 required={true}
             />
 
-            <FormSelect
+            {/* <FormSelect
                 label={`Select Tenant`}
-                value={chart.tenant_id}
+                value={chart.tenant_id || tenant_id}
                 options={tenants?.map((t) => ({ value: t.id, label: t.name })) ?? []}
                 onChange={(value) => updateChartValue('tenant_id', Number(value))}
                 placeholder="Select Tenant"
                 leftIcon={<FaDatabase />}
                 required={true}
-            />
+            /> */}
 
             <FormSelect
                 label={`Select Dataset`}

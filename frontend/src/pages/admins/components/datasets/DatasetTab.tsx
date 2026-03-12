@@ -5,9 +5,7 @@ import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { FormTextarea } from '@components/forms/FormTextarea/FormTextarea';
 import { Tenant } from '@models/identity.model';
-import { tenantService } from '@/services/identity.service';
 import { FormSelect } from '@components/forms/FormSelect/FormSelect';
-import { FormCheckbox } from '@components/forms/FormCheckbox/FormCheckbox';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
 import { Dataset, DatasetColumn, SqlDatasetTypeList, SqlWithUtils } from '@/models/dataset.models';
 import { datasetService } from '@/services/dataset.service';
@@ -21,14 +19,14 @@ import { FormSwitch } from '@/components/forms/FormSwitch/FormSwitch';
 
 
 // SqlFieldTypeList
-const DEFAULT_FORM = Object.freeze<Dataset>({
+const createDefaultForm = (tenant_id:number): Dataset => ({
     id: null,
     name: "",
+    tenant_id: tenant_id,
     view_name: "",
     sql: null,
     use_local_view: false,
     sql_type: "matview",
-    tenant_id: null,
     datasource_id: null,
     connection_id: null,
     description: "",
@@ -130,11 +128,12 @@ const getSourceColumns = (openSqlModal: (ds: Dataset) => void, openSqlColumnsMod
     },
 ];
 
+interface DatasetTabProps {
+   tenants:Tenant[];
+   tenant_id:number
+}
 
-
-export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
+export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(({ tenants, tenant_id }, ref) => {
     const [dataSources, setDataSources] = useState<DataSource[]>([]);
     const [sqlColumns, setSqlColumns] = useState<DatasetColumn[]>([]);
     const [localViews, setLocalViews] = useState<{ name: string, type: string }[]>([]);
@@ -143,7 +142,6 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
     const [showSql, setShowSql] = useState<boolean>(false);
     const [selectedColumns, setSelectedColumns] = useState<DatasetColumn[]>([]);
     const [showSqlColumns, setShowSqlColumns] = useState<boolean>(false);
-    const [loading, setLoading] = useState<boolean>(true);
 
     const openSqlModal = (ds: Dataset) => {
         setSelectedSql(ds.sql ?? "");
@@ -156,45 +154,32 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
         setShowSqlColumns(true);
     };
 
-
     const sourceColumns = getSourceColumns(openSqlModal, openSqlColumnsModal);
 
     const didLoad = useRef(false);
-    const didLoad2 = useRef(false);
+
+    const loadDataSource = (tenantId: number) => {
+        datasourceService.all(tenantId).then(d => setDataSources(d || []));
+    }
+    useEffect(() => {
+        if (!tenant_id) return;
+        loadDataSource(tenant_id);
+    }, [tenant_id]);
 
     useEffect(() => {
         if (didLoad.current) return;
         didLoad.current = true;
-        tenantService.all().then(t=>setTenants(t || []));
-    }, []);
-
-    useEffect(() => {
-        if (!tenant_id) return;
-        datasourceService.all(tenant_id).then(d=>setDataSources(d || []));
-    }, [tenant_id]);
-
-    useEffect(() => {
-        if (didLoad2.current) return;
-        didLoad2.current = true;
-        datasetService.getLocalViews().then(l=>setLocalViews(l as any || []));
+        datasetService.getLocalViews().then(l => setLocalViews(l as any || []));
     }, []);
 
     const defaultTenant = useMemo(() => {
         return { required: true, ids: [tenant_id] };
     }, [tenant_id]);
 
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
+
     return (
         <>
-            <FormSelect
-                label={`Tenant List`}
-                value={tenant_id}
-                options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-                onChange={(value) => setTenantId(value)}
-                placeholder="Sélectionner Tenant"
-                leftIcon={<FaDatabase />}
-                required={true}
-            />
-            <br />
             <AdminEntityCrudModule<Dataset>
                 ref={ref}
                 title="Gestion des Dataset"
@@ -207,15 +192,18 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
                 isValid={(r) => r.name.trim().length > 0}
                 renderForm={(dataset, setValue, saving) => (
                     <>
-                        <FormSelect
+                        {/* <FormSelect
                             label={`Tenant`}
-                            value={dataset.tenant_id}
+                            value={dataset.tenant_id || tenant_id}
                             options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-                            onChange={(value) => { setValue("tenant_id", value) }}
+                            onChange={(value) => {
+                                setValue("tenant_id", value);
+                                if (value) loadDataSource(value);
+                            }}
                             placeholder="Sélectionner Tenant"
                             leftIcon={<FaDatabase />}
                             required={true}
-                        />
+                        /> */}
                         <FormSelect
                             label={`Datasource`}
                             value={dataset.datasource_id}
@@ -238,10 +226,8 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
                             options={SqlDatasetTypeList.map((c) => ({ value: c, label: c }))}
                             onChange={(value) => { setValue("sql_type", value) }}
                             leftIcon={<FaDatabase />}
-
                             required={true}
                         />
-
                         <FormInput
                             label="Nom"
                             value={dataset.name}
@@ -249,7 +235,6 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
                             leftIcon={<FaDatabase />}
                             required={true}
                         />
-
                         <div className="grid grid-cols-2 gap-4 pt-2">
                             <div className="flex items-center justify-between">
                                 <FormSwitch

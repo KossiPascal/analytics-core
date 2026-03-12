@@ -28,7 +28,7 @@ def get_pagination():
 # LIST DATASETS
 @bp.get("/<int:tenant_id>")
 @require_auth
-def list_datasets(tenant_id):
+def list_datasets(tenant_id:int):
     include_relations = request.args.get("include_relations", "false").lower() == "true"
 
     query: List[Dataset] = Dataset.query.filter(

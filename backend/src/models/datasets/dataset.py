@@ -369,8 +369,8 @@ class DatasetField(db.Model, AuditMixin):
             "is_filterable": self.is_filterable,
             "is_groupable": self.is_groupable,
             "is_sortable": self.is_sortable,
-            # "is_selectable": self.is_selectable,
-            # "is_hidden": self.is_hidden,
+            "is_selectable": self.is_selectable,
+            "is_hidden": self.is_hidden,
             "is_active": self.is_active,
         }
 

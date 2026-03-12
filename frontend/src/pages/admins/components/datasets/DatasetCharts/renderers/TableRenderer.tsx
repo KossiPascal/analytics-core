@@ -23,6 +23,16 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
   const pivot = chart.structure?.pivot || {};
   const pageSize = tableOptions.page_size ?? 10;
 
+  const lastRowContent = headerRows[headerRows.length - 1];
+
+  // const totalIndex: number[] = [];
+  // for (let l = 0; l < lastRowContent.length; l++) {
+  //   const cel = lastRowContent[l];
+  //   if (['SUBTOTAL', 'TOTAL'].includes(cel)) {
+  //     totalIndex.push(l);
+  //   }
+  // }
+
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortCol, setSortCol] = useState<string | null>(null);
@@ -105,6 +115,9 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
     }
   };
 
+
+  const metricSpan = metrics.length + (pivot.cols_subtotal ? 1 : 0);
+
   return (
     <div className="border rounded bg-white p-4">
 
@@ -122,7 +135,7 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
 
         {tableOptions.searchable && (
           <input
-          type="text"
+            type="text"
             placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -131,14 +144,14 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
         )}
 
         {tableOptions.exportable && (
-        <div className="mt-2 flex justify-end">
-          <button
-            onClick={exportCSV}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Export CSV
-          </button>
-        </div>
+          <div className="mt-2 flex justify-end">
+            <button
+              onClick={exportCSV}
+              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Export CSV
+            </button>
+          </div>
         )}
 
       </div>
@@ -156,34 +169,45 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
                 <tr key={i}>
                   {i === 0 &&
                     rowDims.map((dim, idx) => (
-                      <th
-                        key={idx}
-                        rowSpan={headerRows.length}
-                        onClick={() => toggleSort(dim)}
-                        className="border px-3 py-2 bg-gray-100 text-left cursor-pointer"
-                      >
+                      <th key={idx} rowSpan={headerRows.length} onClick={() => toggleSort(dim)}
+                        className="border px-3 py-2 bg-gray-100 text-left cursor-pointer">
                         {dim}
                       </th>
                     ))}
 
+
                   {headerRow.map((cell: any, j: number) => {
 
                     const isArray = Array.isArray(cell);
-                    const colName = isArray ? cell[0] : cell;
+                    const label = isArray ? cell[0] : cell;
+
+                    let span = i === headerRows.length - 1 ? 1 : metricSpan;
+
+                    if (pivot.cols_subtotal) {
+                      console.log({label: label, i: i, j:j, lastRowContent: lastRowContent[j]})
+                      if ((label === 'SUBTOTAL' || label === '') && i !== headerRows.length - 1) return null;
+
+                    }
+                    // if (pivot.cols_total) {
+                    //   if (['', 'SUBTOTAL', 'TOTAL'].includes(label) && i !== headerRows.length - 1) return null;
+
+                    // }
+
 
                     return (
                       <th
                         key={j}
-                        colSpan={isArray ? cell.length : 1}
-                        onClick={() => toggleSort(colName)}
+                        // colSpan={isArray ? cell.length : 1}
+                        colSpan={span}
+                        onClick={() => toggleSort(label)}
                         className={clsx(
                           "border px-3 py-2 cursor-pointer",
                           isLast ? "text-right" : "text-center"
                         )}
                       >
-                        {colName}
+                        {label}
 
-                        {sortCol === colName && (
+                        {sortCol === label && (
                           <span className="ml-1">
                             {sortDir === "asc" ? "▲" : "▼"}
                           </span>

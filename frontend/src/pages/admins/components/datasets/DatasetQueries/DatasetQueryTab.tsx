@@ -10,7 +10,6 @@ import { FormSelect } from "@components/forms/FormSelect/FormSelect";
 import { FormMultiSelect } from "@components/forms/FormSelect/FormMultiSelect";
 import { FormSwitch } from "@components/forms/FormSwitch/FormSwitch";
 import { Button } from "@components/ui/Button/Button";
-import { tenantService } from "@/services/identity.service";
 import { datasetService, queryService } from "@/services/dataset.service";
 import { Tenant } from "@/models/identity.model";
 import { Dataset, DatasetField, DatasetQuery, QueryFilterGroup, QueryFilter, QueryJson, SqlAggType, LinkedFilterGroup, QueryFilterNode, SqlOperators, SqlDataType, getInputTypeForField, getOperatorsForField, BOOLEAN_ONLY_OPERATORS } from "@/models/dataset.models";
@@ -85,9 +84,9 @@ interface RenderFormProp {
     // queries: DatasetQuery[],
     query: DatasetQuery,
     tenants: Tenant[],
+    tenant_id: number
     errors: CompileError,
     setValue: (k: keyof DatasetQuery, v: any) => void,
-    setTenantId: (tenant: number | undefined) => void,
     setPreviewSql: (sql: string | null) => void
     setErrors: (error: CompileError) => void
 }
@@ -143,10 +142,10 @@ export const QueryJsonSchema = z.object({
 });
 
 // DEFAULT FORM
-const createDefaultForm = (): DatasetQuery => ({
+const createDefaultForm = (tenant_id:number): DatasetQuery => ({
     id: null,
     name: "",
-    tenant_id: null,
+    tenant_id: tenant_id,
     dataset_id: null,
     query_json: {
         select: {
@@ -182,8 +181,6 @@ const createDefaultForm = (): DatasetQuery => ({
     description: "",
     is_active: true
 });
-
-const DEFAULT_FORM = createDefaultForm();
 
 // ---------- SANITIZE & IDENTIFIERS ----------
 const sanitizeIdentifier = (name: string) => {
@@ -1235,7 +1232,7 @@ const DatasetFilterBuilder = ({ name, fields, node, onChange }: FilterBuilderPro
 };
 
 // FORM RENDER
-const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setValue, setTenantId, setPreviewSql }: RenderFormProp) => {
+const RenderFormBuilder = ({ datasets, query, tenants, errors, tenant_id, setErrors, setValue, setPreviewSql }: RenderFormProp) => {
 
     const [buildError, setBuildError] = useState<string | null>(null);
 
@@ -1339,6 +1336,8 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
         }
     }, [query, dataset, fields, setValue]);
 
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
+
     const resetBuilder = useCallback(() => {
         setValue("query_json", DEFAULT_FORM.query_json);
         setValue("compiled_sql", "");
@@ -1379,21 +1378,19 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
             {buildError && (<p className="text-red-500 text-sm mt-1">{buildError}</p>)}
 
             <div className={styles.grid + ' ' + styles.grid3}>
-                <FormSelect
+                {/* <FormSelect
                     label="Tenant"
-                    value={query.tenant_id}
+                    value={query.tenant_id || tenant_id}
                     options={tenants.map(t => ({ value: t.id, label: t.name }))}
                     onChange={(v) => {
                         const oldError = { ...errors };
                         delete oldError.query_tenant;
                         setErrors(oldError);
-
                         setValue("tenant_id", v);
-                        if (v) setTenantId(v);
                     }}
                     error={errors.query_tenant}
                     required
-                />
+                /> */}
 
                 <FormSelect
                     label="Dataset"
@@ -1562,11 +1559,12 @@ const RenderFormBuilder = ({ datasets, query, tenants, errors, setErrors, setVal
     );
 };
 
-
+interface DatasetQueryTabProps {
+   tenants:Tenant[];
+   tenant_id:number
+}
 // MAIN PAGE
-export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [tenant_id, setTenantId] = useState<number | undefined>();
+export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id }, ref) => {
     const [dataset_id, setDatasetId] = useState<number | undefined>();
     const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [previewSql, setPreviewSql] = useState<string | null>(null);
@@ -1576,12 +1574,6 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
 
     const didLoad = useRef(false);
 
-    // LOAD DATA
-    useEffect(() => {
-        if (didLoad.current) return;
-        didLoad.current = true;
-        tenantService.all().then(t => setTenants(t || []));
-    }, []);
 
     useEffect(() => {
         if (!tenant_id) return;
@@ -1624,33 +1616,12 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
         );
     };
 
+
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
+
     // RENDER
     return (
         <>
-            <div className="grid grid-cols-3 gap-4 mt-4">
-
-                <FormSelect
-                    label={`Tenant List`}
-                    value={tenant_id}
-                    options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-                    onChange={(value) => { setTenantId(value); setDatasetId(undefined) }}
-                    placeholder="Sélectionner Tenant"
-                    leftIcon={<FaDatabase />}
-                    required={true}
-                />
-
-                <FormSelect
-                    label={`Dataset List`}
-                    value={dataset_id}
-                    options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                    onChange={(value) => setDatasetId(value)}
-                    placeholder="Sélectionner Dataset"
-                    leftIcon={<FaDatabase />}
-                    required={true}
-                />
-            </div>
-
-            <br />
             <AdminEntityCrudModule<DatasetQuery>
                 ref={ref}
                 modalSize="yl"
@@ -1660,7 +1631,7 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
                 columns={queryColumns}
                 service={queryService}
                 defaultTenant={defaultTenant}
-                defaultValue={useMemo(() => DEFAULT_FORM, [])}
+                defaultValue={DEFAULT_FORM}
                 isValid={(q) => {
                     return Object.keys(errors).length === 0
                 }}
@@ -1669,14 +1640,25 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef>((props, ref)
                     setErrors(validationErrors);
                     return Object.keys(validationErrors).length === 0;
                 }}
+                headerActions={(
+                <FormSelect
+                    label={`Dataset List`}
+                    value={dataset_id}
+                    options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+                    onChange={(value) => setDatasetId(value)}
+                    placeholder="Sélectionner Dataset"
+                    leftIcon={<FaDatabase />}
+                    required={true}
+                />
+                )}
                 renderForm={(query, setValue, saving) => (
                     <RenderFormBuilder
                         datasets={datasets}
                         query={query}
                         tenants={tenants}
+                        tenant_id={tenant_id}
                         errors={errors}
                         setValue={setValue}
-                        setTenantId={setTenantId}
                         setPreviewSql={setPreviewSql}
                         setErrors={setErrors}
                     />

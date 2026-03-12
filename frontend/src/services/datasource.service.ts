@@ -1,5 +1,5 @@
 import { CRUDService } from '@services/acrud.service';
-import { DataSource, DataSourceParams, DataSourcePermission, DataSourceType, TestType } from '@/models/datasource.models';
+import { DataSource, DataSourcePermission, DataSourceType, TestType } from '@/models/datasource.models';
 
 const datasource = new CRUDService("/datasources");
 export const datasourceService = {
@@ -26,7 +26,7 @@ export const datasourceService = {
   create: (data: DataSource) => datasource.create<DataSource>("", data),
   update: (id: number, data: DataSource) => datasource.update<DataSource>("", id, data),
   remove: (id: number) => datasource.remove<DataSource>("", id),
-  testTunnel: (type: TestType, data: DataSourceParams) => datasource.list<DataSource>(`/${type}`, data),
+  testTunnel: (type: TestType, data: DataSource) => datasource.list<DataSource>(`/${type}`, data),
   testTunnelBy: (sourceId: string) => datasource.list<DataSource>(`/test-ssh-db`, { sourceId }),
   schema: (sourceId: string, table?: string) => {
     const addTable = table ? `?table=${encodeURIComponent(table)}` : '';

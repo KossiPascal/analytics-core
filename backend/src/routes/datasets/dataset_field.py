@@ -87,8 +87,8 @@ def create_field():
             is_filterable=is_filterable,
             is_groupable=is_groupable,
             is_sortable=is_sortable,
-            # is_selectable=is_selectable,
-            # is_hidden=is_hidden,
+            is_selectable=is_selectable,
+            is_hidden=is_hidden,
             is_active=is_active,
         )
 
@@ -138,11 +138,10 @@ def update_field(field_id: int):
             field.is_groupable = bool(data.get("is_groupable", True))
         if "is_sortable" in data:
             field.is_sortable = bool(data.get("is_sortable", True))
-
-        # if "is_selectable" in data:
-        #     field.is_selectable = bool(data.get("is_selectable", True))
-        # if "is_hidden" in data:
-        #     field.is_hidden = bool(data.get("is_hidden", True))
+        if "is_selectable" in data:
+            field.is_selectable = bool(data.get("is_selectable", True))
+        if "is_hidden" in data:
+            field.is_hidden = bool(data.get("is_hidden", True))
 
         if "is_active" in data:
             field.is_active = bool(data.get("is_active", True))

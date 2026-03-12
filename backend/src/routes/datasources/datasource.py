@@ -107,7 +107,7 @@ def create_datasource():
 # GET ALL
 @bp.get("/<int:tenant_id>")
 @require_auth
-def list_datasources(tenant_id):
+def list_datasources(tenant_id:int):
     try:
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
@@ -118,8 +118,8 @@ def list_datasources(tenant_id):
             DataSource.ensure_default_datasource(created_by)
             datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
 
-        sources = sorted((datasources or []), key=lambda c: c.id)
-        results = [c.to_dict() for c in sources]
+        # sources = sorted((datasources or []), key=lambda c: c.id)
+        results = [c.to_dict() for c in datasources]
 
         return jsonify(results), 200
     except SQLAlchemyError as e:
