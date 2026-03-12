@@ -6,12 +6,13 @@ import { UsersTab } from '@pages/admins/components/identities/UsersTab';
 import { RolesTab } from '@pages/admins/components/identities/RolesTab';
 import { PermissionsTab } from '@pages/admins/components/identities/PermissionsTab';
 import { TenantsTab } from '@pages/admins/components/identities/TenantsTab';
-import { Users, Shield, ShieldCheck, Plus, RefreshCw } from 'lucide-react';
+import { Users, Shield, ShieldCheck, Plus } from 'lucide-react';
 import { RolesPermissionsTab } from '@pages/admins/components/identities/RolesPermissionsTab';
 import { UsersLogsTab } from '@pages/admins/components/identities/UsersLogsTab';
 import { UsersRolesTab } from '@pages/admins/components/identities/UsersRolesTab';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { OrgunitsTab } from '@pages/admins/components/identities/OrgunitsTab';
+import { UserFormModal } from '@pages/admins/components/identities/UserFormModal';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
@@ -36,9 +37,17 @@ export default function IdentitiesPage() {
   const [activeName, setActiveName] = useState<string | null>(null);
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
 
+  // UserFormModal pour la création directe depuis le bouton "+"
+  const [userFormOpen, setUserFormOpen] = useState(false);
+  const [usersRefreshKey, setUsersRefreshKey] = useState(0);
+
 
   const handleAddNew = () => {
-    crudRef.current?.handleNew();
+    if (activeTab === 'users_tab') {
+      setUserFormOpen(true);
+    } else {
+      crudRef.current?.handleNew();
+    }
   };
 
   const handleActiveTab = (key: TabType = activeTab) => {
@@ -116,7 +125,7 @@ export default function IdentitiesPage() {
           {/* Tab Content */}
           <div className={styles.tabContent}>
             {activeTab === 'tenants_tab' && <TenantsTab ref={crudRef} />}
-            {activeTab === 'users_tab' && <UsersTab ref={crudRef} />}
+            {activeTab === 'users_tab' && <UsersTab ref={crudRef} key={usersRefreshKey} />}
             {activeTab === 'roles_tab' && <RolesTab ref={crudRef} />}
             {activeTab === 'permissions_tab' && <PermissionsTab ref={crudRef} />}
             {activeTab === 'orgunits_tab' && <OrgunitsTab ref={crudRef} />}
@@ -144,6 +153,11 @@ export default function IdentitiesPage() {
           </div>
         </CardBody>
       </Card>
+      <UserFormModal
+        isOpen={userFormOpen}
+        onClose={() => setUserFormOpen(false)}
+        onCreated={() => { setUserFormOpen(false); setUsersRefreshKey((k) => k + 1); }}
+      />
     </PageWrapper>
   );
 }

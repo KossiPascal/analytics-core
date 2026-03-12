@@ -5,7 +5,7 @@ from backend.src.databases.extensions import db
 from backend.src.models.datasource import (DataSource,DataSourcePermission)
 from backend.src.security.access_security import require_auth, currentUserId
 
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 bp = Blueprint("datasource_permissions",__name__,url_prefix="/api/datasource-permissions")
@@ -43,7 +43,7 @@ def create_or_update_permission():
 
         ds:DataSource = DataSource.query.get(datasource_id)
         if not ds:
-            raise BadRequest("Datasource not found", 404)
+            raise NotFound("Datasource not found")
 
         existing:DataSourcePermission = DataSourcePermission.query.filter(
             DataSourcePermission.datasource_id == datasource_id,
