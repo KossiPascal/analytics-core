@@ -48,7 +48,16 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
     setUser({ ...EMPTY_USER, tenant_id: defaultTenantId ?? null });
     setLoading(true);
     Promise.all([tenantService.all(), roleService.all(), orgunitService.all()])
-      .then(([t, r, o]) => { setTenants(t ?? []); setRoles(r ?? []); setOrgunits(o ?? []); })
+      .then(([t, r, o]) => {
+        const tenantList = t ?? [];
+        setTenants(tenantList);
+        setRoles(r ?? []);
+        setOrgunits(o ?? []);
+        // Auto-sélectionner le tenant si non fourni et qu'il n'y en a qu'un
+        if (!defaultTenantId && tenantList.length === 1) {
+          setUser((prev) => ({ ...prev, tenant_id: tenantList[0].id ?? null }));
+        }
+      })
       .finally(() => setLoading(false));
   }, [isOpen, defaultTenantId]);
 
@@ -56,6 +65,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
     setUser((prev) => ({ ...prev, [key]: value }));
 
   const isValid =
+    !!user.tenant_id &&
     !!user.username?.trim() &&
     !!user.lastname?.trim() &&
     !!user.firstname?.trim() &&
