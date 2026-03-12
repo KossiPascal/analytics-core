@@ -19,7 +19,7 @@ export function EmployeesTable({ data, isLoading, onEdit, onView, onToggleActive
     { key: 'full_name', header: 'Nom', render: (e) => e.full_name, sortable: true },
     { key: 'tenant_name', header: 'Tenant', render: (e) => e.tenant_name || '-', sortable: true },
     { key: 'position_name', header: 'Poste', render: (e) => e.position_name || '-', searchable: false },
-    { key: 'phone', header: 'Telephone', render: (e) => e.phone || '-' },
+    { key: 'position_code', header: 'Code poste', render: (e) => e.position_code || '-', searchable: false },
     {
       key: 'is_active',
       header: 'Statut',

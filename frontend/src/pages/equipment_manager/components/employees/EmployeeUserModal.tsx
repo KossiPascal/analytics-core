@@ -136,8 +136,8 @@ export function EmployeeUserModal({ employee, isOpen, onClose, onSuccess }: Prop
       const payload: Record<string, unknown> = {
         firstname:   employee.first_name,
         lastname:    employee.last_name,
-        email:       employee.email  || null,
-        phone:       employee.phone  || null,
+        email:       null,
+        phone:       null,
         role_ids:    selectedRoleIds.map(Number),
         orgunit_ids: selectedOrgunitIds.map(Number),
       };
@@ -198,12 +198,6 @@ export function EmployeeUserModal({ employee, isOpen, onClose, onSuccess }: Prop
           <span><strong>Employé&nbsp;:</strong>&nbsp;{employee.full_name}</span>
           {employee.position_name && (
             <span><strong>Poste&nbsp;:</strong>&nbsp;{employee.position_name}</span>
-          )}
-          {employee.email && (
-            <span><strong>Email&nbsp;:</strong>&nbsp;{employee.email}</span>
-          )}
-          {employee.phone && (
-            <span><strong>Tél&nbsp;:</strong>&nbsp;{employee.phone}</span>
           )}
           {!isCreate && (
             <Badge variant="success">Compte existant</Badge>

@@ -46,8 +46,6 @@ export function EmployeeDetailModal({ isOpen, onClose, employeeId }: Props) {
           <div className={styles.detailItem}><span className={styles.detailLabel}>Nom complet</span><span className={styles.detailValue}>{employee.full_name}</span></div>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Poste</span><span className={styles.detailValue}>{employee.position_name || '-'}</span></div>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Genre</span><span className={styles.detailValue}>{employee.gender || '-'}</span></div>
-          <div className={styles.detailItem}><span className={styles.detailLabel}>Téléphone</span><span className={styles.detailValue}>{employee.phone || '-'}</span></div>
-          <div className={styles.detailItem}><span className={styles.detailLabel}>Email</span><span className={styles.detailValue}>{employee.email || '-'}</span></div>
           <div className={styles.detailItem}><span className={styles.detailLabel}>Date embauche</span><span className={styles.detailValue}>{employee.hire_date || '-'}</span></div>
           <div className={styles.detailItem}>
             <span className={styles.detailLabel}>Statut</span>

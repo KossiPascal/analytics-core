@@ -8,7 +8,7 @@ import { Save } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { ascsApi } from '../../api';
-import type { ASC, Site, Supervisor } from '../../types';
+import type { ASC, Supervisor } from '../../types';
 
 const VALIDATION_RULES = {
   firstName: { required: true, message: 'Le prenom est requis' },
@@ -21,18 +21,16 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   editData?: ASC | null;
-  sites: Site[];
   supervisors: Supervisor[];
 }
 
-export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supervisors }: Props) {
+export function AscFormModal({ isOpen, onClose, onSuccess, editData, supervisors }: Props) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [code, setCode] = useState('');
   const [gender, setGender] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [siteId, setSiteId] = useState('');
   const [supervisorId, setSupervisorId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -49,13 +47,12 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
       setGender(editData.gender);
       setPhone(editData.phone);
       setEmail(editData.email);
-      setSiteId(editData.site_id || '');
       setSupervisorId(editData.supervisor_id || '');
       setStartDate(editData.start_date || '');
       setNotes(editData.notes);
     } else {
       setFirstName(''); setLastName(''); setCode(''); setGender('');
-      setPhone(''); setEmail(''); setSiteId(''); setSupervisorId('');
+      setPhone(''); setEmail(''); setSupervisorId('');
       setStartDate(''); setNotes('');
     }
     reset();
@@ -71,7 +68,7 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
     try {
       const data = {
         first_name: firstName, last_name: lastName, code, gender, phone, email,
-        site_id: siteId || null, supervisor_id: supervisorId || null,
+        supervisor_id: supervisorId || null,
         start_date: startDate || null, notes,
       };
       const res = isEdit
@@ -144,20 +141,12 @@ export function AscFormModal({ isOpen, onClose, onSuccess, editData, sites, supe
           <FormInput label="Telephone" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <FormInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
-        <div className={shared.formRow}>
-          <FormSelect
-            label="Site"
-            value={siteId}
-            onChange={(v) => setSiteId(v)}
-            options={[{ value: '', label: 'Aucun' }, ...sites.map((s) => ({ value: s.id, label: `${s.name} (${s.district_name})` }))]}
-          />
-          <FormSelect
-            label="Superviseur"
-            value={supervisorId}
-            onChange={(v) => setSupervisorId(v)}
-            options={[{ value: '', label: 'Aucun' }, ...supervisors.map((s) => ({ value: s.user_id, label: s.full_name }))]}
-          />
-        </div>
+        <FormSelect
+          label="Superviseur"
+          value={supervisorId}
+          onChange={(v) => setSupervisorId(v)}
+          options={[{ value: '', label: 'Aucun' }, ...supervisors.map((s) => ({ value: s.user_id, label: s.full_name }))]}
+        />
         <FormInput label="Date de debut" type={"date" as any} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </form>

@@ -15,6 +15,7 @@ from sqlalchemy.orm import selectinload, declared_attr
 from sqlalchemy.sql import quoted_name
 
 from backend.src.logger import get_backend_logger
+from backend.src.security.access_security import currentUserId
 logger = get_backend_logger(__name__)
 
 # 🔁 Flux Métier Complet

@@ -35,17 +35,6 @@ export interface Site {
   region_name: string | null;
   created_at: string | null;
   updated_at: string | null;
-  zones?: ZoneASC[];
-}
-
-export interface ZoneASC {
-  id: string;
-  site_id: string;
-  name: string;
-  code: string;
-  site_name: string | null;
-  created_at: string | null;
-  updated_at: string | null;
 }
 
 // ─── ASC & SUPERVISOR ───────────────────────────────────────────────────────
@@ -59,10 +48,6 @@ export interface ASC {
   gender: string;
   phone: string;
   email: string;
-  site_id: string | null;
-  site_name: string | null;
-  zone_asc_id: string | null;
-  zone_asc_name: string | null;
   supervisor_id: string | null;
   is_active: boolean;
   start_date: string | null;
@@ -286,8 +271,6 @@ export interface Employee {
   full_name: string;
   employee_id_code: string;
   gender: string;
-  phone: string;
-  email: string;
   position_id: string | null;
   position_name: string | null;
   position_code: string | null;

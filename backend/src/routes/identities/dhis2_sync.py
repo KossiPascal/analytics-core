@@ -589,6 +589,7 @@ def sync_ascs():
                     user_id=user.id,
                     position_id=asc_position_id,
                     is_active=True,
+                    created_by_id=currentUserId(),
                 )
                 db.session.add(emp)
                 db.session.flush()

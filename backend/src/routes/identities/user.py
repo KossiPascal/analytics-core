@@ -74,7 +74,11 @@ def create_user():
         if not tenant_id or not username or not password:
             raise BadRequest("tenant_id, username and password are required")
 
-        existing = User.query.filter((User.username == username) | (User.email == email)).first()
+        from sqlalchemy import or_
+        conditions = [User.username == username]
+        if email:
+            conditions.append(User.email == email)
+        existing = User.query.filter(or_(*conditions)).first()
         if existing:
             raise BadRequest("Username or email already exists")
 

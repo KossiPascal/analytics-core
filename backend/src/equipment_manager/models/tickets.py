@@ -109,17 +109,16 @@ class RepairTicket(db.Model, AuditMixin):
         eu aucun SENT depuis ce RECEIVED (ticket confirmé mais pas renvoyé).
         On compare les timestamps dans l'ordre chronologique.
         """
-        events_asc = sorted(self.events, key=lambda e: e.timestamp)
+        events = sorted(self.events, key=lambda e: e.timestamp)
         last_received_ts = None
         last_sent_ts = None
-        for ev in events_asc:
+        for ev in events:
             if ev.event_type == "RECEIVED":
                 last_received_ts = ev.timestamp
             elif ev.event_type == "SENT":
                 last_sent_ts = ev.timestamp
-        # Bloqué uniquement si reçu ET jamais renvoyé après réception
         if last_received_ts and (last_sent_ts is None or last_sent_ts < last_received_ts):
-            return False  # Reçu mais pas encore envoyé = normal, pas bloqué
+            return True  
         return False
 
     def to_dict_safe(self):

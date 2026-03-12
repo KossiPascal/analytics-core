@@ -4,7 +4,7 @@
 
 import { api } from '@/apis/api';
 import type {
-  Region, District, Site, ZoneASC,
+  Region, District, Site,
   ASC, Supervisor, Equipment, EquipmentHistory, Accessory,
   EquipmentCategoryGroup, EquipmentCategory, EquipmentBrand,
   Department, Position, Employee,
@@ -37,22 +37,16 @@ export const locationsApi = {
   // Sites
   getSites: (districtId?: string) => api.get<Site[]>(`${BASE}/locations/sites${districtId ? `?district_id=${districtId}` : ''}`),
   createSite: (data: { name: string; code: string; district_id: string; address?: string; phone?: string }) => api.post<Site>(`${BASE}/locations/sites`, data),
-  getSite: (id: string) => api.get<Site & { zones: ZoneASC[] }>(`${BASE}/locations/sites/${id}`),
+  getSite: (id: string) => api.get<Site>(`${BASE}/locations/sites/${id}`),
   updateSite: (id: string, data: Partial<Site>) => api.put<Site>(`${BASE}/locations/sites/${id}`, data),
-
-  // Zones
-  getZones: (siteId?: string) => api.get<ZoneASC[]>(`${BASE}/locations/zones${siteId ? `?site_id=${siteId}` : ''}`),
-  createZone: (data: { name: string; code: string; site_id: string }) => api.post<ZoneASC>(`${BASE}/locations/zones`, data),
-  updateZone: (id: string, data: Partial<ZoneASC>) => api.put<ZoneASC>(`${BASE}/locations/zones/${id}`, data),
 };
 
 // ─── ASCs ───────────────────────────────────────────────────────────────────
 
 export const ascsApi = {
-  getAll: (params?: { supervisor_id?: string; site_id?: string; search?: string }) => {
+  getAll: (params?: { supervisor_id?: string; search?: string }) => {
     const query = new URLSearchParams();
     if (params?.supervisor_id) query.set('supervisor_id', params.supervisor_id);
-    if (params?.site_id) query.set('site_id', params.site_id);
     if (params?.search) query.set('search', params.search);
     const qs = query.toString();
     return api.get<ASC[]>(`${BASE}/ascs${qs ? `?${qs}` : ''}`);
@@ -228,7 +222,6 @@ export const dashboardApi = {
   getTicketsByStatus: () => api.get<TicketsByStatus>(`${BASE}/dashboard/tickets-by-status`),
   getTicketsByDelay: () => api.get<TicketsByDelay>(`${BASE}/dashboard/tickets-by-delay`),
   getBlockagePoints: () => api.get<BlockagePoint[]>(`${BASE}/dashboard/blockage-points`),
-  getRecentOverdue: () => api.get<RepairTicket[]>(`${BASE}/dashboard/recent-overdue`),
 };
 
 // ─── EMAIL CONFIG ────────────────────────────────────────────────────────────
@@ -279,5 +272,4 @@ export const alertRecipientConfigsApi = {
 
 export const syncApi = {
   syncOrgUnits: (data?: { program_id?: string; org_unit_id?: string }) => api.post<SyncResult>(`${BASE}/sync/organizational-units`, data),
-  syncAscs: (data?: { program_id?: string; org_unit_id?: string }) => api.post<SyncResult>(`${BASE}/sync/ascs`, data),
 };

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { ascsApi, locationsApi, supervisorsApi } from '../../api';
+import { ascsApi, supervisorsApi } from '../../api';
 import { SyncPanel } from '../sync/SyncPanel';
-import type { ASC, Site, Supervisor } from '../../types';
+import type { ASC, Supervisor } from '../../types';
 import { AscsTable } from './AscsTable';
 import { AscFormModal } from './AscFormModal';
 import { AscDetailModal } from './AscDetailModal';
@@ -14,7 +14,6 @@ import toast from 'react-hot-toast';
 
 export function AscsTab() {
   const [ascs, setAscs] = useState<ASC[]>([]);
-  const [sites, setSites] = useState<Site[]>([]);
   const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -31,13 +30,11 @@ export function AscsTab() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [ascsRes, sitesRes, supRes] = await Promise.all([
+      const [ascsRes, supRes] = await Promise.all([
         ascsApi.getAll(),
-        locationsApi.getSites(),
         supervisorsApi.getAll(),
       ]);
       if (ascsRes.success) setAscs(ascsRes.data!);
-      if (sitesRes.success) setSites(sitesRes.data!);
       if (supRes.success) setSupervisors(supRes.data!);
     } catch {
       toast.error('Erreur de chargement');
@@ -82,7 +79,6 @@ export function AscsTab() {
         onClose={() => setFormOpen(false)}
         onSuccess={loadAll}
         editData={editData}
-        sites={sites}
         supervisors={supervisors}
       />
 

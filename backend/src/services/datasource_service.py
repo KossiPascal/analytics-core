@@ -175,7 +175,7 @@ class DataSourceProvisioningService:
                 selectinload(DataSource.credential),
                 selectinload(DataSource.permissions),
             )
-            .filter_by(DataSource.id == datasource_id)
+            .filter(DataSource.id == datasource_id)
             .first()
         )
 

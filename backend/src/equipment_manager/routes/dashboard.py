@@ -102,16 +102,3 @@ def blockage_points():
     # Top 5
     top = sorted(stage_counts.items(), key=lambda x: x[1], reverse=True)[:5]
     return jsonify([{"stage": s, "count": c} for s, c in top]), 200
-
-
-@bp.get("/recent-overdue")
-@require_auth
-def recent_overdue():
-    active_tickets = RepairTicket.query.filter(
-        RepairTicket.status.notin_(["CLOSED", "CANCELLED"])
-    ).all()
-
-    overdue = [t for t in active_tickets if t.get_delay_days() > 14]
-    overdue.sort(key=lambda t: t.get_delay_days(), reverse=True)
-
-    return jsonify([t.to_dict_safe() for t in overdue[:10]]), 200

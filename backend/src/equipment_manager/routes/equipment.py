@@ -680,7 +680,7 @@ def declare_equipment(id):
     old_status = eq.status
 
     eq.status = declaration  # LOST | STOLEN | TAKEN_AWAY | COMPLETELY_DAMAGED
-    eq.updated_by_id=user_id,
+    eq.updated_by_id = user_id
 
     # If COMPLETELY_DAMAGED and there is an open repair ticket → close it
     if declaration == "COMPLETELY_DAMAGED":

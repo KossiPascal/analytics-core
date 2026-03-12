@@ -3,24 +3,22 @@ import { Button } from '@components/ui/Button/Button';
 import { Modal } from '@components/ui/Modal/Modal';
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { locationsApi } from '../../api';
-import type { Region, District, Site, ZoneASC } from '../../types';
+import type { Region, District, Site } from '../../types';
 import { RegionsTable } from './RegionsTable';
 import { DistrictsTable } from './DistrictsTable';
 import { SitesTable } from './SitesTable';
-import { ZonesTable } from './ZonesTable';
 import { LocationFormModal } from './LocationFormModal';
 import styles from '../../EquipmentManager.module.css';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 
-type SubTab = 'regions' | 'districts' | 'sites' | 'zones';
+type SubTab = 'regions' | 'districts' | 'sites';
 
 export function LocationsTab() {
   const [subTab, setSubTab] = useState<SubTab>('regions');
   const [regions, setRegions] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
-  const [zones, setZones] = useState<ZoneASC[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
@@ -35,16 +33,14 @@ export function LocationsTab() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [regRes, distRes, sitesRes, zonesRes] = await Promise.all([
+      const [regRes, distRes, sitesRes] = await Promise.all([
         locationsApi.getRegions(),
         locationsApi.getDistricts(),
         locationsApi.getSites(),
-        locationsApi.getZones(),
       ]);
       if (regRes.success) setRegions(regRes.data!);
       if (distRes.success) setDistricts(distRes.data!);
       if (sitesRes.success) setSites(sitesRes.data!);
-      if (zonesRes.success) setZones(zonesRes.data!);
     } catch {
       toast.error('Erreur de chargement');
     } finally {
@@ -73,7 +69,6 @@ export function LocationsTab() {
     { key: 'regions', label: 'Regions' },
     { key: 'districts', label: 'Districts' },
     { key: 'sites', label: 'Sites' },
-    { key: 'zones', label: 'Zones ASC' },
   ];
 
   return (
@@ -109,7 +104,6 @@ export function LocationsTab() {
           )}
           {subTab === 'districts' && <DistrictsTable data={districts} isLoading={loading && initialized} onEdit={handleEdit} />}
           {subTab === 'sites' && <SitesTable data={sites} isLoading={loading && initialized} onEdit={handleEdit} />}
-          {subTab === 'zones' && <ZonesTable data={zones} isLoading={loading && initialized} onEdit={handleEdit} />}
         </>
       )}
 
@@ -117,7 +111,7 @@ export function LocationsTab() {
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
         onSuccess={loadAll}
-        type={subTab === 'regions' ? 'region' : subTab === 'districts' ? 'district' : subTab === 'sites' ? 'site' : 'zone'}
+        type={subTab === 'regions' ? 'region' : subTab === 'districts' ? 'district' : 'site'}
         editData={editData}
         regions={regions}
         districts={districts}

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { dashboardApi, ascsApi, equipmentApi } from '../../api';
 import type {
-  DashboardStats, TicketsByDelay, BlockagePoint, RepairTicket,
+  DashboardStats, TicketsByDelay, BlockagePoint,
   ASC, EquipmentCategory, EquipmentCategoryGroup, EquipmentBrand,
 } from '../../types';
 import { TicketCreateModal } from '../tickets/TicketCreateModal';
@@ -22,7 +22,6 @@ export function DashboardTab() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [delays, setDelays] = useState<TicketsByDelay | null>(null);
   const [blockages, setBlockages] = useState<BlockagePoint[]>([]);
-  const [overdueTickets, setOverdueTickets] = useState<RepairTicket[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Quick-action modals
@@ -42,16 +41,14 @@ export function DashboardTab() {
   const loadDashboard = async () => {
     setLoading(true);
     try {
-      const [statsRes, delaysRes, blockagesRes, overdueRes] = await Promise.all([
+      const [statsRes, delaysRes, blockagesRes] = await Promise.all([
         dashboardApi.getStats(),
         dashboardApi.getTicketsByDelay(),
         dashboardApi.getBlockagePoints(),
-        dashboardApi.getRecentOverdue(),
       ]);
       if (statsRes.success) setStats(statsRes.data!);
       if (delaysRes.success) setDelays(delaysRes.data!);
       if (blockagesRes.success) setBlockages(blockagesRes.data!);
-      if (overdueRes.success) setOverdueTickets(overdueRes.data!);
     } catch {
       toast.error('Erreur lors du chargement du dashboard');
     } finally {
@@ -104,21 +101,6 @@ export function DashboardTab() {
     { label: '7–14 jours', value: delays.yellow, cls: styles.yellow },
     { label: '> 14 jours', value: delays.red, cls: styles.red },
   ] : [];
-
-  const overdueColumns: Column<RepairTicket>[] = [
-    { key: 'ticket_number', header: 'Numero', render: (t) => t.ticket_number },
-    { key: 'equipment', header: 'Equipement', render: (t) => `${t.equipment_brand ?? ''} ${t.equipment_model ?? ''}`.trim() },
-    { key: 'owner', header: 'Propriétaire', render: (t) => t.employee_name },
-    {
-      key: 'delay',
-      header: 'Délai',
-      render: (t) => (
-        <Badge variant={t.delay_color === 'red' ? 'danger' : t.delay_color === 'yellow' ? 'warning' : 'success'}>
-          {t.delay_days}j
-        </Badge>
-      ),
-    },
-  ];
 
   return (
     <div>
@@ -174,24 +156,6 @@ export function DashboardTab() {
               </Badge>
             ))}
           </div>
-        </motion.div>
-      )}
-
-      {/* Overdue Tickets */}
-      {overdueTickets.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.82, duration: 0.25 }}
-        >
-          <h3 className={styles.sectionTitle}>Tickets en retard (&gt;14 jours)</h3>
-          <Table<any>
-            data={overdueTickets}
-            columns={overdueColumns}
-            keyExtractor={(t) => t.id}
-            features={{ pagination: true }}
-            defaultPageSize={5}
-          />
         </motion.div>
       )}
 

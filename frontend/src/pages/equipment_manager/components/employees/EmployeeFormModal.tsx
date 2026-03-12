@@ -3,29 +3,26 @@ import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { Button } from '@components/ui/Button/Button';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
-import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { useFormValidation } from '@/components/forms/useFormValidation';
-import { Save, Plus } from 'lucide-react';
+import { Save, Plus, UserPlus } from 'lucide-react';
 import shared from '@components/ui/styles/shared.module.css';
 import toast from 'react-hot-toast';
 import { employeesApi } from '../../api';
-import { api } from '@/apis/api';
-import type { Employee, Position, GeneratedCredentials } from '../../types';
+import { userService } from '@services/identity.service';
+import type { Employee, Position } from '../../types';
+import type { User } from '@models/identity.model';
 import { PositionFormModal } from './PositionFormModal';
-
-interface Tenant { id: string; name: string; }
+import { UserFormModal } from '@pages/admins/components/identities/UserFormModal';
 
 const VALIDATION_RULES = {
-  firstName:  { required: true, message: 'Le prénom est requis' },
-  lastName:   { required: true, message: 'Le nom est requis' },
-  phone:      { required: true, message: 'Le téléphone est requis' },
+  userId:     { required: true, message: "L'utilisateur est requis" },
   positionId: { required: true, message: 'Le poste est requis' },
 };
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (credentials?: GeneratedCredentials, employeeName?: string, employeeId?: string) => void;
+  onSuccess: () => void;
   editData?: Employee | null;
   positions: Position[];
 }
@@ -43,89 +40,96 @@ function buildPositionOptions(positions: Position[]): { value: string; label: st
       traverse(children, depth + 1);
     }
   }
-
   traverse(roots, 0);
-
-  // Orphans (parent missing/inactive) appended at root level
   const visited = new Set(result.map((r) => r.value));
   positions
     .filter((p) => p.is_active && !visited.has(p.id))
     .forEach((p) => result.push({ value: p.id, label: p.name }));
-
   return result;
 }
 
+// ── Composant principal ───────────────────────────────────────────────────────
 export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, positions }: Props) {
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [code, setCode] = useState('');
-  const [tenantId, setTenantId] = useState('');
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [gender, setGender] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [code,       setCode]       = useState('');
   const [positionId, setPositionId] = useState('');
-  const [hireDate, setHireDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [hireDate,   setHireDate]   = useState('');
+  const [saving,     setSaving]     = useState(false);
 
-  // Charger la liste des tenants au montage
-  useEffect(() => {
-    api.get<Tenant[]>('/tenants').then((res) => {
-      if (res.success) setTenants(res.data ?? []);
+  // ── User select ──────────────────────────────────────────────────────────────
+  const [userId,         setUserId]         = useState('');
+  const [users,          setUsers]          = useState<User[]>([]);
+  const [usersLoading,   setUsersLoading]   = useState(false);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+
+  const loadUsers = async (): Promise<User[]> => {
+    setUsersLoading(true);
+    try {
+      const list = await userService.full();
+      setUsers(list ?? []);
+      return list ?? [];
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => { if (isOpen) loadUsers(); }, [isOpen]);
+
+  const handleUserCreated = (newUser: User) => {
+    setCreateUserOpen(false);
+    loadUsers().then((list) => {
+      const found = list.find((u) => String(u.id) === String(newUser.id)) ?? newUser;
+      setUserId(String(found.id));
+      touchField('userId', String(found.id));
     });
-  }, []);
+  };
 
-  const [posFormOpen, setPosFormOpen] = useState(false);
+  const [posFormOpen,    setPosFormOpen]    = useState(false);
   const [localPositions, setLocalPositions] = useState<Position[]>([]);
 
   const isEdit = !!editData;
   const { touchField, validateAll, getFieldError, getErrorMessages, isFormValid, reset } = useFormValidation(VALIDATION_RULES);
 
-  const allPositions = [...positions, ...localPositions.filter((lp) => !positions.find((p) => p.id === lp.id))];
+  const allPositions    = [...positions, ...localPositions.filter((lp) => !positions.find((p) => p.id === lp.id))];
   const positionOptions = buildPositionOptions(allPositions);
+
+  const userOptions = [
+    { value: '', label: 'Sélectionner un utilisateur…' },
+    ...users.map((u) => ({
+      value: String(u.id),
+      label: `${u.firstname} ${u.lastname} (@${u.username})`,
+    })),
+  ];
 
   useEffect(() => {
     if (editData) {
-      setFirstName(editData.first_name);
-      setLastName(editData.last_name);
       setCode(editData.employee_id_code ?? '');
-      setTenantId(editData.tenant_id ?? '');
-      setGender(editData.gender);
-      setPhone(editData.phone);
-      setEmail(editData.email);
       setPositionId(editData.position_id || '');
       setHireDate(editData.hire_date || '');
-      setNotes(editData.notes);
+      setUserId(editData.user_id ?? '');
     } else {
-      setFirstName(''); setLastName(''); setCode('');
-      setTenantId(''); setGender(''); setPhone(''); setEmail('');
-      setPositionId(''); setHireDate(''); setNotes('');
+      setCode(''); setPositionId(''); setHireDate(''); setUserId('');
     }
     setLocalPositions([]);
     reset();
   }, [editData, isOpen]);
 
-  const formValues = { firstName, lastName, phone, positionId };
-  const canSubmit = isFormValid(formValues);
+  const formValues    = { userId, positionId };
+  const canSubmit     = isFormValid(formValues);
   const errorMessages = getErrorMessages();
 
   const handleSave = async () => {
     if (!validateAll(formValues)) return;
-
     setSaving(true);
     try {
+      const selectedUser = users.find((u) => String(u.id) === userId);
       const data = {
-        first_name: firstName,
-        last_name: lastName,
+        first_name:       selectedUser?.firstname ?? '',
+        last_name:        selectedUser?.lastname  ?? '',
         employee_id_code: code.trim() || null,
-        tenant_id: tenantId || null,
-        gender,
-        phone,
-        email,
-        position_id: positionId || null,
-        hire_date: hireDate || null,
-        notes,
+        tenant_id:        selectedUser?.tenant_id ?? null,
+        position_id:      positionId || null,
+        hire_date:        hireDate || null,
+        user_id:          userId || null,
       };
       const res = isEdit
         ? await employeesApi.update(editData!.id, data)
@@ -133,9 +137,8 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, positi
 
       if (res.success) {
         toast.success(`Employé ${isEdit ? 'mis à jour' : 'créé'} avec succès`);
-        const creds = !isEdit ? (res.data as any)?.generated_credentials as GeneratedCredentials | undefined : undefined;
-        const empId = !isEdit ? (res.data as any)?.id as string | undefined : undefined;
-        onSuccess(creds, `${firstName} ${lastName}`, empId); onClose();
+        onSuccess();
+        onClose();
       } else {
         toast.error(res.message || 'Erreur');
       }
@@ -152,61 +155,51 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, positi
   };
 
   return (
-    <FormModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={`${isEdit ? 'Modifier' : 'Nouvel'} Employé`}
-      size="lg"
-      errors={errorMessages}
-      onSubmit={handleSave}
-      isSubmitDisabled={!canSubmit}
-      isLoading={saving}
-      submitLabel="Enregistrer"
-      submitIcon={<Save size={16} />}
-    >
-      <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
-        {/* Prénom / Nom */}
-        <div className={shared.formRow}>
-          <FormInput
-            label="Prénom"
-            required
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            onBlur={() => touchField('firstName', firstName)}
-            error={getFieldError('firstName')}
-          />
-          <FormInput
-            label="Nom"
-            required
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            onBlur={() => touchField('lastName', lastName)}
-            error={getFieldError('lastName')}
-          />
-        </div>
+    <>
+      <FormModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title={`${isEdit ? 'Modifier' : 'Nouvel'} Employé`}
+        size="md"
+        errors={errorMessages}
+        onSubmit={handleSave}
+        isSubmitDisabled={!canSubmit}
+        isLoading={saving}
+        submitLabel="Enregistrer"
+        submitIcon={<Save size={16} />}
+      >
+        <form className={shared.form} onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
 
-        {/* Téléphone (requis) / Email (optionnel) */}
-        <div className={shared.formRow}>
-          <FormInput
-            label="Téléphone"
-            required
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            onBlur={() => touchField('phone', phone)}
-            error={getFieldError('phone')}
-          />
-          <FormInput
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+          {/* ── Utilisateur lié (requis) ─────────────────────────────────── */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <FormSelect
+                label="Compte utilisateur"
+                required
+                value={userId}
+                onChange={(v) => { setUserId(v); touchField('userId', v); }}
+                error={getFieldError('userId')}
+                options={userOptions}
+                searchable
+                searchPlaceholder="Rechercher par nom, prénom, username…"
+                disabled={usersLoading}
+                placeholder={usersLoading ? 'Chargement…' : 'Sélectionner un utilisateur…'}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCreateUserOpen(true)}
+              title="Créer un nouvel utilisateur"
+              style={{ flexShrink: 0, marginBottom: getFieldError('userId') ? '1.5rem' : '0.25rem' }}
+            >
+              <UserPlus size={16} />
+            </Button>
+          </div>
 
-        {/* Poste (requis) */}
-        <div className={shared.formRow}>
-          {/* Poste hiérarchique + bouton création rapide */}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flex: 1 }}>
+          {/* ── Poste (requis) ───────────────────────────────────────────── */}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
               <FormSelect
                 label="Poste"
@@ -228,54 +221,39 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, positi
               <Plus size={16} />
             </Button>
           </div>
-        </div>
 
-        {/* Tenant */}
-        <FormSelect
-          label="Tenant (organisation)"
-          value={tenantId}
-          onChange={(v) => setTenantId(v)}
-          options={[
-            { value: '', label: '— Aucun —' },
-            ...tenants.map((t) => ({ value: t.id, label: t.name })),
-          ]}
+          {/* ── Code employé / Date d'embauche ───────────────────────────── */}
+          <div className={shared.formRow}>
+            <FormInput
+              label="Code employé (optionnel)"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+            />
+            <FormInput
+              label="Date d'embauche"
+              type={'date' as any}
+              value={hireDate}
+              onChange={(e) => setHireDate(e.target.value)}
+            />
+          </div>
+
+        </form>
+
+        <PositionFormModal
+          isOpen={posFormOpen}
+          onClose={() => setPosFormOpen(false)}
+          onSuccess={() => {}}
+          onCreated={handlePositionCreated}
+          existingPositions={allPositions}
         />
+      </FormModal>
 
-        {/* Genre / Code (optionnel) */}
-        <div className={shared.formRow}>
-          <FormSelect
-            label="Genre"
-            value={gender}
-            onChange={(v) => setGender(v)}
-            options={[{ value: '', label: '-' }, { value: 'M', label: 'Masculin' }, { value: 'F', label: 'Féminin' }]}
-          />
-          <FormInput
-            label="Code employé (optionnel)"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-        </div>
-
-        {/* Date d'embauche */}
-        <div className={shared.formRow}>
-          <FormInput
-            label="Date d'embauche"
-            type={'date' as any}
-            value={hireDate}
-            onChange={(e) => setHireDate(e.target.value)}
-          />
-        </div>
-
-        <FormTextarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
-      </form>
-
-      <PositionFormModal
-        isOpen={posFormOpen}
-        onClose={() => setPosFormOpen(false)}
-        onSuccess={() => {}}
-        onCreated={handlePositionCreated}
-        existingPositions={allPositions}
+      {/* ── Modal création utilisateur ───────────────────────────────────────── */}
+      <UserFormModal
+        isOpen={createUserOpen}
+        onClose={() => setCreateUserOpen(false)}
+        onCreated={handleUserCreated}
       />
-    </FormModal>
+    </>
   );
 }
