@@ -100,7 +100,7 @@ def delete_tenant(tenant_id: int):
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:
             raise BadRequest(f"Tenant with id={tenant_id} not found", 404)
-
+        tenant.is_active = False
         tenant.deleted = True
         tenant.deleted_at = datetime.now(timezone.utc)
         tenant.deleted_by=currentUserId()

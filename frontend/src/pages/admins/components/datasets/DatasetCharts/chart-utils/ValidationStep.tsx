@@ -1,24 +1,36 @@
-import { FormMultiSelect } from "@/components/forms/FormSelect/FormMultiSelect";
-import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { FormSwitch } from "@/components/forms/FormSwitch/FormSwitch";
 import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
 import { Button } from "@/components/ui/Button/Button";
-import { AGGRAGATE_TYPES, CHART_PIVOT_MODE, ChartFormProps, ChartVisualOptions, DatasetChart, SqlChartType, SqlChartTypeList, suggestChartType } from "@/models/dataset.models";
+import { ChartFormProps, DatasetChart, suggestChartType } from "@/models/dataset.models";
 import { chartService } from "@/services/dataset.service";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 
-export const ValidationStep = ({ chart, onChange, onExecute }: ChartFormProps) => {
+export const ValidationStep = ({ chart, onChange, onExecute, queries }: ChartFormProps) => {
+
+    const query = useMemo(() => {
+        return queries?.find((q) => q.id === chart.query_id);
+    }, [queries, chart.query_id]);
+
+    const fields = useMemo(() => {
+        return query?.fields ?? [];
+    }, [query]);
 
     const updateChartValue = (key: keyof DatasetChart, val: any) => {
         let updated: DatasetChart = { ...chart, [key]: val };
         // si tu veux suggérer le type après chaque changement de structure
         if (key === "structure") {
             if (!("structure" in updated)) {
-                updated = { ...updated as any, structure: { rows_dimensions: [], cols_dimensions: [], metrics: [], filters: [] } };
+                updated = {
+                    ...updated as any, structure: {
+                        rows_dimensions: [],
+                        cols_dimensions: [],
+                        metrics: [], filters: []
+                    }
+                };
             }
-            const dimensions = [...updated.structure.rows_dimensions, ...updated.structure.cols_dimensions].map(d => d.field);
-            const metrics = updated.structure.metrics.map(m => m.field);
+            const dimensions = [...updated.structure.rows_dimensions, ...updated.structure.cols_dimensions].map(d => d.field_id);
+            const metrics = updated.structure.metrics.map(m => m.field_id);
             updated.type = suggestChartType(dimensions, metrics);
         }
         onChange(updated);
@@ -28,7 +40,6 @@ export const ValidationStep = ({ chart, onChange, onExecute }: ChartFormProps) =
         if (!chart.query_id || !onExecute) return;
         chartService.execute(chart.query_id, chart).then(res => onExecute(res))
     }
-
 
     return (
         <>

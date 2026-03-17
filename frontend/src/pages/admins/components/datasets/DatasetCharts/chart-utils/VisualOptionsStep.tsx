@@ -1,11 +1,10 @@
+import { useMemo, useState } from "react";
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { FormSwitch } from "@/components/forms/FormSwitch/FormSwitch";
 import {
   DatasetChart,
-  ChartVisualOptions,
-  BaseChartOptions,
-  SqlChartType,
+  ChartOptions,
   ChartFormProps,
   BarChartOptions,
   GaugeChartOptions,
@@ -16,50 +15,44 @@ import {
   RadarChartOptions,
   TableChartOptions,
   SqlChartTypeList,
-  suggestChartType
+  suggestChartType,
+  getOptionKey,
+  AreaChartOptions,
 } from "@/models/dataset.models";
-import { useState } from "react";
+import { Button } from "@/components/ui/Button/Button";
+import { RenamesOptionsModal } from "./RenamesOptionsModal";
 
-export const getOptionKey = (type: SqlChartType): keyof ChartVisualOptions => {
-  switch (type) {
-    case "bar": return "bar";
-    case "stacked-bar": return "stacked_bar";
-    case "line": return "line";
-    case "area": return "area";
-    case "stacked-area": return "stacked_area";
-    case "pie": return "pie";
-    case "donut": return "donut";
-    case "kpi": return "kpi";
-    case "table": return "table";
-    case "gauge": return "gauge";
-    case "heatmap": return "heatmap";
-    case "radar": return "radar";
-    default:
-      return "bar";
-  }
-};
-
-type FullChartOptions = BarChartOptions | LineChartOptions | PieChartOptions | TableChartOptions | KpiChartOptions | GaugeChartOptions | HeatmapChartOptions | RadarChartOptions
+// ChartOptions
 
 
-export const VisualOptionsStep = ({ chart, onChange }: ChartFormProps) => {
-
+export const VisualOptionsStep = ({ chart, queries, onChange }: ChartFormProps) => {
+  const [isInModalOpen, setIsInModalOpen] = useState(false);
   const [expertMode, setExpertMode] = useState<boolean>(false);
   const [chartType, setChartType] = useState<string>("table");
 
   const optionKey = getOptionKey(chart.type);
 
-  function options<T = FullChartOptions>() {
+  const options = (): ChartOptions => chart.options ?? {};
+
+  function visualOptions<T>() {
     return (chart.options?.[optionKey] ?? {}) as T;
   }
 
-  const updateOption = (key: keyof BaseChartOptions, value: any) => {
-    const updatedOptions = { ...chart.options, [optionKey]: { ...options(), [key]: value } };
+  const query = useMemo(() => {
+    return queries?.find((q) => q.id === chart.query_id);
+  }, [queries, chart.query_id]);
+
+  const fields = useMemo(() => {
+    return query?.fields ?? [];
+  }, [query]);
+
+  const updateOption = (key: keyof ChartOptions, value: any) => {
+    const updatedOptions = { ...chart.options, [key]: value };
     onChange({ ...chart, options: updatedOptions });
   };
 
-  const updateSpecific = (key: string, value: any) => {
-    const updatedOptions = { ...chart.options, [optionKey]: { ...options(), [key]: value } };
+  function updateSpecific<T>(key: keyof T, value: any) {
+    const updatedOptions = { ...options(), [optionKey]: { ...visualOptions<T>(), [key]: value } };
     onChange({ ...chart, options: updatedOptions });
   };
 
@@ -70,8 +63,8 @@ export const VisualOptionsStep = ({ chart, onChange }: ChartFormProps) => {
       if (!("structure" in updated)) {
         updated = { ...updated as any, structure: { rows_dimensions: [], cols_dimensions: [], metrics: [], filters: [] } };
       }
-      const dimensions = [...updated.structure.rows_dimensions, ...updated.structure.cols_dimensions].map(d => d.field);
-      const metrics = updated.structure.metrics.map(m => m.field);
+      const dimensions = [...updated.structure.rows_dimensions, ...updated.structure.cols_dimensions].map(d => d.field_id);
+      const metrics = updated.structure.metrics.map(m => m.field_id);
       updated.type = suggestChartType(dimensions, metrics);
     }
     onChange(updated);
@@ -84,6 +77,19 @@ export const VisualOptionsStep = ({ chart, onChange }: ChartFormProps) => {
 
   return (
     <>
+      <>
+        <Button size="sm" variant="outline" onClick={() => setIsInModalOpen(true)} >
+          Edit values
+        </Button>
+
+        <RenamesOptionsModal
+          isOpen={isInModalOpen}
+          onClose={() => setIsInModalOpen(false)}
+          values={options()?.renames || {}}
+          onChange={(newValues) => updateOption("renames", newValues)}
+        />
+      </>
+
       {/* BASE OPTIONS */}
       <FormSelect
         label="Chart Type"
@@ -138,141 +144,209 @@ export const VisualOptionsStep = ({ chart, onChange }: ChartFormProps) => {
 
 
       {/* BAR CHART */}
-
       {(chart.type === "bar" || chart.type === "stacked-bar") && (
         <>
           <FormSwitch
             label="Stacked"
-            checked={options<BarChartOptions>().stacked ?? false}
-            onChange={e => updateSpecific("stacked", e.target.checked)}
+            checked={visualOptions<BarChartOptions>().stacked ?? false}
+            onChange={e => updateSpecific<BarChartOptions>("stacked", e.target.checked)}
           />
 
           <FormSwitch
             label="Horizontal"
-            checked={options<BarChartOptions>().horizontal ?? false}
-            onChange={e => updateSpecific("horizontal", e.target.checked)}
+            checked={visualOptions<BarChartOptions>().horizontal ?? false}
+            onChange={e => updateSpecific<BarChartOptions>("horizontal", e.target.checked)}
           />
 
           <FormInput
             label="Bar Width"
-            value={options<BarChartOptions>().bar_width ?? 20}
-            onChange={e => updateSpecific("bar_width", Number(e.target.value))}
+            value={visualOptions<BarChartOptions>().bar_width ?? 20}
+            onChange={e => updateSpecific<BarChartOptions>("bar_width", Number(e.target.value))}
           />
         </>
       )}
 
       {/* LINE / AREA */}
-
       {(chart.type === "line" || chart.type === "area" || chart.type === "stacked-area") && (
         <>
           <FormSwitch
             label="Curved Line"
-            checked={options<LineChartOptions>().curved ?? false}
-            onChange={e => updateSpecific("curved", e.target.checked)}
+            checked={visualOptions<LineChartOptions>().curved ?? false}
+            onChange={e => updateSpecific<LineChartOptions>("curved", e.target.checked)}
+          />
+          <FormSwitch
+            label="Is Area"
+            checked={visualOptions<LineChartOptions>().is_area ?? false}
+            onChange={e => updateSpecific<LineChartOptions>("is_area", e.target.checked)}
+          />
+          <FormSwitch
+            label="Horizontal"
+            checked={visualOptions<BarChartOptions>().horizontal ?? false}
+            onChange={e => updateSpecific<BarChartOptions>("horizontal", e.target.checked)}
           />
 
           <FormSwitch
             label="Show Markers"
-            checked={options<LineChartOptions>().show_markers ?? true}
-            onChange={e => updateSpecific("show_markers", e.target.checked)}
+            checked={visualOptions<LineChartOptions>().show_markers ?? true}
+            onChange={e => updateSpecific<LineChartOptions>("show_markers", e.target.checked)}
           />
 
           <FormInput
             label="Line Width"
-            value={options<LineChartOptions>().line_width ?? 2}
-            onChange={e => updateSpecific("line_width", Number(e.target.value))}
+            value={visualOptions<LineChartOptions>().line_width ?? 2}
+            onChange={e => updateSpecific<LineChartOptions>("line_width", Number(e.target.value))}
           />
         </>
       )}
 
-      {/* PIE / DONUT */}
+      {/* LINE / AREA */}
+      {(chart.type === "area") && (
+        <>
+          <FormInput
+            label="grid_stroke"
+            value={visualOptions<AreaChartOptions>().grid_stroke ?? 20}
+            onChange={e => updateSpecific<AreaChartOptions>("grid_stroke", Number(e.target.value))}
+          />
+          <FormInput
+            label="grid_dasharray"
+            value={visualOptions<AreaChartOptions>().grid_dasharray ?? 20}
+            onChange={e => updateSpecific<AreaChartOptions>("grid_dasharray", Number(e.target.value))}
+          />
 
+          <FormSwitch
+            label="grid_vertical"
+            checked={visualOptions<AreaChartOptions>().grid_vertical ?? false}
+            onChange={e => updateSpecific<AreaChartOptions>("grid_vertical", e.target.checked)}
+          />
+          <FormSwitch
+            label="grid_horizontal"
+            checked={visualOptions<AreaChartOptions>().grid_horizontal ?? false}
+            onChange={e => updateSpecific<AreaChartOptions>("grid_horizontal", e.target.checked)}
+          />
+          <FormSwitch
+            label="show_brush"
+            checked={visualOptions<AreaChartOptions>().show_brush ?? false}
+            onChange={e => updateSpecific<AreaChartOptions>("show_brush", e.target.checked)}
+          />
+
+          {/* <FormSelect
+            label="reference_lines"
+            value={visualOptions<AreaChartOptions>().reference_lines ?? []}
+            options={[{ value: "", label: "" }]}
+            onChange={v => updateSpecific<AreaChartOptions>("reference_lines", v)}
+          /> */}
+
+          <FormInput
+            label="Bar Width"
+            value={visualOptions<AreaChartOptions>().gradient_fill}
+            onChange={e => updateSpecific<AreaChartOptions>("gradient_fill", Number(e.target.value))}
+          />
+          <FormInput
+            label="Bar Width"
+            type="number"
+            value={visualOptions<AreaChartOptions>().fill_opacity}
+            onChange={e => updateSpecific<AreaChartOptions>("fill_opacity", Number(e.target.value))}
+          />
+
+          <FormSelect
+            label="label_position"
+            value={visualOptions<AreaChartOptions>().label_position ?? []}
+            options={[
+              { value: "top", label: "Top" }, 
+              { value: "bottom", label: "Bottom" },
+              { value: "left", label: "Left" },
+              { value: "right", label: "Right" },
+              { value: "inside", label: "Inside" },
+            ]}
+            onChange={v => updateSpecific<AreaChartOptions>("label_position", v)}
+          />
+
+        </>
+      )}
+
+      {/* PIE / DONUT */}
       {(chart.type === "pie" || chart.type === "donut") && (
         <>
           <FormSwitch
             label="Show Percentage"
-            checked={options<PieChartOptions>().show_percentage ?? true}
-            onChange={e => updateSpecific("show_percentage", e.target.checked)}
+            checked={visualOptions<PieChartOptions>().show_percentage ?? true}
+            onChange={e => updateSpecific<PieChartOptions>("show_percentage", e.target.checked)}
           />
 
           {chart.type === "donut" && (
             <FormInput
               label="Inner Radius"
-              value={options<PieChartOptions>().inner_radius ?? 50}
-              onChange={e => updateSpecific("inner_radius", Number(e.target.value))}
+              value={visualOptions<PieChartOptions>().inner_radius ?? 50}
+              onChange={e => updateSpecific<PieChartOptions>("inner_radius", Number(e.target.value))}
             />
           )}
         </>
       )}
 
       {/* KPI */}
-
       {chart.type === "kpi" && (
         <>
           <FormInput
             label="Icon"
-            value={options<KpiChartOptions>().icon ?? ""}
-            onChange={e => updateSpecific("icon", e.target.value)}
+            value={visualOptions<KpiChartOptions>().icon ?? ""}
+            onChange={e => updateSpecific<KpiChartOptions>("icon", e.target.value)}
           />
 
           <FormInput
             label="Decimal Precision"
-            value={options<KpiChartOptions>().decimal_precision ?? 2}
-            onChange={e => updateSpecific("decimal_precision", Number(e.target.value))}
+            value={visualOptions<KpiChartOptions>().decimal_precision ?? 2}
+            onChange={e => updateSpecific<KpiChartOptions>("decimal_precision", Number(e.target.value))}
           />
 
           <FormSwitch
             label="Show Trend Indicator"
-            checked={options<KpiChartOptions>().trend_indicator ?? false}
-            onChange={e => updateSpecific("trend_indicator", e.target.checked)}
+            checked={visualOptions<KpiChartOptions>().trend_indicator ?? false}
+            onChange={e => updateSpecific<KpiChartOptions>("trend_indicator", e.target.checked)}
           />
         </>
       )}
 
       {/* GAUGE */}
-
       {chart.type === "gauge" && (
         <>
           <FormInput
             label="Min Value"
-            value={options<GaugeChartOptions>().min_value ?? 0}
-            onChange={e => updateSpecific("min_value", Number(e.target.value))}
+            value={visualOptions<GaugeChartOptions>().min_value ?? 0}
+            onChange={e => updateSpecific<GaugeChartOptions>("min_value", Number(e.target.value))}
           />
 
           <FormInput
             label="Max Value"
-            value={options<GaugeChartOptions>().max_value ?? 100}
-            onChange={e => updateSpecific("max_value", Number(e.target.value))}
+            value={visualOptions<GaugeChartOptions>().max_value ?? 100}
+            onChange={e => updateSpecific<GaugeChartOptions>("max_value", Number(e.target.value))}
           />
         </>
       )}
 
       {/* HEATMAP */}
-
       {chart.type === "heatmap" && (
         <>
           <FormInput
             label="Cell Padding"
-            value={options<HeatmapChartOptions>().cell_padding ?? 2}
-            onChange={e => updateSpecific("cell_padding", Number(e.target.value))}
+            value={visualOptions<HeatmapChartOptions>().cell_padding ?? 2}
+            onChange={e => updateSpecific<HeatmapChartOptions>("cell_padding", Number(e.target.value))}
           />
         </>
       )}
 
       {/* RADAR */}
-
       {chart.type === "radar" && (
         <>
           <FormInput
             label="Max Value"
-            value={options<RadarChartOptions>().max_value ?? 100}
-            onChange={e => updateSpecific("max_value", Number(e.target.value))}
+            value={visualOptions<RadarChartOptions>().max_value ?? 100}
+            onChange={e => updateSpecific<RadarChartOptions>("max_value", Number(e.target.value))}
           />
 
           <FormSwitch
             label="Fill Area"
-            checked={options<RadarChartOptions>().fill_area ?? true}
-            onChange={e => updateSpecific("fill_area", e.target.checked)}
+            checked={visualOptions<RadarChartOptions>().fill_area ?? true}
+            onChange={e => updateSpecific<RadarChartOptions>("fill_area", e.target.checked)}
           />
         </>
       )}
@@ -280,16 +354,16 @@ export const VisualOptionsStep = ({ chart, onChange }: ChartFormProps) => {
       {/* TABLE SPECIFIC OPTIONS */}
       {chart.type === "table" && (
         <>
-          <FormSwitch label="Pagination" checked={options<TableChartOptions>().pagination ?? true} onChange={e => updateSpecific("pagination", e.target.checked)} />
-          <FormInput label="Page Size" value={options<TableChartOptions>().page_size ?? 10} onChange={e => updateSpecific("page_size", Number(e.target.value))} />
-          <FormSwitch label="Sortable" checked={options<TableChartOptions>().sortable ?? true} onChange={e => updateSpecific("sortable", e.target.checked)} />
-          <FormSwitch label="Filterable" checked={options<TableChartOptions>().filterable ?? false} onChange={e => updateSpecific("filterable", e.target.checked)} />
-          <FormSwitch label="Searchable" checked={options<TableChartOptions>().searchable ?? true} onChange={e => updateSpecific("searchable", e.target.checked)} />
-          <FormSwitch label="Exportable" checked={options<TableChartOptions>().exportable ?? false} onChange={e => updateSpecific("exportable", e.target.checked)} />
-          <FormSwitch label="Row Highlight" checked={options<TableChartOptions>().row_highlight ?? true} onChange={e => updateSpecific("row_highlight", e.target.checked)} />
-          <FormSwitch label="Conditional Formatting" checked={options<TableChartOptions>().conditional_formatting ?? false} onChange={e => updateSpecific("conditional_formatting", e.target.checked)} />
-          {options<TableChartOptions>().columns?.length && (
-            <FormInput label="Custom Columns JSON" value={JSON.stringify(options<TableChartOptions>().columns)} onChange={e => updateSpecific("columns", JSON.parse(e.target.value))} />
+          <FormSwitch label="Pagination" checked={visualOptions<TableChartOptions>().pagination ?? true} onChange={e => updateSpecific<TableChartOptions>("pagination", e.target.checked)} />
+          <FormInput label="Page Size" value={visualOptions<TableChartOptions>().page_size ?? 10} onChange={e => updateSpecific<TableChartOptions>("page_size", Number(e.target.value))} />
+          <FormSwitch label="Sortable" checked={visualOptions<TableChartOptions>().sortable ?? true} onChange={e => updateSpecific<TableChartOptions>("sortable", e.target.checked)} />
+          <FormSwitch label="Filterable" checked={visualOptions<TableChartOptions>().filterable ?? false} onChange={e => updateSpecific<TableChartOptions>("filterable", e.target.checked)} />
+          <FormSwitch label="Searchable" checked={visualOptions<TableChartOptions>().searchable ?? true} onChange={e => updateSpecific<TableChartOptions>("searchable", e.target.checked)} />
+          <FormSwitch label="Exportable" checked={visualOptions<TableChartOptions>().exportable ?? false} onChange={e => updateSpecific<TableChartOptions>("exportable", e.target.checked)} />
+          <FormSwitch label="Row Highlight" checked={visualOptions<TableChartOptions>().row_highlight ?? true} onChange={e => updateSpecific<TableChartOptions>("row_highlight", e.target.checked)} />
+          <FormSwitch label="Conditional Formatting" checked={visualOptions<TableChartOptions>().conditional_formatting ?? false} onChange={e => updateSpecific<TableChartOptions>("conditional_formatting", e.target.checked)} />
+          {visualOptions<TableChartOptions>().columns?.length && (
+            <FormInput label="Custom Columns JSON" value={JSON.stringify(visualOptions<TableChartOptions>().columns)} onChange={e => updateSpecific<TableChartOptions>("columns", JSON.parse(e.target.value))} />
           )}
         </>
       )}
@@ -300,7 +374,7 @@ export const VisualOptionsStep = ({ chart, onChange }: ChartFormProps) => {
 
 // import { FormInput } from "@/components/forms/FormInput/FormInput";
 // import { FormSwitch } from "@/components/forms/FormSwitch/FormSwitch";
-// import { ChartStructure, ChartVisualOptions, DatasetChart } from "@/models/dataset.models";
+// import { ChartStructure, ChartOptions, DatasetChart } from "@/models/dataset.models";
 
 // export interface ChartFormProps {
 //   chart: DatasetChart;

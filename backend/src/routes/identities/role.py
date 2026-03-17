@@ -117,7 +117,7 @@ def delete_role(role_id: int):
         role:UserRole = UserRole.query.get(role_id)
         if not role or role.deleted:
             raise BadRequest(f"Role with id={role_id} not found", 404)
-
+        role.is_active = False
         role.deleted = True
         role.deleted_at = datetime.now(timezone.utc)
         role.deleted_by=currentUserId()

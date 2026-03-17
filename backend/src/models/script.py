@@ -13,7 +13,7 @@ class Script(db.Model, AuditMixin):
     _content = db.Column("content", db.Text, nullable=False)  # champ interne pour sérialisation
 
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), nullable=False)
-    tenant = db.relationship("Tenant", back_populates="scripts",lazy="selectin",foreign_keys=[tenant_id])
+    tenant = db.relationship("Tenant", back_populates="scripts",lazy="noload",foreign_keys=[tenant_id])
     scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="script", cascade="all, delete-orphan")
 
     # --- Constructeur ---

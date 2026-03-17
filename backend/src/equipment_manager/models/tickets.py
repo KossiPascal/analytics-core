@@ -13,7 +13,7 @@ class ProblemType(db.Model, AuditMixin):
     category = db.Column(db.String(20), nullable=False)  # HARDWARE, SOFTWARE, OTHER
     display_order = db.Column(db.Integer, default=0)
 
-    issues = db.relationship("Issue", back_populates="problem_type", lazy="selectin")
+    issues = db.relationship("Issue", back_populates="problem_type", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -71,12 +71,12 @@ class RepairTicket(db.Model, AuditMixin):
     initial_problem_description = db.Column(db.Text, nullable=False)
     resolution_notes = db.Column(db.Text, default="")
 
-    equipment = db.relationship("Equipment", back_populates="repair_tickets", lazy="selectin")
-    employee = db.relationship("Employee", back_populates="repair_tickets", lazy="selectin")
-    events = db.relationship("TicketEvent", back_populates="ticket", lazy="selectin", cascade="all, delete-orphan")
-    issues = db.relationship("Issue", back_populates="ticket", lazy="selectin", cascade="all, delete-orphan")
-    comments = db.relationship("TicketComment", back_populates="ticket", lazy="selectin", cascade="all, delete-orphan")
-    delay_alerts = db.relationship("DelayAlertLog", back_populates="ticket", lazy="selectin", cascade="all, delete-orphan")
+    equipment = db.relationship("Equipment", back_populates="repair_tickets", lazy="noload")
+    employee = db.relationship("Employee", back_populates="repair_tickets", lazy="noload")
+    events = db.relationship("TicketEvent", back_populates="ticket", lazy="noload", cascade="all, delete-orphan")
+    issues = db.relationship("Issue", back_populates="ticket", lazy="noload", cascade="all, delete-orphan")
+    comments = db.relationship("TicketComment", back_populates="ticket", lazy="noload", cascade="all, delete-orphan")
+    delay_alerts = db.relationship("DelayAlertLog", back_populates="ticket", lazy="noload", cascade="all, delete-orphan")
 
     def get_delay_days(self):
         if self.closed_date:
@@ -166,8 +166,8 @@ class Issue(db.Model, AuditMixin):
     problem_type_id = db.Column(db.BigInteger, db.ForeignKey("eqpm.problem_types.id", ondelete="RESTRICT"), nullable=False)
     description = db.Column(db.Text, default="")
 
-    ticket = db.relationship("RepairTicket", back_populates="issues", lazy="selectin")
-    problem_type = db.relationship("ProblemType", back_populates="issues", lazy="selectin")
+    ticket = db.relationship("RepairTicket", back_populates="issues", lazy="noload")
+    problem_type = db.relationship("ProblemType", back_populates="issues", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -200,9 +200,9 @@ class TicketEvent(db.Model, AuditMixin):
     comment = db.Column(db.Text, default="")
     attachment_path = db.Column(db.String(500), default="")
 
-    ticket = db.relationship("RepairTicket", back_populates="events", lazy="selectin")
-    user = db.relationship("User", foreign_keys=[user_id], lazy="selectin")
-    recipient_employee = db.relationship("Employee", foreign_keys=[recipient_employee_id], lazy="selectin")
+    ticket = db.relationship("RepairTicket", back_populates="events", lazy="noload")
+    user = db.relationship("User", foreign_keys=[user_id], lazy="noload")
+    recipient_employee = db.relationship("Employee", foreign_keys=[recipient_employee_id], lazy="noload")
 
     def to_dict_safe(self):
         recipient = self.recipient_employee
@@ -237,8 +237,8 @@ class TicketComment(db.Model, AuditMixin):
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     comment = db.Column(db.Text, nullable=False)
 
-    ticket = db.relationship("RepairTicket", back_populates="comments", lazy="selectin")
-    user = db.relationship("User", foreign_keys=[user_id], lazy="selectin")
+    ticket = db.relationship("RepairTicket", back_populates="comments", lazy="noload")
+    user = db.relationship("User", foreign_keys=[user_id], lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -291,7 +291,7 @@ class DelayAlertLog(db.Model, AuditMixin):
     email_sent_successfully = db.Column(db.Boolean, default=False, nullable=False)
     error_message = db.Column(db.Text, default="")
 
-    ticket = db.relationship("RepairTicket", back_populates="delay_alerts", lazy="selectin")
+    ticket = db.relationship("RepairTicket", back_populates="delay_alerts", lazy="noload")
 
     def to_dict_safe(self):
         return {

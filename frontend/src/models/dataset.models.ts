@@ -1,12 +1,15 @@
+import { LabelPosition } from "recharts/types/component/Label";
 import { DataSource, DataSourceConnection } from "./datasource.models";
 import { Tenant } from "./identity.model";
 
 export type SqlDatasetType = "table" | "view" | "matview" | "function" | "index";
 export type SqlChartType = "bar" | "line" | "pie" | "table" | "area" | "kpi" | "donut" | "gauge" | "heatmap" | "radar" | "stacked-area" | "stacked-bar";
+export type SqlChartVisualType = 'bar' | 'line' | 'area' | 'pie' | 'donut' | 'kpi' | 'table' | 'gauge' | 'heatmap' | 'radar' | 'stacked_area' | 'stacked_bar';
+
 export type SqlFieldType = "dimension" | "metric" | "calculated_metric";
 export type SqlDataType = "string" | "text" | "integer" | "number" | "bigint" | "numeric" | "float" | "decimal" | "boolean" | "date" | "datetime" | "time" | "json";
-export type SqlAggType = "sum" | "avg" | "count" | "min" | "max" | "distinct";
-export type SqlOperators = "=" | "!=" | ">" | "<" | "<>" | ">=" | "<=" | "IN" | "BETWEEN" | "LIKE" | "ILIKE" | "IS NULL" | "IS NOT NULL" | "IS TRUE" | "IS NOT TRUE" | "IS FALSE" | "IS NOT FALSE";
+export type SqlAggType = "sum" | "avg" | "count" | "min" | "max"; // | "distinct";
+export type SqlOperators = "=" | "!=" | ">" | "<" | "<>" | ">=" | "<=" | "IN" | "NOT IN" | "BETWEEN" | "NOT BETWEEN" | "LIKE" | "ILIKE" | "IS NULL" | "IS NOT NULL" | "IS TRUE" | "IS NOT TRUE" | "IS FALSE" | "IS NOT FALSE";
 export type SqlLogicalOperator = "AND" | "OR";
 export type ChartPivotMode = "dynamic" | "rows_to_columns" | "columns_to_rows"
 
@@ -18,23 +21,21 @@ export const NUMERIC_DATA_TYPES: SqlDataType[] = ["integer", "number", "bigint",
 export const DATETIME_DATA_TYPES: SqlDataType[] = ["date", "datetime", "time"] as const;
 export const FULL_DATA_TYPES: SqlDataType[] = ["string", "text", ...NUMERIC_DATA_TYPES, "boolean", ...DATETIME_DATA_TYPES, "json"] as const;
 
-export const AGGRAGATE_TYPES: SqlAggType[] = ["sum", "avg", "count", "min", "max", "distinct"] as const;
+export const AGGRAGATE_TYPES: SqlAggType[] = ["sum", "avg", "count", "min", "max"] as const;
 export const LOGICAL_OPERATORS: SqlLogicalOperator[] = ["AND", "OR"] as const;
 
 export const NULL_ONLY_OPERATORS: SqlOperators[] = ["IS NULL", "IS NOT NULL"] as const;
 export const BOOLEAN_ONLY_OPERATORS: SqlOperators[] = ["IS TRUE", "IS NOT TRUE", "IS FALSE", "IS NOT FALSE"] as const;
 export const NO_VALUE_OPERATORS: SqlOperators[] = [...BOOLEAN_ONLY_OPERATORS, ...NULL_ONLY_OPERATORS] as const;
 
-export const ARRAY_REQUIRED_OPERATORS: SqlOperators[] = ["IN", ...NULL_ONLY_OPERATORS] as const;
-export const RANGE_REQUIRED_OPERATORS: SqlOperators[] = ["BETWEEN", ...NULL_ONLY_OPERATORS] as const;
+export const ARRAY_REQUIRED_OPERATORS: SqlOperators[] = ["IN", "NOT IN", ...NULL_ONLY_OPERATORS] as const;
+export const RANGE_REQUIRED_OPERATORS: SqlOperators[] = ["BETWEEN", "NOT BETWEEN", ...NULL_ONLY_OPERATORS] as const;
 
-export const NUMERIC_OPERATORS: SqlOperators[] = ["=", "!=", "<>", ">", ">=", "<", "<=", "BETWEEN", "IN", ...NULL_ONLY_OPERATORS] as const;
-export const STRING_OPERATORS: SqlOperators[] = ["=", "!=", "<>", "LIKE", "ILIKE", "IN", ...NULL_ONLY_OPERATORS] as const;
+export const NUMERIC_OPERATORS: SqlOperators[] = ["=", "!=", "<>", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", ...NULL_ONLY_OPERATORS] as const;
+export const STRING_OPERATORS: SqlOperators[] = ["=", "!=", "<>", "LIKE", "ILIKE", "IN", "NOT IN", ...NULL_ONLY_OPERATORS] as const;
 export const DATE_OPERATORS: SqlOperators[] = [...NUMERIC_OPERATORS] as const;
 
 export const CHART_PIVOT_MODE: ChartPivotMode[] = ["dynamic", "rows_to_columns", "columns_to_rows"]
-
-
 export const NUMERIC_DATA_TYPE = new Set(NUMERIC_DATA_TYPES);
 
 export const FULL_OPERATORS: SqlOperators[] = Array.from(new Set([
@@ -48,18 +49,18 @@ export const FULL_OPERATORS: SqlOperators[] = Array.from(new Set([
 ]));
 
 export const OPERATORS_BY_TYPE: Record<SqlDataType, SqlOperators[]> = {
-  string: ["=", "!=", "LIKE", "ILIKE", "IN", "IS NULL", "IS NOT NULL"],
-  text: ["=", "!=", "LIKE", "ILIKE", "IN", "IS NULL", "IS NOT NULL"],
-  integer: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IN", "IS NULL", "IS NOT NULL"],
-  number: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IN", "IS NULL", "IS NOT NULL"],
-  bigint: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IN", "IS NULL", "IS NOT NULL"],
-  numeric: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IN", "IS NULL", "IS NOT NULL"],
-  float: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IN", "IS NULL", "IS NOT NULL"],
-  decimal: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IN", "IS NULL", "IS NOT NULL"],
+  string: ["=", "!=", "LIKE", "ILIKE", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
+  text: ["=", "!=", "LIKE", "ILIKE", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
+  integer: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
+  number: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
+  bigint: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
+  numeric: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
+  float: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
+  decimal: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", "IS NULL", "IS NOT NULL"],
   boolean: ["=", "!=", "IS TRUE", "IS FALSE", "IS NULL", "IS NOT NULL"],
-  date: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IS NULL", "IS NOT NULL"],
-  datetime: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IS NULL", "IS NOT NULL"],
-  time: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "IS NULL", "IS NOT NULL"],
+  date: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"],
+  datetime: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"],
+  time: ["=", "!=", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"],
   json: ["=", "!=", "IS NULL", "IS NOT NULL"],
 };
 
@@ -78,6 +79,8 @@ export const INPUT_TYPE_BY_SQL_TYPE: Record<SqlDataType, string> = {
   time: "time",
   json: "textarea",
 };
+
+export const CHART_COLS_SEPARATOR = "___";
 
 export const getOperatorsForField = (dataType?: SqlDataType) => {
   if (!dataType) return [];
@@ -163,6 +166,7 @@ export interface DatasetQuery {
   values: Record<string, any>
   is_active: boolean;
 
+  fields_ids: number[]
   is_validated?: boolean
   validated_at?: string
   tenant?: Tenant
@@ -171,21 +175,23 @@ export interface DatasetQuery {
   charts?: DatasetChart[]
 }
 
+export type QueryFilterNode = QueryFilter | QueryFilterGroup;
+
 export interface QueryFilter {
   type: "condition";
-  field: string;
+  field_id: number;
   operator: SqlOperators;
   value: any;
   value2?: any
+  useSqlInClause?: boolean
 }
-
-export type QueryFilterNode = QueryFilter | QueryFilterGroup;
 
 export interface QueryFilterGroup {
   type: "group";
   operator: SqlLogicalOperator;
   children: QueryFilterNode[];
 };
+
 
 export interface LinkedFilterGroup {
   linkWithPrevious?: SqlLogicalOperator;
@@ -194,15 +200,15 @@ export interface LinkedFilterGroup {
 export interface QueryJson {
   // dataset_id: number;
   select: {
-    dimensions: string[];
-    metrics: string[];
+    dimensions: { field_id: number, alias?: string }[];
+    metrics: { field_id: number, alias?: string }[];
   };
   filters: {
     where: LinkedFilterGroup[],
     having: LinkedFilterGroup[],
   };
   order_by: {
-    field: string;
+    field_id: number;
     direction: "asc" | "desc";
   }[];
   limit: number | null;
@@ -212,19 +218,35 @@ export interface QueryJson {
 // SHARED TYPES
 export interface TableColumn {
   align?: "right" | "left";
-  field: string;
+  field_id: number;
   label: string;
   formatter?: "number" | "currency" | "percent" | "string";
 }
 
 export interface ChartStructureFilter {
-  field: string,
+  field_id: number,
+  field_type: SqlFieldType
   operator: SqlOperators,
   value: any,
   value2: any;
-  field_type: SqlFieldType
+  useSqlInClause: boolean
 }
 
+export interface ChartStructureMetric {
+  field_id: number;
+  alias: string;
+  aggregation: SqlAggType
+}
+
+export interface ChartStructureDimension {
+  field_id: number;
+  alias: string
+}
+
+export interface ChartStructureOrderBy {
+  field_id: number;
+  direction: "ASC" | "DESC"
+}
 
 export interface ChartPivot {
   acitve: boolean
@@ -236,30 +258,34 @@ export interface ChartPivot {
   rows_subtotal: boolean
   cols_subtotal: boolean
 
-  percent_metrics?: string[]
+  percent_metrics?: number[]
   top_n?: number
-  sort_metric?: string
+  sort_metric?: number
   sort_desc: boolean
 }
 
 export interface ChartDimension {
-  field: string,
-  alias: string
+  field_id: number;
+  name?: string;
+  alias: string;
+  data_type?: SqlDataType;
+  operator?: SqlOperators,
+  value?: any,
+  value2?: any,
+  useSqlInClause?: boolean
 }
 export interface ChartMetric extends ChartDimension {
   aggregation: SqlAggType
 }
 export interface ChartOrderby {
-  field: string,
+  field_id: number,
   direction: "ASC" | "DESC"
 }
 
 // ANALYTICAL STRUCTURE (BI CORE)
 export interface ChartStructure {
-  // Categorical fields (group by) -> Example: ["country", "year"]
   rows_dimensions: ChartDimension[];
   cols_dimensions: ChartDimension[];
-  //Numeric fields -> Example: ["revenue", "population"]
   metrics: ChartMetric[];
   // Filter data
   filters: ChartStructureFilter[];
@@ -269,23 +295,217 @@ export interface ChartStructure {
   pivot: ChartPivot;
 }
 
-export interface ChartVisualOptions {
-  bar?: BarChartOptions;
-  line?: LineChartOptions;
-  area?: LineChartOptions;
-  pie?: PieChartOptions;
-  donut?: PieChartOptions;
-  kpi?: KpiChartOptions;
-  table?: TableChartOptions;
-  gauge?: GaugeChartOptions;
-  heatmap?: HeatmapChartOptions;
-  radar?: RadarChartOptions;
-  stacked_area?: LineChartOptions;
-  stacked_bar?: BarChartOptions;
+// BAR CHART OPTIONS
+export interface BarChartOptions {
+  stacked?: boolean;
+  normalized?: boolean;
+  horizontal?: boolean;
+  // vertical: boolean;
+  grouped?: boolean;
+  bar_width?: number;
+  border_radius?: number;
+  
+  rotate_x_labels?: number;
+  x_label_height?: number;
+  show_subtotal?: boolean;
+  show_total?: boolean;
+
+  bar_radius?: [number, number, number, number];
+  bar_gap?: number;
+  bar_category_gap?: number | string;
+  grid_stroke?: string;
+  grid_dasharray?: string;
+  y_label_width?: number;
+  show_right_y_axis?: boolean;
+  animation_delay_per_bar?: number;
+  label_format?: "percent";
+  label_angle?: number;
+  label_offset?: number;
+
+  // stacked_bar
+  animation_duration?: number;
+  radius?: [number, number, number, number]
+  show_labels?: boolean;
+}
+
+// LINE CHART OPTIONS
+export interface LineChartOptions {
+  curved?: boolean;
+  is_area?: boolean;
+  horizontal?: boolean;
+  line_width?: number;
+  point_shape?: "circle" | "square" | "triangle";
+  point_size?: number;
+  show_markers?: boolean;
+  smoothness?: number; // 0-1
+  multi_axis?: boolean;
+
+  rotate_x_labels?: number;
+  x_label_height?: number;
+  show_subtotal?: boolean;
+  show_total?: boolean;
+
+  grid_stroke?: string;
+  grid_dasharray?: string;
+  grid_vertical?: boolean;
+  grid_horizontal?: boolean;
+  show_right_y_axis?: boolean;
+  show_brush?: boolean;
+  gradient_fill?: string;
+  fill_opacity?: number;
+  label_position?: LabelPosition;
+  reference_lines?: { x?: string; y?: string; stroke?: string; dash?: string; label?: string }[],
+
+  // stacked_area
+  animation_duration?: number;
+  stroke_width?: number;
+}
+
+export interface AreaChartOptions extends LineChartOptions {
+  grid_stroke?: string;
+  grid_dasharray?: string;
+  grid_vertical?: boolean;
+  grid_horizontal?: boolean;
+  show_brush?: boolean;
+  reference_lines?: { x?: string; y?: string; stroke?: string; dash?: string; label?: string }[]
+  gradient_fill?: string;
+  fill_opacity?: number;
+  label_position?: LabelPosition;
+}
+
+// PIE / DONUT CHART OPTIONS
+export interface PieChartOptions {
+  show_percentage?: boolean;
+  inner_radius?: number; // donut charts
+  outer_radius?: number;
+  start_angle?: number;
+  end_angle?: number;
+  sort_slices?: boolean;
+  explode_slice?: boolean;
+  labels_position?: "inside" | "outside";
+  animation_duration?: number;
+  show_labels?: boolean;
+  label_position?: string;
+  label_formatter?: string;
+  colors?: string[];
+  show_tooltip?: boolean;
+  show_legend?: boolean;
+  hover_offset?: number;
+
+  clockwise?: boolean;
+  show_label_lines?: boolean;
+  stroke_color?: string;
+  stroke_width?: number;
+}
+
+// KPI CHART OPTIONS
+export interface KpiChartOptions {
+  aggregation?: "sum" | "avg" | "min" | "max" | "count";
+  icon?: string;
+  icon_color?: string;
+  trend_indicator?: boolean;
+  decimal_precision?: number;
+
+  value_format?: "number" | "percent" | "currency";
+  show_trend?: boolean;
+  background_opacity?: number;
+  columns_per_row?: number;
+}
+
+// TABLE CHART OPTIONS
+export interface TableChartOptions {
+  // columns?: TableColumn[];
+  columns?: TableColumn[];
+  pagination?: boolean;
+  page_size?: number;
+  sortable?: boolean;
+  filterable?: boolean;
+  searchable?: boolean;
+  exportable?: boolean;
+  row_highlight?: boolean;
+  conditional_formatting?: boolean;
+}
+
+// GAUGE CHART OPTIONS
+export interface GaugeChartOptions {
+  min_value?: number;
+  max_value?: number;
+  needle_color?: string;
+  show_thresholds?: boolean;
+  thresholds?: Array<{ value: number; color: string }>;
+
+  width?: number;
+  height?: number;
+  min?: number;
+  max?: number;
+  show_value?: boolean;
+  show_label?: boolean;
+  label_formatter?: (val: number) => string;
+  thickness?: number;
+  animation_duration?: number;
+}
+
+// HEATMAP CHART OPTIONS
+export interface HeatmapChartOptions {
+  show_labels?: boolean;
+  color_range?: string[];
+  cell_padding?: number;
+
+  cell_width?: number;
+  cell_height?: number;
+  color_min?: string;
+  color_max?: string;
+  show_values?: boolean;
+  min_value?: number;
+  max_value?: number;
+}
+
+// RADAR CHART OPTIONS
+export interface RadarChartOptions {
+  max_value?: number;
+  show_axes?: boolean;
+  fill_area?: boolean;
+  line_width?: number;
+
+  animation_duration?: number;
+  stroke_width?: number;
+  fill_opacity?: number;
+  show_dots?: boolean;
+  outer_radius?: string;
+  grid_dasharray?: string;
+  label_font_size?: number;
+  label_formatter?: (val: any) => string;
+  angle?: number;
+  radius_angle?: number;
+  tick_count?: number;
+  dot_size?: number;
+}
+
+export type FullChartOptions = BarChartOptions | LineChartOptions | PieChartOptions | TableChartOptions | KpiChartOptions | GaugeChartOptions | HeatmapChartOptions | RadarChartOptions
+
+export const getOptionKey = (type: SqlChartType): SqlChartVisualType => {
+  switch (type) {
+    case "bar": return "bar";
+    case "stacked-bar": return "stacked_bar";
+    case "line": return "line";
+    case "area": return "area";
+    case "stacked-area": return "stacked_area";
+    case "pie": return "pie";
+    case "donut": return "donut";
+    case "kpi": return "kpi";
+    case "table": return "table";
+    case "gauge": return "gauge";
+    case "heatmap": return "heatmap";
+    case "radar": return "radar";
+    default:
+      return "bar";
+  }
 };
 
+// export type ChartVisualOptions = BarChartOptions | LineChartOptions | PieChartOptions | KpiChartOptions | TableChartOptions | GaugeChartOptions | HeatmapChartOptions | RadarChartOptions 
+
 // BASE VISUAL OPTIONS (COMMON TO ALL CHARTS)
-export interface BaseChartOptions {
+export interface ChartOptions {
   title?: string;
   subtitle?: string;
 
@@ -321,93 +541,25 @@ export interface BaseChartOptions {
 
   // Responsiveness
   responsive?: boolean;
-}
 
-// BAR CHART OPTIONS
-export interface BarChartOptions extends BaseChartOptions {
-  stacked?: boolean;
-  normalized?: boolean;
-  horizontal?: boolean;
-  grouped?: boolean;
-  bar_width?: number;
-  border_radius?: number;
-  rotate_x_labels?: number;
-  x_label_height?: number;
-  show_subtotal?: boolean;
-  show_total?: boolean;
-}
+  renames?: Record<string, Record<string, string>>
 
-// LINE CHART OPTIONS
-export interface LineChartOptions extends BaseChartOptions {
-  curved?: boolean;
-  area?: boolean;
-  line_width?: number;
-  point_shape?: "circle" | "square" | "triangle";
-  point_size?: number;
-  show_markers?: boolean;
-  smoothness?: number; // 0-1
-  multi_axis?: boolean;
-  rotate_x_labels?: number;
-  x_label_height?: number;
-  show_subtotal?: boolean;
-  show_total?: boolean;
-}
+  max?: number;
+  stacked?: number;
 
-// PIE / DONUT CHART OPTIONS
-export interface PieChartOptions extends BaseChartOptions {
-  show_percentage?: boolean;
-  inner_radius?: number; // donut charts
-  start_angle?: number;
-  end_angle?: number;
-  sort_slices?: boolean;
-  explode_slice?: boolean;
-  labels_position?: "inside" | "outside";
-}
-
-// KPI CHART OPTIONS
-export interface KpiChartOptions extends BaseChartOptions {
-  aggregation?: "sum" | "avg" | "min" | "max" | "count";
-  icon?: string;
-  icon_color?: string;
-  trend_indicator?: boolean;
-  decimal_precision?: number;
-}
-
-// TABLE CHART OPTIONS
-export interface TableChartOptions extends BaseChartOptions {
-  columns?: TableColumn[];
-  pagination?: boolean;
-  page_size?: number;
-  sortable?: boolean;
-  filterable?: boolean;
-  searchable?: boolean;
-  exportable?: boolean;
-  row_highlight?: boolean;
-  conditional_formatting?: boolean;
-}
-
-// GAUGE CHART OPTIONS
-export interface GaugeChartOptions extends BaseChartOptions {
-  min_value?: number;
-  max_value?: number;
-  needle_color?: string;
-  show_thresholds?: boolean;
-  thresholds?: Array<{ value: number; color: string }>;
-}
-
-// HEATMAP CHART OPTIONS
-export interface HeatmapChartOptions extends BaseChartOptions {
-  show_labels?: boolean;
-  color_range?: string[];
-  cell_padding?: number;
-}
-
-// RADAR CHART OPTIONS
-export interface RadarChartOptions extends BaseChartOptions {
-  max_value?: number;
-  show_axes?: boolean;
-  fill_area?: boolean;
-  line_width?: number;
+  // Chart Options
+  bar?: BarChartOptions;
+  line?: LineChartOptions;
+  area?: AreaChartOptions;
+  pie?: PieChartOptions;
+  donut?: PieChartOptions;
+  kpi?: KpiChartOptions;
+  table?: TableChartOptions;
+  gauge?: GaugeChartOptions;
+  heatmap?: HeatmapChartOptions;
+  radar?: RadarChartOptions;
+  stacked_area?: LineChartOptions;
+  stacked_bar?: BarChartOptions;
 }
 
 // MAIN DATASET CHART MODEL
@@ -427,7 +579,7 @@ export interface DatasetChart {
   structure: ChartStructure;
 
   // Visual configuration (how we render it)
-  options: ChartVisualOptions;
+  options: ChartOptions;
 
   is_active: boolean;
 
@@ -439,11 +591,14 @@ export interface DatasetChart {
 
 export interface ChartRenderProp {
   chart: DatasetChart;
+  query: DatasetQuery;
   data: {
     header: {
-      header_rows: string[][],
+      header_rows: (string | string[])[][],
       rows: string[],
       columns: string[],
+      column_maps: Record<string, string[] | number[]>
+      column_label_maps: Record<number, string>
       metrics: string[],
       _all_columns_order: string[],
     },
@@ -480,7 +635,7 @@ export interface ExecuteChartResponse {
 
 
 
-export const suggestChartType = (dimensions: string[], metrics: string[]): SqlChartType => {
+export const suggestChartType = (dimensions: number[], metrics: number[]): SqlChartType => {
 
   const d = dimensions.length;
   const m = metrics.length;

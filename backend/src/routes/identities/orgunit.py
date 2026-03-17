@@ -150,7 +150,7 @@ def delete_orgunit(orgunit_id: int):
         orgunit:UserOrgunit = UserOrgunit.query.get(orgunit_id)
         if not orgunit or orgunit.deleted:
             raise BadRequest(f"Orgunit with id={orgunit_id} not found", 404)
-
+        orgunit.is_active = False
         orgunit.deleted = True
         orgunit.deleted_at = datetime.now(timezone.utc)
         orgunit.deleted_by=currentUserId()

@@ -204,7 +204,7 @@ def delete_user(user_id: int):
         user:User = User.query.get(user_id)
         if not user or user.deleted:
             raise BadRequest(f"User with id={user_id} not found", 404)
-
+        user.is_active = False
         user.deleted = True
         user.deleted_at = datetime.now(timezone.utc)
         user.deleted_by=currentUserId()

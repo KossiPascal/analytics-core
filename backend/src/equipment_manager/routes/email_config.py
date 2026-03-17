@@ -129,6 +129,7 @@ def delete_email_config(config_id):
     if not config:
         return jsonify(success=False, message="Configuration introuvable"), 404
     # db.session.delete(config)
+    config.is_active = False
     config.deleted = True
     config.deleted_at = datetime.now(timezone.utc)
     config.deleted_by_id=currentUserId()

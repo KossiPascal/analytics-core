@@ -45,9 +45,9 @@ class DatasetChart(db.Model, AuditMixin):
     options = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
     # Relations
-    tenant = db.relationship("Tenant", back_populates="charts", lazy="selectin",foreign_keys=[tenant_id])
-    dataset = db.relationship("Dataset", back_populates="charts", lazy="selectin",foreign_keys=[dataset_id])
-    dataset_query = db.relationship("DatasetQuery", back_populates="charts", lazy="selectin",foreign_keys=[query_id])
+    tenant = db.relationship("Tenant", back_populates="charts", lazy="noload",foreign_keys=[tenant_id])
+    dataset = db.relationship("Dataset", back_populates="charts", lazy="noload",foreign_keys=[dataset_id])
+    dataset_query = db.relationship("DatasetQuery", back_populates="charts", lazy="noload",foreign_keys=[query_id])
 
     visualizations = db.relationship("VisualizationChart", back_populates="chart", cascade="all, delete-orphan")
 

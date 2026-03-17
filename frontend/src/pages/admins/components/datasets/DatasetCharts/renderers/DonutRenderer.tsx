@@ -1,33 +1,35 @@
-import {
-  PieChart,
-  Pie,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { buildPieData, getDimensionKeys, getMetricKeys } from "./render-utils";
 import { ChartRenderProp } from "@/models/dataset.models";
+import { PieRenderer } from "./PieRenderer";
+import { useMemo } from "react";
 
-export const DonutRenderer = ({ chart, data }: ChartRenderProp) => {
-  const dimensions = getDimensionKeys(chart);
-  const metrics = getMetricKeys(chart);
-  const makeMetrics = metrics.map(m=>m.field);
+export const DonutRenderer = (props: ChartRenderProp) => {
+  const chart:any = useMemo(() => {
+    const baseOptions = props.chart.options ?? {};
+    const pieOpts = baseOptions.pie ?? {};
 
-  const pieData = buildPieData(data.rows, dimensions[0].field, makeMetrics[0]);
+    return {
+      ...props.chart,
+      options: {
+        ...baseOptions,
+        pie: {
+          inner_radius: pieOpts.inner_radius ?? 70,
+          outer_radius: pieOpts.outer_radius ?? 100,
+          start_angle: pieOpts.start_angle ?? 0,
+          end_angle: pieOpts.end_angle ?? 360,
+          animation_duration: pieOpts.animation_duration ?? 800,
+          show_labels: pieOpts.show_labels ?? true,
+          label_position: pieOpts.label_position ?? "outside",
+          label_formatter: pieOpts.label_formatter ?? ((value:any, name:any, percent:any) => `${name}: ${percent.toFixed(1)}%`),
+          colors: pieOpts.colors ?? [
+            "#4caf50", "#2196f3", "#ff9800", "#9c27b0", "#f44336", "#00bcd4", "#8bc34a", "#ffc107"
+          ],
+          show_tooltip: pieOpts.show_tooltip ?? true,
+          show_legend: pieOpts.show_legend ?? true,
+          hover_offset: pieOpts.hover_offset ?? 8,
+        },
+      },
+    };
+  }, [props.chart]);
 
-  return (
-    <ResponsiveContainer width="100%" height={350}>
-      <PieChart>
-        <Tooltip />
-        <Legend />
-        <Pie
-          data={pieData}
-          dataKey="value"
-          nameKey="name"
-          innerRadius={70}
-          outerRadius={120}
-        />
-      </PieChart>
-    </ResponsiveContainer>
-  );
+  return <PieRenderer {...props} chart={chart} />;
 };

@@ -19,6 +19,7 @@ def require_auth(f=None, *, roles_names: Optional[list[str]] = None, permissions
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
+
             # 1. Read Authorization header
             auth_header = request.headers.get("Authorization", "")
             if not auth_header or not auth_header.startswith("Bearer "):
@@ -94,3 +95,44 @@ def require_auth(f=None, *, roles_names: Optional[list[str]] = None, permissions
         return wrapped
     
     return decorator if f is None else decorator(f)
+
+
+
+# def require_auth(f=None, *, roles_names=None, permissions_names=None):
+
+#     def decorator(func):
+
+#         @wraps(func)
+#         def wrapped(*args, **kwargs):
+
+#             auth = request.headers.get("Authorization")
+
+#             if not auth or not auth.startswith("Bearer "):
+#                 raise Unauthorized("Missing token")
+
+#             token = auth.split(" ", 1)[1]
+
+#             try:
+#                 payload = User.decode(token)
+#             except Exception:
+#                 raise Unauthorized("Invalid token")
+
+#             if not payload.get("id"):
+#                 raise Unauthorized("Invalid token payload")
+
+#             roles = set(payload.get("roles", []))
+#             permissions = set(payload.get("permissions", []))
+
+#             if roles_names and roles.isdisjoint(roles_names):
+#                 raise Forbidden("Missing role")
+
+#             if permissions_names and permissions.isdisjoint(permissions_names):
+#                 raise Forbidden("Missing permission")
+
+#             g.current_user = payload
+
+#             return func(*args, **kwargs)
+
+#         return wrapped
+
+#     return decorator if f is None else decorator(f)
