@@ -126,7 +126,12 @@ export const generateSqlExpression = (expression: string, aggregation: SqlAggTyp
     if (!expression) return "";
     const DISTINCT = isDistinct ? "DISTINCT " : ""
     if (aggregation) {
-        return `${aggregation}(${DISTINCT}${expression})`;
+        const agg = aggregation.toUpperCase();
+        if (agg === "DISTINCT") {
+            return `(DISTINCT ${expression})`;
+        } else {
+            return `${agg}(${DISTINCT}${expression})`;
+        }
     } else {
         return `${DISTINCT}${expression}`;
     }

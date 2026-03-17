@@ -8,7 +8,7 @@ export type SqlChartVisualType = 'bar' | 'line' | 'area' | 'pie' | 'donut' | 'kp
 
 export type SqlFieldType = "dimension" | "metric" | "calculated_metric";
 export type SqlDataType = "string" | "text" | "integer" | "number" | "bigint" | "numeric" | "float" | "decimal" | "boolean" | "date" | "datetime" | "time" | "json";
-export type SqlAggType = "sum" | "avg" | "count" | "min" | "max" | "distinct";
+export type SqlAggType = "sum" | "avg" | "count" | "min" | "max"; // | "distinct";
 export type SqlOperators = "=" | "!=" | ">" | "<" | "<>" | ">=" | "<=" | "IN" | "NOT IN" | "BETWEEN" | "NOT BETWEEN" | "LIKE" | "ILIKE" | "IS NULL" | "IS NOT NULL" | "IS TRUE" | "IS NOT TRUE" | "IS FALSE" | "IS NOT FALSE";
 export type SqlLogicalOperator = "AND" | "OR";
 export type ChartPivotMode = "dynamic" | "rows_to_columns" | "columns_to_rows"
@@ -21,7 +21,7 @@ export const NUMERIC_DATA_TYPES: SqlDataType[] = ["integer", "number", "bigint",
 export const DATETIME_DATA_TYPES: SqlDataType[] = ["date", "datetime", "time"] as const;
 export const FULL_DATA_TYPES: SqlDataType[] = ["string", "text", ...NUMERIC_DATA_TYPES, "boolean", ...DATETIME_DATA_TYPES, "json"] as const;
 
-export const AGGRAGATE_TYPES: SqlAggType[] = ["sum", "avg", "count", "min", "max", "distinct"] as const;
+export const AGGRAGATE_TYPES: SqlAggType[] = ["sum", "avg", "count", "min", "max"] as const;
 export const LOGICAL_OPERATORS: SqlLogicalOperator[] = ["AND", "OR"] as const;
 
 export const NULL_ONLY_OPERATORS: SqlOperators[] = ["IS NULL", "IS NOT NULL"] as const;

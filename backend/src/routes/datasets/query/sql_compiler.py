@@ -35,6 +35,63 @@ class CompilerError(ValueError):
 
 # VALUE PARSER
 class SQLValueParser:
+    
+    @staticmethod
+    def validate_and_clean_expr(expr: str, field_type: str) -> str:
+        """
+        Valide et nettoie une expression SQL selon son type (dimension / metric)
+        """
+
+        if not expr:
+            return expr
+
+        expr_clean = expr.strip()
+
+        # 1. Gestion du DISTINCT
+        has_distinct = re.search(r"\bDISTINCT\b", expr_clean, re.IGNORECASE)
+
+        if has_distinct:
+            # ❌ Cas interdit : DISTINCT sur une dimension simple
+            if field_type == "dimension":
+                # Autorisé seulement si dans une fonction (ex: COUNT(DISTINCT col))
+                if not re.search(r"\w+\s*\(\s*DISTINCT", expr_clean, re.IGNORECASE):
+                    # 👉 soit on nettoie automatiquement
+                    expr_clean = re.sub(r"\bDISTINCT\s+", "", expr_clean, flags=re.IGNORECASE)
+
+                    # 👉 ou on bloque (décommente si tu veux strict)
+                    # raise CompilerError(f"DISTINCT interdit sur dimension: {expr}")
+
+            # ❌ Cas interdit : DISTINCT mal utilisé dans metric
+            if field_type == ["metric", "calculated_metric"]:
+                # DISTINCT seul sans fonction
+                if not re.search(r"\w+\s*\(\s*DISTINCT", expr_clean, re.IGNORECASE):
+                    raise CompilerError(f"DISTINCT mal utilisé dans metric: {expr}")
+
+        # 2. Vérification basique SQL dangereuse
+        forbidden_patterns = [
+            r";",                # multi statements
+            r"--",               # commentaire inline
+            r"/\*",              # commentaire bloc
+            r"\bDROP\b",
+            r"\bDELETE\b",
+            r"\bINSERT\b",
+            r"\bUPDATE\b",
+            r"\bALTER\b"
+            r"\bTRUNCATE\b"
+            r"\bCREATE\b"
+            r"\bEXEC\b"
+            r"\bGRANT\b"
+            r"\bREVOKE\b"
+        ]
+
+        for pattern in forbidden_patterns:
+            if re.search(pattern, expr_clean, re.IGNORECASE):
+                raise CompilerError(f"Expression SQL interdite: {expr}")
+
+        # -----------------------------
+        # 3. Nettoyage final
+        # -----------------------------
+        return expr_clean
 
     # NULL / EMPTY CHECK
     @staticmethod
@@ -231,14 +288,22 @@ class SQLFilterBuilder:
 
     # SQL EXPRESSION
     def generate_expression(self, field: DatasetField, isDistinct: bool = False) -> str:
-        if not field.expression:
-            return ""
-        DISTINCT = "DISTINCT " if isDistinct else ""
-        if field.field_type == "dimension" and not field.aggregation:
-            return f"{DISTINCT}{field.expression}"
-        if field.aggregation:
-            return f"{field.aggregation}({DISTINCT}{field.expression})"
-        return f"{DISTINCT}{field.expression}"
+        expr = ""
+        if field.expression:
+            DISTINCT = "DISTINCT " if isDistinct else ""
+            if field.field_type == "dimension" and not field.aggregation:
+                expr = f"{DISTINCT}{field.expression}"
+            elif field.aggregation:
+                agg = f"{field.aggregation}".upper()
+                if agg == "DISTINCT":
+                    expr = f"(DISTINCT {field.expression})"
+                else:
+                    expr = f"{agg}({DISTINCT}{field.expression})"
+            else:   
+                expr = f"{DISTINCT}{field.expression}"
+
+        clean_expr = SQLValueParser.validate_and_clean_expr(expr, field.field_type)
+        return clean_expr
 
     def build(self, node: dict) -> Dict[str, Any]:
 
@@ -419,8 +484,10 @@ class SQLCompilerV1:
                 raise ValueError(f"Unrecognize dimension: {field_id}.")
             dim_alias = (dim.get("alias") or "").strip()
             alias = SQLValueParser.quote_identifier(dim_alias or field.name)
-            select_part.append(f"{field.expression} AS {alias}")
-            group_by_part.append(field.expression)
+            expr = SQLValueParser.validate_and_clean_expr(field.expression, field.field_type)
+            select_part.append(f"{expr} AS {alias}")
+            if len(metrics) > 0:
+                group_by_part.append(expr)
             alias_map[field.id] = alias
 
         # METRICS
@@ -471,7 +538,7 @@ class SQLCompilerV1:
         limit_clause = f"LIMIT {query['limit']}" if isinstance(query.get("limit"), int) and query["limit"] > 0 else ""
         offset_clause = f"OFFSET {query['offset']}" if isinstance(query.get("offset"), int) and query["offset"] >= 0 else ""
 
-        has_group_by = bool(metrics and group_by_part)
+        has_group_by = len(metrics) > 0 and len(group_by_part) > 0
 
         view_name = SQLValueParser.quote_identifier(self.dataset.view_name)
 
@@ -526,8 +593,9 @@ class SQLCompilerV1:
             
             row_alias = (row.get("alias") or "").strip()
             alias = SQLValueParser.quote_identifier(row_alias or field.name)
-            select_part.append(f"{field.expression} AS {alias}")
-            group_by_part.append(field.expression)
+            expr = SQLValueParser.validate_and_clean_expr(field.expression, field.field_type)
+            select_part.append(f"{expr} AS {alias}")
+            group_by_part.append(expr)
 
         # 2️⃣ COLUMN COMBINATIONS
         column_combinations = []

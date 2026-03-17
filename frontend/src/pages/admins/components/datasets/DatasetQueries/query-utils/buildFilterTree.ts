@@ -44,7 +44,6 @@ export const buildFilterTree = (node: QueryFilterGroup | QueryFilter, fieldMap: 
         // ---- IN / NOT IN----
         if (sqlOperator === "IN" || sqlOperator === "NOT IN") {
             const arr = Array.isArray(val) ? val : [val];
-
             if (arr.length === 0) {
                 throw new Error(`${sqlOperator} operator requires at least one value`);
             }

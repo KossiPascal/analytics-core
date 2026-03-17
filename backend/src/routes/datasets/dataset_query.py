@@ -32,7 +32,14 @@ class MakeCompileQueryJson():
         if not self.dataset_id:
             raise BadRequest(f"Dataset Id can't be null", 404)
         
-        dataset:Dataset = Dataset.query.get(self.dataset_id)
+        dataset:Dataset = Dataset.query.options(
+            selectinload(Dataset.fields),
+            selectinload(Dataset.queries),
+        ).filter(
+            Dataset.deleted == False, 
+            Dataset.id == self.dataset_id
+        ).first()
+
         if not dataset or dataset.deleted:
             raise BadRequest(f"Dataset with id={self.dataset_id} not found", 404)
         

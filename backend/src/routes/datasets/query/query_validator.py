@@ -52,6 +52,7 @@ class QueryValidatorV1:
 
     # INIT
     def __init__(self, query_json: Dict[str, Any], fields: List[DatasetField]):
+
         self._node_count = 0
         self.fields = self._transformField(fields)
         dims, mets, qjson = self.validate_query_json(fields=fields, query_json=query_json or {})

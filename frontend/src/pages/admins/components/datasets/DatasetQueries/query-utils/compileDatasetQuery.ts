@@ -62,7 +62,6 @@ export const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], qu
     if (selectPart.length === 0) {
         const errorMsg = "Au moins un champ doit être sélectionné.";
         compile.error.select = errorMsg;
-        console.log(errorMsg);
         return compile;
     }
 
