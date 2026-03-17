@@ -26,7 +26,7 @@ def list_datasets(tenant_id: Optional[int] = None,dataset_id: Optional[int] = No
     ).filter(Dataset.deleted == False)
 
     if dataset_id is not None:
-        query = query.filter(Dataset.dataset_id == dataset_id)
+        query = query.filter(Dataset.id == dataset_id)
 
     if tenant_id is not None:
         query = query.filter(Dataset.tenant_id == tenant_id)

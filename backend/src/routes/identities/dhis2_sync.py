@@ -571,10 +571,6 @@ def sync_ascs():
             if emp:
                 emp.first_name = firstname or emp.first_name
                 emp.last_name  = lastname  or emp.last_name
-                if email_val:
-                    emp.email = email_val
-                if phone_val:
-                    emp.phone = phone_val
                 if employee_code and not emp.employee_id_code:
                     emp.employee_id_code = employee_code
                 updated_employees += 1
@@ -583,8 +579,6 @@ def sync_ascs():
                     tenant_id=tenant_id,
                     first_name=firstname or username,
                     last_name=lastname or "",
-                    email=email_val or "",
-                    phone=phone_val or "",
                     employee_id_code=employee_code or None,
                     user_id=user.id,
                     position_id=asc_position_id,

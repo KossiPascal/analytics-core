@@ -61,13 +61,16 @@ def create_field():
     try:
         payload = request.get_json(silent=True) or {}
         name = payload.get("name")
+        dataset_id = payload.get("dataset_id")
         if not name:
-            return BadRequest("DatasetField name is required")
+            raise BadRequest("DatasetField name is required")
+        if not dataset_id:
+            raise BadRequest("dataset_id is required")
 
         field = DatasetField(
             name=name,
             tenant_id=payload.get("tenant_id"),
-            dataset_id=payload.get("dataset_id"),
+            dataset_id=dataset_id,
             description=payload.get("description"),
             expression=payload.get("expression"),
             aggregation=payload.get("aggregation"),

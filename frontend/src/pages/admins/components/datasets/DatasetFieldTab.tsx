@@ -819,7 +819,10 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
         return map;
     }, [datasets]);
 
-    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
+    const DEFAULT_FORM = useMemo(() => ({
+        ...createDefaultForm(tenant_id),
+        dataset_id: dataset_id ?? null,
+    }), [tenant_id, dataset_id])
 
 
     return (
@@ -844,7 +847,8 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                         required={true}
                     />
                 )}
-                isValid={df => !hasFormError && Boolean(
+                onBeforeSave={(df) => ({ ...df, dataset_id: df.dataset_id ?? dataset_id ?? null })}
+                isValid={df => !hasFormError && Boolean(df.dataset_id) && Boolean(
                     df.name.trim() &&
                     df.expression.trim() &&
                     (
