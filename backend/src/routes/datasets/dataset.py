@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List
+from typing import Optional, List
 
 from flask import Blueprint, g, request, jsonify
 from sqlalchemy.exc import IntegrityError
@@ -18,6 +18,27 @@ logger = get_backend_logger(__name__)
 bp = Blueprint("datasets", __name__, url_prefix="/api/datasets")
 
 
+def list_datasets(tenant_id: Optional[int] = None,dataset_id: Optional[int] = None, all:bool = True):
+    
+    query = Dataset.query.options(
+        selectinload(Dataset.fields),
+        selectinload(Dataset.queries),
+    ).filter(Dataset.deleted == False)
+
+    if dataset_id is not None:
+        query = query.filter(Dataset.dataset_id == dataset_id)
+
+    if tenant_id is not None:
+        query = query.filter(Dataset.tenant_id == tenant_id)
+
+    if all == True:
+        charts: List[Dataset] = query.all()
+        return [chart.to_dict() for chart in charts]
+    else:
+        chart:Dataset = query.first()
+        return chart.to_dict()
+
+
 # HELPERS
 def get_pagination():
     page = request.args.get("page", 1, type=int)
@@ -28,19 +49,12 @@ def get_pagination():
 # LIST DATASETS
 @bp.get("/<int:tenant_id>")
 @require_auth
-def list_datasets(tenant_id:int):
-    include_relations = request.args.get("include_relations", "false").lower() == "true"
+def list_datasets_by(tenant_id:int):
+    # include_relations = request.args.get("include_relations", "false").lower() == "true"
 
-    query: List[Dataset] = Dataset.query.filter(
-        Dataset.tenant_id == tenant_id,
-        Dataset.deleted == False
-    )
+    datasets = list_datasets(tenant_id=tenant_id)
 
-    return jsonify([
-        # d.to_dict(include_relations=include_relations)
-        d.to_dict()
-        for d in query
-    ])
+    return jsonify(datasets)
 
 # LIST DATASETS PAGINATE
 @bp.get("/paginate/<int:tenant_id>")
@@ -48,14 +62,14 @@ def list_datasets(tenant_id:int):
 def list_datasets_paginate(tenant_id):
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
-    
-    query = Dataset.query.options(
+
+    datasets = Dataset.query.options(
         selectinload(Dataset.fields),
         selectinload(Dataset.queries),
     ).filter(Dataset.tenant_id == tenant_id, Dataset.deleted == False)
 
     page, per_page = get_pagination()
-    pagination = query.order_by(Dataset.id.desc()).paginate(
+    pagination = datasets.order_by(Dataset.id.desc()).paginate(
         page=page,
         per_page=per_page,
         error_out=False,
@@ -77,19 +91,12 @@ def get_dataset(tenant_id, dataset_id):
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
     
-    dataset = Dataset.query.options(
-        selectinload(Dataset.fields),
-        selectinload(Dataset.queries),
-    ).filter(
-        Dataset.id == dataset_id, 
-        Dataset.tenant_id == tenant_id, 
-        Dataset.deleted == False
-    ).first()
+    dataset = list_datasets(tenant_id=tenant_id, dataset_id=dataset_id, all=False)
 
-    if not dataset:
+    if not dataset or dataset["deleted"]:
         raise BadRequest("Dataset not found", 404)
 
-    return jsonify(dataset.to_dict(include_relations=True)), 200
+    return jsonify(dataset), 200
 
 # CREATE DATASET
 @bp.post("")
@@ -206,6 +213,7 @@ def delete_dataset(dataset_id):
             raise BadRequest("Dataset not found", 404)
         
         dataset.is_active = False
+        dataset.deleted = True
         dataset.deleted_at = datetime.now(timezone.utc)
         dataset.deleted_by_id=currentUserId(),
         # db.session.delete(dataset)

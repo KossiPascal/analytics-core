@@ -56,17 +56,17 @@ class QueryValidatorV1:
         self.fields = self._transformField(fields)
         dims, mets, qjson = self.validate_query_json(fields=fields, query_json=query_json or {})
 
-        self.dimensions = dims
-        self.metrics = mets
+        self.dimensionIds = dims
+        self.metricIds = mets
         self.query = qjson
 
     def validate_query_json(self, fields: List[DatasetField], query_json: Dict[str, Any]):
-        dimensions: Set[str] = set(
-            fd.name for fd in fields
+        dimensionIds: Set[int] = set(
+            fd.id for fd in fields
             if not fd.aggregation and fd.field_type == "dimension"
         )
-        metrics: Set[str] = set(
-            fm.name for fm in fields
+        metricIds: Set[int] = set(
+            fm.id for fm in fields
             if fm.aggregation or fm.field_type in {"metric", "calculated_metric"}
         )
 
@@ -75,13 +75,19 @@ class QueryValidatorV1:
         query_json["select"].setdefault("dimensions", [])
         query_json["select"].setdefault("metrics", [])
 
-        query_dimensions = set(query_json["select"]["dimensions"])
-        query_metrics = set(query_json["select"]["metrics"])
+        dimsMap: dict[int, dict] = {d["field_id"]:d for d in query_json["select"]["dimensions"]}
+        metsMap: dict[int, dict] = {m["field_id"]:m for m in query_json["select"]["metrics"]}
 
-        query_json["select"]["dimensions"] = [d for d in query_dimensions if d in dimensions]
-        query_json["select"]["metrics"] = [m for m in query_metrics if m in metrics]
+        query_json["select"]["dimensions"] = [v for k, v in dimsMap.items() if k in dimensionIds]
+        query_json["select"]["metrics"] = [v for k, v in metsMap.items() if k in metricIds]
 
-        return dimensions, metrics, query_json
+        # dimIds: set[int] = set([d["field_id"] for d in query_json["select"]["dimensions"]])
+        # metIds: set[int] = set([m["field_id"] for m in query_json["select"]["metrics"]])
+
+        # query_json["select"]["dimensions"] = [d for d in dimIds if d in dimensionIds]
+        # query_json["select"]["metrics"] = [m for m in metIds if m in metricIds]
+
+        return dimensionIds, metricIds, query_json
 
 
     # ENTRY POINT
@@ -94,24 +100,15 @@ class QueryValidatorV1:
         self._validate_cross_logic()
 
     # FIELD HELPERS
-    def _transformField(self, datasetFields:list[DatasetField])->Dict[str, DatasetField]:
-        return  {f.name:f for f in datasetFields}
+    def _transformField(self, datasetFields:list[DatasetField])->Dict[int, DatasetField]:
+        return  {f.id:f for f in datasetFields}
 
     # FIELD HELPERS
-    def _get_field(self, name: str):
-        field = self.fields.get(name)
+    def _get_field(self, id: int):
+        field = self.fields.get(id)
         if not field or not field.is_active:
-            raise QueryValidationError(f"Unknown or inactive field: {name}")
+            raise QueryValidationError(f"Unknown or inactive field_id: {id}")
         return field
-
-    # FIELDS
-    def _validate_field(self, name):
-        if not isinstance(name, str):
-            raise QueryValidationError("Field must be string")
-        if not self.SAFE_FIELD_PATTERN.match(name):
-            raise QueryValidationError(f"Unsafe field name: {name}")
-        if name not in self.fields:
-            raise QueryValidationError(f"Unknown field {name}")
 
     # STRUCTURE
     def _validate_structure(self):
@@ -130,83 +127,85 @@ class QueryValidatorV1:
         if not isinstance(select, dict):
             raise QueryValidationError("select must be an object")
 
-        dimensions = select.get("dimensions", [])
-        metrics = select.get("metrics", [])
+        dimensions:list[dict] = select.get("dimensions", [])
+        metrics:list[dict] = select.get("metrics", [])
 
-        self._validate_string_list(dimensions, "dimensions")
-        self._validate_string_list(metrics, "metrics")
+        print(dimensions)
 
-        dimensions = set(dimensions)
-        metrics = set(metrics)
+        if not isinstance(dimensions, list) or not all(isinstance(v, dict) for v in dimensions):
+            raise QueryValidationError(f"dimensions must be a list of dict")
+
+        if not isinstance(metrics, list) or not all(isinstance(v, dict) for v in metrics):
+            raise QueryValidationError(f"metrics must be a list of dict")
+
 
         # 1️⃣ Toutes les dimensions doivent être groupables
         for d in dimensions:
-            self._validate_field(d)
+            field_id:int = d["field_id"]
+            field = self._get_field(field_id)
 
-            if d not in self.dimensions:
-                raise QueryValidationError(f"Unauthorized dimension: {d}")
-            
-            field = self._get_field(d)
-
+            if not field_id or not field or not isinstance(field.name, str):
+                raise QueryValidationError(f"Invalid dimension with field_id={field_id}")
             if field.field_type != "dimension":
-                raise QueryValidationError(f"{d} is not a dimension")
-
+                raise QueryValidationError(f"{field.name} is not a dimension")
+            if field_id not in self.dimensionIds:
+                raise QueryValidationError(f"Unauthorized dimension: {field.name}")
             if not field.is_groupable:
-                raise QueryValidationError(f"{d} is not groupable")
+                raise QueryValidationError(f"{field.name} is not groupable")
+            if not self.SAFE_FIELD_PATTERN.match(field.name):
+                raise QueryValidationError(f"Unsafe field name: {field.name}")
 
         # 2️⃣ Toutes les metrics doivent être agrégées
         for m in metrics:
-            self._validate_field(m)
+            field_id:int = m["field_id"]
+            field = self._get_field(field_id)
 
-            if m not in self.metrics:
-                raise QueryValidationError(f"Unauthorized metric: {m}")
-            
-            field = self._get_field(m)
-
+            if not field_id or not field or not isinstance(field.name, str):
+                raise QueryValidationError(f"Invalid metric with field_id={field_id}")
+            if field_id not in self.metricIds:
+                raise QueryValidationError(f"Unauthorized metric: {field.name}")
             if field.field_type not in ("metric", "calculated_metric"):
-                raise QueryValidationError(f"{m} is not a metric")
-
+                raise QueryValidationError(f"{field.name} is not a metric")
             if field.field_type == "metric":
                 if not field.aggregation:
-                    raise QueryValidationError(f"Metric {m} must define aggregation")
-
+                    raise QueryValidationError(f"Metric {field.name} must define aggregation")
                 if field.aggregation not in self.AGGRAGATION_TYPES:
                     raise QueryValidationError(f"{field.aggregation} aggregation not allowed")
+            if not self.SAFE_FIELD_PATTERN.match(field.name):
+                raise QueryValidationError(f"Unsafe field name: {field.name}")
 
-        # 3️⃣ HAVING sans metric interdit
+        # 3️⃣ WHERE sans  interdit
+        where = self.query.get("filters", {}).get("where", [])
+        if where and not dimensions:
+            raise QueryValidationError("WHERE requires at least one selected dimension")
+
+        # 4️⃣ HAVING sans metric interdit
         having = self.query.get("filters", {}).get("having", [])
         if having and not metrics:
             raise QueryValidationError("HAVING requires at least one selected metric")
 
-        # 4️⃣ Si metrics + dimensions vide → KPI autorisé
-        # (SELECT sum(amount)) → OK
-        # donc pas d'erreur ici
-
         # 5️⃣ ORDER BY cohérence
-        selected_fields = dimensions | metrics
+        selected_fields:list[int] = [d["field_id"] for d in (dimensions + metrics)]
+        for o in self.query.get("order_by", []):
+            field_id:int = o["field_id"]
+            field = self._get_field(field_id)
 
-        for item in self.query.get("order_by", []):
-            field_name = item["field"]
+            if not field_id or not field:
+                raise QueryValidationError(f"Invalid order_by with field_id={field_id}")
 
-            if field_name not in selected_fields:
-                raise QueryValidationError(f"ORDER BY field {field_name} must be selected")
+            if field_id not in selected_fields:
+                raise QueryValidationError(f"ORDER BY field {field.name} must be selected")
 
     # LINKED GROUP
     def _validate_linked_groups(self, groups, clause, depth:int):
-
         for i, group in enumerate(groups):
-
             if "node" not in group:
                 raise QueryValidationError("Missing node in filter group")
-            
             link = group.get("linkWithPrevious")
-
             # if i == 0 and link:
             #     raise QueryValidationError("First group cannot have linkWithPrevious")
-
             if i > 0 and link not in self.ALLOWED_LOGICAL:
                 raise QueryValidationError("Invalid linkWithPrevious operator")
-
             self._validate_node(group["node"], clause, depth)
             
     # FILTERSb -> GROUP BY (IMPLICIT BI LOGIC)
@@ -218,8 +217,8 @@ class QueryValidatorV1:
 
         for clause in ("where", "having"):
             groups = filters.get(clause, [])
-            if not isinstance(groups, list):
-                raise QueryValidationError(f"{clause} must be a list")
+            if not isinstance(groups, list) or not all(isinstance(g, dict) for g in groups):
+                raise QueryValidationError(f"{clause} must be a list of dict")
 
             self._validate_linked_groups(groups, clause, depth=0)
 
@@ -253,32 +252,34 @@ class QueryValidatorV1:
                 self._validate_node(child, clause, depth + 1)
 
         elif node_type == "condition":
+            field_id:int = node.get("field_id")
+            field = self._get_field(field_id)
+            if not field_id or not field or not isinstance(field.name, str):
+                raise QueryValidationError(f"Invalid filter with field_id={field_id}")
+            
             self._node_count += 1
-
-            field_name = node.get("field")
             operator = node.get("operator")
             value = node.get("value")
             value2 = node.get("value2")
 
             if operator not in self.ALLOWED_OPERATORS:
                 raise QueryValidationError(f"Invalid operator: {operator}")
-
-            self._validate_field(field_name)
-            field = self._get_field(field_name)
-
+            if not self.SAFE_FIELD_PATTERN.match(field.name):
+                raise QueryValidationError(f"Unsafe field name: {field.name}")
+            
             # WHERE vs HAVING
             if clause == "where":
                 if field.field_type != "dimension":
                     raise QueryValidationError("WHERE only on dimensions")
-                if field.name not in self.dimensions:
+                if field.id not in self.dimensionIds:
                     raise QueryValidationError(f"WHERE only allowed on dimensions: {field.name}")
                 if not field.is_filterable:
-                    raise QueryValidationError(f"{field_name} not filterable")
+                    raise QueryValidationError(f"{field.name} is not filterable")
             
             if clause == "having":
                 if field.field_type == "dimension":
                     raise QueryValidationError("HAVING only on metrics")
-                if field.name not in self.metrics:
+                if field.id not in self.metricIds:
                     raise QueryValidationError(f"HAVING only allowed on metrics: {field.name}")
 
 
@@ -290,19 +291,14 @@ class QueryValidatorV1:
 
     # OPERATOR VALIDATION
     def _validate_operator(self, field:DatasetField, operator):
-
         data_type = field.data_type
-
         allowed = self.OPERATORS_BY_TYPE.get(data_type, [])
-
         if operator not in allowed:
             raise QueryValidationError(f"Operator {operator} not allowed for type {data_type}")
 
     # VALUE VALIDATION
     def _validate_values(self, field:DatasetField, operator, value, value2):
-
         data_type = field.data_type
-
         if not data_type:
             raise QueryValidationError(f"No datatype for {field.name}")
 
@@ -311,7 +307,7 @@ class QueryValidatorV1:
             return
 
         # BETWEEN
-        if operator == "BETWEEN":
+        if operator == "BETWEEN" or operator == "NOT BETWEEN":
             if value is None or value2 is None:
                 raise QueryValidationError("BETWEEN requires value and value2")
             self._validate_scalar(data_type, value)
@@ -319,7 +315,7 @@ class QueryValidatorV1:
             return
 
         # IN
-        if operator == "IN":
+        if operator == "IN" or operator == "NOT IN":
             if not isinstance(value, list) or not value:
                 raise QueryValidationError("IN requires non empty list")
             for v in value:
@@ -419,24 +415,26 @@ class QueryValidatorV1:
             raise QueryValidationError("Too many order_by fields")
 
         valid_fields = (
-            set(self.query["select"].get("dimensions", [])) |
-            set(self.query["select"].get("metrics", []))
+            set([d['field_id'] for d in (self.query["select"].get("dimensions") or [])]) |
+            set([m['field_id'] for m in (self.query["select"].get("metrics") or [])])
         )
 
         for item in order_by:
-            field_name = item.get("field")
+            field_id = item.get("field_id")
             direction = item.get("direction", "ASC")
+            field = self._get_field(field_id)
 
-            self._validate_field(field_name)
+            if not field_id or not field or not isinstance(field.name, str):
+                raise QueryValidationError(f"Invalid ORDER BY field with field_id={field_id}")
+            if not self.SAFE_FIELD_PATTERN.match(field.name):
+                raise QueryValidationError(f"Unsafe field name: {field.name}")
 
-            if field_name not in valid_fields:
+            if field_id not in valid_fields:
                 # if not field.is_hidden:
-                raise QueryValidationError(f"ORDER BY field must be selected: {field_name}")
-
-            field = self._get_field(field_name)
+                raise QueryValidationError(f"ORDER BY field must be selected: {field.name}")
 
             if not field.is_sortable:
-                raise QueryValidationError(f"{field_name} not sortable")
+                raise QueryValidationError(f"{field.name} not sortable")
 
             if f"{direction}".upper() not in self.ALLOWED_ORDER:
                 raise QueryValidationError("Invalid order direction")
@@ -469,8 +467,7 @@ class QueryValidatorV1:
         - Metrics doivent être sélectionnés si utilisés en HAVING
         """
         having = self.query.get("filters", {}).get("having", [])
-        selected_metrics = set(self.query["select"].get("metrics", []))
-
+        selected_metrics = self.query["select"].get("metrics", [])
         if having and not selected_metrics:
             raise QueryValidationError("HAVING requires selected metrics")
     

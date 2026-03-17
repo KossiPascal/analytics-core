@@ -2,6 +2,7 @@ import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { ChartFormProps, Dataset, DatasetChart, DatasetQuery } from "@/models/dataset.models";
 import { Tenant } from "@/models/identity.model";
+import { useMemo } from "react";
 import { FaDatabase } from "react-icons/fa";
 
 
@@ -10,6 +11,14 @@ export const DatasetStep = ({ chart, onChange, tenants, tenant_id, datasets, que
     const updateChartValue = (field: keyof DatasetChart, val: any) => {
         onChange({ ...chart, [field]: val });
     };
+
+    const query = useMemo(() => {
+        return queries?.find((q) => q.id === chart.query_id);
+    }, [queries, chart.query_id]);
+
+    const fields = useMemo(() => {
+        return query?.fields ?? [];
+    }, [query]);
 
     return (
         <>

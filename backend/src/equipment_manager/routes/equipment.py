@@ -822,7 +822,7 @@ def delete_accessory(id, acc_id):
         raise BadRequest("Accessory not found", 404)
 
     # db.session.delete(acc)
-
+    acc.is_active = False
     acc.deleted = True
     acc.deleted_at = datetime.now(timezone.utc)
     acc.deleted_by_id=currentUserId()

@@ -3,10 +3,10 @@ import random
 import string
 from backend.src.config import Config
 from datetime import datetime, timezone
-from backend.src.models.auth import User, RefreshToken
+from backend.src.models.auth import User, RefreshToken, UserOrgunit, UserRole, UserRole
 from flask import Blueprint, request, jsonify, g
 from backend.src.security.access_security import require_auth, currentUserId
-
+from sqlalchemy.orm import selectinload
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
@@ -49,7 +49,23 @@ def login():
 
     # --- Refresh token ---
     raw_token, hashed_token, expires_at = RefreshToken.encode()
+
     RefreshToken.save_refresh_token(user.id, hashed_token, expires_at)
+
+    user: User = (
+        User.query
+        .options(
+            selectinload(User.roles).selectinload(UserRole.permissions),
+            # selectinload(User.orgunits).selectinload(UserOrgunit.level_rel),
+            # selectinload(User.datasource_permissions),
+            # selectinload(User.tenant),
+            # selectinload(User.refresh_tokens),
+            # selectinload(User.logs),
+            # selectinload(User.histories),
+        )
+        .filter_by(username=username)
+        .first()
+    )
 
     # --- Access token ---
     token, expire, payload = user.generate_permission_payload()
@@ -59,6 +75,7 @@ def login():
         # "refresh_token_exp": int(expires_at.timestamp()),
         "payload": payload
     }
+
     
     cookie = request.args.get("cookie")
     set_cookie = Config.AUTH_SET_COOKIE if cookie is None else cookie.lower() in ("1", "true", "yes")
@@ -125,6 +142,22 @@ def refresh():
     # Revoke old token -> ROTATE TOKEN
     RefreshToken.revoke_refresh_token(rt)
     RefreshToken.save_refresh_token(user.id, hashed_token, expires_at)
+
+
+    user: User = (
+        User.query
+        .options(
+            selectinload(User.roles).selectinload(UserRole.permissions),
+            # selectinload(User.orgunits).selectinload(UserOrgunit.level_rel),
+            # selectinload(User.datasource_permissions),
+            # selectinload(User.tenant),
+            # selectinload(User.refresh_tokens),
+            # selectinload(User.logs),
+            # selectinload(User.histories),
+        )
+        .filter_by(id=rt.user_id)
+        .first()
+    )
 
     token, expire, payload = user.generate_permission_payload()
     response = {

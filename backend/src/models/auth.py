@@ -34,28 +34,28 @@ class Tenant(db.Model, MetaxMixin):
     name = db.Column(db.String(255), nullable=False, unique=True)
     description = db.Column(db.String(255), nullable=True)
 
-    users = db.relationship("User", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    datasets = db.relationship("Dataset", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    datasources = db.relationship("DataSource", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    visualizations = db.relationship("Visualization", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    visualization_charts = db.relationship("VisualizationChart", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    permissions = db.relationship("DataSourcePermission", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
+    users = db.relationship("User", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    datasets = db.relationship("Dataset", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    datasources = db.relationship("DataSource", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    visualizations = db.relationship("Visualization", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    visualization_charts = db.relationship("VisualizationChart", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    permissions = db.relationship("DataSourcePermission", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     fields = db.relationship("DatasetField", back_populates="tenant", cascade="all, delete-orphan")
-    connections = db.relationship("DataSourceConnection", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    ssh_configs = db.relationship("DataSourceSSHConfig", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    credentials = db.relationship("DataSourceCredential", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    histories = db.relationship("DataSourceHistory", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    visualization_execution_logs = db.relationship("VisualizationExecutionLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    dhis2_validations = db.relationship("VisualizationDhis2Validation", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    data_lineages = db.relationship("DataLineage", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    ai_query_logs = db.relationship("AIQueryLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    scripts = db.relationship("Script", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    orgunits        = db.relationship("UserOrgunit", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    orgunit_levels  = db.relationship("OrgUnitLevel", lazy="selectin", cascade="all, delete-orphan")
-    roles           = db.relationship("UserRole", back_populates="tenant", lazy="selectin", cascade="all, delete-orphan")
-    queries = db.relationship("DatasetQuery", back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
-    charts = db.relationship("DatasetChart", back_populates="tenant",lazy="selectin", cascade="all, delete-orphan")
+    connections = db.relationship("DataSourceConnection", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    ssh_configs = db.relationship("DataSourceSSHConfig", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    credentials = db.relationship("DataSourceCredential", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    histories = db.relationship("DataSourceHistory", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    visualization_execution_logs = db.relationship("VisualizationExecutionLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    dhis2_validations = db.relationship("VisualizationDhis2Validation", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    data_lineages = db.relationship("DataLineage", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    ai_query_logs = db.relationship("AIQueryLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    scripts = db.relationship("Script", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    orgunits        = db.relationship("UserOrgunit", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    orgunit_levels  = db.relationship("OrgUnitLevel", lazy="noload", cascade="all, delete-orphan")
+    roles           = db.relationship("UserRole", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    queries = db.relationship("DatasetQuery", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
+    charts = db.relationship("DatasetChart", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
 
 
     def to_dict(self, include_relations:bool=False):
@@ -118,8 +118,8 @@ class OrgUnitLevel(db.Model, MetaxMixin):
     level        = db.Column(db.Integer, nullable=False)       # 1 = National, 2 = Régional, …
     display_name = db.Column(db.String(100), nullable=True)    # alias d'affichage optionnel
 
-    tenant   = db.relationship("Tenant", lazy="selectin", foreign_keys=[tenant_id])
-    orgunits = db.relationship("UserOrgunit", back_populates="level_rel", lazy="selectin")
+    tenant   = db.relationship("Tenant", lazy="noload", foreign_keys=[tenant_id])
+    orgunits = db.relationship("UserOrgunit", back_populates="level_rel", lazy="noload")
 
     __table_args__ = (
         db.UniqueConstraint("tenant_id", "level", name="uq_orgunit_level_tenant"),
@@ -155,10 +155,10 @@ class UserOrgunit(db.Model, MetaxMixin):
     description = db.Column(db.String(255), nullable=True)
 
     # Relations
-    parent     = db.relationship("UserOrgunit", remote_side=[id], backref=db.backref("children", lazy="selectin"), uselist=False)
-    tenant     = db.relationship("Tenant", back_populates="orgunits", lazy="selectin", foreign_keys=[tenant_id])
-    level_rel  = db.relationship("OrgUnitLevel", back_populates="orgunits", lazy="selectin", foreign_keys=[level_id])
-    users_link = db.relationship("UserOrgunitLink", back_populates="orgunit", lazy="selectin", cascade="all, delete-orphan")
+    parent     = db.relationship("UserOrgunit", remote_side=[id], backref=db.backref("children", lazy="noload"), uselist=False)
+    tenant     = db.relationship("Tenant", back_populates="orgunits", lazy="noload", foreign_keys=[tenant_id])
+    level_rel  = db.relationship("OrgUnitLevel", back_populates="orgunits", lazy="noload", foreign_keys=[level_id])
+    users_link = db.relationship("UserOrgunitLink", back_populates="orgunit", lazy="noload", cascade="all, delete-orphan")
 
     __table_args__ = (
         db.CheckConstraint("tenant_id IS NOT NULL", name="ck_orgunit_tenant_not_null"),
@@ -232,8 +232,8 @@ class UserRole(db.Model, MetaxMixin):
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
     is_system = db.Column(db.Boolean, default=False)
 
-    permissions = db.relationship("UserPermission", secondary="user_role_permission_links", lazy="selectin")
-    tenant = db.relationship("Tenant", back_populates="roles",lazy="selectin",foreign_keys=[tenant_id])
+    permissions = db.relationship("UserPermission", secondary="user_role_permission_links", lazy="noload")
+    tenant = db.relationship("Tenant", back_populates="roles",lazy="noload",foreign_keys=[tenant_id])
 
     __table_args__ = (
         db.UniqueConstraint("tenant_id", "name", name="uq_role_tenant_name"),
@@ -262,8 +262,8 @@ class RolePermissionLink(db.Model):
     role_id = db.Column(db.BigInteger, db.ForeignKey("user_roles.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
     permission_id = db.Column(db.BigInteger, db.ForeignKey("user_permissions.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
 
-    role = db.relationship("UserRole", backref="role_permission_links", lazy="selectin")
-    permission = db.relationship("UserPermission", backref="role_permission_links", lazy="selectin")
+    role = db.relationship("UserRole", backref="role_permission_links", lazy="noload")
+    permission = db.relationship("UserPermission", backref="role_permission_links", lazy="noload")
 
     def to_dict(self):
         role:UserRole = self.role
@@ -298,17 +298,17 @@ class User(db.Model, MetaxMixin):
     # orgunits = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))  # e.g., [{"id1": [...]}, {"id2": [...]}]
     
     # Relationships
-    tenant = db.relationship("Tenant", back_populates="users",lazy="selectin",foreign_keys=[tenant_id])
-    datasource_permissions = db.relationship("DataSourcePermission",back_populates="user",lazy="selectin",cascade="all, delete-orphan",foreign_keys="DataSourcePermission.user_id")
-    refresh_tokens = db.relationship("RefreshToken", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
-    logs = db.relationship("UsersLog", back_populates="user", lazy="selectin", cascade="all, delete-orphan")
-    roles = db.relationship("UserRole",secondary="user_role_links",lazy="selectin",backref=db.backref("users", lazy="selectin"))
-    orgunits = db.relationship("UserOrgunit",secondary="user_orgunit_links",lazy="selectin",backref=db.backref("users", lazy="selectin"))
+    tenant = db.relationship("Tenant", back_populates="users",lazy="noload",foreign_keys=[tenant_id])
+    datasource_permissions = db.relationship("DataSourcePermission",back_populates="user",lazy="noload",cascade="all, delete-orphan",foreign_keys="DataSourcePermission.user_id")
+    refresh_tokens = db.relationship("RefreshToken", back_populates="user", lazy="noload", cascade="all, delete-orphan")
+    logs = db.relationship("UsersLog", back_populates="user", lazy="noload", cascade="all, delete-orphan")
+    roles = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref=db.backref("users", lazy="noload"))
+    orgunits = db.relationship("UserOrgunit",secondary="user_orgunit_links",lazy="noload",backref=db.backref("users", lazy="noload"))
 
-    histories = db.relationship("DataSourceHistory",lazy="selectin",cascade="all, delete-orphan",foreign_keys="DataSourceHistory.user_id")
+    histories = db.relationship("DataSourceHistory",lazy="noload",cascade="all, delete-orphan",foreign_keys="DataSourceHistory.user_id")
 
-    # roles_link = db.relationship("UserRole",secondary="user_role_links",lazy="selectin",backref="users")
-    # orgunits_link = db.relationship("UserOrgunitLink",back_populates="user",lazy="selectin",cascade="all, delete-orphan")
+    # roles_link = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref="users")
+    # orgunits_link = db.relationship("UserOrgunitLink",back_populates="user",lazy="noload",cascade="all, delete-orphan")
 
     @property
     def fullname(self):
@@ -401,14 +401,15 @@ class User(db.Model, MetaxMixin):
         position_code: str | None = None
         position_is_zone_assignable: bool = False
         department_code: str | None = None
+
         try:
             from backend.src.equipment_manager.models.employees import Employee as _Emp, Position as _Pos
-            emp = _Emp.query.filter_by(user_id=self.id).first()
+            emp:_Emp = _Emp.query.filter_by(user_id=self.id).first()
             if emp:
                 employee_id = str(emp.id)
                 position_id = str(emp.position_id) if emp.position_id else None
                 if emp.position_id:
-                    pos = _Pos.query.get(emp.position_id)
+                    pos:_Pos = _Pos.query.get(emp.position_id)
                     if pos:
                         position_code = pos.code
                         position_is_zone_assignable = bool(getattr(pos, 'is_zone_assignable', False))
@@ -439,6 +440,7 @@ class User(db.Model, MetaxMixin):
     def generate_permission_payload(self, onlyPayload:bool=False):
         """ Génère le payload JWT basé sur les rôles / permissions (caps). """
         payloadBrut = self.build_access_payload()
+        
         token, exp, payload = User.encode(payload=payloadBrut)
 
         return payload if onlyPayload else (token, exp, payload)
@@ -593,7 +595,7 @@ class UsersLog(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
-    user = db.relationship("User", back_populates="logs",lazy="selectin",foreign_keys=[user_id])
+    user = db.relationship("User", back_populates="logs",lazy="noload",foreign_keys=[user_id])
 
     method = db.Column(db.String(10), nullable=False)
     url = db.Column(db.String(1024), nullable=False)
@@ -623,8 +625,8 @@ class UserRoleLink(db.Model):
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
     role_id = db.Column(db.BigInteger, db.ForeignKey("user_roles.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
 
-    user = db.relationship("User", lazy="selectin")
-    role = db.relationship("UserRole", lazy="selectin")
+    user = db.relationship("User", lazy="noload")
+    role = db.relationship("UserRole", lazy="noload")
 
     def to_dict(self):
         return { 
@@ -646,7 +648,7 @@ class RefreshToken(db.Model):
 
     # Foreign key to user
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
-    user = db.relationship("User", back_populates="refresh_tokens",lazy="selectin",foreign_keys=[user_id])
+    user = db.relationship("User", back_populates="refresh_tokens",lazy="noload",foreign_keys=[user_id])
 
     def is_valid(self):
         return not self.revoked and self.expires_at > datetime.now(timezone.utc)
@@ -755,8 +757,8 @@ class UserOrgunitLink(db.Model):
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
     orgunit_id = db.Column(db.BigInteger, db.ForeignKey("user_orgunits.id", ondelete="CASCADE", onupdate="CASCADE"), primary_key=True)
 
-    user = db.relationship("User", lazy="selectin")
-    orgunit = db.relationship("UserOrgunit", lazy="selectin")
+    user = db.relationship("User", lazy="noload")
+    orgunit = db.relationship("UserOrgunit", lazy="noload")
 
     def to_dict(self):
         return { 

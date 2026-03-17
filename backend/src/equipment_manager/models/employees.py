@@ -21,9 +21,9 @@ class Department(db.Model, AuditMixin):
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
 
-    parent = db.relationship("Department", remote_side=[id], back_populates="children", lazy="selectin")
-    children = db.relationship("Department", back_populates="parent", lazy="selectin", cascade="all, delete-orphan")
-    positions = db.relationship("Position", back_populates="department", lazy="selectin")
+    parent = db.relationship("Department", remote_side=[id], back_populates="children", lazy="noload")
+    children = db.relationship("Department", back_populates="parent", lazy="noload", cascade="all, delete-orphan")
+    positions = db.relationship("Position", back_populates="department", lazy="noload")
 
     @property
     def is_root(self):
@@ -70,10 +70,10 @@ class Position(db.Model, AuditMixin):
     description = db.Column(db.Text, default="")
     is_zone_assignable = db.Column(db.Boolean, default=False, nullable=False)
 
-    parent = db.relationship("Position", remote_side=[id], back_populates="children", lazy="selectin")
-    children = db.relationship("Position", back_populates="parent", lazy="selectin")
-    department = db.relationship("Department", back_populates="positions", lazy="selectin")
-    employees = db.relationship("Employee", back_populates="position_rel", lazy="selectin")
+    parent = db.relationship("Position", remote_side=[id], back_populates="children", lazy="noload")
+    children = db.relationship("Position", back_populates="parent", lazy="noload")
+    department = db.relationship("Department", back_populates="positions", lazy="noload")
+    employees = db.relationship("Employee", back_populates="position_rel", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -111,13 +111,13 @@ class Employee(db.Model, AuditMixin):
     hire_date = db.Column(db.Date, nullable=True)
     notes = db.Column(db.Text, default="")
 
-    position_rel = db.relationship("Position", back_populates="employees", lazy="selectin")
-    tenant = db.relationship("Tenant", lazy="selectin", foreign_keys=[tenant_id])
-    equipments = db.relationship("Equipment", back_populates="employee", lazy="selectin", foreign_keys="Equipment.employee_id")
-    owned_equipments = db.relationship("Equipment", back_populates="owner", lazy="selectin", foreign_keys="Equipment.owner_id")
-    history = db.relationship("EmployeeHistory", back_populates="employee", lazy="selectin", cascade="all, delete-orphan")
-    profile = db.relationship("EmployeeProfile", back_populates="employee", uselist=False, lazy="selectin", cascade="all, delete-orphan", foreign_keys="EmployeeProfile.employee_id")
-    repair_tickets = db.relationship("RepairTicket", back_populates="employee", lazy="selectin")
+    position_rel = db.relationship("Position", back_populates="employees", lazy="noload")
+    tenant = db.relationship("Tenant", lazy="noload", foreign_keys=[tenant_id])
+    equipments = db.relationship("Equipment", back_populates="employee", lazy="noload", foreign_keys="Equipment.employee_id")
+    owned_equipments = db.relationship("Equipment", back_populates="owner", lazy="noload", foreign_keys="Equipment.owner_id")
+    history = db.relationship("EmployeeHistory", back_populates="employee", lazy="noload", cascade="all, delete-orphan")
+    profile = db.relationship("EmployeeProfile", back_populates="employee", uselist=False, lazy="noload", cascade="all, delete-orphan", foreign_keys="EmployeeProfile.employee_id")
+    repair_tickets = db.relationship("RepairTicket", back_populates="employee", lazy="noload")
 
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -162,8 +162,8 @@ class EmployeeProfile(db.Model, AuditMixin):
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
 
-    employee = db.relationship("Employee", back_populates="profile", foreign_keys=[employee_id], lazy="selectin")
-    supervisor = db.relationship("Employee", foreign_keys=[supervisor_employee_id], lazy="selectin")
+    employee = db.relationship("Employee", back_populates="profile", foreign_keys=[employee_id], lazy="noload")
+    supervisor = db.relationship("Employee", foreign_keys=[supervisor_employee_id], lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -189,9 +189,9 @@ class EmployeeHistory(db.Model, AuditMixin):
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
 
-    employee = db.relationship("Employee", back_populates="history", lazy="selectin")
-    old_department = db.relationship("Department", foreign_keys=[old_department_id], lazy="selectin")
-    new_department = db.relationship("Department", foreign_keys=[new_department_id], lazy="selectin")
+    employee = db.relationship("Employee", back_populates="history", lazy="noload")
+    old_department = db.relationship("Department", foreign_keys=[old_department_id], lazy="noload")
+    new_department = db.relationship("Department", foreign_keys=[new_department_id], lazy="noload")
 
     def to_dict_safe(self):
         return {

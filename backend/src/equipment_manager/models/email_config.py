@@ -101,8 +101,8 @@ class AlertRecipientConfig(db.Model, AuditMixin):
         nullable=True,
     )
 
-    employee = db.relationship("Employee", foreign_keys=[employee_id], lazy="selectin")
-    position = db.relationship("Position", foreign_keys=[position_id], lazy="selectin")
+    employee = db.relationship("Employee", foreign_keys=[employee_id], lazy="noload")
+    position = db.relationship("Position", foreign_keys=[position_id], lazy="noload")
 
     def to_dict_safe(self):
         from backend.src.equipment_manager.models.tickets import RepairTicket

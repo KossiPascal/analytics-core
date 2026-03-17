@@ -6,6 +6,7 @@ from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQu
 from backend.src.routes.datasets.query.query_validator import QueryValidatorV1
 from backend.src.routes.datasets.query.sql_compiler import MaterializedViewManager, SQLCompilerV1
 from backend.src.security.access_security import require_auth, currentUserId
+from sqlalchemy.orm import selectinload
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -50,7 +51,19 @@ class MakeCompileQueryJson():
             query_view_name=self.query_view_name,
             sql_type=self.sql_type
         )
-        
+    
+    @property
+    def fields_ids(self):
+        # sécuriser select
+        self.query_json.setdefault("select", {})
+        self.query_json["select"].setdefault("dimensions", [])
+        self.query_json["select"].setdefault("metrics", [])
+
+        dimIds: list[int] = [d["field_id"] for d in self.query_json["select"]["dimensions"]]
+        metIds: list[int] = [m["field_id"] for m in self.query_json["select"]["metrics"]]
+
+        # return list(dict.fromkeys(dimIds + metIds))
+        return [fId for fId in set(dimIds + metIds)]
 
     def make_matview_sql(self)-> str:
         return self.manager.generate_matview_sql(sql=self.sql,values=self.values)
@@ -69,16 +82,38 @@ class MakeCompileQueryJson():
 
 
 
+def list_queries(query_id: Optional[int] = None, tenant_id: Optional[int] = None,dataset_id: Optional[int] = None, all:bool = True):
+
+    query = DatasetQuery.query.options(
+        selectinload(DatasetQuery.dataset).selectinload(Dataset.fields),
+        selectinload(DatasetQuery.charts),
+    ).filter(DatasetQuery.deleted == False)
+
+    if query_id is not None:
+        query = query.filter(DatasetQuery.id == query_id)
+
+    if tenant_id is not None:
+        query = query.filter(DatasetQuery.tenant_id == tenant_id)
+
+    if dataset_id is not None:
+        query = query.filter(DatasetQuery.dataset_id == dataset_id)
+
+    if all == True:
+        charts: List[DatasetQuery] = query.all()
+        return [chart.to_dict() for chart in charts]
+    else:
+        chart:DatasetQuery = query.first()
+        return chart.to_dict()
+
+
+
 # ===================== QUERIES =====================
 @bp.get("/<int:tenant_id>")
 @require_auth
-def list_queries(tenant_id: int):
+def list_queries_by(tenant_id: int):
     try:
-        queries: List[DatasetQuery] = DatasetQuery.query.filter(
-            DatasetQuery.tenant_id==tenant_id,
-            DatasetQuery.deleted==False
-        ).all()
-        return jsonify([r.to_dict() for r in queries]), 200
+        queries = list_queries(tenant_id=tenant_id)
+        return jsonify(queries), 200
     except Exception as e:
         logger.error(f"List queries error: {str(e)}")
         raise BadRequest("Failed to list queries", 500)
@@ -87,31 +122,22 @@ def list_queries(tenant_id: int):
 @require_auth
 def list_queries_by_dataset(tenant_id: int, dataset_id: int):
     try:
-        queries: List[DatasetQuery] = DatasetQuery.query.filter(
-            DatasetQuery.tenant_id==tenant_id,
-            DatasetQuery.dataset_id==dataset_id,
-            DatasetQuery.deleted==False
-        ).all()
-        return jsonify([r.to_dict() for r in queries]), 200
+        queries = list_queries(tenant_id=tenant_id,dataset_id=dataset_id)
+        return jsonify(queries), 200
     except Exception as e:
         logger.error(f"List queries error: {str(e)}")
         raise BadRequest("Failed to list queries", 500)
 
 
 
-@bp.get("/<int:tenant_id>/<int:query_id>")
+@bp.get("/one/<int:tenant_id>/<int:query_id>")
 @require_auth
 def get_query(tenant_id: int,query_id: int):
     try:
-        query:DatasetQuery = DatasetQuery.query.filter(
-            DatasetQuery.id==query_id,
-            DatasetQuery.tenant_id==tenant_id,
-            DatasetQuery.deleted==False
-        ).first()
-        if not query or query.deleted:
+        query = list_queries(tenant_id=tenant_id,query_id=query_id,all=False)
+        if not query or query["deleted"]:
             raise BadRequest(f"DatasetQuery with id={query_id} not found", 404)
-        data = query.to_dict()
-        return jsonify(data), 200
+        return jsonify(query), 200
     except Exception as e:
         logger.error(f"Get query error: {str(e)}")
         raise BadRequest("Failed to get query", 500)
@@ -140,7 +166,7 @@ def create_query():
             dataset_id=dataset_id, 
             query_json=query_json, 
             sql_type=sql_type, 
-            query_view_name=query_name
+            query_view_name=query_name,
         )
         compiler.run()
 
@@ -158,16 +184,15 @@ def create_query():
             compiled_sql=compiler.sql, #compiled_sql,
             values=compiler.values, #values,
             is_active=is_active,
+            fields_ids=compiler.fields_ids
         )
         if is_validated:
             query.is_validated=is_validated,
             query.validated_at = datetime.now(timezone.utc)
 
         query.created_by_id=currentUserId()
-
         db.session.add(query)
         db.session.commit()
-
         compiler.store_matview()
         
         return jsonify({"message": "DatasetQuery created", "query_id": query.id}), 201
@@ -211,13 +236,11 @@ def update_query(query_id: int):
         query.query_json = query_json
         query.compiled_sql = compiler.make_matview_sql() #compiler.sql
         query.values = compiler.values
-
+        query.fields_ids = compiler.fields_ids
         # if "compiled_sql" in data:
         #     query.compiled_sql = data["compiled_sql"]
         # if "values" in data:
         #     query.values = data["values"]
-
-
         if "tenant_id" in data:
             query.tenant_id = data["tenant_id"]
         if "description" in data:
@@ -233,9 +256,7 @@ def update_query(query_id: int):
                 query.validated_at = datetime.now(timezone.utc)
 
         query.updated_by_id=currentUserId()
-
         db.session.commit()
-
         compiler.store_matview()
         
         return jsonify({"message": "DatasetQuery updated"}), 200
@@ -250,7 +271,7 @@ def delete_query(query_id: int):
         query:DatasetQuery = DatasetQuery.query.get(query_id)
         if not query or query.deleted:
             raise BadRequest(f"DatasetQuery with id={query_id} not found", 404)
-
+        query.is_active = False
         query.deleted = True
         query.deleted_at = datetime.now(timezone.utc)
         query.deleted_by_id=currentUserId()

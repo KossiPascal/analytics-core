@@ -11,7 +11,7 @@ class Region(db.Model, AuditMixin):
     name = db.Column(db.String(255), unique=True, nullable=False)
     code = db.Column(db.String(50), unique=True, nullable=False)
 
-    districts = db.relationship("District", back_populates="region", lazy="selectin", cascade="all, delete-orphan")
+    districts = db.relationship("District", back_populates="region", lazy="noload", cascade="all, delete-orphan")
 
     def to_dict_safe(self):
         return {
@@ -37,8 +37,8 @@ class District(db.Model, AuditMixin):
     name = db.Column(db.String(255), nullable=False)
     code = db.Column(db.String(50), nullable=False)
 
-    region = db.relationship("Region", back_populates="districts", lazy="selectin")
-    sites = db.relationship("Site", back_populates="district", lazy="selectin", cascade="all, delete-orphan")
+    region = db.relationship("Region", back_populates="districts", lazy="noload")
+    sites = db.relationship("Site", back_populates="district", lazy="noload", cascade="all, delete-orphan")
 
     def to_dict_safe(self):
         return {
@@ -65,7 +65,7 @@ class Site(db.Model, AuditMixin):
     address = db.Column(db.Text, default="")
     phone = db.Column(db.String(20), default="")
 
-    district = db.relationship("District", back_populates="sites", lazy="selectin")
+    district = db.relationship("District", back_populates="sites", lazy="noload")
 
     def to_dict_safe(self):
         return {

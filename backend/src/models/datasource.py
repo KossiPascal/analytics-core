@@ -331,16 +331,16 @@ class DataSource(db.Model, AuditMixin):
     last_sync = db.Column(db.DateTime(timezone=True), index=True)
     last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
-    tenant = db.relationship("Tenant", back_populates="datasources",lazy="selectin",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="datasources", uselist=False,lazy="selectin",foreign_keys=[type_id])
+    tenant = db.relationship("Tenant", back_populates="datasources",lazy="noload",foreign_keys=[tenant_id])
+    type = db.relationship("DataSourceType", back_populates="datasources", uselist=False,lazy="noload",foreign_keys=[type_id])
     
     connection = db.relationship("DataSourceConnection", back_populates="datasource", uselist=False, cascade="all, delete-orphan")
     ssh_config = db.relationship("DataSourceSSHConfig", back_populates="datasource", uselist=False, cascade="all, delete-orphan")
     credential = db.relationship("DataSourceCredential", back_populates="datasource", uselist=False, cascade="all, delete-orphan")
     
-    permissions = db.relationship("DataSourcePermission", back_populates="datasource", cascade="all, delete-orphan",lazy="selectin")
-    datasets = db.relationship("Dataset", back_populates="datasource", cascade="all, delete-orphan", lazy="selectin")
-    histories = db.relationship("DataSourceHistory",back_populates="datasource",cascade="all, delete-orphan",lazy="selectin")
+    permissions = db.relationship("DataSourcePermission", back_populates="datasource", cascade="all, delete-orphan",lazy="noload")
+    datasets = db.relationship("Dataset", back_populates="datasource", cascade="all, delete-orphan", lazy="noload")
+    histories = db.relationship("DataSourceHistory",back_populates="datasource",cascade="all, delete-orphan",lazy="noload")
    
     
     __table_args__ = (
@@ -772,16 +772,16 @@ class DataSourceConnection(db.Model, AuditMixin):
 
     ssh_enabled = db.Column(db.Boolean, default=False)
 
-    tenant = db.relationship("Tenant", back_populates="connections",lazy="selectin",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="connections",lazy="selectin",foreign_keys=[type_id])
+    tenant = db.relationship("Tenant", back_populates="connections",lazy="noload",foreign_keys=[tenant_id])
+    type = db.relationship("DataSourceType", back_populates="connections",lazy="noload",foreign_keys=[type_id])
 
-    datasource = db.relationship("DataSource", back_populates="connection",lazy="selectin",foreign_keys=[datasource_id], uselist=False)
+    datasource = db.relationship("DataSource", back_populates="connection",lazy="noload",foreign_keys=[datasource_id], uselist=False)
     credential = db.relationship("DataSourceCredential", back_populates="connection", uselist=False, cascade="all, delete-orphan")
     ssh_config = db.relationship("DataSourceSSHConfig", back_populates="connection", uselist=False, cascade="all, delete-orphan")
     
-    permissions = db.relationship("DataSourcePermission",back_populates="connection",cascade="all, delete-orphan", lazy="selectin")
-    datasets = db.relationship("Dataset", back_populates="connection", cascade="all, delete-orphan", lazy="selectin")
-    histories = db.relationship("DataSourceHistory",back_populates="connection",cascade="all, delete-orphan", lazy="selectin")
+    permissions = db.relationship("DataSourcePermission",back_populates="connection",cascade="all, delete-orphan", lazy="noload")
+    datasets = db.relationship("Dataset", back_populates="connection", cascade="all, delete-orphan", lazy="noload")
+    histories = db.relationship("DataSourceHistory",back_populates="connection",cascade="all, delete-orphan", lazy="noload")
     
     __table_args__ = (
         db.UniqueConstraint("datasource_id","status",name="uq_datasource_status"),
@@ -825,11 +825,11 @@ class DataSourceSSHConfig(db.Model, AuditMixin):
     host = db.Column(db.String(255), nullable=False)
     port = db.Column(db.BigInteger, default=22)
 
-    tenant = db.relationship("Tenant", back_populates="ssh_configs",lazy="selectin",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="ssh_configs",lazy="selectin",foreign_keys=[type_id])
+    tenant = db.relationship("Tenant", back_populates="ssh_configs",lazy="noload",foreign_keys=[tenant_id])
+    type = db.relationship("DataSourceType", back_populates="ssh_configs",lazy="noload",foreign_keys=[type_id])
 
-    datasource = db.relationship("DataSource", back_populates="ssh_config",lazy="selectin",foreign_keys=[datasource_id], uselist=False)
-    connection = db.relationship("DataSourceConnection", back_populates="ssh_config",lazy="selectin",foreign_keys=[connection_id], uselist=False)
+    datasource = db.relationship("DataSource", back_populates="ssh_config",lazy="noload",foreign_keys=[datasource_id], uselist=False)
+    connection = db.relationship("DataSourceConnection", back_populates="ssh_config",lazy="noload",foreign_keys=[connection_id], uselist=False)
    
     credential = db.relationship("DataSourceCredential", back_populates="ssh_config", uselist=False, cascade="all, delete-orphan")
 
@@ -876,12 +876,12 @@ class DataSourceCredential(db.Model, AuditMixin):
     ssh_key_enc = db.Column(db.Text)  # vault
     ssh_key_pass_enc = db.Column(db.Text)
 
-    tenant = db.relationship("Tenant", back_populates="credentials",lazy="selectin",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="credentials",lazy="selectin",foreign_keys=[type_id])
+    tenant = db.relationship("Tenant", back_populates="credentials",lazy="noload",foreign_keys=[tenant_id])
+    type = db.relationship("DataSourceType", back_populates="credentials",lazy="noload",foreign_keys=[type_id])
 
-    datasource = db.relationship("DataSource", back_populates="credential",lazy="selectin",foreign_keys=[datasource_id], uselist=False)
-    ssh_config = db.relationship("DataSourceSSHConfig", back_populates="credential",lazy="selectin",foreign_keys=[ssh_config_id], uselist=False)
-    connection = db.relationship("DataSourceConnection", back_populates="credential",lazy="selectin",foreign_keys=[connection_id], uselist=False)
+    datasource = db.relationship("DataSource", back_populates="credential",lazy="noload",foreign_keys=[datasource_id], uselist=False)
+    ssh_config = db.relationship("DataSourceSSHConfig", back_populates="credential",lazy="noload",foreign_keys=[ssh_config_id], uselist=False)
+    connection = db.relationship("DataSourceConnection", back_populates="credential",lazy="noload",foreign_keys=[connection_id], uselist=False)
     
     __table_args__ = (
         db.UniqueConstraint("connection_id", name="uq_credential_connection"),
@@ -939,12 +939,12 @@ class DataSourcePermission(db.Model, AuditMixin):
     connection_id = db.Column(db.BigInteger, db.ForeignKey("datasource_connections.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
 
-    tenant = db.relationship("Tenant", back_populates="permissions",lazy="selectin",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="permissions",lazy="selectin",foreign_keys=[type_id])
-    user = db.relationship("User",back_populates="datasource_permissions",lazy="selectin",foreign_keys=[user_id])
+    tenant = db.relationship("Tenant", back_populates="permissions",lazy="noload",foreign_keys=[tenant_id])
+    type = db.relationship("DataSourceType", back_populates="permissions",lazy="noload",foreign_keys=[type_id])
+    user = db.relationship("User",back_populates="datasource_permissions",lazy="noload",foreign_keys=[user_id])
 
-    datasource = db.relationship("DataSource", back_populates="permissions",lazy="selectin",foreign_keys=[datasource_id])
-    connection = db.relationship("DataSourceConnection", back_populates="permissions",lazy="selectin",foreign_keys=[connection_id])
+    datasource = db.relationship("DataSource", back_populates="permissions",lazy="noload",foreign_keys=[datasource_id])
+    connection = db.relationship("DataSourceConnection", back_populates="permissions",lazy="noload",foreign_keys=[connection_id])
     
     histories = db.relationship("DataSourceHistory", back_populates="permission")
 
@@ -1025,14 +1025,14 @@ class DataSourceHistory(db.Model):
     record_id = db.Column(db.String)
     timestamp = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
-    tenant = db.relationship("Tenant", back_populates="histories",lazy="selectin",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="histories",lazy="selectin",foreign_keys=[type_id])
+    tenant = db.relationship("Tenant", back_populates="histories",lazy="noload",foreign_keys=[tenant_id])
+    type = db.relationship("DataSourceType", back_populates="histories",lazy="noload",foreign_keys=[type_id])
 
-    connection = db.relationship("DataSourceConnection", back_populates="histories",lazy="selectin",foreign_keys=[connection_id])
-    permission = db.relationship("DataSourcePermission", back_populates="histories",lazy="selectin",foreign_keys=[permission_id])
-    datasource = db.relationship("DataSource", back_populates="histories",lazy="selectin",foreign_keys=[datasource_id])
+    connection = db.relationship("DataSourceConnection", back_populates="histories",lazy="noload",foreign_keys=[connection_id])
+    permission = db.relationship("DataSourcePermission", back_populates="histories",lazy="noload",foreign_keys=[permission_id])
+    datasource = db.relationship("DataSource", back_populates="histories",lazy="noload",foreign_keys=[datasource_id])
 
-    user = db.relationship("User", back_populates="histories",lazy="selectin",foreign_keys=[user_id])
+    user = db.relationship("User", back_populates="histories",lazy="noload",foreign_keys=[user_id])
 
     def to_dict(self, include_relations:bool=True):
         data = {

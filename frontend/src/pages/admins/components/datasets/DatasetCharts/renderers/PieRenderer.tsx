@@ -1,174 +1,93 @@
-// import {
-//   PieChart,
-//   Pie,
-//   Tooltip,
-//   Legend,
-//   ResponsiveContainer,
-//   Cell,
-// } from "recharts";
-
-// import {
-//   getDimensionKeys,
-//   getMetricKeys,
-//   buildPieData,
-// } from "./render-utils";
-
-// import { ChartRenderProp } from "@/models/dataset.models";
-
-// export const PieRenderer = ({ chart, data }: ChartRenderProp) => {
-//   const dimensions = getDimensionKeys(chart);
-//   const metrics = getMetricKeys(chart);
-
-//   if (!dimensions?.length || !metrics?.length || !data?.rows?.length) {
-//     return (
-//       <div className="text-gray-400 p-4">
-//         No configuration or data
-//       </div>
-//     );
-//   }
-
-//   const dimension = dimensions[0].field;
-//   const metric = metrics[0].field;
-
-//   let pieData = buildPieData(data.rows, dimension, metric);
-
-//   const options = chart.options?.pie ?? {};
-
-//   const colors =
-//     options.color_scheme ??
-//     ["#4caf50", "#2196f3", "#ff9800", "#9c27b0", "#f44336", "#00bcd4"];
-
-//   const width = options.width ?? "100%";
-//   const height = options.height ?? 400;
-
-//   const innerRadius = options.inner_radius ?? 0;
-//   const outerRadius = options.outer_radius ?? "80%";
-
-//   const showTooltip = options.show_tooltip ?? true;
-//   const showLegend = options.show_legend ?? true;
-//   const showLabels = options.show_labels ?? false;
-
-//   const paddingAngle = options.padding_angle ?? 0;
-
-//   const startAngle = options.start_angle ?? 0;
-//   const endAngle = options.end_angle ?? 360;
-
-//   const animate = options.animate ?? true;
-
-//   const cx = options.cx ?? "50%";
-//   const cy = options.cy ?? "50%";
-
-//   const minAngle = options.min_angle ?? 0;
-
-//   if (options.sort) {
-//     pieData = [...pieData].sort((a, b) => b.value - a.value);
-//   }
-
-//   return (
-//     <ResponsiveContainer width={width} height={height}>
-//       <PieChart>
-//         <Pie
-//           data={pieData}
-//           dataKey="value"
-//           nameKey="name"
-//           cx={cx}
-//           cy={cy}
-//           innerRadius={innerRadius}
-//           outerRadius={outerRadius}
-//           paddingAngle={paddingAngle}
-//           startAngle={startAngle}
-//           endAngle={endAngle}
-//           minAngle={minAngle}
-//           label={showLabels}
-//           isAnimationActive={animate}
-//           animationDuration={options.animation_duration ?? 400}
-//         >
-//           {pieData.map((entry, idx) => (
-//             <Cell
-//               key={`cell-${idx}`}
-//               fill={colors[idx % colors.length]}
-//               stroke={options.slice_border_color ?? "#fff"}
-//               strokeWidth={options.slice_border_width ?? 1}
-//             />
-//           ))}
-//         </Pie>
-
-//         {showTooltip && (
-//           <Tooltip
-//             formatter={(value: number, name: string) => {
-//               if (options.show_percentage) {
-//                 const total = pieData.reduce((a, b) => a + b.value, 0);
-//                 const pct = ((value / total) * 100).toFixed(1);
-//                 return [`${value} (${pct}%)`, name];
-//               }
-//               return [value, name];
-//             }}
-//           />
-//         )}
-
-//         {showLegend && (
-//           <Legend
-//             layout={options.legend_layout ?? "horizontal"}
-//             verticalAlign={options.legend_vertical_align ?? "bottom"}
-//             align={options.legend_align ?? "center"}
-//           />
-//         )}
-//       </PieChart>
-//     </ResponsiveContainer>
-//   );
-// };
-
-
-
 import {
   PieChart,
   Pie,
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Cell,
+  Cell
 } from "recharts";
-
-import { getDimensionKeys, getMetricKeys, buildPieData } from "./render-utils";
-import { ChartRenderProp } from "@/models/dataset.models";
+import { ChartRenderProp, CHART_COLS_SEPARATOR } from "@/models/dataset.models";
+import { useMemo } from "react";
 
 export const PieRenderer = ({ chart, data }: ChartRenderProp) => {
-  const dimensions = getDimensionKeys(chart);
-  const metrics = getMetricKeys(chart);
-
-  if (!dimensions?.length || !metrics?.length || !data?.rows?.length) {
-    return (<div className="text-gray-400 p-4">No configuration or data</div>);
+  if (!data?.rows?.length || !data?.header) {
+    return <div className="text-gray-400 p-4">No data</div>;
   }
 
-  // 🔥 Pie = 1 dimension + 1 metric
-  const dimension = dimensions[0].field;
-  const metric = metrics.map(m=>m.field)[0];
+  const header = data.header;
+  const dimensionKeys: string[] = header.rows ?? [];
+  const allColumns: string[] = header._all_columns_order ?? [];
 
-  const pieData = buildPieData(data.rows, dimension, metric);
+  const options = useMemo(() => ({
+    ...(chart.options?.pie ?? {}),
+    ...(chart.options ?? {}),
+    show_percentage: chart.options?.pie?.show_percentage ?? true,
+    animation_duration: chart.options?.pie?.animation_duration ?? 800,
+    clockwise: chart.options?.pie?.clockwise ?? true
+  }), [chart.options]);
 
-  const options = chart.options?.pie ?? {};
-  const colors = options.color_scheme ?? ["#4caf50", "#2196f3", "#ff9800", "#9c27b0", "#f44336", "#00bcd4"];
+  const colors = options.color_scheme ?? [
+    "#4caf50","#2196f3","#ff9800","#9c27b0","#f44336","#00bcd4"
+  ];
 
   const width = options.width ?? "100%";
   const height = options.height ?? 400;
+
+  const xKey = dimensionKeys[dimensionKeys.length - 1];
+  const metric = allColumns[0];
+
+  // ----- Préparation des données -----
+  const chartData = useMemo(() => {
+    return data.rows.map((row: any) => ({
+      name: dimensionKeys
+        .map(d => row[d])
+        .filter(Boolean)
+        .join(" / "),
+      value: Number(row[metric]) || 0
+    }));
+  }, [data.rows, dimensionKeys, metric]);
+
+  // ----- Label personnalisé -----
+  const labelFormatter = (entry: any) => {
+    if (!options.show_labels) return "";
+    const name = entry.name;
+    if (options.show_percentage) {
+      const total = chartData.reduce((a, r) => a + r.value, 0);
+      const pct = total ? ((entry.value / total) * 100).toFixed(1) + "%" : "";
+      return `${name} (${pct})`;
+    }
+    return name;
+  };
 
   return (
     <ResponsiveContainer width={width} height={height}>
       <PieChart>
         <Pie
-          data={pieData}
+          data={chartData}
           dataKey="value"
           nameKey="name"
-          label={options.show_labels ?? false}
-          innerRadius={(options as any).inner_radius ?? 0} // support donut
+          innerRadius={options.inner_radius ?? 0}
+          outerRadius={options.outer_radius ?? 120}
+          label={labelFormatter}
+          labelLine={options.show_label_lines ?? true}
+          isAnimationActive={options.animation_duration > 0}
+          animationDuration={options.animation_duration}
+          // clockwise={options.clockwise}
         >
-          {pieData.map((_, idx) => (
-            <Cell key={idx} fill={colors[idx % colors.length]} />
+          {chartData.map((_, i) => (
+            <Cell
+              key={i}
+              fill={colors[i % colors.length]}
+              stroke={options.stroke_color ?? "#fff"}
+              strokeWidth={options.stroke_width ?? 1}
+            />
           ))}
         </Pie>
 
-        {options.show_tooltip && <Tooltip />}
-        {options.show_legend && <Legend />}
+        {options.show_tooltip !== false && (
+          <Tooltip formatter={(value: any) => value.toLocaleString()} />
+        )}
+        {options.show_legend !== false && <Legend />}
       </PieChart>
     </ResponsiveContainer>
   );

@@ -88,7 +88,7 @@ def delete_region(id):
     if not region:
         raise BadRequest("Region not found", 404)
     # db.session.delete(region)
-
+    region.is_active = False
     region.deleted = True
     region.deleted_at = datetime.now(timezone.utc)
     region.deleted_by_id=currentUserId()

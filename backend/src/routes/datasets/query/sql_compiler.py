@@ -15,10 +15,10 @@ NULL_ONLY_OPERATORS = {"IS NULL", "IS NOT NULL"}
 BOOLEAN_ONLY_OPERATORS = {"IS TRUE", "IS NOT TRUE", "IS FALSE", "IS NOT FALSE"}
 NO_VALUE_OPERATORS = NULL_ONLY_OPERATORS | BOOLEAN_ONLY_OPERATORS
 
-ARRAY_REQUIRED_OPERATORS = {"IN"}
-RANGE_REQUIRED_OPERATORS = {"BETWEEN"}
+ARRAY_REQUIRED_OPERATORS = {"IN", "NOT IN"}
+RANGE_REQUIRED_OPERATORS = {"BETWEEN", "NOT BETWEEN"}
 
-NUMERIC_OPERATORS = {"=", "!=", "<>", ">", ">=", "<", "<=", "BETWEEN", "IN", *NULL_ONLY_OPERATORS}
+NUMERIC_OPERATORS = {"=", "!=", "<>", ">", ">=", "<", "<=", "BETWEEN", "NOT BETWEEN", "IN", "NOT IN", *NULL_ONLY_OPERATORS}
 STRING_OPERATORS = {"=", "!=", "<>", "LIKE", "ILIKE", "IN", *NULL_ONLY_OPERATORS}
 DATE_OPERATORS = NUMERIC_OPERATORS
 
@@ -28,6 +28,10 @@ VALID_SQL_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 DIALECT_QUOTES = { "postgres": '"', "duckdb": '"', "mysql": "`" }
 
+
+
+class CompilerError(ValueError):
+    pass
 
 # VALUE PARSER
 class SQLValueParser:
@@ -180,10 +184,6 @@ class SQLValueParser:
     def quote_identifier(name: str) -> str:
         return f'"{name.replace(chr(34), "")}"'
     
-    @staticmethod
-    def placeholder(name: str) -> str:
-        return f":{name}"
-    
     # SANITIZE & IDENTIFIERS
     @staticmethod
     def sanitize_identifier(name: str) -> str:
@@ -213,10 +213,17 @@ class SQLValueParser:
 # FILTER BUILDER
 class SQLFilterBuilder:
 
-    def __init__(self, fields: Dict[str, DatasetField]):
+    def __init__(self, fields: Dict[int, DatasetField]):
         self.fields = fields
         self.param_index = 0
 
+    # FIELD HELPERS
+    def _get_field(self, id: int):
+        field = self.fields.get(id)
+        if not field or not field.is_active:
+            raise CompilerError(f"Unknown or inactive field_id: {id}")
+        return field
+    
     def next_key(self) -> str:
         key = f"p_{self.param_index}"
         self.param_index += 1
@@ -233,7 +240,7 @@ class SQLFilterBuilder:
             return f"{field.aggregation}({DISTINCT}{field.expression})"
         return f"{DISTINCT}{field.expression}"
 
-    def build(self, node: dict, useSqlInClause:bool=False) -> Dict[str, Any]:
+    def build(self, node: dict) -> Dict[str, Any]:
 
         result = {"wheres": [], "havings": [], "values": {}}
 
@@ -242,19 +249,19 @@ class SQLFilterBuilder:
 
         # ---------------- CONDITION ----------------
         if node["type"] == "condition":
+            field_id = node.get("field_id")
+            field = self._get_field(field_id)
 
-            field = self.fields.get(node["field"])
-            if not field:
-                raise ValueError(f"Unknown field: {node['field']}")
-        
-            if (not field.field_type):
-                raise ValueError(f"Field type missing for {node["field"]}")
-            if (node["operator"] not in FULL_OPERATORS):
-                raise ValueError(f"Opérateur non autorisé: {node["operator"]}")
-            
-            operator = node["operator"]
+            operator = f'{node.get("operator")}'.upper()
             brutValue = node.get("value")
             brutValue2 = node.get("value2")
+            
+            if not field:
+                raise ValueError(f"Unknown field: {field_id}")
+            if (not field.field_type):
+                raise ValueError(f"Field type missing for {field_id}")
+            if (operator not in FULL_OPERATORS):
+                raise ValueError(f"Opérateur non autorisé: {operator}")
 
             dataType = field.data_type
             fieldType = field.field_type
@@ -266,20 +273,22 @@ class SQLFilterBuilder:
             values = {}
 
             # BETWEEN
-            if operator == "BETWEEN":
+            if operator == "BETWEEN" or operator == "NOT BETWEEN":
                 if not brutValue or not brutValue2:
                     raise ValueError(f"BETWEEN requires two values")
                 k1 = self.next_key()
                 k2 = self.next_key()
                 values[k1] = SQLValueParser.parse_value(brutValue, dataType)
                 values[k2] = SQLValueParser.parse_value(brutValue2, dataType)
-                clause = f"{expr} BETWEEN {SQLValueParser.placeholder(k1)} AND {SQLValueParser.placeholder(k2)}"
+                clause = f"{expr} {operator} :{k1} AND :{k2}"
 
-            # IN
-            elif operator == "IN":
+            # IN / NOT IN
+            elif operator == "IN" or operator == "NOT IN":
                 arr = brutValue if isinstance(brutValue,list) else [brutValue]
                 if (len(arr) == 0):
                     raise ValueError("IN operator requires at least one value")
+
+                useSqlInClause =bool(node.get("useSqlInClause") or False)
                 
                 if useSqlInClause:
                     # Cas classique: col IN (:p_0, :p_1, ...)
@@ -287,15 +296,19 @@ class SQLFilterBuilder:
                     for v in arr:
                         k = self.next_key()
                         values[k] = SQLValueParser.parse_value(v, dataType)
-                        keys.append(SQLValueParser.placeholder(k))
-                    clause = f"{expr} IN ({', '.join(keys)})"
+                        keys.append(f':{k}')
+                    clause = f"{expr} {operator} ({', '.join(keys)})"
                 else:
                     # Cas ANY: col = ANY(:p_array) → PostgreSQL ARRAY
                     k = self.next_key()
+                    # IMPORTANT : on génère ARRAY[:p_array] pour Postgres
+                    if operator == "NOT IN":
+                        clause = f"NOT ({expr} = ANY(:{k}))"
+                    else:
+                        clause = f"{expr} = ANY(:{k})"
+                        
                     # convertit toutes les valeurs au format SQLValueParser
                     values[k] = [SQLValueParser.parse_value(v, dataType) for v in arr]
-                    # IMPORTANT : on génère ARRAY[:p_array] pour Postgres
-                    clause = f"{expr} = ANY(:{k})"
 
             # NO VALUE
             elif operator in NO_VALUE_OPERATORS:
@@ -309,7 +322,7 @@ class SQLFilterBuilder:
                 else:
                     k = self.next_key()
                     values[k] = SQLValueParser.parse_value(brutValue, dataType)
-                    clause = f"{expr} {operator} {SQLValueParser.placeholder(k)}"
+                    clause = f"{expr} {operator} :{k}"
 
             is_metric = fieldType in {"metric", "calculated_metric"} or field.aggregation
 
@@ -371,6 +384,17 @@ class SQLCompilerV1:
         self.params: Dict[str, Any] = {}
         self._param_index = 0
 
+
+    # FIELD HELPERS
+    def _get_field(self, id: int):
+        msg = f"Unknown or inactive field_id: {id}"
+        if not id:
+            raise CompilerError(msg)
+        field = self.fields.get(id)
+        if not field or not field.is_active:
+            raise CompilerError(msg)
+        return field
+    
     def compile(self, query: Dict[str, Any]):
 
         if not self.dataset.view_name:
@@ -389,23 +413,27 @@ class SQLCompilerV1:
 
         # DIMENSIONS
         for dim in dimensions:
-            field = self.fields.get(dim)
+            field_id = dim.get("field_id")
+            field = self._get_field(field_id)
             if not field or field.field_type != "dimension" or bool(field.aggregation):
-                continue
-            alias = SQLValueParser.quote_identifier(field.name)
+                raise ValueError(f"Unrecognize dimension: {field_id}.")
+            dim_alias = (dim.get("alias") or "").strip()
+            alias = SQLValueParser.quote_identifier(dim_alias or field.name)
             select_part.append(f"{field.expression} AS {alias}")
             group_by_part.append(field.expression)
-            alias_map[field.name] = alias
+            alias_map[field.id] = alias
 
         # METRICS
         for met in metrics:
-            field = self.fields.get(met)
+            field_id = met.get("field_id")
+            field = self._get_field(field_id)
             if not field or field.field_type not in {"metric", "calculated_metric"}:
-                continue
-            alias = SQLValueParser.quote_identifier(field.name)
+                raise ValueError(f"Unrecognize metric : {field_id}.")
+            metric_alias = (met.get("alias") or "").strip()
+            alias = SQLValueParser.quote_identifier(metric_alias or field.name)
             expr = filter_builder.generate_expression(field)
             select_part.append(f"{expr} AS {alias}")
-            alias_map[field.name] = alias
+            alias_map[field.id] = alias
 
         if not select_part:
             raise ValueError("No valid fields selected.")
@@ -431,10 +459,11 @@ class SQLCompilerV1:
         if query.get("order_by"):
             parts = []
             for o in query["order_by"]:
-                if o["field"] not in self.fields:
-                    raise ValueError(f"Invalid ORDER BY field: {o['field']}")
-                direction = "DESC" if o["direction"].lower() == "desc" else "ASC"
-                alias = alias_map.get(o["field"], SQLValueParser.quote_identifier(o["field"]))
+                field_id = o["field_id"]
+                alias = alias_map.get(field_id)
+                if field_id not in self.fields or not alias:
+                    raise ValueError(f"Invalid ORDER BY field: {field_id}")
+                direction = "DESC" if f'{o["direction"]}'.lower() == "desc" else "ASC"
                 parts.append(f"{alias} {direction}")
             order_by_clause = "ORDER BY " + ", ".join(parts)
 
@@ -460,15 +489,11 @@ class SQLCompilerV1:
 
         return { "sql": sql, "values": values }
 
-
     def compile_pivot(self, query: Dict[str, Any], pivot_fields: Dict[str, Any]) -> Dict[str, Any]:
         """
         Pivot multi-dimension V1
-
         Supports:
-        - many rows
-        - many columns
-        - many metrics
+        - many rows, many columns, many metrics
         """
 
         pivot_rows = pivot_fields.get("rows", []) or []
@@ -495,11 +520,12 @@ class SQLCompilerV1:
 
         # 1️⃣ ROWS
         for row in pivot_rows:
-            field = self.fields.get(row)
+            field = self._get_field(row.get('field_id'))
             if not field:
                 raise ValueError(f"Invalid row field: {row}")
-
-            alias = SQLValueParser.quote_identifier(field.name)
+            
+            row_alias = (row.get("alias") or "").strip()
+            alias = SQLValueParser.quote_identifier(row_alias or field.name)
             select_part.append(f"{field.expression} AS {alias}")
             group_by_part.append(field.expression)
 
@@ -517,8 +543,7 @@ class SQLCompilerV1:
         if pivot_columns:
 
             for metric in pivot_metrics:
-
-                metric_field = self.fields.get(metric)
+                metric_field = self._get_field(metric.get('field_id'))
                 if not metric_field:
                     raise ValueError(f"Invalid metric field: {metric}")
 
@@ -557,7 +582,7 @@ class SQLCompilerV1:
             # No pivot columns → simple aggregation
             for metric in pivot_metrics:
 
-                metric_field = self.fields.get(metric)
+                metric_field = self._get_field(metric.get('field_id'))
                 if not metric_field:
                     raise ValueError(f"Invalid metric field: {metric}")
 
@@ -600,7 +625,6 @@ class SQLCompilerV1:
 
         return {"sql": sql.strip(), "values": values}
 
-
     def _get_column_combinations(self,query: Dict[str, Any],columns: List[str],max_values: int = 200) -> List[Dict[str, Any]]:
         """ 
             Retourne toutes les combinaisons DISTINCT des colonnes pivot.
@@ -621,7 +645,7 @@ class SQLCompilerV1:
 
         column_exprs = []
         for col in columns:
-            field = self.fields.get(col)
+            field = self._get_field(col.get('field_id'))
             if not field:
                 raise ValueError(f"Invalid pivot column: {col}")
             column_exprs.append(field.expression)
@@ -672,8 +696,6 @@ class SQLCompilerV1:
 
         return combos
 
-
-
     def _safe_alias_part(self, value: Any) -> str:
         if value is None:
             return "null"
@@ -687,8 +709,8 @@ class SQLCompilerV1:
 
         return s
 
-    def _transformField(self, datasetFields:list[DatasetField])->Dict[str, DatasetField]:
-        return  {f.name: f for f in datasetFields}
+    def _transformField(self, datasetFields:list[DatasetField])->Dict[int, DatasetField]:
+        return  {f.id: f for f in datasetFields}
 
 
 # MATVIEW MANAGER

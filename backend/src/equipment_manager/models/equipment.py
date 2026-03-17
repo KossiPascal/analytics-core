@@ -37,7 +37,7 @@ class EquipmentCategoryGroup(db.Model, AuditMixin):
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
 
-    categories = db.relationship("EquipmentCategory", back_populates="category_group", lazy="selectin")
+    categories = db.relationship("EquipmentCategory", back_populates="category_group", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -65,8 +65,8 @@ class EquipmentCategory(db.Model, AuditMixin):
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
 
-    category_group = db.relationship("EquipmentCategoryGroup", back_populates="categories", lazy="selectin")
-    equipments = db.relationship("Equipment", back_populates="category_rel", lazy="selectin")
+    category_group = db.relationship("EquipmentCategoryGroup", back_populates="categories", lazy="noload")
+    equipments = db.relationship("Equipment", back_populates="category_rel", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -96,7 +96,7 @@ class EquipmentBrand(db.Model, AuditMixin):
     code = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
 
-    equipments = db.relationship("Equipment", back_populates="brand_rel", lazy="selectin")
+    equipments = db.relationship("Equipment", back_populates="brand_rel", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -140,14 +140,14 @@ class Equipment(db.Model, AuditMixin):
     reception_form_path = db.Column(db.String(500), default="")
     notes = db.Column(db.Text, default="")
 
-    category_rel = db.relationship("EquipmentCategory", back_populates="equipments", lazy="selectin")
-    brand_rel = db.relationship("EquipmentBrand", back_populates="equipments", lazy="selectin")
-    owner = db.relationship("Employee", back_populates="owned_equipments", lazy="selectin", foreign_keys=[owner_id])
-    employee = db.relationship("Employee", back_populates="equipments", lazy="selectin", foreign_keys=[employee_id])
-    history = db.relationship("EquipmentHistory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
-    repair_tickets = db.relationship("RepairTicket", back_populates="equipment", lazy="selectin")
-    accessories = db.relationship("Accessory", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan")
-    imeis = db.relationship("EquipmentImei", back_populates="equipment", lazy="selectin", cascade="all, delete-orphan", order_by="EquipmentImei.slot_number")
+    category_rel = db.relationship("EquipmentCategory", back_populates="equipments", lazy="noload")
+    brand_rel = db.relationship("EquipmentBrand", back_populates="equipments", lazy="noload")
+    owner = db.relationship("Employee", back_populates="owned_equipments", lazy="noload", foreign_keys=[owner_id])
+    employee = db.relationship("Employee", back_populates="equipments", lazy="noload", foreign_keys=[employee_id])
+    history = db.relationship("EquipmentHistory", back_populates="equipment", lazy="noload", cascade="all, delete-orphan")
+    repair_tickets = db.relationship("RepairTicket", back_populates="equipment", lazy="noload")
+    accessories = db.relationship("Accessory", back_populates="equipment", lazy="noload", cascade="all, delete-orphan")
+    imeis = db.relationship("EquipmentImei", back_populates="equipment", lazy="noload", cascade="all, delete-orphan", order_by="EquipmentImei.slot_number")
 
     @property
     def is_status_active(self) -> bool:
@@ -199,7 +199,7 @@ class EquipmentHistory(db.Model, AuditMixin):
     new_value = db.Column(db.String(255), default="")
     notes = db.Column(db.Text, default="")
 
-    equipment = db.relationship("Equipment", back_populates="history", lazy="selectin")
+    equipment = db.relationship("Equipment", back_populates="history", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -230,7 +230,7 @@ class Accessory(db.Model, AuditMixin):
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
-    equipment = db.relationship("Equipment", back_populates="accessories", lazy="selectin")
+    equipment = db.relationship("Equipment", back_populates="accessories", lazy="noload")
 
     def to_dict_safe(self):
         return {
@@ -258,7 +258,7 @@ class EquipmentImei(db.Model, AuditMixin):
     imei = db.Column(db.String(15), unique=True, nullable=False)
     slot_number = db.Column(db.Integer, default=1, nullable=False)
 
-    equipment = db.relationship("Equipment", back_populates="imeis", lazy="selectin")
+    equipment = db.relationship("Equipment", back_populates="imeis", lazy="noload")
 
     def to_dict_safe(self):
         return {

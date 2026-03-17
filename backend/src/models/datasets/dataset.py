@@ -74,14 +74,14 @@ class Dataset(db.Model, AuditMixin):
     parent_id = db.Column(db.BigInteger, db.ForeignKey("datasets.id", ondelete="SET NULL"))
 
     # RELATIONS
-    tenant = db.relationship("Tenant", back_populates="datasets",lazy="selectin",foreign_keys=[tenant_id])
-    datasource = db.relationship("DataSource", back_populates="datasets",lazy="selectin",foreign_keys=[datasource_id])
-    connection = db.relationship("DataSourceConnection", back_populates="datasets",lazy="selectin",foreign_keys=[connection_id])
-    validated_by = db.relationship("User",lazy="selectin",foreign_keys=[validated_by_id])
+    tenant = db.relationship("Tenant", back_populates="datasets",lazy="noload",foreign_keys=[tenant_id])
+    datasource = db.relationship("DataSource", back_populates="datasets",lazy="noload",foreign_keys=[datasource_id])
+    connection = db.relationship("DataSourceConnection", back_populates="datasets",lazy="noload",foreign_keys=[connection_id])
+    validated_by = db.relationship("User",lazy="noload",foreign_keys=[validated_by_id])
     
-    fields = db.relationship("DatasetField",back_populates="dataset",cascade="all, delete-orphan",lazy="selectin",passive_deletes=True)
-    queries = db.relationship("DatasetQuery",back_populates="dataset",cascade="all, delete-orphan",lazy="selectin",passive_deletes=True)
-    charts = db.relationship("DatasetChart", back_populates="dataset",cascade="all, delete-orphan",lazy="selectin",passive_deletes=True)
+    fields = db.relationship("DatasetField",back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
+    queries = db.relationship("DatasetQuery",back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
+    charts = db.relationship("DatasetChart", back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
     
     parent = db.relationship("Dataset",remote_side=[id],backref=db.backref("children", passive_deletes=True))
 
@@ -317,7 +317,7 @@ class DatasetField(db.Model, AuditMixin):
     data_type = db.Column(db.String(50), nullable=True)
 
     format = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb")) # {"type": "currency", "currency": "USD", "precision": 2 }
-    
+        
     is_public = db.Column(db.Boolean, nullable=False, default=False)
     is_filterable = db.Column(db.Boolean, nullable=False, default=False)
     is_groupable = db.Column(db.Boolean, nullable=False, default=False)
@@ -325,8 +325,8 @@ class DatasetField(db.Model, AuditMixin):
     is_selectable = db.Column(db.Boolean, nullable=False, default=False)
     is_hidden = db.Column(db.Boolean, nullable=False, default=False)
 
-    tenant = db.relationship("Tenant", back_populates="fields", lazy="selectin",foreign_keys=[tenant_id])
-    dataset = db.relationship("Dataset", back_populates="fields", lazy="selectin",foreign_keys=[dataset_id])
+    tenant = db.relationship("Tenant", back_populates="fields", lazy="noload",foreign_keys=[tenant_id])
+    dataset = db.relationship("Dataset", back_populates="fields", lazy="noload",foreign_keys=[dataset_id])
 
     __table_args__ = (
         db.UniqueConstraint("dataset_id", "name", name="uq_dataset_field"),
@@ -383,7 +383,7 @@ class DatasetField(db.Model, AuditMixin):
         return data
 
     def __repr__(self):
-        return f"<DatasetField {self.name} ({self.field_type.value})>"
+        return f"<DatasetField {self.name} ({self.field_type})>"
 
 # DATASET QUERY
 class DatasetQuery(db.Model, AuditMixin):
@@ -405,9 +405,10 @@ class DatasetQuery(db.Model, AuditMixin):
     validated_at = db.Column(db.DateTime(timezone=True))
 
     cache = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb")) # { "enabled": true, "ttl_seconds": 300 }
+    fields_ids = db.Column(JSONB,nullable=False,server_default=text("'[]'::jsonb"))
 
-    dataset = db.relationship("Dataset", back_populates="queries", lazy="selectin",foreign_keys=[dataset_id])
-    tenant = db.relationship("Tenant", back_populates="queries", lazy="selectin",foreign_keys=[tenant_id])
+    dataset = db.relationship("Dataset", back_populates="queries", lazy="noload",foreign_keys=[dataset_id])
+    tenant = db.relationship("Tenant", back_populates="queries", lazy="noload",foreign_keys=[tenant_id])
     # charts = db.relationship(
     #     "DatasetChart",
     #     secondary="visualization_charts",
@@ -420,7 +421,7 @@ class DatasetQuery(db.Model, AuditMixin):
         "DatasetChart",
         back_populates="dataset_query",
         cascade="all, delete-orphan",
-        lazy="selectin",
+        lazy="noload",
         passive_deletes=True,
         foreign_keys="DatasetChart.query_id",
     )
@@ -473,6 +474,7 @@ class DatasetQuery(db.Model, AuditMixin):
             "validated_at": self.validated_at,
             "is_active": self.is_active,
             "cache": self.cache,
+            "fields_ids": self.fields_ids,
         }
 
         if include_relations:

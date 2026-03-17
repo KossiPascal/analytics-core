@@ -95,7 +95,7 @@ def delete_permission(permission_id: int):
         perm:UserPermission = UserPermission.query.get(permission_id)
         if not perm or perm.deleted:
             raise BadRequest(f"Permission with id={permission_id} not found", 404)
-
+        perm.is_active = False
         perm.deleted = True
         perm.deleted_at = datetime.now(timezone.utc)
         perm.deleted_by=currentUserId()
