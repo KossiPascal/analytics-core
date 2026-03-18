@@ -153,7 +153,7 @@ export interface DatasetField {
   format: Record<string, any>
   is_public: boolean
   is_filterable: boolean;
-  select_multiple: boolean| null;
+  select_multiple: boolean| undefined;
   is_groupable: boolean;
   is_sortable: boolean;
   is_selectable: boolean;

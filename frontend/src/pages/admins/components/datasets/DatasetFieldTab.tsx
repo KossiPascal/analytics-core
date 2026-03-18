@@ -15,6 +15,7 @@ import { Sigma, Calculator } from 'lucide-react';
 import { FormSwitch } from '@/components/forms/FormSwitch/FormSwitch';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
+import { FormRadio } from '@/components/forms/FormRadio/FormRadio';
 
 const createDefaultForm = (tenant_id: number): DatasetField => ({
     id: null,
@@ -27,8 +28,8 @@ const createDefaultForm = (tenant_id: number): DatasetField => ({
     data_type: "string",
     description: "",
     format: {},
-    dimensions:[],
-    select_multiple: null,
+    dimensions: [],
+    select_multiple: undefined,
     is_public: false,
     is_filterable: false,
     is_groupable: false,
@@ -107,6 +108,53 @@ const datafieldColumns: Column<DatasetField>[] = [
         align: "center",
         render: (ou) => (<StatusBadge isActive={ou.is_active} />),
         searchable: false,
+    },
+    {
+        key: "is_filterable",
+        header: "is_filterable",
+        sortable: true,
+        align: "center",
+        render: (ou) => (<StatusBadge isActive={ou.is_filterable} />),
+        searchable: false,
+    },
+    {
+        key: "is_groupable",
+        header: "is_groupable",
+        sortable: true,
+        align: "center",
+        render: (ou) => (<StatusBadge isActive={ou.is_groupable} />),
+        searchable: false,
+    },
+    {
+        key: "is_sortable",
+        header: "is_sortable",
+        sortable: true,
+        align: "center",
+        render: (ou) => (<StatusBadge isActive={ou.is_sortable} />),
+        searchable: false,
+    },
+    {
+        key: "is_selectable",
+        header: "is_selectable",
+        sortable: true,
+        align: "center",
+        render: (ou) => (<StatusBadge isActive={ou.is_selectable} />),
+        searchable: false,
+    },
+    {
+        key: "is_hidden",
+        header: "is_hidden",
+        sortable: true,
+        align: "center",
+        render: (ou) => (<StatusBadge isActive={ou.is_hidden} />),
+        searchable: false,
+    },
+    {
+        key: "raw_field",
+        header: "raw_field",
+        render: (ou) => JSON.stringify(ou.raw_field),
+        sortable: true,
+        searchable: true,
     },
 ];
 
@@ -467,13 +515,25 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
     const [showDimensionsModal, setShowDimensionsModal] = useState(false);
     const [tempSelected, setTempSelected] = useState<{ name: string; type: string; description: string }[]>([]);
 
-    const isDimensionMultiple = field.field_type === "dimension" && field.select_multiple === true;
-    const isDimensionHidden = field.field_type === "dimension" && field.select_multiple !== false;
+    const isNew = useMemo(() => {
+        return !field.id;
+    }, [field.id]);
+
+    const isDimensionMultiple = useMemo(() => {
+        return isNew && field.field_type === "dimension" && field.select_multiple === true;
+    }, [isNew, field.field_type, field.select_multiple]);
+
+    const isNotDimensionMultiple = useMemo(() => {
+        return field.field_type !== "dimension" || field.select_multiple == false || !isNew && !field.select_multiple
+    }, [isNew, field.field_type, field.select_multiple]);
+
+    const isDimensionHidden = useMemo(() => {
+        return isNew && field.field_type === "dimension" && field.select_multiple !== false;
+    }, [isNew, field.field_type, field.select_multiple]);
 
     const datasetId = useMemo(() => {
         return field.dataset_id || dataset_id;
     }, [field.dataset_id, dataset_id]);
-
 
     const datasetColumns = useMemo(() => {
         if (!datasetId) return [];
@@ -630,56 +690,62 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
             transition={{ duration: 0.4 }}
             className="w-full max-w-2xl space-y-4"
         >
-            <FormSelect
-                label={`Dataset`}
-                value={field.dataset_id || dataset_id}
-                options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                onChange={(val) => {
-                    setValue("dataset_id", val);
-                    setDatasetId(val);
-                    validateField();
-                }}
-                leftIcon={<FaTable />}
-                required
-            />
-            <FormSelect
-                label={`Field Type`}
-                value={field.field_type}
-                options={SqlFieldTypeList.map((c) => ({ value: c, label: c }))}
-                onChange={(val) => handleFieldTypeChange(val, field.id)}
-                leftIcon={getFieldTypeIcon(field.field_type)}
-                required
-            />
+            {/* Radio select_multiple — visible uniquement à la création, pour dimension */}
+            {isNew && (
+                <>
+                    <FormSelect
+                        label={`Dataset`}
+                        value={field.dataset_id || dataset_id}
+                        options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+                        onChange={(val) => {
+                            setValue("dataset_id", val);
+                            setDatasetId(val);
+                            validateField();
+                        }}
+                        leftIcon={<FaTable />}
+                        required
+                    />
+                    <FormSelect
+                        label={`Field Type`}
+                        value={field.field_type}
+                        options={SqlFieldTypeList.map((c) => ({ value: c, label: c }))}
+                        onChange={(val) => handleFieldTypeChange(val, field.id)}
+                        leftIcon={getFieldTypeIcon(field.field_type)}
+                        required
+                    />
 
-            {/* Radio select_multiple — visible uniquement pour dimension */}
-            {field.field_type === "dimension" && (
-                <div className="flex items-center gap-6 py-1">
-                    <span className="text-sm font-medium text-gray-700">Sélection multiple</span>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="radio"
-                            name="select_multiple"
-                            checked={field.select_multiple === true}
-                            onChange={() => {
-                                setValue("select_multiple", true);
-                                setValue("dimensions", []);
-                            }}
-                        />
-                        <span className="text-sm">Oui</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="radio"
-                            name="select_multiple"
-                            checked={field.select_multiple !== true}
-                            onChange={() => {
-                                setValue("select_multiple", false);
-                                setValue("dimensions", []);
-                            }}
-                        />
-                        <span className="text-sm">Non</span>
-                    </label>
-                </div>
+                    {field.field_type === "dimension" && (
+                        <>
+                            <div className="flex items-center gap-6 py-1">
+                                <span className="text-sm font-medium text-gray-700">Sélection multiple</span>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <FormRadio
+                                        name="select_multiple"
+                                        checked={field.select_multiple}
+                                        onChange={() => {
+                                            setValue("select_multiple", true);
+                                            setValue("dimensions", []);
+                                        }}
+                                    />
+                                    <span className="text-sm">Oui</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="select_multiple"
+                                        checked={field.select_multiple !== true}
+                                        onChange={() => {
+                                            setValue("select_multiple", false);
+                                            setValue("dimensions", []);
+                                        }}
+                                    />
+                                    <span className="text-sm">Non</span>
+                                </label>
+                            </div>
+                            <br />
+                        </>
+                    )}
+                </>
             )}
 
             {/* Champs restants : visibles seulement si field_type != dimension OU select_multiple === false */}
@@ -723,9 +789,10 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                         </div>
                     )}
                 </div>
-            ) : field.field_type !== "dimension" || field.select_multiple === false ? (
+
+            ) : isNotDimensionMultiple ? (
                 <>
-                    <FormSelect
+                    {isNew&&(<FormSelect
                         label={`Data Type`}
                         value={field.data_type}
                         options={dataTypes.map((c) => ({ value: c, label: c }))}
@@ -733,7 +800,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                         leftIcon={getDataTypeIcon(field.data_type)}
                         error={errors.data_type}
                         required
-                    />
+                    />)}
 
                     <FormSwitch
                         label={`Voir les colonnes`}
@@ -831,7 +898,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                     </div>
 
                     {/* Raw field */}
-                    <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
+                    {isNew&&(<div className="border rounded-xl p-3 bg-gray-50 space-y-3">
                         <p className="text-sm font-medium text-gray-700">Raw Field <span className="text-gray-400 font-normal">(optionnel)</span></p>
                         <div className="grid grid-cols-2 gap-3">
                             <FormInput
@@ -839,15 +906,17 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                                 value={field.raw_field?.name ?? ""}
                                 onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { type: "" }), name: e.target.value })}
                                 placeholder="ex: user_id"
+                                disabled={!isNew}
                             />
                             <FormInput
                                 label="Type"
                                 value={field.raw_field?.type ?? ""}
                                 onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { name: "" }), type: e.target.value })}
                                 placeholder="ex: varchar"
+                                disabled={!isNew}
                             />
                         </div>
-                    </div>
+                    </div>)}
 
                     <FormTextarea
                         label="Description"
