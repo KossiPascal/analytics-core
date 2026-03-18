@@ -111,7 +111,7 @@ def create_dataset():
 
         payload = request.get_json(silent=True) or {}
 
-        name=payload.get("name"),
+        name = payload.get("name")
         view_name = DbObjectManager.safe_object_name(name, user_id)
         sql_type=(payload.get("sql_type") or DbObjectType.MATVIEW.value).lower()
 
@@ -137,10 +137,10 @@ def create_dataset():
             result, status = run_sql(conn, sql, None, max_rows=max_rows, explain=explain)
             return jsonify(result), status
         
-        success_excecuted = bool(payload.get("success_excecuted") or False)
-        if not success_excecuted:
-            raise BadRequest(f"L'execution n'a pas été un succes, veuillez réésayer", 400)
-            
+        success_executed = bool(payload.get("success_executed") or False)
+        if not success_executed:
+            raise BadRequest("L'execution n'a pas été un succès, veuillez réessayer", 400)
+        print("1 ="*20)    
         dataset = Dataset(
             name=name,
             sql=sql,
@@ -157,13 +157,13 @@ def create_dataset():
             is_active=bool(payload.get("is_active", False)),
             created_by_id=user_id,
         )
-
+        print("2 ="*20)
         db.session.add(dataset)
-
+        print("3 ="*20)
         _manager.create_object(sql=sql, values=values)
 
         db.session.commit()
-
+        print("4 ="*20)
         return jsonify(dataset.to_dict()), 201
 
     except IntegrityError as e:
@@ -263,9 +263,9 @@ def update_dataset(dataset_id):
             result, status = run_sql(conn, sql, None, max_rows=max_rows, explain=explain)
             return jsonify(result), status
         
-        success_excecuted = bool(payload.get("success_excecuted") or False)
-        if not success_excecuted:
-            raise BadRequest(f"L'execution n'a pas été un succes, veuillez réésayer", 400)
+        success_executed = bool(payload.get("success_executed") or False)
+        if not success_executed:
+            raise BadRequest("L'execution n'a pas été un succès, veuillez réessayer", 400)
         
 
         dts_versioned = DatasetVersioned(

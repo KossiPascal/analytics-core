@@ -4,7 +4,8 @@ from flask import Blueprint, request, jsonify
 from typing import Any, Dict, List, Optional
 from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DbObjectType
 from backend.src.routes.datasets.query.query_validator import QueryValidatorV1
-from backend.src.routes.datasets.query.sql_compiler import DbObjectManager, SQLCompilerV1
+from backend.src.routes.datasets.query.sql_compiler import SQLCompilerV1
+from backend.src.routes.datasets.db_manager import DbObjectManager
 from backend.src.security.access_security import require_auth, currentUserId
 from sqlalchemy.orm import selectinload
 

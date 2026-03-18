@@ -126,7 +126,6 @@ class Dataset(db.Model, AuditMixin):
             "name": self.name,
             "view_name": self.view_name,
             "sql_type": self.sql_type,
-            "use_local_view": self.use_local_view,
             "tenant_id": self.tenant_id,
             "datasource_id": self.datasource_id,
             "connection_id": self.connection_id,
