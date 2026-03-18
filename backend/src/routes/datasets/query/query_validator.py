@@ -240,22 +240,24 @@ class QueryValidatorV1:
             raise QueryValidationError("Filter depth too large")
 
         if node_type == "group":
-            operator = node.get("operator")
             children = node.get("children", [])
 
+            if not isinstance(children, list) or not children:
+                return  # groupe vide = pas de filtre, on ignore
+
+            operator = node.get("operator")
             if operator not in self.ALLOWED_LOGICAL:
                 raise QueryValidationError(f"Invalid logical operator: {operator}")
-
-            if not isinstance(children, list) or not children:
-                raise QueryValidationError("Group must contain children")
 
             for child in children:
                 self._validate_node(child, clause, depth + 1)
 
         elif node_type == "condition":
             field_id:int = node.get("field_id")
+            if not field_id or field_id <= 0:
+                return  # condition placeholder (field_id=-1), on ignore
             field = self._get_field(field_id)
-            if not field_id or not field or not isinstance(field.name, str):
+            if not field or not isinstance(field.name, str):
                 raise QueryValidationError(f"Invalid filter with field_id={field_id}")
             
             self._node_count += 1

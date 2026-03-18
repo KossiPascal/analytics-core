@@ -182,6 +182,39 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
 
     const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
 
+    const cleanQueryJson = (q: DatasetQuery): DatasetQuery => {
+        const cleanNode = (node: any): any | null => {
+            if (!node) return null;
+            if (node.type === "condition") {
+                return (!node.field_id || node.field_id <= 0) ? null : node;
+            }
+            if (node.type === "group") {
+                const cleanedChildren = (node.children ?? [])
+                    .map(cleanNode)
+                    .filter(Boolean);
+                return cleanedChildren.length === 0 ? null : { ...node, children: cleanedChildren };
+            }
+            return node;
+        };
+
+        const cleanGroups = (groups: any[]): any[] =>
+            (groups ?? [])
+                .map(g => ({ ...g, node: cleanNode(g.node) }))
+                .filter(g => g.node !== null);
+
+        return {
+            ...q,
+            dataset_id: q.dataset_id ?? dataset_id ?? null,
+            query_json: {
+                ...q.query_json,
+                filters: {
+                    where: cleanGroups(q.query_json?.filters?.where ?? []),
+                    having: cleanGroups(q.query_json?.filters?.having ?? []),
+                },
+            },
+        };
+    };
+
     // RENDER
     return (
         <>
@@ -198,6 +231,7 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                 isValid={(q) => {
                     return Object.keys(errors).length === 0
                 }}
+                onBeforeSave={cleanQueryJson}
                 submitValidation={async (q) => {
                     const validationErrors = validateQuery(q);
                     setErrors(validationErrors);

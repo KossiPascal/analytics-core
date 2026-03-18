@@ -1,8 +1,9 @@
 import { JSX, useEffect, useRef, useState } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Card, CardBody } from '@components/ui/Card/Card';
+import { Modal } from '@components/ui/Modal/Modal';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
-import { Users, Plus, Shield, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Plus, Shield, ShieldCheck, RefreshCw, Code } from 'lucide-react';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 
 import shared from '@components/ui/styles/shared.module.css';
@@ -11,6 +12,7 @@ import { DataSourceTab } from './components/datasources/DataSourceTab';
 import { DataSourceTypeTab } from './components/datasources/DataSourceTypeTab';
 import { DataSourcePermissionTab } from './components/datasources/DataSourcePermissionTab';
 import { DatasetChartTab } from './components/datasets/DatasetCharts/DatasetChartTab';
+import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderPage';
 import { DatasetFieldTab } from './components/datasets/DatasetFieldTab';
 import { DatasetQueryTab } from './components/datasets/DatasetQueries/DatasetQueryTab';
 import { DatasetTab } from './components/datasets/DatasetTab';
@@ -37,6 +39,7 @@ export default function DataAssetsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [showQueryBuilder, setShowQueryBuilder] = useState(false);
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
 
   const { user } = useAuth();
@@ -105,23 +108,19 @@ export default function DataAssetsPage() {
     { key: 'chart_tab', label: 'Dataset Chart', icon: <ShieldCheck size={18} /> },
   ];
 
-  const TenantForm = () => {
-    return (
-      // <div className="grid grid-cols-1 gap-2 mt-0">
-      <FormSelect
-        label={`Tenant List`}
-        value={tenant_id}
-        options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-        onChange={(val) => setTenantId(val)}
-        placeholder="Sélectionner Tenant"
-        leftIcon={<FaDatabase />}
-        required={true}
-      />
-      // </div>
-    );
-  }
+  const TenantForm = () => (
+    <FormSelect
+      label={`Tenant List`}
+      value={tenant_id}
+      options={tenants.map((c) => ({ value: c.id, label: c.name }))}
+      onChange={(val) => setTenantId(val)}
+      placeholder="Sélectionner Tenant"
+      leftIcon={<FaDatabase />}
+      required={true}
+    />
+  );
 
-  const centerStyles:any = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center' };
+  const centerStyles: any = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center' };
 
   return (
     <PageWrapper
@@ -135,8 +134,13 @@ export default function DataAssetsPage() {
 
               <Button variant="ghost" size="sm" onClick={handleAddNew}>
                 <Plus size={16} /> {activeName}
-                {/* <RefreshCw size={16} className="animate-spin" /> */}
               </Button>
+
+              {activeTab === 'query_tab' && (
+                <Button variant="outline" size="sm" onClick={() => setShowQueryBuilder(true)}>
+                  <Code size={16} /> Query Builder
+                </Button>
+              )}
             </div>
           )}
         </>
@@ -184,6 +188,16 @@ export default function DataAssetsPage() {
           <TenantForm />
         </div>
       )}
+
+      {/* QUERY BUILDER MODAL */}
+      <Modal
+        isOpen={showQueryBuilder}
+        onClose={() => setShowQueryBuilder(false)}
+        title="Query Builder"
+        size="full"
+      >
+        <QueryBuilderPage embedded />
+      </Modal>
     </PageWrapper>
   );
 }

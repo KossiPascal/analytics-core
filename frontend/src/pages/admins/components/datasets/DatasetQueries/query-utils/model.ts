@@ -70,4 +70,5 @@ export interface RenderFormProp {
     setValue: (k: keyof DatasetQuery, v: any) => void,
     setPreviewSql: (sql: string | null) => void
     setErrors: (error: CompileError) => void
+    hideFilters?: boolean
 }

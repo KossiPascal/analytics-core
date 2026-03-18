@@ -16,7 +16,7 @@ import { Trash2 } from "lucide-react";
 import { Pencil } from "lucide-react";
 
 // FORM RENDER
-export const RenderFormBuilder = ({ datasets, query, tenants, errors, tenant_id, defaultForm, setErrors, setValue, setPreviewSql }: RenderFormProp) => {
+export const RenderFormBuilder = ({ datasets, query, tenants, errors, tenant_id, defaultForm, setErrors, setValue, setPreviewSql, hideFilters = false }: RenderFormProp) => {
     const [_query, setQuery] = useState<DatasetQuery>(query);
     const [buildError, setBuildError] = useState<string | null>(null);
     const [editing, setEditing] = useState<number | null>(null);
@@ -403,43 +403,47 @@ export const RenderFormBuilder = ({ datasets, query, tenants, errors, tenant_id,
                 <>
                     {hasSelectJson && (
                         <>
-                            <div key={"filters_where"} className="p-4 border rounded-xl bg-gray-50">
-                                <DatasetFilterBuilder
-                                    name="Where Filters"
-                                    fields={dimensionFields}
-                                    node={query.query_json.filters.where}
-                                    onChange={(node) => {
-                                        const having = query.query_json.filters.having ?? [];
-                                        const filters = { where: node, having: [...having] };
-                                        updateQueryJson({ filters });
-                                    }}
-                                />
-                            </div>
+                            {!hideFilters && (
+                                <>
+                                    <div key={"filters_where"} className="p-4 border rounded-xl bg-gray-50">
+                                        <DatasetFilterBuilder
+                                            name="Where Filters"
+                                            fields={dimensionFields}
+                                            node={query.query_json.filters.where}
+                                            onChange={(node) => {
+                                                const having = query.query_json.filters.having ?? [];
+                                                const filters = { where: node, having: [...having] };
+                                                updateQueryJson({ filters });
+                                            }}
+                                        />
+                                    </div>
 
-                            <div key={"filters_having"} className="p-4 border rounded-xl bg-gray-50">
-                                <DatasetFilterBuilder
-                                    name="Having Filters"
-                                    fields={metricFields}
-                                    node={query.query_json.filters.having}
-                                    onChange={(node) => {
-                                        const where = query.query_json.filters.where ?? [];
-                                        const filters = { where: [...where], having: node };
-                                        updateQueryJson({ filters });
-                                    }}
-                                />
-                            </div>
+                                    <div key={"filters_having"} className="p-4 border rounded-xl bg-gray-50">
+                                        <DatasetFilterBuilder
+                                            name="Having Filters"
+                                            fields={metricFields}
+                                            node={query.query_json.filters.having}
+                                            onChange={(node) => {
+                                                const where = query.query_json.filters.where ?? [];
+                                                const filters = { where: [...where], having: node };
+                                                updateQueryJson({ filters });
+                                            }}
+                                        />
+                                    </div>
 
-                            <DatasetOrderByBuilder
-                                fields={fields}
-                                orderBy={query.query_json.order_by}
-                                onChange={(order_by) => {
-                                    const oldError = { ...errors };
-                                    delete oldError.order_by;
-                                    setErrors(oldError);
-                                    updateQueryJson({ order_by });
-                                }}
-                                error={errors.order_by}
-                            />
+                                    <DatasetOrderByBuilder
+                                        fields={fields}
+                                        orderBy={query.query_json.order_by}
+                                        onChange={(order_by) => {
+                                            const oldError = { ...errors };
+                                            delete oldError.order_by;
+                                            setErrors(oldError);
+                                            updateQueryJson({ order_by });
+                                        }}
+                                        error={errors.order_by}
+                                    />
+                                </>
+                            )}
 
                             <div className={styles.grid + ' ' + styles.grid3}>
                                 <FormInput
