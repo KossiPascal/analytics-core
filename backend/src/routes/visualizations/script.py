@@ -144,6 +144,7 @@ def save_script(script_id=None):
             raise BadRequest(f"Language '{language}' is not allowed", 422)
         
         user_id = g.current_user["id"]
+        tenant_id = g.current_user.get("tenant_id")
 
         if not user_id:
             raise BadRequest("Action non autorisée !", 409)
@@ -161,7 +162,7 @@ def save_script(script_id=None):
             script.name = name
             script.language = language_lower
             script.content = content
-            script.updated_by = user_id
+            script.updated_by_id = user_id
 
             if name in SCRIPT_NAMES:
                 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -182,6 +183,7 @@ def save_script(script_id=None):
             
             # Création d'un nouveau script
             script = Script(name=name,language=language_lower,content=content,owner_id=user_id)
+            script.tenant_id = tenant_id
             db.session.add(script)
             audit_log(action="CREATE_SCRIPT",details={"script_name": name,"language": language})
 

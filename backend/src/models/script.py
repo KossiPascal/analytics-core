@@ -21,7 +21,7 @@ class Script(db.Model, AuditMixin):
         self.name = name
         self.language = language.lower()
         self.content = content  # sera automatiquement sérialisé
-        self.owner_id = owner_id
+        self.created_by_id = owner_id
 
     # --- Propriété content avec sérialisation automatique ---
     @property

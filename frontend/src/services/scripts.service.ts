@@ -12,11 +12,11 @@ export interface Script {
 
 }
 
-const script = new CRUDService("/script");
+const scripts = new CRUDService("/scripts");
 export const scriptService = {
-    all: () => script.all<Script>(""),
-    create: (data: Script) => script.create("", data, { callback: async (s) => db.save({ ...s }), }),
-    update: (id: number, data: Script) => script.update("", id, data),
-    remove: (id: number) => script.remove("", id),
-    execute: (data: Script, signal: AbortSignal) => script.post("/scripts/execute", data, { options: { signal } })
+    all: () => scripts.all<Script>(""),
+    create: (data: Script) => scripts.create("", data, { callback: async (s) => db.save({ ...s }), }),
+    update: (id: number, data: Script) => scripts.update("", id, data),
+    remove: (id: number) => scripts.remove("", id),
+    execute: (data: Script, signal: AbortSignal) => scripts.post("/execute", data, { options: { signal } })
 }

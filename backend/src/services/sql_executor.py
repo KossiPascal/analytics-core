@@ -204,7 +204,7 @@ def run_sql(conn,sql_text,user=None,max_rows=None,explain=False):
     # Audit logging (do NOT log full SQL in prod or strip secrets)
     try:
         logger.info(
-            "SQL_EXEC user_id=%s role=%s first_kw=%s status=%s rowcount=%s time_ms=%s",
+            "SQL_EXEC user_id=%s first_kw=%s status=%s rowcount=%s time_ms=%s",
             user_id, first_kw, status, result.get("rowcount"), result.get("timing_ms")
         )
     except Exception:

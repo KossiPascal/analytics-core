@@ -1,11 +1,12 @@
+import { useState } from "react";
+import { Save, Play, CheckCircle, AlertCircle } from "lucide-react";
 import { Tenant } from "@/models/identity.model";
 import { Dataset, DatasetQuery } from "@/models/dataset.models";
 import { RenderFormBuilder } from "../../DatasetQueries/query-utils/RenderFormBuilder";
 import { DatasetPreviewModal } from "../../DatasetQueries/query-utils/DatasetPreviewModal";
 import { CompileError } from "../../DatasetQueries/query-utils/model";
 import { Button } from "@/components/ui/Button/Button";
-import { Play } from "lucide-react";
-import { useState } from "react";
+import { queryService } from "@/services/dataset.service";
 
 interface DatasetQueryPanelProps {
     query: DatasetQuery;
@@ -20,11 +21,70 @@ interface DatasetQueryPanelProps {
     onUseSql: (sql: string) => void;
 }
 
+const cleanQueryJson = (q: DatasetQuery): DatasetQuery => {
+    const cleanNode = (node: any): any | null => {
+        if (!node) return null;
+        if (node.type === "condition") return (!node.field_id || node.field_id <= 0) ? null : node;
+        if (node.type === "group") {
+            const children = (node.children ?? []).map(cleanNode).filter(Boolean);
+            return children.length === 0 ? null : { ...node, children };
+        }
+        return node;
+    };
+    const cleanGroups = (groups: any[]) =>
+        (groups ?? []).map(g => ({ ...g, node: cleanNode(g.node) })).filter(g => g.node !== null);
+
+    return {
+        ...q,
+        query_json: {
+            ...q.query_json,
+            filters: {
+                where: cleanGroups(q.query_json?.filters?.where ?? []),
+                having: cleanGroups(q.query_json?.filters?.having ?? []),
+            },
+        },
+    };
+};
+
 export const DatasetQueryPanel: React.FC<DatasetQueryPanelProps> = ({
     query, datasets, tenants, tenant_id, errors, defaultForm,
     setValue, setErrors, setPreviewSql, onUseSql,
 }) => {
     const [localPreviewSql, setLocalPreviewSql] = useState<string | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [saveResult, setSaveResult] = useState<"success" | "error" | null>(null);
+    const [saveMessage, setSaveMessage] = useState<string>("");
+
+    const isValid =
+        Boolean(query.compiled_sql) &&
+        Boolean(query.name?.trim()) &&
+        Boolean(query.dataset_id) &&
+        Object.keys(errors).length === 0;
+
+    const handleSave = async () => {
+        if (!isValid) return;
+        setSaving(true);
+        setSaveResult(null);
+        try {
+            const cleaned = cleanQueryJson(query);
+            let saved: DatasetQuery;
+            if (query.id) {
+                saved = await queryService.update(query.id, cleaned) as DatasetQuery;
+                setSaveMessage("Requête mise à jour avec succès");
+            } else {
+                saved = await queryService.create(cleaned) as DatasetQuery;
+                setSaveMessage("Requête sauvegardée avec succès");
+                if (saved?.id) setValue("id", saved.id);
+            }
+            setSaveResult("success");
+            setTimeout(() => setSaveResult(null), 3000);
+        } catch (err: any) {
+            setSaveResult("error");
+            setSaveMessage(err?.message ?? "Erreur lors de la sauvegarde");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -41,14 +101,37 @@ export const DatasetQueryPanel: React.FC<DatasetQueryPanelProps> = ({
                 hideFilters
             />
 
-            {query.compiled_sql && (
-                <div className="flex justify-end pt-2">
+            {/* Feedback */}
+            {saveResult === "success" && (
+                <div className="flex items-center gap-2 text-green-600 text-sm">
+                    <CheckCircle size={15} /> {saveMessage}
+                </div>
+            )}
+            {saveResult === "error" && (
+                <div className="flex items-center gap-2 text-red-600 text-sm">
+                    <AlertCircle size={15} /> {saveMessage}
+                </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex justify-end gap-2 pt-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={!isValid || saving}
+                >
+                    <Save size={14} />
+                    {saving ? "Sauvegarde..." : query.id ? "Mettre à jour" : "Sauvegarder"}
+                </Button>
+
+                {query.compiled_sql && (
                     <Button variant="primary" size="sm" onClick={() => onUseSql(query.compiled_sql)}>
                         <Play size={14} />
                         Utiliser ce SQL
                     </Button>
-                </div>
-            )}
+                )}
+            </div>
 
             <DatasetPreviewModal
                 title="SQL Preview"

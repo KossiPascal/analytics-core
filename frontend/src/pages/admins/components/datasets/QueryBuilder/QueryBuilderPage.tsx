@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Database, RefreshCw, Filter, ArrowUpDown, Play } from "lucide-react";
+import { Database, RefreshCw, Filter, ArrowUpDown, Play, Loader2 } from "lucide-react";
 
 import { Button } from "@components/ui/Button/Button";
 import { Modal } from "@components/ui/Modal/Modal";
@@ -41,7 +41,7 @@ const createDefaultQuery = (tenant_id: number): DatasetQuery => ({
 });
 
 const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false }) => {
-  const { setScript, defaultScript } = scriptStore();
+  const { setScript, defaultScript, execute, executing } = scriptStore();
   const { isSuperAdmin, user } = useAuth();
 
   /* ---- Modal visibility ---- */
@@ -138,6 +138,14 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
     setShowQueryPanel(false);
   };
 
+  /* ---- Execute compiled query ---- */
+  const handleExecuteQuery = async () => {
+    if (!query?.compiled_sql) return;
+    setScript(defaultScript(query.compiled_sql));
+    await execute();
+    setShowResultsModal(true);
+  };
+
   const whereCount = (query?.query_json.filters.where ?? []).filter(g => g.node !== null).length;
   const havingCount = (query?.query_json.filters.having ?? []).filter(g => g.node !== null).length;
   const orderByCount = (query?.query_json.order_by ?? []).filter(o => o.field_id > 0).length;
@@ -152,6 +160,17 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
             <Database size={16} />
             Informations générales
           </Button>
+          {query?.compiled_sql && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleExecuteQuery}
+              disabled={executing}
+            >
+              {executing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+              {executing ? "Exécution..." : "Exécuter la requête"}
+            </Button>
+          )}
           {/* FILTER BUTTONS */}
           {dataset && hasSelectJson && (
             <div className={styles.cardHeader} style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
