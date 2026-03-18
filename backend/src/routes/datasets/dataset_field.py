@@ -18,7 +18,7 @@ bp = Blueprint("dataset_fields", __name__, url_prefix="/api/dataset-fields")
 def list_fields(field_id: Optional[int] = None, tenant_id: Optional[int] = None,dataset_id: Optional[int] = None, all:bool = True):
     query = DatasetField.query.options(
         selectinload(DatasetField.dataset),
-        # selectinload(DatasetField.tenant),
+        selectinload(DatasetField.tenant),
     ).filter(DatasetField.deleted == False)
 
     if field_id is not None:
@@ -66,22 +66,22 @@ def create_field():
             raise BadRequest("select_multiple is required")
 
         dataset_id = payload.get("dataset_id")
-        tenant_id=payload.get("tenant_id"),
+        tenant_id=payload.get("tenant_id")
         if not dataset_id or not tenant_id:
             raise BadRequest("dataset_id and tenant_id are required")
         
         user_id=currentUserId()
         
-        field_type=payload.get("field_type"),
-        data_type=payload.get("data_type"),
-        format=payload.get("format") or {},
-        is_public=bool(payload.get("is_public", False)),
-        is_filterable=bool(payload.get("is_filterable", False)),
-        is_groupable=bool(payload.get("is_groupable", False)),
-        is_sortable=bool(payload.get("is_sortable", False)),
-        is_selectable=bool(payload.get("is_selectable", False)),
-        is_hidden=bool(payload.get("is_hidden", False)),
-        is_active=bool(payload.get("is_active", False)),
+        field_type=payload.get("field_type")
+        data_type=payload.get("data_type")
+        format=payload.get("format") or {}
+        is_public=bool(payload.get("is_public", False))
+        is_filterable=bool(payload.get("is_filterable", False))
+        is_groupable=bool(payload.get("is_groupable", False))
+        is_sortable=bool(payload.get("is_sortable", False))
+        is_selectable=bool(payload.get("is_selectable", False))
+        is_hidden=bool(payload.get("is_hidden", False))
+        is_active=bool(payload.get("is_active", False))
         
         if select_multiple is True:
             dimensions = payload.get("dimensions")
