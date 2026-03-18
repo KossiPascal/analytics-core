@@ -117,6 +117,13 @@ export interface Dataset {
   version: number;
   is_active: boolean;
 
+  // Execution options
+  options?: Record<string, any>;
+  only_execute?: boolean;
+  max_rows?: number | null;
+  explain?: boolean;
+  success_executed?: boolean;
+
   tenant?: Tenant;
   datasource?: DataSource;
   connection?: DataSourceConnection;
@@ -149,6 +156,7 @@ export interface DatasetField {
   is_selectable: boolean;
   is_hidden: boolean;
   is_active: boolean;
+  raw_field?: { name: string; type: string } | null;
   tenant?: Tenant
   dataset?: Dataset
   is_dimension?: boolean

@@ -34,6 +34,7 @@ const createDefaultForm = (tenant_id: number): DatasetField => ({
     is_selectable: false,
     is_hidden: false,
     is_active: true,
+    raw_field: null,
 });
 
 
@@ -778,6 +779,25 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                     />
                 </div>
             </div>
+            {/* Raw field */}
+            <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
+                <p className="text-sm font-medium text-gray-700">Raw Field <span className="text-gray-400 font-normal">(optionnel)</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                    <FormInput
+                        label="Nom"
+                        value={field.raw_field?.name ?? ""}
+                        onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { type: "" }), name: e.target.value })}
+                        placeholder="ex: user_id"
+                    />
+                    <FormInput
+                        label="Type"
+                        value={field.raw_field?.type ?? ""}
+                        onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { name: "" }), type: e.target.value })}
+                        placeholder="ex: varchar"
+                    />
+                </div>
+            </div>
+
             <FormTextarea
                 label="Description"
                 value={field.description || ""}
