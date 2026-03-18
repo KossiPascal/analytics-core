@@ -60,34 +60,94 @@ def get_field(tenant_id: int,field_id: int):
 def create_field():
     try:
         payload = request.get_json(silent=True) or {}
-        name = payload.get("name")
+
+        select_multiple = payload.get("select_multiple")
+        if select_multiple is None:
+            raise BadRequest("select_multiple is required")
+
         dataset_id = payload.get("dataset_id")
-        if not name:
-            raise BadRequest("DatasetField name is required")
-        if not dataset_id:
-            raise BadRequest("dataset_id is required")
+        tenant_id=payload.get("tenant_id"),
+        if not dataset_id or not tenant_id:
+            raise BadRequest("dataset_id and tenant_id are required")
+        
+        user_id=currentUserId()
+        
+        field_type=payload.get("field_type"),
+        data_type=payload.get("data_type"),
+        format=payload.get("format") or {},
+        is_public=bool(payload.get("is_public", False)),
+        is_filterable=bool(payload.get("is_filterable", False)),
+        is_groupable=bool(payload.get("is_groupable", False)),
+        is_sortable=bool(payload.get("is_sortable", False)),
+        is_selectable=bool(payload.get("is_selectable", False)),
+        is_hidden=bool(payload.get("is_hidden", False)),
+        is_active=bool(payload.get("is_active", False)),
+        
+        if select_multiple is True:
+            dimensions = payload.get("dimensions")
+            if not isinstance(dimensions, list) or not all(isinstance(v, dict) for v in dimensions):
+                raise BadRequest(f"dimensions must be a list of dict", 400)
+            for dim in dimensions:
+                name = dim.get("name")
+                type = dim.get("type")
+                description = dim.get("description")
+                if not name or not type:
+                    raise BadRequest("dimensions must be a list of {name, type, desciption}", 400)
+                raw_field = {"name":name, "type": type}
+                field = DatasetField(
+                    name=name,
+                    tenant_id=tenant_id,
+                    dataset_id=dataset_id,
+                    raw_field=raw_field,
+                    description=description,
+                    expression=name,
+                    field_type=field_type,
+                    data_type=data_type,
+                    format=format,
+                    is_public=is_public,
+                    is_filterable=is_filterable,
+                    is_groupable=is_groupable,
+                    is_sortable=is_sortable,
+                    is_selectable=is_selectable,
+                    is_hidden=is_hidden,
+                    is_active=is_active,
+                    created_by_id=user_id
+                )
+                db.session.add(field)
 
-        field = DatasetField(
-            name=name,
-            tenant_id=payload.get("tenant_id"),
-            dataset_id=dataset_id,
-            description=payload.get("description"),
-            expression=payload.get("expression"),
-            aggregation=payload.get("aggregation"),
-            field_type=payload.get("field_type"),
-            data_type=payload.get("data_type"),
-            format=payload.get("format") or {},
-            is_public=bool(payload.get("is_public", False)),
-            is_filterable=bool(payload.get("is_filterable", False)),
-            is_groupable=bool(payload.get("is_groupable", False)),
-            is_sortable=bool(payload.get("is_sortable", False)),
-            is_selectable=bool(payload.get("is_selectable", False)),
-            is_hidden=bool(payload.get("is_hidden", False)),
-            is_active=bool(payload.get("is_active", False)),
-            created_by_id=currentUserId()
-        )
+        else:
+            name = payload.get("name")
+            if not name:
+                raise BadRequest("DatasetField name is required")
 
-        db.session.add(field)
+            raw_field = payload.get("raw_field") or {}
+            raw_name = raw_field.get("name")
+            raw_type = raw_field.get("type")
+            
+            if not isinstance(raw_field, dict) or not raw_name or not raw_type:
+                raise BadRequest(f"raw_field muist be a dict with key=name -> string and key=type -> string", 404)
+
+            field = DatasetField(
+                name=name,
+                tenant_id=tenant_id,
+                dataset_id=dataset_id,
+                description=payload.get("description"),
+                expression=payload.get("expression"),
+                aggregation=payload.get("aggregation"),
+                field_type=field_type,
+                data_type=data_type,
+                format=format,
+                is_public=is_public,
+                is_filterable=is_filterable,
+                is_groupable=is_groupable,
+                is_sortable=is_sortable,
+                is_selectable=is_selectable,
+                is_hidden=is_hidden,
+                is_active=is_active,
+                created_by_id=user_id
+            )
+            db.session.add(field)
+
         db.session.commit()
         return jsonify({"message": "DatasetField created", "field_id": field.id}), 201
     
@@ -105,8 +165,17 @@ def update_field(field_id: int):
 
         payload = request.get_json(silent=True) or {}
 
+        raw_field = payload.get("raw_field") or {}
+        raw_name = raw_field.get("name")
+        raw_type = raw_field.get("type")
+        
+        if not isinstance(raw_field, dict) or not raw_name or not raw_type:
+            raise BadRequest(f"raw_field muist be a dict with key=name -> string and key=type -> string", 404)
+
+
         UPDATABLE_FIELDS = {
             "name",
+            "raw_field",
             "description",
             "tenant_id",
             "dataset_id",
