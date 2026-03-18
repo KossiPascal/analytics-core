@@ -32,7 +32,7 @@ const createDefaultQuery = (tenant_id: number): DatasetQuery => ({
     select: { dimensions: [], metrics: [] },
     order_by: [],
     filters: {
-      where: [{ linkWithPrevious: undefined, node: { type: "group", operator: "AND", children: [{ type: "condition", field_id: -1, operator: "=", value: "", useSqlInClause: false }] } }],
+      where: [],
       having: [],
     },
     limit: null, offset: null,
@@ -148,10 +148,14 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
 
         {/* SIDEBAR */}
         <aside className={`${styles.sidebar} ${styles.compactCard}`}>
-
+          <Button variant="outline" size="sm" onClick={() => setShowQueryPanel(true)}>
+            <Database size={16} />
+            Informations générales
+          </Button>
           {/* FILTER BUTTONS */}
           {dataset && hasSelectJson && (
             <div className={styles.cardHeader} style={{ flexDirection: "column", alignItems: "stretch", gap: "0.5rem" }}>
+              
               <div className={styles.cardTitle}>
                 <div className={styles.cardIcon}><Filter size={16} /></div>
                 <span>Filtres & Tri</span>
@@ -197,10 +201,7 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
               <div className={styles.cardTitle}>
                 <CodeEditorButtons onExecuteComplete={() => setShowResultsModal(true)} />
               </div>
-              <Button variant="outline" size="sm" onClick={() => setShowQueryPanel(true)}>
-                <Database size={16} />
-                Dataset Query
-              </Button>
+              
             </div>
             <div className={styles.cardBody}>
               <CodeEditor />
@@ -210,7 +211,7 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
       </div>
 
       {/* DATASET QUERY PANEL MODAL */}
-      <Modal isOpen={showQueryPanel} onClose={() => setShowQueryPanel(false)} title="Dataset Query Builder" size="xl">
+      <Modal isOpen={showQueryPanel} onClose={() => setShowQueryPanel(false)} title="Générateur de requêtes" size="xl">
         {query && tenant_id ? (
           <DatasetQueryPanel
             query={query}
