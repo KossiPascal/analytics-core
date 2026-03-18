@@ -468,6 +468,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
     const [tempSelected, setTempSelected] = useState<{ name: string; type: string; description: string }[]>([]);
 
     const isDimensionMultiple = field.field_type === "dimension" && field.select_multiple === true;
+    const isDimensionHidden = field.field_type === "dimension" && field.select_multiple !== false;
 
     const datasetId = useMemo(() => {
         return field.dataset_id || dataset_id;
@@ -490,6 +491,14 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
     useEffect(() => {
         setDataTypes(FULL_DATA_TYPES);
     }, [FULL_DATA_TYPES]);
+
+    // Réinitialiser les erreurs quand les champs sont cachés (dimension non-false)
+    useEffect(() => {
+        if (isDimensionHidden) {
+            setErrors({});
+            onValidationChange?.(false);
+        }
+    }, [isDimensionHidden]);
 
     // Génération automatique contrôlée
     useEffect(() => {
@@ -673,7 +682,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                 </div>
             )}
 
-            {/* Mode select_multiple = Oui : bouton compact + badges */}
+            {/* Champs restants : visibles seulement si field_type != dimension OU select_multiple === false */}
             {isDimensionMultiple ? (
                 <div className="space-y-2">
                     <div className="flex items-center gap-3 flex-wrap">
@@ -692,16 +701,29 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                         )}
                     </div>
                     {(field.dimensions?.length ?? 0) > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-1">
-                            {field.dimensions!.map((d, i) => (
-                                <span key={i} className="text-xs bg-blue-100 text-blue-700 rounded px-2 py-1">
-                                    {d.name} <span className="text-blue-400">({d.type})</span>
-                                </span>
-                            ))}
+                        <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
+                            <table className="w-full text-xs">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-200">
+                                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Nom</th>
+                                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Type</th>
+                                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {field.dimensions!.map((d, i) => (
+                                        <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                            <td className="px-3 py-2 font-medium text-gray-800">{d.name}</td>
+                                            <td className="px-3 py-2 text-blue-500">{d.type}</td>
+                                            <td className="px-3 py-2 text-gray-400 italic">{d.description || "—"}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>
-            ) : (
+            ) : field.field_type !== "dimension" || field.select_multiple === false ? (
                 <>
                     <FormSelect
                         label={`Data Type`}
@@ -835,14 +857,14 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                         rows={0} cols={0}
                     />
                 </>
-            )}
+            ) : null}
 
             {/* Modal sélection des dimensions (multi-select) */}
             <Modal
                 isOpen={showDimensionsModal}
                 onClose={() => setShowDimensionsModal(false)}
                 title="Field - Columns"
-                size="sm"
+                size="lg"
                 footer={
                     <div className="flex gap-3">
                         <Button variant="outline" size="sm" onClick={() => setShowDimensionsModal(false)}>
