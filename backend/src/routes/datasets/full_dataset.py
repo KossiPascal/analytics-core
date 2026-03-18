@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from flask import Blueprint, request, jsonify, g
 from backend.src.databases.extensions import db
-from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DatasetSqlType, FieldType
+from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DbObjectType, FieldType
 from backend.src.models.datasets.dataset_chart import DatasetChart
 from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
@@ -43,7 +43,7 @@ def create_dataset_aggregate():
         # ================= DATASET =================
         dataset = Dataset(
             name=dataset_data["name"],
-            sql_type=dataset_data.get("sql_type", DatasetSqlType.MATVIEW.value),
+            sql_type=dataset_data.get("sql_type", DbObjectType.MATVIEW.value),
             tenant_id=tenant_id,
             datasource_id=dataset_data["datasource_id"],
             connection_id=dataset_data.get("connection_id"),
@@ -207,7 +207,7 @@ def update_full_aggregate(dataset_id: int):
                 setattr(dataset, attr, dataset_data[attr])
 
         if "sql_type" in dataset_data:
-            dataset.sql_type = (dataset_data["sql_type"] or DatasetSqlType.MATVIEW.value).lower()
+            dataset.sql_type = (dataset_data["sql_type"] or DbObjectType.MATVIEW.value).lower()
 
         dataset.updated_by_id = user_id
 

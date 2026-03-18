@@ -6,8 +6,14 @@ from werkzeug.exceptions import Unauthorized, Forbidden
 from backend.src.models.auth import User, UserPermission, UserRole
 
 
+def currentUser():
+    return g.current_user if g.get("current_user") else None
+
 def currentUserId():
     return g.current_user.get("id") if g.get("current_user") else None
+
+def currentUsername():
+    return g.current_user.get("username") if g.get("current_user") else None
 
 
 # Decorator to protect routes (uses JWT access token)

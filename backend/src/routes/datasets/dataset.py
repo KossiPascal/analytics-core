@@ -5,13 +5,16 @@ from flask import Blueprint, g, request, jsonify
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
-from backend.src.databases.extensions import db
-from backend.src.models.datasets.dataset import Dataset, DatasetSqlType
+from backend.src.databases.extensions import db, get_connection
+from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetVersioned, DbObjectType
 from backend.src.logger import get_backend_logger
+from backend.src.routes.datasets.db_manager import DbObjectManager, SqlIntrospector
 from backend.src.security.access_security import require_auth, currentUserId
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+
+from backend.src.services.sql_executor import run_sql
 
 logger = get_backend_logger(__name__)
 
@@ -26,7 +29,7 @@ def list_datasets(tenant_id: Optional[int] = None,dataset_id: Optional[int] = No
     ).filter(Dataset.deleted == False)
 
     if dataset_id is not None:
-        query = query.filter(Dataset.dataset_id == dataset_id)
+        query = query.filter(Dataset.id == dataset_id)
 
     if tenant_id is not None:
         query = query.filter(Dataset.tenant_id == tenant_id)
@@ -83,7 +86,6 @@ def list_datasets_paginate(tenant_id):
     #     "pages": pagination.pages,
     # }), 200
 
-
 # GET ONE DATASET
 @bp.get("/<int:tenant_id>/<int:dataset_id>")
 @require_auth
@@ -103,25 +105,63 @@ def get_dataset(tenant_id, dataset_id):
 @require_auth
 def create_dataset():
     try:
-        data = request.get_json()
+        user_id = currentUserId()
+        if not user_id:
+            raise BadRequest(f"Current User not found", 401)
 
+        payload = request.get_json(silent=True) or {}
+
+        name=payload.get("name"),
+        view_name = DbObjectManager.safe_object_name(name, user_id)
+        sql_type=(payload.get("sql_type") or DbObjectType.MATVIEW.value).lower()
+
+        _manager = DbObjectManager(object_name=view_name, sql_type=sql_type)
+        if(_manager.object_exists()):
+            raise BadRequest(f"View {view_name} already exist !", 400)
+
+        sql=SqlIntrospector.extract_select_query(payload.get("sql"))
+        values=payload.get("values") or {}
+        columns = SqlIntrospector.get_columns(sql=sql, values=values)
+
+        options = payload.get("options") or {}
+
+        for field in ["tenant_id","datasource_id"]:
+            if not field in payload:
+                raise BadRequest(f"{field} is required", 400)
+            
+        only_execute = bool(payload.get("only_execute") or False)
+        max_rows = int(payload.get("max_rows") or 50)
+        explain = bool(payload.get("explain") or False)
+        if only_execute:
+            conn = get_connection()
+            result, status = run_sql(conn, sql, None, max_rows=max_rows, explain=explain)
+            return jsonify(result), status
+        
+        success_excecuted = bool(payload.get("success_excecuted") or False)
+        if not success_excecuted:
+            raise BadRequest(f"L'execution n'a pas été un succes, veuillez réésayer", 400)
+            
         dataset = Dataset(
-            name=data["name"],
-            view_name=data["view_name"],
-            description=data["description"],
-            use_local_view=bool(data.get("use_local_view",False)),
-            sql=data["sql"],
-            sql_type=(data.get("sql_type") or "matview").lower(),
-            tenant_id=data["tenant_id"],
-            datasource_id=data["datasource_id"],
-            connection_id=data.get("connection_id"),
-            columns=data.get("columns", []),
-            version=data.get("version"),
-            is_active=bool(data.get("is_active",False)),
-            created_by_id=currentUserId(),
+            name=name,
+            sql=sql,
+            values=values,
+            options=options,
+            sql_type=sql_type,
+            view_name=view_name,
+            description=payload.get("description"),
+            tenant_id=payload.get("tenant_id"),
+            datasource_id=payload.get("datasource_id"),
+            connection_id=payload.get("connection_id"),
+            columns=columns,
+            version=payload.get("version") or 1,
+            is_active=bool(payload.get("is_active", False)),
+            created_by_id=user_id,
         )
 
         db.session.add(dataset)
+
+        _manager.create_object(sql=sql, values=values)
+
         db.session.commit()
 
         return jsonify(dataset.to_dict()), 201
@@ -150,7 +190,7 @@ def get_local_views():
 @require_auth
 def get_view_sql_columns(view_name:str, sql_type:str):
     try:
-        sql_from_db = Dataset.get_view_sql_endpoint(view_name, sql_type)
+        sql_from_db = SqlIntrospector.sql_from_db(view_name,sql_type)
         return jsonify(sql_from_db), 201
 
     except IntegrityError as e:
@@ -161,36 +201,97 @@ def get_view_sql_columns(view_name:str, sql_type:str):
 @require_auth
 def update_dataset(dataset_id):
     try:
-        dataset:Dataset = Dataset.query.get(dataset_id)
+        from sqlalchemy import and_
+        dataset:Dataset = Dataset.query.options(
+            selectinload(Dataset.fields),
+            # selectinload(Dataset.queries),
+        ).filter(
+            Dataset.deleted == False,
+            Dataset.id == dataset_id,
+            and_(
+                Dataset.view_name.isnot(None),
+                Dataset.view_name != "",
+                Dataset.sql_type.isnot(None),
+                Dataset.sql_type != "",
+            )
+        ).first()
+
         if not dataset:
             raise BadRequest("Dataset not found", 404)
 
-        data = request.get_json()
+        user_id = currentUserId()
+        if not user_id:
+            raise BadRequest(f"Current User not found", 401)
 
-        if "tenant_id" in data:
-            dataset.tenant_id = data["tenant_id"]
-        if "datasource_id" in data:
-            dataset.datasource_id = data["datasource_id"]
-        if "connection_id" in data:
-            dataset.connection_id = data["connection_id"]
-        if "name" in data:
-            dataset.name = data["name"]
-        if "view_name" in data:
-            dataset.view_name = data["view_name"]
-        if "use_local_view" in data:
-            dataset.use_local_view = bool(data.get("use_local_view",False))
-        if "sql_type" in data:
-            dataset.sql_type = (data.get("sql_type") or DatasetSqlType.MATVIEW.value).lower()
-        if "sql" in data:
-            dataset.sql = data["sql"]
-        if "columns" in data:
-            dataset.columns = data["columns"]
-        if "name" in data:
-            dataset.connection_id = data.get("connection_id", dataset.connection_id)
+        view_name = dataset.view_name
+        sql_type = dataset.sql_type
 
-        dataset.updated_by_id=currentUserId(),
+        _manager = DbObjectManager(object_name=view_name, sql_type=sql_type)
+        # if(not _manager.object_exists()):
+        #     raise BadRequest(f"View not exist !", 404)
+
+        payload = request.get_json(silent=True) or {}
+
+        sql=SqlIntrospector.extract_select_query(payload.get("sql"))
+        values=payload.get("values") or {}
+        columns = SqlIntrospector.get_columns(sql=sql, values=values)
+        column_maps = {c["name"]:c["type"] for c in columns if c and c.get("name") and c.get("type")}
+
+        fields:List[DatasetField] = dataset.fields or []
+        for field in fields:
+            raw_field = field.raw_field or {}
+            raw_type = raw_field.get("type")
+            raw_name = raw_field.get("name")
+
+            if raw_name not in column_maps:
+                message = f"The required field '{raw_name}' is missing in the provided columns."
+                raise BadRequest(message, 400)
+
+            expected_type = column_maps[raw_name]
+            if raw_type and expected_type:
+                if raw_type != expected_type:
+                    raise BadRequest(
+                        f"The field '{raw_name}' has type '{raw_type}' "
+                        f"but the expected type is '{expected_type}'.",
+                        400)
+
+        only_execute = bool(payload.get("only_execute") or False)
+        max_rows = int(payload.get("max_rows") or 50)
+        explain = bool(payload.get("explain") or False)
+        if only_execute:
+            conn = get_connection()
+            result, status = run_sql(conn, sql, None, max_rows=max_rows, explain=explain)
+            return jsonify(result), status
+        
+        success_excecuted = bool(payload.get("success_excecuted") or False)
+        if not success_excecuted:
+            raise BadRequest(f"L'execution n'a pas été un succes, veuillez réésayer", 400)
+        
+
+        dts_versioned = DatasetVersioned(
+            dataset_id=dataset.id,
+            sql=dataset.sql,
+            values=dataset.values,
+            version=dataset.version,
+            options=dataset.options,
+            archived_by=user_id,
+        )
+        db.session.add(dts_versioned)
+
+        for field in { "name", "options" }:
+            if field in payload:
+                setattr(dataset, field, payload[field])
+            elif field in ["name"]:
+                raise BadRequest(f"{field} is required", 400)
+
+        dataset.sql=sql
+        dataset.values=values
+        dataset.version=dataset.version + 1
+        dataset.updated_by_id=user_id
 
         db.session.commit()
+
+        _manager.update_object(sql=sql, values=values)
 
         return jsonify(dataset.to_dict()), 200
 
@@ -217,6 +318,33 @@ def delete_dataset(dataset_id):
         dataset.deleted_at = datetime.now(timezone.utc)
         dataset.deleted_by_id=currentUserId(),
         # db.session.delete(dataset)
+        db.session.commit()
+
+        return jsonify({"message": "Dataset deleted successfully"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        logger.exception("Error deleting dataset")
+        raise
+
+# DELETE DATASET
+@bp.delete("/<int:dataset_id>/forever")
+@require_auth
+def admin_delete_dataset(dataset_id):
+    try:
+        dataset:Dataset = Dataset.query.get(dataset_id)
+        if not dataset:
+            raise BadRequest("Dataset not found", 404)
+        
+        db.session.delete(dataset)
+
+        all_versioned = DatasetVersioned.query.filter(
+            DatasetVersioned.dataset_id == dataset.id
+        ).all()
+
+        for versioned in all_versioned or []:
+            db.session.delete(versioned)
+
         db.session.commit()
 
         return jsonify({"message": "Dataset deleted successfully"}), 200

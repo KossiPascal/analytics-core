@@ -23,12 +23,19 @@ BASE_SCHEMA = {
 }
 
 # ENUMS
-class DatasetSqlType(str, PyEnum):
+class DbObjectType(str, PyEnum):
     TABLE = "table"
     VIEW = "view"
     MATVIEW = "matview"
     FUNCTION = "function"
     INDEX = "index"
+    SEQUENCE = "sequence"
+    FOREIGN_TABLE = "foreign_table"
+
+    @classmethod
+    def list(cls):
+        return [e.value for e in cls]
+
 
 class FieldType(str, PyEnum):
     DIMENSION = "dimension"
@@ -49,23 +56,19 @@ class Dataset(db.Model, AuditMixin):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False)
-    view_name = db.Column(db.String(255), nullable=True)
+    view_name = db.Column(db.String(255), nullable=False)
+    options = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
     description = db.Column(db.Text)
-
-    sql_type = db.Column(db.String(50),nullable=False,default=DatasetSqlType.MATVIEW.value)
+    sql_type = db.Column(db.String(50),nullable=False,default=DbObjectType.MATVIEW.value)
     tenant_id = db.Column(db.BigInteger,db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False)
     datasource_id = db.Column(db.BigInteger,db.ForeignKey("datasources.id", ondelete="RESTRICT"),nullable=False)
     connection_id = db.Column(db.BigInteger,db.ForeignKey("datasource_connections.id", ondelete="RESTRICT"),nullable=True)
-
-    use_local_view = db.Column(db.Boolean, nullable=False, default=False)
     sql = db.Column(db.Text, nullable=True)
+    values = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
     columns = db.Column(JSONB,nullable=False,server_default=text("'[]'::jsonb"))
-
     refresh = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
-
     is_public = db.Column(db.Boolean, nullable=False, default=False)
     roles_allowed = db.Column(JSONB,nullable=False,server_default=text("'[]'::jsonb"))
-
     is_validated = db.Column(db.Boolean, nullable=False, default=False)
     validated_at = db.Column(db.DateTime(timezone=True))
     validated_by_id = db.Column(db.BigInteger, db.ForeignKey("users.id"))
@@ -82,6 +85,7 @@ class Dataset(db.Model, AuditMixin):
     fields = db.relationship("DatasetField",back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
     queries = db.relationship("DatasetQuery",back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
     charts = db.relationship("DatasetChart", back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
+    all_versioned = db.relationship("DatasetVersioned", back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
     
     parent = db.relationship("Dataset",remote_side=[id],backref=db.backref("children", passive_deletes=True))
 
@@ -135,13 +139,6 @@ class Dataset(db.Model, AuditMixin):
             "version": self.version,
             "parent_id": self.parent_id,
         }
-
-        # # hasEngine = bool(self.sql is None and self.view_name)
-        # # data["sql"] = Dataset.get_view_sql_endpoint() if hasEngine else self.sql
-        # sql_endpoint = Dataset.get_view_sql_endpoint(self.view_name, self.sql_type)
-        # if sql_endpoint:
-        #     data["sql"] = sql_endpoint.get('sql')
-        #     data["columns"] = sql_endpoint.get("columns"),
             
         if include_relations:
             data.update({
@@ -155,147 +152,26 @@ class Dataset(db.Model, AuditMixin):
 
         return data
 
-    @staticmethod
-    def get_view_sql_endpoint(view_name:Optional[str]=None,sql_type:Optional[str]=None,schema: str = "public") -> (Dict[str, Any] | None):
-        """
-        Récupère le SQL réel de la view/table/function en base de données
-        à partir de view_name et sql_type.
-        """
-        if not view_name or not sql_type:
-            raise ValueError('view_name or sql_type is required !')
-        
-        viewname = view_name.lower()
 
-        query = None
-        if sql_type == DatasetSqlType.VIEW.value:
-            query = """
-                SELECT definition
-                FROM pg_views
-                WHERE schemaname = 'public' AND viewname = :view_name
-            """
-        elif sql_type == DatasetSqlType.MATVIEW.value:
-            query = """
-                SELECT definition
-                FROM pg_matviews
-                WHERE schemaname = 'public' AND matviewname = :view_name
-            """
-        elif sql_type == DatasetSqlType.FUNCTION.value:
-            query = f"""
-                SELECT pg_get_functiondef(p.oid) AS definition
-                FROM pg_proc p
-                JOIN pg_namespace n ON n.oid = p.pronamespace
-                WHERE n.nspname = 'public' AND p.proname = :view_name
-            """
-        elif sql_type == DatasetSqlType.TABLE.value:
-            # Pour une table, on peut reconstruire CREATE TABLE via pg_dump ou information_schema
-            query = f"""
-                SELECT 'table: ' || table_name AS definition
-                FROM information_schema.tables
-                WHERE table_schema = 'public' AND table_name = :view_name
-            """
-        else:
-            # Index et autres types → pas géré ici
-            return None
 
-        result = db.session.execute(text(query), {"view_name": viewname}).fetchone()
-        columns = Dataset.dataset_columns(view_name,schema)
 
-        return {
-            "sql": result[0] if result else None,
-            "columns": columns if columns else []
-        }
+# DATASET
+class DatasetVersioned(db.Model):
+    __tablename__ = "datasets_versioned"
 
-    # @staticmethod  
-    # def manage_materialized_view(engine, dataset, replace_if_exists: bool = False, refresh: bool = False):
-    #     """
-    #     Crée ou met à jour une materialized view PostgreSQL de façon sécurisée.
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    dataset_id = db.Column(db.BigInteger,db.ForeignKey("datasets.id", ondelete="CASCADE"),nullable=True)
+    sql = db.Column(db.Text, nullable=True)
+    values = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
+    version = db.Column(db.BigInteger, nullable=False, default=1)
+    options = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
 
-    #     Args:
-    #         engine: SQLAlchemy engine
-    #         dataset: instance Dataset (dataset.sql doit être validé)
-    #         replace_if_exists: si True, remplace la MATVIEW existante
-    #         refresh: si True, rafraîchit la MATVIEW existante
-    #     """
-    #     view_name = dataset.name.lower()
+    dataset = db.relationship("Dataset", back_populates="all_versioned",lazy="noload",foreign_keys=[dataset_id])
 
-    #     # 1️⃣ Vérifier existence de la MATVIEW
-    #     check_sql = text("""
-    #         SELECT 1
-    #         FROM pg_matviews
-    #         WHERE schemaname = 'public' AND matviewname = :view_name
-    #     """)
-        
-    #     with engine.connect() as conn:
-    #         exists = conn.execute(check_sql, {"view_name": view_name}).fetchone() is not None
+    archived_by = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False)
+    archived_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
 
-    #         if exists:
-    #             logger.info(f"Materialized view '{view_name}' exists in DB")
-    #             if replace_if_exists:
-    #                 # ✅ Remplacer en validant le SQL
-    #                 validator = QueryValidator(query_json=None, fields=dataset.fields)
-    #                 compiled_sql = validator.validate_and_compile(dataset.sql)
-    #                 create_sql = f"CREATE OR REPLACE MATERIALIZED VIEW {view_name} AS {compiled_sql}"
-    #                 logger.info(f"Replacing MATVIEW '{view_name}'")
-    #                 conn.execute(text(create_sql))
-    #             elif refresh:
-    #                 # ✅ Rafraîchir la vue existante
-    #                 refresh_sql = f"REFRESH MATERIALIZED VIEW CONCURRENTLY {view_name}"
-    #                 logger.info(f"Refreshing MATVIEW '{view_name}'")
-    #                 conn.execute(text(refresh_sql))
-    #             else:
-    #                 logger.info(f"No action taken for MATVIEW '{view_name}'")
-    #         else:
-    #             # 2️⃣ Créer la MATVIEW si absente
-    #             validator = QueryValidator(query_json=None, fields=dataset.fields)
-    #             compiled_sql = validator.validate_and_compile(dataset.sql)
-    #             create_sql = f"CREATE MATERIALIZED VIEW {view_name} AS {compiled_sql}"
-    #             logger.info(f"Creating MATVIEW '{view_name}'")
-    #             conn.execute(text(create_sql))
 
-    @staticmethod
-    def dataset_columns(view_name: str,schema: str = "public") -> List[Dict[str, str]]:
-
-        if not view_name:
-            return []
-
-        query = """
-            SELECT
-                a.attname AS column_name,
-                pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type
-            FROM pg_attribute a
-            JOIN pg_class c ON a.attrelid = c.oid
-            JOIN pg_namespace n ON c.relnamespace = n.oid
-            WHERE c.relname = :view_name
-              AND n.nspname = :schema
-              AND a.attnum > 0
-              AND NOT a.attisdropped
-            ORDER BY a.attnum;
-        """
-
-        result = db.session.execute(
-            text(query),
-            { "view_name": view_name, "schema": schema },
-        ).mappings().all()
-
-        return [
-            { 
-                "name": row["column_name"], 
-                "type": Dataset._map_pg_type(row["data_type"]),
-            }
-            for row in result
-        ]
-
-    @staticmethod
-    def _map_pg_type(pg_type: str) -> str:
-        pg_type = pg_type.lower()
-
-        if any(t in pg_type for t in ["int", "numeric", "decimal", "real", "double"]):
-            return "number"
-        if any(t in pg_type for t in ["timestamp", "date", "time"]):
-            return "datetime"
-        if "bool" in pg_type:
-            return "boolean"
-        return "string"
 
 # DATASET FIELD
 class DatasetField(db.Model, AuditMixin):
@@ -307,6 +183,8 @@ class DatasetField(db.Model, AuditMixin):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
 
+    raw_field = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb")) #{"name": "hhhk;", "type": "dfdf"}
+
     # Expression SQL (colonne brute ou formule)
     expression = db.Column(db.Text, nullable=False)
     # Agrégation (utile uniquement pour metrics)
@@ -314,7 +192,7 @@ class DatasetField(db.Model, AuditMixin):
     # Type dimension / metric
     field_type = db.Column(db.String(50),nullable=False)
     # Optionnel : type logique (string, number, date…)
-    data_type = db.Column(db.String(50), nullable=True)
+    data_type = db.Column(db.String(50), nullable=False)
 
     format = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb")) # {"type": "currency", "currency": "USD", "precision": 2 }
         
@@ -399,7 +277,7 @@ class DatasetQuery(db.Model, AuditMixin):
     
     compiled_sql = db.Column(db.Text)
 
-    sql_type = db.Column(db.String(50), nullable=False, default=DatasetSqlType.MATVIEW.value)
+    sql_type = db.Column(db.String(50), nullable=False, default=DbObjectType.MATVIEW.value)
 
     is_validated = db.Column(db.Boolean, nullable=False, default=False)
     validated_at = db.Column(db.DateTime(timezone=True))

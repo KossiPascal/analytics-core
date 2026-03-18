@@ -1,15 +1,15 @@
 from datetime import datetime, timezone
 from backend.src.databases.extensions import db
-from flask import Blueprint, request, jsonify, g
-from typing import Any, Dict, List, Optional, Set
-from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DatasetSqlType
+from flask import Blueprint, request, jsonify
+from typing import Any, Dict, List, Optional
+from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DbObjectType
 from backend.src.routes.datasets.query.query_validator import QueryValidatorV1
-from backend.src.routes.datasets.query.sql_compiler import MaterializedViewManager, SQLCompilerV1
+from backend.src.routes.datasets.query.sql_compiler import DbObjectManager, SQLCompilerV1
 from backend.src.security.access_security import require_auth, currentUserId
 from sqlalchemy.orm import selectinload
 
 from werkzeug.exceptions import BadRequest
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.src.logger import get_backend_logger
 logger = get_backend_logger(__name__)
@@ -19,14 +19,14 @@ bp = Blueprint("dataset_queries", __name__, url_prefix="/api/dataset-queries")
 
 class MakeCompileQueryJson():
 
-    def __init__(self,dataset_id:int, query_json: Dict[str, Any], sql_type:str, query_view_name:str):
+    def __init__(self,dataset_id:int, query_json: Dict[str, Any], sql_type:str, object_name:str):
         self.dataset_id:int = dataset_id
         self.query_json: Dict[str, Any] = query_json or {}
         self.sql_type = sql_type
         self.sql:Optional[str] = None
         self.values: Dict[str, Any] = {}
-        self.query_view_name:Optional[str] = query_view_name
-        self.manager:MaterializedViewManager|None = None
+        self.object_name:Optional[str] = object_name
+        self.db_manager:DbObjectManager|None = None
 
     def run(self):
         if not self.dataset_id:
@@ -54,11 +54,8 @@ class MakeCompileQueryJson():
         self.sql = compiled["sql"]
         self.values = compiled["values"]
         
-        self.manager = MaterializedViewManager(
-            query_view_name=self.query_view_name,
-            sql_type=self.sql_type
-        )
-    
+        self.db_manager = DbObjectManager(object_name=self.object_name, sql_type=self.sql_type)
+
     @property
     def fields_ids(self):
         # sécuriser select
@@ -73,21 +70,19 @@ class MakeCompileQueryJson():
         return [fId for fId in set(dimIds + metIds)]
 
     def make_matview_sql(self)-> str:
-        return self.manager.generate_matview_sql(sql=self.sql,values=self.values)
+        return self.db_manager.generate_create_sql(sql=self.sql,values=self.values)
 
     def store_matview(self):
-        self.manager.create_matview_safe(sql=self.sql,values=self.values)
+        self.db_manager.create(sql=self.sql,values=self.values)
 
     def refresh_matview(self):
-        self.manager.refresh_matview()
+        self.db_manager.refresh()
 
     def schedule_refresh(self, cron_expression="0 * * * *"):
-        self.manager.schedule_refresh(cron_expression=cron_expression)  # every hour at minute 0
+        self.db_manager.schedule_refresh(cron_expression=cron_expression)  # every hour at minute 0
 
 # # Rafraîchissement automatique toutes les heures
-# MaterializedViewManager.schedule_refresh(view_name="users_summary")
-
-
+# DbObjectManager.schedule_refresh(view_name="users_summary")
 
 def list_queries(query_id: Optional[int] = None, tenant_id: Optional[int] = None,dataset_id: Optional[int] = None, all:bool = True):
 
@@ -113,7 +108,6 @@ def list_queries(query_id: Optional[int] = None, tenant_id: Optional[int] = None
         return chart.to_dict()
 
 
-
 # ===================== QUERIES =====================
 @bp.get("/<int:tenant_id>")
 @require_auth
@@ -134,8 +128,6 @@ def list_queries_by_dataset(tenant_id: int, dataset_id: int):
     except Exception as e:
         logger.error(f"List queries error: {str(e)}")
         raise BadRequest("Failed to list queries", 500)
-
-
 
 @bp.get("/one/<int:tenant_id>/<int:query_id>")
 @require_auth
@@ -159,7 +151,7 @@ def create_query():
         dataset_id = data.get("dataset_id")
         description = data.get("description")
         query_json = data.get("query_json")
-        sql_type = data.get("sql_type") or DatasetSqlType.MATVIEW.value
+        sql_type = data.get("sql_type") or DbObjectType.MATVIEW.value
         compiled_sql = data.get("compiled_sql")
         values = data.get("values")
         is_validated = bool(data.get("is_validated", False))
@@ -173,7 +165,7 @@ def create_query():
             dataset_id=dataset_id, 
             query_json=query_json, 
             sql_type=sql_type, 
-            query_view_name=query_name,
+            object_name=query_name,
         )
         compiler.run()
 
@@ -221,7 +213,7 @@ def update_query(query_id: int):
         dataset_id = data.get("dataset_id") or query.dataset_id
         query_json = data.get("query_json") or query.query_json or {}
         query_name = data.get("name") or query.name
-        sql_type = data.get("sql_type") or DatasetSqlType.MATVIEW.value
+        sql_type = data.get("sql_type") or DbObjectType.MATVIEW.value
 
         if not query_name or not dataset_id or not query_json:
             raise BadRequest("parametters ares invalid", 400)

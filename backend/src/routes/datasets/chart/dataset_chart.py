@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError, OperationalError
 from backend.src.databases.extensions import db
 from backend.src.logger import get_backend_logger
 from backend.src.security.access_security import require_auth, currentUserId
-from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DatasetSqlType
+from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetQuery, DbObjectType
 from backend.src.models.datasets.dataset_chart import DatasetChart
 from sqlalchemy.orm import selectinload
 
@@ -290,9 +290,9 @@ def execute_chart(query_id: int):
         ChartValidator.validate_chart(table_name,chart,cleanedFieldsMap)
         
         # 🧠 Build SQL
-        if query.sql_type in (DatasetSqlType.MATVIEW.value, DatasetSqlType.VIEW.value):
+        if query.sql_type in (DbObjectType.MATVIEW.value, DbObjectType.VIEW.value):
 
-            sql, params = ChartExecutor.generate_sql(table_name, chart, cleanedFieldsMap)
+            sql, params = ChartExecutor.generate_chart_sql(table_name, chart, cleanedFieldsMap)
 
         else:
             # Compiled SQL must already be safe
