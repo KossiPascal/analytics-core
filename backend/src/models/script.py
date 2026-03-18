@@ -39,8 +39,8 @@ class Script(db.Model, AuditMixin):
             "name": self.name,
             "language": self.language,
             "content": self.content,  # automatiquement désérialisé
-            "owner": self.owner_id,
-            "updated_by": self.updated_by,
+            "owner": self.created_by_id,
+            "updated_by": self.updated_by_id,
             # "edit_only_content": True if self.name in (INDICATORS_SCRIPT_NAME,INDICATORS_INTO_SQL_NAME,INDICATORS_SQL_MATVIEW_TABLE_NAME,) else False,
         }
 
