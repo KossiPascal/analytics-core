@@ -598,7 +598,7 @@ class ChartSQLBuilder:
 class ChartExecutor:
 
     @staticmethod
-    def generate_sql(table_name: str, chart: DatasetChart, fieldsMap:dict[int, Any]):
+    def generate_chart_sql(table_name: str, chart: DatasetChart, fieldsMap:dict[int, Any]):
 
         select_parts, group_by = ChartSQLBuilder.build_select(chart, fieldsMap)
 

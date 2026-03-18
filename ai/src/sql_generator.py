@@ -6,7 +6,7 @@ import logging
 
 llm = LLMManager()
 
-def generate_sql(question: str) -> str:
+def generate_ai_sql(question: str) -> str:
     if not question:
         raise ValueError("Question vide non autorisée")
     prompt = SYSTEM_PROMPT + "\nQuestion: " + question

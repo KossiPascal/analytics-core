@@ -1,11 +1,19 @@
 import re
+import hashlib
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from backend.src.databases.extensions import db, scheduler
-from backend.src.models.datasets.dataset import Dataset, DatasetField, DatasetSqlType
+from backend.src.models.datasets.dataset import Dataset, DatasetField, DbObjectType
 from sqlalchemy import bindparam, text
 from sqlalchemy.sql.elements import TextClause
+
+FORBIDDEN_PATTERNS = [
+    r";",
+    r"--",
+    r"/\*",
+    r"\b(DROP|DELETE|INSERT|UPDATE|ALTER|TRUNCATE|EXEC|EXECUTE|CALL|CREATE|GRANT|REVOKE|COPY|DO|SET)\b",
+]
 
 # CONSTANTS
 NUMERIC_DATA_TYPES = {"integer", "number", "bigint", "numeric", "float", "decimal"}
@@ -25,6 +33,7 @@ DATE_OPERATORS = NUMERIC_OPERATORS
 FULL_OPERATORS = set().union(NUMERIC_OPERATORS,STRING_OPERATORS,DATE_OPERATORS,BOOLEAN_ONLY_OPERATORS,)
 
 VALID_SQL_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+ALLOWED_PATTERN = re.compile(r"^\s*(SELECT|WITH)\b", re.IGNORECASE)
 
 DIALECT_QUOTES = { "postgres": '"', "duckdb": '"', "mysql": "`" }
 
@@ -781,164 +790,6 @@ class SQLCompilerV1:
         return  {f.id: f for f in datasetFields}
 
 
-# MATVIEW MANAGER
-class MaterializedViewManager:
-    """
-    Safe Materialized View Manager for PostgreSQL
-    SQL injection safe | DROP CASCADE support | Optional auto-refresh via cron
-    """
-    def __init__(self, query_view_name: str, sql_type: str):
-        self.sql_type = sql_type
-
-        if not query_view_name or not isinstance(query_view_name, str):
-            raise ValueError(f"query_view_name is require")
-
-        viewname = query_view_name.strip('"')
-        if not VALID_SQL_IDENTIFIER.match(viewname):
-            raise ValueError(f"Invalid view name: {query_view_name}")
-        
-        self.brut_viewname = viewname
-        self.view_name = SQLValueParser.quote_identifier(viewname)
-
- 
-    def rendered_sql(self, sql: str, values: Dict[str, Any]) -> str:
-        """
-        Compile le SQL avec les valeurs fournies.
-        - Pour les scalaires, utilise bindparam normal
-        - Pour les listes destinées à IN/ANY, génère ARRAY[...] pour éviter double parenthèses
-        """
-        try:
-            stmt: TextClause = text(sql)
-
-            for key, value in values.items():
-                if isinstance(value, list):
-                    # Si la liste est vide, PostgreSQL ne peut pas faire ANY(ARRAY[]), donc skip
-                    if not value:
-                        continue
-                    # Transforme en ARRAY[...] directement pour literal_binds=True
-                    # Evite la double parenthèse avec expanding=True + literal_binds
-                    arr_str = ", ".join(
-                        repr(v) if isinstance(v, str) else str(v) for v in value
-                    )
-                    sql_fragment = f"ARRAY[{arr_str}]"
-                    # Remplace la variable par l’ARRAY[...] dans le SQL
-                    sql = sql.replace(f":{key}", sql_fragment)
-                else:
-                    stmt = stmt.bindparams(bindparam(key, value=value))
-
-            compiled_sql = stmt.compile(db.engine, compile_kwargs={"literal_binds": True})
-            return str(compiled_sql)
-
-        except Exception as e:
-            raise ValueError(str(e))
-    
-    def generate_matview_sql(self, sql: str, values: Dict[str, Any]) -> str:
-        """Create matview safely with optional DROP CASCADE"""
-    
-        rendered_sql = self.rendered_sql(sql, values)
-
-    
-        view_prefix = ""
-
-        if self.sql_type == DatasetSqlType.MATVIEW.value:
-            view_prefix = f'CREATE MATERIALIZED VIEW {self.view_name} AS '
-        elif self.sql_type == DatasetSqlType.VIEW.value:
-            view_prefix = ""
-        elif self.sql_type == DatasetSqlType.TABLE.value:
-            view_prefix = ""
-        elif self.sql_type == DatasetSqlType.FUNCTION.value:
-            view_prefix = ""
-        elif self.sql_type == DatasetSqlType.INDEX.value:
-            view_prefix = ""
-
-
-        sql = "\n".join(filter(None, [
-            view_prefix,
-            f'{rendered_sql}'
-        ])).strip()
-
-        return sql
-    
-
-    def create_matview_safe(self, sql: str, values: Dict[str, Any], replace: bool = True) -> None:
-        """Create matview safely with optional DROP CASCADE"""
-
-        if self.sql_type != DatasetSqlType.MATVIEW.value:
-            return
-
-        try:
-            rendered_sql = self.rendered_sql(sql, values)
-            # Build CREATE MATERIALIZED VIEW statement
-            with db.engine.begin() as conn:
-                # 🔹 Drop with CASCADE if replace
-                if replace:
-                    conn.execute(text(f'DROP MATERIALIZED VIEW IF EXISTS {self.view_name} CASCADE'))
-                # 🔹 Create matview
-                conn.execute(text(f'CREATE MATERIALIZED VIEW {self.view_name} AS {rendered_sql}'))
-
-        except Exception as e:
-            raise ValueError(str(e))
-
-    def refresh_matview(self, concurrently: bool = True) -> None:
-        """Refresh a matview safely, optionally concurrently"""
-
-        if self.sql_type != DatasetSqlType.MATVIEW.value:
-            return
-
-        sql = f'REFRESH MATERIALIZED VIEW {"CONCURRENTLY " if concurrently else ""}{self.view_name}'
-        with db.engine.begin() as conn:
-            conn.execute(text(sql))
-
-    def schedule_refresh(self, cron_expression: str,concurrently: bool = True,job_id: str | None = None):
-        """
-        Schedule automatic refresh of the matview via APScheduler.
-        - cron_expression: standard cron (e.g. '0 * * * *' = every hour)
-        """
-
-        if self.sql_type != DatasetSqlType.MATVIEW.value:
-            return
-        
-        job_id = job_id or f"refresh_{self.brut_viewname}"
-
-        def job():
-            try:
-                self.refresh_matview(concurrently)
-                print(f"Materialized view '{self.brut_viewname}' refreshed successfully")
-            except Exception as e:
-                print(f"Error refreshing matview '{self.brut_viewname}': {e}")
-
-        # Remove existing job if any
-        if scheduler.get_job(job_id):
-            scheduler.remove_job(job_id)
-
-        # Add new cron job
-        scheduler.add_job(
-            id=job_id,
-            func=job,
-            trigger='cron',
-            **self._parse_cron(cron_expression)
-        )
-
-    def _parse_cron(self, cron_expr: str) -> dict:
-        """
-        Convert standard cron string (5 fields) into APScheduler kwargs
-        Format: 'minute hour day month day_of_week'
-        """
-        parts = cron_expr.strip().split()
-        if len(parts) != 5:
-            raise ValueError("Invalid cron expression. Expected 5 fields: 'min hour day month weekday'")
-        return dict(minute=parts[0], hour=parts[1], day=parts[2], month=parts[3], day_of_week=parts[4])
-
-
-
-
-
-
-
-
-
-
-
 # import pandas as pd
 # class PivotTransformer:
 #     """
@@ -1010,8 +861,8 @@ class MaterializedViewManager:
 #     #     values = compiled["values"]
 
 #     #     # 2️⃣ Créer la matview
-#     #     matview_manager = MaterializedViewManager("kossi_reports_one")
-#     #     matview_manager.create_matview_safe(sql, values)
+#     #     matview_manager = DbObjectManager("kossi_reports_one")
+#     #     matview_manager.create(sql, values)
 
 #     #     # 3️⃣ Charger les données pour pivot (via pandas)
 #     #     df = pd.read_sql(text(f'SELECT * FROM "kossi_reports_one"'), db.engine)
