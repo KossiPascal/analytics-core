@@ -131,8 +131,6 @@ class QueryValidatorV1:
         dimensions:list[dict] = select.get("dimensions", [])
         metrics:list[dict] = select.get("metrics", [])
 
-        print(dimensions)
-
         if not isinstance(dimensions, list) or not all(isinstance(v, dict) for v in dimensions):
             raise QueryValidationError(f"dimensions must be a list of dict")
 
