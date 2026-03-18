@@ -136,9 +136,14 @@ class Dataset(db.Model, AuditMixin):
             "sql": self.sql,
             "columns": self.columns,
             "version": self.version,
-            "parent_id": self.parent_id,
+            "parent_id": self.parent_id,  
+            "options": self.options, 
+            "values": self.values, 
+            "refresh": self.refresh, 
         }
-            
+          
+
+
         if include_relations:
             data.update({
                 "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
@@ -150,8 +155,6 @@ class Dataset(db.Model, AuditMixin):
             })
 
         return data
-
-
 
 
 # DATASET
@@ -240,6 +243,7 @@ class DatasetField(db.Model, AuditMixin):
             "field_type": self.field_type,
             "data_type": self.data_type,
             "format": self.format,
+            "raw_field": self.raw_field,
             "is_public": self.is_public,
             "is_dimension": self.is_dimension,
             "is_metric": self.is_metric,

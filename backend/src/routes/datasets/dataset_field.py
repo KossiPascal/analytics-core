@@ -73,7 +73,7 @@ def create_field():
         user_id=currentUserId()
         
         field_type=payload.get("field_type")
-        data_type=payload.get("data_type")
+
         format=payload.get("format") or {}
         is_public=bool(payload.get("is_public", False))
         is_filterable=bool(payload.get("is_filterable", False))
@@ -89,11 +89,11 @@ def create_field():
                 raise BadRequest(f"dimensions must be a list of dict", 400)
             for dim in dimensions:
                 name = dim.get("name")
-                type = dim.get("type")
+                data_type = dim.get("type")
                 description = dim.get("description")
-                if not name or not type:
+                if not name or not data_type:
                     raise BadRequest("dimensions must be a list of {name, type, desciption}", 400)
-                raw_field = {"name":name, "type": type}
+                raw_field = {"name":name, "type": data_type}
                 field = DatasetField(
                     name=name,
                     tenant_id=tenant_id,
@@ -119,6 +119,8 @@ def create_field():
             name = payload.get("name")
             if not name:
                 raise BadRequest("DatasetField name is required")
+
+            data_type=payload.get("data_type")
 
             raw_field = payload.get("raw_field") or {}
             raw_name = raw_field.get("name")
