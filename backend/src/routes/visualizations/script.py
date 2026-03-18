@@ -38,18 +38,18 @@ def list_scripts():
             raise BadRequest("Unauthorized", 401)
 
         user_id = current.get("id")
-        role = current.get("role")
+        roles = current.get("roles")
         permissions = current.get("permissions")
 
         # 🚫 Autorisation
-        if not isAdmin(role, permissions):
+        if not isAdmin(roles, permissions):
             audit_log(action="ACCESS_DENIED",details={"resource": "list_scripts"},level="WARNING")
             raise BadRequest("Access denied", 403)
 
         result = []
 
         # ⭐ SUPER ADMIN
-        if isSuperAdmin(role, permissions):
+        if isSuperAdmin(roles, permissions):
             base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
             for name, rel_path, language in LOCAL_SCRIPT_FILES:
@@ -180,12 +180,19 @@ def save_script(script_id=None):
         else:
             if name in SCRIPT_NAMES:
                 raise BadRequest("Modification interdite pour ce script", 403)
-            
-            # Création d'un nouveau script
-            script = Script(name=name,language=language_lower,content=content,owner_id=user_id)
-            script.tenant_id = tenant_id
-            db.session.add(script)
-            audit_log(action="CREATE_SCRIPT",details={"script_name": name,"language": language})
+
+            # Upsert : si le nom existe déjà, on met à jour
+            existing = Script.query.filter_by(name=name).first()
+            if existing:
+                existing.language = language_lower
+                existing.content = content
+                existing.updated_by_id = user_id
+                script = existing
+            else:
+                script = Script(name=name,language=language_lower,content=content,owner_id=user_id)
+                script.tenant_id = tenant_id
+                db.session.add(script)
+                audit_log(action="CREATE_SCRIPT",details={"script_name": name,"language": language})
 
         db.session.commit()
 
