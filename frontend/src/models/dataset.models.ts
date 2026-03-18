@@ -95,6 +95,7 @@ export const getInputTypeForField = (dataType?: SqlDataType) => {
 export interface DatasetColumn {
   name: string;
   type: string;
+  description?: string;
 }
 
 export interface SqlWithUtils {
@@ -148,9 +149,11 @@ export interface DatasetField {
   aggregation: SqlAggType | null
   field_type: SqlFieldType | null
   data_type: SqlDataType
+  dimensions: {name:string, type:string, description:string}[]
   format: Record<string, any>
   is_public: boolean
   is_filterable: boolean;
+  select_multiple: boolean| null;
   is_groupable: boolean;
   is_sortable: boolean;
   is_selectable: boolean;

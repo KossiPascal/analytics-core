@@ -27,6 +27,8 @@ const createDefaultForm = (tenant_id: number): DatasetField => ({
     data_type: "string",
     description: "",
     format: {},
+    dimensions:[],
+    select_multiple: null,
     is_public: false,
     is_filterable: false,
     is_groupable: false,
@@ -134,8 +136,8 @@ interface DatasetFieldFormProps {
 
 // Icons helpers
 const getFieldTypeIcon = (type: SqlFieldType | null) => {
-    if (type === "dimension") return <FaRuler className="w-4 h-4" />; // dimension = grouping axis
-    if (type === "metric") return <FaChartLine className="w-4 h-4" />; // metric = measured value
+    if (type === "dimension") return <FaRuler className="w-4 h-4" />;
+    if (type === "metric") return <FaChartLine className="w-4 h-4" />;
     return <FaLayerGroup className="w-4 h-4" />;
 };
 
@@ -151,7 +153,7 @@ const getDataTypeIcon = (dataType: SqlDataType) => {
         return <FaAlignLeft size={14} />;
 
     if (["date", "time", "datetime", "timestamp"].includes(vDataType))
-        return <FaLayerGroup size={14} />; // return <FaCalendarAlt />;
+        return <FaLayerGroup size={14} />;
 
     if (["boolean", "bool"].includes(vDataType))
         return <FaToggleOn size={14} />;
@@ -159,7 +161,7 @@ const getDataTypeIcon = (dataType: SqlDataType) => {
     if (["json", "jsonb"].includes(vDataType))
         return <FaTable size={14} />;
 
-    return <FaLayerGroup size={14} />; // return <FaFont />;
+    return <FaLayerGroup size={14} />;
 };
 
 const getExpressionIcon = (expression?: string) => {
@@ -187,11 +189,6 @@ const getAggregationIcon = (aggregation: SqlAggType | null) => {
         return <FaCalculator size={14} />;
 
     return <FaCalculator size={14} />;
-    // if (agg === "count") return <FaHashtag />;
-    // if (agg === "sum") return <FaSigma />;
-    // if (agg === "avg") return <FaCalculator />;
-    // if (agg === "min" || agg === "max") return <FaSortAmountDown />;
-    // return <FaCalculator />;
 };
 
 // Field name generation
@@ -227,9 +224,7 @@ function generateFieldName({ fieldType, expression, aggregation }: GenerateNameP
 
     if (!base) base = "field";
 
-    // -----------------------------
     // 4️⃣ Metric prefix logic
-    // -----------------------------
     if (fieldType === "metric" && aggregation) {
         const safeAgg = aggregation.toLowerCase().replace(/[^a-z]/g, "");
         return `${safeAgg}_${base}`;
@@ -335,29 +330,22 @@ const FORBIDDEN_PATTERNS = [
     /\bJOIN\b/i
 ];
 
-// const FORBIDDEN_SQL_REGEX = /\b(drop|delete|update|insert|truncate|alter|exec|union|from|join)\b|--|;/i;
-// const FILTER_REGEX = /\bFILTER\s*\(\s*WHERE\s+/i;
-
 const isNumericExpression = (expr: string, aggregation: SqlAggType | null, columns: DatasetColumn[]): boolean => {
 
     const trimmed = expr.trim().toUpperCase();
 
-    // 1️⃣ Aggregation numérique
     if (aggregation && UNIQUE_AGG_FUNCTIONS.has(aggregation.toUpperCase())) {
         return true;
     }
 
-    // 2️⃣ Expression purement numérique (1 + 2, 100, etc.)
     if (NUMERIC_LITERAL_REGEX.test(trimmed)) {
         return true;
     }
 
-    // 3️⃣ SUM(col), COUNT(col) etc
     if (AGG_WITH_DISTINCT_REGEX.test(trimmed)) {
         return true;
     }
 
-    // 4️⃣ Si expression est juste une colonne numérique
     const identifiers = trimmed.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || [];
 
     for (const id of identifiers) {
@@ -377,14 +365,12 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
         return { valid: false, error: "Expression vide." };
     }
 
-    // 🔐 1️⃣ SQL Injection Guard
     if (FORBIDDEN_PATTERNS.some(p => p.test(trimmed))) {
         return { valid: false, error: "Expression contient des mots-clés SQL interdits." };
     }
 
     const upperExpr = trimmed.toUpperCase();
 
-    // 🔎 2️⃣ Détection des fonctions + FILTER
     let hasAggregation = false;
     let hasFilter = false;
 
@@ -405,12 +391,10 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
         }
     }
 
-    // 🔁 FILTER doit suivre une agrégation
     if (hasFilter && !hasAggregation) {
         return { valid: false, error: "FILTER doit être utilisé avec une fonction d'agrégation." };
     }
 
-    // 🎯 3️⃣ Règles selon fieldType
     if (fieldType === "dimension" && hasAggregation) {
         return { valid: false, error: "Une dimension ne peut pas contenir d'agrégation." };
     }
@@ -423,10 +407,8 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
         return { valid: false, error: "Un calculated_metric doit contenir une agrégation." };
     }
 
-    // 🧹 4️⃣ Retirer les strings
     const exprWithoutStrings = trimmed.replace(/'[^']*'/g, "").replace(/"[^"]*"/g, "");
 
-    // 🧠 5️⃣ Validation des identifiants
     const identifiers = exprWithoutStrings.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g);
 
     const normalizedColumns = new Set(columns.filter(c => c.name).map(c => c.name!.toLowerCase()));
@@ -446,7 +428,6 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
         }
     }
 
-    // ✅ 6️⃣ Validation CASE ... END
     const caseCount = (upperExpr.match(/\bCASE\b/g) || []).length;
     const endCount = (upperExpr.match(/\bEND\b/g) || []).length;
     if (caseCount > 0 && endCount === 0) {
@@ -456,7 +437,6 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
         return { valid: false, error: "Nombre de CASE et END non équilibré." };
     }
 
-    // 🧮 7️⃣ Vérification parenthèses
     let balance = 0;
     for (const char of trimmed) {
         if (char === "(") balance++;
@@ -469,7 +449,6 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
         return { valid: false, error: "Parenthèses mal fermées." };
     }
 
-    // 🔢 Vérification compatibilité numérique
     const isNumeric = isNumericExpression(trimmed, aggregation, columns);
     if (isNumeric && !NUMERIC_DATA_TYPE.has(dataType?.toLowerCase() as SqlDataType)) {
         return { valid: false, error: "Data Type non compatible avec expression numérique." };
@@ -485,6 +464,10 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
     const [dataTypes, setDataTypes] = useState<SqlDataType[]>([]);
     const [autoName, setAutoName] = useState<string | null>(null);
     const [manuallyEdited, setManuallyEdited] = useState(false);
+    const [showDimensionsModal, setShowDimensionsModal] = useState(false);
+    const [tempSelected, setTempSelected] = useState<{ name: string; type: string; description: string }[]>([]);
+
+    const isDimensionMultiple = field.field_type === "dimension" && field.select_multiple === true;
 
     const datasetId = useMemo(() => {
         return field.dataset_id || dataset_id;
@@ -504,15 +487,14 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
         return mapped;
     }, [datasetColumns]);
 
-    // datasetColumns.map(c => c.name)
-
-
     useEffect(() => {
         setDataTypes(FULL_DATA_TYPES);
     }, [FULL_DATA_TYPES]);
 
     // Génération automatique contrôlée
     useEffect(() => {
+        if (isDimensionMultiple) return;
+
         const generated = generateFieldName({
             fieldType: field.field_type,
             expression: field.expression,
@@ -521,20 +503,14 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
 
         if (!generated) return;
 
-        // Première génération
         if (!autoName) {
             setAutoName(generated);
-
-            // Si name vide → set
             if (!field.name) {
                 setValue("name", generated);
             }
-
             return;
         }
 
-        // Si utilisateur n’a jamais modifié ET
-        // le name actuel correspond à l'ancien auto
         if (!manuallyEdited && field.name === autoName) {
             setValue("name", generated);
             setAutoName(generated);
@@ -542,8 +518,12 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
     }, [field.field_type, field.expression, field.aggregation]);
 
 
-    // Fonction de validation réactive
     const validateField = ({ expression = field.expression, field_type = field.field_type, aggregation = field.aggregation, data_type = field.data_type, dataset_id = field.dataset_id }: Partial<DatasetField> = {}) => {
+        if (isDimensionMultiple) {
+            setErrors({});
+            onValidationChange?.(false);
+            return;
+        }
         const datasetColumns = datasetId ? datasetMap.get(datasetId)?.columns ?? [] : [];
 
         const { valid, error } = validateExpression({
@@ -571,7 +551,6 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
         onValidationChange?.(hasError);
     };
 
-    // Handlers pour chaque champ
     const handleExpressionChange = (val: string) => {
         setValue("expression", val);
         validateField({ expression: val });
@@ -589,25 +568,25 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
 
     const handleFieldTypeChange = (val: SqlFieldType | null, fieldId: number | null) => {
         setValue("field_type", val);
+        // Reset select_multiple when changing field type
+        setValue("select_multiple", null);
+        setValue("dimensions", []);
 
         if (val === "dimension") {
             setValue("aggregation", null);
         }
 
         if (fieldId === null) {
-            // valeurs par défaut communes
             setValue("is_filterable", true);
             setValue("is_selectable", true);
             setValue("is_hidden", false);
             setValue("is_public", false);
 
-            // dimensions
             if (val === "dimension") {
                 setValue("is_groupable", true);
                 setValue("is_sortable", true);
             }
 
-            // metrics
             if (["metric", "calculated_metric"].includes(val as string)) {
                 setValue("is_groupable", false);
                 setValue("is_sortable", false);
@@ -619,11 +598,21 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
     };
 
     useEffect(() => {
+        if (isDimensionMultiple) return;
         const dataType = mappedColumns[field.expression];
         if (field.expression in mappedColumns && field.data_type !== dataType) {
             handleDataTypeChange(dataType);
         }
     }, [field.expression, mappedColumns]);
+
+    const handleValidateDimensions = () => {
+        setValue("dimensions", tempSelected);
+        if (!field.name) {
+            const autoName = tempSelected.map(s => s.name).join("_") || "multi_dimension";
+            setValue("name", autoName.slice(0, 50));
+        }
+        setShowDimensionsModal(false);
+    };
 
     return (
         <motion.div
@@ -632,17 +621,6 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
             transition={{ duration: 0.4 }}
             className="w-full max-w-2xl space-y-4"
         >
-            {/* <FormSelect
-                label={`Tenant`}
-                value={field.tenant_id || tenant_id}
-                options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-                onChange={(value) => {
-                    setValue("tenant_id", value)
-                }}
-                placeholder="Sélectionner Tenant"
-                leftIcon={<FaDatabase />}
-                required
-            /> */}
             <FormSelect
                 label={`Dataset`}
                 value={field.dataset_id || dataset_id}
@@ -663,148 +641,282 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                 leftIcon={getFieldTypeIcon(field.field_type)}
                 required
             />
-            <FormSelect
-                label={`Data Type`}
-                value={field.data_type}
-                options={dataTypes.map((c) => ({ value: c, label: c }))}
-                onChange={handleDataTypeChange}
-                leftIcon={getDataTypeIcon(field.data_type)}
-                error={errors.data_type}
-                // disabled={field.expression in mappedColumns}
-                required
-            />
 
-            <FormSwitch
-                label={`Voir les column`}
-                checked={showColumns}
-                onChange={(e) => setShowColumns(e.target.checked)}
-            />
-            <br />
-
-            {/* {field.field_type} - {datasetColumns.length} */}
-
-            {field.field_type && datasetColumns.length > 0 && (
-                <FormTextarea
-                    label="Expression SQL"
-                    value={field.expression}
-                    hint="Ex: COUNT(id) CASE WHEN sex = 'M' THEN 1 END | Ex: DATE_TRUNC('month', created_at)"
-                    onChange={e => {
-                        const val = e.target.value;
-                        handleExpressionChange(val);
-                    }}
-                    // leftIcon={getExpressionIcon(field.expression)}
-                    error={errors.expression}
-                    rows={0} cols={0}
-                    required
-                />
+            {/* Radio select_multiple — visible uniquement pour dimension */}
+            {field.field_type === "dimension" && (
+                <div className="flex items-center gap-6 py-1">
+                    <span className="text-sm font-medium text-gray-700">Sélection multiple</span>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="radio"
+                            name="select_multiple"
+                            checked={field.select_multiple === true}
+                            onChange={() => {
+                                setValue("select_multiple", true);
+                                setValue("dimensions", []);
+                            }}
+                        />
+                        <span className="text-sm">Oui</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="radio"
+                            name="select_multiple"
+                            checked={field.select_multiple !== true}
+                            onChange={() => {
+                                setValue("select_multiple", false);
+                                setValue("dimensions", []);
+                            }}
+                        />
+                        <span className="text-sm">Non</span>
+                    </label>
+                </div>
             )}
-            {field.field_type === "metric" && (
-                <FormSelect
-                    label="Aggregation"
-                    value={field.aggregation}
-                    options={AGGRAGATE_TYPES.map((c) => ({ value: c, label: c }))}
-                    onChange={handleAggregationChange}
-                    leftIcon={getAggregationIcon(field.aggregation)}
-                    required
-                />
-            )}
-            <FormInput
-                label="Nom"
-                value={field.name}
-                onChange={(e) => {
-                    setManuallyEdited(true);
-                    setValue("name", e.target.value);
-                }}
-                // leftIcon={<FaHashtag size={16} />}
-                leftIcon={getFieldTypeIcon(field.field_type)}
-                required
-            />
 
-            {/* Flags */}
-            <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="flex items-center justify-between">
-                    <FormSwitch
-                        label="Public"
-                        checked={Boolean(field.is_public)}
-                        onChange={(e) => setValue("is_public", e.target.checked)}
-                    // icon={<FaEye />}
-                    />
+            {/* Mode select_multiple = Oui : bouton compact + badges */}
+            {isDimensionMultiple ? (
+                <div className="space-y-2">
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setTempSelected(field.dimensions ?? []);
+                                setShowDimensionsModal(true);
+                            }}
+                        >
+                            + Sélectionner les dimensions
+                        </Button>
+                        {(field.dimensions?.length ?? 0) > 0 && (
+                            <span className="text-xs text-gray-500">{field.dimensions!.length} sélectionnée{field.dimensions!.length > 1 ? "s" : ""}</span>
+                        )}
+                    </div>
+                    {(field.dimensions?.length ?? 0) > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1">
+                            {field.dimensions!.map((d, i) => (
+                                <span key={i} className="text-xs bg-blue-100 text-blue-700 rounded px-2 py-1">
+                                    {d.name} <span className="text-blue-400">({d.type})</span>
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center justify-between">
-                    <FormSwitch
-                        label="Filterable"
-                        checked={Boolean(field.is_filterable)}
-                        onChange={(e) => setValue("is_filterable", e.target.checked)}
-                    // icon={<FaFilter />}
+            ) : (
+                <>
+                    <FormSelect
+                        label={`Data Type`}
+                        value={field.data_type}
+                        options={dataTypes.map((c) => ({ value: c, label: c }))}
+                        onChange={handleDataTypeChange}
+                        leftIcon={getDataTypeIcon(field.data_type)}
+                        error={errors.data_type}
+                        required
                     />
-                </div>
-                <div className="flex items-center justify-between">
+
                     <FormSwitch
-                        label="Groupable"
-                        checked={Boolean(field.is_groupable)}
-                        onChange={(e) => setValue("is_groupable", e.target.checked)}
-                    // icon={<FaLayerGroup />}
+                        label={`Voir les colonnes`}
+                        checked={showColumns}
+                        onChange={(e) => setShowColumns(e.target.checked)}
                     />
-                </div>
-                <div className="flex items-center justify-between">
-                    <FormSwitch
-                        label="Sortable"
-                        checked={Boolean(field.is_sortable)}
-                        onChange={(e) => setValue("is_sortable", e.target.checked)}
-                    // icon={<FaSortAmountDown />}
-                    />
-                </div>
-                <div className="flex items-center justify-between">
-                    <FormSwitch
-                        label="Selectable"
-                        checked={Boolean(field.is_selectable)}
-                        onChange={(e) => setValue("is_selectable", e.target.checked)}
-                    // icon={<FaSortAmountDown />}
-                    />
-                </div>
-                <div className="flex items-center justify-between">
-                    <FormSwitch
-                        label="Hidden"
-                        checked={Boolean(field.is_hidden)}
-                        onChange={(e) => setValue("is_hidden", e.target.checked)}
-                    // icon={<FaSortAmountDown />}
-                    />
-                </div>
-                <div className="flex items-center justify-between">
-                    <FormSwitch
-                        label="Active"
-                        checked={Boolean(field.is_active)}
-                        onChange={(e) => setValue("is_active", e.target.checked)}
-                    // icon={<FaCheckCircle />}
-                    />
-                </div>
-            </div>
-            {/* Raw field */}
-            <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
-                <p className="text-sm font-medium text-gray-700">Raw Field <span className="text-gray-400 font-normal">(optionnel)</span></p>
-                <div className="grid grid-cols-2 gap-3">
+                    <br />
+
+                    {field.field_type && datasetColumns.length > 0 && (
+                        <FormTextarea
+                            label="Expression SQL"
+                            value={field.expression}
+                            hint="Ex: COUNT(id) CASE WHEN sex = 'M' THEN 1 END | Ex: DATE_TRUNC('month', created_at)"
+                            onChange={e => {
+                                const val = e.target.value;
+                                handleExpressionChange(val);
+                            }}
+                            error={errors.expression}
+                            rows={0} cols={0}
+                            required
+                        />
+                    )}
+                    {field.field_type === "metric" && (
+                        <FormSelect
+                            label="Aggregation"
+                            value={field.aggregation}
+                            options={AGGRAGATE_TYPES.map((c) => ({ value: c, label: c }))}
+                            onChange={handleAggregationChange}
+                            leftIcon={getAggregationIcon(field.aggregation)}
+                            required
+                        />
+                    )}
                     <FormInput
                         label="Nom"
-                        value={field.raw_field?.name ?? ""}
-                        onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { type: "" }), name: e.target.value })}
-                        placeholder="ex: user_id"
+                        value={field.name}
+                        onChange={(e) => {
+                            setManuallyEdited(true);
+                            setValue("name", e.target.value);
+                        }}
+                        leftIcon={getFieldTypeIcon(field.field_type)}
+                        required
                     />
-                    <FormInput
-                        label="Type"
-                        value={field.raw_field?.type ?? ""}
-                        onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { name: "" }), type: e.target.value })}
-                        placeholder="ex: varchar"
-                    />
-                </div>
-            </div>
 
-            <FormTextarea
-                label="Description"
-                value={field.description || ""}
-                onChange={(e) => setValue("description", e.target.value)}
-                placeholder="Description du field"
-                rows={0} cols={0}
-            />
+                    {/* Flags */}
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div className="flex items-center justify-between">
+                            <FormSwitch
+                                label="Public"
+                                checked={Boolean(field.is_public)}
+                                onChange={(e) => setValue("is_public", e.target.checked)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <FormSwitch
+                                label="Filterable"
+                                checked={Boolean(field.is_filterable)}
+                                onChange={(e) => setValue("is_filterable", e.target.checked)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <FormSwitch
+                                label="Groupable"
+                                checked={Boolean(field.is_groupable)}
+                                onChange={(e) => setValue("is_groupable", e.target.checked)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <FormSwitch
+                                label="Sortable"
+                                checked={Boolean(field.is_sortable)}
+                                onChange={(e) => setValue("is_sortable", e.target.checked)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <FormSwitch
+                                label="Selectable"
+                                checked={Boolean(field.is_selectable)}
+                                onChange={(e) => setValue("is_selectable", e.target.checked)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <FormSwitch
+                                label="Hidden"
+                                checked={Boolean(field.is_hidden)}
+                                onChange={(e) => setValue("is_hidden", e.target.checked)}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <FormSwitch
+                                label="Active"
+                                checked={Boolean(field.is_active)}
+                                onChange={(e) => setValue("is_active", e.target.checked)}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Raw field */}
+                    <div className="border rounded-xl p-3 bg-gray-50 space-y-3">
+                        <p className="text-sm font-medium text-gray-700">Raw Field <span className="text-gray-400 font-normal">(optionnel)</span></p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <FormInput
+                                label="Nom"
+                                value={field.raw_field?.name ?? ""}
+                                onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { type: "" }), name: e.target.value })}
+                                placeholder="ex: user_id"
+                            />
+                            <FormInput
+                                label="Type"
+                                value={field.raw_field?.type ?? ""}
+                                onChange={(e) => setValue("raw_field", { ...(field.raw_field ?? { name: "" }), type: e.target.value })}
+                                placeholder="ex: varchar"
+                            />
+                        </div>
+                    </div>
+
+                    <FormTextarea
+                        label="Description"
+                        value={field.description || ""}
+                        onChange={(e) => setValue("description", e.target.value)}
+                        placeholder="Description du field"
+                        rows={0} cols={0}
+                    />
+                </>
+            )}
+
+            {/* Modal sélection des dimensions (multi-select) */}
+            <Modal
+                isOpen={showDimensionsModal}
+                onClose={() => setShowDimensionsModal(false)}
+                title="Field - Columns"
+                size="sm"
+                footer={
+                    <div className="flex gap-3">
+                        <Button variant="outline" size="sm" onClick={() => setShowDimensionsModal(false)}>
+                            Annuler
+                        </Button>
+                        <Button size="sm" onClick={handleValidateDimensions}>
+                            Valider ({tempSelected.length})
+                        </Button>
+                    </div>
+                }
+            >
+                <div className="flex-1 overflow-auto p-4">
+                    {datasetColumns.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-4">Aucune colonne disponible</p>
+                    ) : (
+                        <table className="w-full text-sm border-collapse">
+                            <thead>
+                                <tr className="border-b border-gray-200">
+                                    <th className="w-6 pb-2"></th>
+                                    <th className="text-left pb-2 text-gray-600 font-medium pr-3">Nom</th>
+                                    <th className="text-left pb-2 text-gray-600 font-medium pr-3">Type</th>
+                                    <th className="text-left pb-2 text-gray-600 font-medium">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {datasetColumns.map((c, idx) => {
+                                    const isChecked = tempSelected.some(s => s.name === c.name);
+                                    const selected = tempSelected.find(s => s.name === c.name);
+                                    return (
+                                        <tr
+                                            key={idx}
+                                            className={`border-b border-gray-100 transition-colors ${isChecked ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                                        >
+                                            <td className="py-2 pr-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    onChange={() => {
+                                                        setTempSelected(prev =>
+                                                            isChecked
+                                                                ? prev.filter(s => s.name !== c.name)
+                                                                : [...prev, { name: c.name, type: c.type, description: c.description ?? "" }]
+                                                        );
+                                                    }}
+                                                    className="rounded"
+                                                />
+                                            </td>
+                                            <td className="py-2 pr-3 font-medium text-gray-800">{c.name}</td>
+                                            <td className="py-2 pr-3 text-gray-400">{c.type}</td>
+                                            <td className="py-2">
+                                                {isChecked ? (
+                                                    <input
+                                                        type="text"
+                                                        value={selected?.description ?? ""}
+                                                        onChange={(e) => {
+                                                            setTempSelected(prev =>
+                                                                prev.map(s => s.name === c.name ? { ...s, description: e.target.value } : s)
+                                                            );
+                                                        }}
+                                                        placeholder="Description..."
+                                                        className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400"
+                                                    />
+                                                ) : (
+                                                    <span className="text-xs text-gray-300">—</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            </Modal>
         </motion.div>
     )
 };
@@ -868,14 +980,18 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                     />
                 )}
                 onBeforeSave={(df) => ({ ...df, dataset_id: df.dataset_id ?? dataset_id ?? null })}
-                isValid={df => !hasFormError && Boolean(df.dataset_id) && Boolean(
-                    df.name.trim() &&
-                    df.expression.trim() &&
-                    (
-                        (df.field_type === "dimension" && !df.aggregation) ||
-                        (df.field_type === "calculated_metric" && !df.aggregation) ||
-                        (df.field_type === "metric" && df.aggregation)
-                    )
+                isValid={df => !hasFormError && Boolean(df.dataset_id) && (
+                    df.field_type === "dimension" && df.select_multiple === true
+                        ? (df.dimensions?.length ?? 0) > 0
+                        : Boolean(
+                            df.name.trim() &&
+                            df.expression.trim() &&
+                            (
+                                (df.field_type === "dimension" && !df.aggregation) ||
+                                (df.field_type === "calculated_metric" && !df.aggregation) ||
+                                (df.field_type === "metric" && df.aggregation)
+                            )
+                        )
                 )}
                 renderForm={(field, setValue, saving) => (
                     <DatasetFieldForm
@@ -895,6 +1011,7 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                 )}
             />
 
+            {/* Modal "Voir les colonnes" (switch général) */}
             <Modal
                 isOpen={showColumns}
                 onClose={() => setShowColumns(false)}
@@ -908,7 +1025,6 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                     </div>
                 }
             >
-
                 <div className="flex-1 overflow-auto bg-[#1e1e1e] p-6">
                     <table className="w-full table-auto border-collapse border border-gray-600">
                         <thead>
