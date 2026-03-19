@@ -74,10 +74,10 @@ class MakeCompileQueryJson():
         return self.db_manager.generate_create_sql(sql=self.sql,values=self.values)
 
     def store_matview(self):
-        self.db_manager.create(sql=self.sql,values=self.values)
+        self.db_manager.create_object(sql=self.sql,values=self.values)
 
     def refresh_matview(self):
-        self.db_manager.refresh()
+        self.db_manager.refresh_matview()
 
     def schedule_refresh(self, cron_expression="0 * * * *"):
         self.db_manager.schedule_refresh(cron_expression=cron_expression)  # every hour at minute 0

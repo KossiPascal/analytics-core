@@ -59,21 +59,22 @@ def get_field(tenant_id: int,field_id: int):
 @require_auth
 def create_field():
     try:
+        print("11111111111")
         payload = request.get_json(silent=True) or {}
 
         select_multiple = payload.get("select_multiple")
-        if select_multiple is None:
-            raise BadRequest("select_multiple is required")
-
+        # if select_multiple is None:
+        #     raise BadRequest("select_multiple is required")
+        print("22222222222")
         dataset_id = payload.get("dataset_id")
         tenant_id=payload.get("tenant_id")
         if not dataset_id or not tenant_id:
             raise BadRequest("dataset_id and tenant_id are required")
-        
+        print("33333333333")
         user_id=currentUserId()
         
         field_type=payload.get("field_type")
-
+        print("4444444444444")
         format=payload.get("format") or {}
         is_public=bool(payload.get("is_public", False))
         is_filterable=bool(payload.get("is_filterable", False))
@@ -116,18 +117,23 @@ def create_field():
                 db.session.add(field)
 
         else:
+            print("AAAAAAAA")
             name = payload.get("name")
             if not name:
                 raise BadRequest("DatasetField name is required")
+            print("BBBBBBBBBBB")
 
             data_type=payload.get("data_type")
 
             raw_field = payload.get("raw_field") or {}
             raw_name = raw_field.get("name")
             raw_type = raw_field.get("type")
+            print("CCCCCCCCCC")
+
             
             if not isinstance(raw_field, dict) or not raw_name or not raw_type:
                 raise BadRequest(f"raw_field muist be a dict with key=name -> string and key=type -> string", 404)
+            print("DDDDDDDDDDD")
 
             field = DatasetField(
                 name=name,
@@ -149,6 +155,9 @@ def create_field():
                 created_by_id=user_id
             )
             db.session.add(field)
+
+            print("EEEEEEEEEEEEEEEE")
+
 
         db.session.commit()
         return jsonify({"message": "DatasetField created", "field_id": field.id}), 201

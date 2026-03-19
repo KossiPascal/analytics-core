@@ -40,7 +40,7 @@ export const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], qu
         const field = fieldMap.get(dim.field_id);
         if (!field || field.field_type !== "dimension") continue;
 
-        const alias = dim.alias ?? quoteIdentifier(field.name);
+        const alias = quoteIdentifier(dim.alias ?? field.name);
         selectPart.push(`${field.expression} AS ${alias}`);
         groupByPart.push(field.expression);
 
@@ -52,7 +52,7 @@ export const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], qu
         const field = fieldMap.get(met.field_id);
         if (!field || !field.field_type || !["metric", "calculated_metric"].includes(field.field_type)) continue;
 
-        const alias = met.alias ?? quoteIdentifier(field.name);
+        const alias = quoteIdentifier(met.alias ?? field.name);
         const sqlExpression = generateSqlExpression(field.expression, field.aggregation);
 
         selectPart.push(`${sqlExpression} AS ${alias}`);
@@ -96,7 +96,8 @@ export const compileDatasetQuery = (dataset: Dataset, fields: DatasetField[], qu
                 return true
             }).map(o => {
                 const dir = o.direction?.toLowerCase() === "desc" ? "DESC" : "ASC";
-                const alias = aliasMap.get(o.field_id);
+                const alias_map = aliasMap.get(o.field_id);
+                const alias = quoteIdentifier(alias_map!);
                 return `${alias} ${dir}`;
             })
             .filter(Boolean)

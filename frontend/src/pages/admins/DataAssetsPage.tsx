@@ -153,6 +153,7 @@ export default function DataAssetsPage() {
           <RefreshCw size={24} className="animate-spin" />
         </div>
       ) : tenant_id ? (
+        
         <Card>
           <CardBody>
             {/* Tabs */}
@@ -181,6 +182,7 @@ export default function DataAssetsPage() {
             </div>
           </CardBody>
         </Card>
+
       ) : (
         <div style={centerStyles}>
           <Building2 size={48} />
