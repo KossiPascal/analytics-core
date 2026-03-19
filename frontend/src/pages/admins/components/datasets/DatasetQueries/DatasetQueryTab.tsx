@@ -1,5 +1,7 @@
-import { Shield } from "lucide-react";
+import { Shield, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState, forwardRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/routes/configs";
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from "@pages/admins/AdminEntityCrudModule";
 import { StatusBadge } from "@components/ui/Badge/Badge";
 import { type Column } from "@components/ui/Table/Table";
@@ -133,6 +135,7 @@ interface DatasetQueryTabProps {
 }
 // MAIN PAGE
 export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id }, ref) => {
+    const navigate = useNavigate();
     const [dataset_id, setDatasetId] = useState<number | undefined>();
     const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [previewSql, setPreviewSql] = useState<string | null>(null);
@@ -228,6 +231,18 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                 service={queryService}
                 defaultTenant={defaultTenant}
                 defaultValue={DEFAULT_FORM}
+                enableEdit={false}
+                customActions={(row) => (
+                    <button
+                        title="Ouvrir dans Query Builder"
+                        onClick={() => navigate(ROUTES.builder.queryBuilder(), { state: { query: row } })}
+                        style={{ padding: "4px", borderRadius: "4px", border: "none", background: "transparent", cursor: "pointer", color: "#2563eb" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#dbeafe"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                    >
+                        <Pencil size={15} />
+                    </button>
+                )}
                 isValid={(q) => {
                     return Object.keys(errors).length === 0
                 }}

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Save, Play, CheckCircle, AlertCircle } from "lucide-react";
-import { Tenant } from "@/models/identity.model";
 import { Dataset, DatasetQuery } from "@/models/dataset.models";
 import { RenderFormBuilder } from "../../DatasetQueries/query-utils/RenderFormBuilder";
 import { DatasetPreviewModal } from "../../DatasetQueries/query-utils/DatasetPreviewModal";
@@ -11,7 +10,6 @@ import { queryService } from "@/services/dataset.service";
 interface DatasetQueryPanelProps {
     query: DatasetQuery;
     datasets: Dataset[];
-    tenants: Tenant[];
     tenant_id: number;
     errors: CompileError;
     defaultForm: DatasetQuery;
@@ -47,7 +45,7 @@ const cleanQueryJson = (q: DatasetQuery): DatasetQuery => {
 };
 
 export const DatasetQueryPanel: React.FC<DatasetQueryPanelProps> = ({
-    query, datasets, tenants, tenant_id, errors, defaultForm,
+    query, datasets, tenant_id, errors, defaultForm,
     setValue, setErrors, setPreviewSql, onUseSql,
 }) => {
     const [localPreviewSql, setLocalPreviewSql] = useState<string | null>(null);
@@ -69,12 +67,13 @@ export const DatasetQueryPanel: React.FC<DatasetQueryPanelProps> = ({
             const cleaned = cleanQueryJson(query);
             let saved: DatasetQuery;
             if (query.id) {
-                saved = await queryService.update(query.id, cleaned) as DatasetQuery;
+                await queryService.update(query.id, cleaned);
                 setSaveMessage("Requête mise à jour avec succès");
             } else {
-                saved = await queryService.create(cleaned) as DatasetQuery;
+                const res = await queryService.create(cleaned) as any;
                 setSaveMessage("Requête sauvegardée avec succès");
-                if (saved?.id) setValue("id", saved.id);
+                const newId = res?.id ?? res?.query_id;
+                if (newId) setValue("id", newId);
             }
             setSaveResult("success");
             setTimeout(() => setSaveResult(null), 3000);
@@ -91,7 +90,7 @@ export const DatasetQueryPanel: React.FC<DatasetQueryPanelProps> = ({
             <RenderFormBuilder
                 datasets={datasets}
                 query={query}
-                tenants={tenants}
+                tenants={[]}
                 tenant_id={tenant_id}
                 errors={errors}
                 defaultForm={defaultForm}
@@ -115,15 +114,6 @@ export const DatasetQueryPanel: React.FC<DatasetQueryPanelProps> = ({
 
             {/* Action buttons */}
             <div className="flex justify-end gap-2 pt-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!isValid || saving}
-                >
-                    <Save size={14} />
-                    {saving ? "Sauvegarde..." : query.id ? "Mettre à jour" : "Sauvegarder"}
-                </Button>
 
                 {query.compiled_sql && (
                     <Button variant="primary" size="sm" onClick={() => onUseSql(query.compiled_sql)}>
@@ -132,14 +122,6 @@ export const DatasetQueryPanel: React.FC<DatasetQueryPanelProps> = ({
                     </Button>
                 )}
             </div>
-
-            <DatasetPreviewModal
-                title="SQL Preview"
-                open={Boolean(localPreviewSql)}
-                data={localPreviewSql || ""}
-                onClose={() => setLocalPreviewSql(null)}
-                type="sql"
-            />
         </div>
     );
 };

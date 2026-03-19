@@ -88,13 +88,26 @@ def create_field():
             dimensions = payload.get("dimensions")
             if not isinstance(dimensions, list) or not all(isinstance(v, dict) for v in dimensions):
                 raise BadRequest(f"dimensions must be a list of dict", 400)
+
+            existing_names = {
+                row.name for row in db.session.query(DatasetField.name).filter(
+                    DatasetField.dataset_id == dataset_id,
+                    DatasetField.deleted == False
+                ).all()
+            }
+
+            field = None
+            skipped = 0
             for dim in dimensions:
                 name = dim.get("name")
                 data_type = dim.get("type")
                 description = dim.get("description")
                 if not name or not data_type:
-                    raise BadRequest("dimensions must be a list of {name, type, desciption}", 400)
-                raw_field = {"name":name, "type": data_type}
+                    raise BadRequest("dimensions must be a list of {name, type, description}", 400)
+                if name in existing_names:
+                    skipped += 1
+                    continue
+                raw_field = {"name": name, "type": data_type}
                 field = DatasetField(
                     name=name,
                     tenant_id=tenant_id,
@@ -130,7 +143,7 @@ def create_field():
             raw_type = raw_field.get("type")
             print("CCCCCCCCCC")
 
-            
+
             if not isinstance(raw_field, dict) or not raw_name or not raw_type:
                 raise BadRequest(f"raw_field muist be a dict with key=name -> string and key=type -> string", 404)
             print("DDDDDDDDDDD")
@@ -160,8 +173,14 @@ def create_field():
 
 
         db.session.commit()
+        if select_multiple is True:
+            return jsonify({
+                "message": "DatasetFields created",
+                "skipped": skipped,
+                "field_id": field.id if field else None
+            }), 201
         return jsonify({"message": "DatasetField created", "field_id": field.id}), 201
-    
+
     except Exception:
         db.session.rollback()
         raise

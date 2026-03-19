@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Database, RefreshCw, Filter, ArrowUpDown, Play, Loader2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Database, RefreshCw, Filter, ArrowUpDown, Play, Loader2, FolderOpen } from "lucide-react";
 
 import { Button } from "@components/ui/Button/Button";
 import { Modal } from "@components/ui/Modal/Modal";
 import CodeEditor from "./components/CodeEditor";
 import ResultsTable from "./components/ResultsTable";
-import SavedScriptList from "./components/SavedScriptList";
 import { DatasetQueryPanel } from "./components/DatasetQueryPanel";
 import { DatasetFilterBuilder } from "../DatasetQueries/query-utils/DatasetFilterBuilder";
 import { DatasetOrderByBuilder } from "../DatasetQueries/query-utils/DatasetOrderByBuilder";
@@ -14,9 +14,7 @@ import { compileDatasetQuery } from "../DatasetQueries/query-utils/compileDatase
 import { CompileError } from "../DatasetQueries/query-utils/model";
 import { scriptStore } from "@/stores/scripts.store";
 import { useAuth } from "@contexts/AuthContext";
-import { tenantService } from "@/services/identity.service";
-import { datasetService } from "@/services/dataset.service";
-import { Tenant } from "@/models/identity.model";
+import { datasetService, queryService } from "@/services/dataset.service";
 import { Dataset, DatasetQuery, LinkedFilterGroup, QueryJson } from "@/models/dataset.models";
 import styles from "./QueryBuilder.module.css";
 import { PageWrapper } from "@/components/layout/PageWrapper/PageWrapper";
@@ -42,7 +40,9 @@ const createDefaultQuery = (tenant_id: number): DatasetQuery => ({
 
 const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false }) => {
   const { setScript, defaultScript, execute, executing } = scriptStore();
-  const { isSuperAdmin, user } = useAuth();
+  const { user } = useAuth();
+  const location = useLocation();
+  const stateQuery = (location.state as any)?.query as DatasetQuery | undefined;
 
   /* ---- Modal visibility ---- */
   const [showQueryPanel, setShowQueryPanel] = useState(false);
@@ -53,11 +53,13 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
   const [previewSql, setPreviewSql] = useState<string | null>(null);
 
   /* ---- Dataset query state ---- */
-  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [tenant_id, setTenantId] = useState<number | undefined>();
   const [query, setQuery] = useState<DatasetQuery | null>(null);
   const [errors, setErrors] = useState<CompileError>({});
+
+  /* ---- Saved queries ---- */
+  const [savedQueries, setSavedQueries] = useState<DatasetQuery[]>([]);
 
   /* ---- Temp state for sub-modals ---- */
   const [tempWhere, setTempWhere] = useState<LinkedFilterGroup[]>([]);
@@ -68,19 +70,28 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    tenantService.all().then(t => {
-      setTenants(t || []);
-      const tid = user?.tenant_id;
-      setTenantId(tid);
-      if (tid) setQuery(createDefaultQuery(tid));
-    });
+    const tid = user?.tenant_id;
+    setTenantId(tid);
+    if (!stateQuery && tid) setQuery(createDefaultQuery(tid));
   }, []);
 
   useEffect(() => {
     if (!tenant_id) return;
-    datasetService.allWithRelations(tenant_id).then(d => setDatasets(d || []));
-    setQuery(createDefaultQuery(tenant_id));
+    datasetService.allWithRelations(tenant_id).then(d => {
+      setDatasets(d || []);
+      if (stateQuery) {
+        setQuery(stateQuery);
+        if (stateQuery.compiled_sql) setScript(defaultScript(stateQuery.compiled_sql));
+      } else {
+        setQuery(prev => prev?.id ? prev : createDefaultQuery(tenant_id));
+      }
+    });
   }, [tenant_id]);
+
+  useEffect(() => {
+    if (!tenant_id || !query?.dataset_id) { setSavedQueries([]); return; }
+    queryService.all(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []));
+  }, [tenant_id, query?.dataset_id]);
 
   const defaultForm = useMemo(() => createDefaultQuery(tenant_id ?? 0), [tenant_id]);
 
@@ -130,6 +141,12 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
     if (!query) return;
     recompileAndPush({ ...query.query_json, order_by: tempOrderBy });
     setShowOrderByModal(false);
+  };
+
+  /* ---- Load saved query into builder ---- */
+  const handleLoadQuery = (saved: DatasetQuery) => {
+    setQuery(saved);
+    if (saved.compiled_sql) setScript(defaultScript(saved.compiled_sql));
   };
 
   /* ---- SQL injection into editor ---- */
@@ -196,18 +213,40 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
             </div>
           )}
 
-          {/* SAVED SCRIPTS (super admin only) */}
-          {isSuperAdmin && (
+          {/* SAVED QUERIES */}
+          {savedQueries.length > 0 && (
             <>
               <div className={styles.cardHeader}>
                 <div className={styles.cardTitle}>
-                  <div className={styles.cardIcon}><Database size={16} /></div>
-                  <span>Scripts sauvegardés</span>
+                  <div className={styles.cardIcon}><FolderOpen size={16} /></div>
+                  <span>Requêtes sauvegardées</span>
                 </div>
-                <Button variant="ghost" size="sm" title="Rafraîchir"><RefreshCw size={16} /></Button>
+                <Button
+                  variant="ghost" size="sm" title="Rafraîchir"
+                  onClick={() => tenant_id && query?.dataset_id && queryService.all(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []))}
+                >
+                  <RefreshCw size={16} />
+                </Button>
               </div>
-              <div className={styles.cardBody}>
-                <SavedScriptList />
+              <div className={styles.cardBody} style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                {savedQueries.map(sq => (
+                  <button
+                    key={sq.id}
+                    onClick={() => handleLoadQuery(sq)}
+                    title={sq.description || sq.name}
+                    style={{
+                      textAlign: "left", padding: "0.4rem 0.6rem", borderRadius: "6px",
+                      fontSize: "0.78rem", cursor: "pointer", border: "none",
+                      background: query?.id === sq.id ? "#dbeafe" : "transparent",
+                      color: query?.id === sq.id ? "#1d4ed8" : "#374151",
+                      fontWeight: query?.id === sq.id ? 600 : 400,
+                    }}
+                    onMouseEnter={e => { if (query?.id !== sq.id) (e.currentTarget as HTMLElement).style.background = "#f3f4f6"; }}
+                    onMouseLeave={e => { if (query?.id !== sq.id) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                  >
+                    {sq.name}
+                  </button>
+                ))}
               </div>
             </>
           )}
@@ -218,7 +257,15 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
           <div className={`${styles.editorSection} ${styles.compactCard}`}>
             <div className={styles.cardHeader}>
               <div className={styles.cardTitle}>
-                <CodeEditorButtons onExecuteComplete={() => setShowResultsModal(true)} />
+                <CodeEditorButtons
+                  onExecuteComplete={() => setShowResultsModal(true)}
+                  query={query}
+                  onAfterSave={(id) => {
+                    setValue("id", id);
+                    if (tenant_id && query?.dataset_id)
+                      queryService.all(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []));
+                  }}
+                />
               </div>
               
             </div>
@@ -235,7 +282,6 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
           <DatasetQueryPanel
             query={query}
             datasets={datasets}
-            tenants={tenants}
             tenant_id={tenant_id}
             errors={errors}
             defaultForm={defaultForm}
@@ -250,7 +296,7 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
       </Modal>
 
       {/* RESULTS MODAL */}
-      <Modal isOpen={showResultsModal} onClose={() => setShowResultsModal(false)} title="📊 Résultats de l'exécution" size="xl">
+      <Modal isOpen={showResultsModal} onClose={() => setShowResultsModal(false)} title="Résultats de l'exécution" size="xl">
         <ResultsTable />
       </Modal>
 

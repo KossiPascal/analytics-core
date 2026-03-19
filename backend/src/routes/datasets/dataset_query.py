@@ -193,9 +193,13 @@ def create_query():
         query.created_by_id=currentUserId()
         db.session.add(query)
         db.session.commit()
-        compiler.store_matview()
-        
-        return jsonify({"message": "DatasetQuery created", "query_id": query.id}), 201
+
+        try:
+            compiler.store_matview()
+        except Exception as e:
+            logger.warning(f"store_matview failed (non-blocking): {str(e)}")
+
+        return jsonify({"message": "DatasetQuery created", "id": query.id, "query_id": query.id}), 201
     except Exception as e:
         db.session.rollback()
         logger.error(f"Create query error: {str(e)}")
@@ -220,10 +224,10 @@ def update_query(query_id: int):
             raise BadRequest("parametters ares invalid", 400)
         
         compiler = MakeCompileQueryJson(
-            dataset_id=dataset_id, 
-            query_json=query_json, 
+            dataset_id=dataset_id,
+            query_json=query_json,
             sql_type=sql_type,
-            query_view_name=query_name
+            object_name=query_name
         )
         compiler.run()
 
@@ -257,9 +261,13 @@ def update_query(query_id: int):
 
         query.updated_by_id=currentUserId()
         db.session.commit()
-        compiler.store_matview()
-        
-        return jsonify({"message": "DatasetQuery updated"}), 200
+
+        try:
+            compiler.store_matview()
+        except Exception as e:
+            logger.warning(f"store_matview failed (non-blocking): {str(e)}")
+
+        return jsonify({"message": "DatasetQuery updated", "id": query.id}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
         raise BadRequest("Failed to update query", 500)

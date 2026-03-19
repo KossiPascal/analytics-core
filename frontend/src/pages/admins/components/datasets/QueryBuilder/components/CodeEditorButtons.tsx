@@ -1,25 +1,36 @@
-import React, { useCallback, useEffect } from "react";
-import { AppBar, Toolbar, Button, Tooltip, CircularProgress, Box } from "@mui/material";
-import { useAuth } from "@contexts/AuthContext";
+import React, { useCallback, useEffect, useState } from "react";
+import { Toolbar, Button, Tooltip, CircularProgress, Box } from "@mui/material";
 import { useTheme, useMediaQuery } from "@mui/material";
 import { scriptStore } from "@/stores/scripts.store";
+import { queryService } from "@/services/dataset.service";
+import { DatasetQuery } from "@/models/dataset.models";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import StopIcon from "@mui/icons-material/Stop";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 interface CodeEditorButtonsProps {
   onExecuteComplete?: () => void;
+  query?: DatasetQuery | null;
+  onAfterSave?: (id: number) => void;
 }
 
-export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButtonsProps) {
-  const { toggleTheme, execute, cancelExecution, resetEditor, save, remove, loading, script, isDirty, canExecute, fetchAll } = scriptStore();
+export default function CodeEditorButtons({ onExecuteComplete, query, onAfterSave }: CodeEditorButtonsProps) {
+  const { toggleTheme, execute, cancelExecution, resetEditor, remove, loading, script, canExecute } = scriptStore();
 
-  const { isSuperAdmin } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"success" | "error" | null>(null);
+  const [saveMessage, setSaveMessage] = useState("");
+
+  /* ---- Condition d'activation du bouton Sauvegarder ---- */
+  const canSaveQuery = Boolean(query?.compiled_sql && query?.name?.trim() && query?.dataset_id);
 
   /* ---------------- UTILS POUR BOUTONS DARK/LIGHT ---------------- */
   const buttonSx = (colorKey: string) => ({
@@ -45,16 +56,35 @@ export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButto
     if (!loading && script?.content) resetEditor();
   }, [loading, script, resetEditor]);
 
-  const safeSave = useCallback(() => {
-    if (loading || !isDirty) return;
-    save();
-    fetchAll();
-  }, [loading, isDirty, save, fetchAll]);
-
   const safeDelete = useCallback(() => {
     if (!script?.id || loading) return;
     remove();
   }, [script, loading, remove]);
+
+  const safeSaveQuery = useCallback(async () => {
+    if (!canSaveQuery || saving || !query) return;
+    setSaving(true);
+    setSaveStatus(null);
+    try {
+      if (query.id) {
+        await queryService.update(query.id, query);
+        setSaveMessage("Requête mise à jour");
+      } else {
+        const res = await queryService.create(query) as any;
+        const newId = res?.id ?? res?.query_id;
+        if (newId) onAfterSave?.(newId);
+        setSaveMessage("Requête sauvegardée");
+      }
+      setSaveStatus("success");
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch {
+      setSaveStatus("error");
+      setSaveMessage("Erreur lors de la sauvegarde");
+      setTimeout(() => setSaveStatus(null), 4000);
+    } finally {
+      setSaving(false);
+    }
+  }, [canSaveQuery, saving, query, onAfterSave]);
 
   /* ---------------- GLOBAL KEYBINDINGS ---------------- */
   useEffect(() => {
@@ -63,9 +93,7 @@ export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButto
         e.preventDefault();
         safeExecute();
       }
-      if (e.key === "Escape") {
-        safeCancel();
-      }
+      if (e.key === "Escape") safeCancel();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -73,28 +101,11 @@ export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButto
 
   /* ---------------- RENDER ---------------- */
   return (
-    // <AppBar
-    //   position="static"
-    //   color="transparent" // IMPORTANT
-    //   elevation={1}
-    //   sx={{
-    //     bgcolor: (theme) =>
-    //       theme.palette.mode === "dark"
-    //         ? `${theme.palette.background.default} !important`
-    //         : `${theme.palette.grey[100]} !important`,
-    //     color: (theme) =>
-    //       theme.palette.mode === "dark"
-    //         ? theme.palette.text.primary
-    //         : theme.palette.text.primary,
-    //   }}
-    // >
-    // </AppBar>
-
     <Toolbar>
       <Box
         className="flex gap-2 flex-wrap items-center justify-start sm:justify-between"
         role="toolbar"
-        aria-label="Barre d’actions du script"
+        aria-label="Barre d'actions du script"
       >
         {/* THEME */}
         <Tooltip title="Changer le thème">
@@ -111,11 +122,7 @@ export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButto
         </Tooltip>
 
         {/* EXECUTE */}
-        <Tooltip
-          title={
-            canExecute ? "Exécuter (Ctrl+Entrée)" : "Script invalide ou incomplet"
-          }
-        >
+        <Tooltip title={canExecute ? "Exécuter (Ctrl+Entrée)" : "Script invalide ou incomplet"}>
           <span>
             <Button
               color="primary"
@@ -143,7 +150,7 @@ export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButto
                 onClick={safeCancel}
                 disabled={!loading}
                 sx={{ px: 1.5, py: 0.5 }}
-                aria-label="Annuler l’exécution"
+                aria-label="Annuler l'exécution"
               >
                 {!isMobile && "Stop"}
               </Button>
@@ -167,42 +174,40 @@ export default function CodeEditorButtons({ onExecuteComplete }: CodeEditorButto
           </span>
         </Tooltip>
 
-        {/* SAVE */}
-        {isSuperAdmin && (
-          <Tooltip title={isDirty ? "Sauvegarder" : "Aucune modification"}>
-            <span>
-              <Button
-                color="success"
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={safeSave}
-                disabled={loading || !isDirty}
-                aria-label="Sauvegarder le script"
-                sx={buttonSx("green")}
-              >
-                {!isMobile && "Sauvegarder"}
-              </Button>
-            </span>
-          </Tooltip>
-        )}
+        {/* SAVE QUERY */}
+        <Tooltip title={
+          !query?.compiled_sql ? "Construisez une requête d'abord" :
+          !query?.name?.trim() ? "Renseignez le nom dans Informations générales" :
+          !query?.dataset_id ? "Sélectionnez un dataset dans Informations générales" :
+          query.id ? "Mettre à jour la requête" : "Sauvegarder la requête"
+        }>
+          <span>
+            <Button
+              color="success"
+              variant="contained"
+              startIcon={saving ? <CircularProgress size={18} /> : <SaveIcon />}
+              onClick={safeSaveQuery}
+              disabled={loading || !canSaveQuery || saving}
+              aria-label="Sauvegarder la requête"
+              sx={buttonSx("green")}
+            >
+              {!isMobile && (saving ? "Sauvegarde…" : query?.id ? "Mettre à jour" : "Sauvegarder")}
+            </Button>
+          </span>
+        </Tooltip>
 
-        {/* DELETE */}
-        {isSuperAdmin && (
-          <Tooltip title={script?.id ? "Supprimer" : "Aucun script chargé"}>
-            <span>
-              <Button
-                color="error"
-                variant="contained"
-                startIcon={<DeleteIcon />}
-                onClick={safeDelete}
-                disabled={loading || !script?.id}
-                aria-label="Supprimer le script"
-                sx={buttonSx("red")}
-              >
-                {!isMobile && "Supprimer"}
-              </Button>
-            </span>
-          </Tooltip>
+        {/* FEEDBACK SAVE */}
+        {saveStatus === "success" && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "success.main", fontSize: "0.8rem" }}>
+            <CheckCircleOutlineIcon fontSize="small" />
+            {!isMobile && saveMessage}
+          </Box>
+        )}
+        {saveStatus === "error" && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "error.main", fontSize: "0.8rem" }}>
+            <ErrorOutlineIcon fontSize="small" />
+            {!isMobile && saveMessage}
+          </Box>
         )}
       </Box>
     </Toolbar>

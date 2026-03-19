@@ -71,8 +71,8 @@ export default function CodeEditor() {
           </div>
         )}
 
-        {/* Language selector */}
-        {isSuperAdmin && (
+        {/* Language selector — masqué, SQL par défaut */}
+        {false && (
           <div className="min-w-[220px]">
             <FormSelect
               label="Langage"
