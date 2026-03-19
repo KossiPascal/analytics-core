@@ -23,6 +23,9 @@ export const datasetService = {
     create: (data: Dataset) => datasets.create("", data),
     update: (id: number, data: Dataset) => datasets.update("", id, data),
     remove: (id: number) => datasets.remove("", id),
+    validateSql: (data: Dataset) => datasets.post<{ rows: Record<string, any>[] }>("/validate-sql", data),
+
+
 }
 
 const fields = new CRUDService("/dataset-fields");

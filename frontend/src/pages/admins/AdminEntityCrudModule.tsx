@@ -7,6 +7,7 @@ import { useNotification } from "@/contexts/OLD/useNotification";
 import { RefreshCw, Building2, Save, Trash2, Edit2 } from "lucide-react";
 
 import styles from "@pages/admins/AdminPage.module.css";
+import { boolean } from "zod";
 
 /* ============================= */
 /* ========== TYPES ============ */
@@ -46,16 +47,7 @@ interface AdminEntityCrudModuleProps<T> {
     formatedEntity?: (entity: T) => Promise<T>,
 
     /** Custom buttons rendered inside modal footer */
-    formButtons?: (
-        entity: T,
-        helpers: {
-            handleAction: (
-                action: () => Promise<void>,
-                fetchAfterAction: boolean
-            ) => Promise<void>;
-            close: () => void;
-        }
-    ) => React.ReactNode;
+    formActionsButtons?: (props: {entity: T,isFormValid: boolean,saving: boolean,close?: (cls: boolean) => void}) => React.ReactNode;
 
     isValid?: (entity: T) => boolean;
 
@@ -90,7 +82,7 @@ const AdminEntityCrudModuleInner = <
         renderForm,
         formatedEntity,
         modalSize = "sm",
-        formButtons,
+        formActionsButtons,
         isValid,
         enableActions = true,
         enableEdit = true,
@@ -371,10 +363,8 @@ const AdminEntityCrudModuleInner = <
                                 Annuler
                             </Button>
 
-                            {formButtons?.(entity, {
-                                handleAction,
-                                close: () => setOpenModal(false),
-                            })}
+
+                            {formActionsButtons?.({entity, isFormValid, saving, close: (act: boolean) => setOpenModal(act)})}
 
                             <Button
                                 variant="primary"

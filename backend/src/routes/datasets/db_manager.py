@@ -8,7 +8,7 @@ from sqlalchemy import bindparam, text
 from sqlalchemy.sql.elements import TextClause
 from backend.src.routes.datasets.query.sql_compiler import ALLOWED_PATTERN, FORBIDDEN_PATTERNS, VALID_SQL_IDENTIFIER
 
-MAX_IDENTIFIER_LENGTH = 15
+MAX_IDENTIFIER_LENGTH = 60
 
 RESERVED_KEYWORDS = {
     "select", "table", "view", "index", "where", "group",
@@ -47,7 +47,8 @@ class DbObjectManager:
             raise ValueError(f"Invalid sql_type: {self.sql_type}")
         return sql_type
 
-    def _validate_sql(self, sql: str):
+    @classmethod
+    def _validate_sql(cls, sql: str):
         if not sql or not isinstance(sql, str):
             raise ValueError("SQL query must be a non-empty string")
         
@@ -59,13 +60,14 @@ class DbObjectManager:
                 raise ValueError(f"Forbidden SQL pattern detected: {pattern}")
 
     # SQL RENDERING
-    def _render_sql(self, sql: str, values: Dict[str, Any]) -> str:
+    @classmethod
+    def render_sql_with_values(cls, sql: str, values: Dict[str, Any]) -> str:
         """
         Safely render SQL with parameters.
         Handles: Scalars, Lists (IN / ANY)
         """
 
-        self._validate_sql(sql)
+        cls._validate_sql(sql)
         try:
             stmt: TextClause = text(sql)
             for key, value in values.items():
@@ -143,7 +145,8 @@ class DbObjectManager:
 
     # SQL GENERATION
     def generate_create_sql(self, sql: str, values: Dict[str, Any]) -> str:
-        rendered = self._render_sql(sql, values)
+
+        rendered = self.render_sql_with_values(sql, values)
 
         create_sql = None
 
@@ -381,20 +384,54 @@ class SqlIntrospector:
 
     # --------------------------------------------------
 
+    # @staticmethod
+    # def extract_select_query(sql: str) -> str:
+    #     sql = SqlIntrospector._clean_sql(sql)
+    #     # 🔹 CREATE ... AS ...
+    #     match = re.search(r"\bAS\s*\(?\s*(SELECT|WITH)\b",sql,re.IGNORECASE)
+    #     if match:
+    #         return sql[match.start(1):]
+    #     # 🔹 direct SELECT / WITH
+    #     if re.match(r"^\s*(SELECT|WITH)\b", sql, re.IGNORECASE):
+    #         return sql
+    #     raise ValueError("Only SELECT-based queries are allowed")
+
     @staticmethod
-    def extract_select_query(sql: str) -> str:
+    def unwrap_sql(sql: str) -> str:
         sql = SqlIntrospector._clean_sql(sql)
 
-        # 🔹 CREATE ... AS ...
-        match = re.search(r"\bAS\s*\(?\s*(SELECT|WITH)\b",sql,re.IGNORECASE)
+        # uniquement pour CREATE ... AS
+        match = re.search(r"\bAS\s+(SELECT|WITH)\b.*", sql, re.IGNORECASE | re.DOTALL)
         if match:
             return sql[match.start(1):]
 
-        # 🔹 direct SELECT / WITH
-        if re.match(r"^\s*(SELECT|WITH)\b", sql, re.IGNORECASE):
-            return sql
+        return sql
 
-        raise ValueError("Only SELECT-based queries are allowed")
+ 
+    @staticmethod
+    def add_limit(sql: str, limit: int = 100) -> str:
+        """
+        Ajoute un LIMIT directement sur la requête principale.
+        Si la requête est une CTE (WITH ... AS (...)), on place le LIMIT à l'intérieur de la CTE
+        pour éviter que PostgreSQL scanne tout.
+        """
+        sql_clean = sql.strip().rstrip(";")
+
+        # 🔹 détecter LIMIT déjà présent
+        if re.search(r"\bLIMIT\s+\d+", sql_clean, re.IGNORECASE):
+            return sql_clean
+
+        # # 🔹 Si c'est un WITH ... AS ( ... ), ajouter LIMIT à la fin de la CTE
+        # cte_match = re.match(r"(WITH\s+.+?\))\s+SELECT", sql_clean, re.IGNORECASE | re.DOTALL)
+        # if cte_match:
+        #     cte_sql = cte_match.group(1)
+        #     rest_sql = sql_clean[len(cte_sql):].lstrip()
+        #     # ajouter LIMIT à l'intérieur de la CTE
+        #     cte_sql_limited = re.sub(r"\)\s*$", f") LIMIT {limit}", cte_sql)
+        #     return f"{cte_sql_limited} {rest_sql}"
+
+        # sinon simple SELECT
+        return f"{sql_clean} LIMIT {limit}"
 
 
     @classmethod
@@ -430,8 +467,15 @@ class SqlIntrospector:
 
             elif sql:
                 # 🔹 SQL brut
-                select_sql = cls.extract_select_query(sql)
-                wrapped_sql = f"SELECT * FROM ({select_sql}) AS sub LIMIT 0"
+                selected_sql = cls.unwrap_sql(sql)
+                final_sql = cls.add_limit(selected_sql, 1)
+
+                wrapped_sql = f"SELECT * FROM ({final_sql}) AS subquery LIMIT 1"
+                # wrapped_sql = f"""
+                #     WITH subquery AS ({final_sql})
+                #     SELECT * FROM subquery LIMIT 1
+                #     """
+        
 
                 with db.engine.connect() as conn:
                     result = conn.execute(text(wrapped_sql))
@@ -464,12 +508,15 @@ class SqlIntrospector:
         except Exception as e:
             raise ValueError(f"SQL introspection error: {e}")
 
+
     @classmethod
-    def sql_from_db(view_name: str, sql_type: str, schema: str = "public") -> (Dict[str, Any] | None):
+    def sql_from_db(cls, view_name: str, sql_type: str, schema: str = "public") -> (Dict[str, Any] | None):
         """
         Récupère le SQL réel de la view/table/function en base de données
         à partir de view_name et sql_type.
         """
+        sql_type = sql_type.lower()
+
         if not view_name or not sql_type:
             raise ValueError('view_name or sql_type is required !')
         
@@ -478,32 +525,32 @@ class SqlIntrospector:
             query = """
                 SELECT definition
                 FROM pg_views
-                WHERE schemaname = 'public' AND viewname = :view_name
+                WHERE schemaname = :schema AND viewname = :view_name
             """
         elif sql_type == DbObjectType.MATVIEW.value:
             query = """
                 SELECT definition
                 FROM pg_matviews
-                WHERE schemaname = 'public' AND matviewname = :view_name
+                WHERE schemaname = :schema AND matviewname = :view_name
             """
         elif sql_type == DbObjectType.FUNCTION.value:
             query = f"""
                 SELECT pg_get_functiondef(p.oid) AS definition
                 FROM pg_proc p
                 JOIN pg_namespace n ON n.oid = p.pronamespace
-                WHERE n.nspname = 'public' AND p.proname = :view_name
+                WHERE n.nspname = :schema AND p.proname = :view_name
             """
         elif sql_type == DbObjectType.TABLE.value:
             # Pour une table, on peut reconstruire CREATE TABLE via pg_dump ou information_schema
             query = f"""
                 SELECT 'table: ' || table_name AS definition
                 FROM information_schema.tables
-                WHERE table_schema = 'public' AND table_name = :view_name
+                WHERE table_schema = :schema AND table_name = :view_name
             """
         else:
             # Index et autres types → pas géré ici
             return None
 
-        result = db.session.execute(text(query), {"view_name": view_name}).fetchone()
+        result = db.session.execute(text(query), {"schema": schema, "view_name": view_name}).fetchone()
 
         return result[0] if result else None

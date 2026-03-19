@@ -24,8 +24,15 @@ bp = Blueprint("datasets", __name__, url_prefix="/api/datasets")
 def list_datasets(tenant_id: Optional[int] = None,dataset_id: Optional[int] = None, all:bool = True):
     
     query = Dataset.query.options(
+        selectinload(Dataset.tenant),
         selectinload(Dataset.fields),
         selectinload(Dataset.queries),
+        selectinload(Dataset.datasource),
+        # selectinload(Dataset.connection),
+        # selectinload(Dataset.charts),
+        # selectinload(Dataset.queries),
+        # selectinload(Dataset.all_versioned),
+        # selectinload(Dataset.parent),
     ).filter(Dataset.deleted == False)
 
     if dataset_id is not None:
@@ -41,6 +48,23 @@ def list_datasets(tenant_id: Optional[int] = None,dataset_id: Optional[int] = No
         chart:Dataset = query.first()
         return chart.to_dict()
 
+
+# CREATE DATASET
+def validate_sql_given(sql:str, values:dict, max_rows:int=50, explain:bool=False, limit:int=100):
+    try:
+
+        unwrap_sql=SqlIntrospector.unwrap_sql(sql)
+        rendered_sql = DbObjectManager.render_sql_with_values(unwrap_sql, values)
+        final_sql = SqlIntrospector.add_limit(rendered_sql, limit)
+
+        conn = get_connection()
+        result, status = run_sql(conn, final_sql, None, max_rows=max_rows, explain=explain)
+        
+        return result, status
+
+    except Exception as e:
+        logger.error("Error validating sql")
+        raise
 
 # HELPERS
 def get_pagination():
@@ -101,6 +125,30 @@ def get_dataset(tenant_id, dataset_id):
     return jsonify(dataset), 200
 
 # CREATE DATASET
+@bp.post("validate-sql")
+@require_auth
+def validate_dataset():
+    try:
+
+        payload = request.get_json(silent=True) or {}
+
+        sql = payload.get("sql")
+        values = payload.get("values") or {}
+            
+        limit = int(payload.get("limit") or 100)
+        max_rows = int(payload.get("max_rows") or 50)
+        explain = bool(payload.get("explain") or False)
+        
+        result, status = validate_sql_given(sql, values, max_rows, explain, limit)
+        
+        return jsonify(result), status
+
+    except Exception as e:
+        logger.error("Error validating sql")
+        raise
+
+
+# CREATE DATASET
 @bp.post("")
 @require_auth
 def create_dataset():
@@ -111,6 +159,10 @@ def create_dataset():
 
         payload = request.get_json(silent=True) or {}
 
+        for field in ["name","tenant_id","datasource_id"]:
+            if not field in payload:
+                raise BadRequest(f"{field} is required", 400)
+
         name = payload.get("name")
         view_name = DbObjectManager.safe_object_name(name, user_id)
         sql_type=(payload.get("sql_type") or DbObjectType.MATVIEW.value).lower()
@@ -119,31 +171,25 @@ def create_dataset():
         if(_manager.object_exists()):
             raise BadRequest(f"View {view_name} already exist !", 400)
 
-        sql=SqlIntrospector.extract_select_query(payload.get("sql"))
-        values=payload.get("values") or {}
-        columns = SqlIntrospector.get_columns(sql=sql, values=values)
-
-        options = payload.get("options") or {}
-
-        for field in ["tenant_id","datasource_id"]:
-            if not field in payload:
-                raise BadRequest(f"{field} is required", 400)
+        sql = payload.get("sql")
+        values = payload.get("values") or {}
             
-        only_execute = bool(payload.get("only_execute") or False)
+        limit = int(payload.get("limit") or 100)
         max_rows = int(payload.get("max_rows") or 50)
         explain = bool(payload.get("explain") or False)
-        if only_execute:
-            conn = get_connection()
-            result, status = run_sql(conn, sql, None, max_rows=max_rows, explain=explain)
-            return jsonify(result), status
         
-        success_executed = bool(payload.get("success_executed") or False)
-        if not success_executed:
-            raise BadRequest("L'execution n'a pas été un succès, veuillez réessayer", 400)
-        print("1 ="*20)    
+        result, status = validate_sql_given(sql, values, max_rows, explain, limit)
+        if not status in {200, 201}:
+            raise BadRequest("Votre SQL n'est pas valide, veuillez réessayer", 400)
+
+        cleaned_sql=SqlIntrospector.unwrap_sql(sql)
+        columns = SqlIntrospector.get_columns(cleaned_sql, values)
+
+        options = payload.get("options") or {}
+            
         dataset = Dataset(
             name=name,
-            sql=sql,
+            sql=cleaned_sql,
             values=values,
             options=options,
             sql_type=sql_type,
@@ -157,13 +203,12 @@ def create_dataset():
             is_active=bool(payload.get("is_active", False)),
             created_by_id=user_id,
         )
-        print("2 ="*20)
         db.session.add(dataset)
-        print("3 ="*20)
-        _manager.create_object(sql=sql, values=values)
+
+        _manager.create_object(sql=cleaned_sql, values=values)
 
         db.session.commit()
-        print("4 ="*20)
+
         return jsonify(dataset.to_dict()), 201
 
     except IntegrityError as e:
@@ -186,12 +231,20 @@ def get_local_views():
     except IntegrityError as e:
         raise BadRequest(f"Error local_views: {str(e)}", 400)
 
+
 @bp.get("/view-sql/<string:view_name>/<string:sql_type>")
 @require_auth
 def get_view_sql_columns(view_name:str, sql_type:str):
     try:
-        sql_from_db = SqlIntrospector.sql_from_db(view_name,sql_type)
-        return jsonify(sql_from_db), 201
+        if not view_name or not sql_type:
+            raise BadRequest(f"view_name and sql_type are required")
+
+        sql_from_db = SqlIntrospector.sql_from_db(view_name=view_name,sql_type=sql_type)
+
+        if not sql_from_db:
+            raise BadRequest("Object not found in database", 404)
+
+        return jsonify({"sql": sql_from_db}), 201
 
     except IntegrityError as e:
         raise BadRequest(f"Error local_views: {str(e)}", 400)
@@ -201,6 +254,10 @@ def get_view_sql_columns(view_name:str, sql_type:str):
 @require_auth
 def update_dataset(dataset_id):
     try:
+        user_id = currentUserId()
+        if not user_id:
+            raise BadRequest(f"Current User not found", 401)
+
         from sqlalchemy import and_
         dataset:Dataset = Dataset.query.options(
             selectinload(Dataset.fields),
@@ -209,19 +266,13 @@ def update_dataset(dataset_id):
             Dataset.deleted == False,
             Dataset.id == dataset_id,
             and_(
-                Dataset.view_name.isnot(None),
-                Dataset.view_name != "",
-                Dataset.sql_type.isnot(None),
-                Dataset.sql_type != "",
+                Dataset.view_name.isnot(None), Dataset.view_name != "",
+                Dataset.sql_type.isnot(None), Dataset.sql_type != "",
             )
         ).first()
 
         if not dataset:
             raise BadRequest("Dataset not found", 404)
-
-        user_id = currentUserId()
-        if not user_id:
-            raise BadRequest(f"Current User not found", 401)
 
         view_name = dataset.view_name
         sql_type = dataset.sql_type
@@ -232,9 +283,19 @@ def update_dataset(dataset_id):
 
         payload = request.get_json(silent=True) or {}
 
-        sql=SqlIntrospector.extract_select_query(payload.get("sql"))
-        values=payload.get("values") or {}
-        columns = SqlIntrospector.get_columns(sql=sql, values=values)
+        sql = payload.get("sql")
+        values = payload.get("values") or {}
+            
+        limit = int(payload.get("limit") or 100)
+        max_rows = int(payload.get("max_rows") or 50)
+        explain = bool(payload.get("explain") or False)
+        
+        result, status = validate_sql_given(sql, values, max_rows, explain, limit)
+        if not status in {200, 201}:
+            raise BadRequest("Votre SQL n'est pas valide, veuillez réessayer", 400)
+
+        cleaned_sql=SqlIntrospector.unwrap_sql(sql)
+        columns = SqlIntrospector.get_columns(cleaned_sql, values)
         column_maps = {c["name"]:c["type"] for c in columns if c and c.get("name") and c.get("type")}
 
         fields:List[DatasetField] = dataset.fields or []
@@ -255,19 +316,6 @@ def update_dataset(dataset_id):
                         f"but the expected type is '{expected_type}'.",
                         400)
 
-        only_execute = bool(payload.get("only_execute") or False)
-        max_rows = int(payload.get("max_rows") or 50)
-        explain = bool(payload.get("explain") or False)
-        if only_execute:
-            conn = get_connection()
-            result, status = run_sql(conn, sql, None, max_rows=max_rows, explain=explain)
-            return jsonify(result), status
-        
-        success_executed = bool(payload.get("success_executed") or False)
-        if not success_executed:
-            raise BadRequest("L'execution n'a pas été un succès, veuillez réessayer", 400)
-        
-
         dts_versioned = DatasetVersioned(
             dataset_id=dataset.id,
             sql=dataset.sql,
@@ -278,20 +326,21 @@ def update_dataset(dataset_id):
         )
         db.session.add(dts_versioned)
 
-        for field in { "name", "options" }:
+        for field in { "name", "options", "description", "is_active" }:
             if field in payload:
                 setattr(dataset, field, payload[field])
             elif field in ["name"]:
                 raise BadRequest(f"{field} is required", 400)
 
-        dataset.sql=sql
+        dataset.columns=columns
+        dataset.sql=cleaned_sql
         dataset.values=values
         dataset.version=dataset.version + 1
         dataset.updated_by_id=user_id
 
-        db.session.commit()
+        _manager.update_object(sql=cleaned_sql, values=values)
 
-        _manager.update_object(sql=sql, values=values)
+        db.session.commit()
 
         return jsonify(dataset.to_dict()), 200
 

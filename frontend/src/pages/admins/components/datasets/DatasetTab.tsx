@@ -15,6 +15,7 @@ import { DataSource } from '@/models/datasource.models';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
 import { FormSwitch } from '@/components/forms/FormSwitch/FormSwitch';
+import { Save } from 'lucide-react';
 
 const createDefaultForm = (tenant_id: number): Dataset => ({
     id: null,
@@ -27,14 +28,13 @@ const createDefaultForm = (tenant_id: number): Dataset => ({
     datasource_id: null,
     connection_id: null,
     description: "",
-    is_active: false,
+    is_active: true,
+    is_public: false,
     columns: [],
     version: 1,
     options: {},
-    only_execute: false,
     max_rows: null,
     explain: false,
-    success_executed: false,
 });
 
 /** Textarea that manages its own string state and commits on blur as parsed JSON */
@@ -67,6 +67,15 @@ const getSourceColumns = (openSqlModal: (ds: Dataset) => void): Column<Dataset>[
         key: "sql", header: "SQL", align: "center",
         render: (ds) => ds.sql ? <Button onClick={() => openSqlModal(ds)}>Voir SQL</Button> : "",
     },
+    {
+        key: "values", header: "Sql Values", sortable: true, searchable: true,
+        render: (ds) => JSON.stringify(ds.values ?? {}),
+    },
+    {
+        key: "options", header: "Sql Options", sortable: true, searchable: true,
+        render: (ds) => JSON.stringify(ds.options ?? {}),
+    },
+
     { key: "sql_type", header: "Sql type", sortable: true, searchable: true },
     { key: "tenant", header: "Tenant", render: (ds) => ds.tenant?.name ?? "", sortable: true, searchable: true },
     { key: "datasource", header: "Datasource", render: (ds) => ds.datasource?.name ?? "", sortable: true, searchable: true },
@@ -74,6 +83,10 @@ const getSourceColumns = (openSqlModal: (ds: Dataset) => void): Column<Dataset>[
     {
         key: "is_active", header: "Active", sortable: true, align: "center",
         render: (ou) => <StatusBadge isActive={ou.is_active === true} />, searchable: false,
+    },
+    {
+        key: "is_public", header: "Is public", sortable: true, align: "center",
+        render: (ou) => <StatusBadge isActive={ou.is_public === true} />, searchable: false,
     },
     { key: "version", header: "Version", sortable: true, align: "center", render: (ds) => ds.version ?? "", searchable: false },
 ];
@@ -88,12 +101,13 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
     const [localViews, setLocalViews] = useState<{ name: string; type: string }[]>([]);
     const [selectedDatasetName, setSelectedDatasetName] = useState<string>("");
     const [selectedSql, setSelectedSql] = useState<string | null>(null);
-    const [showSql, setShowSql] = useState<boolean>(false);
+    const [validatedSqlResult, setValidatedSqlResult] = useState<{ columns: string[]; rows: Record<string, any>[]; } | null>(null);
+    const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+    const [validating, setValidating] = useState<boolean>(false);
 
     const openSqlModal = (ds: Dataset) => {
-        setSelectedSql(ds.sql ?? "");
+        setSelectedSql(ds.sql);
         setSelectedDatasetName(ds.name);
-        setShowSql(true);
     };
 
     const sourceColumns = useMemo(() => getSourceColumns(openSqlModal), []);
@@ -118,6 +132,14 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
     const defaultTenant = useMemo(() => ({ required: true, ids: [tenant_id] }), [tenant_id]);
     const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id]);
 
+
+    const renderCell = (value: any) => {
+        if (value === null || value === undefined) return <span className="text-gray-400">NULL</span>;
+        if (typeof value === "boolean") return value ? "TRUE" : "FALSE";
+        if (typeof value === "object") return JSON.stringify(value);
+        return value.toString();
+    };
+
     return (
         <>
             <AdminEntityCrudModule<Dataset>
@@ -130,6 +152,31 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
                 service={datasetService}
                 defaultTenant={defaultTenant}
                 isValid={(r) => r.name.trim().length > 0}
+                formActionsButtons={({ entity, isFormValid, saving, close }) => (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={!isFormValid || saving || validating}
+                        onClick={async () => {
+                            try {
+                                setValidating(true);
+                                const res = await datasetService.validateSql(entity);
+                                const rows = Array.isArray(res?.rows) ? res.rows : [];
+                                const has_data = rows.length > 0 && typeof rows[0] === "object";
+                                const columns = has_data && rows.length > 0 ? Object.keys(rows[0]) : [];
+                                setValidatedSqlResult({ columns, rows });
+                            } catch (error) {
+                                setValidatedSqlResult({ columns: [], rows: [] });
+                            } finally {
+                                setValidating(false);
+                                // close(false);
+                            }
+                        }}
+                    >
+                        <Save size={16} />
+                        {validating ? "Validation Sql ..." : "Valider Sql"}
+                    </Button>
+                )}
                 renderForm={(dataset, setValue, _saving) => {
                     const isUpdate = Boolean(dataset.id);
                     return (
@@ -196,35 +243,21 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
                                     required
                                 />
                             )}
-                            {dataset.use_local_view
-                                ? <FormTextarea label="SQL (auto)" value={dataset.sql || ""} disabled rows={4} />
-                                : <FormTextarea
-                                    label="SQL"
-                                    value={dataset.sql || ""}
-                                    onChange={(e) => setValue("sql", e.target.value)}
-                                    placeholder="Ex: SELECT * FROM table;"
-                                    rows={4}
-                                  />
-                            }
+
+                            <FormTextarea
+                                label="SQL"
+                                value={dataset.sql || ""}
+                                onChange={(e) => setValue("sql", e.target.value)}
+                                placeholder="Ex: SELECT * FROM table;"
+                                rows={4}
+                            />
 
                             {/* ── Nouveaux champs ── */}
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <FormSwitch
-                                    label="Exécution seule"
-                                    checked={Boolean(dataset.only_execute)}
-                                    onChange={(e) => setValue("only_execute", e.target.checked)}
-                                />
-                                <FormSwitch
                                     label="Mode Explain"
                                     checked={Boolean(dataset.explain)}
                                     onChange={(e) => setValue("explain", e.target.checked)}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormSwitch
-                                    label="Exécution réussie"
-                                    checked={Boolean(dataset.success_executed)}
-                                    onChange={(e) => setValue("success_executed", e.target.checked)}
                                 />
                                 <FormInput
                                     label="Lignes max"
@@ -245,6 +278,13 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
                                     checked={Boolean(dataset.is_active)}
                                     onChange={(e) => setValue("is_active", e.target.checked)}
                                 />
+                                <FormSwitch
+                                    label="Is public"
+                                    checked={Boolean(dataset.is_public)}
+                                    onChange={(e) => setValue("is_public", e.target.checked)}
+                                />
+
+                                
                             </div>
 
                             <FormTextarea
@@ -261,13 +301,13 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
 
             {selectedSql && (
                 <Modal
-                    isOpen={showSql}
-                    onClose={() => setShowSql(false)}
+                    isOpen={true}
+                    onClose={() => setSelectedSql(null)}
                     title={"SQL — " + selectedDatasetName}
                     size="full"
                     footer={
                         <div className="flex gap-3">
-                            <Button variant="outline" size="sm" onClick={() => { setShowSql(false); setSelectedSql(null); }}>
+                            <Button variant="outline" size="sm" onClick={() => setSelectedSql(null)}>
                                 Fermer
                             </Button>
                             <Button onClick={() => navigator.clipboard.writeText(selectedSql)}>
@@ -279,6 +319,51 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
                     <div className="flex-1 overflow-auto bg-[#1e1e1e] p-6">
                         <pre className="text-sm text-green-400 font-mono whitespace-pre-wrap">{selectedSql}</pre>
                     </div>
+                </Modal>
+            )}
+
+
+            {validatedSqlResult && (
+                <Modal
+                    isOpen={true}
+                    onClose={() => setValidatedSqlResult(null)}
+                    title={"Résultat SQL"}
+                    size="full"
+                    footer={
+                        <div className="flex gap-3">
+                            <Button variant="outline" size="sm" onClick={() => setValidatedSqlResult(null)}>
+                                Fermer
+                            </Button>
+                        </div>
+                    }
+                >
+                    <table className="min-w-full border-collapse text-sm">
+                        <thead className="bg-gray-100 sticky top-0">
+                            <tr>
+                                {validatedSqlResult.columns.map((key) => (
+                                    <th key={key} className="px-4 py-2 border text-left font-semibold">
+                                        {key}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {validatedSqlResult.rows.map((row, i) => (
+                                <tr
+                                    key={i}
+                                    onMouseEnter={() => setHoveredRow(i)}
+                                    onMouseLeave={() => setHoveredRow(null)}
+                                    className={hoveredRow === i ? "bg-gray-50" : ""}
+                                >
+                                    {validatedSqlResult.columns.map((col) => (
+                                        <td key={col} className="px-4 py-2 border">
+                                            {renderCell(row[col])}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </Modal>
             )}
         </>

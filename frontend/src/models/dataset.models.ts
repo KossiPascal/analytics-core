@@ -114,16 +114,16 @@ export interface Dataset {
   description: string
   use_local_view: boolean;
   sql: string | null;
+  values?: Record<string, any>;
   columns?: DatasetColumn[];
   version: number;
   is_active: boolean;
-
+  is_public: boolean;
+  refresh?: boolean;
   // Execution options
   options?: Record<string, any>;
-  only_execute?: boolean;
   max_rows?: number | null;
   explain?: boolean;
-  success_executed?: boolean;
 
   tenant?: Tenant;
   datasource?: DataSource;
@@ -137,6 +137,7 @@ export interface Dataset {
   queries?: DatasetQuery[];
   parents?: Dataset[];
   created_at?: string;
+  roles_allowed?:string[]
 }
 
 export interface DatasetField {

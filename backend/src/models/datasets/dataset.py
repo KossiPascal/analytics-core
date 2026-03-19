@@ -130,6 +130,7 @@ class Dataset(db.Model, AuditMixin):
             "datasource_id": self.datasource_id,
             "connection_id": self.connection_id,
             "is_active": self.is_active,
+            "is_public": self.is_public,
             "is_validated": self.is_validated,
             "validated_at": self.validated_at,
             "validated_by_id": self.validated_by_id,
@@ -140,19 +141,24 @@ class Dataset(db.Model, AuditMixin):
             "options": self.options, 
             "values": self.values, 
             "refresh": self.refresh, 
+            "description": self.description,
+            # "roles_allowed": self.roles_allowed,
         }
-          
-
 
         if include_relations:
             data.update({
+                "parent": self.parent.to_dict(include_relations=False) if self.parent else None,
                 "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
                 "connection": self.connection.to_dict(include_relations=False) if self.connection else None,
                 "datasource": self.datasource.to_dict(include_relations=False) if self.datasource else None,
                 "fields": [f.to_dict(include_relations=False) for f in self.fields],
                 "queries": [q.to_dict(include_relations=False) for q in self.queries],
+                "charts": [c.to_dict(include_relations=False) for c in self.charts],
+                "all_versioned": [v.to_dict(include_relations=False) for v in self.all_versioned],
+                # "children": [c.id for c in self.children],
                 # "children": [c.id for c in self.children],
             })
+
 
         return data
 
@@ -173,6 +179,25 @@ class DatasetVersioned(db.Model):
     archived_by = db.Column(db.BigInteger, db.ForeignKey("users.id"), nullable=False)
     archived_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now(), nullable=False)
 
+    # SERIALIZATION
+    def to_dict(self, include_relations:bool=True):
+        data = {
+            "id": self.id,
+            "dataset_id": self.dataset_id,
+            "sql": self.sql,
+            "values": self.values, 
+            "version": self.version,
+            "options": self.options, 
+            "archived_by": self.archived_by,
+            "archived_at": self.archived_at,
+        }
+
+        if include_relations:
+            data.update({
+                "dataset": self.dataset.to_dict(include_relations=False) if self.dataset else None,
+            })
+
+        return data
 
 
 # DATASET FIELD

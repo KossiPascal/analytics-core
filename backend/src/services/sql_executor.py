@@ -32,6 +32,7 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
 
     start_ts = time.time()
     cur = None
+
     try:
         # We will use a server-side cursor for big selects? for simplicity use normal cursor
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -41,7 +42,7 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
             cur.execute(f"SET LOCAL statement_timeout = {int(STATEMENT_TIMEOUT_MS)};")
         except Exception as e:
             logger.warning("Could not set statement_timeout: %s", e)
-
+        
         # If read_only requested (for non-admins), set transaction readonly
         if read_only:
             try:
@@ -83,6 +84,7 @@ def execute_sql(conn,sql_text,max_rows=None,explain:bool=False,read_only:bool=Fa
             data = []
 
         duration = round((time.time() - start_ts) * 1000, 2)
+
         result = {
             "columns": columns,
             "rows": data,
