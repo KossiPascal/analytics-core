@@ -34,7 +34,7 @@ from backend.src.models.auth import User
 from backend.src.security.api_security import api_security
 from backend.src.routes import auth, database, worker_controller
 from backend.src.routes.visualizations import script, visualization
-from backend.src.routes.identities import permission, role, tenant, user, user_utils, orgunit, level, dhis2_sync as identities_dhis2_sync
+from backend.src.routes.identities import permission, role, tenant, tenant_source, user, user_utils, orgunit, level, dhis2_sync as identities_dhis2_sync
 from backend.src.routes.datasources import datasource, datasource_permission, datasource_type
 from backend.src.routes.datasets import dataset, dataset_field
 from backend.src.databases.extensions import db, scheduler
@@ -265,7 +265,7 @@ def create_flask_app(initialize_database = True) -> Flask:
     # Blueprints
     for bp in (
         auth, database, worker_controller, script, visualization,
-        permission, role, tenant, user, user_utils, orgunit, level, identities_dhis2_sync,
+        permission, role, tenant, tenant_source, user, user_utils, orgunit, level, identities_dhis2_sync,
         datasource, datasource_permission, datasource_type,
         dataset, dataset_chart,dataset_field,dataset_query
 

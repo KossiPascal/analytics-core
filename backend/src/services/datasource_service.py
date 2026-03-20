@@ -1,5 +1,6 @@
 from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
+from backend.src.config import clean_base_url
 from backend.src.models.datasource import ConnectionStatus, DataSource, DataSourceHistory, DataSourceConnection, DataSourceCredential, DataSourcePermission, DataSourceRole, DataSourceSSHConfig
 from shared_libs.helpers.utils import decrypt, encrypt, normalize_base_url
 from backend.src.databases.extensions import db
@@ -448,7 +449,8 @@ class DataSourceProvisioningService:
     def base_url(base_host:str) -> Optional[str]:
         base = base_host
         if base:
-            return f"https://{base.replace('https://','').replace('http://','')}"
+            base = clean_base_url(base)
+            return f"https://{base}"
         return None
 
 

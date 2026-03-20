@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from backend.src.databases.extensions import db
-
+from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import JSONB
 
 class Meeting(db.Model):
     __tablename__ = "meetings"
@@ -50,7 +51,7 @@ class MeetingTranscription(db.Model):
     language            = db.Column(db.String(10), nullable=True, default="fr")
     duration_seconds    = db.Column(db.Float, nullable=True)
     # WhisperX word-level segments stored as JSON
-    word_segments       = db.Column(db.JSON, nullable=True)
+    word_segments       = db.Column(JSONB, nullable=True, server_default=text("'{}'::jsonb"))
     created_at          = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     def to_dict_safe(self):
@@ -78,8 +79,8 @@ class MeetingSummary(db.Model):
     discussions       = db.Column(db.Text, nullable=True)
     prochaines_etapes = db.Column(db.Text, nullable=True)
     recommandations   = db.Column(db.Text, nullable=True)
-    participants      = db.Column(db.JSON, nullable=True)
-    raw_json          = db.Column(db.JSON, nullable=True)
+    participants = db.Column(JSONB, nullable=True, server_default=text("'{}'::jsonb"))
+    raw_json = db.Column(JSONB, nullable=True, server_default=text("'{}'::jsonb"))
     created_at        = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     def to_dict_safe(self):

@@ -77,12 +77,18 @@ export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef, Data
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const typeRes = await dsTypeService.all();
-            const userRes = await userService.all();
-            let datasourceRes: DataSource[] = [];
-            if (tenant_id) datasourceRes = await datasourceService.all(tenant_id);
+            if (!types || types.length === 0) {
+                const typeRes = await dsTypeService.all();
+                setTypes(typeRes || []);
+            }
 
-            setTypes(typeRes || []);
+            if (!tenant_id) return;
+
+            const [userRes, datasourceRes] = await Promise.all([
+                userService.all(tenant_id),
+                datasourceService.all(tenant_id),
+            ]);
+
             setUsers(userRes || []);
             setDatasources(datasourceRes || []);
         } catch {

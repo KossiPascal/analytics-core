@@ -4,11 +4,10 @@ from typing import List
 from sqlalchemy import text
 from flask import Blueprint, request, jsonify
 from flask import Blueprint, g, jsonify, request
-from workers.couchdb.models import CreateTableModel
 from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.databases.extensions import db
 from backend.src.services.datasource_service import DataSourceProvisioningService
-from backend.src.models.datasource import DataSource, DataSourceConnection, DataSourcePermission, DataSourceTarget, DataSourceType, SSHTunnelManager
+from backend.src.models.datasource import DataSource, DataSourceConnection, DataSourcePermission, DataSourceType, SSHTunnelManager
 from backend.src.utils.connection import create_ssh_tunnel, explore_schema, get_engine, inspect_full_postgres_schema, inspect_source
 
 from werkzeug.exceptions import BadRequest
@@ -70,7 +69,7 @@ def create_datasource():
             is_active = bool(data.get("is_active", True)),
             
             host=conn.get("host"),
-            port= int(conn.get("port") or (443 if type_id == "couchdb" else 5432)),
+            port= int(conn.get("port") or 5432),
             dbname=conn.get("dbname"),
             username=conn.get("username"),
             password=conn.get("password"),
@@ -86,13 +85,6 @@ def create_datasource():
             permissions=data.get("permissions", []),
             created_by=currentUserId(),
         )
-
-        if type_id == "couchdb":
-            ModelMgr = CreateTableModel(db, project_name=ds.name, create_table=True)
-            ModelMgr.create_sync_states_table()
-            ModelMgr.create_sync_status_table()
-            for source_type in DataSourceType.list_by_target(target=DataSourceTarget.COUCHDB):
-                ModelMgr.create_source_table(source_type.id)
 
         # db.session.close()
 
@@ -138,8 +130,7 @@ def list_connections_with_details(tenant_id):
         
         dataSources:list[DataSource] = DataSource.query.filter(
             DataSource.tenant_id == tenant_id,
-            DataSource.is_active == True, 
-            DataSourceType.target != DataSourceTarget.COUCHDB
+            DataSource.is_active == True
         ).all()
         datasources = sorted((dataSources or []), key=lambda c: c.id)
 
@@ -235,7 +226,7 @@ def update_datasource(datasource_id):
             is_main=data.get("is_main"),
             # HOST
             host=conn.get("host"),
-            port=int(conn.get("port") or (443 if type_id == "couchdb" else 5432)),
+            port=int(conn.get("port") or 5432),
             dbname=conn.get("dbname"),
             username=conn.get("username"),
             password=conn.get("password"),

@@ -4,7 +4,7 @@ import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { FormTextarea } from '@components/forms/FormTextarea/FormTextarea';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
-import { DataSourceType, DB_TARGET_LIST, DB_TYPE_CODE_LIST } from '@/models/datasource.models';
+import { DataSourceType, DB_TYPE_CODE_LIST } from '@/models/datasource.models';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { dsTypeService } from '@/services/datasource.service';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
@@ -13,7 +13,6 @@ const defaultType: DataSourceType = {
     id: null,
     name: "",
     code: "postgresql",
-    target: "db",
     config: {},
     description: "",
     is_active: false
@@ -76,14 +75,6 @@ export const DataSourceTypeTab = forwardRef<AdminEntityCrudModuleRef>((props, re
                         options={DB_TYPE_CODE_LIST.map((c) => ({ value: c, label: c }))}
                         onChange={(value) => { setValue("code", value) }}
                         placeholder="Ex: postgresql"
-                        required={true}
-                    />
-                    <FormSelect
-                        label={`Target`}
-                        value={type.target}
-                        options={DB_TARGET_LIST.map((t) => ({ value: t, label: t }))}
-                        onChange={(value) => { setValue("target", value) }}
-                        placeholder="Ex: db"
                         required={true}
                     />
                     <FormTextarea

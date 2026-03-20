@@ -93,6 +93,7 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
     queryService.all(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []));
   }, [tenant_id, query?.dataset_id]);
 
+  
   const defaultForm = useMemo(() => createDefaultQuery(tenant_id ?? 0), [tenant_id]);
 
   const setValue = (k: keyof DatasetQuery, v: any) =>

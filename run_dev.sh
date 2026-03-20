@@ -69,9 +69,9 @@ echo "🌐 Starting Flask API on http://$APP_HOST:$APP_PORT"
 
 # gunicorn -w "$GUNICORN_WORKERS" -b "$APP_HOST:$APP_PORT" backend.wsgi:app &
 
-# gunicorn -w "$GUNICORN_WORKERS" -b "$APP_HOST:$APP_PORT" backend.wsgi:app --log-level warning
+# gunicorn -w "$GUNICORN_WORKERS" -b "$APP_HOST:$APP_PORT" backend.wsgi:app --log-level warning &
 
-gunicorn -w "$GUNICORN_WORKERS" -b "$APP_HOST:$APP_PORT" backend.wsgi:app --access-logfile logs/access.log --error-logfile logs/error.log
+gunicorn -w "$GUNICORN_WORKERS" -b "$APP_HOST:$APP_PORT" backend.wsgi:app --access-logfile logs/access.log --error-logfile logs/error.log &
 
   
 

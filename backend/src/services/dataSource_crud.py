@@ -5,7 +5,7 @@ from typing import List
 
 from sqlalchemy.exc import SQLAlchemyError
 from backend.src.databases.extensions import db
-from backend.src.models.datasource import ConnectionStatus, DataSource, DataSourceHistory, DataSourceConnection, DataSourceCredential, DataSourcePermission, DataSourceSSHConfig, DataSourceTarget, DataSourceType
+from backend.src.models.datasource import ConnectionStatus, DataSource, DataSourceHistory, DataSourceConnection, DataSourceCredential, DataSourcePermission, DataSourceSSHConfig, DataSourceType
 from shared_libs.helpers.utils import encrypt
 
 from backend.src.logger import get_backend_logger
@@ -22,8 +22,8 @@ def safe_commit():
 # DATASOURCE TYPE CRUD
 class DataSourceTypeCRUD:
     @staticmethod
-    def create(code: str, name: str, target: DataSourceTarget, config: dict = None) -> DataSourceType:
-        obj = DataSourceType(code=code, name=name, target=target, config=config or {})
+    def create(code: str, name: str, config: dict = None) -> DataSourceType:
+        obj = DataSourceType(code=code, name=name, config=config or {})
         db.session.add(obj)
         safe_commit()
         return obj

@@ -1,21 +1,18 @@
 import { Dataset } from "./dataset.models";
 import { Tenant, User } from "./identity.model";
 
-export type DbTypeCode = 'postgresql' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'couchdb' | 'mongodb' | 'oracle' | 'other';
-export type DbTarget = 'couchdb' | 'db';
+export type DbTypeCode = 'postgresql' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'mongodb' | 'oracle' | 'other';
 export type DbPermissionRole = "none" | "read" | "write" | "admin" | "owner";
 export type TestType = "test-ssh" | "test-ssh-db";
 export type ConnectionStatus = "prod" | "dev" | "staging";
 
-export const DB_TYPE_CODE_LIST: DbTypeCode[] = ['postgresql', 'mysql', 'mssql', 'mariadb', 'sqlite', 'couchdb', 'mongodb', 'oracle', 'other'];
-export const DB_TARGET_LIST: DbTarget[] = ['couchdb', 'db'];
+export const DB_TYPE_CODE_LIST: DbTypeCode[] = ['postgresql', 'mysql', 'mssql', 'mariadb', 'sqlite', 'mongodb', 'oracle', 'other'];
 export const DB_PERMISSION_ROLE_LIST: DbPermissionRole[] = ["none", "read", "write", "admin", "owner"];
 
 export interface DataSourceType {
   id: number | null;
   name: string;
   code: DbTypeCode;
-  target: DbTarget;
   config?: Record<string, any>;
   description: string;
   datasources?: DataSource[]

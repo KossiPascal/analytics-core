@@ -9,6 +9,8 @@ import { FormCheckbox } from '@components/forms/FormCheckbox/FormCheckbox';
 import { Tenant, Orgunit, OrgUnitLevel } from '@models/identity.model';
 import { tenantService, orgunitService, levelService, identitySyncService, SyncResult } from '@/services/identity.service';
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from '@pages/admins/AdminEntityCrudModule';
+import { FaDatabase } from 'react-icons/fa';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types sub-tabs
@@ -42,8 +44,8 @@ const defaultLevel: OrgUnitLevel = {
 // Colonnes — Orgunits
 // ─────────────────────────────────────────────────────────────────────────────
 const orgunitColumns: Column<Orgunit>[] = [
-  { key: 'name',        header: 'Nom',         sortable: true,  searchable: true },
-  { key: 'code',        header: 'Code',        sortable: true,  searchable: true },
+  { key: 'name', header: 'Nom', sortable: true, searchable: true },
+  { key: 'code', header: 'Code', sortable: true, searchable: true },
   {
     key: 'level',
     header: 'Niveau',
@@ -85,9 +87,9 @@ const levelColumns: Column<OrgUnitLevel>[] = [
     searchable: false,
     render: (lv) => <strong>{lv.level}</strong>,
   },
-  { key: 'name',         header: 'Nom',          sortable: true, searchable: true },
-  { key: 'code',         header: 'Code DHIS2',   sortable: true, searchable: true },
-  { key: 'display_name', header: 'Nom affiché',   sortable: true, searchable: true },
+  { key: 'name', header: 'Nom', sortable: true, searchable: true },
+  { key: 'code', header: 'Code DHIS2', sortable: true, searchable: true },
+  { key: 'display_name', header: 'Nom affiché', sortable: true, searchable: true },
   {
     key: 'is_active',
     header: 'Statut',
@@ -109,16 +111,31 @@ export interface OrgunitsTabRef {
 // Composant principal
 // ─────────────────────────────────────────────────────────────────────────────
 export const OrgunitsTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
-  const [activeTab, setActiveTab]   = useState<SubTab>('orgunits');
-  const [tenants, setTenants]       = useState<Tenant[]>([]);
-  const [orgunits, setOrgunits]     = useState<Orgunit[]>([]);
-  const [levels, setLevels]         = useState<OrgUnitLevel[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [syncing, setSyncing]       = useState(false);
-  const [syncMsg, setSyncMsg]       = useState<string | null>(null);
+  const { isSuperAdmin, user } = useAuth();
+
+  const [activeTab, setActiveTab] = useState<SubTab>('orgunits');
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [orgunits, setOrgunits] = useState<Orgunit[]>([]);
+  const [levels, setLevels] = useState<OrgUnitLevel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const [tenant_id, setTenantId] = useState<number | undefined>();
 
   const orgunitModuleRef = useRef<AdminEntityCrudModuleRef>(null);
-  const levelModuleRef   = useRef<AdminEntityCrudModuleRef>(null);
+  const levelModuleRef = useRef<AdminEntityCrudModuleRef>(null);
+
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
+    tenantService.all().then(t => {
+      setTenants(t || []);
+      setTenantId(user?.tenant_id);
+    });
+  }, []);
+
 
   // Expose handleNew selon le sous-onglet actif
   useImperativeHandle(ref, () => ({
@@ -134,19 +151,18 @@ export const OrgunitsTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
 
   // ── Chargement initial ──────────────────────────────────────────────────
   const fetchAll = async () => {
+    if(!tenant_id) return;
     setLoading(true);
-    const [tenantRes, orgunitRes, levelRes] = await Promise.allSettled([
-      tenantService.all(),
-      orgunitService.all(),
-      levelService.all(),
+    const [orgunitRes, levelRes] = await Promise.allSettled([
+      orgunitService.all(tenant_id),
+      levelService.all(tenant_id),
     ]);
-    if (tenantRes.status  === 'fulfilled') setTenants(tenantRes.value  ?? []);
     if (orgunitRes.status === 'fulfilled') setOrgunits(orgunitRes.value ?? []);
-    if (levelRes.status   === 'fulfilled') setLevels(levelRes.value     ?? []);
+    if (levelRes.status === 'fulfilled') setLevels(levelRes.value ?? []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { fetchAll(); }, [tenant_id]);
 
   // ── Synchronisation DHIS2 ───────────────────────────────────────────────
   const handleSync = async (type: SubTab) => {
@@ -167,9 +183,9 @@ export const OrgunitsTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
   };
 
   // ── Options de sélection ────────────────────────────────────────────────
-  const tenantOptions  = tenants.map((t) => ({ value: t.id, label: t.name }));
+  const tenantOptions = tenants.map((t) => ({ value: t.id, label: t.name }));
   const orgunitOptions = orgunits.map((o) => ({ value: o.id, label: o.name }));
-  const levelOptions   = levels
+  const levelOptions = levels
     .filter((lv) => lv.is_active !== false)
     .sort((a, b) => a.level - b.level)
     .map((lv) => ({ value: lv.id, label: `${lv.level} — ${lv.display_name ?? lv.name}` }));
@@ -177,10 +193,22 @@ export const OrgunitsTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div>
+
+      <div className="grid grid-cols-2 gap-4 pt-2">
+        <FormSelect
+          label="Tenant"
+          value={tenant_id}
+          options={tenants.map((t) => ({ value: t.id, label: t.name }))}
+          onChange={(value) => setTenantId(value)}
+          leftIcon={<FaDatabase />}
+          required
+        />
+      </div>
+
       {/* ── Navigation sous-onglets ───────────────────────────────────────── */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color, #e2e8f0)', paddingBottom: '0.5rem' }}>
         <SubTabButton active={activeTab === 'orgunits'} icon={<Globe size={15} />} label="Unités d'organisation" onClick={() => setActiveTab('orgunits')} />
-        <SubTabButton active={activeTab === 'levels'}   icon={<Layers size={15} />} label="Niveaux"               onClick={() => setActiveTab('levels')}   />
+        <SubTabButton active={activeTab === 'levels'} icon={<Layers size={15} />} label="Niveaux" onClick={() => setActiveTab('levels')} />
       </div>
 
       {/* ── Message sync ──────────────────────────────────────────────────── */}

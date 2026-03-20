@@ -1,5 +1,5 @@
 import { Shield } from 'lucide-react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { FormTextarea } from '@components/forms/FormTextarea/FormTextarea';
@@ -10,6 +10,8 @@ import { FormSelect } from '@components/forms/FormSelect/FormSelect';
 import { FormCheckbox } from '@components/forms/FormCheckbox/FormCheckbox';
 import { StatusBadge } from '@components/ui/Badge/Badge';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
+import { useAuth } from '@/contexts/AuthContext';
+import { FaDatabase } from 'react-icons/fa';
 
 const defaultRole: Role = {
   id: null,
@@ -34,7 +36,7 @@ const roleColumns: Column<Role>[] = [
     sortable: true,
     searchable: true,
     getSearchValue: (r) => r.tenant?.name || "",
-    getSortValue:   (r) => r.tenant?.name || "",
+    getSortValue: (r) => r.tenant?.name || "",
   },
   {
     key: "authorizations",
@@ -63,16 +65,30 @@ const roleColumns: Column<Role>[] = [
 ];
 
 export const RolesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
+  const { isSuperAdmin, user } = useAuth();
+
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [tenant_id, setTenantId] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
 
+
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
+    tenantService.all().then(t => {
+      setTenants(t || []);
+      setTenantId(user?.tenant_id);
+    });
+  }, []);
+
   const fetchInitialData = async () => {
+    if(!tenant_id) return;
     setLoading(true);
     try {
-      const tenantRes = await tenantService.all();
-      const permsRes = await permissionService.all();
-      setTenants(tenantRes || []);
+      const permsRes = await permissionService.all(tenant_id);
       setPermissions(permsRes || []);
     } catch {
       // showError(`Erreur chargement`);
@@ -83,57 +99,70 @@ export const RolesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [tenant_id]);
 
   return (
-    <AdminEntityCrudModule<Role>
-      ref={ref}
-      title="Gestion des rôles"
-      icon={<Shield size={20} />}
-      entityName="Role"
-      columns={roleColumns}
-      defaultValue={defaultRole}
-      service={roleService}
-      isValid={(r) => r.name.trim().length > 0}
-      renderForm={(role, setValue) => (
-        <>
-          <FormInput
-            label="Nom du rôle"
-            value={role.name}
-            onChange={(e) => setValue("name", e.target.value)}
-            required
-          />
-          <FormSelect
-            label={`Tenant`}
-            value={role.tenant_id}
-            options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-            onChange={(value) => {setValue("tenant_id", value)}}
-            placeholder="Sélectionner Tenant"
-            required
-          />
-          <FormMultiSelect
-            label={`Permission`}
-            value={role.permission_ids}
-            options={permissions.map((c) => ({ value: c.id, label: c.name }))}
-            onChange={(values) => setValue("permission_ids", values.filter(v=>v !== null))}
-            placeholder="Sélectionner Permissions"
-            required
-          />
-          <FormCheckbox
-            label={`Is System`}
-            checked={Boolean(role.is_system)}
-            onChange={(e) => setValue("is_system", e.target.checked)}
-          />
-          <FormTextarea
-            label="Description"
-            hint="Optionnel"
-            placeholder="Description du role"
-            value={role.description || ""}
-            onChange={(e) => setValue("description", e.target.value)}
-          />
-        </>
-      )}
-    />
+    <>
+      <div className="grid grid-cols-2 gap-4 pt-2">
+        <FormSelect
+          label="Tenant"
+          value={tenant_id}
+          options={tenants.map((t) => ({ value: t.id, label: t.name }))}
+          onChange={(value) => setTenantId(value)}
+          leftIcon={<FaDatabase />}
+          required
+        />
+      </div>
+
+      <AdminEntityCrudModule<Role>
+        ref={ref}
+        title="Gestion des rôles"
+        icon={<Shield size={20} />}
+        entityName="Role"
+        columns={roleColumns}
+        defaultValue={defaultRole}
+        service={roleService}
+        isValid={(r) => r.name.trim().length > 0}
+        renderForm={(role, setValue) => (
+          <>
+            <FormInput
+              label="Nom du rôle"
+              value={role.name}
+              onChange={(e) => setValue("name", e.target.value)}
+              required
+            />
+            <FormSelect
+              label={`Tenant`}
+              value={role.tenant_id}
+              options={tenants.map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(value) => { setValue("tenant_id", value) }}
+              placeholder="Sélectionner Tenant"
+              required
+            />
+            <FormMultiSelect
+              label={`Permission`}
+              value={role.permission_ids}
+              options={permissions.map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(values) => setValue("permission_ids", values.filter(v => v !== null))}
+              placeholder="Sélectionner Permissions"
+              required
+            />
+            <FormCheckbox
+              label={`Is System`}
+              checked={Boolean(role.is_system)}
+              onChange={(e) => setValue("is_system", e.target.checked)}
+            />
+            <FormTextarea
+              label="Description"
+              hint="Optionnel"
+              placeholder="Description du role"
+              value={role.description || ""}
+              onChange={(e) => setValue("description", e.target.value)}
+            />
+          </>
+        )}
+      />
+    </>
   );
 });
 

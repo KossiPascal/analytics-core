@@ -8,15 +8,15 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 bp = Blueprint("workers", __name__, url_prefix="/api/workers")
 
-@bp.get("/status/<worker_name>")
-def get_status(worker_name: str):
+@bp.get("/status/<int:tenant_id>/<worker_name>")
+def get_status(tenant_id:int, worker_name: str):
     control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
     if not control:
         raise BadRequest("Worker not found", 404)
     return jsonify({"worker": worker_name, "status": control.status})
 
-@bp.post("/stop/<worker_name>")
-def stop_worker(worker_name: str):
+@bp.post("/stop/<int:tenant_id>/<worker_name>")
+def stop_worker(tenant_id:int, worker_name: str):
     control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
     if not control:
         control = WorkerControl(name=worker_name, status="stop")
@@ -26,8 +26,8 @@ def stop_worker(worker_name: str):
     db.session.commit()
     return jsonify({"worker": worker_name, "status": "stop"})
 
-@bp.post("/start/<worker_name>")
-def start_worker(worker_name: str):
+@bp.post("/start/<int:tenant_id>/<worker_name>")
+def start_worker(tenant_id:int, worker_name: str):
     control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
     if not control:
         control = WorkerControl(name=worker_name, status="run")
@@ -37,11 +37,16 @@ def start_worker(worker_name: str):
     db.session.commit()
     return jsonify({"worker": worker_name, "status": "run"})
 
-@bp.post("/sync/<worker_name>/<int:source_id>")
-def trigger_sync(worker_name: str, source_id: int):
+@bp.post("/sync/<int:tenant_id>/<worker_name>/<int:source_id>")
+def trigger_sync(tenant_id:int,worker_name: str,source_id: int):
     # Permet de déclencher un sync ponctuel, même si le worker est arrêté
     try:
-        # start_async_single_source(source_id)
-        return jsonify({"worker": worker_name, "source_id": source_id, "status": "sync triggered"})
+        # start_async_single_source(tenant_id, source_id)
+        return jsonify({
+            "tenant_id": tenant_id, 
+            "source_id": source_id, 
+            "worker": worker_name, 
+            "status": "sync triggered"
+        })
     except Exception as e:
         raise

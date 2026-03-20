@@ -1,38 +1,26 @@
 import re
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Literal, Optional, Any
+from typing import Dict, List, Optional
 from enum import Enum
 import unicodedata
-from flask import g
 from sqlalchemy import text
-from backend.src.config import Config
+from backend.src.config import Config, clean_base_url
 from backend.src.databases.extensions import db
-from backend.src.models.auth import Tenant
+from backend.src.models.tenant import Tenant
 from backend.src.models.controls import AuditMixin
 from shared_libs.helpers.utils import decrypt, encrypt, normalize_base_url
-from sqlalchemy.orm import selectinload, declared_attr
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import quoted_name
-
 from backend.src.logger import get_backend_logger
 from backend.src.security.access_security import currentUserId
+
+from sqlalchemy.dialects.postgresql import JSONB
+
 logger = get_backend_logger(__name__)
 
-# 🔁 Flux Métier Complet
-# 1️⃣ Créer DataSource
-# 2️⃣ Ajouter Connection + Credential
-# 3️⃣ Créer Dataset
-# 4️⃣ Ajouter Dimensions + Metrics
-# 5️⃣ Créer Query
-# 6️⃣ Valider Query
-# 7️⃣ Compiler Query
-# 8️⃣ Créer Chart
-# 9️⃣ Créer Visualization
-# 🔟 Ajouter Chart à Visualization
 
-# =====================================================
 # DTO / PARAMS
-# =====================================================
 @dataclass(frozen=True)
 class SSHParams:
     host: str
@@ -75,10 +63,7 @@ class SSHTunnelManager:
         cls._tunnels[key] = (tunnel, now)
         return tunnel
 
-# ENUM
-class DataSourceTarget(str, Enum):
-    COUCHDB = "couchdb"
-    DB = "db"
+
 
 class ConnectionStatus(str, Enum):
     PROD = "prod"
@@ -100,21 +85,14 @@ class DataSourceRole(str, Enum):
 IDENTIFIER_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 DEFAULT_DATA_SOURCE_TYPES = [
-    {"code": "docs", "name": "medic", "target": DataSourceTarget.COUCHDB},
-    {"code": "users", "name": "_users", "target": DataSourceTarget.COUCHDB},
-    {"code": "logs", "name": "medic-logs", "target": DataSourceTarget.COUCHDB},
-    {"code": "metas", "name": "medic-sentinel", "target": DataSourceTarget.COUCHDB},
-    {"code": "sentinel", "name": "medic-users-meta", "target": DataSourceTarget.COUCHDB},
-    
-    {"code": "postgresql", "name": "PostgreSQL", "target": DataSourceTarget.DB},
-    {"code": "mysql", "name": "MySQL", "target": DataSourceTarget.DB},
-    {"code": "mariadb", "name": "MariaDB", "target": DataSourceTarget.DB},
-    {"code": "mssql", "name": "SQL Server", "target": DataSourceTarget.DB},
-    {"code": "oracle", "name": "Oracle", "target": DataSourceTarget.DB},
-    {"code": "mongodb", "name": "MongoDB", "target": DataSourceTarget.DB},
-    {"code": "couchdb", "name": "CouchDB", "target": DataSourceTarget.DB},
-    {"code": "sqlite", "name": "SQLite", "target": DataSourceTarget.DB},
-    {"code": "other", "name": "Autre", "target": DataSourceTarget.DB},
+    {"code": "postgresql", "name": "PostgreSQL"},
+    {"code": "mysql",      "name": "MySQL"},
+    {"code": "mariadb",    "name": "MariaDB"},
+    {"code": "mssql",      "name": "SQL Server"},
+    {"code": "oracle",     "name": "Oracle"},
+    {"code": "mongodb",    "name": "MongoDB"},
+    {"code": "sqlite",     "name": "SQLite"},
+    {"code": "other",      "name": "Autre"},
 ]
 
 POSTGRES_ROLE_MAPPING: dict[str, list[str]] = {
@@ -242,8 +220,7 @@ class DataSourceType(db.Model, AuditMixin):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)  # order / display
     code = db.Column(db.String(50), unique=True, nullable=False, index=True)   # postgres, mysql…
     name = db.Column(db.String(100), unique=True, nullable=False)
-    target = db.Column(db.Enum(DataSourceTarget), nullable=False)
-    config = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))
+    config = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     description = db.Column(db.Text, nullable=True)
 
     datasources = db.relationship("DataSource", back_populates="type", cascade="all, delete-orphan")
@@ -258,7 +235,6 @@ class DataSourceType(db.Model, AuditMixin):
             "id": self.id,
             "code": self.code,
             "name": self.name,
-            "target": self.target.value,
             "config": self.config,
             "description": self.description,
             "is_active": self.is_active,
@@ -278,18 +254,9 @@ class DataSourceType(db.Model, AuditMixin):
         return data
 
     @staticmethod
-    def list_by_target(target: Optional[DataSourceTarget] = None,is_active: Optional[bool] = True) -> list["DataSourceType"]:
-        query = DataSourceType.query
-        if is_active is not None:
-            query = query.filter(DataSourceType.is_active == is_active)
-        if target is not None:
-            query = query.filter(DataSourceType.target == target)
-        return query.order_by(DataSourceType.code).all()
-
-    @staticmethod
     def ensure_default_type():
         try:
-            existing = {t.code: t for t in DataSourceType.query.all()}
+            existing:Dict[str,DataSourceType] = {t.code: t for t in DataSourceType.query.all()}
             changed = False
 
             for spec in DEFAULT_DATA_SOURCE_TYPES:
@@ -299,9 +266,8 @@ class DataSourceType(db.Model, AuditMixin):
                     db.session.add(DataSourceType(**spec))
                     changed = True
                 else:
-                    if (current.name != spec["name"] or current.target != spec["target"]):
+                    if current.name != spec["name"]:
                         current.name = spec["name"]
-                        current.target = spec["target"]
                         changed = True
 
             if changed:
@@ -366,7 +332,7 @@ class DataSource(db.Model, AuditMixin):
         base = self.base_host
         if not base:
             return None
-        clean = base.replace("https://", "").replace("http://", "")
+        clean = clean_base_url(base)
         return f"https://{clean}" if clean else None
 
     @staticmethod

@@ -5,28 +5,26 @@ from sqlalchemy.exc import SQLAlchemyError
 from flask import Blueprint, g, jsonify, request
 from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.databases.extensions import db
-from backend.src.models.datasource import DataSourceTarget, DataSourceType
+from backend.src.models.datasource import DataSourceType
 
 from werkzeug.exceptions import BadRequest
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError
 
 bp = Blueprint("datasource_types", __name__, url_prefix="/api/datasource-types")
 
-# { "code": "postgresql", "name": "PostgreSQL", "target": "db", "config": { "default_port": 5432 } }
+# { "code": "postgresql", "name": "PostgreSQL", "config": { "default_port": 5432 } }
 
 # -------------------- DATASOURCE CRUD --------------------
 
 @bp.get("")
 @require_auth
 def list_datasource_types():
-    target = request.args.get("target")
     active_only = request.args.get("active_only", "true").lower() == "true"
 
     query = DataSourceType.query
     if active_only:
         query = query.filter(DataSourceType.is_active == True)
-    if target:
-        query = query.filter(DataSourceType.target == DataSourceTarget(target))
+
     types:List[DataSourceType] = query.order_by(DataSourceType.code).all()
     if len(types) == 0:
         DataSourceType.ensure_default_type()
@@ -39,11 +37,10 @@ def list_datasource_types():
 def create_datasource_type():
     try:
         data = request.get_json()
-
-        target=DataSourceTarget(data["target"])
+        
         config=data.get("config", {})
 
-        obj = DataSourceType(code=data["code"],name=data["name"],target=target, config=config)
+        obj = DataSourceType(code=data["code"],name=data["name"], config=config)
         obj.created_by_id=currentUserId(),
 
         db.session.add(obj)
@@ -79,8 +76,6 @@ def update_datasource_type(type_id):
             obj.code = data["code"]
         if "name" in data:
             obj.name = data["name"]
-        if "target" in data:
-            obj.target = DataSourceTarget(data["target"])
         if "config" in data:
             obj.config = data["config"]
 

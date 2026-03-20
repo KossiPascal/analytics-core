@@ -18,7 +18,7 @@ export type LogicalOperator = 'AND' | 'OR';
 // ============================================================================
 // CONNECTIONS
 // ============================================================================
-export type DbType = 'postgresql' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'couchdb' | 'mongodb' | 'oracle' | 'other';
+export type DbType = 'postgresql' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'mongodb' | 'oracle' | 'other';
 
 export interface DataSourceConnectionDetails {
   functions: any[],
