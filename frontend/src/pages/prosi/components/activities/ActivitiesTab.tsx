@@ -84,7 +84,7 @@ export function ActivitiesTab() {
   const [filterOverdue, setFilterOverdue]   = useState(false);
   const [search, setSearch]                 = useState('');
   const [searchInput, setSearchInput]       = useState('');
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Collapsible sections in list view
   const [collapsed, setCollapsed] = useState<Set<ActivityStatus>>(new Set(['CANCELLED']));

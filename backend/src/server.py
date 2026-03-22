@@ -302,12 +302,17 @@ def create_flask_app(initialize_database = True) -> Flask:
         # PROSI — Gestion de Projets et ORCs
         from backend.src.prosi.routes import (
             projects as prosi_projects,
-            orcs as prosi_orcs,
-            activities as prosi_activities,
-            reports as prosi_reports,
-            dashboard as prosi_dashboard,
+            pillars  as prosi_pillars,
+            orcs     as prosi_orcs,
+            activities          as prosi_activities,
+            reports             as prosi_reports,
+            dashboard           as prosi_dashboard,
+            import_excel        as prosi_import,
+            employee_objectives as prosi_emp_obj,
         )
-        for prosi_bp in (prosi_projects, prosi_orcs, prosi_activities, prosi_reports, prosi_dashboard):
+        for prosi_bp in (prosi_projects, prosi_pillars, prosi_orcs,
+                         prosi_activities, prosi_reports, prosi_dashboard,
+                         prosi_import, prosi_emp_obj):
             app.register_blueprint(prosi_bp.bp)
 
     # -----------------------------------------------------------------------------

@@ -58,17 +58,25 @@ def create_orc(tenant_id: int, user_id: int, data: dict) -> ORC:
     orc = ORC(
         tenant_id=tenant_id,
         project_id=int(project_id),
+        pillar_id=int(data["pillar_id"]) if data.get("pillar_id") else None,
         parent_id=int(parent_id) if parent_id else None,
+        department_id=int(data["department_id"]) if data.get("department_id") else None,
         orc_type=orc_type,
+        code=data.get("code", ""),
         name=name,
         description=data.get("description", ""),
+        target_indicator=data.get("target_indicator", ""),
         target_value=data.get("target_value") or None,
         current_value=data.get("current_value") or 0,
         unit=data.get("unit", ""),
+        score=data.get("score") or None,
         status=data.get("status", "DRAFT"),
+        priority=data.get("priority", "MEDIUM"),
         weight=data.get("weight") or 1.0,
         start_date=data.get("start_date") or None,
         end_date=data.get("end_date") or None,
+        fiscal_year=data.get("fiscal_year") or None,
+        quarter=data.get("quarter") or None,
         responsible_id=int(data["responsible_id"]) if data.get("responsible_id") else None,
         notes=data.get("notes", ""),
         is_active=True,
@@ -80,28 +88,25 @@ def create_orc(tenant_id: int, user_id: int, data: dict) -> ORC:
 
 
 def update_orc(orc: ORC, user_id: int, data: dict) -> ORC:
-    for field in ("name", "description", "notes", "unit"):
+    for field in ("name", "description", "notes", "unit", "code", "target_indicator"):
         if field in data:
             setattr(orc, field, (data[field] or "").strip() if isinstance(data[field], str) else data[field])
 
-    if "status" in data:
-        orc.status = data["status"]
-    if "target_value" in data:
-        orc.target_value = data["target_value"] or None
-    if "current_value" in data:
-        orc.current_value = data["current_value"] if data["current_value"] is not None else 0
-    if "weight" in data:
-        orc.weight = data["weight"] or 1.0
-    if "start_date" in data:
-        orc.start_date = data["start_date"] or None
-    if "end_date" in data:
-        orc.end_date = data["end_date"] or None
-    if "responsible_id" in data:
-        orc.responsible_id = int(data["responsible_id"]) if data["responsible_id"] else None
-    if "is_active" in data:
-        orc.is_active = bool(data["is_active"])
-    if "parent_id" in data:
-        orc.parent_id = int(data["parent_id"]) if data["parent_id"] else None
+    if "status" in data:       orc.status        = data["status"]
+    if "priority" in data:     orc.priority      = data["priority"]
+    if "target_value" in data: orc.target_value  = data["target_value"] or None
+    if "current_value" in data: orc.current_value = data["current_value"] if data["current_value"] is not None else 0
+    if "score" in data:        orc.score         = data["score"] or None
+    if "weight" in data:       orc.weight        = data["weight"] or 1.0
+    if "start_date" in data:   orc.start_date    = data["start_date"] or None
+    if "end_date" in data:     orc.end_date      = data["end_date"] or None
+    if "fiscal_year" in data:  orc.fiscal_year   = data["fiscal_year"] or None
+    if "quarter" in data:      orc.quarter       = data["quarter"] or None
+    if "pillar_id" in data:    orc.pillar_id     = int(data["pillar_id"]) if data["pillar_id"] else None
+    if "department_id" in data: orc.department_id = int(data["department_id"]) if data["department_id"] else None
+    if "responsible_id" in data: orc.responsible_id = int(data["responsible_id"]) if data["responsible_id"] else None
+    if "is_active" in data:    orc.is_active     = bool(data["is_active"])
+    if "parent_id" in data:    orc.parent_id     = int(data["parent_id"]) if data["parent_id"] else None
     if "orc_type" in data and data["orc_type"] in ("OBJECTIF", "RESULTAT_CLE"):
         orc.orc_type = data["orc_type"]
 

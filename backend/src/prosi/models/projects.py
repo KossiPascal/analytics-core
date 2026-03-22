@@ -30,11 +30,12 @@ class Project(db.Model, AuditMixin):
     notes = db.Column(db.Text, default="")
 
     # Relationships
-    tenant = db.relationship("Tenant", lazy="noload", foreign_keys=[tenant_id])
-    owner = db.relationship("User", lazy="noload", foreign_keys=[owner_id])
-    orcs = db.relationship("ORC", back_populates="project", lazy="noload", cascade="all, delete-orphan")
+    tenant     = db.relationship("Tenant",   lazy="noload", foreign_keys=[tenant_id])
+    owner      = db.relationship("User",     lazy="noload", foreign_keys=[owner_id])
+    pillars    = db.relationship("StrategicPillar", back_populates="project", lazy="noload", cascade="all, delete-orphan")
+    orcs       = db.relationship("ORC",      back_populates="project", lazy="noload", cascade="all, delete-orphan")
     activities = db.relationship("Activity", back_populates="project", lazy="noload", cascade="all, delete-orphan")
-    reports = db.relationship("MonthlyReport", back_populates="project", lazy="noload", cascade="all, delete-orphan")
+    reports    = db.relationship("MonthlyReport", back_populates="project", lazy="noload", cascade="all, delete-orphan")
 
     def to_dict_safe(self):
         return {

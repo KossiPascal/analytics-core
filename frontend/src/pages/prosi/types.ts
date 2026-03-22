@@ -38,29 +38,58 @@ export interface ProjectStats {
   activities_avg_progress: number;
 }
 
-// ─── ORC ─────────────────────────────────────────────────────────────────────
+// ─── PILIER STRATÉGIQUE ───────────────────────────────────────────────────────
 
-export type ORCStatus = 'DRAFT' | 'ACTIVE' | 'AT_RISK' | 'COMPLETED' | 'CANCELLED';
-export type OrcType = 'OBJECTIF' | 'RESULTAT_CLE';
-
-export interface ORC {
-  orc_type: OrcType;
+export interface StrategicPillar {
   id: string;
   tenant_id: string;
   project_id: string;
   project_name: string | null;
+  name: string;
+  code: string;
+  description: string;
+  order_index: number;
+  fiscal_year: number | null;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+// ─── ORC ─────────────────────────────────────────────────────────────────────
+
+export type ORCStatus = 'DRAFT' | 'ACTIVE' | 'AT_RISK' | 'COMPLETED' | 'CANCELLED';
+export type OrcType   = 'OBJECTIF' | 'RESULTAT_CLE';
+export type Quarter   = 'T1' | 'T2' | 'T3' | 'T4' | 'YEARLY';
+
+export interface ORC {
+  id: string;
+  tenant_id: string;
+  project_id: string;
+  project_name: string | null;
+  pillar_id: string | null;
+  pillar_name: string | null;
+  pillar_code: string | null;
   parent_id: string | null;
   parent_name: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  orc_type: OrcType;
+  code: string;
   name: string;
   description: string;
+  target_indicator: string;
   target_value: number | null;
   current_value: number;
   unit: string;
+  score: number | null;
   progress_percent: number;
   status: ORCStatus;
+  priority: Priority;
   weight: number;
   start_date: string | null;
   end_date: string | null;
+  fiscal_year: number | null;
+  quarter: Quarter | null;
   responsible_id: string | null;
   responsible_name: string | null;
   notes: string;
@@ -211,8 +240,14 @@ export const ORC_TYPE_LABELS: Record<OrcType, string> = {
 };
 
 export const ORC_TYPE_VARIANT: Record<OrcType, string> = {
-  OBJECTIF:     'purple',
+  OBJECTIF:     'primary',
   RESULTAT_CLE: 'info',
+};
+
+export const QUARTER_LABELS: Record<Quarter, string> = {
+  T1: 'Trimestre 1', T2: 'Trimestre 2',
+  T3: 'Trimestre 3', T4: 'Trimestre 4',
+  YEARLY: 'Annuel',
 };
 
 export const ORC_STATUS_LABELS: Record<ORCStatus, string> = {
@@ -259,6 +294,67 @@ export const PRIORITY_VARIANT: Record<Priority, string> = {
   MEDIUM: 'secondary',
   HIGH: 'warning',
   CRITICAL: 'danger',
+};
+
+// ─── OBJECTIFS EMPLOYÉ ───────────────────────────────────────────────────────
+
+export type ObjectiveStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+
+export interface EmployeeObjective {
+  id: string;
+  tenant_id: string;
+  employee_id: string;
+  employee_name: string | null;
+  user_id: string | null;
+  project_id: string | null;
+  project_name: string | null;
+  orc_id: string | null;
+  orc_name: string | null;
+  title: string;
+  description: string;
+  target_indicator: string;
+  target_value: number | null;
+  current_value: number;
+  unit: string;
+  score: number | null;
+  progress_percent: number;
+  fiscal_year: number;
+  quarter: Quarter;
+  priority: Priority;
+  status: ObjectiveStatus;
+  reviewer_id: string | null;
+  reviewer_name: string | null;
+  reviewed_at: string | null;
+  review_notes: string;
+  notes: string;
+  is_active: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface TeamSummary {
+  fiscal_year: number;
+  quarter: Quarter;
+  total: number;
+  by_status: Record<ObjectiveStatus, number>;
+  avg_score: number | null;
+  completion_rate: number;
+}
+
+export const OBJECTIVE_STATUS_LABELS: Record<ObjectiveStatus, string> = {
+  DRAFT:     'Brouillon',
+  SUBMITTED: 'Soumis',
+  APPROVED:  'Approuvé',
+  REJECTED:  'Rejeté',
+  COMPLETED: 'Complété',
+};
+
+export const OBJECTIVE_STATUS_VARIANT: Record<ObjectiveStatus, string> = {
+  DRAFT:     'secondary',
+  SUBMITTED: 'warning',
+  APPROVED:  'success',
+  REJECTED:  'danger',
+  COMPLETED: 'info',
 };
 
 export const MONTHS_FR = [

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileBarChart2, Plus, Eye, Trash2, RefreshCw, CheckCircle, FileText } from 'lucide-react';
+import { FileBarChart2, Plus, Eye, Trash2, RefreshCw, CheckCircle, FileText, Download } from 'lucide-react';
 import { reportsApi, projectsApi } from '../../api';
 import type { MonthlyReport, Project } from '../../types';
 import { MONTHS_FR } from '../../types';
@@ -28,7 +28,8 @@ export function ReportsTab() {
     summary: '',
     overwrite: false,
   });
-  const [generating, setGenerating] = useState(false);
+  const [generating, setGenerating]   = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [filterProject, setFilterProject] = useState('');
   const [filterYear, setFilterYear] = useState<number | ''>('');
 
