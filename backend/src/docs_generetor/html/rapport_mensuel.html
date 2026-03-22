@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="rapport_mensuel.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- ─── EN-TÊTE ─────────────────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="{{ logo_uri }}" alt="Integrate Health">
+    </div>
+    <div class="header-center">
+      <div class="header-org">Integrate Health</div>
+      <h1 class="header-title">RAPPORT MENSUEL D'ACTIVITÉS</h1>
+      <div class="header-period">{{ period_label }}</div>
+    </div>
+    <div class="header-status">
+      <span class="status-badge {{ 'published' if status == 'PUBLISHED' else 'draft' }}">
+        {{ 'PUBLIÉ' if status == 'PUBLISHED' else 'BROUILLON' }}
+      </span>
+    </div>
+  </div>
+
+  <!-- ─── INFOS PROJET ─────────────────────────────────────────────── -->
+  <div class="section-box project-box">
+    <div class="section-box-title">Informations du Projet</div>
+    <div class="info-grid">
+      <div class="info-row">
+        <span class="info-label">Projet :</span>
+        <span class="info-value bold">{{ project_name }}</span>
+        <span class="info-label ml">Code :</span>
+        <span class="info-value mono">{{ project_code }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Statut :</span>
+        <span class="info-value">{{ project_status }}</span>
+        <span class="info-label ml">Généré le :</span>
+        <span class="info-value">{{ generated_at }}</span>
+      </div>
+      {% if summary %}
+      <div class="info-row summary-row">
+        <span class="info-label">Résumé :</span>
+        <span class="info-value italic">{{ summary }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ─── INDICATEURS CLÉS ─────────────────────────────────────────── -->
+  <div class="section-title">Indicateurs Clés du Mois</div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-value">{{ activities_total }}</div>
+      <div class="kpi-label">Activités ce mois</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-value">{{ activities_done }}</div>
+      <div class="kpi-label">Terminées</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-value">{{ avg_progress }}%</div>
+      <div class="kpi-label">Progression moy.</div>
+    </div>
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-value">{{ orcs_total }}</div>
+      <div class="kpi-label">ORCs du projet</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-value">{{ orcs_completed }}</div>
+      <div class="kpi-label">ORCs atteints</div>
+    </div>
+    <div class="kpi-card {{ 'kpi-orange' if completion_rate < 70 else 'kpi-green' }}">
+      <div class="kpi-value">{{ completion_rate }}%</div>
+      <div class="kpi-label">Taux de réalisation</div>
+    </div>
+  </div>
+
+  <!-- ─── STATUTS ACTIVITÉS ────────────────────────────────────────── -->
+  {% if activities_by_status %}
+  <div class="mini-section">
+    <div class="mini-section-title">Répartition des activités par statut</div>
+    <div class="status-row">
+      {% for label, count, pct in activities_by_status %}
+      <div class="status-item">
+        <div class="status-bar-wrap">
+          <div class="status-bar" style="width: {{ pct }}%; background: {{ status_colors[loop.index0] }};"></div>
+        </div>
+        <div class="status-bar-label">{{ label }}</div>
+        <div class="status-bar-count">{{ count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ─── TABLEAU DES ORCs ─────────────────────────────────────────── -->
+  {% if orcs %}
+  <div class="section-title" style="margin-top: 0.5cm;">Objectifs et Résultats Clés (ORCs)</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 38%;">Nom de l'ORC</th>
+        <th style="width: 13%; text-align: center;">Statut</th>
+        <th style="width: 13%; text-align: center;">Progression</th>
+        <th style="width: 18%; text-align: center;">Réalisation</th>
+        <th style="width: 18%; text-align: center;">Cible</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for orc in orcs %}
+      <tr class="{{ 'row-even' if loop.index is even else '' }}">
+        <td>{{ orc.name }}</td>
+        <td style="text-align: center;">
+          <span class="badge badge-{{ orc.status | lower }}">{{ orc_status_labels[orc.status] }}</span>
+        </td>
+        <td style="text-align: center;">
+          <div class="progress-wrap">
+            <div class="progress-fill" style="width: {{ orc.progress_percent }}%;"></div>
+            <span class="progress-text">{{ orc.progress_percent }}%</span>
+          </div>
+        </td>
+        <td style="text-align: center;">{{ orc.current_value }} {{ orc.unit }}</td>
+        <td style="text-align: center;">{{ orc.target_value or '—' }} {{ orc.unit if orc.target_value else '' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- ─── TABLEAU DES ACTIVITÉS ────────────────────────────────────── -->
+  {% if activities %}
+  <div class="section-title" style="margin-top: 0.5cm;">Détail des Activités</div>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 32%;">Activité</th>
+        <th style="width: 10%; text-align: center;">Statut</th>
+        <th style="width: 10%; text-align: center;">Priorité</th>
+        <th style="width: 14%; text-align: center;">Progression</th>
+        <th style="width: 18%;">ORC lié</th>
+        <th style="width: 16%;">Responsable</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in activities %}
+      <tr class="{{ 'row-even' if loop.index is even else '' }}">
+        <td>{{ a.name }}</td>
+        <td style="text-align: center;">
+          <span class="badge badge-{{ a.status | lower }}">{{ act_status_labels[a.status] }}</span>
+        </td>
+        <td style="text-align: center;">
+          <span class="badge badge-priority-{{ a.priority | lower }}">{{ priority_labels[a.priority] }}</span>
+        </td>
+        <td style="text-align: center;">
+          <div class="progress-wrap">
+            <div class="progress-fill {{ 'pf-done' if a.progress >= 100 else ('pf-mid' if a.progress >= 50 else 'pf-low') }}"
+                 style="width: {{ a.progress }}%;"></div>
+            <span class="progress-text">{{ a.progress }}%</span>
+          </div>
+        </td>
+        <td>{{ a.orc_name or '—' }}</td>
+        <td>{{ a.assignee_name or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <!-- ─── PIED DE PAGE ─────────────────────────────────────────────── -->
+  <div class="footer">
+    <span>Rapport généré le {{ generated_at }} — {{ project_name }} · {{ period_label }}</span>
+    <span>Integrate Health</span>
+  </div>
+
+</div>
+</body>
+</html>
