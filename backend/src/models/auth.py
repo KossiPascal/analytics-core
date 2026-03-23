@@ -14,94 +14,13 @@ from backend.src.models.controls import MetaxMixin
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from itsdangerous import BadSignature, SignatureExpired
 
+from backend.src.models.tenant import Tenant
+
+from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import JSONB
+
 rate_limit_store: Dict[str, Tuple[int, int]] = {}  # client_id -> (count, first_ts)
 
-
-def apply_tenant_scope(query, model, current_user):
-    if current_user and current_user.is_superadmin:
-        return query
-
-    if hasattr(model, "tenant_id"):
-        return query.filter(model.tenant_id == current_user.tenant_id)
-
-    return query
-
-# -------------------- TENANT --------------------
-class Tenant(db.Model, MetaxMixin):
-    __tablename__ = "tenants"
-
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(255), nullable=False, unique=True)
-    description = db.Column(db.String(255), nullable=True)
-
-    users = db.relationship("User", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    datasets = db.relationship("Dataset", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    datasources = db.relationship("DataSource", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    visualizations = db.relationship("Visualization", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    visualization_charts = db.relationship("VisualizationChart", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    permissions = db.relationship("DataSourcePermission", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    fields = db.relationship("DatasetField", back_populates="tenant", cascade="all, delete-orphan")
-    connections = db.relationship("DataSourceConnection", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    ssh_configs = db.relationship("DataSourceSSHConfig", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    credentials = db.relationship("DataSourceCredential", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    histories = db.relationship("DataSourceHistory", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    visualization_execution_logs = db.relationship("VisualizationExecutionLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    dhis2_validations = db.relationship("VisualizationDhis2Validation", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    data_lineages = db.relationship("DataLineage", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    ai_query_logs = db.relationship("AIQueryLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    scripts = db.relationship("Script", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    orgunits        = db.relationship("UserOrgunit", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    orgunit_levels  = db.relationship("OrgUnitLevel", lazy="noload", cascade="all, delete-orphan")
-    roles           = db.relationship("UserRole", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    queries = db.relationship("DatasetQuery", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
-    charts = db.relationship("DatasetChart", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
-
-
-    def to_dict(self, include_relations:bool=False):
-        data = {
-            "id": self.id, 
-            "name": self.name, 
-            "description": self.description, 
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
-        }
-
-        if include_relations:
-            data.update({
-                "users": [d.to_dict() for d in self.users],
-                "datasets": [d.to_dict() for d in self.datasets],
-                "datasources": [d.to_dict() for d in self.datasources],
-                "visualizations": [d.to_dict() for d in self.visualizations],
-                "visualization_charts": [d.to_dict() for d in self.visualization_charts],
-                "permissions": [d.to_dict() for d in self.permissions],
-                "fields": [d.to_dict() for d in self.fields],
-                "connections": [d.to_dict() for d in self.connections],
-                "ssh_configs": [d.to_dict() for d in self.ssh_configs],
-                "credentials": [d.to_dict() for d in self.credentials],
-                "histories": [d.to_dict() for d in self.histories],
-                "visualization_execution_logs": [d.to_dict() for d in self.visualization_execution_logs],
-                "dhis2_validations": [d.to_dict() for d in self.dhis2_validations],
-                "data_lineages": [d.to_dict() for d in self.data_lineages],
-                "ai_query_logs": [d.to_dict() for d in self.ai_query_logs],
-                "scripts": [d.to_dict() for d in self.scripts],
-                "scripts_execution_logs": [d.to_dict() for d in self.scripts_execution_logs],
-                "orgunits": [d.to_dict() for d in self.orgunits],
-                "roles": [d.to_dict() for d in self.roles],
-                "queries": [d.to_dict() for d in self.queries],
-                "charts": [d.to_dict() for d in self.charts],
-            })
-
-        return data
-    
-    @classmethod
-    def active(cls):
-        return cls.query.filter(cls.deleted.is_(False),cls.deleted_at.is_(None))
-
-    
-    def __repr__(self):
-        return f"<Tenant {self.name}>"
 
 # -------------------- ORGUNIT LEVEL (DHIS2-style) --------------------
 class OrgUnitLevel(db.Model, MetaxMixin):
@@ -213,6 +132,8 @@ class UserPermission(db.Model, MetaxMixin):
     name = db.Column(db.String(150), nullable=False)   # dashboard:read, report:create, chart:update
     description = db.Column(db.String(255), nullable=True)
 
+    visualization_shares = db.relationship("VisualizationShare",lazy="noload",cascade="all, delete-orphan",foreign_keys="VisualizationShare.permission_id")
+
     def to_dict(self):
         return { 
             "id": self.id, 
@@ -295,7 +216,7 @@ class User(db.Model, MetaxMixin):
     salt = db.Column(db.String(255), nullable=True)
     must_login = db.Column(db.Boolean, nullable=False, default=True)
     has_changed_default_password = db.Column(db.Boolean, nullable=False, default=False)
-    # orgunits = db.Column(db.JSON, nullable=False, server_default=text("'{}'::json"))  # e.g., [{"id1": [...]}, {"id2": [...]}]
+    # orgunits = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))  # e.g., [{"id1": [...]}, {"id2": [...]}]
     
     # Relationships
     tenant = db.relationship("Tenant", back_populates="users",lazy="noload",foreign_keys=[tenant_id])
@@ -304,7 +225,6 @@ class User(db.Model, MetaxMixin):
     logs = db.relationship("UsersLog", back_populates="user", lazy="noload", cascade="all, delete-orphan")
     roles = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref=db.backref("users", lazy="noload"))
     orgunits = db.relationship("UserOrgunit",secondary="user_orgunit_links",lazy="noload",backref=db.backref("users", lazy="noload"))
-
     histories = db.relationship("DataSourceHistory",lazy="noload",cascade="all, delete-orphan",foreign_keys="DataSourceHistory.user_id")
 
     # roles_link = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref="users")

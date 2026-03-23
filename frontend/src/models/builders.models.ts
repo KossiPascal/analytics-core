@@ -3,6 +3,8 @@
  * Types et interfaces pour le module Query Builder
  */
 
+import { DbSourceType } from "./datasource.models";
+
 // ============================================================================
 // BASIC TYPES
 // ============================================================================
@@ -18,7 +20,6 @@ export type LogicalOperator = 'AND' | 'OR';
 // ============================================================================
 // CONNECTIONS
 // ============================================================================
-export type DbType = 'postgresql' | 'mysql' | 'mssql' | 'mariadb' | 'sqlite' | 'couchdb' | 'mongodb' | 'oracle' | 'other';
 
 export interface DataSourceConnectionDetails {
   functions: any[],
@@ -39,7 +40,7 @@ export interface DataSourceConnectionDetails {
 
 export interface DataSourceConnection {
   id?: number | null;
-  type: DbType;
+  type: DbSourceType;
   description: string;
   name: string;
   dbname: string;
@@ -63,7 +64,7 @@ export interface DataSourceConnection {
 
 export interface DataSourceConnectionParams {
   id?: number | null;
-  type: DbType;
+  type: DbSourceType;
   name: string;
   description: string;
   host: string;
@@ -113,7 +114,7 @@ export type EntityType = 'table' | 'view' | 'materialized_view';
 export interface DatabaseDef {
   id: string|number;
   label: string;
-  type: DbType|undefined;
+  type: DbSourceType;
   description?: string;
   icon?: string;
   color?: string;

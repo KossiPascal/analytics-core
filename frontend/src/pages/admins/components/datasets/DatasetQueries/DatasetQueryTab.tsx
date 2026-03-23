@@ -1,5 +1,7 @@
-import { Shield } from "lucide-react";
+import { Shield, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState, forwardRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/routes/configs";
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from "@pages/admins/AdminEntityCrudModule";
 import { StatusBadge } from "@components/ui/Badge/Badge";
 import { type Column } from "@components/ui/Table/Table";
@@ -129,21 +131,18 @@ const getQueryColumns = (setPreviewJson: (v: QueryJson) => void, setPreviewSql: 
 
 interface DatasetQueryTabProps {
    tenants:Tenant[];
-   tenant_id:number
+   tenant_id:number;
+
+   datasets:Dataset[];
+   dataset_id:number;
 }
 // MAIN PAGE
-export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id }, ref) => {
-    const [dataset_id, setDatasetId] = useState<number | undefined>();
-    const [datasets, setDatasets] = useState<Dataset[]>([]);
+export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
+    const navigate = useNavigate();
     const [previewSql, setPreviewSql] = useState<string | null>(null);
     const [previewJson, setPreviewJson] = useState<QueryJson | null>(null);
     const [previewValues, setPreviewValues] = useState<Record<string, any> | null>(null);
     const [errors, setErrors] = useState<CompileError>({});
-
-    useEffect(() => {
-        if (!tenant_id) return;
-        datasetService.all(tenant_id).then(d => setDatasets(d || []));
-    }, [tenant_id]);
 
     // TABLE COLUMNS
     const queryColumns = useMemo(() => getQueryColumns(setPreviewJson, setPreviewSql, setPreviewValues), []);
@@ -228,6 +227,18 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                 service={queryService}
                 defaultTenant={defaultTenant}
                 defaultValue={DEFAULT_FORM}
+                enableEdit={false}
+                customActions={(row) => (
+                    <button
+                        title="Ouvrir dans Query Builder"
+                        onClick={() => navigate(ROUTES.builder.queryBuilder(), { state: { query: row } })}
+                        style={{ padding: "4px", borderRadius: "4px", border: "none", background: "transparent", cursor: "pointer", color: "#2563eb" }}
+                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#dbeafe"}
+                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+                    >
+                        <Pencil size={15} />
+                    </button>
+                )}
                 isValid={(q) => {
                     return Object.keys(errors).length === 0
                 }}
@@ -237,17 +248,6 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                     setErrors(validationErrors);
                     return Object.keys(validationErrors).length === 0;
                 }}
-                headerActions={(
-                <FormSelect
-                    label={`Dataset List`}
-                    value={dataset_id}
-                    options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                    onChange={(value) => setDatasetId(value)}
-                    placeholder="Sélectionner Dataset"
-                    leftIcon={<FaDatabase />}
-                    required={true}
-                />
-                )}
                 renderForm={(query, setValue, saving) => (
                     <RenderFormBuilder
                         datasets={datasets}

@@ -8,7 +8,8 @@ import string
 from flask import Blueprint, request, jsonify
 
 from backend.src.databases.extensions import db
-from backend.src.models.auth import OrgUnitLevel, UserOrgunit, UserOrgunitLink, Tenant, User
+from backend.src.models.auth import OrgUnitLevel, UserOrgunit, UserOrgunitLink, User
+from backend.src.models.tenant import Tenant
 from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.logger import get_backend_logger
 

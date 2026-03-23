@@ -1,5 +1,6 @@
 from typing import Optional
 from sqlalchemy.exc import SQLAlchemyError
+from backend.src.config import clean_base_url
 from backend.src.models.datasource import ConnectionStatus, DataSource, DataSourceHistory, DataSourceConnection, DataSourceCredential, DataSourcePermission, DataSourceRole, DataSourceSSHConfig
 from shared_libs.helpers.utils import decrypt, encrypt, normalize_base_url
 from backend.src.databases.extensions import db
@@ -15,7 +16,7 @@ class DataSourceProvisioningService:
         *,
         id: Optional[int] = None,
         tenant_id: int,
-        type_id: int,
+        type: str,
         name: str,
         technical_name: str,
         description: str = "",
@@ -61,7 +62,7 @@ class DataSourceProvisioningService:
             # 1️⃣ Create DataSource
             datasource = DataSource(
                 tenant_id=tenant_id,
-                type_id=type_id,
+                type=type,
                 name=name,
                 technical_name=technical_name,
                 description=description,
@@ -77,7 +78,7 @@ class DataSourceProvisioningService:
             connection = DataSourceConnection(
                 datasource_id=datasource.id,
                 tenant_id=tenant_id,
-                type_id=type_id,
+                type=type,
                 host=host,
                 port=port,
                 dbname=dbname,
@@ -94,7 +95,7 @@ class DataSourceProvisioningService:
                     connection_id=connection.id,
                     datasource_id=datasource.id,
                     tenant_id=tenant_id,
-                    type_id=type_id,
+                    type=type,
                     host=ssh_host,
                     port=ssh_port,
                     use_ssh_key=bool(ssh_key),
@@ -107,7 +108,7 @@ class DataSourceProvisioningService:
                 connection_id=connection.id,
                 datasource_id=datasource.id,
                 tenant_id=tenant_id,
-                type_id=type_id,
+                type=type,
                 username_enc=encrypt(username),
                 password_enc=encrypt(password) if password else None,
                 ssh_username_enc=encrypt(ssh_username) if ssh_username else None,
@@ -126,7 +127,7 @@ class DataSourceProvisioningService:
                         connection_id=connection.id,
                         datasource_id=datasource.id,
                         tenant_id=tenant_id,
-                        type_id=type_id,
+                        type=type,
                         user_id=perm["user_id"],
                         role=DataSourceRole(role),
                         created_by_id=created_by
@@ -138,7 +139,7 @@ class DataSourceProvisioningService:
                 connection_id=connection.id,
                 datasource_id=datasource.id,
                 tenant_id=tenant_id,
-                type_id=type_id,
+                type=type,
                 action="CREATE",
                 table_name="datasources",
                 record_id=str(datasource.id),
@@ -203,7 +204,7 @@ class DataSourceProvisioningService:
         datasource_id: int,
         *,
         tenant_id: int = None,
-        type_id: int = None,
+        type: str = None,
         name: str = None,
         technical_name: str = None,
         description: str = None,
@@ -240,10 +241,10 @@ class DataSourceProvisioningService:
             ds:DataSource = DataSourceProvisioningService.get_full_datasource(datasource_id)
 
             tenant_id_v = tenant_id if tenant_id is not None else ds.tenant_id
-            type_id_v = type_id if type_id is not None else ds.type_id
+            type_v = type if type is not None else ds.type
 
             ds.tenant_id = tenant_id_v
-            ds.type_id = type_id_v
+            ds.type = type_v
 
             # Update datasource
             if name is not None:
@@ -275,7 +276,7 @@ class DataSourceProvisioningService:
                 conn.ssh_enabled = ssh_enabled
 
             conn.tenant_id = tenant_id_v
-            conn.type_id = type_id_v
+            conn.type = type_v
             conn.updated_by_id = updated_by
 
             # SSH handling
@@ -296,7 +297,7 @@ class DataSourceProvisioningService:
                     
                     ssh.updated_by_id = updated_by
                     ssh.tenant_id=tenant_id_v
-                    ssh.type_id=type_id_v
+                    ssh.type=type_v
 
                     # Update fields
                     if ssh_host is not None:
@@ -324,7 +325,7 @@ class DataSourceProvisioningService:
             cred.connection_id=conn.id,
             cred.datasource_id=ds.id
             cred.tenant_id=tenant_id_v
-            cred.type_id=type_id_v
+            cred.type=type_v
             cred.updated_by_id = updated_by
 
 
@@ -359,7 +360,7 @@ class DataSourceProvisioningService:
                                 connection_id=conn.id,
                                 datasource_id=ds.id,
                                 tenant_id=tenant_id_v,
-                                type_id=type_id_v,
+                                type=type_v,
                                 user_id=user_id,
                                 role=DataSourceRole(role),
                                 created_by_id = updated_by
@@ -371,7 +372,7 @@ class DataSourceProvisioningService:
                 connection_id=conn.id,
                 datasource_id=ds.id,
                 tenant_id=tenant_id,
-                type_id=type_id,
+                type=type,
                 action="UPDATE",
                 table_name="datasources",
                 record_id=str(ds.id),
@@ -397,7 +398,7 @@ class DataSourceProvisioningService:
                 connection_id=conn.id if conn else None,
                 datasource_id=ds.id,
                 tenant_id=ds.tenant_id,
-                type_id=ds.type_id,
+                type=ds.type,
                 action="DELETE",
                 table_name="datasources",
                 record_id=str(ds.id),
@@ -448,7 +449,8 @@ class DataSourceProvisioningService:
     def base_url(base_host:str) -> Optional[str]:
         base = base_host
         if base:
-            return f"https://{base.replace('https://','').replace('http://','')}"
+            base = clean_base_url(base)
+            return f"https://{base}"
         return None
 
 
@@ -467,7 +469,7 @@ class DataSourceProvisioningService:
         *,
         id: Optional[int] = None,
         tenant_id: int,
-        type_id: int,
+        type: str,
         name: str,
         description: str = "",
 
@@ -514,7 +516,7 @@ class DataSourceProvisioningService:
                     {"id": id} if id else {},
                     {
                         "tenant_id": tenant_id,
-                        "type_id": type_id,
+                        "type": type,
                         "name": name,
                         "description": description,
                         "is_active": is_active,
@@ -583,7 +585,7 @@ class DataSourceProvisioningService:
         *,
         id: Optional[int] = None,
         tenant_id: int,
-        type_id: int,
+        type: str,
         name: str,
         description: str = "",
 
@@ -622,7 +624,7 @@ class DataSourceProvisioningService:
             source = DataSource.query.filter_by(id=id).first() if id else None
             if not source:
                 source = DataSource()
-            source_attrs = ["tenant_id", "type_id", "name", "description", "is_active", "auto_sync", "is_main", "last_sync", "last_used_at"]
+            source_attrs = ["tenant_id", "type", "name", "description", "is_active", "auto_sync", "is_main", "last_sync", "last_used_at"]
             for attr in source_attrs:
                 val = getattr(attr, None)
                 if val is not None:

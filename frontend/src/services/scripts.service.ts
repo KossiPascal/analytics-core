@@ -14,8 +14,8 @@ export interface Script {
 
 const scripts = new CRUDService("/scripts");
 export const scriptService = {
-    all: () => scripts.all<Script>(""),
-    create: (data: Script) => scripts.create("", data, { callback: async (s) => db.save({ ...s }), }),
+    list: () => scripts.all<Script>(""),
+    create: (data: Script) => scripts.create("", data, { callback: async (s) => db.upsert({ ...s }), }),
     update: (id: number, data: Script) => scripts.update("", id, data),
     remove: (id: number) => scripts.remove("", id),
     execute: (data: Script, signal: AbortSignal) => scripts.post("/execute", data, { options: { signal } })

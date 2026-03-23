@@ -137,7 +137,7 @@ export interface Dataset {
   queries?: DatasetQuery[];
   parents?: Dataset[];
   created_at?: string;
-  roles_allowed?:string[]
+  roles_allowed?: string[]
 }
 
 export interface DatasetField {
@@ -150,11 +150,11 @@ export interface DatasetField {
   aggregation: SqlAggType | null
   field_type: SqlFieldType | null
   data_type: SqlDataType
-  dimensions: {name:string, type:string, description:string}[]
+  dimensions: { name: string, type: string, description: string }[]
   format: Record<string, any>
   is_public: boolean
   is_filterable: boolean;
-  select_multiple: boolean| undefined;
+  select_multiple: boolean | undefined;
   is_groupable: boolean;
   is_sortable: boolean;
   is_selectable: boolean;
@@ -316,7 +316,7 @@ export interface BarChartOptions {
   grouped?: boolean;
   bar_width?: number;
   border_radius?: number;
-  
+
   rotate_x_labels?: number;
   x_label_height?: number;
   show_subtotal?: boolean;
@@ -593,6 +593,8 @@ export interface DatasetChart {
   // Visual configuration (how we render it)
   options: ChartOptions;
 
+  filters?: Record<string, any>;
+
   is_active: boolean;
 
   //Lazy-loaded relations
@@ -601,20 +603,29 @@ export interface DatasetChart {
   query?: DatasetQuery;
 }
 
+export interface ChartRenderDataProp {
+  header: {
+    header_rows: (string | string[])[][],
+    rows: string[],
+    columns: string[],
+    column_maps: Record<string, string[] | number[]>
+    column_label_maps: Record<number, string>
+    metrics: string[],
+    _all_columns_order: string[],
+  },
+  rows: Record<string, any>[]
+}
+
 export interface ChartRenderProp {
   chart: DatasetChart;
   query: DatasetQuery;
-  data: {
-    header: {
-      header_rows: (string | string[])[][],
-      rows: string[],
-      columns: string[],
-      column_maps: Record<string, string[] | number[]>
-      column_label_maps: Record<number, string>
-      metrics: string[],
-      _all_columns_order: string[],
-    },
-    rows: Record<string, any>[]
+  data: ChartRenderDataProp;
+  customOptions?: {
+    showTitle?: boolean;
+    showSubTitle?: boolean;
+    showDownload?: boolean;
+    showSearcInput?: boolean;
+    showExportBtn?: boolean;
   }
 }
 
@@ -640,7 +651,7 @@ export interface DatasetChartMeta {
 // Réponse de l'endpoint execute_chart
 export interface ExecuteChartResponse {
   chart: DatasetChart;    // Objet DatasetChart complet
-  data: Record<string, any>[]; // Tableau des lignes retournées
+  data: Record<string, any>; // Tableau des lignes retournées
   meta: DatasetChartMeta; // Métadonnées supplémentaires
 }
 

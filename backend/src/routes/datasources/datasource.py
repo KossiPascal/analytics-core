@@ -4,11 +4,10 @@ from typing import List
 from sqlalchemy import text
 from flask import Blueprint, request, jsonify
 from flask import Blueprint, g, jsonify, request
-from workers.couchdb.models import CreateTableModel
 from backend.src.security.access_security import require_auth, currentUserId
 from backend.src.databases.extensions import db
 from backend.src.services.datasource_service import DataSourceProvisioningService
-from backend.src.models.datasource import DataSource, DataSourceConnection, DataSourcePermission, DataSourceTarget, DataSourceType, SSHTunnelManager
+from backend.src.models.datasource import DataSource, DataSourceConnection, DataSourcePermission, SSHTunnelManager
 from backend.src.utils.connection import create_ssh_tunnel, explore_schema, get_engine, inspect_full_postgres_schema, inspect_source
 
 from werkzeug.exceptions import BadRequest
@@ -39,12 +38,9 @@ def inspect_postgres_source():
 @bp.post("")
 @require_auth
 def create_datasource():
-    payload = request.get_json(silent=True)        
+    payload = request.get_json(silent=True) or {}
     
-    if not payload:
-        raise ValueError("payload body must be JSON")
-
-    required = ["tenant_id", "type_id", "name", "technical_name", "host", "dbname", "username"]
+    required = ["tenant_id", "type", "name", "technical_name", "host", "dbname", "username"]
     missing = [f for f in required if f not in payload]
     if missing:
         raise BadRequest(f"Missing fields: {', '.join(missing)}")
@@ -53,7 +49,7 @@ def create_datasource():
     if not data:
         raise BadRequest("Invalid JSON body")
     
-    type_id=data.get("type_id")
+    data_type=data.get("type")
 
     try:
         conn = data.get("connection") or {}
@@ -61,7 +57,7 @@ def create_datasource():
 
         ds:DataSource = DataSourceProvisioningService.create_full_datasource(
             tenant_id=data.get("tenant_id"),
-            type_id=type_id,
+            type=data_type,
             name=data.get("name"),
             technical_name=data.get("technical_name"),
             description=data.get("description"),
@@ -70,7 +66,7 @@ def create_datasource():
             is_active = bool(data.get("is_active", True)),
             
             host=conn.get("host"),
-            port= int(conn.get("port") or (443 if type_id == "couchdb" else 5432)),
+            port= int(conn.get("port") or 5432),
             dbname=conn.get("dbname"),
             username=conn.get("username"),
             password=conn.get("password"),
@@ -87,13 +83,6 @@ def create_datasource():
             created_by=currentUserId(),
         )
 
-        if type_id == "couchdb":
-            ModelMgr = CreateTableModel(db, project_name=ds.name, create_table=True)
-            ModelMgr.create_sync_states_table()
-            ModelMgr.create_sync_status_table()
-            for source_type in DataSourceType.list_by_target(target=DataSourceTarget.COUCHDB):
-                ModelMgr.create_source_table(source_type.id)
-
         # db.session.close()
 
         logger.info("Connection created: %s", ds.name)
@@ -104,96 +93,83 @@ def create_datasource():
     except Exception as e:
         raise
 
-# GET ALL
-@bp.get("/<int:tenant_id>")
+
+
+@bp.get("")
 @require_auth
-def list_datasources(tenant_id:int):
+def list_datasources():
     try:
+        tenant_id = request.args.get("tenant_id", type=int)
+        datasource_id = request.args.get("datasource_id", type=int)
+        with_details = request.args.get("with_details", type=int)
+
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
 
-        datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
-        if len(datasources) == 0:
-            created_by = currentUserId()
-            DataSource.ensure_default_datasource(created_by)
-            datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
+        if not with_details:
+            if not datasource_id:
+                datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
+                if len(datasources) == 0:
+                    created_by = currentUserId()
+                    DataSource.ensure_default_datasource(created_by)
+                    datasources = DataSourceProvisioningService.list_full_datasources(tenant_id)
 
-        # sources = sorted((datasources or []), key=lambda c: c.id)
-        results = [c.to_dict() for c in datasources]
+                # sources = sorted((datasources or []), key=lambda c: c.id)
+                results = [c.to_dict() for c in datasources]
+                return jsonify(results), 200
+            
+            else:
+                ds = DataSourceProvisioningService.get_full_datasource(datasource_id)
+                conn:DataSourceConnection = ds.connection
+                permissions:List[DataSourcePermission] = [p for p in ds.permissions if p.tenant_id == tenant_id]
 
-        return jsonify(results), 200
-    except SQLAlchemyError as e:
-        logger.error(f"Failed to list connections: {str(e)}")
-        raise BadRequest("Failed to list connections", 500)
-    except Exception as e:
-        raise
+                return jsonify({
+                    "id": ds.id,
+                    "name": ds.name,
+                    "technical_name": ds.technical_name,
+                    "description": ds.description,
+                    "tenant_id": ds.tenant_id,
+                    "type": ds.type,
+                    "is_active": ds.is_active,
+                    "auto_sync": ds.auto_sync,
+                    "is_main": ds.is_main,
+                    "connection": {
+                        "host": conn.host if conn else None,
+                        "port": conn.port if conn else None,
+                        "dbname": conn.dbname if conn else None,
+                    },
+                    "permissions": [
+                        { 
+                            "tenant_id": p.tenant_id,
+                            "type": p.type,
+                            "datasource_id": p.datasource_id,
+                            "connection_id": p.connection_id,
+                            "user_id": p.user_id, 
+                            "role": p.role.value
+                        } for p in permissions
+                    ]
+                }), 200
 
-# GET WITH DETAIL
-@bp.get("/with-details/<int:tenant_id>")
-@require_auth
-def list_connections_with_details(tenant_id):
-    try:
-        if not tenant_id:
-            raise BadRequest("tenant_id is required", 400)
-        
-        dataSources:list[DataSource] = DataSource.query.filter(
-            DataSource.tenant_id == tenant_id,
-            DataSource.is_active == True, 
-            DataSourceType.target != DataSourceTarget.COUCHDB
-        ).all()
-        datasources = sorted((dataSources or []), key=lambda c: c.id)
+        else:
+            dataSources:list[DataSource] = DataSource.query.filter(
+                DataSource.tenant_id == tenant_id,
+                DataSource.is_active == True
+            ).all()
+            datasources = sorted((dataSources or []), key=lambda c: c.id)
 
-        results = []
-        for datasource in datasources:
-            data = datasource.to_dict()
-            conn_conf = datasource.to_secure_forms_conf(use_docker=True)
-            schemas_list = inspect_full_postgres_schema(conn_conf=conn_conf)
-            data["details"] = schemas_list
-            results.append(data)
+            results = []
+            for datasource in datasources:
+                data = datasource.to_dict()
+                conn_conf = datasource.to_secure_forms_conf(use_docker=True)
+                schemas_list = inspect_full_postgres_schema(conn_conf=conn_conf)
+                data["details"] = schemas_list
+                results.append(data)
 
-        return jsonify(results)
-    except SQLAlchemyError as e:
-        logger.error(f"Failed to list connections: {str(e)}")
-        raise BadRequest("Failed to list connections", 500)
+            return jsonify(results), 200
     
-# GET ONE
-@bp.get("/<int:tenant_id>/<int:datasource_id>")
-@require_auth
-def get_datasource(tenant_id,datasource_id):
-    try:
-        ds = DataSourceProvisioningService.get_full_datasource(datasource_id)
-        conn:DataSourceConnection = ds.connection
-        permissions:List[DataSourcePermission] = [p for p in ds.permissions if p.tenant_id == tenant_id]
-
-        return jsonify({
-            "id": ds.id,
-            "name": ds.name,
-            "technical_name": ds.technical_name,
-            "description": ds.description,
-            "tenant_id": ds.tenant_id,
-            "type_id": ds.type_id,
-            "is_active": ds.is_active,
-            "auto_sync": ds.auto_sync,
-            "is_main": ds.is_main,
-            "connection": {
-                "host": conn.host if conn else None,
-                "port": conn.port if conn else None,
-                "dbname": conn.dbname if conn else None,
-            },
-            "permissions": [
-                { 
-                    "tenant_id": p.tenant_id,
-                    "type_id": p.type_id,
-                    "datasource_id": p.datasource_id,
-                    "connection_id": p.connection_id,
-                    "user_id": p.user_id, 
-                    "role": p.role.value
-                } for p in permissions
-            ]
-        }), 200
-
-    except ValueError:
-        raise BadRequest("Datasource not found", 404)
+    except SQLAlchemyError as e:
+        logger.error(f"Failed to list connections: {str(e)}")
+        raise BadRequest("Failed to list connections", 500)
     except Exception as e:
         raise
 
@@ -207,7 +183,7 @@ def update_datasource(datasource_id):
         if not payload:
             raise ValueError("payload body must be JSON")
 
-        required = ["tenant_id", "type_id", "name", "technical_name", "host", "dbname", "username"]
+        required = ["tenant_id", "type", "name", "technical_name", "host", "dbname", "username"]
         missing = [f for f in required if f not in payload]
         if missing:
             raise BadRequest(f"Missing fields: {', '.join(missing)}")
@@ -216,7 +192,7 @@ def update_datasource(datasource_id):
         if not data:
             raise BadRequest("Invalid JSON body")
         
-        type_id=data.get("type_id")
+        data_type=data.get("type")
 
         conn = data.get("connection") or {}
         ssh = data.get("ssh") or {}
@@ -225,7 +201,7 @@ def update_datasource(datasource_id):
             datasource_id=datasource_id,
             # DB fields
             tenant_id=data.get("tenant_id"),
-            type_id=type_id,
+            type=data_type,
             name=data.get("name"),
             technical_name=data.get("technical_name"),
             description=data.get("description"),
@@ -235,7 +211,7 @@ def update_datasource(datasource_id):
             is_main=data.get("is_main"),
             # HOST
             host=conn.get("host"),
-            port=int(conn.get("port") or (443 if type_id == "couchdb" else 5432)),
+            port=int(conn.get("port") or 5432),
             dbname=conn.get("dbname"),
             username=conn.get("username"),
             password=conn.get("password"),

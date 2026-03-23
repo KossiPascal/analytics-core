@@ -7,6 +7,23 @@ export interface Tenant {
   updated_at?: string;
 }
 
+export interface TenantSource {
+  id: number | null;
+  tenant_id: number | null;
+  fetch_limit: number;
+  chunk_size: number;
+  name: string;
+  host: string;
+  target: 'cht' | 'dhis2';
+  username?: string;
+  password?: string;
+  https: boolean;
+  is_active: boolean;
+  update_auth: boolean;
+  config?: Record<string, any>
+  tenant?: Tenant
+}
+
 export interface Coordinates {
   latitude: number;
   longitude: number;

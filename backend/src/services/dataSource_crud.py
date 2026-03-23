@@ -5,7 +5,7 @@ from typing import List
 
 from sqlalchemy.exc import SQLAlchemyError
 from backend.src.databases.extensions import db
-from backend.src.models.datasource import ConnectionStatus, DataSource, DataSourceHistory, DataSourceConnection, DataSourceCredential, DataSourcePermission, DataSourceSSHConfig, DataSourceTarget, DataSourceType
+from backend.src.models.datasource import ConnectionStatus, DataSource, DataSourceHistory, DataSourceConnection, DataSourceCredential, DataSourcePermission, DataSourceSSHConfig
 from shared_libs.helpers.utils import encrypt
 
 from backend.src.logger import get_backend_logger
@@ -19,51 +19,13 @@ def safe_commit():
         logger.error(f"DB commit failed: {str(e)}")
         raise
 
-# DATASOURCE TYPE CRUD
-class DataSourceTypeCRUD:
-    @staticmethod
-    def create(code: str, name: str, target: DataSourceTarget, config: dict = None) -> DataSourceType:
-        obj = DataSourceType(code=code, name=name, target=target, config=config or {})
-        db.session.add(obj)
-        safe_commit()
-        return obj
-
-    @staticmethod
-    def get(type_id: int) -> DataSourceType:
-        return DataSourceType.query.get(type_id)
-
-    @staticmethod
-    def list_all(active_only: bool = True) -> list[DataSourceType]:
-        query = DataSourceType.query
-        if active_only:
-            query = query.filter_by(is_active=True)
-        return query.all()
-
-    @staticmethod
-    def update(type_id: int, **kwargs) -> DataSourceType:
-        obj = DataSourceType.query.get(type_id)
-        if not obj:
-            raise ValueError("DataSourceType not found")
-        for k, v in kwargs.items():
-            setattr(obj, k, v)
-        safe_commit()
-        return obj
-
-    @staticmethod
-    def delete(type_id: int):
-        obj = DataSourceType.query.get(type_id)
-        if not obj:
-            raise ValueError("DataSourceType not found")
-        db.session.delete(obj)
-        safe_commit()
-
 # DATASOURCE CRUD
 class DataSourceCRUD:
     @staticmethod
-    def create(tenant_id: int, type_id: int, name: str, description: str = "", is_main=False) -> DataSource:
+    def create(tenant_id: int, type: int, name: str, description: str = "", is_main=False) -> DataSource:
         obj = DataSource(
             tenant_id=tenant_id,
-            type_id=type_id,
+            type=type,
             name=name,
             description=description,
             is_main=is_main,
@@ -106,12 +68,12 @@ class DataSourceCRUD:
 # CONNECTION CRUD
 class DataSourceConnectionCRUD:
     @staticmethod
-    def create(datasource_id: int, type_id: int, tenant_id: int, host: str, port: int,
+    def create(datasource_id: int, type: int, tenant_id: int, host: str, port: int,
                dbname: str, status: ConnectionStatus = ConnectionStatus.PROD,
                ssh_enabled: bool = False) -> "DataSourceConnection":
         obj = DataSourceConnection(
             datasource_id=datasource_id,
-            type_id=type_id,
+            type=type,
             tenant_id=tenant_id,
             host=host,
             port=port,
@@ -155,12 +117,12 @@ class DataSourceConnectionCRUD:
 # SSH CONFIG CRUD
 class DataSourceSSHConfigCRUD:
     @staticmethod
-    def create(connection_id: int, datasource_id: int, type_id: int, tenant_id: int,
+    def create(connection_id: int, datasource_id: int, type: int, tenant_id: int,
                ssh_host: str, ssh_port: int = 22, use_ssh_key: bool = True) -> "DataSourceSSHConfig":
         obj = DataSourceSSHConfig(
             connection_id=connection_id,
             datasource_id=datasource_id,
-            type_id=type_id,
+            type=type,
             tenant_id=tenant_id,
             ssh_host=ssh_host,
             ssh_port=ssh_port,
@@ -195,13 +157,13 @@ class DataSourceSSHConfigCRUD:
 # CREDENTIAL CRUD
 class DataSourceCredentialCRUD:
     @staticmethod
-    def create(connection_id: int, datasource_id: int, type_id: int, tenant_id: int,
+    def create(connection_id: int, datasource_id: int, type: int, tenant_id: int,
                username: str, password: str = None, ssh_username: str = None, ssh_password: str = None,
                ssh_key: str = None, ssh_key_pass: str = None) -> "DataSourceCredential":
         obj = DataSourceCredential(
             connection_id=connection_id,
             datasource_id=datasource_id,
-            type_id=type_id,
+            type=type,
             tenant_id=tenant_id,
             username_enc=encrypt(username),
             password_enc=encrypt(password) if password else None,
@@ -241,11 +203,11 @@ class DataSourceCredentialCRUD:
 # PERMISSION CRUD
 class DataSourcePermissionCRUD:
     @staticmethod
-    def create(connection_id: int, datasource_id: int, type_id: int, tenant_id: int,user_id: int, role=str) -> "DataSourcePermission":
+    def create(connection_id: int, datasource_id: int, type: int, tenant_id: int,user_id: int, role=str) -> "DataSourcePermission":
         obj = DataSourcePermission(
             connection_id=connection_id,
             datasource_id=datasource_id,
-            type_id=type_id,
+            type=type,
             tenant_id=tenant_id,
             user_id=user_id,
             role=role
@@ -279,12 +241,12 @@ class DataSourcePermissionCRUD:
 # AUDIT HISTORY CRUD
 class DataSourceHistoryCRUD:
     @staticmethod
-    def create(connection_id: int, datasource_id: int, type_id: int, tenant_id: int,
+    def create(connection_id: int, datasource_id: int, type: int, tenant_id: int,
                action: str, table_name: str = None, record_id: str = None, user: str = None) -> "DataSourceHistory":
         obj = DataSourceHistory(
             connection_id=connection_id,
             datasource_id=datasource_id,
-            type_id=type_id,
+            type=type,
             tenant_id=tenant_id,
             action=action,
             table_name=table_name,

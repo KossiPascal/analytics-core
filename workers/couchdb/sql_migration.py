@@ -8,16 +8,15 @@ from sqlalchemy import text
 import yaml
 import hashlib
 from pathlib import Path
-from typing import List, Dict, Any, Literal, Set, Tuple, Optional, TypedDict
 from psycopg2 import sql
-
 from backend.src.config import Config
-from backend.src.models.datasource import DataSourceTarget, DataSourceType
-from workers.couchdb.utils import with_app_context
+from typing import List, Dict, Any, Literal, Set, Tuple, Optional
+from backend.src.models.tenant import CHT_SOURCE_TYPES
 from backend.src.databases.extensions import db
 from sqlalchemy.orm import Session
 from dataclasses import dataclass, field
 
+from workers.couchdb.utils import with_app_context
 from workers.logger import get_workers_logger
 logger = get_workers_logger(__name__)
 from enum import Enum
@@ -29,10 +28,7 @@ class SQLObjectType(str, Enum):
     MATVIEW = "matview"
     INDEX = "index"
 
-# ----------------------------
 # CONFIGURATION
-# ----------------------------
-
 METHODES = {
     "btree": "Index standard (par défaut)",
     "gin": "JSONB, ARRAY, full-text search",
@@ -104,7 +100,6 @@ class SqlMetadata:
 
 
 # CREATE MATERIALIZED VIEW IF NOT EXISTS patient_view WITH NO DATA AS ...
-
 class DependencyError(Exception):
     """Base class for all dependency-related errors."""
 
@@ -148,10 +143,7 @@ class SQLMetadataConversionError(SQLMetadataError):
         super().__init__(message or "Failed to convert SQL metadata.")
 
 
-
-# ----------------------------
 # SQL UTILS
-# ----------------------------
 class SQLUtils:
 
     @staticmethod
@@ -287,7 +279,7 @@ class SQLUtils:
         return list(deps)
 
     @staticmethod
-    def build_index_sql(object_name: str, idx: Dict[str, Any], project_name:str,) -> str:
+    def build_index_sql(object_name: str, idx: Dict[str, Any], source_name:str,) -> str:
         columns = idx.get("columns") or []
         if not columns:
             return ""
@@ -300,7 +292,7 @@ class SQLUtils:
         method = f" USING {method_raw}" if method_raw in METHODES else ""
         where = f" WHERE {idx['where']}" if idx.get("where") else ""
 
-        index_name = f"{project_name}_idx_{safe_table}_{'_'.join(safe_columns)}"
+        index_name = f"{source_name}_idx_{safe_table}_{'_'.join(safe_columns)}"
         cols_sql_str = "(" + ", ".join(safe_columns) + ")"
 
         index_sql = f"CREATE {unique}INDEX IF NOT EXISTS {index_name} ON {safe_table}{method} {cols_sql_str}{where};"
@@ -316,13 +308,13 @@ class SQLUtils:
         return name
     
     @staticmethod
-    def get_sql_folder(project_name:str):
-        project_name_raw = SQLUtils.validate_identifier(project_name)
-        return Config.POSTGRESQL_DIR / project_name_raw
+    def get_sql_folder(source_name:str):
+        source_name_raw = SQLUtils.validate_identifier(source_name)
+        return Config.POSTGRESQL_DIR / source_name_raw
     
     @staticmethod
-    def get_sql_files(project_name:str)-> list[Path]:
-        sql_folder = SQLUtils.get_sql_folder(project_name)
+    def get_sql_files(source_name:str)-> list[Path]:
+        sql_folder = SQLUtils.get_sql_folder(source_name)
 
         folder_path = Path(sql_folder).resolve(strict=True)
 
@@ -344,20 +336,18 @@ class SQLUtils:
         return sql_files
     
     @staticmethod
-    def migrations_shema_name(project_name:str):
-        if not project_name or not isinstance(project_name, str):
-            logger.info('project_name is missed ...')
+    def migrations_shema_name(source_name:str):
+        if not source_name or not isinstance(source_name, str):
+            logger.info('source_name is missed ...')
             raise
-        return SQLUtils.validate_identifier(f"{project_name}_schema_migrations")
+        return SQLUtils.validate_identifier(f"{source_name}_schema_migrations")
 
-    # ----------------------------
     # MIGRATION TABLE
-    # ----------------------------
     @staticmethod
     @with_app_context
-    def ensure_migration_table(session:Session, project_name:str, app:Flask=None):
+    def ensure_migration_table(session:Session, source_name:str, app:Flask=None):
 
-        shema_name = SQLUtils.migrations_shema_name(project_name)
+        shema_name = SQLUtils.migrations_shema_name(source_name)
         session.execute(text(f"""
             CREATE TABLE IF NOT EXISTS {shema_name} (
                 name TEXT PRIMARY KEY,
@@ -368,9 +358,9 @@ class SQLUtils:
 
     @staticmethod
     @with_app_context
-    def is_up_to_date(session, obj: "SQLObject", project_name:str, app:Flask=None) -> bool:
+    def is_up_to_date(session, obj: "SQLObject", source_name:str, app:Flask=None) -> bool:
         
-        shema_name = SQLUtils.migrations_shema_name(project_name)
+        shema_name = SQLUtils.migrations_shema_name(source_name)
         result = session.execute(
             text(f"SELECT hash FROM {shema_name} WHERE name = :name"), {"name": obj.sql_metadata.name}
         )
@@ -382,9 +372,9 @@ class SQLUtils:
 
     @staticmethod
     @with_app_context
-    def record_migration(session, obj: "SQLObject", project_name:str, app:Flask=None):
+    def record_migration(session, obj: "SQLObject", source_name:str, app:Flask=None):
         
-        shema_name = SQLUtils.migrations_shema_name(project_name)
+        shema_name = SQLUtils.migrations_shema_name(source_name)
         session.execute(text(f"""
             INSERT INTO {shema_name} (name, hash)
             VALUES (:name, :hash)
@@ -394,14 +384,12 @@ class SQLUtils:
 
     @staticmethod
     @with_app_context
-    def remove_migration(session, obj: "SQLObject", project_name:str, app:Flask=None):
+    def remove_migration(session, obj: "SQLObject", source_name:str, app:Flask=None):
         
-        shema_name = SQLUtils.migrations_shema_name(project_name)
+        shema_name = SQLUtils.migrations_shema_name(source_name)
         session.execute(text(f"DELETE FROM {shema_name} WHERE name = :name"), {"name": obj.sql_metadata.name})
 
-    # ----------------------------
     # DEPENDENCY SORT
-    # ----------------------------
     @staticmethod
     def topo_sort(objects: List["SQLObject"]) -> List["SQLObject"]:
         name_map = {obj.sql_metadata.name: obj for obj in objects}
@@ -427,13 +415,11 @@ class SQLUtils:
             
         return stack
 
-    # ----------------------------
     # SQL OBJECT LOADING
-    # ----------------------------
     @staticmethod
-    def load_sql_objects(project_name: str, metadata_source: MetadataSource = "sql") -> List["SQLObject"]:
+    def load_sql_objects(source_name: str, metadata_source: MetadataSource = "sql") -> List["SQLObject"]:
         
-        sql_files = SQLUtils.get_sql_files(project_name)
+        sql_files = SQLUtils.get_sql_files(source_name)
 
         objects: List[SQLObject] = []
         known_objects: Set[str] = set()
@@ -459,27 +445,19 @@ class SQLUtils:
                     if d and d != obj.sql_metadata.name
                 ]
 
-
-        print("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")
-        print(obj.sql_metadata.depends)
         return objects
 
-    # ----------------------------
     # INDEX CREATION
-    # ----------------------------
     @staticmethod
     @with_app_context
-    def create_indexes(session: Session, obj: "SQLObject", project_name:str, app:Flask=None)-> List[str]:
+    def create_indexes(session: Session, obj: "SQLObject", source_name:str, app:Flask=None)-> List[str]:
         
         view_index_sql = []
 
-        print("AAAAAAAAAAAAAAAAAAA")
-        print(str(obj.sql_metadata.indexes))
-
         for idx in obj.sql_metadata.indexes:
-            sql_str = SQLUtils.build_index_sql(obj.sql_metadata.name, idx.to_dict(), project_name)
+            sql_str = SQLUtils.build_index_sql(obj.sql_metadata.name, idx.to_dict(), source_name)
             if not sql_str or not sql_str.strip():
-                logger.error(f"CREATE INDEXES ERRORRRRRRR...: {str(obj.sql_metadata.name)}")
+                logger.error(f"CREATE INDEXES ...: {str(obj.sql_metadata.name)}")
                 raise
             session.execute(text(sql_str))
             view_index_sql.append(sql_str)
@@ -487,14 +465,10 @@ class SQLUtils:
 
     @staticmethod
     @with_app_context
-    def create_project_indexes(session: Session, project_name: str, app:Flask=None):
-        safe_name = SQLUtils.validate_identifier(project_name)
+    def create_project_indexes(session: Session, source_name: str, app:Flask=None):
+        safe_name = SQLUtils.validate_identifier(source_name)
 
-        DataSourceType.ensure_default_type()
-
-        couchdb_types:List[DataSourceType] = DataSourceType.list_by_target(target=DataSourceTarget.COUCHDB, is_active=True)
-
-        local_db_names = [n.id for n in couchdb_types if n.id]
+        localdbs = [n["localdb"] for n in CHT_SOURCE_TYPES or []]
         
         queries = [
             "CREATE INDEX IF NOT EXISTS idx_{}_doc_id ON {} ((doc->>'_id')) WHERE (doc::JSONB) ? '_id';",
@@ -513,7 +487,7 @@ class SQLUtils:
             "CREATE INDEX IF NOT EXISTS idx_{}_doc_pppppppp_id ON {} ((doc->'parent'->'parent'->'parent'->'parent'->'parent'->'parent'->'parent'->'parent'->>'_id')) WHERE ((doc->'parent'->'parent'->'parent'->'parent'->'parent'->'parent'->'parent'->'parent')::JSONB) ? '_id';"
         ]
 
-        for ldb in local_db_names:
+        for ldb in localdbs:
             db_name = SQLUtils.validate_identifier(f"{safe_name}_{ldb}")
 
             for query in queries:
@@ -521,10 +495,7 @@ class SQLUtils:
                 if sql_str.strip():
                     session.execute(text(sql_str))
 
-    # ---------------------------------------------------------
     # METADATA PARSER (robuste et strict)
-    # ---------------------------------------------------------
-
     @staticmethod
     def parse_metadata_from_sql_yaml(sql_path: Path) -> SqlMetadata:
         """
@@ -571,18 +542,14 @@ class SQLUtils:
             key = match.group(1).strip().lower()
             value = match.group(2).strip()
 
-            # -----------------------
             # NAME
-            # -----------------------
             if key == "name":
                 if not value:
                     raise SQLMetadataConversionError(f"Missing value for @name in {sql_path.name}")
                 
                 metadata["name"] = SQLUtils.strip_quotes(value)
 
-            # -----------------------
             # TYPE
-            # -----------------------
             if key == "type":
                 if not value:
                     raise SQLMetadataConversionError(f"Missing value for @type in {sql_path.name}")
@@ -594,9 +561,7 @@ class SQLUtils:
                 except ValueError:
                     raise SQLMetadataError(f"Invalid type in metadata JSON: {obj_type_str}")
                 
-            # -----------------------
             # DEPENDS
-            # -----------------------
             elif key == "depends":
                 if value:
                     # depends = [d.strip() for d in value.split(",") if d.strip()]
@@ -604,16 +569,13 @@ class SQLUtils:
                     if not isinstance(depends, list) or not all(isinstance(d, str) for d in depends):
                         raise SQLMetadataError(f"'depends' must be a list of strings in {sql_path.name}")
                     metadata["depends"] = depends
-            # -----------------------
+
             # AUTO_DEPENDS
-            # -----------------------
             elif key == "auto_depends":
                 metadata["auto_depends"] = SQLUtils.parse_bool(value)
                 metadata.setdefault("auto_depends", False)
 
-            # -----------------------
             # INDEXES BLOCK (YAML)
-            # -----------------------
             elif key == "indexes":
 
                 yaml_lines = []
@@ -762,8 +724,8 @@ class SQLUtils:
     
     
     @staticmethod
-    def convert_all_sql_metadata(project_name: str):
-        sql_files = SQLUtils.get_sql_files(project_name)
+    def convert_all_sql_metadata(source_name: str):
+        sql_files = SQLUtils.get_sql_files(source_name)
         for sql_file in sql_files:
             try:
                 result = SQLUtils.convert_sql_yaml_metadata_to_json(sql_file)
@@ -774,13 +736,13 @@ class SQLUtils:
 
 
     @staticmethod
-    def delete_all_meta_json(project_name: str,dry_run: bool = False,verbose: bool = True) -> int:
+    def delete_all_meta_json(source_name: str,dry_run: bool = False,verbose: bool = True) -> int:
         """
         Delete all `.meta.json` files associated with SQL files
         for the given project.
 
         Args:
-            project_name: Name of the project.
+            source_name: Name of the project.
             dry_run: If True, only lists files that would be deleted.
             verbose: If True, prints deletion status.
 
@@ -788,7 +750,7 @@ class SQLUtils:
             Number of deleted (or detected in dry_run) files.
         """
 
-        sql_files = SQLUtils.get_sql_files(project_name)
+        sql_files = SQLUtils.get_sql_files(source_name)
         deleted_count = 0
 
         for sql_file in sql_files:
@@ -846,10 +808,7 @@ class SQLUtils:
             raise SQLMetadataConversionError(f"SQL execution failed: {e}") from e
 
     
-
-# ----------------------------
 # SQL OBJECT
-# ----------------------------
 class SQLObject:
     def __init__(self, path: Path, metadata_source: MetadataSource = "sql"):
         self.path = path
@@ -867,13 +826,7 @@ class SQLObject:
             raise ValueError(f"{path.name} missing @name or @type")
 
 
-
-
-
-
-    # --------------------------------------------------
     # SQL EXTRACTION
-    # --------------------------------------------------
     def _extract_sql_body(self) -> str:
         return "\n".join(line for line in self.content.splitlines() if not line.strip().startswith("-- @"))
 
@@ -932,9 +885,8 @@ class SQLObject:
 
         return yaml.safe_load(yaml_block) or []
 
-    # ----------------------------
+
     # Convert SQLObject metadata → JSON/dict
-    # ----------------------------
     @staticmethod
     def sql_metadata_to_json(obj: "SQLObject") -> Dict[str, Any]:
         """
@@ -951,9 +903,7 @@ class SQLObject:
         }
 
 
-    # ----------------------------
     # Convert JSON/dict → SQL metadata block
-    # ----------------------------
     @staticmethod
     def json_to_sql_metadata(meta: Dict[str, Any], use_yaml_method:bool=False) -> str:
         """
@@ -1018,19 +968,15 @@ class SQLObject:
         return "\n".join(lines)
 
 
-# ----------------------------
 # APPLY / DROP / REFRESH / REBUILD /SQL MIGRATOR
-# ----------------------------
 class SQLMigrator:
-    def __init__(self, project_name:str):
-        self.project_name = project_name
+    def __init__(self, source_name:str):
+        self.source_name = source_name
 
     def close(self):
         pass
 
-    # ----------------------------
     # EXECUTION ORDONNEE | APPLY
-    # ----------------------------
     @with_app_context
     def apply_objects(self, objects: List[SQLObject], refresh_concurrently: bool=False, app:Flask=None):
         """
@@ -1043,7 +989,7 @@ class SQLMigrator:
 
         with Session(db.engine) as session:
             try:
-                SQLUtils.create_project_indexes(session, self.project_name, app=app)
+                SQLUtils.create_project_indexes(session, self.source_name, app=app)
                 session.commit()
             except Exception as e:
                 session.rollback()
@@ -1053,11 +999,9 @@ class SQLMigrator:
             # Assure la table de migrations
             logger.info(f"{session.execute(text("SELECT current_database()")).scalar()}\n")
 
-            # ----------------------------
             # Ensure migration table
-            # ----------------------------
             try:
-                SQLUtils.ensure_migration_table(session, self.project_name, app=app)
+                SQLUtils.ensure_migration_table(session, self.source_name, app=app)
                 session.commit()
             except Exception as e:
                 session.rollback()
@@ -1068,7 +1012,7 @@ class SQLMigrator:
             for obj in ordered:
                 try:
                     
-                    if SQLUtils.is_up_to_date(session, obj, self.project_name, app=app):
+                    if SQLUtils.is_up_to_date(session, obj, self.source_name, app=app):
                         logger.info(f"✓ {obj.sql_metadata.name} up to date")
                         continue
 
@@ -1084,7 +1028,7 @@ class SQLMigrator:
 
                     # --- CREATE INDEXES ---
                     if obj.sql_metadata.type in {SQLObjectType.TABLE,SQLObjectType.VIEW,SQLObjectType.MATVIEW}:
-                        view_index_sql = SQLUtils.create_indexes(session, obj, self.project_name, app=app)
+                        view_index_sql = SQLUtils.create_indexes(session, obj, self.source_name, app=app)
                         
                         if view_index_sql and len(view_index_sql) > 0:
                             logger.info(f"Index Créé avec sucess: \n{f"{', '.join(view_index_sql)}"}")
@@ -1092,7 +1036,7 @@ class SQLMigrator:
                             logger.info(f"No index create for : {f"{obj.sql_metadata.name}"}")
                     
                     # --- RECORD MIGRATION ---
-                    SQLUtils.record_migration(session, obj, self.project_name, app=app)
+                    SQLUtils.record_migration(session, obj, self.source_name, app=app)
 
                     # --- COMMIT OBJECT ---
                     session.commit()
@@ -1122,9 +1066,8 @@ class SQLMigrator:
                         logger.error(f"❌ Failed to refresh matview {obj.sql_metadata.name}: {e}")
                         raise SQLMetadataConversionError(f"Failed to apply SQL object {obj.sql_metadata.name}") from e
 
-    # ----------------------------
+
     # DROP
-    # ----------------------------
     @with_app_context
     def drop_objects(self, objects: List[SQLObject], app:Flask=None):
         """Supprime tous les objets SQL dans l'ordre inverse, cascade et supprime de migrations."""
@@ -1167,7 +1110,7 @@ class SQLMigrator:
                     # 🔥 PAS DE CASCADE
                     session.execute(text(template.format(safe_name)))
 
-                    SQLUtils.remove_migration(session, obj, self.project_name, app=app)  # supprime de schema_migrations
+                    SQLUtils.remove_migration(session, obj, self.source_name, app=app)  # supprime de schema_migrations
 
                     session.commit()
                     logger.info(f"✅ Dropped {safe_name}")
@@ -1191,9 +1134,7 @@ class SQLMigrator:
 
                 logger.info(f"Dropping {obj.sql_metadata.type.value} {safe_name} with CASCADE ...")
 
-                # -----------------------------
                 # 1️⃣ Récupérer dépendances AVANT DROP
-                # -----------------------------
                 dependencies = session.execute(text("""
                     SELECT DISTINCT c.relname
                     FROM pg_depend d
@@ -1206,9 +1147,7 @@ class SQLMigrator:
                 dependent_names = {row[0] for row in dependencies}
                 dependent_names.add(obj.sql_metadata.name)  # inclure lui-même
 
-                # -----------------------------
                 # 2️⃣ DROP CASCADE
-                # -----------------------------
                 drop_map = {
                     SQLObjectType.TABLE: "DROP TABLE IF EXISTS {} CASCADE",
                     SQLObjectType.VIEW: "DROP VIEW IF EXISTS {} CASCADE",
@@ -1225,10 +1164,8 @@ class SQLMigrator:
                 query = sql.SQL(template).format(sql.Identifier(obj.sql_metadata.name))
                 session.execute(query)
 
-                # -----------------------------
                 # 3️⃣ Nettoyer schema_migrations
-                # -----------------------------
-                schema_name = SQLUtils.migrations_shema_name(self.project_name)
+                schema_name = SQLUtils.migrations_shema_name(self.source_name)
 
                 session.execute(
                     text(f"DELETE FROM {schema_name} WHERE name = ANY(:names)"), 
@@ -1247,9 +1184,8 @@ class SQLMigrator:
                 logger.error(f"❌ Failed to drop {obj.sql_metadata.name}: {e}")
                 raise
 
-    # ----------------------------
+
     # FORCE REFRESH
-    # ----------------------------
     @with_app_context
     def force_refresh(self, objects: List[SQLObject], concurrently: bool=False, app:Flask=None):
         """
@@ -1277,9 +1213,8 @@ class SQLMigrator:
                     logger.error(f"❌ Failed to refresh matview {obj.sql_metadata.name}: {e}")
                     raise
 
-    # ----------------------------
+
     # REBUILD ALL
-    # ----------------------------
     def rebuild_all(self, objects: List[SQLObject], refresh_concurrently=False, app:Flask=None):
         """Supprime et recrée tous les objets SQL."""
         logger.info("Dropping all objects...")
@@ -1288,13 +1223,11 @@ class SQLMigrator:
         self.apply_objects(objects, refresh_concurrently, app=app)
 
 
-# ----------------------------
 # SQL STARTER
-# ----------------------------
 class SQLStarter:
-    def __init__(self, project_name: str, app: Flask, metadata_source: MetadataSource = "sql"):
-        self.sql_objects = SQLUtils.load_sql_objects(project_name,metadata_source=metadata_source)
-        self.migrator = SQLMigrator(project_name)
+    def __init__(self, source_name: str, app: Flask, metadata_source: MetadataSource = "sql"):
+        self.sql_objects = SQLUtils.load_sql_objects(source_name,metadata_source=metadata_source)
+        self.migrator = SQLMigrator(source_name)
         self.app = app
 
     def run(self, action:Literal['init','refresh','rebuild']):
@@ -1317,13 +1250,11 @@ class SQLStarter:
             self.migrator.close()
 
 
-# ----------------------------
 # MAIN
-# ----------------------------
 if __name__ == "__main__":
     pass
 
-    # starter = SQLStarter(project_name="kendeya")
+    # starter = SQLStarter(source_name="kendeya")
     # starter.run("init")
 
     # import argparse
@@ -1332,7 +1263,7 @@ if __name__ == "__main__":
     # parser.add_argument("--metadata-source",choices=["sql", "json"],default="sql")
 
     # starter = SQLStarter(
-    #     project_name="kendeya",
+    #     source_name="kendeya",
     #     app=app,
     #     metadata_source=args.metadata_source
     # )

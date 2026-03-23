@@ -632,9 +632,22 @@ class ChartFactory:
     def from_payload(payload: Dict,query: DatasetQuery):
 
         structure = payload.get("structure", {})
-        rows = [ChartStructureDimension(**d) for d in structure.get("rows_dimensions", [])]
-        cols = [ChartStructureDimension(**d) for d in structure.get("cols_dimensions", [])]
-        metrics = [ChartStructureMetric(**m) for m in structure.get("metrics", [])]
+        rows_dimensions = [
+            {"field_id": d.get("field_id"),"alias": d.get("alias")}
+            for d in structure.get("rows_dimensions", []) or []
+        ]
+        cols_dimensions = [
+            {"field_id": d.get("field_id"),"alias": d.get("alias")}
+            for d in structure.get("cols_dimensions", []) or []
+        ]
+        metrics_list = [
+            {"field_id": d.get("field_id"),"alias": d.get("alias"),"aggregation": d.get("aggregation")}
+            for d in structure.get("metrics", []) or []
+        ]
+                                                        
+        rows = [ChartStructureDimension(**d) for d in rows_dimensions]
+        cols = [ChartStructureDimension(**d) for d in cols_dimensions]
+        metrics = [ChartStructureMetric(**m) for m in metrics_list]
         filters = [ChartStructureFilter(**f) for f in structure.get("filters", [])]
         order_by = [ChartStructureOrderby(**o) for o in structure.get("order_by", [])]
         limit = int(structure["limit"]) if structure.get("limit", None) else None

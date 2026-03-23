@@ -110,30 +110,24 @@ def list_queries(query_id: Optional[int] = None, tenant_id: Optional[int] = None
 
 
 # ===================== QUERIES =====================
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_queries_by(tenant_id: int):
+def list_queries_by():
     try:
-        queries = list_queries(tenant_id=tenant_id)
-        return jsonify(queries), 200
-    except Exception as e:
-        logger.error(f"List queries error: {str(e)}")
-        raise BadRequest("Failed to list queries", 500)
+        tenant_id = request.args.get("tenant_id", type=int)
+        dataset_id = request.args.get("dataset_id", type=int)
 
-@bp.get("/<int:tenant_id>/<int:dataset_id>")
-@require_auth
-def list_queries_by_dataset(tenant_id: int, dataset_id: int):
-    try:
         queries = list_queries(tenant_id=tenant_id,dataset_id=dataset_id)
         return jsonify(queries), 200
     except Exception as e:
         logger.error(f"List queries error: {str(e)}")
         raise BadRequest("Failed to list queries", 500)
 
-@bp.get("/one/<int:tenant_id>/<int:query_id>")
+@bp.get("/<int:query_id>")
 @require_auth
-def get_query(tenant_id: int,query_id: int):
+def get_query(query_id: int):
     try:
+        tenant_id = request.args.get("tenant_id", type=int)
         query = list_queries(tenant_id=tenant_id,query_id=query_id,all=False)
         if not query or query["deleted"]:
             raise BadRequest(f"DatasetQuery with id={query_id} not found", 404)
@@ -193,9 +187,13 @@ def create_query():
         query.created_by_id=currentUserId()
         db.session.add(query)
         db.session.commit()
-        compiler.store_matview()
-        
-        return jsonify({"message": "DatasetQuery created", "query_id": query.id}), 201
+
+        try:
+            compiler.store_matview()
+        except Exception as e:
+            logger.warning(f"store_matview failed (non-blocking): {str(e)}")
+
+        return jsonify({"message": "DatasetQuery created", "id": query.id, "query_id": query.id}), 201
     except Exception as e:
         db.session.rollback()
         logger.error(f"Create query error: {str(e)}")
@@ -220,10 +218,10 @@ def update_query(query_id: int):
             raise BadRequest("parametters ares invalid", 400)
         
         compiler = MakeCompileQueryJson(
-            dataset_id=dataset_id, 
-            query_json=query_json, 
+            dataset_id=dataset_id,
+            query_json=query_json,
             sql_type=sql_type,
-            query_view_name=query_name
+            object_name=query_name
         )
         compiler.run()
 
@@ -257,9 +255,13 @@ def update_query(query_id: int):
 
         query.updated_by_id=currentUserId()
         db.session.commit()
-        compiler.store_matview()
-        
-        return jsonify({"message": "DatasetQuery updated"}), 200
+
+        try:
+            compiler.store_matview()
+        except Exception as e:
+            logger.warning(f"store_matview failed (non-blocking): {str(e)}")
+
+        return jsonify({"message": "DatasetQuery updated", "id": query.id}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
         raise BadRequest("Failed to update query", 500)

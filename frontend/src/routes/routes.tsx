@@ -14,16 +14,25 @@ import { RouteAccess } from "./access";
 // ################################################################
 
 export const ROUTES_ITEMS: RouteItem[] = [
+
+  
   {
     path: ROUTES.home(),
-    component: PAGES.VisualizationHomePage,
+    component: PAGES.VisualizationViewPage,
     label: "Accueil - Visualisations",
     access: "authenticated",
     icon: <Home size={20} />,
     permissions:['_admin', '_superadmin']
   },
 
-  // 
+  {
+    path: ROUTES.visualization.manage(),
+    component: PAGES.VisualizationManagerPage,
+    label: "Manage - Visualisations",
+    access: "authenticated",
+    icon: <Home size={20} />,
+    permissions:['_admin', '_superadmin']
+  },
   
   {
     path: ROUTES.auth.login(),
@@ -36,8 +45,21 @@ export const ROUTES_ITEMS: RouteItem[] = [
   // Visualisation
   {
     label: 'Visualisation',
-    path: ROUTES.visualization(),
-    component: PAGES.VisualizationHomePage,
+    path: ROUTES.visualization.root(),
+    component: PAGES.VisualizationViewPage,
+    icon: <Eye size={20} />,
+    access: "authenticated",
+    showInGridpNav: true,
+    showInTopNav: true,
+    showInSideNav: true,
+    permissions:['_admin', '_superadmin'],
+  },
+
+  // Visualisation
+  {
+    label: 'Manage Visualisation',
+    path: ROUTES.visualization.manage(),
+    component: PAGES.VisualizationManagerPage,
     icon: <Eye size={20} />,
     access: "authenticated",
     showInGridpNav: true,
@@ -85,6 +107,17 @@ export const ROUTES_ITEMS: RouteItem[] = [
     showInSideNav: true,
     permissions:['_admin', '_superadmin'],
   },
+  {
+    label: 'DataVisualisationPage',
+    path: ROUTES.dataVisualisations.list(),
+    component: PAGES.DataVisualisationPage,
+    icon: <Users size={20} />,
+    access: "authenticated",
+    showInGridpNav: true,
+    showInSideNav: true,
+    permissions:['_admin', '_superadmin'],
+  },
+  
   {
     label: 'Administration',
     path: ROUTES.admin.root(),

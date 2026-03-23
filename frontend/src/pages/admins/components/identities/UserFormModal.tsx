@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FormModal } from '@/components/forms/FormModal/FormModal';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { FormSelect } from '@components/forms/FormSelect/FormSelect';
@@ -8,6 +8,7 @@ import { UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tenantService, roleService, orgunitService, userService } from '@services/identity.service';
 import type { Tenant, Role, User, Orgunit } from '@models/identity.model';
+import { useAuth } from '@/contexts/AuthContext';
 
 const EMPTY_USER: User = {
   id: null,
@@ -35,49 +36,60 @@ interface Props {
 }
 
 export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: Props) {
-  const [user, setUser]     = useState<User>({ ...EMPTY_USER });
-  const [saving, setSaving] = useState(false);
+  const { isSuperAdmin, user } = useAuth();
 
+  const [formUser, setFormUser]     = useState<User>({ ...EMPTY_USER });
+  const [saving, setSaving] = useState(false);
   const [tenants,  setTenants]  = useState<Tenant[]>([]);
   const [roles,    setRoles]    = useState<Role[]>([]);
   const [orgunits, setOrgunits] = useState<Orgunit[]>([]);
   const [loading,  setLoading]  = useState(false);
+  const [tenant_id, setTenantId] = useState<number | undefined>();
+  
+    const loaded = useRef(false);
+  
+    useEffect(() => {
+      if (loaded.current) return;
+      loaded.current = true;
+      tenantService.list().then(t => {
+        setTenants(t || []);
+        setTenantId(user?.tenant_id);
+      });
+    }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
-    setUser({ ...EMPTY_USER, tenant_id: defaultTenantId ?? null });
+    if (!isOpen || !tenant_id) return;
+    setFormUser({ ...EMPTY_USER, tenant_id: defaultTenantId ?? null });
     setLoading(true);
-    Promise.all([tenantService.all(), roleService.all(), orgunitService.all()])
-      .then(([t, r, o]) => {
-        const tenantList = t ?? [];
-        setTenants(tenantList);
+    Promise.all([roleService.list(tenant_id), orgunitService.list(tenant_id)])
+      .then(([r, o]) => {
         setRoles(r ?? []);
         setOrgunits(o ?? []);
         // Auto-sélectionner le tenant si non fourni et qu'il n'y en a qu'un
-        if (!defaultTenantId && tenantList.length === 1) {
-          setUser((prev) => ({ ...prev, tenant_id: tenantList[0].id ?? null }));
+        if (!defaultTenantId && tenants.length === 1) {
+          setFormUser((prev) => ({ ...prev, tenant_id: tenants[0].id ?? null }));
         }
       })
       .finally(() => setLoading(false));
-  }, [isOpen, defaultTenantId]);
+  }, [tenant_id, isOpen, defaultTenantId]);
 
   const setValue = <K extends keyof User>(key: K, value: User[K]) =>
-    setUser((prev) => ({ ...prev, [key]: value }));
+    setFormUser((prev) => ({ ...prev, [key]: value }));
 
   const isValid =
-    !!user.tenant_id &&
-    !!user.username?.trim() &&
-    !!user.lastname?.trim() &&
-    !!user.firstname?.trim() &&
-    !!user.password &&
-    user.password === user.password_confirm;
+    !!formUser.tenant_id &&
+    !!formUser.username?.trim() &&
+    !!formUser.lastname?.trim() &&
+    !!formUser.firstname?.trim() &&
+    !!formUser.password &&
+    formUser.password === formUser.password_confirm;
 
   const handleSave = async () => {
     if (!isValid) return;
     setSaving(true);
     try {
-      const created = await userService.create(user);
-      toast.success(`Utilisateur « ${user.username} » créé avec succès`);
+      const created = await userService.create(formUser);
+      toast.success(`Utilisateur « ${formUser.username} » créé avec succès`);
       onCreated?.(created);
       onClose();
     } catch (e: any) {
@@ -88,7 +100,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
   };
 
   const errors: string[] = [];
-  if (user.password && user.password_confirm && user.password !== user.password_confirm)
+  if (formUser.password && formUser.password_confirm && formUser.password !== formUser.password_confirm)
     errors.push('Les mots de passe ne correspondent pas');
 
   return (
@@ -107,7 +119,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
       <FormSelect
         label="Tenant"
         required
-        value={user.tenant_id}
+        value={formUser.tenant_id}
         options={[
           { value: null, label: '— Sélectionner —' },
           ...tenants.map((t) => ({ value: t.id, label: t.name })),
@@ -119,35 +131,35 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
       <FormInput
         label="Username"
         required
-        value={user.username}
+        value={formUser.username}
         onChange={(e) => setValue('username', e.target.value)}
       />
 
       <FormInput
         label="Nom"
         required
-        value={user.lastname}
+        value={formUser.lastname}
         onChange={(e) => setValue('lastname', e.target.value)}
       />
 
       <FormInput
         label="Prénoms"
         required
-        value={user.firstname}
+        value={formUser.firstname}
         onChange={(e) => setValue('firstname', e.target.value)}
       />
 
       <FormInput
         label="Email"
         type="email"
-        value={user.email}
+        value={formUser.email}
         onChange={(e) => setValue('email', e.target.value)}
       />
 
       <FormInput
         label="Téléphone"
         type="tel"
-        value={user.phone}
+        value={formUser.phone}
         onChange={(e) => setValue('phone', e.target.value)}
       />
 
@@ -155,7 +167,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
         label="Mot de passe"
         type="password"
         required
-        value={user.password}
+        value={formUser.password}
         onChange={(e) => setValue('password', e.target.value)}
         placeholder="········"
       />
@@ -164,14 +176,14 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
         label="Confirmer le mot de passe"
         type="password"
         required
-        value={user.password_confirm}
+        value={formUser.password_confirm}
         onChange={(e) => setValue('password_confirm', e.target.value)}
         placeholder="········"
       />
 
       <FormMultiSelect
         label="Rôles"
-        value={user.role_ids}
+        value={formUser.role_ids}
         options={roles.map((r) => ({ value: r.id, label: r.name }))}
         onChange={(values) => setValue('role_ids', values.filter((v): v is number => v !== null))}
         placeholder="Sélectionner des rôles"
@@ -180,7 +192,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
 
       <FormMultiSelect
         label="Orgunits"
-        value={user.orgunit_ids}
+        value={formUser.orgunit_ids}
         options={orgunits.map((o) => ({ value: o.id, label: o.name }))}
         onChange={(values) => setValue('orgunit_ids', values.filter((v): v is number => v !== null))}
         placeholder="Sélectionner des orgunits"
@@ -189,7 +201,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
 
       <FormCheckbox
         label="Actif"
-        checked={Boolean(user.is_active)}
+        checked={Boolean(formUser.is_active)}
         onChange={(e) => setValue('is_active', e.target.checked)}
       />
     </FormModal>

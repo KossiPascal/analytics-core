@@ -4,8 +4,8 @@ import { buildUrl, withQuery } from './utils';
 export const PAGES = {
 
     // Home page
-    VisualizationHomePage: lazy(() => import('@pages/visualizations/VisualizationHome')),
-    // VisualizationHomePage: lazy(() => import('@pages/visualizations/visu/VisualizationsTab')),
+    VisualizationManagerPage: lazy(() => import('@/pages/visualizations/VisualizationManagerPage')),
+    VisualizationViewPage: lazy(() => import('@/pages/visualizations/VisualizationViewPage')),
 
 
     // Auth pages
@@ -31,8 +31,11 @@ export const PAGES = {
     // Users pages
     IdentitiesPage: lazy(() => import('@/pages/admins/IdentitiePage')),
 
-    // DataSources Page
+    // DataAssets Page
     DataAssetsPage: lazy(() => import('@/pages/admins/DataAssetsPage')),
+
+    // DataVisualisation Page
+    DataVisualisationPage: lazy(() => import('@/pages/admins/DataVisualisationPage')),
 
     // Admin pages
     AdminPage: lazy(() => import('@/pages/admins/ManagementPage')),
@@ -67,7 +70,10 @@ export const ROUTES = {
     home: () => '/',
 
     // MENU GROUPS (for navigation structure only)
-    visualization: () => '/visualization',
+    visualization: {
+        root: () => '/visualization/view',
+        manage: () => '/visualization/nanage',
+    },
 
     // QUERY BUILDER
     builder: {
@@ -116,6 +122,11 @@ export const ROUTES = {
     dataassets: {
         root: () => '/dataassets',
         list: () => '/dataassets/list',
+    },
+
+    dataVisualisations: {
+        root: () => '/dataVisualisations',
+        list: () => '/dataVisualisations/list',
     },
 
     // ADMINISTRATION

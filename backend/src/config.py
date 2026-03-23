@@ -1,4 +1,6 @@
 import os
+import re
+from urllib.parse import urlparse
 from pathlib import Path
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
@@ -12,6 +14,28 @@ ROOT_DIR = BASE_DIR.parent
 for env_path in [BASE_DIR / ".env", ROOT_DIR / ".env"]:
     if env_path.exists():
         load_dotenv(env_path, override=True)
+
+
+
+def clean_base_url(url: str, use_urlparse:bool=False) -> str:
+    if not url:
+        return ""
+    url = url.strip()
+
+    if not use_urlparse:
+        # Supprimer http:// ou https://
+        url = re.sub(r'^https?://', '', url, flags=re.IGNORECASE)
+        # Supprimer les / au début et à la fin
+        return url.strip('/')
+    
+    else:
+        # Ajouter un schéma fictif si absent pour bien parser
+        if not url.startswith(("http://", "https://")):
+            url = "http://" + url
+        parsed = urlparse(url)
+        # Reconstituer sans scheme
+        clean = parsed.netloc + parsed.path
+        return clean.strip('/')
 
 
 class Config:
@@ -83,7 +107,7 @@ class Config:
 
     COUCHDB_USER = os.getenv('COUCHDB_USER')
     COUCHDB_PASS = os.getenv('COUCHDB_PASS')
-    COUCHDB_HOST = os.getenv('COUCHDB_HOST')
+    COUCHDB_HOST = clean_base_url(os.getenv('COUCHDB_HOST'))
     COUCHDB_PORT = os.getenv('COUCHDB_PORT')
     COUCHDB_BASE_URL = (f"https://{COUCHDB_USER}:{COUCHDB_PASS}@{COUCHDB_HOST}:{COUCHDB_PORT}") if  all([COUCHDB_HOST, COUCHDB_PORT]) else None
 

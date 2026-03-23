@@ -35,21 +35,21 @@ def list_fields(field_id: Optional[int] = None, tenant_id: Optional[int] = None,
         return chart.to_dict()
 
 # ===================== FIELDS =====================
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_fields_by(tenant_id: int):
-    fields = list_fields(tenant_id=tenant_id)
-    return jsonify(fields), 200
+def list_fields_by():
+    tenant_id = request.args.get("tenant_id", type=int)
+    dataset_id = request.args.get("dataset_id", type=int)
 
-@bp.get("/<int:tenant_id>/<int:dataset_id>")
-@require_auth
-def list_fields_by_dataset(tenant_id: int, dataset_id: int):
     fields = list_fields(tenant_id=tenant_id,dataset_id=dataset_id)
     return jsonify(fields), 200
 
-@bp.get("/<int:tenant_id>/<int:field_id>")
+
+@bp.get("/<int:field_id>")
 @require_auth
-def get_field(tenant_id: int,field_id: int):
+def get_field(field_id: int):
+    tenant_id = request.args.get("tenant_id", type=int)
+    
     field = list_fields(tenant_id=tenant_id,field_id=field_id,all=False)
     if not field or field["deleted"]:
         raise BadRequest(f"DatasetField with id={field_id} not found", 404)
@@ -59,22 +59,20 @@ def get_field(tenant_id: int,field_id: int):
 @require_auth
 def create_field():
     try:
-        print("11111111111")
         payload = request.get_json(silent=True) or {}
 
         select_multiple = payload.get("select_multiple")
         # if select_multiple is None:
         #     raise BadRequest("select_multiple is required")
-        print("22222222222")
+
         dataset_id = payload.get("dataset_id")
         tenant_id=payload.get("tenant_id")
         if not dataset_id or not tenant_id:
             raise BadRequest("dataset_id and tenant_id are required")
-        print("33333333333")
+
         user_id=currentUserId()
         
         field_type=payload.get("field_type")
-        print("4444444444444")
         format=payload.get("format") or {}
         is_public=bool(payload.get("is_public", False))
         is_filterable=bool(payload.get("is_filterable", False))
@@ -88,13 +86,26 @@ def create_field():
             dimensions = payload.get("dimensions")
             if not isinstance(dimensions, list) or not all(isinstance(v, dict) for v in dimensions):
                 raise BadRequest(f"dimensions must be a list of dict", 400)
+
+            existing_names = {
+                row.name for row in db.session.query(DatasetField.name).filter(
+                    DatasetField.dataset_id == dataset_id,
+                    DatasetField.deleted == False
+                ).all()
+            }
+
+            field = None
+            skipped = 0
             for dim in dimensions:
                 name = dim.get("name")
                 data_type = dim.get("type")
                 description = dim.get("description")
                 if not name or not data_type:
-                    raise BadRequest("dimensions must be a list of {name, type, desciption}", 400)
-                raw_field = {"name":name, "type": data_type}
+                    raise BadRequest("dimensions must be a list of {name, type, description}", 400)
+                if name in existing_names:
+                    skipped += 1
+                    continue
+                raw_field = {"name": name, "type": data_type}
                 field = DatasetField(
                     name=name,
                     tenant_id=tenant_id,
@@ -117,23 +128,18 @@ def create_field():
                 db.session.add(field)
 
         else:
-            print("AAAAAAAA")
             name = payload.get("name")
             if not name:
                 raise BadRequest("DatasetField name is required")
-            print("BBBBBBBBBBB")
 
             data_type=payload.get("data_type")
 
             raw_field = payload.get("raw_field") or {}
             raw_name = raw_field.get("name")
             raw_type = raw_field.get("type")
-            print("CCCCCCCCCC")
-
             
             if not isinstance(raw_field, dict) or not raw_name or not raw_type:
                 raise BadRequest(f"raw_field muist be a dict with key=name -> string and key=type -> string", 404)
-            print("DDDDDDDDDDD")
 
             field = DatasetField(
                 name=name,
@@ -156,12 +162,16 @@ def create_field():
             )
             db.session.add(field)
 
-            print("EEEEEEEEEEEEEEEE")
-
-
         db.session.commit()
+        
+        if select_multiple is True:
+            return jsonify({
+                "message": "DatasetFields created",
+                "skipped": skipped,
+                "field_id": field.id if field else None
+            }), 201
         return jsonify({"message": "DatasetField created", "field_id": field.id}), 201
-    
+
     except Exception:
         db.session.rollback()
         raise

@@ -10,18 +10,17 @@ import { Users, Shield, ShieldCheck, Plus } from 'lucide-react';
 import { RolesPermissionsTab } from '@pages/admins/components/identities/RolesPermissionsTab';
 import { UsersLogsTab } from '@pages/admins/components/identities/UsersLogsTab';
 import { UsersRolesTab } from '@pages/admins/components/identities/UsersRolesTab';
-import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { OrgunitsTab } from '@pages/admins/components/identities/OrgunitsTab';
+import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { UserFormModal } from '@pages/admins/components/identities/UserFormModal';
+import { TenantSourcesTab } from './components/identities/TenantSourcesTab';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
 
-import { FormMultiSelectDualPanel, MultiSelectItem } from '@/components/forms/FormMultiSelectDualPanel/FormMultiSelectDualPanel';
-import { FormCascadeTree } from '@/components/forms/FormCascadeTree/FormCascadeTree';
-
 type TabType =
   | "tenants_tab"
+  | "tenant_sources_tab"
   | "orgunits_tab"
   | "users_tab"
   | "roles_tab"
@@ -57,6 +56,9 @@ export default function IdentitiesPage() {
       case 'tenants_tab':
         setActiveName("Ajouter Nouveau Tenant");
         break;
+      case 'tenant_sources_tab':
+        setActiveName("Ajouter Nouvelle Source Tenant");
+        break;
       case 'users_tab':
         setActiveName("Ajouter Nouveau User");
         break;
@@ -81,6 +83,7 @@ export default function IdentitiesPage() {
 
   const tabs: { key: TabType; label: string; icon: JSX.Element }[] = [
     { key: 'tenants_tab', label: 'Tenants', icon: <Users size={18} /> },
+    { key: 'tenant_sources_tab', label: 'TenantSources', icon: <Users size={18} /> },
     { key: 'permissions_tab', label: 'Permissions', icon: <ShieldCheck size={18} /> },
     { key: 'roles_tab', label: 'Rôles', icon: <Shield size={18} /> },
     { key: 'orgunits_tab', label: 'Orgunits', icon: <ShieldCheck size={18} /> },
@@ -125,6 +128,7 @@ export default function IdentitiesPage() {
           {/* Tab Content */}
           <div className={styles.tabContent}>
             {activeTab === 'tenants_tab' && <TenantsTab ref={crudRef} />}
+            {activeTab === 'tenant_sources_tab' && <TenantSourcesTab ref={crudRef} />}
             {activeTab === 'users_tab' && <UsersTab ref={crudRef} key={usersRefreshKey} />}
             {activeTab === 'roles_tab' && <RolesTab ref={crudRef} />}
             {activeTab === 'permissions_tab' && <PermissionsTab ref={crudRef} />}
@@ -133,7 +137,6 @@ export default function IdentitiesPage() {
             {activeTab === 'users_logs_tab' && <UsersLogsTab />}
             {activeTab === 'roles_permissions_tab' && <RolesPermissionsTab />}
             {activeTab === 'users_roles_tab' && <UsersRolesTab />}
-
 
             {/* <FormMultiSelectDualPanel
               items={[{ id: '1', name: 'string1' },{ id: '2', name: 'string2' },{ id: '3', name: 'string3' }]}

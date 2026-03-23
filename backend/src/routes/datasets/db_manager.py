@@ -1,13 +1,15 @@
 import re
 import hashlib
 import unicodedata
+from flask import current_app
 from typing import Any, Dict, List, Optional
 from backend.src.databases.extensions import db, scheduler
 from backend.src.models.datasets.dataset import DbObjectType
-from sqlalchemy import bindparam, text
+from sqlalchemy import bindparam, inspect, text
 from sqlalchemy.sql.elements import TextClause
 from backend.src.routes.datasets.query.sql_compiler import ALLOWED_PATTERN, FORBIDDEN_PATTERNS, VALID_SQL_IDENTIFIER
 
+    
 MAX_IDENTIFIER_LENGTH = 60
 
 RESERVED_KEYWORDS = {
@@ -382,8 +384,6 @@ class SqlIntrospector:
 
         return sql
 
-    # --------------------------------------------------
-
     # @staticmethod
     # def extract_select_query(sql: str) -> str:
     #     sql = SqlIntrospector._clean_sql(sql)
@@ -407,7 +407,6 @@ class SqlIntrospector:
 
         return sql
 
- 
     @staticmethod
     def add_limit(sql: str, limit: int = 100) -> str:
         """
@@ -432,7 +431,6 @@ class SqlIntrospector:
 
         # sinon simple SELECT
         return f"{sql_clean} LIMIT {limit}"
-
 
     @classmethod
     def get_columns(cls, sql: str = None, object_name: str = None, values: dict = {}, schema: str = "public") -> List[Dict[str, str]]:
@@ -508,7 +506,6 @@ class SqlIntrospector:
         except Exception as e:
             raise ValueError(f"SQL introspection error: {e}")
 
-
     @classmethod
     def sql_from_db(cls, view_name: str, sql_type: str, schema: str = "public") -> (Dict[str, Any] | None):
         """
@@ -554,3 +551,86 @@ class SqlIntrospector:
         result = db.session.execute(text(query), {"schema": schema, "view_name": view_name}).fetchone()
 
         return result[0] if result else None
+
+
+
+
+class DbSqlActions:
+
+    def __init__(self):
+
+        self.ALLOWED_TYPES = {
+            "int": "INTEGER",
+            "string": "VARCHAR(255)",
+            "text": "TEXT",
+            "bool": "BOOLEAN",
+            "date": "DATE",
+        }
+
+        self.VALID_NAME = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+    def table_exists(self,table_name):
+        inspector = inspect(current_app.db.engine)
+        return table_name in inspector.get_table_names()
+    
+    def validate_identifier(self,name: str):
+        if not self.VALID_NAME.match(name):
+            raise ValueError(f"Invalid identifier: {name}")
+        return name
+
+
+    def column_exists(self,table_name, column_name):
+        inspector = inspect(current_app.db.engine)
+        columns = [c["name"] for c in inspector.get_columns(table_name)]
+        return column_name in columns
+
+
+    def alter_table_safe(self,table_name: str, action: str, column_name=None, column_type=None):
+
+
+        self.validate_identifier(table_name)
+
+        if column_name:
+            self.validate_identifier(column_name)
+
+        if not self.table_exists(table_name):
+            raise ValueError(f"Table {table_name} does not exist")
+
+        if column_name and not column_name.isidentifier():
+            raise ValueError("Invalid column name")
+
+        if column_type:
+            column_type = self.ALLOWED_TYPES.get(column_type.lower())
+            if not column_type:
+                raise ValueError("Unsupported column type")
+
+        sql = None
+
+        if action == "add_column":
+            if self.column_exists(table_name, column_name):
+                raise ValueError("Column already exists")
+            if not column_type:
+                raise ValueError("column_type is required")
+
+            sql = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
+
+        elif action == "drop_column":
+            if not self.column_exists(table_name, column_name):
+                raise ValueError("Column does not exist")
+
+            sql = f"ALTER TABLE {table_name} DROP COLUMN {column_name}"
+
+        elif action == "alter_column":
+
+            if not column_type:
+                raise ValueError("column_type is required")
+        
+            sql = f"ALTER TABLE {table_name} ALTER COLUMN {column_name} TYPE {column_type}"
+
+        else:
+            raise ValueError("Unsupported action")
+
+        with current_app.db.engine.begin() as conn:
+            conn.execute(text(sql))
+
+        return {"status": "success", "action": action}

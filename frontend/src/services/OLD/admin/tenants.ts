@@ -16,7 +16,7 @@ export default {
     return res.data;
   },
 
-  getById: async (id: string): Promise<Tenant> => {
+  getById: async (id: number): Promise<Tenant> => {
     const res = await api.get(`/tenants/${id}`);
     if (!res.success) throw new Error("Failed to fetch tenant");
     return res.data;
@@ -30,52 +30,52 @@ export default {
   },
 
   // UPDATE
-  update: async (id: string, tenant: Partial<Tenant>): Promise<Tenant> => {
+  update: async (id: number, tenant: Partial<Tenant>): Promise<Tenant> => {
     const res = await api.put(`/tenants/${id}`, tenant);
     if (!res.success) throw new Error("Failed to update tenant");
     return res.data;
   },
 
-  partialUpdate: async (id: string, tenant: Partial<Tenant>): Promise<Tenant> => {
+  partialUpdate: async (id: number, tenant: Partial<Tenant>): Promise<Tenant> => {
     const res = await api.patch(`/tenants/${id}`, tenant);
     if (!res.success) throw new Error("Failed to partially update tenant");
     return res.data;
   },
 
   // DELETE
-  delete: async (id: string): Promise<void> => {
+  delete: async (id: number): Promise<void> => {
     const res = await api.delete(`/tenants/${id}`);
     if (!res.success) throw new Error("Failed to delete tenant");
   },
 
   // STATUS / ACTIONS
-  activate: async (id: string): Promise<Tenant> => {
+  activate: async (id: number): Promise<Tenant> => {
     const res = await api.post(`/tenants/${id}/activate`);
     if (!res.success) throw new Error("Failed to activate tenant");
     return res.data;
   },
 
-  deactivate: async (id: string): Promise<Tenant> => {
+  deactivate: async (id: number): Promise<Tenant> => {
     const res = await api.post(`/tenants/${id}/deactivate`);
     if (!res.success) throw new Error("Failed to deactivate tenant");
     return res.data;
   },
 
   // MEMBERS / ACCESS
-  getUsers: async (tenantId: string) => {
-    const res = await api.get(`/tenants/${tenantId}/users`);
+  getUsers: async (tenant_id: number) => {
+    const res = await api.get(`/tenants/users`, { params:{tenant_id} });
     if (!res.success) throw new Error("Failed to fetch tenant users");
     return res.data;
   },
 
-  addUser: async (tenantId: string, userId: string) => {
-    const res = await api.post(`/tenants/${tenantId}/users`, { userId });
+  addUser: async (tenant_id: number, user_id: number) => {
+    const res = await api.post(`/tenants/users`, { tenant_id, user_id });
     if (!res.success) throw new Error("Failed to add user to tenant");
     return res.data;
   },
 
-  removeUser: async (tenantId: string, userId: string) => {
-    const res = await api.delete(`/tenants/${tenantId}/users/${userId}`);
+  removeUser: async (tenant_id: number, user_id: number) => {
+    const res = await api.delete(`/tenants/users`, { params:{tenant_id, user_id} });
     if (!res.success) throw new Error("Failed to remove user from tenant");
   },
 };

@@ -1,7 +1,6 @@
 import { forwardRef } from "react";
 import { Building2 } from 'lucide-react';
 import { Tenant } from '@models/identity.model';
-import { StatusBadge } from '@components/ui/Badge/Badge';
 import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { FormTextarea } from '@components/forms/FormTextarea/FormTextarea';
@@ -10,7 +9,7 @@ import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/A
 
 
 // Default value
-const defaultTenant: Tenant = { 
+const defaultForm: Tenant = { 
   id: null, 
   name: "", 
   description: "" 
@@ -41,7 +40,8 @@ export const TenantsTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
       icon={<Building2 size={20} />}
       entityName="Tenant"
       columns={tenantColumns}
-      defaultValue={defaultTenant}
+      defaultValue={defaultForm}
+      defaultTenant={{ required: true, ids: [0] }}
       service={tenantService}
       isValid={(tenant: Tenant): boolean => {
         return tenant.name.trim().length > 0;
@@ -109,7 +109,7 @@ export const TenantsTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
 //   const fetchTenants = async () => {
 //     setLoading(true);
 //     try {
-//       const res = await tenantService.all();
+//       const res = await tenantService.list();
 //       setTenantsList(res || []);
 //     } catch {
 //       showError('Erreur lors du chargement des tenants');

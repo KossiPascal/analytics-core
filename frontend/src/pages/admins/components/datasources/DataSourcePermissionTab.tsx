@@ -2,8 +2,8 @@ import { Key } from 'lucide-react';
 import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { type Column } from '@components/ui/Table/Table';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
-import { DataSource, DataSourcePermission, DataSourceType, DB_PERMISSION_ROLE_LIST } from '@/models/datasource.models';
-import { datasourceService, dsPermissionService, dsTypeService } from '@/services/datasource.service';
+import { DataSource, DataSourcePermission, DB_PERMISSION_ROLE_LIST, DB_SOURCE_TYPES } from '@/models/datasource.models';
+import { datasourceService, dsPermissionService } from '@/services/datasource.service';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { Tenant, User } from '@/models/identity.model';
 import { userService } from '@/services/identity.service';
@@ -11,7 +11,7 @@ import { userService } from '@/services/identity.service';
 const createDefaultForm = (tenant_id: number): DataSourcePermission => ({
     id: null,
     tenant_id: tenant_id,
-    type_id: null,
+    type: "postgresql",
     datasource_id: null,
     connection_id: null,
     user_id: null,
@@ -29,7 +29,7 @@ const dsPermissionColumns: Column<DataSourcePermission>[] = [
     {
         key: "type",
         header: "Type",
-        render: (p) => p.type?.name ?? "-",
+        render: (p) => p.type ?? "-",
         sortable: true,
         searchable: true,
     },
@@ -69,7 +69,6 @@ interface DataSourcePermissionTabProps {
 }
 
 export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef, DataSourcePermissionTabProps>(({ tenants, tenant_id }, ref) => {
-    const [types, setTypes] = useState<DataSourceType[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [datasources, setDatasources] = useState<DataSource[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,12 +76,12 @@ export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef, Data
     const fetchInitialData = async () => {
         setLoading(true);
         try {
-            const typeRes = await dsTypeService.all();
-            const userRes = await userService.all();
-            let datasourceRes: DataSource[] = [];
-            if (tenant_id) datasourceRes = await datasourceService.all(tenant_id);
+            if (!tenant_id) return;
+            const [userRes, datasourceRes] = await Promise.all([
+                userService.list(tenant_id),
+                datasourceService.list(tenant_id),
+            ]);
 
-            setTypes(typeRes || []);
             setUsers(userRes || []);
             setDatasources(datasourceRes || []);
         } catch {
@@ -123,9 +122,9 @@ export const DataSourcePermissionTab = forwardRef<AdminEntityCrudModuleRef, Data
                     /> */}
                     <FormSelect
                         label={`Type`}
-                        value={permission.type_id}
-                        options={types.map((t) => ({ value: t.id, label: t.name }))}
-                        onChange={(value) => { setValue("type_id", value) }}
+                        value={permission.type}
+                        options={DB_SOURCE_TYPES.map((c) => ({ value: c.value, label: c.name }))}
+                        onChange={(value) => { setValue("type", value) }}
                         placeholder="Ex: db"
                         required={true}
                     />

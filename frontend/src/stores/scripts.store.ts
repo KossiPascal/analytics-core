@@ -215,7 +215,7 @@ export const scriptStore = create<ScriptState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const isOnline = networkManager.isOnline();
-      const res = await scriptService.all();
+      const res = await scriptService.list();
 
       set({ scripts: res || templates });
     } catch (err: any) {

@@ -1,7 +1,7 @@
 import { Shield } from 'lucide-react';
 import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { StatusBadge } from '@components/ui/Badge/Badge';
-import { type Column } from '@components/ui/Table/Table';
+import { Table, type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { FormTextarea } from '@components/forms/FormTextarea/FormTextarea';
 import { Tenant } from '@models/identity.model';
@@ -16,6 +16,7 @@ import { FormSwitch } from '@/components/forms/FormSwitch/FormSwitch';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
 import { FormRadio } from '@/components/forms/FormRadio/FormRadio';
+import { InlineEditCell } from '@components/ui/InlineEditCell';
 
 const createDefaultForm = (tenant_id: number): DatasetField => ({
     id: null,
@@ -174,7 +175,6 @@ interface DatasetFieldFormProps {
     tenant_id: number;
     datasets: Dataset[];
     dataset_id: number | undefined;
-    setDatasetId: (datasetId: number) => void;
     datasetMap: Map<number, Dataset>;
     saving: boolean;
     showColumns: boolean;
@@ -505,7 +505,7 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
     return { valid: true };
 }
 
-const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, setDatasetId, datasets, datasetMap, saving, showColumns, setShowColumns, onValidationChange }: DatasetFieldFormProps) => {
+const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, datasets, datasetMap, saving, showColumns, setShowColumns, onValidationChange }: DatasetFieldFormProps) => {
 
     const [errors, setErrors] = useState<{ expression?: string, data_type?: string }>({});
     const [disabled, setDisabled] = useState<{ expression?: boolean, data_type?: boolean }>({});
@@ -699,7 +699,6 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                         options={datasets.map((c) => ({ value: c.id, label: c.name }))}
                         onChange={(val) => {
                             setValue("dataset_id", val);
-                            setDatasetId(val);
                             validateField();
                         }}
                         leftIcon={<FaTable />}
@@ -767,32 +766,37 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                         )}
                     </div>
                     {(field.dimensions?.length ?? 0) > 0 && (
-                        <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
-                            <table className="w-full text-xs">
-                                <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-200">
-                                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Nom</th>
-                                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Type</th>
-                                        <th className="text-left px-3 py-2 text-gray-500 font-medium">Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {field.dimensions!.map((d, i) => (
-                                        <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                                            <td className="px-3 py-2 font-medium text-gray-800">{d.name}</td>
-                                            <td className="px-3 py-2 text-blue-500">{d.type}</td>
-                                            <td className="px-3 py-2 text-gray-400 italic">{d.description || "—"}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="mt-2">
+                            <Table
+                                data={field.dimensions ?? []}
+                                keyExtractor={(_, i) => i}
+                                scrollable
+                                maxHeight={220}
+                                features={{ search: false, pagination: false, animate: false }}
+                                columns={[
+                                    { key: "name", header: "Nom", sortable: true, render: d => <span className="font-medium text-gray-800">{d.name}</span> },
+                                    { key: "type", header: "Type", sortable: true, render: d => <span className="text-blue-500">{d.type}</span> },
+                                    {
+                                        key: "description", header: "Description", sortable: true, render: (d, i) => (
+                                            <InlineEditCell
+                                                value={d.description || ""}
+                                                onChange={(v) => {
+                                                    const updated = [...(field.dimensions ?? [])];
+                                                    updated[i] = { ...updated[i], description: v };
+                                                    setValue("dimensions", updated);
+                                                }}
+                                            />
+                                        )
+                                    },
+                                ]}
+                            />
                         </div>
                     )}
                 </div>
 
             ) : isNotDimensionMultiple ? (
                 <>
-                    {isNew&&(<FormSelect
+                    {isNew && (<FormSelect
                         label={`Data Type`}
                         value={field.data_type}
                         options={dataTypes.map((c) => ({ value: c, label: c }))}
@@ -898,7 +902,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                     </div>
 
                     {/* Raw field */}
-                    {isNew&&(<div className="border rounded-xl p-3 bg-gray-50 space-y-3">
+                    {isNew && (<div className="border rounded-xl p-3 bg-gray-50 space-y-3">
                         <p className="text-sm font-medium text-gray-700">Raw Field <span className="text-gray-400 font-normal">(optionnel)</span></p>
                         <div className="grid grid-cols-2 gap-3">
                             <FormInput
@@ -945,66 +949,81 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                     </div>
                 }
             >
-                <div className="flex-1 overflow-auto p-4">
+                <div className="p-4">
                     {datasetColumns.length === 0 ? (
                         <p className="text-sm text-gray-400 text-center py-4">Aucune colonne disponible</p>
                     ) : (
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="border-b border-gray-200">
-                                    <th className="w-6 pb-2"></th>
-                                    <th className="text-left pb-2 text-gray-600 font-medium pr-3">Nom</th>
-                                    <th className="text-left pb-2 text-gray-600 font-medium pr-3">Type</th>
-                                    <th className="text-left pb-2 text-gray-600 font-medium">Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {datasetColumns.map((c, idx) => {
-                                    const isChecked = tempSelected.some(s => s.name === c.name);
-                                    const selected = tempSelected.find(s => s.name === c.name);
-                                    return (
-                                        <tr
-                                            key={idx}
-                                            className={`border-b border-gray-100 transition-colors ${isChecked ? "bg-blue-50" : "hover:bg-gray-50"}`}
-                                        >
-                                            <td className="py-2 pr-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isChecked}
-                                                    onChange={() => {
-                                                        setTempSelected(prev =>
-                                                            isChecked
-                                                                ? prev.filter(s => s.name !== c.name)
-                                                                : [...prev, { name: c.name, type: c.type, description: c.description ?? "" }]
-                                                        );
-                                                    }}
-                                                    className="rounded"
-                                                />
-                                            </td>
-                                            <td className="py-2 pr-3 font-medium text-gray-800">{c.name}</td>
-                                            <td className="py-2 pr-3 text-gray-400">{c.type}</td>
-                                            <td className="py-2">
-                                                {isChecked ? (
-                                                    <input
-                                                        type="text"
-                                                        value={selected?.description ?? ""}
-                                                        onChange={(e) => {
-                                                            setTempSelected(prev =>
-                                                                prev.map(s => s.name === c.name ? { ...s, description: e.target.value } : s)
-                                                            );
-                                                        }}
-                                                        placeholder="Description..."
-                                                        className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400"
-                                                    />
-                                                ) : (
-                                                    <span className="text-xs text-gray-300">—</span>
+                        <Table
+                            data={datasetColumns}
+                            keyExtractor={(c) => c.name}
+                            scrollable
+                            maxHeight={340}
+                            features={{ search: true, pagination: false, animate: false }}
+                            searchPlaceholder="Rechercher une colonne..."
+                            columns={[
+                                {
+                                    key: "select",
+                                    header: (
+                                        <input
+                                            type="checkbox"
+                                            className="rounded"
+                                            checked={datasetColumns.length > 0 && tempSelected.length === datasetColumns.length}
+                                            ref={el => { if (el) el.indeterminate = tempSelected.length > 0 && tempSelected.length < datasetColumns.length; }}
+                                            onChange={(e) => {
+                                                setTempSelected(e.target.checked
+                                                    ? datasetColumns.map(c => ({ name: c.name, type: c.type, description: c.description ?? "" }))
+                                                    : []
+                                                );
+                                            }}
+                                            title="Tout sélectionner"
+                                        />
+                                    ),
+                                    width: 40,
+                                    render: (c) => {
+                                        const isChecked = tempSelected.some(s => s.name === c.name);
+                                        return (
+                                            <input
+                                                type="checkbox"
+                                                checked={isChecked}
+                                                className="rounded"
+                                                onChange={() => setTempSelected(prev =>
+                                                    isChecked
+                                                        ? prev.filter(s => s.name !== c.name)
+                                                        : [...prev, { name: c.name, type: c.type, description: c.description ?? "" }]
                                                 )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                            />
+                                        );
+                                    },
+                                },
+                                {
+                                    key: "name", header: "Nom", sortable: true, searchable: true,
+                                    render: (c) => <span className="font-medium text-gray-800">{c.name}</span>,
+                                },
+                                {
+                                    key: "type", header: "Type", sortable: true, searchable: true,
+                                    render: (c) => <span className="text-gray-400">{c.type}</span>,
+                                },
+                                {
+                                    key: "description", header: "Description",
+                                    render: (c) => {
+                                        const isChecked = tempSelected.some(s => s.name === c.name);
+                                        const selected = tempSelected.find(s => s.name === c.name);
+                                        if (!isChecked) return <span className="text-xs text-gray-300">—</span>;
+                                        return (
+                                            <input
+                                                type="text"
+                                                value={selected?.description ?? ""}
+                                                onChange={(e) => setTempSelected(prev =>
+                                                    prev.map(s => s.name === c.name ? { ...s, description: e.target.value } : s)
+                                                )}
+                                                placeholder="Description..."
+                                                className="w-full text-xs border border-gray-200 rounded px-2 py-1 focus:outline-none focus:border-blue-400"
+                                            />
+                                        );
+                                    },
+                                },
+                            ]}
+                        />
                     )}
                 </div>
             </Modal>
@@ -1014,21 +1033,15 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
 
 interface DatasetFieldTabProps {
     tenants: Tenant[];
-    tenant_id: number
+    tenant_id: number;
+
+    datasets: Dataset[];
+    dataset_id: number;
 }
-export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetFieldTabProps>(({ tenants, tenant_id }, ref) => {
-    const [dataset_id, setDatasetId] = useState<number | undefined>(undefined);
-    const [datasets, setDatasets] = useState<Dataset[]>([]);
+export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetFieldTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
     const [showColumns, setShowColumns] = useState<boolean>(false);
     const [hasFormError, setHasFormError] = useState(false);
     const [loading, setLoading] = useState(true);
-
-    const didLoad = useRef(false);
-
-    useEffect(() => {
-        if (!tenant_id) return;
-        datasetService.all(tenant_id).then(d => setDatasets(d || []));
-    }, [tenant_id]);
 
     const defaultTenant = useMemo(() => {
         return { required: true, ids: [tenant_id, dataset_id] };
@@ -1059,17 +1072,6 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                 defaultValue={DEFAULT_FORM}
                 service={fieldService}
                 defaultTenant={defaultTenant}
-                headerActions={(
-                    <FormSelect
-                        label={`Dataset List`}
-                        value={dataset_id}
-                        options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                        onChange={(value) => setDatasetId(value)}
-                        placeholder="Sélectionner Dataset"
-                        leftIcon={<FaDatabase />}
-                        required={true}
-                    />
-                )}
                 onBeforeSave={(df) => ({ ...df, dataset_id: df.dataset_id ?? dataset_id ?? null })}
                 isValid={df => !hasFormError && Boolean(df.dataset_id) && (
                     df.field_type === "dimension" && df.select_multiple === true
@@ -1092,7 +1094,6 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                         tenant_id={tenant_id}
                         datasets={datasets}
                         dataset_id={dataset_id}
-                        setDatasetId={setDatasetId}
                         datasetMap={datasetMap}
                         saving={saving}
                         showColumns={showColumns}

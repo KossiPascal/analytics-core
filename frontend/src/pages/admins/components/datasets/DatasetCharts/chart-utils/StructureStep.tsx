@@ -12,6 +12,7 @@ import { FormMultiSelect } from "@/components/forms/FormSelect/FormMultiSelect";
 import { MoreVertical, Trash2, Pencil } from "lucide-react";
 import { ChartFilterBuilder } from "./ChartFilterBuilder";
 import { data } from "react-router-dom";
+import { FaDatabase } from "react-icons/fa";
 
 interface DragItem {
   type: "dimension" | "metric";
@@ -342,6 +343,13 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
     }));
   };
 
+  const updateChartValue = (key: keyof DatasetChart, val: any) => {
+    updateChart((prev) => ({
+      ...prev,
+      [key]: val,
+    }));
+  };
+
   const query = useMemo(() => {
     return queries?.find((q) => q.id === (_chart.query_id ?? chart.query_id));
   }, [queries, _chart.query_id, chart.query_id]);
@@ -611,6 +619,15 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
   return (
     <>
       <DndProvider backend={HTML5Backend}>
+
+        <FormInput
+          label="Nom du chart"
+          value={chart.name}
+          onChange={e => updateChartValue("name", e.target.value)}
+          placeholder="Saisir Nom du chart"
+          leftIcon={<FaDatabase />}
+          required={true}
+        />
 
         <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}>
           {/* Available fields */}
