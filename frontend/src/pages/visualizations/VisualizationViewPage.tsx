@@ -93,11 +93,16 @@ export default function VisualizationView() {
     fetchCharts();
   }
 
+  const refreshView = async (id: number | null) => {
+    console.log("👉 refresh...");
+    // Make refresh view function
+    refresh();
+  }
+
   useEffect(() => {
     if (!tenant_id) return;
     refresh()
   }, [tenant_id]);
-
 
 
   // ---------------- ACTIONS ----------------
@@ -134,9 +139,6 @@ export default function VisualizationView() {
   const openView = async (viz: Visualization, charts: DatasetChart[]) => {
     window.open(`/dashboard/${viz.id}`)
   }
-
-
-
 
 
   // Stats
@@ -269,14 +271,14 @@ export default function VisualizationView() {
 
         {/* View Toggle */}
         {/* <div className={styles.viewToggle}> */}
-          <button
-            type="button"
-            // className={`${styles.viewButtonActive}`}
-            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-            title={viewMode === 'grid' ? "Vue grille" : "Vue liste"}
-          >
-            {viewMode === 'grid' ? <LayoutGrid size={18} /> : <List size={18} />}
-          </button>
+        <button
+          type="button"
+          // className={`${styles.viewButtonActive}`}
+          onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+          title={viewMode === 'grid' ? "Vue grille" : "Vue liste"}
+        >
+          {viewMode === 'grid' ? <LayoutGrid size={18} /> : <List size={18} />}
+        </button>
         {/* </div> */}
       </div>
 
@@ -368,10 +370,14 @@ export default function VisualizationView() {
                     /> */}
                     {/* <VisualizationViewModule visualization={viz} charts={charts} removeView={handleDelete} openView={openView} /> */}
 
-                    <Card key={viz.id} style={{"padding": "5px"}} className="hover:shadow-xl transition-all rounded-2xl">
-                        {/* <div className="p-4 space-y-4"> */}
-                            <VisualizationViewModule visualization={viz} charts={charts} />
-                        {/* </div> */}
+                    <Card key={viz.id} style={{ "padding": "5px" }} className="hover:shadow-xl transition-all rounded-2xl">
+                      {/* <div className="p-4 space-y-4"> */}
+                      <VisualizationViewModule visualization={viz} charts={charts} refreshView={refreshView} autoRefresh={refreshView} />
+
+
+                      refreshView();
+                      console.log("👉 refresh...");
+                      {/* </div> */}
                     </Card>
 
                   </motion.div>

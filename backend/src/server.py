@@ -70,9 +70,8 @@ def init_database(app: Flask) -> None:
         # car db.create_all() ouvre sa propre connexion et ne voit pas une transaction
         # non committée. On utilise une connexion séparée avec commit explicite.
         with db.engine.connect() as schema_conn:
-            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS eqpm"))
-            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS meet"))
-            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS prosi"))
+            for shema in ["eqpm", "meet", "prosi"]:
+                schema_conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {shema}"))
             schema_conn.commit()
 
         with db.engine.begin() as conn:
