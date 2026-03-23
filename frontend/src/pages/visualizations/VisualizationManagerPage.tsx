@@ -21,7 +21,7 @@ import DialogContent from "@mui/material/DialogContent";
 import { Tenant } from "@/models/identity.model";
 import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
 
-import { VisualizationChartRenderer, VisualizationViewModule } from "./VisualizationUtils";
+import { VisualizationChartRenderer, VisualizationViewModule, statusColor } from "./VisualizationUtils";
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -262,56 +262,26 @@ export default function VisualizationHome() {
       )}
 
       {/* GRID */}
-      <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-3 gap-6" : "space-y-4"}>
+      <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-2 gap-6" : "space-y-4"}>
         {filtered.map(v => (
-          <Card key={v.id} className="hover:shadow-xl transition-all rounded-2xl">
+          <Card key={v.id} className="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow border border-gray-100" style={{ borderColor: "#7e035f" }}>
 
-            <div className="p-4 space-y-4">
+            {/* ── Card header ── */}
+            
 
-              {/* TITLE */}
-              {/* <div className="flex justify-between"> */}
-              {/* <div>
-                  <h2 className="font-semibold text-lg truncate">{v.name}</h2>
-                  <p className="text-sm text-gray-500 line-clamp-2">{v.description}</p>
-                </div> */}
-
-              {/* BADGES */}
-              {/* <div className="flex gap-2 flex-wrap">
-                  <Badge>{v.type}</Badge>
-                  <Badge>{v.status}</Badge>
-                  <Badge>{v.state}</Badge>
-                </div> */}
-
-              {/* ACTIONS */}
-              {/* <div className="flex gap-2 flex-wrap">
-                <Button size="sm" onClick={() => startEdit(v)}>Edit</Button>
-                <Button size="sm" variant="danger" onClick={() => remove(v.id)}>Delete</Button>
-                <Button size="sm" onClick={() => window.open(`/dashboard/${v.id}`)}>Open</Button>
-
-                <Button onClick={() => workflowAction(v.id!, "publish")}>Publish</Button>
-                <Button onClick={() => workflowAction(v.id!, "archive")}>Archive</Button>
-                <Button onClick={() => workflowAction(v.id!, "execute")}>Run</Button>
-                <Button onClick={() => window.open(`/api/export/pdf/${v.id}`)}>Export PDF</Button>
-                <Button onClick={() => window.open(`/api/export/excel/${v.id}`)}>Export Excel</Button>
-              </div> */}
-              {/* </div> */}
-
-              {/* MINI PREVIEW */}
-              {/* <div className="h-32 bg-gray-50 border rounded-xl overflow-hidden flex items-center justify-center text-gray-400 text-sm"> */}
-              <VisualizationViewModule visualization={v} charts={charts} removeView={remove} editView={startEdit} openView={openView} refreshView={refreshView} autoRefresh={refreshView} />
-              {/* </div> */}
-
-              {/* ACTIONS */}
-              {/* <div className="flex justify-between items-center">
-                <Button size="sm" onClick={() => window.open(`/dashboard/${v.id}`)}>Open</Button>
-
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => startEdit(v)}>Edit</Button>
-                  <Button size="sm" variant="danger" onClick={() => remove(v.id)}>Delete</Button>
-                </div>
-              </div> */}
-
+            {/* ── Visualisation preview ── */}
+            <div className="bg-white">
+              <VisualizationViewModule
+                visualization={v}
+                charts={charts}
+                removeView={remove}
+                editView={startEdit}
+                openView={openView}
+                refreshView={refreshView}
+                autoRefresh={refreshView}
+              />
             </div>
+
           </Card>
         ))}
       </div>

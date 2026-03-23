@@ -48,6 +48,136 @@ export const statusColor = (status?: string) => {
     }
 };
 
+// ---------------- TOOLBAR ----------------
+type ToolbarProps = {
+    viz: Visualization;
+    charts: DatasetChart[];
+    startAutoRefresh: boolean;
+    showDownloadBtn: boolean;
+    showFilters: boolean;
+    onToggleFilters: () => void;
+    onToggleAutoRefresh: () => void;
+    onManualRefresh: () => void;
+    onToggleExport: () => void;
+    onFullscreen: () => void;
+    onEdit?: () => void;
+    onDelete?: () => void;
+    onOpen?: () => void;
+};
+
+function VisualizationToolbar({
+    startAutoRefresh, showDownloadBtn, showFilters,
+    onToggleFilters, onToggleAutoRefresh, onManualRefresh,
+    onToggleExport, onFullscreen, onEdit, onDelete, onOpen,
+}: ToolbarProps) {
+    const [refreshOpen, setRefreshOpen] = useState(false);
+
+    return (
+        <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.375rem',
+            padding: '0.5rem 0.75rem',
+            background: '#f8fafc',
+            borderBottom: '1px solid #e2e8f0',
+            flexWrap: 'wrap',
+        }}>
+            {/* Filters */}
+            <button onClick={onToggleFilters} style={btnStyle(showFilters)} title="Filtres">
+                🔍
+            </button>
+
+            {/* Export */}
+            <button onClick={onToggleExport} style={btnStyle(showDownloadBtn)} title="Export">
+                📄
+            </button>
+
+            {/* Refresh dropdown */}
+            <div style={{ position: 'relative' }}>
+                <button
+                    onClick={() => setRefreshOpen(v => !v)}
+                    style={{
+                        ...btnStyle(startAutoRefresh),
+                        paddingRight: '0.625rem',
+                        display: 'flex', alignItems: 'center', gap: 4,
+                    }}
+                    title="Rafraîchissement"
+                >
+                    {startAutoRefresh ? '⏳' : '🔄'} Refresh <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
+                </button>
+                {refreshOpen && (
+                    <div style={{
+                        position: 'absolute', top: '110%', left: 0, zIndex: 100,
+                        background: 'white', border: '1px solid #e2e8f0',
+                        borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                        minWidth: 170, overflow: 'hidden',
+                    }}>
+                        <button
+                            onClick={() => { onToggleAutoRefresh(); setRefreshOpen(false); }}
+                            style={dropItemStyle(startAutoRefresh)}
+                        >
+                            {startAutoRefresh ? '⏸ Stop Auto Refresh' : '▶ Auto Refresh'}
+                        </button>
+                        <button
+                            onClick={() => { onManualRefresh(); setRefreshOpen(false); }}
+                            style={dropItemStyle(false)}
+                        >
+                            🔄 Rafraîchir maintenant
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Spacer */}
+            <div style={{ flex: 1 }} />
+
+            {/* Fullscreen */}
+            <button onClick={onFullscreen} style={btnStyle(false)} title="Plein écran">⛶</button>
+
+            {/* Open */}
+            {onOpen && (
+                <button onClick={onOpen} style={{ ...btnStyle(false), background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }} title="Ouvrir">
+                    Ouvrir
+                </button>
+            )}
+
+            {/* Edit */}
+            {onEdit && (
+                <button onClick={onEdit} style={{ ...btnStyle(false), background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }} title="Modifier">
+                    Modifier
+                </button>
+            )}
+
+            {/* Delete */}
+            {onDelete && (
+                <button onClick={onDelete} style={{ ...btnStyle(false), background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }} title="Supprimer">
+                    Supprimer
+                </button>
+            )}
+        </div>
+    );
+}
+
+const btnStyle = (active: boolean): React.CSSProperties => ({
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    padding: '0.3rem 0.625rem',
+    fontSize: '0.78rem', fontWeight: 500,
+    borderRadius: 6, border: '1px solid',
+    cursor: 'pointer',
+    background: active ? '#e0e7ff' : '#ffffff',
+    color: active ? '#4338ca' : '#475569',
+    borderColor: active ? '#a5b4fc' : '#e2e8f0',
+    transition: 'all 0.15s',
+    whiteSpace: 'nowrap' as const,
+});
+
+const dropItemStyle = (active: boolean): React.CSSProperties => ({
+    display: 'block', width: '100%', textAlign: 'left',
+    padding: '0.5rem 0.875rem', fontSize: '0.82rem',
+    border: 'none', cursor: 'pointer',
+    background: active ? '#e0e7ff' : 'transparent',
+    color: active ? '#4338ca' : '#1e293b',
+    fontWeight: active ? 600 : 400,
+});
+
 // ---------------- CHART ----------------
 export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: RendererProps) {
     const [response, setResponse] = useState<ExecuteChartResponse | null>(null);
@@ -164,57 +294,62 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
 
     if (!viz) return <Skeleton />;
 
-    const layout = (viz.layout || []).map((item: any) => ({ ...item }));
+    const rawLayout = viz.layout || [];
+    const layoutArray: any[] = Array.isArray(rawLayout)
+        ? rawLayout
+        : (rawLayout as any)['lg'] ?? Object.values(rawLayout)[0] ?? [];
+    const layout = layoutArray.map((item: any) => ({ ...item }));
 
     const getChart = (id: number) => charts?.find((c) => c.id === id);
 
     return (
-        <div className={`${fullscreen ? "fixed inset-0 z-50 bg-gray-50" : ""}`}>
-            {/* <div className={`${fullscreen ? "fixed inset-0 z-50 bg-white p-4" : "p-6"} bg-gray-50 min-h-screen`}> */}
+        <div className={fullscreen ? "fixed inset-0 z-[9999] bg-white flex flex-col overflow-hidden" : ""}>
 
-            {/* ================= HEADER ================= */}
-            <div
-            // className="sticky top-0 z-20 backdrop-blur bg-white/80 border-b px-6 py-4 flex flex-wrap justify-between items-center gap-4"
-            >
-                {/* LEFT */}
-                <div className="flex gap-2 mt-2 flex-wrap">
-                    <h1 className="text-xl font-semibold">{viz.name}</h1>
-                    {/* <p className="text-sm text-gray-500">{viz.description}</p> */}
-                    {/* <span className={`px-2 py-1 text-xs rounded ${statusColor(viz.status)}`}>{viz.status}</span> */}
-                    <Badge>{viz.type}</Badge>
-                    <Badge>{viz.state}</Badge>
-                    <Badge>{viz.status}</Badge>
-                </div>
+            {/* ================= TOOLBAR (masqué en fullscreen) ================= */}
+            {!fullscreen && (
+                <>
+                    <VisualizationToolbar
+                        viz={viz}
+                        charts={charts}
+                        startAutoRefresh={startAutoRefresh}
+                        showDownloadBtn={showDownloadBtn}
+                        showFilters={showFilters}
+                        onToggleFilters={() => setShowFilters(v => !v)}
+                        onToggleAutoRefresh={() => setStartAutoRefresh(v => !v)}
+                        onManualRefresh={() => refreshView?.(viz.id)}
+                        onToggleExport={() => setShowDownloadBtn(v => !v)}
+                        onFullscreen={() => setFullscreen(true)}
+                        onEdit={editView ? () => editView(viz) : undefined}
+                        onDelete={removeView ? () => removeView(viz.id) : undefined}
+                        onOpen={openView ? () => openView(viz, charts) : undefined}
+                    />
 
-                {/* RIGHT ACTIONS */}
-                <div className="flex gap-2 flex-wrap">
-                    <Button size="sm" variant="outline" onClick={() => setShowFilters(v => !v)}>🔍 Filters</Button>
-                    <Button size="sm" variant="outline" onClick={() => setStartAutoRefresh(v => !v)}>{startAutoRefresh ? "⏸ Stop Refresh" : "▶ Auto Refresh"}</Button>
-                    <Button size="sm" variant="outline" onClick={() => setShowDownloadBtn(v => !v)}>📄 Export</Button>
-                    <Button size="sm" onClick={() => setFullscreen(v => !v)}>{fullscreen ? "🡼 Exit Fullscreen" : "⛶ Fullscreen"}</Button>
+                    {/* ================= FILTER PANEL ================= */}
+                    {showFilters && (
+                        <div className="bg-slate-50 border-b px-4 py-3 flex flex-wrap gap-3">
+                            <FormInput placeholder="Region" value={filters.region || ""} onChange={(e) => setFilters({ ...filters, region: e.target.value })} />
+                            <FormInput type="date" value={filters.date || ""} onChange={(e) => setFilters({ ...filters, date: e.target.value })} />
+                            <Button size="sm" onClick={() => { console.log("apply filters", filters); }}>Appliquer</Button>
+                        </div>
+                    )}
+                </>
+            )}
 
-                    {editView && (<Button size="sm" onClick={() => editView(viz)}>Edit</Button>)}
-                    {removeView && (<Button size="sm" variant="danger" onClick={() => removeView(viz.id)}>Delete</Button>)}
-                    {openView && (<Button size="sm" onClick={() => openView(viz, charts)}>Open</Button>)}
-                    {refreshView && (<Button size="sm" onClick={() => refreshView(viz.id)}>Refresh</Button>)}
-
-
-
-                    {/* <Button onClick={() => workflowAction(viz.id!, "publish")}>Publish</Button>
-                    <Button onClick={() => workflowAction(viz.id!, "archive")}>Archive</Button>
-                    <Button onClick={() => workflowAction(viz.id!, "execute")}>Run</Button>
-                    <Button onClick={() => window.open(`/api/export/pdf/${viz.id}`)}>Export PDF</Button>
-                    <Button onClick={() => window.open(`/api/export/excel/${viz.id}`)}>Export Excel</Button> */}
-                </div>
-            </div>
-
-            {/* ================= FILTER PANEL ================= */}
-            {showFilters && (
-                <div className="bg-white border-b p-4 flex flex-wrap gap-3 animate-fade-in">
-                    <FormInput placeholder="Region" value={filters.region || ""} onChange={(e) => setFilters({ ...filters, region: e.target.value })} />
-                    <FormInput type="date" value={filters.date || ""} onChange={(e) => setFilters({ ...filters, date: e.target.value })} />
-                    <Button onClick={() => { console.log("apply filters", filters); }} >Apply Filters</Button>
-                </div>
+            {/* ================= BOUTON EXIT FULLSCREEN (flottant) ================= */}
+            {fullscreen && (
+                <button
+                    onClick={() => setFullscreen(false)}
+                    style={{
+                        position: 'fixed', top: 70, right: 18, zIndex: 99999,
+                        background: 'rgba(30,41,59,0.9)', color: 'white',
+                        border: 'none', borderRadius: 6, padding: '7px 16px',
+                        cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
+                        backdropFilter: 'blur(4px)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                    }}
+                >
+                    ✕ Exit Fullscreen
+                </button>
             )}
 
             {/* ================= EMPTY ================= */}
@@ -223,43 +358,39 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
             )}
 
             {/* ================= GRID ================= */}
-            {/* <div className="p-4"> */}
-            <div ref={ref}>
-                <Responsive
-                    width={bounds.width || 1200}
-                    layouts={{ lg: layout }}
-                    breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-                    cols={{ lg: 12, md: 8, sm: 4 }}
-                    rowHeight={40}
-                // isDraggable={false}
-                // isResizable={false}
-                >
-                    {layout.map((item: any) => {
-                        const chart = getChart(item.chart_id);
-
-                        return (
-                            <div key={item.i}
-                            // className="bg-white rounded-xl shadow-md border hover:shadow-xl transition-all group"
-                            >
-
-                                {/* <div className="h-full flex flex-col rounded-2xl border bg-white shadow-sm hover:shadow-lg transition overflow-hidden"> */}
-
-                                {/* <div className="flex items-center justify-between px-3 py-2 border-b bg-gray-50">
-                                            <span className="text-sm font-medium truncate">{chart?.name || "Chart"}</span>
-                                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                                            </div>
-                                        </div> */}
-
-                                {/* <div className="flex-1 min-h-full"> */}
-                                {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} showDownloadBtn={showDownloadBtn} />}
-                                {/* </div> */}
-                                {/* </div> */}
-                            </div>
-                        );
-                    })}
-                </Responsive>
+            <div
+                ref={ref}
+                style={fullscreen ? {
+                    flex: 1,
+                    overflow: 'auto',
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '24px 32px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                } : {}}
+            >
+                <div style={fullscreen ? { width: '100%', maxWidth: '100%' } : { width: '100%' }}>
+                    <Responsive
+                        width={bounds.width || window.innerWidth}
+                        layouts={{ lg: layout }}
+                        breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+                        cols={{ lg: 12, md: 8, sm: 4 }}
+                        rowHeight={fullscreen ? 80 : 40}
+                    >
+                        {layout.map((item: any) => {
+                            const chart = getChart(item.chart_id);
+                            return (
+                                <div key={item.i} style={fullscreen ? { background: 'white', borderRadius: 8, overflow: 'hidden' } : {}}>
+                                    {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} showDownloadBtn={showDownloadBtn} />}
+                                </div>
+                            );
+                        })}
+                    </Responsive>
+                </div>
             </div>
-            {/* </div> */}
         </div>
     );
 };
