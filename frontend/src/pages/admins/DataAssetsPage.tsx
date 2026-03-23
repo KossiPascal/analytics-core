@@ -3,7 +3,7 @@ import { Button } from '@components/ui/Button/Button';
 import { Card, CardBody } from '@components/ui/Card/Card';
 import { Modal } from '@components/ui/Modal/Modal';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
-import { Plus, Shield, ShieldCheck, RefreshCw, Code } from 'lucide-react';
+import { Plus, Shield, ShieldCheck, RefreshCw, Code, LayoutDashboard } from 'lucide-react';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 
 import shared from '@components/ui/styles/shared.module.css';
@@ -13,6 +13,7 @@ import { DataSourceTypeTab } from './components/datasources/DataSourceTypeTab';
 import { DataSourcePermissionTab } from './components/datasources/DataSourcePermissionTab';
 import { DatasetChartTab } from './components/datasets/DatasetCharts/DatasetChartTab';
 import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderPage';
+import DashboardBuilderPage from './components/datasets/DashboardBuilder/DashboardBuilderPage';
 import { DatasetFieldTab } from './components/datasets/DatasetFieldTab';
 import { DatasetQueryTab } from './components/datasets/DatasetQueries/DatasetQueryTab';
 import { DatasetTab } from './components/datasets/DatasetTab';
@@ -40,6 +41,7 @@ export default function DataAssetsPage() {
   const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [showQueryBuilder, setShowQueryBuilder] = useState(false);
+  const [showDashboardBuilder, setShowDashboardBuilder] = useState(false);
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
 
   const { user } = useAuth();
@@ -141,6 +143,11 @@ export default function DataAssetsPage() {
                   <Code size={16} /> Query Builder
                 </Button>
               )}
+              {activeTab === 'chart_tab' && (
+                <Button variant="outline" size="sm" onClick={() => setShowDashboardBuilder(true)}>
+                  <LayoutDashboard size={16} /> Dashboard Builder
+                </Button>
+              )}
             </div>
           )}
         </>
@@ -199,6 +206,16 @@ export default function DataAssetsPage() {
         size="full"
       >
         <QueryBuilderPage embedded />
+      </Modal>
+
+      {/* DASHBOARD BUILDER MODAL */}
+      <Modal
+        isOpen={showDashboardBuilder}
+        onClose={() => setShowDashboardBuilder(false)}
+        title="Dashboard Builder"
+        size="full"
+      >
+        <DashboardBuilderPage />
       </Modal>
     </PageWrapper>
   );
