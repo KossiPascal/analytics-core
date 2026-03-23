@@ -370,14 +370,8 @@ export default function VisualizationView() {
                     /> */}
                     {/* <VisualizationViewModule visualization={viz} charts={charts} removeView={handleDelete} openView={openView} /> */}
 
-                    <Card key={viz.id} style={{ "padding": "5px" }} className="hover:shadow-xl transition-all rounded-2xl">
-                      {/* <div className="p-4 space-y-4"> */}
+                    <Card key={viz.id} style={{ padding: "5px" }} className="hover:shadow-xl transition-all rounded-2xl">
                       <VisualizationViewModule visualization={viz} charts={charts} refreshView={refreshView} autoRefresh={refreshView} />
-
-
-                      refreshView();
-                      console.log("👉 refresh...");
-                      {/* </div> */}
                     </Card>
 
                   </motion.div>

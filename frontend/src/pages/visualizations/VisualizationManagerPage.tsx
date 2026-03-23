@@ -264,13 +264,31 @@ export default function VisualizationHome() {
       {/* GRID */}
       <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-2 gap-6" : "space-y-4"}>
         {filtered.map(v => (
-          <Card key={v.id} className="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow border border-gray-100" style={{ borderColor: "#7e035f" }}>
+          <Card key={v.id} className="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow" style={{ borderColor: "#7e035f", background: "#e9e6e6", display: 'flex', flexDirection: 'row' }}>
 
-            {/* ── Card header ── */}
-            
+            {/* ── Titre vertical ── */}
+            <div style={{
+              writingMode: 'vertical-rl',
+              textOrientation: 'mixed',
+              transform: 'rotate(180deg)',
+              background: 'linear-gradient(180deg, #1e293b 0%, #334155 100%)',
+              color: 'white',
+              padding: '0.75rem 0.5rem',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              flexShrink: 0,
+              minWidth: 32,
+            }}>
+              {v.name}
+            </div>
 
             {/* ── Visualisation preview ── */}
-            <div className="bg-white">
+            <div style={{ flex: 1, minWidth: 0 }}>
               <VisualizationViewModule
                 visualization={v}
                 charts={charts}
@@ -281,7 +299,6 @@ export default function VisualizationHome() {
                 autoRefresh={refreshView}
               />
             </div>
-
           </Card>
         ))}
       </div>

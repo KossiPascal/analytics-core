@@ -75,7 +75,7 @@ function VisualizationToolbar({
     return (
         <div style={{
             display: 'flex', alignItems: 'center', gap: '0.375rem',
-            padding: '0.5rem 0.75rem',
+            padding: '0.375rem 0.625rem',
             background: '#f8fafc',
             borderBottom: '1px solid #e2e8f0',
             flexWrap: 'wrap',
@@ -158,8 +158,8 @@ function VisualizationToolbar({
 
 const btnStyle = (active: boolean): React.CSSProperties => ({
     display: 'inline-flex', alignItems: 'center', gap: 4,
-    padding: '0.3rem 0.625rem',
-    fontSize: '0.78rem', fontWeight: 500,
+    padding: '0.2rem 0.5rem',
+    fontSize: '0.75rem', fontWeight: 500,
     borderRadius: 6, border: '1px solid',
     cursor: 'pointer',
     background: active ? '#e0e7ff' : '#ffffff',
@@ -168,6 +168,15 @@ const btnStyle = (active: boolean): React.CSSProperties => ({
     transition: 'all 0.15s',
     whiteSpace: 'nowrap' as const,
 });
+
+const exportBtn: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 3,
+    padding: '0.18rem 0.45rem',
+    fontSize: '0.72rem', fontWeight: 500,
+    borderRadius: 5, border: '1px solid #e2e8f0',
+    cursor: 'pointer', background: 'white', color: '#475569',
+    whiteSpace: 'nowrap',
+};
 
 const dropItemStyle = (active: boolean): React.CSSProperties => ({
     display: 'block', width: '100%', textAlign: 'left',
@@ -184,6 +193,8 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const chartRef = useRef<any>(null);
+    const [showChartMenu, setShowChartMenu] = useState(false);
+    const [chartFullscreen, setChartFullscreen] = useState(false);
 
     const options = {
         showTitle: false,
@@ -249,23 +260,81 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
     if (!response) return <div className="flex items-center justify-center text-gray-400">No data</div>;
 
     return (
-        <div className="relative group" >
-            {/* Floating actions */}
-            {showDownloadBtn && (<div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition flex gap-1">
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={executeQuery}>🔄</Button>
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => console.log("expand")}>⛶</Button>
+        <>
+            {/* Fullscreen individuel */}
+            {chartFullscreen && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 99999,
+                    background: 'white', display: 'flex', flexDirection: 'column',
+                }}>
+                    <button
+                        onClick={() => setChartFullscreen(false)}
+                        style={{
+                            position: 'fixed', top: 14, right: 18, zIndex: 100000,
+                            background: 'rgba(30,41,59,0.9)', color: 'white',
+                            border: 'none', borderRadius: 6, padding: '7px 16px',
+                            cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                        }}
+                    >✕ Exit Fullscreen</button>
+                    <div style={{ flex: 1, padding: '2rem' }}>
+                        <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
+                    </div>
+                </div>
+            )}
 
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => download("png")}>⬇ PNG</Button>
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => download("jpg")}>⬇ JPG</Button>
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => download("pdf-landscape")}>⬇ PDF (L)</Button>
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => download("pdf-portrait")}>⬇ PDF (P)</Button>
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => download("excel")}>⬇ Excel</Button>
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => download("csv")}>⬇ CSV</Button>
-                <Button size="sm" variant="outline" className="hover:bg-gray-200 p-1 rounded" onClick={() => download("json")}>⬇ JSON</Button>
-            </div>)}
+            {/* Barre export */}
+            {showDownloadBtn && (
+                <div style={{
+                    display: 'flex', flexWrap: 'wrap', gap: '0.25rem',
+                    padding: '0.3rem 0.625rem',
+                    background: '#f1f5f9',
+                    borderBottom: '1px solid #e2e8f0',
+                }}>
+                    <button style={exportBtn} onClick={executeQuery} title="Rafraîchir">🔄</button>
+                    {(['png','jpg','pdf-landscape','pdf-portrait','excel','csv','json'] as ExportTypes[]).map(t => (
+                        <button key={t} style={exportBtn} onClick={() => download(t)}>
+                            ⬇ {t === 'pdf-landscape' ? 'PDF (L)' : t === 'pdf-portrait' ? 'PDF (P)' : t.toUpperCase()}
+                        </button>
+                    ))}
+                </div>
+            )}
 
-            <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
-        </div>
+            {/* Graphique + bouton actions */}
+            <div style={{ position: 'relative' }}>
+                {/* Bouton ⋮ */}
+                <div style={{ position: 'absolute', top: 6, right: 6, zIndex: 10 }}>
+                    <button
+                        onClick={() => setShowChartMenu(v => !v)}
+                        style={{
+                            width: 24, height: 24, borderRadius: 4,
+                            border: '1px solid #e2e8f0', background: 'white',
+                            cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
+                            color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                        }}
+                        title="Actions"
+                    >⋮</button>
+                    {showChartMenu && (
+                        <div style={{
+                            position: 'absolute', top: '110%', right: 0,
+                            background: 'white', border: '1px solid #e2e8f0',
+                            borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                            minWidth: 160, overflow: 'hidden', zIndex: 20,
+                        }}>
+                            <button style={dropItemStyle(false)} onClick={() => { setChartFullscreen(true); setShowChartMenu(false); }}>
+                                ⛶ Plein écran
+                            </button>
+                            <button style={dropItemStyle(false)} onClick={() => { executeQuery(); setShowChartMenu(false); }}>
+                                🔄 Rafraîchir
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
+            </div>
+        </>
     );
 };
 
