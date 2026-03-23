@@ -6,6 +6,7 @@ import {
   Clock, AlertTriangle, BarChart3,
 } from 'lucide-react';
 import { employeeObjectivesApi, projectsApi, orcsApi } from '../../api';
+import { useAuthStore } from '@/stores/auth.store';
 import type {
   EmployeeObjective, ObjectiveStatus, Priority, Project, ORC,
   Quarter, TeamSummary,
@@ -227,6 +228,7 @@ function ObjectiveCard({ obj, isManager, onEdit, onDelete, onSubmit, onReview, o
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export function EmployeeObjectivesTab() {
+  const currentUser = useAuthStore((s) => s.user);
   const [objectives, setObjectives] = useState<EmployeeObjective[]>([]);
   const [projects, setProjects]     = useState<Project[]>([]);
   const [orcs, setOrcs]             = useState<ORC[]>([]);
@@ -269,9 +271,15 @@ export function EmployeeObjectivesTab() {
       fiscal_year: parseInt(filterYear),
       quarter: filterQuarter,
     };
-    if (filterStatus)   params.status      = filterStatus;
-    if (viewMode === 'team' && filterEmployee) params.employee_id = filterEmployee;
-    if (viewMode === 'team') params.pending_review = filterStatus === 'SUBMITTED' ? true : undefined;
+    if (filterStatus) params.status = filterStatus;
+    if (viewMode === 'my') {
+      // Filtre sur l'employé connecté
+      if (currentUser?.employee_id) params.employee_id = currentUser.employee_id;
+      else if (currentUser?.id)     params.user_id     = currentUser.id;
+    } else {
+      if (filterEmployee) params.employee_id = filterEmployee;
+      if (filterStatus === 'SUBMITTED') params.pending_review = true;
+    }
 
     const [objRes, projRes] = await Promise.allSettled([
       employeeObjectivesApi.getAll(params),
@@ -296,7 +304,17 @@ export function EmployeeObjectivesTab() {
   }, [form.project_id]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
-  const openCreate = () => { setEditing(null); setForm({ ...EMPTY_FORM, fiscal_year: filterYear, quarter: filterQuarter }); setShowModal(true); };
+  const openCreate = () => {
+    setEditing(null);
+    setForm({
+      ...EMPTY_FORM,
+      fiscal_year: filterYear,
+      quarter: filterQuarter,
+      employee_id: currentUser?.employee_id ?? '',
+      user_id: currentUser?.id ?? '',
+    });
+    setShowModal(true);
+  };
   const openEdit   = (o: EmployeeObjective) => {
     setEditing(o);
     setForm({
@@ -313,7 +331,10 @@ export function EmployeeObjectivesTab() {
   };
 
   const handleSubmitForm = async () => {
-    if (!form.title.trim() || !form.employee_id || !form.fiscal_year || !form.quarter) return;
+    if (!form.title.trim() || !form.employee_id || !form.fiscal_year || !form.quarter) {
+      if (!form.employee_id) alert('Votre compte n\'est pas lié à une fiche employé. Contactez un administrateur.');
+      return;
+    }
     setSaving(true);
     const payload = {
       ...form,
@@ -534,15 +555,20 @@ export function EmployeeObjectivesTab() {
         }
       >
         <div style={{ padding: '0.25rem 0' }}>
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Employé (ID) *</label>
-              <input className={styles.formInput} value={form.employee_id} onChange={f('employee_id')} placeholder="ID de l'employé" />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Compte utilisateur (ID)</label>
-              <input className={styles.formInput} value={form.user_id} onChange={f('user_id')} placeholder="Optionnel" />
-            </div>
+          {/* Bandeau employé connecté */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.5rem',
+            background: '#eef2ff', border: '1px solid #c7d2fe',
+            borderRadius: 8, padding: '0.5rem 0.875rem',
+            marginBottom: '1rem', fontSize: '0.85rem', color: '#4338ca',
+          }}>
+            <User size={15} />
+            <span>Planification pour : <strong>{currentUser?.fullname || currentUser?.username}</strong></span>
+            {!currentUser?.employee_id && (
+              <span style={{ marginLeft: 'auto', color: '#ef4444', fontWeight: 600, fontSize: '0.78rem' }}>
+                ⚠ Aucune fiche employé liée à ce compte
+              </span>
+            )}
           </div>
 
           <div className={styles.formGroup} style={{ marginBottom: '0.75rem' }}>

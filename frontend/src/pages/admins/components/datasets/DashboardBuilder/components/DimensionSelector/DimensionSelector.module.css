@@ -1,0 +1,167 @@
+.dimensionSelector {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dimensionSelector:last-child {
+  border-bottom: none;
+}
+
+.dimensionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.dimensionHeader:hover {
+  background: #f8fafc;
+}
+
+.dimensionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 0.375rem;
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.dimensionTitle {
+  flex: 1;
+}
+
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.dimensionContent {
+  padding: 0 1rem 1rem;
+}
+
+.dimensionSearch {
+  margin-bottom: 0.75rem;
+}
+
+.dimensionSearchInput {
+  width: 100%;
+}
+
+.dimensionSearchClear {
+  padding: 0.125rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dimensionSearchClear:hover {
+  color: #64748b;
+}
+
+.dimensionActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.dimensionActions button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  color: #3b82f6;
+  cursor: pointer;
+}
+
+.dimensionActions button:hover {
+  text-decoration: underline;
+}
+
+.dimensionItems {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dimensionItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dimensionItem:hover {
+  background: #f8fafc;
+}
+
+.dimensionItemRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.dimensionItemRow .dimensionItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.editItemBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+  opacity: 0;
+}
+
+.dimensionItemRow:hover .editItemBtn {
+  opacity: 1;
+}
+
+.editItemBtn:hover {
+  color: #3b82f6;
+  background: #eff6ff;
+}
+
+.noResults {
+  padding: 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
