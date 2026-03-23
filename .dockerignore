@@ -18,3 +18,5 @@ build
 tests
 docs
 TO_BE_DELETED
+
+.dev_pids
