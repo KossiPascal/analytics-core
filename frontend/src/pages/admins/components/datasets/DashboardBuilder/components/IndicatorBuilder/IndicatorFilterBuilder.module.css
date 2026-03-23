@@ -1,0 +1,237 @@
+/* ===== CARD CONTAINER ===== */
+
+.card {
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cardTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cardTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.filterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+/* ===== ADD BUTTON ===== */
+
+.addFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px dashed #3b82f6;
+  background: transparent;
+  color: #3b82f6;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.addFilterBtn:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.addFilterBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== PICKER ROW ===== */
+
+.pickerRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.pickerRow > *:first-child {
+  flex: 1;
+}
+
+.btnCancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #64748b;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.btnCancel:hover {
+  background: #f1f5f9;
+}
+
+/* ===== GLOBAL WARNING ===== */
+
+.globalWarning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 0.375rem;
+  color: #92400e;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* ===== TABLE OVERRIDES ===== */
+
+.filterTable {
+  overflow: visible;
+}
+
+.filterTable table {
+  overflow: visible;
+}
+
+.filterTable td {
+  overflow: visible;
+  vertical-align: middle;
+}
+
+/* ===== CELL STYLES ===== */
+
+.cellColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.columnName {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.columnType {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.noValue {
+  color: #cbd5e1;
+  font-size: 0.8125rem;
+  padding-left: 0.25rem;
+}
+
+.cellActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+/* ===== BETWEEN GROUP ===== */
+
+.betweenGroup {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.betweenSep {
+  flex-shrink: 0;
+  color: #64748b;
+  font-size: 0.8125rem;
+}
+
+/* ===== WARNING ICON ===== */
+
+.warningIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+  cursor: help;
+}
+
+/* ===== REMOVE BUTTON ===== */
+
+.removeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.removeBtn:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* ===== EMPTY STATE ===== */
+
+.emptyFilters {
+  text-align: center;
+  padding: 1.5rem;
+  color: #94a3b8;
+  font-size: 0.8125rem;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 900px) {
+  .betweenGroup {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

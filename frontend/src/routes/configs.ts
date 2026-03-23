@@ -55,6 +55,9 @@ export const PAGES = {
     // Meeting Intelligence page
     MeetingIntelligencePage: lazy(() => import('@pages/meeting_intelligence')),
 
+    // PROSI — Gestion Projets & ORCs
+    ProsiPage: lazy(() => import('@pages/prosi')),
+
     // Error pages
     NotFoundPage: lazy(() => import('@pages/errors/NotFoundPage')),
     ServerErrorPage: lazy(() => import('@pages/errors/ServerErrorPage')),
@@ -161,6 +164,11 @@ export const ROUTES = {
     // MEETING INTELLIGENCE
     meetingIntelligence: {
         root: () => '/meeting-intelligence',
+    },
+
+    // PROSI — Projets & ORCs
+    prosi: {
+        root: () => '/prosi',
     },
 
     // ERRORS
