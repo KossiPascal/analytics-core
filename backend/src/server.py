@@ -72,6 +72,7 @@ def init_database(app: Flask) -> None:
         with db.engine.connect() as schema_conn:
             schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS eqpm"))
             schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS meet"))
+            schema_conn.execute(text("CREATE SCHEMA IF NOT EXISTS prosi"))
             schema_conn.commit()
 
         with db.engine.begin() as conn:
@@ -297,6 +298,22 @@ def create_flask_app(initialize_database = True) -> Flask:
 
         # Meeting Intelligence blueprint
         app.register_blueprint(mi_meeting.bp)
+
+        # PROSI — Gestion de Projets et ORCs
+        from backend.src.prosi.routes import (
+            projects as prosi_projects,
+            pillars  as prosi_pillars,
+            orcs     as prosi_orcs,
+            activities          as prosi_activities,
+            reports             as prosi_reports,
+            dashboard           as prosi_dashboard,
+            import_excel        as prosi_import,
+            employee_objectives as prosi_emp_obj,
+        )
+        for prosi_bp in (prosi_projects, prosi_pillars, prosi_orcs,
+                         prosi_activities, prosi_reports, prosi_dashboard,
+                         prosi_import, prosi_emp_obj):
+            app.register_blueprint(prosi_bp.bp)
 
     # -----------------------------------------------------------------------------
     # ROUTES
