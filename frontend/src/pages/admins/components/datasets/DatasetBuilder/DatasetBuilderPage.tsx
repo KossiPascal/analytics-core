@@ -29,7 +29,7 @@ import type {
   VisualizationOptions,
   VisualizationType,
 } from './components/types';
-import styles from '@pages/builders/DashboardBuilder/DashboardBuilderPage.module.css';
+import styles from './DatasetBuilder.module.css';
 import { BuilderHeader } from './components/BuilderHeader/BuilderHeader';
 import { BuilderMainArea } from './components/BuilderMainArea/BuilderMainArea';
 import { BuilderSidebar } from './components/BuilderSidebar/BuilderSidebar';
@@ -75,7 +75,7 @@ interface PreviewSnapshot {
   options: VisualizationOptions;
 }
 
-const DashboardBuilderPage: React.FC = () => {
+const DatasetBuilderPage: React.FC = () => {
   const { showSuccess, showError } = useNotification();
 
   // Modal states
@@ -649,4 +649,4 @@ const DashboardBuilderPage: React.FC = () => {
   );
 };
 
-export default DashboardBuilderPage;
+export default DatasetBuilderPage;

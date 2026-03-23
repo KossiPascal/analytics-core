@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
 import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderPage';
+import DatasetBuilderPage from './components/datasets/DatasetBuilder/DatasetBuilderPage';
 
 type TabType =
   | "datasource_tab"
@@ -31,6 +32,8 @@ export default function DataAssetsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [openDatasetBuilder, setOpenDatasetBuilder] = useState(false);
+
   const [showQueryBuilder, setShowQueryBuilder] = useState(false);
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
 
@@ -84,8 +87,8 @@ export default function DataAssetsPage() {
     { key: 'dataset_tab', label: 'Main Dataset', icon: <Shield size={18} /> },
   ];
 
-//   <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}><div>
-// <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}></div>
+  //   <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}><div>
+  // <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}></div>
 
   const TenantForm = () => (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
@@ -104,6 +107,7 @@ export default function DataAssetsPage() {
   const centerStyles: any = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center' };
 
   return (
+    <>
     <PageWrapper
       title="Gestion des Datasources & Datasets"
       subtitle="Datasets/Fields/Queries/Chart"
@@ -118,6 +122,10 @@ export default function DataAssetsPage() {
               </Button>
             </div>
           )}
+
+          <Button onClick={() => setOpenDatasetBuilder(true)}>
+            DatasetBuilder
+          </Button>
         </>
       }
     >
@@ -128,7 +136,7 @@ export default function DataAssetsPage() {
           <RefreshCw size={24} className="animate-spin" />
         </div>
       ) : tenant_id ? (
-        
+
         <Card>
           <CardBody>
             {/* Tabs */}
@@ -172,5 +180,16 @@ export default function DataAssetsPage() {
         <QueryBuilderPage embedded />
       </Modal>
     </PageWrapper>
+
+
+      <Modal
+        isOpen={openDatasetBuilder}
+        onClose={() => setOpenDatasetBuilder(false)}
+        title="Dataset Builder"
+        size="full"
+      >
+        <DatasetBuilderPage />
+      </Modal>
+    </>
   );
 }
