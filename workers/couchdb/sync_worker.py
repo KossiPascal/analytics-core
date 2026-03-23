@@ -11,9 +11,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Flask
 from aiohttp import ClientSession, ClientTimeout, BasicAuth, ClientError
 
+from werkzeug.exceptions import BadRequest, NotFound
+
 from sqlalchemy import delete, literal_column
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from backend.src.config import Config
@@ -57,6 +59,18 @@ WORKER_CONTROL_NAME = "couchdb_worker"
 SOURCE_LOCKS = {}  # Verrouillage par source_id
 
 
+def commit_session(session:Session):
+    try:
+        session.commit()
+    except IntegrityError as e:
+        session.rollback()
+        raise BadRequest(f"Integrity error: {str(e.orig)}")
+    except SQLAlchemyError as e:
+        session.rollback()
+        logger.exception(e)
+        raise BadRequest(f"Database error: {str(e)}")
+    
+
 # UPSERT / DELETE thread-safe
 @with_app_context
 def _upsert_chunk(DataModel: Type[Any], chunk: List[dict], source_name: str, app=None) -> tuple[int, int]:
@@ -78,7 +92,9 @@ def _upsert_chunk(DataModel: Type[Any], chunk: List[dict], source_name: str, app
                     created += 1
                 else:
                     updated += 1
-            session.commit()
+
+            commit_session(session)
+
         except SQLAlchemyError as e:
             session.rollback()
             logger.error(f"[UPSERT BULK] Failed on source={source_name}: {e}", extra={"source": source_name})
@@ -93,19 +109,30 @@ def _delete_chunk(DataModel: Type[Any], chunk: List[str], source_name: str, app=
             result = session.execute(stmt)
             session.flush()
             deleted += result.rowcount
-            session.commit()
+
+            commit_session(session)
+
         except SQLAlchemyError as e:
             session.rollback()
             logger.error(f"[DELETE BULK] Failed on source={source_name}: {e}", extra={"source": source_name})
     return deleted
 
 @with_app_context
-def bulk_apply_changes(source_name: str, DataModel: Type[Any], rows_upsert: List[dict], ids_delete: List[str], app=None) -> tuple[int, int, int]:
+def bulk_apply_changes(source: TenantSource, DataModel: Type[Any], rows_upsert: List[dict], ids_delete: List[str], app=None) -> tuple[int, int, int]:
     """Apply bulk upsert/delete concurrently."""
+
+    source_name:str = source.name if source else None
+    chunk_size:int = (source.chunk_size if source else None) or CHUNK_SIZE
+
+    if not source or not source.is_active or not source_name:
+        logger.warning(f"[SYNC] Source inactive ou inexistante")
+        # return {"status": "skipped", "reason": "inactive"}
+        return 0, 0, 0
+    
     created, updated, deleted = 0, 0, 0
 
-    upsert_chunks = [rows_upsert[i:i + CHUNK_SIZE] for i in range(0, len(rows_upsert), CHUNK_SIZE)]
-    delete_chunks = [ids_delete[i:i + CHUNK_SIZE] for i in range(0, len(ids_delete), CHUNK_SIZE)]
+    upsert_chunks = [rows_upsert[i:i + chunk_size] for i in range(0, len(rows_upsert), chunk_size)]
+    delete_chunks = [ids_delete[i:i + chunk_size] for i in range(0, len(ids_delete), chunk_size)]
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures_upsert = [executor.submit(_upsert_chunk, DataModel, chunk, source_name, app=app) for chunk in upsert_chunks]
@@ -127,12 +154,22 @@ def bulk_apply_changes(source_name: str, DataModel: Type[Any], rows_upsert: List
     return created, updated, deleted
 
 # FETCH CHANGES
-async def fetch_changes(client: ClientSession, host: str, chtdb: str, last_seq: str, auth: tuple) -> dict:
-    url = f"{host}/{chtdb}/_changes"
+async def fetch_changes(client: ClientSession, source: TenantSource, cible:ChtSources, last_seq: str) -> dict:
+
+    limit = int((source.fetch_limit if source else None) or DEFAULT_LIMIT)
+    host:str = source.host if source else None
+    source_name:str = source.name if source else None
+    auth = source.auth if source else None
+    
+    if not source or not source.is_active or not host or not source_name or not auth or not cible:
+        logger.warning(f"[SYNC] Source inactive ou inexistant")
+        return 0
+
+    url = f"{host}/{cible.chtdb}/_changes"
     params = {
         "since": last_seq or "0",
         "include_docs": "true",
-        "limit": DEFAULT_LIMIT,
+        "limit": limit,
         "style": "all_docs",
         "feed": "longpoll",
         "timeout": Config.TIMEOUT
@@ -147,10 +184,9 @@ async def fetch_changes(client: ClientSession, host: str, chtdb: str, last_seq: 
 async def sync_db_once(app: Flask, source: TenantSource, source_type: ChtSources, DataModel: Type[Any], SyncStateModel: Type[Any], SyncStatusModel: Type[Any]) -> int:
     """Sync CouchDB → Postgres pour une DB, async & thread-safe."""
 
-    host:str = source.host if source else None
     source_name:str = source.name if source else None
     
-    if not source or not source.is_active or not host or not source_name:
+    if not source or not source.is_active or not source_name:
         logger.warning(f"[SYNC] Source {source_id} inactive", extra={"source": source_id})
         # return {"status": "skipped", "reason": "inactive"}
         return 0
@@ -160,6 +196,7 @@ async def sync_db_once(app: Flask, source: TenantSource, source_type: ChtSources
     source_id = source.id
     tenant_id = source.tenant_id
     chtdb = source_type.chtdb
+    localdb = source_type.localdb
 
     lock_key = f"{source_id}_{source_type.localdb}"
     lock = SOURCE_LOCKS.setdefault(lock_key, threading.Lock())
@@ -173,35 +210,27 @@ async def sync_db_once(app: Flask, source: TenantSource, source_type: ChtSources
             with Session(db.engine) as session:
                 sync_state = session.query(SyncStateModel).filter(
                     SyncStateModel.tenant_id==tenant_id, 
-                    SyncStateModel.source_id==source_id
+                    SyncStateModel.source_id==source_id,
+                    SyncStateModel.dbname==localdb,
                 ).first()
 
+                last_seq = "0"
                 if not sync_state:
-                    sync_state = SyncStateModel(tenant_id=tenant_id, source_id=source_id, last_seq="0")
+                    sync_state = SyncStateModel(tenant_id=tenant_id,source_id=source_id,dbname=localdb,last_seq=last_seq)
                     session.add(sync_state)
-                    session.commit()
-                    last_seq = "0"
                 else:
                     last_seq = sync_state.last_seq or "0"
 
-                sync_status = SyncStatusModel(
-                    tenant_id=tenant_id, 
-                    source_id=source_id, 
-                    status="RUNNING", 
-                    started_at=datetime.now(timezone.utc)
-                )
-
-                session.add(sync_status)
-                session.commit()
-
+                commit_session(session)
+    
         retry_count = 0
         while retry_count < MAX_RETRIES:
             try:
                 async with ClientSession(timeout=ClientTimeout(total=Config.TIMEOUT)) as client:
-                    payload = await fetch_changes(client, host, chtdb, last_seq, source.auth)
+                    payload = await fetch_changes(client, source, source_type, last_seq)
                 break
+
             except (ClientError, asyncio.TimeoutError) as e:
-                
                 retry_count += 1
                 wait = ERROR_RETRY_BASE * (2 ** (retry_count - 1)) + random.uniform(0, 1)
                 logger.warning(f"[source={source_id}:{chtdb}] network error, retry {retry_count}/{MAX_RETRIES} in {wait:.1f}s: {e}")
@@ -211,7 +240,6 @@ async def sync_db_once(app: Flask, source: TenantSource, source_type: ChtSources
 
         results = payload.get("results", [])
         rows_upsert, ids_delete = [], []
-
         for item in results:
             doc_id = item.get("id")
             doc = item.get("doc") or {}
@@ -231,34 +259,34 @@ async def sync_db_once(app: Flask, source: TenantSource, source_type: ChtSources
                     "reported_date": doc.get("reported_date"),
                 })
 
-        created, updated, deleted = bulk_apply_changes(source_name, DataModel, rows_upsert, ids_delete, app=app)
-
+        created, updated, deleted = bulk_apply_changes(source, DataModel, rows_upsert, ids_delete, app=app)
         if created or updated or deleted:
             logger.info(f"{source_name.upper()} → CREATED: {created}, UPDATED: {updated}, DELETED: {deleted}", extra={"source": source_name})
         else:
             logger.debug(f"{source_name} → no changes", extra={"source": source_name})
 
+            
         # --- Update last_seq and SUCCESS log ---
         with app.app_context():
             with Session(db.engine) as session:
                 sync_state = session.query(SyncStateModel).filter(
                     SyncStateModel.tenant_id==tenant_id, 
-                    SyncStateModel.source_id==source_id
+                    SyncStateModel.source_id==source_id,
+                    SyncStateModel.dbname==localdb,
                 ).first()
 
-                if sync_state:
-                    sync_state.last_seq = payload.get("last_seq", last_seq)
-                    sync_state.last_sync_at = datetime.now(timezone.utc)
+                sync_state.last_seq = payload.get("last_seq", last_seq)
+                sync_state.last_sync_at = datetime.now(timezone.utc)
+                # session.add(sync_state)  # optionnel mais safe
 
-                session.add(SyncStatusModel(
-                    tenant_id=tenant_id,
-                    source_id=source_id,
-                    status="SUCCESS",
-                    message=f"CREATED({created}) UPDATED({updated}) DELETED({deleted})",
-                    started_at=datetime.now(timezone.utc),
-                    finished_at=datetime.now(timezone.utc)
-                ))
-                session.commit()
+                status = SyncStatusModel(tenant_id=tenant_id,source_id=source_id,dbname=localdb)
+                status.status="SUCCESS"
+                status.message=f"CREATED({created}) UPDATED({updated}) DELETED({deleted})"
+                status.started_at=datetime.now(timezone.utc)
+                status.finished_at=datetime.now(timezone.utc)
+                session.add(status)
+
+                commit_session(session)
 
         if not results:
             await asyncio.sleep(SYNC_IDLE_SLEEP)
@@ -270,15 +298,14 @@ async def sync_db_once(app: Flask, source: TenantSource, source_type: ChtSources
 
         with app.app_context():
             with Session(db.engine) as session:
-                session.add(SyncStatusModel(
-                    tenant_id=tenant_id,
-                    source_id=source_id, 
-                    status="ERROR", 
-                    message=str(e),
-                    started_at=datetime.now(timezone.utc), 
-                    finished_at=datetime.now(timezone.utc)
-                ))
-                session.commit()
+                status = SyncStatusModel(tenant_id=tenant_id,source_id=source_id,dbname=localdb)
+                status.status="ERROR"
+                status.message=str(e)
+                status.started_at=datetime.now(timezone.utc)
+                status.finished_at=datetime.now(timezone.utc)
+                session.add(status)
+                commit_session(session)
+
         logger.warning(f"[source={source_id}:{chtdb}] network error → retry", extra={"source": source_id})
         await asyncio.sleep(ERROR_RETRY_BASE + random.uniform(0, 2))
         # return {"cible": cible.id, "status": "error", "error": str(e)}
@@ -288,15 +315,14 @@ async def sync_db_once(app: Flask, source: TenantSource, source_type: ChtSources
 
         with app.app_context():
             with Session(db.engine) as session:
-                session.add(SyncStatusModel(
-                    tenant_id=tenant_id,
-                    source_id=source_id, 
-                    status="ERROR", 
-                    message=str(e),
-                    started_at=datetime.now(timezone.utc), 
-                    finished_at=datetime.now(timezone.utc)
-                ))
-                session.commit()
+                status = SyncStatusModel(tenant_id=tenant_id,source_id=source_id,dbname=localdb)
+                status.status="ERROR"
+                status.message=str(e)
+                status.started_at=datetime.now(timezone.utc)
+                status.finished_at=datetime.now(timezone.utc)
+                session.add(status)
+                commit_session(session)
+
         logger.error(f"[source={source_id}:{chtdb}] unexpected error: {str(e)}", extra={"source": source_id})
         # return {"cible": cible.id, "status": "error", "error": str(e)}
         return created + updated + deleted
@@ -312,53 +338,45 @@ def start_async_single_source(source: TenantSource, app: Flask = None) -> dict:
     if not source or not source.tenant_id:
         logger.warning(f"[SYNC] Source tenant_id and source_id are required")
         return None
-    
-    with Session(db.engine) as session:
 
-        # source = TenantSource.getTenantSourceQuery(session, tenant_id, source_id).first()
-        
-        if not source or not source.is_active or not source.host or not source.name:
-            logger.warning(f"[SYNC] Source {source.id} inactive", extra={"source": source.id})
-            # return {"status": "skipped", "reason": "inactive"}
-            return None
+    if not source or not source.is_active or not source.host or not source.name:
+        logger.warning(f"[SYNC] Source {source.id} inactive", extra={"source": source.id})
+        # return {"status": "skipped", "reason": "inactive"}
+        return None
 
-        try:
-            ModelMgr = CreateTableModel(db, source_name=source.name)
-            SyncStateModel, _ = ModelMgr.create_sync_states_table()
-            SyncStatusModel, _ = ModelMgr.create_sync_status_table()
+    try:
+        ModelMgr = CreateTableModel(db, source_name=source.name)
+        SyncStateModel, _ = ModelMgr.create_sync_states_table()
+        SyncStatusModel, _ = ModelMgr.create_sync_status_table()
 
-            async def runner():
-                tasks = []
-                for source_type in CHT_SOURCE_TYPES:
-                    DataModel, _ = ModelMgr.create_source_table(source_type.localdb)
-                    syncdbonce = sync_db_once(
-                        app, 
-                        source, 
-                        source_type, 
-                        DataModel, 
-                        SyncStateModel, 
-                        SyncStatusModel
-                    )
-                    tasks.append(syncdbonce)
-                return await asyncio.gather(*tasks, return_exceptions=True)
+        async def runner():
+            tasks = []
+            for source_type in CHT_SOURCE_TYPES:
+                DataModel, _ = ModelMgr.create_source_table(source_type.localdb)
+                syncdbonce = sync_db_once(app,source,source_type,DataModel,SyncStateModel,SyncStatusModel)
+                tasks.append(syncdbonce)
+            return await asyncio.gather(*tasks, return_exceptions=True)
 
-            results = asyncio.run(runner())
+        results = asyncio.run(runner())
 
+        with Session(db.engine) as session:
             # --- Update last_sync safely ---
-            source.last_used_at = datetime.now(timezone.utc)
-            source.last_sync = datetime.now(timezone.utc)
+            db_source = session.get(TenantSource, source.id)
 
-            session.commit()
+            now = datetime.now(timezone.utc)
+            db_source.last_used_at = now
+            if all(not isinstance(r, Exception) for r in results):
+                db_source.last_sync = now
 
-            # return {"status": "success", "synced_dbs": len(DataSourceTypes), "details": results}
-            return results
+            commit_session(session)
 
-        except Exception as e:
-    
-            logger.error(f"[SYNC] Fatal error source={source.id}: {str(e)}", extra={"source": source.id})
-            # return {"status": "error", "message": str(e)}
-            return None
-    return None
+        return results
+
+    except Exception as e:
+
+        logger.error(f"[SYNC] Fatal error source={source.id}: {str(e)}", extra={"source": source.id})
+        # return {"status": "error", "message": str(e)}
+        return None
 
 def is_worker_paused(session: Session) -> bool:
     control = session.query(WorkerControl).filter(
@@ -368,7 +386,8 @@ def is_worker_paused(session: Session) -> bool:
     if not control:
         control = WorkerControl(name=WORKER_CONTROL_NAME, status="run")
         session.add(control)
-        session.commit()
+        commit_session(session)
+
     return control.status.lower() == "stop"
 
 # CouchDB Worker encapsulé

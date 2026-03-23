@@ -52,6 +52,6 @@ export const useAuthStore = create<UserState>((set, get) => ({
   },
 
   getUser: async (id: string) => {
-    return await userService.getOne(id);
+    return await userService.get(id);
   },
 }));

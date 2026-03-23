@@ -54,7 +54,6 @@ class Tenant(db.Model, MetaxMixin):
     description = db.Column(db.String(255), nullable=True)
 
     sources = db.relationship("TenantSource", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
-
     users = db.relationship("User", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     datasets = db.relationship("Dataset", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     datasources = db.relationship("DataSource", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
@@ -77,6 +76,9 @@ class Tenant(db.Model, MetaxMixin):
     roles           = db.relationship("UserRole", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     queries = db.relationship("DatasetQuery", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
     charts = db.relationship("DatasetChart", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
+    visualization_views = db.relationship("VisualizationView", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
+    visualization_shares = db.relationship("VisualizationShare", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
+    data_targets = db.relationship("DataTarget", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
 
 
     def to_dict(self, include_relations:bool=False):
@@ -93,27 +95,28 @@ class Tenant(db.Model, MetaxMixin):
 
         if include_relations:
             data.update({
-                "users": [d.to_dict() for d in self.users],
-                "datasets": [d.to_dict() for d in self.datasets],
-                "datasources": [d.to_dict() for d in self.datasources],
-                "visualizations": [d.to_dict() for d in self.visualizations],
-                "visualization_charts": [d.to_dict() for d in self.visualization_charts],
-                "permissions": [d.to_dict() for d in self.permissions],
-                "fields": [d.to_dict() for d in self.fields],
-                "connections": [d.to_dict() for d in self.connections],
-                "ssh_configs": [d.to_dict() for d in self.ssh_configs],
-                "credentials": [d.to_dict() for d in self.credentials],
-                "histories": [d.to_dict() for d in self.histories],
-                "visualization_execution_logs": [d.to_dict() for d in self.visualization_execution_logs],
-                "dhis2_validations": [d.to_dict() for d in self.dhis2_validations],
-                "data_lineages": [d.to_dict() for d in self.data_lineages],
-                "ai_query_logs": [d.to_dict() for d in self.ai_query_logs],
-                "scripts": [d.to_dict() for d in self.scripts],
-                "scripts_execution_logs": [d.to_dict() for d in self.scripts_execution_logs],
-                "orgunits": [d.to_dict() for d in self.orgunits],
-                "roles": [d.to_dict() for d in self.roles],
-                "queries": [d.to_dict() for d in self.queries],
-                "charts": [d.to_dict() for d in self.charts],
+                "users": [d.to_dict(include_relations=False) for d in self.users],
+                "datasets": [d.to_dict(include_relations=False) for d in self.datasets],
+                "datasources": [d.to_dict(include_relations=False) for d in self.datasources],
+                "visualizations": [d.to_dict(include_relations=False) for d in self.visualizations],
+                "visualization_charts": [d.to_dict(include_relations=False) for d in self.visualization_charts],
+                "permissions": [d.to_dict(include_relations=False) for d in self.permissions],
+                "fields": [d.to_dict(include_relations=False) for d in self.fields],
+                "connections": [d.to_dict(include_relations=False) for d in self.connections],
+                "ssh_configs": [d.to_dict(include_relations=False) for d in self.ssh_configs],
+                "credentials": [d.to_dict(include_relations=False) for d in self.credentials],
+                "histories": [d.to_dict(include_relations=False) for d in self.histories],
+                "visualization_execution_logs": [d.to_dict(include_relations=False) for d in self.visualization_execution_logs],
+                "dhis2_validations": [d.to_dict(include_relations=False) for d in self.dhis2_validations],
+                "data_lineages": [d.to_dict(include_relations=False) for d in self.data_lineages],
+                "ai_query_logs": [d.to_dict(include_relations=False) for d in self.ai_query_logs],
+                "scripts": [d.to_dict(include_relations=False) for d in self.scripts],
+                "scripts_execution_logs": [d.to_dict(include_relations=False) for d in self.scripts_execution_logs],
+                "orgunits": [d.to_dict(include_relations=False) for d in self.orgunits],
+                "roles": [d.to_dict(include_relations=False) for d in self.roles],
+                "queries": [d.to_dict(include_relations=False) for d in self.queries],
+                "charts": [d.to_dict(include_relations=False) for d in self.charts],
+                "visualization_views": [d.to_dict(include_relations=False) for d in self.visualization_views],
             })
 
         return data
@@ -133,6 +136,8 @@ class TenantSource(db.Model, MetaxMixin):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False, unique=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
+    fetch_limit = db.Column(db.BigInteger, nullable=False, server_default="2000")
+    chunk_size = db.Column(db.BigInteger, nullable=False, server_default="1000")
     https = db.Column(db.Boolean, default=True, nullable=False)
     given_host = db.Column(db.Text, nullable=False, unique=True)
     target = db.Column(db.String(255), nullable=False, unique=True) # dhis2 | couchdb
@@ -160,6 +165,8 @@ class TenantSource(db.Model, MetaxMixin):
             "name": self.name, 
             "tenant_id": self.tenant_id,
             "host": self.given_host,
+            "fetch_limit": self.fetch_limit,
+            "chunk_size": self.chunk_size,
             "https": self.https,
             "target": self.target,
             "is_active": self.is_active,

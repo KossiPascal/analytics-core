@@ -106,7 +106,7 @@ export class IndexedDbStorage<T extends { id: string }> {
         );
     }
 
-    async getOne<T=any>(id: string, callback?: DbCallback<T | undefined>): Promise<T | undefined> {
+    async get<T=any>(id: string, callback?: DbCallback<T | undefined>): Promise<T | undefined> {
         return (
             (await this.safeExec(async () => {
                 const db = await this.getDB();

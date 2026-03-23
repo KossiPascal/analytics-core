@@ -115,7 +115,7 @@ export const DatasetTab = forwardRef<AdminEntityCrudModuleRef, DatasetTabProps>(
     const didLoad = useRef(false);
 
     const loadDataSource = (tenantId: number) => {
-        datasourceService.all(tenantId).then(d => setDataSources(d || []));
+        datasourceService.list(tenantId).then(d => setDataSources(d || []));
     };
 
     useEffect(() => {

@@ -110,30 +110,24 @@ def list_queries(query_id: Optional[int] = None, tenant_id: Optional[int] = None
 
 
 # ===================== QUERIES =====================
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_queries_by(tenant_id: int):
+def list_queries_by():
     try:
-        queries = list_queries(tenant_id=tenant_id)
-        return jsonify(queries), 200
-    except Exception as e:
-        logger.error(f"List queries error: {str(e)}")
-        raise BadRequest("Failed to list queries", 500)
+        tenant_id = request.args.get("tenant_id", type=int)
+        dataset_id = request.args.get("dataset_id", type=int)
 
-@bp.get("/<int:tenant_id>/<int:dataset_id>")
-@require_auth
-def list_queries_by_dataset(tenant_id: int, dataset_id: int):
-    try:
         queries = list_queries(tenant_id=tenant_id,dataset_id=dataset_id)
         return jsonify(queries), 200
     except Exception as e:
         logger.error(f"List queries error: {str(e)}")
         raise BadRequest("Failed to list queries", 500)
 
-@bp.get("/one/<int:tenant_id>/<int:query_id>")
+@bp.get("/<int:query_id>")
 @require_auth
-def get_query(tenant_id: int,query_id: int):
+def get_query(query_id: int):
     try:
+        tenant_id = request.args.get("tenant_id", type=int)
         query = list_queries(tenant_id=tenant_id,query_id=query_id,all=False)
         if not query or query["deleted"]:
             raise BadRequest(f"DatasetQuery with id={query_id} not found", 404)

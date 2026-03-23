@@ -35,21 +35,21 @@ def list_fields(field_id: Optional[int] = None, tenant_id: Optional[int] = None,
         return chart.to_dict()
 
 # ===================== FIELDS =====================
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_fields_by(tenant_id: int):
-    fields = list_fields(tenant_id=tenant_id)
-    return jsonify(fields), 200
+def list_fields_by():
+    tenant_id = request.args.get("tenant_id", type=int)
+    dataset_id = request.args.get("dataset_id", type=int)
 
-@bp.get("/<int:tenant_id>/<int:dataset_id>")
-@require_auth
-def list_fields_by_dataset(tenant_id: int, dataset_id: int):
     fields = list_fields(tenant_id=tenant_id,dataset_id=dataset_id)
     return jsonify(fields), 200
 
-@bp.get("/<int:tenant_id>/<int:field_id>")
+
+@bp.get("/<int:field_id>")
 @require_auth
-def get_field(tenant_id: int,field_id: int):
+def get_field(field_id: int):
+    tenant_id = request.args.get("tenant_id", type=int)
+    
     field = list_fields(tenant_id=tenant_id,field_id=field_id,all=False)
     if not field or field["deleted"]:
         raise BadRequest(f"DatasetField with id={field_id} not found", 404)

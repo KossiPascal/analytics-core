@@ -186,7 +186,7 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((_props, ref) => {
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    tenantService.all().then(t => {
+    tenantService.list().then(t => {
       setTenants(t || []);
       setTenantId(user?.tenant_id);
     });
@@ -196,8 +196,8 @@ export const UsersTab = forwardRef<AdminEntityCrudModuleRef>((_props, ref) => {
     if (!tenant_id) return;
     try {
       const [roleRes, orgunitRes] = await Promise.all([
-        roleService.all(tenant_id),
-        orgunitService.all(tenant_id),
+        roleService.list(tenant_id),
+        orgunitService.list(tenant_id),
       ]);
       setRoles(roleRes || []);
       setOrgunits(orgunitRes || []);

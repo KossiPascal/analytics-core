@@ -64,7 +64,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSuccess, editData, positi
   const loadUsers = async (): Promise<User[]> => {
     setUsersLoading(true);
     try {
-      const list = await userService.full();
+      const list = await userService.list(0);
       setUsers(list ?? []);
       return list ?? [];
     } finally {

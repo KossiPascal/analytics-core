@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Database, RefreshCw, Filter, ArrowUpDown, Play, Loader2, FolderOpen } from "lucide-react";
-
 import { Button } from "@components/ui/Button/Button";
 import { Modal } from "@components/ui/Modal/Modal";
-import CodeEditor from "./components/CodeEditor";
-import ResultsTable from "./components/ResultsTable";
 import { DatasetQueryPanel } from "./components/DatasetQueryPanel";
 import { DatasetFilterBuilder } from "../DatasetQueries/query-utils/DatasetFilterBuilder";
 import { DatasetOrderByBuilder } from "../DatasetQueries/query-utils/DatasetOrderByBuilder";
@@ -16,8 +13,10 @@ import { scriptStore } from "@/stores/scripts.store";
 import { useAuth } from "@contexts/AuthContext";
 import { datasetService, queryService } from "@/services/dataset.service";
 import { Dataset, DatasetQuery, LinkedFilterGroup, QueryJson } from "@/models/dataset.models";
-import styles from "./QueryBuilder.module.css";
 import { PageWrapper } from "@/components/layout/PageWrapper/PageWrapper";
+import styles from "./QueryBuilder.module.css";
+import CodeEditor from "./components/CodeEditor";
+import ResultsTable from "./components/ResultsTable";
 import CodeEditorButtons from "./components/CodeEditorButtons";
 
 interface QueryBuilderPageProps {
@@ -90,7 +89,7 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
 
   useEffect(() => {
     if (!tenant_id || !query?.dataset_id) { setSavedQueries([]); return; }
-    queryService.all(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []));
+    queryService.list(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []));
   }, [tenant_id, query?.dataset_id]);
 
   
@@ -224,7 +223,7 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
                 </div>
                 <Button
                   variant="ghost" size="sm" title="Rafraîchir"
-                  onClick={() => tenant_id && query?.dataset_id && queryService.all(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []))}
+                  onClick={() => tenant_id && query?.dataset_id && queryService.list(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []))}
                 >
                   <RefreshCw size={16} />
                 </Button>
@@ -264,7 +263,7 @@ const QueryBuilderPage: React.FC<QueryBuilderPageProps> = ({ embedded = false })
                   onAfterSave={(id) => {
                     setValue("id", id);
                     if (tenant_id && query?.dataset_id)
-                      queryService.all(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []));
+                      queryService.list(tenant_id, query.dataset_id).then(q => setSavedQueries(q || []));
                   }}
                 />
               </div>

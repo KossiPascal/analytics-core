@@ -5,17 +5,14 @@ import { Button } from "@components/ui/Button/Button";
 import { Table, Column } from "@components/ui/Table/Table";
 import { useNotification } from "@/contexts/OLD/useNotification";
 import { RefreshCw, Building2, Save, Trash2, Edit2 } from "lucide-react";
-
 import styles from "@pages/admins/AdminPage.module.css";
-import { boolean } from "zod";
 
 /* ============================= */
 /* ========== TYPES ============ */
 /* ============================= */
 
 interface CrudService<T> {
-    full(tenantId?: number): Promise<T[]>;
-    all(tenantId?: number, v2?: number, v3?: number, v4?: number, v5?: number): Promise<T[]>;
+    list(tenantId?: number, v2?: number, v3?: number, v4?: number, v5?: number): Promise<T[]>;
     create(data: T): Promise<any>;
     update(id: number, data: T): Promise<any>;
     remove(id: number): Promise<any>;
@@ -132,9 +129,7 @@ const AdminEntityCrudModuleInner = <
             let res: T[] = [];
             if (defaultTenant && defaultTenant.required) {
                 const ids = defaultTenant.ids as number[];
-                res = await service.all(...(ids as [number, number?, number?, number?, number?]));
-            } else {
-                res = await service.full();
+                res = await service.list(...(ids as [number, number?, number?, number?, number?]));
             }
             setList(res ?? []);
         } catch {

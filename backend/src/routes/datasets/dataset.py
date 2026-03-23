@@ -74,19 +74,23 @@ def get_pagination():
     return page, per_page
 
 # LIST DATASETS
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_datasets_by(tenant_id:int):
-    # include_relations = request.args.get("include_relations", "false").lower() == "true"
+def list_datasets_by():
+    include_relations = request.args.get("include_relations", "false").lower() == "true"
+    tenant_id = request.args.get("tenant_id", type=int)
+    if not tenant_id:
+        raise BadRequest("tenant_id is required", 400)
 
     datasets = list_datasets(tenant_id=tenant_id)
 
     return jsonify(datasets)
 
 # LIST DATASETS PAGINATE
-@bp.get("/paginate/<int:tenant_id>")
+@bp.get("/paginate")
 @require_auth
-def list_datasets_paginate(tenant_id):
+def list_datasets_paginate():
+    tenant_id = request.args.get("tenant_id", type=int)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
 
@@ -111,9 +115,10 @@ def list_datasets_paginate(tenant_id):
     # }), 200
 
 # GET ONE DATASET
-@bp.get("/<int:tenant_id>/<int:dataset_id>")
+@bp.get("/<int:dataset_id>")
 @require_auth
-def get_dataset(tenant_id, dataset_id):
+def get_dataset(dataset_id:int):
+    tenant_id = request.args.get("tenant_id", type=int)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
     
@@ -129,7 +134,6 @@ def get_dataset(tenant_id, dataset_id):
 @require_auth
 def validate_dataset():
     try:
-
         payload = request.get_json(silent=True) or {}
 
         sql = payload.get("sql")
@@ -146,7 +150,6 @@ def validate_dataset():
     except Exception as e:
         logger.error("Error validating sql")
         raise
-
 
 # CREATE DATASET
 @bp.post("")
@@ -220,7 +223,7 @@ def create_dataset():
         logger.error("Error creating dataset")
         raise
 
-
+# LOCAL VIEW
 @bp.get("/local-views")
 @require_auth
 def get_local_views():
@@ -231,7 +234,7 @@ def get_local_views():
     except IntegrityError as e:
         raise BadRequest(f"Error local_views: {str(e)}", 400)
 
-
+# VIEW SQL
 @bp.get("/view-sql/<string:view_name>/<string:sql_type>")
 @require_auth
 def get_view_sql_columns(view_name:str, sql_type:str):
@@ -252,7 +255,7 @@ def get_view_sql_columns(view_name:str, sql_type:str):
 # UPDATE DATASET
 @bp.put("/<int:dataset_id>")
 @require_auth
-def update_dataset(dataset_id):
+def update_dataset(dataset_id:int):
     try:
         user_id = currentUserId()
         if not user_id:
@@ -356,7 +359,7 @@ def update_dataset(dataset_id):
 # DELETE DATASET
 @bp.delete("/<int:dataset_id>")
 @require_auth
-def delete_dataset(dataset_id):
+def delete_dataset(dataset_id:int):
     try:
         dataset:Dataset = Dataset.query.get(dataset_id)
         if not dataset:
@@ -379,7 +382,7 @@ def delete_dataset(dataset_id):
 # DELETE DATASET
 @bp.delete("/<int:dataset_id>/forever")
 @require_auth
-def admin_delete_dataset(dataset_id):
+def admin_delete_dataset(dataset_id:int):
     try:
         dataset:Dataset = Dataset.query.get(dataset_id)
         if not dataset:
@@ -402,3 +405,6 @@ def admin_delete_dataset(dataset_id):
         db.session.rollback()
         logger.exception("Error deleting dataset")
         raise
+
+
+

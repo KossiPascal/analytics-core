@@ -84,15 +84,15 @@ class DataSourceRole(str, Enum):
 
 IDENTIFIER_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
-DEFAULT_DATA_SOURCE_TYPES = [
-    {"code": "postgresql", "name": "PostgreSQL"},
-    {"code": "mysql",      "name": "MySQL"},
-    {"code": "mariadb",    "name": "MariaDB"},
-    {"code": "mssql",      "name": "SQL Server"},
-    {"code": "oracle",     "name": "Oracle"},
-    {"code": "mongodb",    "name": "MongoDB"},
-    {"code": "sqlite",     "name": "SQLite"},
-    {"code": "other",      "name": "Autre"},
+DEFAULT_DATA_typeS = [
+    {"value": "postgresql", "name": "PostgreSQL"},
+    {"value": "mysql",      "name": "MySQL"},
+    {"value": "mariadb",    "name": "MariaDB"},
+    {"value": "mssql",      "name": "SQL Server"},
+    {"value": "oracle",     "name": "Oracle"},
+    {"value": "mongodb",    "name": "MongoDB"},
+    {"value": "sqlite",     "name": "SQLite"},
+    {"value": "other",      "name": "Autre"},
 ]
 
 POSTGRES_ROLE_MAPPING: dict[str, list[str]] = {
@@ -213,78 +213,13 @@ class PostgresRoleAdapter:
         return role
 
 
-# DATASOURCE TYPE
-class DataSourceType(db.Model, AuditMixin):
-    __tablename__ = "datasource_types"
-
-    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)  # order / display
-    code = db.Column(db.String(50), unique=True, nullable=False, index=True)   # postgres, mysql…
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    config = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
-    description = db.Column(db.Text, nullable=True)
-
-    datasources = db.relationship("DataSource", back_populates="type", cascade="all, delete-orphan")
-    connections = db.relationship("DataSourceConnection", back_populates="type", cascade="all, delete-orphan")
-    ssh_configs = db.relationship("DataSourceSSHConfig", back_populates="type", cascade="all, delete-orphan")
-    credentials = db.relationship("DataSourceCredential", back_populates="type", cascade="all, delete-orphan")
-    permissions = db.relationship("DataSourcePermission", back_populates="type", cascade="all, delete-orphan")
-    histories = db.relationship("DataSourceHistory", back_populates="type", cascade="all, delete-orphan")
-
-    def to_dict(self,include_relations=False):
-        data = {
-            "id": self.id,
-            "code": self.code,
-            "name": self.name,
-            "config": self.config,
-            "description": self.description,
-            "is_active": self.is_active,
-        }
-
-        if include_relations:
-            data.update({
-                "datasources": [d.to_dict(include_relations=False) for d in self.datasources] if self.datasources else None,
-                "connections": [d.to_dict(include_relations=False) for d in self.connections] if self.connections else None,
-                "ssh_configs": [d.to_dict(include_relations=False) for d in self.ssh_configs] if self.ssh_configs else None,
-                "credentials": [d.to_dict(include_relations=False) for d in self.credentials] if self.credentials else None,
-                "permissions": [d.to_dict(include_relations=False) for d in self.permissions] if self.permissions else None,
-                "histories": [d.to_dict(include_relations=False) for d in self.histories] if self.histories else None,
-            })
-
-            
-        return data
-
-    @staticmethod
-    def ensure_default_type():
-        try:
-            existing:Dict[str,DataSourceType] = {t.code: t for t in DataSourceType.query.all()}
-            changed = False
-
-            for spec in DEFAULT_DATA_SOURCE_TYPES:
-                current = existing.get(spec["code"])
-                if not current:
-                    spec["created_by_id"] = currentUserId()
-                    db.session.add(DataSourceType(**spec))
-                    changed = True
-                else:
-                    if current.name != spec["name"]:
-                        current.name = spec["name"]
-                        changed = True
-
-            if changed:
-                db.session.commit()
-
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Failed to ensure default datasource types: {str(e)}")
-            raise
-
 # DATASOURCE (LOGICAL CONTAINER)
 class DataSource(db.Model, AuditMixin):
     __tablename__ = "datasources"
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)  # keeps same type as TypeORM (text)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    type_id = db.Column(db.BigInteger,db.ForeignKey("datasource_types.id", ondelete="CASCADE", onupdate="CASCADE"),nullable=False)
+    type = db.Column(db.String(100), nullable=False)
     
     # Business name (free text)
     name = db.Column(db.String(255), nullable=False)
@@ -299,7 +234,6 @@ class DataSource(db.Model, AuditMixin):
     last_used_at = db.Column(db.DateTime(timezone=True), nullable=True)
 
     tenant = db.relationship("Tenant", back_populates="datasources",lazy="noload",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="datasources", uselist=False,lazy="noload",foreign_keys=[type_id])
     
     connection = db.relationship("DataSourceConnection", back_populates="datasource", uselist=False, cascade="all, delete-orphan")
     ssh_config = db.relationship("DataSourceSSHConfig", back_populates="datasource", uselist=False, cascade="all, delete-orphan")
@@ -390,7 +324,7 @@ class DataSource(db.Model, AuditMixin):
         return {
             "id": param.get("id"),
             "tenant_id": param.get("tenant_id"),
-            "type_id": param.get("type_id"),
+            "type": param.get("type"),
             "name": param.get("name"),
             "technical_name": param.get("technical_name"),
             "description": param.get("description"),
@@ -436,7 +370,7 @@ class DataSource(db.Model, AuditMixin):
         return {
             "id": param.get("id"),
             "tenant_id": param.get("tenant_id"),
-            "type_id": param.get("type_id"),
+            "type": param.get("type"),
             "name": param.get("name"),
             "technical_name": param.get("technical_name"),
             "description": param.get("description"),
@@ -460,7 +394,7 @@ class DataSource(db.Model, AuditMixin):
         return {
             "id": form.get("id"),
             "tenant_id": form.get("tenant_id"),
-            "type_id": form.get("type_id"),
+            "type": form.get("type"),
             "name": form.get("name"),
             "technical_name": form.get("technical_name"),
             "description": form.get("description"),
@@ -486,23 +420,17 @@ class DataSource(db.Model, AuditMixin):
             conn:DataSource = DataSource.query.filter_by(is_main=True).first()
             if conn:
                 return conn
-            
-            DataSourceType.ensure_default_type()
+                
             tenant: Tenant = Tenant.query.filter_by(name=Config.DEFAULT_ADMIN.get("tenant_name", "")).first()
             
             if not tenant:
                 raise ValueError("Default tenant not found")
             
-            default_type_code = "postgresql"
-            
-            ds_type:DataSourceType = DataSourceType.query.filter_by(code=default_type_code).first()
-            if not ds_type:
-                DataSourceType.ensure_default_type()
-                ds_type = DataSourceType.query.filter_by(code=default_type_code).first()
+            default_type = "postgresql"
 
             source = DataSource(
                 tenant_id = tenant.id,
-                type_id = ds_type.id,
+                type = default_type,
                 name = "LOCAL POSTGRES",
                 technical_name = "local_postgres",
                 description = "LOCAL POSTGRES",
@@ -517,7 +445,7 @@ class DataSource(db.Model, AuditMixin):
 
             connection = DataSourceConnection(
                 tenant_id = tenant.id,
-                type_id = ds_type.id,
+                type = default_type,
                 datasource_id = source.id,
                 status = ConnectionStatus.PROD,
                 host = Config.POSTGRES_HOST,
@@ -533,7 +461,7 @@ class DataSource(db.Model, AuditMixin):
 
             credential = DataSourceCredential(
                 tenant_id = tenant.id,
-                type_id = ds_type.id,
+                type = default_type,
                 datasource_id = source.id,
                 connection_id = connection.id,
                 username_enc = encrypt(Config.POSTGRES_USER) if Config.POSTGRES_USER else None,
@@ -586,7 +514,7 @@ class DataSource(db.Model, AuditMixin):
                 "id": ds.id,
                 "name": ds.name,
                 "technical_name": ds.technical_name,
-                "type_id": ds.type_id,
+                "type": ds.type,
                 "type": ds.type if ds.type else None,
                 "is_active": ds.is_active,
             }
@@ -667,8 +595,7 @@ class DataSource(db.Model, AuditMixin):
 
         return {
             "id": self.id,
-            "type_id": self.type_id,
-            "type": self.type.to_dict() if self.type else None,
+            "type": self.type,
             "tenant_id": self.tenant_id,
             "tenant": self.tenant.to_dict() if self.tenant else None,
             "name": self.name,
@@ -700,7 +627,7 @@ class DataSource(db.Model, AuditMixin):
 
         return {
             "id": self.id,
-            "type_id": self.type_id,
+            "type": self.type,
             "tenant_id": self.tenant_id,
             "name": self.name,
             "technical_name": self.technical_name,
@@ -721,7 +648,7 @@ class DataSource(db.Model, AuditMixin):
         }
 
     def __repr__(self):
-        return f"<DataSource {self.name} ({self.type_id})>"
+        return f"<DataSource {self.name} ({self.type})>"
     
 # CONNECTION (TECHNICAL INSTANCE)
 class DataSourceConnection(db.Model, AuditMixin):
@@ -730,7 +657,7 @@ class DataSourceConnection(db.Model, AuditMixin):
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
     datasource_id = db.Column(db.BigInteger, db.ForeignKey("datasources.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    type_id = db.Column(db.BigInteger,db.ForeignKey("datasource_types.id", ondelete="CASCADE", onupdate="CASCADE"),nullable=False)
+    type = db.Column(db.String(100), nullable=False)
     
     status = db.Column(db.Enum(ConnectionStatus),default=ConnectionStatus.PROD,nullable=False)
     host = db.Column(db.String(255))
@@ -740,7 +667,6 @@ class DataSourceConnection(db.Model, AuditMixin):
     ssh_enabled = db.Column(db.Boolean, default=False)
 
     tenant = db.relationship("Tenant", back_populates="connections",lazy="noload",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="connections",lazy="noload",foreign_keys=[type_id])
 
     datasource = db.relationship("DataSource", back_populates="connection",lazy="noload",foreign_keys=[datasource_id], uselist=False)
     credential = db.relationship("DataSourceCredential", back_populates="connection", uselist=False, cascade="all, delete-orphan")
@@ -761,14 +687,13 @@ class DataSourceConnection(db.Model, AuditMixin):
             "id": self.id,
             "tenant_id": self.tenant_id,
             "datasource_id": self.datasource_id,
-            "type_id": self.type_id,
+            "type": self.type,
             "status": self.status,
             "host": self.host,
             "port": self.port,
             "dbname": self.dbname,
             "ssh_enabled": self.ssh_enabled,
             "tenant": self.tenant.to_dict() if self.tenant else None,
-            "type": self.type.to_dict() if self.type else None,
             "datasource": self.datasource.to_dict() if self.datasource else None,
             "credential": self.credential.to_dict() if self.credential else None,
             "ssh_config": self.ssh_config.to_dict() if self.ssh_config else None,
@@ -784,7 +709,7 @@ class DataSourceSSHConfig(db.Model, AuditMixin):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    type_id = db.Column(db.BigInteger,db.ForeignKey("datasource_types.id", ondelete="CASCADE", onupdate="CASCADE"),nullable=False)
+    type = db.Column(db.String(100), nullable=False)
     datasource_id = db.Column(db.BigInteger, db.ForeignKey("datasources.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
     connection_id = db.Column(db.BigInteger,db.ForeignKey("datasource_connections.id", ondelete="CASCADE", onupdate="CASCADE"),nullable=False,unique=True)
     # 🔒 jamais stocker la clé privée en clair
@@ -793,7 +718,6 @@ class DataSourceSSHConfig(db.Model, AuditMixin):
     port = db.Column(db.BigInteger, default=22)
 
     tenant = db.relationship("Tenant", back_populates="ssh_configs",lazy="noload",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="ssh_configs",lazy="noload",foreign_keys=[type_id])
 
     datasource = db.relationship("DataSource", back_populates="ssh_config",lazy="noload",foreign_keys=[datasource_id], uselist=False)
     connection = db.relationship("DataSourceConnection", back_populates="ssh_config",lazy="noload",foreign_keys=[connection_id], uselist=False)
@@ -804,14 +728,13 @@ class DataSourceSSHConfig(db.Model, AuditMixin):
         data = {
             "id": self.id,
             "tenant_id": self.tenant_id,
-            "type_id": self.type_id,
+            "type": self.type,
             "datasource_id": self.datasource_id,
             "connection_id": self.connection_id,
             "use_ssh_key": self.use_ssh_key,
             "host": self.host,
             "port": self.port,
             "tenant": self.tenant.to_dict() if self.tenant else None,
-            "type": self.type.to_dict() if self.type else None,
         }
 
         if include_relations:
@@ -829,7 +752,7 @@ class DataSourceCredential(db.Model, AuditMixin):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
-    type_id = db.Column(db.BigInteger,db.ForeignKey("datasource_types.id", ondelete="CASCADE", onupdate="CASCADE"),nullable=False)
+    type = db.Column(db.String(100), nullable=False)
    
     datasource_id = db.Column(db.BigInteger, db.ForeignKey("datasources.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
     ssh_config_id = db.Column(db.BigInteger, db.ForeignKey("datasource_ssh_configs.id", ondelete="CASCADE", onupdate="CASCADE"), unique=True, nullable=True)
@@ -844,7 +767,6 @@ class DataSourceCredential(db.Model, AuditMixin):
     ssh_key_pass_enc = db.Column(db.Text)
 
     tenant = db.relationship("Tenant", back_populates="credentials",lazy="noload",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="credentials",lazy="noload",foreign_keys=[type_id])
 
     datasource = db.relationship("DataSource", back_populates="credential",lazy="noload",foreign_keys=[datasource_id], uselist=False)
     ssh_config = db.relationship("DataSourceSSHConfig", back_populates="credential",lazy="noload",foreign_keys=[ssh_config_id], uselist=False)
@@ -871,7 +793,7 @@ class DataSourceCredential(db.Model, AuditMixin):
         data = {
                 "id": self.id,
                 "tenant_id": self.tenant_id,
-                "type_id": self.type_id,
+                "type": self.type,
                 "datasource_id": self.datasource_id,
                 "ssh_config_id": self.ssh_config_id,
                 "connection_id": self.connection_id,
@@ -882,7 +804,6 @@ class DataSourceCredential(db.Model, AuditMixin):
                 "ssh_key": decrypt(self.ssh_key_enc) if self.ssh_key_enc else None,
                 "ssh_key_pass": decrypt(self.ssh_key_pass_enc) if self.ssh_key_pass_enc else None,
                 "tenant": self.tenant.to_dict() if self.tenant else None,
-                "type": self.type.to_dict() if self.type else None,
                 "is_active": self.is_active,
             }
 
@@ -901,13 +822,12 @@ class DataSourcePermission(db.Model, AuditMixin):
 
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
-    type_id = db.Column(db.BigInteger, db.ForeignKey('datasource_types.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
+    type = db.Column(db.String(100), nullable=False)
     datasource_id = db.Column(db.BigInteger, db.ForeignKey("datasources.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
     connection_id = db.Column(db.BigInteger, db.ForeignKey("datasource_connections.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
     user_id = db.Column(db.BigInteger, db.ForeignKey("users.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
 
     tenant = db.relationship("Tenant", back_populates="permissions",lazy="noload",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="permissions",lazy="noload",foreign_keys=[type_id])
     user = db.relationship("User",back_populates="datasource_permissions",lazy="noload",foreign_keys=[user_id])
 
     datasource = db.relationship("DataSource", back_populates="permissions",lazy="noload",foreign_keys=[datasource_id])
@@ -931,12 +851,11 @@ class DataSourcePermission(db.Model, AuditMixin):
         data = {
             "id": self.id,
             "tenant_id": self.tenant_id,
-            "type_id": self.type_id,
+            "type": self.type,
             "datasource_id": self.datasource_id,
             "connection_id": self.connection_id,
             "user_id": self.user_id,
             "tenant": self.tenant if self.tenant else None,
-            "type": self.type if self.type else None,
             "user": self.user if self.user else None,
             "datasource": self.datasource if self.datasource else None,
             "connection": self.connection if self.connection else None,
@@ -981,7 +900,7 @@ class DataSourceHistory(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     
     tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False,index=True)
-    type_id = db.Column(db.BigInteger, db.ForeignKey('datasource_types.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False,index=True)
+    type = db.Column(db.String(100), nullable=False)
     connection_id = db.Column(db.BigInteger,db.ForeignKey("datasource_connections.id", ondelete="CASCADE", onupdate="CASCADE"),nullable=False,index=True)
     datasource_id = db.Column(db.BigInteger, db.ForeignKey("datasources.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False,index=True)
     permission_id = db.Column(db.Integer, db.ForeignKey("datasource_permissions.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
@@ -993,7 +912,6 @@ class DataSourceHistory(db.Model):
     timestamp = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
 
     tenant = db.relationship("Tenant", back_populates="histories",lazy="noload",foreign_keys=[tenant_id])
-    type = db.relationship("DataSourceType", back_populates="histories",lazy="noload",foreign_keys=[type_id])
 
     connection = db.relationship("DataSourceConnection", back_populates="histories",lazy="noload",foreign_keys=[connection_id])
     permission = db.relationship("DataSourcePermission", back_populates="histories",lazy="noload",foreign_keys=[permission_id])
@@ -1005,7 +923,7 @@ class DataSourceHistory(db.Model):
         data = {
             "id": self.id,
             "tenant_id": self.tenant_id,
-            "type_id": self.type_id,
+            "type": self.type,
             "connection_id": self.connection_id,
             "datasource_id": self.datasource_id,
             "permission_id": self.permission_id,
@@ -1019,7 +937,6 @@ class DataSourceHistory(db.Model):
         if include_relations:
             data.update({
                 "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
-                "type": self.type.to_dict(include_relations=False) if self.type else None,
                 "connection": self.connection.to_dict(include_relations=False) if self.connection else None,
                 "permission": self.permission.to_dict(include_relations=False) if self.permission else None,
                 "datasource": self.datasource.to_dict(include_relations=False) if self.datasource else None,

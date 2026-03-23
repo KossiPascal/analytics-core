@@ -20,7 +20,7 @@ export class CRUDService {
     all = async <T = any>(url: string, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T[]) => Promise<boolean> }): Promise<T[]> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.get<T[]>(`${this.base_url}${url}`);
+                const res = await api.get<T[]>(`${this.base_url}${url}`, { ...(params?.options ?? {}) });
                 if (!res.success) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data ?? []);
                 return res.data ?? [];
@@ -37,7 +37,7 @@ export class CRUDService {
     getBy = async <T = any>(url: string, id: number, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T | T[] | undefined) => Promise<boolean> }): Promise<T | T[] | undefined> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.get<T | T[] | undefined>(`${this.base_url}${url}/${id}`);
+                const res = await api.get<T | T[] | undefined>(`${this.base_url}${url}/${id}`, { ...(params?.options ?? {}) });
                 if (!res.success) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;
@@ -54,7 +54,7 @@ export class CRUDService {
     list = async <T = any>(url: string, param: Record<string, any>, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T[]) => Promise<boolean> }): Promise<T[]> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.post<T[]>(`${this.base_url}${url}`, { ...(param ?? {}) });
+                const res = await api.post<T[]>(`${this.base_url}${url}`, { ...(params?.options ?? {}), ...(param ?? {}) });
                 if (!res.success) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data ?? []);
                 return res.data ?? [];
@@ -71,7 +71,7 @@ export class CRUDService {
     create = async <T = any>(url: string, data: T, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T) => Promise<boolean> }): Promise<T> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.post<T>(`${this.base_url}${url}`, data);
+                const res = await api.post<T>(`${this.base_url}${url}`, data, { ...(params?.options ?? {}) });
                 if (!res.success || !res.data) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;
@@ -105,7 +105,7 @@ export class CRUDService {
     post = async <T = any>(url: string, data?: any, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T | undefined) => Promise<boolean>, }) => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.post<T>(`${this.base_url}${url}`, {...(data??{})}, { ...(params?.options ?? {}) });
+                const res = await api.post<T>(`${this.base_url}${url}`, { ...(data ?? {}) }, { ...(params?.options ?? {}) });
                 if (!res.success) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;
@@ -122,7 +122,7 @@ export class CRUDService {
     update = async <T = any>(url: string, id: number, data: T, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T) => Promise<boolean> }): Promise<T> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.put<T>(`${this.base_url}${url}/${id}`, data);
+                const res = await api.put<T>(`${this.base_url}${url}/${id}`, data, { ...(params?.options ?? {}) });
                 if (!res.success || !res.data) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;
@@ -139,7 +139,7 @@ export class CRUDService {
     patch = async <T = any>(url: string, id: number, data: T, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T) => Promise<boolean> }): Promise<T> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.patch<T>(`${this.base_url}${url}/${id}`, data);
+                const res = await api.patch<T>(`${this.base_url}${url}/${id}`, data, { ...(params?.options ?? {}) });
                 if (!res.success || !res.data) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;
@@ -156,7 +156,7 @@ export class CRUDService {
     remove = async <T = any>(url: string, id: number, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T) => Promise<boolean> }): Promise<T> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.delete<T>(`${this.base_url}${url}/${id}`);
+                const res = await api.delete<T>(`${this.base_url}${url}/${id}`, { ...(params?.options ?? {}) });
                 if (!res.success || !res.data) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;
@@ -176,8 +176,10 @@ export class CRUDService {
             online: async () => {
                 const formData = new FormData();
                 formData.append(fieldName, file);
-                const headers = { 'Content-Type': 'multipart/form-data' }
-                const res = await api.post<T>(`${this.base_url}${url}`, formData, { headers });
+                const headers = { 'Content-Type': 'multipart/form-data' };
+                const options: any = { ...(params?.options ?? {}), ...headers };
+
+                const res = await api.post<T>(`${this.base_url}${url}`, formData, { ...options });
                 if (!res.success || !res.data) throw new Error(params?.msg?.error ?? res.message);
                 if (params?.callback) await params?.callback(res.data);
                 return res.data;
@@ -196,7 +198,10 @@ export class CRUDService {
     downloadFile = async <T = any>(url: string, filename: string, params?: { msg?: CrudMessage, options?: Record<string, any>, callback?: (data: T) => Promise<boolean> }): Promise<T> => {
         return onlineOrOffline({
             online: async () => {
-                const res = await api.get<T>(`${this.base_url}${url}`, { responseType: 'blob' });
+                const headers = { responseType: 'blob' };
+                const options: any = { ...(params?.options ?? {}), ...headers };
+
+                const res = await api.get<T>(`${this.base_url}${url}`, { ...options });
 
                 if (!res.success || !res.data) throw new Error(params?.msg?.error ?? res.message);
 

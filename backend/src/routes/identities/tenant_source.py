@@ -16,11 +16,23 @@ logger = get_backend_logger(__name__)
 
 bp = Blueprint("identities_tenant_sources", __name__, url_prefix="/api/identities/tenant-sources")
 
+def create_source_tables(target:str, source_name:str):
+    if target == TargetTypes.COUCHDB.value:
+        ModelMgr = CreateTableModel(db, source_name=source_name, create_table=True)
+        ModelMgr.create_sync_states_table()
+        ModelMgr.create_sync_status_table()
+        for source_type in CHT_SOURCE_TYPES:
+            ModelMgr.create_source_table(source_type.localdb)
+
 # ===================== TENANT SOURCES =====================
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_tenant_sources(tenant_id:int):
+def list_tenant_sources():
     try:
+        tenant_id = request.args.get("tenant_id", type=int)
+        if not tenant_id:
+            raise BadRequest("tenant_id is required", 400)
+        
         sources: List[TenantSource] = TenantSource.query.filter(
             TenantSource.deleted==False, 
             TenantSource.tenant_id==tenant_id
@@ -32,10 +44,14 @@ def list_tenant_sources(tenant_id:int):
         raise BadRequest("Failed to list sources", 500)
 
 
-@bp.get("/<int:tenant_id>/<int:source_id>")
+@bp.get("/<int:source_id>")
 @require_auth
-def get_tenant_source(tenant_id:int, source_id: int):
+def get_tenant_source(source_id: int):
     try:
+        tenant_id = request.args.get("tenant_id", type=int)
+        if not tenant_id:
+            raise BadRequest("tenant_id is required", 400)
+        
         source:TenantSource = TenantSource.query.filter(
             TenantSource.deleted==False, 
             TenantSource.tenant_id==tenant_id,
@@ -49,6 +65,32 @@ def get_tenant_source(tenant_id:int, source_id: int):
     except Exception as e:
         logger.error(f"Get source error: {str(e)}")
         raise BadRequest("Failed to get source", 500)
+
+
+@bp.get("/upsert-tables/<int:source_id>")
+@require_auth
+def upsert_tenant_source_tables(source_id: int):
+    try:
+        tenant_id = request.args.get("tenant_id", type=int)
+        if not tenant_id:
+            raise BadRequest("tenant_id is required", 400)
+        
+        source:TenantSource = TenantSource.query.filter(
+            TenantSource.deleted==False, 
+            TenantSource.tenant_id==tenant_id,
+            TenantSource.id==source_id,
+        ).first()
+        if not source:
+            raise BadRequest(f"TenantSource with id={source_id} not found", 404)
+        
+        create_source_tables(source.target, source.name)
+
+        return jsonify(source.to_dict()), 200
+    
+    except Exception as e:
+        logger.error(f"Get source error: {str(e)}")
+        raise BadRequest("Failed to get source", 500)
+    
 
 
 @bp.post("")
@@ -71,6 +113,7 @@ def create_tenant_source():
         tenant_id=data.get("tenant_id")
         https=bool(data.get("https", True))
 
+
         targets = [TargetTypes.COUCHDB.value, TargetTypes.DHIS2.value]
         if not target in targets:
             raise BadRequest(f"target must be one of : {', '.join(targets)}", 409)
@@ -83,17 +126,14 @@ def create_tenant_source():
             tenant_id=tenant_id,
             username=data.get("username"),
             password=data.get("password"),
+            fetch_limit=data.get("fetch_limit"),
+            chunk_size=data.get("chunk_size"),
             config=data.get("config", {}),
             is_active=bool(data.get("is_active", True)),
         )
         source.created_by=currentUserId()
 
-        if target == TargetTypes.COUCHDB.value:
-            ModelMgr = CreateTableModel(db, source_name=name, create_table=True)
-            ModelMgr.create_sync_states_table()
-            ModelMgr.create_sync_status_table()
-            for source_type in CHT_SOURCE_TYPES:
-                ModelMgr.create_source_table(source_type.localdb)
+        create_source_tables(target, name)
 
         db.session.add(source)
         db.session.commit()
@@ -136,21 +176,35 @@ def update_tenant_source(source_id: int):
 
         conf.given_host = given_host
 
+        fetch_limit = data.get("fetch_limit")
+        chunk_size = data.get("chunk_size")
+        config = data.get("config")
+        is_active = data.get("is_active")
+        update_auth = bool(data.get("update_auth",False))
+
         if "https" in data:
             conf.https = https
 
-        if "config" in data:
-            conf.config = data.get("config") or {}
+        if "fetch_limit" in data and fetch_limit:
+            conf.fetch_limit = int(fetch_limit)
 
-        if "is_active" in data:
-            conf.is_active = bool(data.get("is_active", True))
+        if "chunk_size" in data and chunk_size:
+            conf.chunk_size = int(chunk_size)
 
-        # ⚠️ Utilise les propriétés → encryption automatique
-        if "username" in data and data.get("username"):
-            conf.username = data.get("username")
+        if "config" in data and config:
+            conf.config = config
 
-        if "password" in data and data.get("password"):
-            conf.password = data.get("password")
+        if "is_active" in data and is_active is not None:
+            conf.is_active = bool(is_active)
+
+        if update_auth == True:
+            username = data.get("username")
+            password = data.get("password")
+            if not username or not password:
+                raise BadRequest(f"Username and Password are required", 409)
+            # ⚠️ Utilise les propriétés → encryption automatique
+            conf.username = username
+            conf.password = password
 
         conf.updated_by = currentUserId()
 

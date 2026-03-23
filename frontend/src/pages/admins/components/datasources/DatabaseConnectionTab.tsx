@@ -6,16 +6,16 @@ import { Table, type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { FormTextarea } from '@/components/forms/FormTextarea/FormTextarea';
 import { useNotification } from '@/contexts/OLD/useNotification';
-import { DataSourceConnection, DataSourceConnectionParams, TestType } from '@/models/builders.models';
-import { Card, CardHeader, CardBody } from '@components/ui/Card/Card';
+import { Card, CardBody } from '@components/ui/Card/Card';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { FormCheckbox } from '@/components/forms/FormCheckbox/FormCheckbox';
+import { DataSourceConnection, DataSourceConnectionParams, TestType } from '@/models/builders.models';
 import { FaDatabase, FaServer, FaUser, FaLock, FaShieldAlt, FaKey, FaSave } from 'react-icons/fa';
 import { ShieldCheck, ShieldAlert, KeyRound, Plug, Database, Server, Building2, Save, Edit2, Trash2, RefreshCw, Plus } from 'lucide-react';
 
-import { dsTypeService } from '@/services/datasource.service';
 
 import styles from '@pages/admins/AdminPage.module.css';
+import { DB_SOURCE_TYPES } from '@/models/datasource.models';
 
 const DEFAULT_FORM = Object.freeze<DataSourceConnection>({
   type: '' as any,
@@ -69,23 +69,9 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [dbTypes, setDbTypes] = useState<{ value: any; label: string; }[]>([]);
   const [response, setResponse] = useState<{ type: "success" | "error", msg: string } | null>(null);
   const [testing, setTesting] = useState<TestType | null>(null);
   const { showError, showSuccess } = useNotification();
-
-
-  const fetchTypes = async () => {
-    try {
-      const res = await dsTypeService.all();
-      if (res && res.length > 0) {
-        const types = (res ?? []).map((d: any) => ({ value: String(d.id), label: d.name }));
-        setDbTypes(types);
-      }
-    } catch {
-      // ne pas écraser le state response du formulaire
-    }
-  };
 
   const fetchDataSourceConnections = async () => {
     setLoading(true);
@@ -105,7 +91,6 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
   };
 
   useEffect(() => {
-    fetchTypes();
     fetchDataSourceConnections();
   }, []);
 
@@ -241,7 +226,7 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
       setTesting(null);
     }
   };
-  const alertStyle = { margin: 0, fontSize: '0.875rem' }
+  const alertStyle = { margin: 0, fontSize: '0.875rem' };
 
 
   const renderConnexionCardField = () => {
@@ -250,7 +235,7 @@ export const DatabaseConnectionTab: React.FC<{ showTitle?: boolean, afterUpsert?
         <CardBody>
           <div className={styles.form}>
             <div className={styles.grid + ' ' + styles.grid3}>
-              <FormSelect value={form.type} onChange={(value) => updateField('type', value)} options={dbTypes} leftIcon={<FaDatabase />} label="Type" placeholder="Ex: postgres" required={true} />
+              <FormSelect value={form.type} onChange={(value) => updateField('type', value)} options={DB_SOURCE_TYPES.map((c) => ({ value: c.value, label: c.name }))} leftIcon={<FaDatabase />} label="Type" required={true} />
               <FormInput name="name" value={form.name} onChange={(e) => updateField('name', e.target.value)} label={"Nom Connexion"} leftIcon={<FaDatabase />} placeholder="Ex: Production PostgreSQL" required={true} />
               <FormTextarea name="description" label="Description" placeholder="Description ..." value={form.description} onChange={(e) => updateField('description', e.target.value)} rows={1} cols={1} />
             </div>

@@ -8,8 +8,8 @@ import { Tenant } from '@models/identity.model';
 import { FormSelect } from '@components/forms/FormSelect/FormSelect';
 import { FormCheckbox } from '@components/forms/FormCheckbox/FormCheckbox';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
-import { DataSource, DataSourceType } from '@/models/datasource.models';
-import { datasourceService, dsTypeService } from '@/services/datasource.service';
+import { DataSource, DB_SOURCE_TYPES } from '@/models/datasource.models';
+import { datasourceService } from '@/services/datasource.service';
 import { FaDatabase, FaKey, FaLock, FaServer, FaUser } from 'react-icons/fa';
 
 import styles from '@pages/admins/AdminPage.module.css';
@@ -22,7 +22,7 @@ interface DataSourceTabProps {
 
 const createDefaultForm = (tenant_id: number): DataSource => ({
     id: null,
-    type_id: null,
+    type: "postgresql",
     tenant_id: tenant_id,
     name: "",
     technical_name: "",
@@ -77,14 +77,14 @@ const sourceColumns: Column<DataSource>[] = [
     {
         key: "tenant",
         header: "Tenant",
-        render: (ds) => ds.tenant ? ds.tenant.name : "",
+        render: (ds) => ds.tenant ? ds.tenant.name : "-",
         sortable: true,
         searchable: true,
     },
     {
         key: "type",
         header: "Type",
-        render: (ds) => ds.type ? ds.type.name : "",
+        render: (ds) => ds.type ?? "-",
         sortable: true,
         searchable: true,
     },
@@ -142,16 +142,7 @@ const sourceColumns: Column<DataSource>[] = [
 
 
 export const DataSourceTab = forwardRef<AdminEntityCrudModuleRef, DataSourceTabProps>(({ tenants, tenant_id }, ref) => {
-    const [types, setTypes] = useState<DataSourceType[]>([]);
     const [testing, setTesting] = useState<{ db: boolean, ssh: boolean }|null>(null);
-
-    const didLoad = useRef(false);
-
-    useEffect(() => {
-        if (didLoad.current) return;
-        didLoad.current = true;
-        dsTypeService.all().then(t => setTypes(t || []));
-    }, []);
 
     const defaultTenant = useMemo(() => {
         return { required: true, ids: [tenant_id] };
@@ -225,9 +216,9 @@ export const DataSourceTab = forwardRef<AdminEntityCrudModuleRef, DataSourceTabP
                                 /> */}
                             <FormSelect
                                 label={`Type`}
-                                value={source.type_id}
-                                options={types.map((c) => ({ value: c.id, label: c.name }))}
-                                onChange={(value) => { setValue("type_id", value) }}
+                                value={source.type}
+                                options={DB_SOURCE_TYPES.map((c) => ({ value: c.value, label: c.name }))}
+                                onChange={(value) => { setValue("type", value) }}
                                 placeholder="Ex: postgres"
                                 leftIcon={<FaDatabase />}
                                 required={true}

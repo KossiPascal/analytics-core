@@ -132,6 +132,8 @@ class UserPermission(db.Model, MetaxMixin):
     name = db.Column(db.String(150), nullable=False)   # dashboard:read, report:create, chart:update
     description = db.Column(db.String(255), nullable=True)
 
+    visualization_shares = db.relationship("VisualizationShare",lazy="noload",cascade="all, delete-orphan",foreign_keys="VisualizationShare.permission_id")
+
     def to_dict(self):
         return { 
             "id": self.id, 
@@ -223,7 +225,6 @@ class User(db.Model, MetaxMixin):
     logs = db.relationship("UsersLog", back_populates="user", lazy="noload", cascade="all, delete-orphan")
     roles = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref=db.backref("users", lazy="noload"))
     orgunits = db.relationship("UserOrgunit",secondary="user_orgunit_links",lazy="noload",backref=db.backref("users", lazy="noload"))
-
     histories = db.relationship("DataSourceHistory",lazy="noload",cascade="all, delete-orphan",foreign_keys="DataSourceHistory.user_id")
 
     # roles_link = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref="users")

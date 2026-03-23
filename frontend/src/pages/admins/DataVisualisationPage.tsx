@@ -3,35 +3,42 @@ import { Button } from '@components/ui/Button/Button';
 import { Card, CardBody } from '@components/ui/Card/Card';
 import { Modal } from '@components/ui/Modal/Modal';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
-import { Plus, Shield, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Plus, ShieldCheck, RefreshCw, Code } from 'lucide-react';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
-import { DataSourceTab } from './components/datasources/DataSourceTab';
-import { DataSourcePermissionTab } from './components/datasources/DataSourcePermissionTab';
-import { DatasetTab } from './components/datasets/DatasetTab';
+import { DatasetChartTab } from './components/datasets/DatasetCharts/DatasetChartTab';
+import { DatasetFieldTab } from './components/datasets/DatasetFieldTab';
+import { DatasetQueryTab } from './components/datasets/DatasetQueries/DatasetQueryTab';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { Tenant } from '@/models/identity.model';
 import { tenantService } from '@/services/identity.service';
 import { FaDatabase } from 'react-icons/fa';
 import { Building2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Dataset } from '@/models/dataset.models';
+import { datasetService } from '@/services/dataset.service';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
 import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderPage';
 
 type TabType =
-  | "datasource_tab"
-  | "permissions_tab"
-  | "dataset_tab";
+  | "field_tab"
+  | "query_tab"
+  | "chart_tab";
 
 
-export default function DataAssetsPage() {
-  const [activeTab, setActiveTab] = useState<TabType>('dataset_tab');
-  const [activeName, setActiveName] = useState<string | null>(null);
+export default function DataVisualisationPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
+
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [dataset_id, setDatasetId] = useState<number | undefined>();
+
+  const [activeTab, setActiveTab] = useState<TabType>('chart_tab');
+  const [activeName, setActiveName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showQueryBuilder, setShowQueryBuilder] = useState(false);
+
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
 
   const { user } = useAuth();
@@ -44,14 +51,14 @@ export default function DataAssetsPage() {
     setActiveTab(key);
 
     switch (key) {
-      case 'datasource_tab':
-        setActiveName("Ajouter Nouveau Datasource");
+      case 'field_tab':
+        setActiveName("Ajouter Nouveau Dataset Field");
         break;
-      case 'permissions_tab':
-        setActiveName("Ajouter Nouvelle permissions");
+      case 'query_tab':
+        setActiveName("Ajouter Nouvelle Dataset Query");
         break;
-      case 'dataset_tab':
-        setActiveName("Ajouter Nouveau Dataset");
+      case 'chart_tab':
+        setActiveName("Ajouter Nouvelle Dataset Chart");
         break;
       default:
         setActiveName(null);
@@ -78,27 +85,65 @@ export default function DataAssetsPage() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!tenant_id) return;
+    datasetService.list(tenant_id).then(d => setDatasets(d || []));
+  }, [tenant_id]);
+
   const tabs: { key: TabType; label: string; icon: JSX.Element }[] = [
-    { key: 'datasource_tab', label: 'DataSources', icon: <ShieldCheck size={18} /> },
-    { key: 'permissions_tab', label: 'Permissions', icon: <ShieldCheck size={18} /> },
-    { key: 'dataset_tab', label: 'Main Dataset', icon: <Shield size={18} /> },
+    { key: 'field_tab', label: 'Dataset Field', icon: <ShieldCheck size={18} /> },
+    { key: 'query_tab', label: 'Dataset Query', icon: <ShieldCheck size={18} /> },
+    { key: 'chart_tab', label: 'Dataset Chart', icon: <ShieldCheck size={18} /> },
   ];
 
-//   <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}><div>
-// <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}></div>
+  // <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}><div>
+  // <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}></div>
 
   const TenantForm = () => (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-      <FormSelect
-        label={`Tenant List`}
-        value={tenant_id}
-        options={tenants.map((c) => ({ value: c.id, label: c.name }))}
-        onChange={(val) => setTenantId(val)}
-        placeholder="Sélectionner Tenant"
-        leftIcon={<FaDatabase />}
-        required={true}
-      />
-    </div>
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+        <FormSelect
+          label={`Tenant List`}
+          value={tenant_id}
+          options={tenants.map((c) => ({ value: c.id, label: c.name }))}
+          onChange={(val) => setTenantId(val)}
+          placeholder="Sélectionner Tenant"
+          leftIcon={<FaDatabase />}
+          required={true}
+        />
+
+        <FormSelect
+          label={`Dataset List`}
+          value={dataset_id}
+          options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+          onChange={(value) => setDatasetId(value)}
+          placeholder="Sélectionner Dataset"
+          leftIcon={<FaDatabase />}
+          required={true}
+        />
+
+        {/* <FormSelect
+          label={`Dataset List`}
+          value={options.dataset_id}
+          options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+          onChange={(value) => setOptions({ ...options, dataset_id: value, query_id: undefined })}
+          placeholder="Sélectionner Dataset"
+          leftIcon={<FaDatabase />}
+          required={true}
+        />
+
+
+        <FormSelect
+          label={`Dataset List`}
+          value={dataset_id}
+          options={datasets.map((c) => ({ value: c.id, label: c.name }))}
+          onChange={(value) => setDatasetId(value)}
+          placeholder="Sélectionner Dataset"
+          leftIcon={<FaDatabase />}
+          required={true}
+        /> */}
+      </div>
+    </>
   );
 
   const centerStyles: any = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center' };
@@ -116,6 +161,12 @@ export default function DataAssetsPage() {
               <Button variant="ghost" size="sm" onClick={handleAddNew}>
                 <Plus size={16} /> {activeName}
               </Button>
+
+              {activeTab === 'query_tab' && (
+                <Button variant="outline" size="sm" onClick={() => setShowQueryBuilder(true)}>
+                  <Code size={16} /> Query Builder
+                </Button>
+              )}
             </div>
           )}
         </>
@@ -128,7 +179,7 @@ export default function DataAssetsPage() {
           <RefreshCw size={24} className="animate-spin" />
         </div>
       ) : tenant_id ? (
-        
+
         <Card>
           <CardBody>
             {/* Tabs */}
@@ -147,9 +198,9 @@ export default function DataAssetsPage() {
 
             {/* Tab Content */}
             <div className={styles.tabContent}>
-              {activeTab === 'datasource_tab' && <DataSourceTab ref={crudRef} tenants={tenants} tenant_id={tenant_id} />}
-              {activeTab === 'permissions_tab' && <DataSourcePermissionTab ref={crudRef} tenants={tenants} tenant_id={tenant_id} />}
-              {activeTab === 'dataset_tab' && <DatasetTab ref={crudRef} tenants={tenants} tenant_id={tenant_id} />}
+              {(activeTab === 'field_tab' && dataset_id) && <DatasetFieldTab ref={crudRef} tenants={tenants} tenant_id={tenant_id} datasets={datasets} dataset_id={dataset_id} />}
+              {(activeTab === 'query_tab' && dataset_id) && <DatasetQueryTab ref={crudRef} tenants={tenants} tenant_id={tenant_id} datasets={datasets} dataset_id={dataset_id} />}
+              {(activeTab === 'chart_tab' && dataset_id) && <DatasetChartTab ref={crudRef} tenants={tenants} tenant_id={tenant_id} datasets={datasets} dataset_id={dataset_id} />}
             </div>
           </CardBody>
         </Card>

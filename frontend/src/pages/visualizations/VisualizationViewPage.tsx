@@ -1,9 +1,9 @@
 /**
- * VisualizationHome - Home page displaying all visualizations in DHIS2 style
+ * VisualizationManager - Home page displaying all visualizations in DHIS2 style
  * This is the default page after authentication
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -25,53 +25,119 @@ import { GraduationLoader } from '@components/loaders/GraduationLoader/Graduatio
 import { VisualizationCard } from '@components/visualizations/VisualizationCard/VisualizationCard';
 import { useVisualizations, type VisualizationWithData } from '@/contexts/OLD/useVisualizations';
 import { ROUTES } from '@routes/configs';
-import styles from './VisualizationHome.module.css';
+import styles from './Visualization.module.css';
+import { useAuth } from '@/contexts/AuthContext';
+import { DatasetChart } from '@/models/dataset.models';
+import { Visualization } from '@/models/visualization.model';
+import { chartService } from '@/services/dataset.service';
+import { visualizationService } from '@/services/visualization.service';
+import { Responsive } from "react-grid-layout";
+import useMeasure from "react-use-measure";
+import { FormInput } from "@/components/forms/FormInput/FormInput";
+import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
+import { VisualizationViewModule } from "./VisualizationUtils";
+
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
+
+const STATUS = ["draft", "submitted", "reviewed", "approved", "published", "archived"];
 
 type ViewMode = 'grid' | 'list';
 type FilterType = 'all' | 'dashboard' | 'report';
 
-function CHTApp() {
-  return (
-    <iframe
-      src="https://kendeya.portal-integratehealth.org/"
-      width="100%"
-      height="900"
-      style={{ border: "none" }}
-      title="CHT"
-    />
-  );
-}
 
-export default function VisualizationHome() {
+export default function VisualizationView() {
+
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const { visualizations, isLoading, error, refresh, deleteVisualization } = useVisualizations();
 
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [tenant_id, setTenantId] = useState<number>();
+  const [visualizations, setVisualizations] = useState<Visualization[]>([]);
+  const [charts, setCharts] = useState<DatasetChart[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
+  const [search, setSearch] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
 
-  // Filter visualizations
-  const filteredVisualizations = useMemo(() => {
+  const didLoad = useRef(false);
+
+  // ---------------- INIT ----------------
+  useEffect(() => {
+    if (didLoad.current) return;
+    didLoad.current = true;
+    setTenantId(user?.tenant_id);
+  }, []);
+
+  // ---------------- FETCH ----------------
+  const fetchData = async () => {
+    if (!tenant_id) return;
+    setLoading(true);
+    const res = await visualizationService.list(tenant_id);
+    setVisualizations(res || []);
+    setLoading(false);
+  };
+
+  const fetchCharts = async () => {
+    if (!tenant_id) return;
+    const res = await chartService.list(tenant_id);
+    setCharts(res || []);
+  };
+
+
+  const refresh = () => {
+    fetchData();
+    fetchCharts();
+  }
+
+  useEffect(() => {
+    if (!tenant_id) return;
+    refresh()
+  }, [tenant_id]);
+
+
+
+  // ---------------- ACTIONS ----------------
+  const handleDelete = async (id: number | null) => {
+    if (!id) return;
+
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette visualisation ?')) {
+      await visualizationService.remove(id);
+      fetchData();
+    }
+  };
+
+  // ---------------- FILTER ----------------
+  const filtered = useMemo(() => {
     let result = visualizations;
 
     // Filter by type
     if (filterType !== 'all') {
       result = result.filter((v) => v.type === filterType);
     }
+    if (search.trim()) {
+      const query = search.toLowerCase();
 
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (v) =>
-          v.name.toLowerCase().includes(query) ||
-          v.description?.toLowerCase().includes(query)
-      );
+      result = result.filter(v => (
+        v.name.toLowerCase().includes(query) ||
+        v.description?.toLowerCase().includes(query)
+      ) && (statusFilter ? v.status === statusFilter : true));
     }
 
     return result;
-  }, [visualizations, filterType, searchQuery]);
+  }, [visualizations, search, statusFilter, filterType]);
+
+
+  const openView = async (viz: Visualization, charts: DatasetChart[]) => {
+    window.open(`/dashboard/${viz.id}`)
+  }
+
+
+
+
 
   // Stats
   const stats = useMemo(() => {
@@ -82,20 +148,13 @@ export default function VisualizationHome() {
     };
   }, [visualizations]);
 
-  const handleCreateVisualization = () => {
-    navigate(ROUTES.builder.dashboardBuilder());
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette visualisation ?')) {
-      deleteVisualization(id);
-    }
+  const handleCreate = () => {
   };
 
   const handleExpand = (visualization: VisualizationWithData) => {
     // Navigate to the appropriate page based on type
 
-      navigate(ROUTES.dashboards.root());
+    navigate(ROUTES.dashboards.root());
 
     // if (visualization.type === 'dashboard') {
     //   navigate(ROUTES.dashboards.monthly());
@@ -111,8 +170,7 @@ export default function VisualizationHome() {
   ];
 
   return (
-    <PageWrapper
-      title="Visualisations"
+    <PageWrapper title="Visualisations"
       subtitle="Bienvenue sur votre tableau de bord de visualisations"
     >
       {/* Header Actions */}
@@ -142,20 +200,11 @@ export default function VisualizationHome() {
 
             {/* Right: Actions */}
             <div className={styles.actionsSection}>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleCreateVisualization}
-              >
+              <Button variant="primary" size="sm" onClick={handleCreate} >
                 <Plus size={16} />
                 Créer
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={refresh}
-                title="Actualiser"
-              >
+              <Button variant="outline" size="sm" onClick={refresh} title="Actualiser" >
                 <RefreshCw size={16} />
               </Button>
             </div>
@@ -171,27 +220,31 @@ export default function VisualizationHome() {
           <input
             type="text"
             placeholder="Rechercher une visualisation..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className={styles.searchInput}
           />
         </div>
 
+        <div className={styles.filterWrapper}>
+          <div className={styles.filterButton}>
+            <FormSelect
+              value={statusFilter}
+              options={[{ value: "", label: "All Status" }, ...STATUS.map(s => ({ value: s, label: s }))]}
+              onChange={setStatusFilter}
+            />
+          </div>
+        </div>
+
         {/* Filter Dropdown */}
         <div className={styles.filterWrapper}>
-          <button
-            type="button"
-            className={styles.filterButton}
-            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-          >
+          <button type="button" className={styles.filterButton} onClick={() => setShowFilter(!showFilter)} >
             <Filter size={16} />
-            <span>
-              {filterOptions.find((o) => o.value === filterType)?.label}
-            </span>
+            <span>{filterOptions.find((o) => o.value === filterType)?.label}</span>
             <ChevronDown size={16} />
           </button>
 
-          {showFilterDropdown && (
+          {showFilter && (
             <motion.div
               className={styles.filterDropdown}
               initial={{ opacity: 0, y: -10 }}
@@ -199,13 +252,11 @@ export default function VisualizationHome() {
               exit={{ opacity: 0, y: -10 }}
             >
               {filterOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
+                <button key={option.value} type="button"
                   className={`${styles.filterOption} ${filterType === option.value ? styles.filterOptionActive : ''}`}
                   onClick={() => {
                     setFilterType(option.value as FilterType);
-                    setShowFilterDropdown(false);
+                    setShowFilter(false);
                   }}
                 >
                   <span>{option.label}</span>
@@ -217,44 +268,50 @@ export default function VisualizationHome() {
         </div>
 
         {/* View Toggle */}
-        <div className={styles.viewToggle}>
+        {/* <div className={styles.viewToggle}> */}
           <button
             type="button"
-            className={`${styles.viewButton} ${viewMode === 'grid' ? styles.viewButtonActive : ''}`}
-            onClick={() => setViewMode('grid')}
-            title="Vue grille"
+            // className={`${styles.viewButtonActive}`}
+            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+            title={viewMode === 'grid' ? "Vue grille" : "Vue liste"}
           >
-            <LayoutGrid size={18} />
+            {viewMode === 'grid' ? <LayoutGrid size={18} /> : <List size={18} />}
           </button>
-          <button
-            type="button"
-            className={`${styles.viewButton} ${viewMode === 'list' ? styles.viewButtonActive : ''}`}
-            onClick={() => setViewMode('list')}
-            title="Vue liste"
-          >
-            <List size={18} />
-          </button>
-        </div>
+        {/* </div> */}
       </div>
 
       {/* Content */}
       <div className={styles.content}>
-        <GraduationLoader isLoading={isLoading} />
+        <GraduationLoader isLoading={loading} />
 
         {error && (
           <div className={styles.errorState}>
             <AlertCircle size={48} />
             <h3>Erreur de chargement</h3>
             <p>{error}</p>
-            <Button variant="outline" size="sm" onClick={refresh}>
-              Réessayer
-            </Button>
+            <Button variant="outline" size="sm" onClick={refresh}>Réessayer</Button>
           </div>
         )}
 
-        {!isLoading && !error && (
+        {/* LOADING */}
+        {loading && (
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-40 bg-gray-200 animate-pulse rounded-xl" />
+            ))}
+          </div>
+        )}
+
+        {/* EMPTY */}
+        {!loading && !filtered.length && (
+          <div className="text-center py-20 text-gray-400">
+            🚀 No visualization yet. Create your first one!
+          </div>
+        )}
+
+        {!loading && !error && (
           <AnimatePresence mode="wait">
-            {/* {filteredVisualizations.length === 0 ? (
+            {filtered.length === 0 ? (
               <motion.div
                 key="empty"
                 className={styles.emptyState}
@@ -264,7 +321,7 @@ export default function VisualizationHome() {
               >
                 <LayoutGrid size={64} />
                 <h3>Aucune visualisation</h3>
-                {searchQuery || filterType !== 'all' ? (
+                {search || filterType !== 'all' ? (
                   <p>
                     Aucune visualisation ne correspond à vos critères de recherche.
                     <br />
@@ -280,7 +337,7 @@ export default function VisualizationHome() {
                     <Button
                       variant="primary"
                       size="md"
-                      onClick={handleCreateVisualization}
+                      onClick={handleCreate}
                     >
                       <Plus size={18} />
                       Créer une visualisation
@@ -296,25 +353,32 @@ export default function VisualizationHome() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {filteredVisualizations.map((viz, index) => (
+                {filtered.map((viz, index) => (
                   <motion.div
                     key={viz.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <VisualizationCard
+                    {/* <VisualizationCard
                       visualization={viz}
-                      onDelete={handleDelete}
+                      onDelete={(id) => handleDelete(id)}
                       onExpand={handleExpand}
                       className={viewMode === 'list' ? styles.listCard : undefined}
-                    />
+                    /> */}
+                    {/* <VisualizationViewModule visualization={viz} charts={charts} removeView={handleDelete} openView={openView} /> */}
+
+                    <Card key={viz.id} style={{"padding": "5px"}} className="hover:shadow-xl transition-all rounded-2xl">
+                        {/* <div className="p-4 space-y-4"> */}
+                            <VisualizationViewModule visualization={viz} charts={charts} />
+                        {/* </div> */}
+                    </Card>
+
                   </motion.div>
                 ))}
               </motion.div>
-            )} */}
+            )}
 
-            <CHTApp />
 
           </AnimatePresence>
         )}

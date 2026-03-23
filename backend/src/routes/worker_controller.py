@@ -8,45 +8,46 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 bp = Blueprint("workers", __name__, url_prefix="/api/workers")
 
-@bp.get("/status/<int:tenant_id>/<worker_name>")
+@bp.get("/<worker_name>")
 def get_status(tenant_id:int, worker_name: str):
-    control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
-    if not control:
-        raise BadRequest("Worker not found", 404)
-    return jsonify({"worker": worker_name, "status": control.status})
 
-@bp.post("/stop/<int:tenant_id>/<worker_name>")
-def stop_worker(tenant_id:int, worker_name: str):
-    control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
-    if not control:
-        control = WorkerControl(name=worker_name, status="stop")
-        db.session.add(control)
-    else:
-        control.status = "stop"
-    db.session.commit()
-    return jsonify({"worker": worker_name, "status": "stop"})
+    tenant_id = request.args.get("tenant_id", type=int)
+    action = request.args.get("action", type=str) # status | stop | start | sync
 
-@bp.post("/start/<int:tenant_id>/<worker_name>")
-def start_worker(tenant_id:int, worker_name: str):
     control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
-    if not control:
-        control = WorkerControl(name=worker_name, status="run")
-        db.session.add(control)
-    else:
-        control.status = "run"
-    db.session.commit()
-    return jsonify({"worker": worker_name, "status": "run"})
-
-@bp.post("/sync/<int:tenant_id>/<worker_name>/<int:source_id>")
-def trigger_sync(tenant_id:int,worker_name: str,source_id: int):
-    # Permet de déclencher un sync ponctuel, même si le worker est arrêté
-    try:
-        # start_async_single_source(tenant_id, source_id)
+    
+    if action == "sync":
+        source_id = request.args.get("source_id", type=int)
         return jsonify({
             "tenant_id": tenant_id, 
             "source_id": source_id, 
             "worker": worker_name, 
             "status": "sync triggered"
         })
-    except Exception as e:
-        raise
+    
+    if action == "stop":
+        if not control:
+            raise BadRequest("Worker not found", 404)
+        return jsonify({"worker": worker_name, "status": control.status})
+    
+    elif action == "status":
+        if not control:
+            control = WorkerControl(name=worker_name, status="stop")
+            db.session.add(control)
+        else:
+            control.status = "stop"
+        db.session.commit()
+        return jsonify({"worker": worker_name, "status": "stop"})
+
+    elif action == "stop":
+        if not control:
+            control = WorkerControl(name=worker_name, status="run")
+            db.session.add(control)
+        else:
+            control.status = "run"
+        db.session.commit()
+        return jsonify({"worker": worker_name, "status": "run"})
+
+
+
+

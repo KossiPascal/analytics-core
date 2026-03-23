@@ -78,7 +78,7 @@ export const RolesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    tenantService.all().then(t => {
+    tenantService.list().then(t => {
       setTenants(t || []);
       setTenantId(user?.tenant_id);
     });
@@ -88,7 +88,7 @@ export const RolesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
     if(!tenant_id) return;
     setLoading(true);
     try {
-      const permsRes = await permissionService.all(tenant_id);
+      const permsRes = await permissionService.list(tenant_id);
       setPermissions(permsRes || []);
     } catch {
       // showError(`Erreur chargement`);

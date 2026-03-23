@@ -1,27 +1,23 @@
 import { CRUDService } from '@services/acrud.service';
-import { DataSource, DataSourcePermission, DataSourceType, TestType } from '@/models/datasource.models';
+import { DataSource, DataSourcePermission, TestType } from '@/models/datasource.models';
 
 const datasource = new CRUDService("/datasources");
 export const datasourceService = {
-  full: (tenant_id: number) => {
+  list: (tenant_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return datasource.all<DataSource>(`/${tenant_id}`)
-  },
-  all: (tenant_id: number) => {
-    if (!tenant_id) throw Error("tenant_id is required");
-    return datasource.all<DataSource>(`/${tenant_id}`)
+    return datasource.all<DataSource>(``, { options: { params: { tenant_id } } })
   },
   allWithRelations: (tenant_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return datasource.all<DataSource>(`/${tenant_id}`, { options: { params: { include_relations: true } } })
+    return datasource.all<DataSource>(``, { options: { params: { include_relations: true, tenant_id } } })
   },
   allWithDetails: (tenant_id: number, with_details: boolean = false) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return datasource.all<DataSource>(`${with_details ? "/with-details" : ""}/${tenant_id}`)
+    return datasource.all<DataSource>(``, { options: { params: { tenant_id, with_details } } })
   },
-  getOne: (tenant_id: number, id: number) => {
+  get: (tenant_id: number, id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return datasource.all<DataSource>(`/${tenant_id}/${id}`)
+    return datasource.all<DataSource>(`/${id}`, { options: { params: { tenant_id } } })
   },
   create: (data: DataSource) => datasource.create<DataSource>("", data),
   update: (id: number, data: DataSource) => datasource.update<DataSource>("", id, data),
@@ -41,48 +37,25 @@ export const datasourceService = {
   autoClean: () => datasource.all<DataSource>("/ssh/auto-clean"),
 }
 
-const types = new CRUDService("/datasource-types");
-export const dsTypeService = {
-  full: () => types.all<DataSourceType>(""),
-  all: () => types.all<DataSourceType>(""),
-  create: (data: DataSourceType) => types.create("", data),
-  update: (id: number, data: DataSourceType) => types.update("", id, data),
-  remove: (id: number) => types.remove("", id),
-}
-
 const permissions = new CRUDService("/datasource-permissions");
 export const dsPermissionService = {
-  full: (tenant_id?: number) => {
+  list: (tenant_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return permissions.all<DataSourcePermission>(`/${tenant_id}`);
-  },
-  all: (tenant_id: number) => {
-    if (!tenant_id) throw Error("tenant_id is required");
-    return permissions.all<DataSourcePermission>(`/${tenant_id}`);
+    return permissions.all<DataSourcePermission>(``, { options: { params: { tenant_id } } });
   },
   allWithRelations: (tenant_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return permissions.all<DataSourcePermission>(`/${tenant_id}`, { options: { params: { include_relations: true } } })
+    return permissions.all<DataSourcePermission>(``, { options: { params: { include_relations: true, tenant_id } } })
   },
   listDatasources: (tenant_id: number, datasource_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return permissions.all<DataSourcePermission>(`/datasource/${tenant_id}/${datasource_id}`);
+    return permissions.all<DataSourcePermission>(`/datasource`, { options: { params: { tenant_id, datasource_id } } });;
   },
   listUsers: (tenant_id: number, user_id: number) => {
     if (!tenant_id) throw Error("tenant_id is required");
-    return permissions.all<DataSourcePermission>(`/user/${tenant_id}/${user_id}`);
+    return permissions.all<DataSourcePermission>(`/user`, { options: { params: { tenant_id, user_id } } });;
   },
   create: (data: DataSourcePermission) => permissions.create("", data),
   update: (id: number, data: DataSourcePermission) => permissions.update("", id, data),
   remove: (id: number) => permissions.remove("", id),
 }
-
-
-
-// DataSourceType
-// DataSource
-// DataSourceConnection
-// DataSourceSSHConfig
-// DataSourceCredential
-// DataSourcePermission
-// DataSourceHistory

@@ -1,3 +1,5 @@
+import React, { forwardRef, RefObject, useImperativeHandle, useRef } from "react";
+
 import { BarRenderer } from "../renderers/BarRenderer";
 import { LineRenderer } from "../renderers/LineRenderer";
 import { PieRenderer } from "../renderers/PieRenderer";
@@ -12,6 +14,7 @@ import { RadarRenderer } from "../renderers/RadarRenderer";
 import { StackedAreaRenderer } from "../renderers/StackedAreaRenderer";
 import { StackedBarRenderer } from "../renderers/StackedBarRenderer";
 import { ChartRenderProp, ExecuteChartResponse, SqlChartTypeList } from "@/models/dataset.models";
+import { ExportTypes, handleExport } from "@/components/download/download";
 
 const Renderers: Record<string, any> = {
   bar: BarRenderer,
@@ -29,27 +32,55 @@ const Renderers: Record<string, any> = {
   heatmap: HeatmapRenderer,
 };
 
-export const ChartRendererPreview = ({ executeResponse }: { executeResponse: ExecuteChartResponse | undefined }) => {
+type Props = {
+  executeResponse: ExecuteChartResponse | undefined,
+  withContainer?: boolean;
+  customOptions?: {
+    showTitle?: boolean;
+    showSubTitle?: boolean;
+    showDownload?: boolean;
+    showSearcInput?: boolean;
+    showExportBtn?: boolean;
+  }
+}
 
+export const ChartRendererPreview = forwardRef((props: Props, ref) => {
+  const { executeResponse, withContainer, customOptions } = props ?? {};
   const { chart, data } = executeResponse ?? {};
 
-  if (!chart?.query_id) {
-    return <div>Select query to preview</div>;
-  }
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  if (!SqlChartTypeList.includes(chart?.type)) {
-    return <div>Type not supported</div>;
-  }
+  // const chartRef = ref as RefObject<any>;
+
+  // 👉 expose method
+  useImperativeHandle(ref, () => ({
+    getElement: () => containerRef.current,
+    download: (type: ExportTypes) => handleExport(
+      {
+        resp: executeResponse,
+        element: containerRef.current,
+        type,
+        filename: chart?.name,
+      }),
+  }));
+
+  if (!chart?.query_id) return <div>Select query to preview</div>;
+  if (!SqlChartTypeList.includes(chart?.type)) return <div>Type not supported</div>;
 
   const Renderer = Renderers[chart?.type];
-  if (!Renderer) {
-    return <div className="text-gray-400 p-4">Aperçu non disponible</div>;
-  }
+  if (!Renderer) return <div className="text-gray-400 p-4">Aperçu non disponible</div>;
 
   return (
-    <div style={{ background: "#fafafa", padding: 16 }}>
-      <h3>Preview</h3>
-      <Renderer chart={chart} data={data || []} />
+    <div ref={containerRef} style={{ background: "#fafafa", padding: withContainer ? 16 : undefined }} className="w-full h-full bg-white flex flex-col">
+      {withContainer && (
+        <div className="p-3 border-b bg-gray-50 text-sm font-semibold">
+          {chart?.name || "Chart Preview"}
+        </div>
+      )}
+
+      <div className="flex-1 min-h-0">
+        <Renderer chart={chart} data={data || []} customOptions={customOptions} />
+      </div>
     </div>
   );
-};
+});

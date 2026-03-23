@@ -29,8 +29,11 @@ def list_tenants():
 
 @bp.get("/<int:tenant_id>")
 @require_auth
-def get_tenant(tenant_id: int):
+def get_tenant(tenant_id:int):
     try:
+        if not tenant_id:
+            raise BadRequest("tenant_id is required", 400)
+        
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:
             raise BadRequest(f"Tenant with id={tenant_id} not found", 404)

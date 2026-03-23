@@ -130,7 +130,7 @@ export const OrgunitsTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    tenantService.all().then(t => {
+    tenantService.list().then(t => {
       setTenants(t || []);
       setTenantId(user?.tenant_id);
     });
@@ -154,8 +154,8 @@ export const OrgunitsTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
     if(!tenant_id) return;
     setLoading(true);
     const [orgunitRes, levelRes] = await Promise.allSettled([
-      orgunitService.all(tenant_id),
-      levelService.all(tenant_id),
+      orgunitService.list(tenant_id),
+      levelService.list(tenant_id),
     ]);
     if (orgunitRes.status === 'fulfilled') setOrgunits(orgunitRes.value ?? []);
     if (levelRes.status === 'fulfilled') setLevels(levelRes.value ?? []);

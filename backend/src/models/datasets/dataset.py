@@ -86,6 +86,8 @@ class Dataset(db.Model, AuditMixin):
     queries = db.relationship("DatasetQuery",back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
     charts = db.relationship("DatasetChart", back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
     all_versioned = db.relationship("DatasetVersioned", back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
+    visualization_charts = db.relationship("VisualizationChart", back_populates="dataset", lazy="noload", cascade="all, delete-orphan")
+    data_targets = db.relationship("DataTarget",back_populates="dataset",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
     
     parent = db.relationship("Dataset",remote_side=[id],backref=db.backref("children", passive_deletes=True))
 
@@ -151,14 +153,12 @@ class Dataset(db.Model, AuditMixin):
                 "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
                 "connection": self.connection.to_dict(include_relations=False) if self.connection else None,
                 "datasource": self.datasource.to_dict(include_relations=False) if self.datasource else None,
-                "fields": [f.to_dict(include_relations=False) for f in self.fields],
-                "queries": [q.to_dict(include_relations=False) for q in self.queries],
-                "charts": [c.to_dict(include_relations=False) for c in self.charts],
-                "all_versioned": [v.to_dict(include_relations=False) for v in self.all_versioned],
-                # "children": [c.id for c in self.children],
-                # "children": [c.id for c in self.children],
+                "fields": [f.to_dict(include_relations=False) for f in self.fields or []],
+                "queries": [q.to_dict(include_relations=False) for q in self.queries or []],
+                "charts": [c.to_dict(include_relations=False) for c in self.charts or []],
+                "all_versioned": [v.to_dict(include_relations=False) for v in self.all_versioned or []],
+                "visualization_charts": [v.to_dict(include_relations=False) for v in self.visualization_charts or []],
             })
-
 
         return data
 
@@ -315,13 +315,9 @@ class DatasetQuery(db.Model, AuditMixin):
 
     dataset = db.relationship("Dataset", back_populates="queries", lazy="noload",foreign_keys=[dataset_id])
     tenant = db.relationship("Tenant", back_populates="queries", lazy="noload",foreign_keys=[tenant_id])
-    # charts = db.relationship(
-    #     "DatasetChart",
-    #     secondary="visualization_charts",
-    #     primaryjoin="DatasetQuery.dataset_id==VisualizationChart.visualization_id",
-    #     secondaryjoin="VisualizationChart.chart_id==Chart.id",
-    #     viewonly=True
-    # )
+    
+    data_targets = db.relationship("DataTarget",back_populates="dataset_query",cascade="all, delete-orphan",lazy="noload",passive_deletes=True)
+
 
     charts = db.relationship(
         "DatasetChart",
@@ -388,7 +384,7 @@ class DatasetQuery(db.Model, AuditMixin):
                 "fields": [f.to_dict(include_relations=False) for f in self.dataset.fields] if self.dataset and self.dataset.fields else None,
                 "dataset": self.dataset.to_dict(include_relations=False) if self.dataset else None,
                 "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
-                # "charts": [c.to_dict() for c in self.charts] if self.charts else None,
+                "data_targets": [c.to_dict() for c in self.data_targets or []],
             })
 
         return data

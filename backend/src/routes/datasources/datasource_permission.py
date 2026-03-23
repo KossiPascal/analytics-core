@@ -12,10 +12,11 @@ bp = Blueprint("datasource_permissions",__name__,url_prefix="/api/datasource-per
 
 # { "datasource_id": 1, "user_id": 25, "roles": ["write"] }
 
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_datasource_permissions(tenant_id):
+def list_datasource_permissions():
     try:
+        tenant_id = request.args.get("tenant_id", type=int)
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
 
@@ -62,7 +63,7 @@ def create_or_update_permission():
                 datasource_id=datasource_id,
                 connection_id=ds.connection.id if ds.connection else None,
                 tenant_id=ds.tenant_id,
-                type_id=ds.type_id,
+                type=ds.type,
                 user_id=user_id,
                 role=data.get("role"),
                 created_by_id=make_by
@@ -122,12 +123,14 @@ def delete_permission(permission_id):
         raise
 
 
-@bp.get("/datasource/<int:tenant_id>/<int:datasource_id>")
+@bp.get("/datasource")
 @require_auth
-def list_permissions_for_datasource(tenant_id,datasource_id):
+def list_permissions_for_datasource():
     try:
-        if not tenant_id:
-            raise BadRequest("tenant_id is required", 400)
+        tenant_id = request.args.get("tenant_id", type=int)
+        datasource_id = request.args.get("datasource_id", type=int)
+        if not tenant_id or not datasource_id:
+            raise BadRequest("tenant_id and datasource_id are required", 400)
 
         permissions:List[DataSourcePermission] = DataSourcePermission.query.filter(
             DataSourcePermission.datasource_id==datasource_id, 
@@ -141,12 +144,14 @@ def list_permissions_for_datasource(tenant_id,datasource_id):
     except Exception as e:
         raise
 
-@bp.get("/user/<int:tenant_id>/<int:user_id>")
+@bp.get("/user")
 @require_auth
-def list_permissions_for_user(tenant_id,user_id):
+def list_permissions_for_user():
     try:
-        if not tenant_id:
-            raise BadRequest("tenant_id is required", 400)
+        tenant_id = request.args.get("tenant_id", type=int)
+        user_id = request.args.get("user_id", type=int)
+        if not tenant_id or not user_id:
+            raise BadRequest("tenant_id and user_id are required", 400)
 
         permissions:List[DataSourcePermission] = DataSourcePermission.query.filter(
             DataSourcePermission.user_id == user_id, 

@@ -164,7 +164,7 @@ const SqlBuilderPage: React.FC = () => {
           id: db.id!,
           label: db.name,
           description: db.description,
-          type: db.type?.code,
+          type: db.type,
           // icon?: string,
           // color?: string,
         })

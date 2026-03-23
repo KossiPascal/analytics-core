@@ -131,22 +131,18 @@ const getQueryColumns = (setPreviewJson: (v: QueryJson) => void, setPreviewSql: 
 
 interface DatasetQueryTabProps {
    tenants:Tenant[];
-   tenant_id:number
+   tenant_id:number;
+
+   datasets:Dataset[];
+   dataset_id:number;
 }
 // MAIN PAGE
-export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id }, ref) => {
+export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
     const navigate = useNavigate();
-    const [dataset_id, setDatasetId] = useState<number | undefined>();
-    const [datasets, setDatasets] = useState<Dataset[]>([]);
     const [previewSql, setPreviewSql] = useState<string | null>(null);
     const [previewJson, setPreviewJson] = useState<QueryJson | null>(null);
     const [previewValues, setPreviewValues] = useState<Record<string, any> | null>(null);
     const [errors, setErrors] = useState<CompileError>({});
-
-    useEffect(() => {
-        if (!tenant_id) return;
-        datasetService.all(tenant_id).then(d => setDatasets(d || []));
-    }, [tenant_id]);
 
     // TABLE COLUMNS
     const queryColumns = useMemo(() => getQueryColumns(setPreviewJson, setPreviewSql, setPreviewValues), []);
@@ -252,17 +248,6 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                     setErrors(validationErrors);
                     return Object.keys(validationErrors).length === 0;
                 }}
-                headerActions={(
-                <FormSelect
-                    label={`Dataset List`}
-                    value={dataset_id}
-                    options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                    onChange={(value) => setDatasetId(value)}
-                    placeholder="Sélectionner Dataset"
-                    leftIcon={<FaDatabase />}
-                    required={true}
-                />
-                )}
                 renderForm={(query, setValue, saving) => (
                     <RenderFormBuilder
                         datasets={datasets}

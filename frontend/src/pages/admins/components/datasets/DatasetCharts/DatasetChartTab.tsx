@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { ChartWizard } from "./chart-utils/ChartWizard";
-import { Dataset, DatasetChart, DatasetQuery, ExecuteChartResponse, TableChartOptions } from "@/models/dataset.models";
-import { chartService, datasetService, queryService } from "@/services/dataset.service";
+import { Dataset, DatasetChart, DatasetQuery, ExecuteChartResponse } from "@/models/dataset.models";
+import { chartService, queryService } from "@/services/dataset.service";
 import { StatusBadge } from "@/components/ui/Badge/Badge";
 import { Column } from "@/components/ui/Table/Table";
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from "@/pages/admins/AdminEntityCrudModule";
@@ -12,6 +12,9 @@ import { FaDatabase } from "react-icons/fa";
 import { ChartRendererPreview } from "./chart-utils/ChartRenderer";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Tenant } from "@/models/identity.model";
+
+import styles from "@pages/admins/AdminPage.module.css";
+import { Building2 } from "lucide-react";
 
 // Colonnes du tableau
 const sourceColumns: Column<DatasetChart>[] = [
@@ -26,24 +29,14 @@ const sourceColumns: Column<DatasetChart>[] = [
     { key: "is_active", header: "Statut", align: "center", render: (ds) => <StatusBadge isActive={ds.is_active} />, sortable: false, searchable: false },
 ];
 
-interface DefaultOptions {
-    tenant_id?: number;
-    dataset_id?: number;
-    query_id?: number;
-}
-
-interface DatasetChartTabProps {
-    tenants: Tenant[];
-    tenant_id: number
-}
 
 // DatasetChartTab
-const createDefaultForm = (tenant_id: number): DatasetChart => ({
+const createDefaultForm = (tenant_id: number, dataset_id: number, query_id: number): DatasetChart => ({
     id: null,
     name: "",
     tenant_id: tenant_id,
-    query_id: null,
-    dataset_id: null,
+    dataset_id: dataset_id,
+    query_id: query_id,
     type: "table",
     description: "",
     is_active: false,
@@ -82,10 +75,17 @@ const createDefaultForm = (tenant_id: number): DatasetChart => ({
     }
 });
 
-export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChartTabProps>(({ tenants, tenant_id }, ref) => {
-    const [datasets, setDatasets] = useState<Dataset[]>([]);
+interface DatasetChartTabProps {
+    tenants: Tenant[];
+    tenant_id: number;
+    datasets: Dataset[];
+    dataset_id: number;
+}
+
+export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChartTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
     const [queries, setQueries] = useState<DatasetQuery[]>([]);
-    const [options, setOptions] = useState<DefaultOptions>({});
+    const [query_id, setQueryId] = useState<number | undefined>(undefined);
+
     const [showPreview, setShowPreview] = useState<boolean>(false);
     const [executeResponse, setExecuteResponse] = useState<ExecuteChartResponse | undefined>(undefined);
 
@@ -104,41 +104,48 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
 
     const didLoad = useRef(false);
 
-    // Chargement datasets
-    useEffect(() => {
-        if (!tenant_id) return;
-        datasetService.all(tenant_id).then(d => setDatasets(d ?? []));
-    }, [tenant_id]);
-
     // Chargement queries
     useEffect(() => {
-        if (!tenant_id || !options.dataset_id) return;
-        queryService.all(tenant_id, options.dataset_id).then(q => setQueries(q || []));
-    }, [tenant_id, options.dataset_id]);
-
+        if (!tenant_id || !dataset_id) return;
+        queryService.list(tenant_id, dataset_id).then(q => setQueries(q || []));
+    }, [tenant_id, dataset_id]);
 
     // useEffect(() => {
     //     const suggestion = suggestChartType( _chart?.options?.rows ?? [], _chart?.options?.metrics ?? []);
     //     if (!expertMode) setChartType(suggestion);
     // }, [_chart?.options?.rows, _chart?.options?.metrics]);
 
-
     const defaultTenant = useMemo(() => {
-        return {
-            required: true,
-            ids: [tenant_id, options.dataset_id, options.query_id]
-        };
-    }, [tenant_id, options.dataset_id, options.query_id]);
+        return { required: true, ids: [tenant_id, dataset_id, query_id] };
+    }, [tenant_id, dataset_id, query_id]);
 
-    const mockData = useMemo(() => {
-        return [
-            { name: "Jan", value: 400 },
-            { name: "Feb", value: 300 },
-            { name: "Mar", value: 500 },
-        ]
-    }, []);
+    const isParamsNotOk = useMemo(() => !tenant_id || !dataset_id || !query_id, [tenant_id, dataset_id, query_id]);
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id, dataset_id, query_id!), [tenant_id, dataset_id, query_id]);
 
-    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
+    const QueriesListForm = () => {
+        return (
+            <FormSelect
+                label={`Queries List`}
+                value={query_id}
+                options={queries.map((c) => ({ value: c.id, label: c.name }))}
+                onChange={(value) => setQueryId(value)}
+                placeholder="Sélectionner Query"
+                leftIcon={<FaDatabase />}
+                required={true}
+            />
+        );
+    }
+
+
+    if (isParamsNotOk) {
+        return (
+            <div className={styles.emptyState}>
+                <Building2 size={48} />
+                <p>Select Query</p>
+                <QueriesListForm />
+            </div>
+        );
+    }
 
     return (
         <>
@@ -154,28 +161,9 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
                 defaultTenant={defaultTenant}
                 // isValid={(r) => !!r.name && !!r.dataset_id && !!r.query_id}
                 isValid={(r) => r.name.trim().length > 0 && r.dataset_id != null && r.query_id != null}
-                headerActions={(
-                    <>
-                        <FormSelect
-                            label={`Dataset List`}
-                            value={options.dataset_id}
-                            options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                            onChange={(value) => setOptions({ ...options, dataset_id: value, query_id: undefined })}
-                            placeholder="Sélectionner Dataset"
-                            leftIcon={<FaDatabase />}
-                            required={true}
-                        />
-                        <FormSelect
-                            label={`Queries List`}
-                            value={options.query_id}
-                            options={queries.map((c) => ({ value: c.id, label: c.name }))}
-                            onChange={(value) => setOptions({ ...options, query_id: value })}
-                            placeholder="Sélectionner Query"
-                            leftIcon={<FaDatabase />}
-                            required={true}
-                        />
-                    </>
-                )}
+                headerActions={
+                    (<QueriesListForm />)
+                }
                 renderForm={(chart, setValue, saving) => (
                     <>
                         {/* <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}> */}
@@ -184,6 +172,10 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
                             chart={chart}
                             tenants={tenants}
                             tenant_id={tenant_id}
+                            datasets={datasets}
+                            dataset_id={dataset_id}
+                            queries={queries}
+                            query_id={query_id!}
                             onChange={(updatedChart) => {
                                 // Exemple de mise à jour de chaque champ individuellement
                                 Object.keys(updatedChart).forEach((key) => {
@@ -191,15 +183,14 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
                                 });
                             }}
                             onExecute={(ex) => {
-                                setExecuteResponse(ex)
-                                setShowPreview(true)
+                                setExecuteResponse(ex);
+                                setShowPreview(true);
                             }}
                         />
 
-
-                        <Modal size="full" isOpen={showPreview} onClose={() => setShowPreview(false)}>
+                        {!isParamsNotOk && (<Modal size="full" isOpen={showPreview} onClose={() => setShowPreview(false)}>
                             <ChartRendererPreview executeResponse={executeResponse} />
-                        </Modal>
+                        </Modal>)}
 
                         {/* </div> */}
                     </>

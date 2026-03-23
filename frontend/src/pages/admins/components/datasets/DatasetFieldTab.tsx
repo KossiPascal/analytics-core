@@ -175,7 +175,6 @@ interface DatasetFieldFormProps {
     tenant_id: number;
     datasets: Dataset[];
     dataset_id: number | undefined;
-    setDatasetId: (datasetId: number) => void;
     datasetMap: Map<number, Dataset>;
     saving: boolean;
     showColumns: boolean;
@@ -506,7 +505,7 @@ const validateExpression = ({ expr, fieldType, columns, dataType, aggregation }:
     return { valid: true };
 }
 
-const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, setDatasetId, datasets, datasetMap, saving, showColumns, setShowColumns, onValidationChange }: DatasetFieldFormProps) => {
+const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, datasets, datasetMap, saving, showColumns, setShowColumns, onValidationChange }: DatasetFieldFormProps) => {
 
     const [errors, setErrors] = useState<{ expression?: string, data_type?: string }>({});
     const [disabled, setDisabled] = useState<{ expression?: boolean, data_type?: boolean }>({});
@@ -700,7 +699,6 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                         options={datasets.map((c) => ({ value: c.id, label: c.name }))}
                         onChange={(val) => {
                             setValue("dataset_id", val);
-                            setDatasetId(val);
                             validateField();
                         }}
                         leftIcon={<FaTable />}
@@ -778,16 +776,18 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                                 columns={[
                                     { key: "name", header: "Nom", sortable: true, render: d => <span className="font-medium text-gray-800">{d.name}</span> },
                                     { key: "type", header: "Type", sortable: true, render: d => <span className="text-blue-500">{d.type}</span> },
-                                    { key: "description", header: "Description", sortable: true, render: (d, i) => (
-                                        <InlineEditCell
-                                            value={d.description || ""}
-                                            onChange={(v) => {
-                                                const updated = [...(field.dimensions ?? [])];
-                                                updated[i] = { ...updated[i], description: v };
-                                                setValue("dimensions", updated);
-                                            }}
-                                        />
-                                    )},
+                                    {
+                                        key: "description", header: "Description", sortable: true, render: (d, i) => (
+                                            <InlineEditCell
+                                                value={d.description || ""}
+                                                onChange={(v) => {
+                                                    const updated = [...(field.dimensions ?? [])];
+                                                    updated[i] = { ...updated[i], description: v };
+                                                    setValue("dimensions", updated);
+                                                }}
+                                            />
+                                        )
+                                    },
                                 ]}
                             />
                         </div>
@@ -796,7 +796,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
 
             ) : isNotDimensionMultiple ? (
                 <>
-                    {isNew&&(<FormSelect
+                    {isNew && (<FormSelect
                         label={`Data Type`}
                         value={field.data_type}
                         options={dataTypes.map((c) => ({ value: c, label: c }))}
@@ -902,7 +902,7 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
                     </div>
 
                     {/* Raw field */}
-                    {isNew&&(<div className="border rounded-xl p-3 bg-gray-50 space-y-3">
+                    {isNew && (<div className="border rounded-xl p-3 bg-gray-50 space-y-3">
                         <p className="text-sm font-medium text-gray-700">Raw Field <span className="text-gray-400 font-normal">(optionnel)</span></p>
                         <div className="grid grid-cols-2 gap-3">
                             <FormInput
@@ -1033,21 +1033,15 @@ const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_id, set
 
 interface DatasetFieldTabProps {
     tenants: Tenant[];
-    tenant_id: number
+    tenant_id: number;
+
+    datasets: Dataset[];
+    dataset_id: number;
 }
-export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetFieldTabProps>(({ tenants, tenant_id }, ref) => {
-    const [dataset_id, setDatasetId] = useState<number | undefined>(undefined);
-    const [datasets, setDatasets] = useState<Dataset[]>([]);
+export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetFieldTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
     const [showColumns, setShowColumns] = useState<boolean>(false);
     const [hasFormError, setHasFormError] = useState(false);
     const [loading, setLoading] = useState(true);
-
-    const didLoad = useRef(false);
-
-    useEffect(() => {
-        if (!tenant_id) return;
-        datasetService.all(tenant_id).then(d => setDatasets(d || []));
-    }, [tenant_id]);
 
     const defaultTenant = useMemo(() => {
         return { required: true, ids: [tenant_id, dataset_id] };
@@ -1078,17 +1072,6 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                 defaultValue={DEFAULT_FORM}
                 service={fieldService}
                 defaultTenant={defaultTenant}
-                headerActions={(
-                    <FormSelect
-                        label={`Dataset List`}
-                        value={dataset_id}
-                        options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-                        onChange={(value) => setDatasetId(value)}
-                        placeholder="Sélectionner Dataset"
-                        leftIcon={<FaDatabase />}
-                        required={true}
-                    />
-                )}
                 onBeforeSave={(df) => ({ ...df, dataset_id: df.dataset_id ?? dataset_id ?? null })}
                 isValid={df => !hasFormError && Boolean(df.dataset_id) && (
                     df.field_type === "dimension" && df.select_multiple === true
@@ -1111,7 +1094,6 @@ export const DatasetFieldTab = forwardRef<AdminEntityCrudModuleRef, DatasetField
                         tenant_id={tenant_id}
                         datasets={datasets}
                         dataset_id={dataset_id}
-                        setDatasetId={setDatasetId}
                         datasetMap={datasetMap}
                         saving={saving}
                         showColumns={showColumns}

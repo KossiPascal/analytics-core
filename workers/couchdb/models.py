@@ -20,9 +20,20 @@ class CreateTableModel:
         self._models: dict[str, Any] = {}
         self.create_table = create_table
 
+    
+    def source_tablename(self, localdb: str):
+        return normalize_name(f"{self.source_name}_{localdb}")
+    
+    def sync_states_tablename(self):
+        return normalize_name(f"{self.source_name}_sync_states")
+    
+    def sync_status_tablename(self):
+        return normalize_name(f"{self.source_name}_sync_status")
+    
     # Création des tables dynamiques
     def create_source_table(self, localdb: str, create_table: bool = False) -> tuple[Any, str]:
-        table_name = normalize_name(f"{self.source_name}_{localdb}")
+        table_name = self.source_tablename(localdb)
+
         if table_name in self._models:
             return self._models[table_name], table_name
 
@@ -51,9 +62,9 @@ class CreateTableModel:
 
         return self._register_table(SourceDataTable, table_name, create_table)
 
-
     def create_sync_states_table(self, create_table: bool = False) -> tuple[Any, str]:
-        table_name = normalize_name(f"{self.source_name}_sync_states")
+        table_name = self.sync_states_tablename()
+
         if table_name in self._models:
             return self._models[table_name], table_name
 
@@ -65,6 +76,7 @@ class CreateTableModel:
             "id": self.db.Column(self.db.BigInteger, primary_key=True, autoincrement=True),
             "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False),
             "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("tenant_sources.id", ondelete="CASCADE"),nullable=False),
+            "dbname": self.db.Column(self.db.String(100), nullable=False),
             "last_seq": self.db.Column(self.db.Text, nullable=True),
             "last_sync_at": self.db.Column(self.db.DateTime(timezone=True), nullable=True),
         }
@@ -78,9 +90,9 @@ class CreateTableModel:
 
         return self._register_table(SourceLastSyncStateTable, table_name, create_table)
 
-
     def create_sync_status_table(self, create_table: bool = False) -> tuple[Any, str]:
-        table_name = normalize_name(f"{self.source_name}_sync_status")
+        table_name = self.sync_status_tablename()
+
         if table_name in self._models:
             return self._models[table_name], table_name
 
@@ -92,6 +104,7 @@ class CreateTableModel:
             "id": self.db.Column(self.db.BigInteger, primary_key=True, autoincrement=True),
             "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False),
             "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("tenant_sources.id", ondelete="CASCADE"),nullable=False),
+            "dbname": self.db.Column(self.db.String(100), nullable=False),
             "message": self.db.Column(self.db.Text, nullable=True),
             "action": self.db.Column(self.db.Text, nullable=True),  # INSERT, UPDATE, DELETE, ERROR
             "status": self.db.Column(self.db.String(32), nullable=False),  # STARTED, SUCCESS, ERROR
@@ -108,9 +121,14 @@ class CreateTableModel:
         return self._register_table(SourceSyncStatusTable, table_name, create_table)
 
 
-    def _register_table(self, model: Type[Any], name: str, create_table: bool = False):
+    def _register_table(self, model: Type[Any], table_name: str, create_table: bool = False):
         # ⚡ Crée la table si demandé
-        if (self.create_table or create_table) and name not in self._models:
+
+        exists = self.table_exists(table_name)
+
+        must_create = not exists or self.create_table or create_table
+
+        if must_create and table_name not in self._models:
             try:
                 model.__table__.create(self.db.engine, checkfirst=True)
                 logger.info(f"Table '{model.__tablename__}' ready.")
@@ -119,8 +137,8 @@ class CreateTableModel:
                 raise
 
         # ⚡ Enregistrement du modèle pour éviter recréation
-        self._models[name] = model
-        return model, name
+        self._models[table_name] = model
+        return model, table_name
 
     # Méthodes utilitaires publiques
     def table_exists(self, table_name: str) -> bool:

@@ -76,27 +76,25 @@ def list_charts(chart_id: Optional[int] = None, tenant_id: Optional[int] = None,
 
 
 # ===================== CHARTS =====================
-@bp.get("/<int:tenant_id>")
+@bp.get("")
 @require_auth
-def list_full_charts(tenant_id: int):
-    charts = list_charts(tenant_id=tenant_id)
-    return jsonify(charts), 200
-
-@bp.get("/<int:tenant_id>/<int:dataset_id>")
-@require_auth
-def list_charts_by_dataset(tenant_id: int, dataset_id: int):
-    charts = list_charts(tenant_id=tenant_id, dataset_id=dataset_id)
-    return jsonify(charts), 200
-
-@bp.get("/<int:tenant_id>/<int:dataset_id>/<int:query_id>")
-@require_auth
-def list_charts_by_dataset_and_query(tenant_id: int, dataset_id: int, query_id: int):
+def list_full_charts():
+    tenant_id = request.args.get("tenant_id", type=int)
+    dataset_id = request.args.get("dataset_id", type=int)
+    query_id = request.args.get("query_id", type=int)
+    if not tenant_id:
+        raise BadRequest("tenant_id is required", 400)
+    
     charts = list_charts(tenant_id=tenant_id, dataset_id=dataset_id,query_id=query_id)
     return jsonify(charts), 200
 
-@bp.get("/<int:tenant_id>/<int:chart_id>")
+@bp.get("/<int:chart_id>")
 @require_auth
-def get_chart(tenant_id: int,chart_id: int):
+def get_chart(chart_id: int):
+    tenant_id = request.args.get("tenant_id", type=int)
+    if not tenant_id:
+        raise BadRequest("tenant_id is required", 400)
+    
     chart = list_charts(tenant_id=tenant_id, chart_id=chart_id, all=False)
     if not chart or chart["deleted"]:
         raise BadRequest(f"DatasetChart with id={chart_id} not found")

@@ -1,8 +1,9 @@
 import { CHART_COLS_SEPARATOR, ChartRenderProp } from "@/models/dataset.models";
 import { useState, useMemo } from "react";
 import clsx from "clsx";
+import { FormInput } from "@/components/forms/FormInput/FormInput";
 
-export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
+export const TableRenderer = ({ chart, data, customOptions }: ChartRenderProp) => {
 
   if (!data?.rows?.length) {
     return <div className="text-gray-400 p-4">Aucune donnée</div>;
@@ -25,7 +26,7 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
   const pivot = chart.structure?.pivot || {};
   const pageSize = options.page_size ?? 10;
 
-    // const lastHeadRowContent = headerRows[headerRows.length - 1];
+  // const lastHeadRowContent = headerRows[headerRows.length - 1];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -105,22 +106,29 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
     }
   };
 
+  const searchable = useMemo(() => {
+    return options.searchable && customOptions?.showSearcInput !== false;
+  }, [options.searchable, customOptions?.showSearcInput]);
+
+  const exportable = useMemo(() => {
+    return options.exportable && customOptions?.showExportBtn !== false;
+  }, [options.exportable, customOptions?.showExportBtn]);
+
   return (
     <div className="border rounded bg-white p-4">
 
       {/* TITLE */}
-      {options.title && (
+      {(options.title && (customOptions?.showTitle !== false)) && (
         <div className="text-lg font-semibold mb-1">{options.title}</div>
       )}
-      {options.subtitle && (
+      {(options.subtitle && (customOptions?.showSubTitle !== false)) && (
         <div className="text-gray-500 mb-3">{options.subtitle}</div>
       )}
 
       {/* TOOLBAR */}
-      <div className="mb-3 flex flex-col md:flex-row justify-between items-center gap-2">
-        {options.searchable && (
-          <input
-            type="text"
+      {(searchable || exportable) && (<div className="mb-3 flex flex-col md:flex-row justify-between items-center gap-2">
+        {searchable && (
+          <FormInput
             placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -128,15 +136,12 @@ export const TableRenderer = ({ chart, data }: ChartRenderProp) => {
           />
         )}
 
-        {options.exportable && (
-          <button
-            onClick={exportCSV}
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
+        {exportable && (
+          <button onClick={exportCSV} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" >
             Export CSV
           </button>
         )}
-      </div>
+      </div>)}
 
       {/* TABLE */}
       <div className="overflow-auto max-h-[600px]">

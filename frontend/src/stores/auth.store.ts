@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true });
 
     try {
-      const session = await db.getOne<LoginResponse>(AUTH_KEY);
+      const session = await db.get<LoginResponse>(AUTH_KEY);
       if (!session) return;
       set({ user: session.payload });
       await persistSession(session, false);

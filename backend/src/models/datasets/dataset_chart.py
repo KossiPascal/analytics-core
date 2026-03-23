@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Text, ForeignKey, JSON, text
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSONB
 from enum import Enum as PyEnum
 from backend.src.databases.extensions import db
@@ -6,6 +6,7 @@ from backend.src.models.datasource import AuditMixin
 from backend.src.logger import get_backend_logger
 
 logger = get_backend_logger(__name__)
+# bp = Blueprint("analytics", __name__, url_prefix="/api/analytics")
 
 # ----------------------------
 # Chart Types
@@ -30,26 +31,26 @@ class ChartType(str, PyEnum):
 class DatasetChart(db.Model, AuditMixin):
     __tablename__ = "dataset_charts"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
-    name = Column(String(255), nullable=False)
-    description = Column(Text)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text)
 
-    tenant_id = Column(BigInteger, ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
-    dataset_id = Column(BigInteger, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False, index=True)
-    query_id = Column(BigInteger, ForeignKey("dataset_queries.id", ondelete="CASCADE"), nullable=False, index=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    dataset_id = db.Column(db.BigInteger, db.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False, index=True)
+    query_id = db.Column(db.BigInteger, db.ForeignKey("dataset_queries.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    type = Column(String(50), nullable=False)
+    type = db.Column(db.String(50), nullable=False)
 
     # JSON fields pour structure et options
-    structure = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
-    options = Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+    structure = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
+    options = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
 
     # Relations
     tenant = db.relationship("Tenant", back_populates="charts", lazy="noload",foreign_keys=[tenant_id])
     dataset = db.relationship("Dataset", back_populates="charts", lazy="noload",foreign_keys=[dataset_id])
     dataset_query = db.relationship("DatasetQuery", back_populates="charts", lazy="noload",foreign_keys=[query_id])
 
-    visualizations = db.relationship("VisualizationChart", back_populates="chart", cascade="all, delete-orphan")
+    visualization_charts = db.relationship("VisualizationChart", back_populates="chart", cascade="all, delete-orphan")
 
     __table_args__ = (
         db.UniqueConstraint("tenant_id", "name", name="uq_chart_name_per_tenant"),
@@ -166,7 +167,7 @@ class DatasetChart(db.Model, AuditMixin):
                 "tenant": self.tenant.to_dict(include_relations=False) if self.tenant else None,
                 "dataset": self.dataset.to_dict(include_relations=False) if self.dataset else None,
                 "query": self.dataset_query.to_dict(include_relations=False) if self.dataset_query else None,
-                "visualizations": [v.to_dict(include_relations=False) for v in self.visualizations] if self.visualizations else []
+                "visualizations": [v.to_dict(include_relations=False) for v in self.visualization_charts] if self.visualization_charts else []
             })
         return data
 

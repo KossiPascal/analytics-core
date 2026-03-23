@@ -51,7 +51,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
     useEffect(() => {
       if (loaded.current) return;
       loaded.current = true;
-      tenantService.all().then(t => {
+      tenantService.list().then(t => {
         setTenants(t || []);
         setTenantId(user?.tenant_id);
       });
@@ -61,7 +61,7 @@ export function UserFormModal({ isOpen, onClose, onCreated, defaultTenantId }: P
     if (!isOpen || !tenant_id) return;
     setFormUser({ ...EMPTY_USER, tenant_id: defaultTenantId ?? null });
     setLoading(true);
-    Promise.all([roleService.all(tenant_id), orgunitService.all(tenant_id)])
+    Promise.all([roleService.list(tenant_id), orgunitService.list(tenant_id)])
       .then(([r, o]) => {
         setRoles(r ?? []);
         setOrgunits(o ?? []);
