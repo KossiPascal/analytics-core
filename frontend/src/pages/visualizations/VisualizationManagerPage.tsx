@@ -274,16 +274,28 @@ export default function VisualizationHome() {
   }
 
 
+  // Calcule la hauteur (en unités de rowHeight=80) nécessaire pour afficher tous les graphiques
+  const getCardH = (viz: Visualization) => {
+    const layout: any[] = Array.isArray(viz.layout) ? viz.layout : [];
+    if (!layout.length) return 5;
+    const maxBottom = Math.max(...layout.map((item: any) => (item.y || 0) + (item.h || 1)));
+    const innerRowH = 130; // rowHeight dans makeGrid normal
+    const toolbarH = 58;   // toolbar + popover
+    const total = maxBottom * innerRowH + toolbarH + 20;
+    return Math.ceil(total / 80) + 1;
+  };
+
   // ---------------- UI ----------------
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f5f9', padding: '1.5rem' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
 
-      {/* ── HEADER ── */}
+      {/* ── HEADER STICKY ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 200, background: '#f1f5f9', padding: '0.6rem 1.5rem 0' }}>
       <div style={{
         background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-        borderRadius: 16, padding: '0.6rem 1.25rem',
+        borderRadius: 12, padding: '0.6rem 1.25rem',
         display: 'flex', alignItems: 'center', gap: '1rem',
-        marginBottom: '1.25rem', boxShadow: '0 4px 20px rgba(15,23,42,0.18)',
+        marginBottom: '0.75rem', boxShadow: '0 4px 20px rgba(15,23,42,0.18)',
         flexWrap: 'wrap',
       }}>
         {/* Titre */}
@@ -342,6 +354,10 @@ export default function VisualizationHome() {
           }}
         >+ Nouvelle visualisation</button>
       </div>
+      </div>{/* /sticky wrapper */}
+
+      {/* ── CONTENU ── */}
+      <div style={{ padding: '0 1.5rem 1.5rem' }}>
 
       {/* ── LOADING ── */}
       {loading && (
@@ -376,8 +392,8 @@ export default function VisualizationHome() {
                 : filtered.map((v, i) => ({
                     i: String(v.id),
                     x: (i % 2) * 6,
-                    y: Math.floor(i / 2) * 7,
-                    w: 6, h: 7,
+                    y: Math.floor(i / 2) * getCardH(v),
+                    w: 6, h: getCardH(v),
                     minH: 4,
                   })),
             }}
@@ -389,11 +405,11 @@ export default function VisualizationHome() {
           >
             {filtered.map(v => (
               <div key={String(v.id)} style={{
-                background: 'white', borderRadius: 14, overflow: 'hidden',
+                background: 'white', borderRadius: 14, overflow: 'clip',
                 boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
                 border: '1px solid #e2e8f0',
                 display: 'flex', flexDirection: 'column',
-                position: 'relative',
+                position: 'relative', height: '100%',
               }}>
                 {/* Bouton poignée de déplacement */}
                 <div
@@ -532,7 +548,7 @@ export default function VisualizationHome() {
                           layouts={{ lg: form.layout }}
                           breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                           cols={{ lg: 12, md: 8, sm: 4 }}
-                          rowHeight={40}
+                          rowHeight={120}
                           onLayoutChange={(layout) => updateLayout(layout as any)}
                         >
                           {(form.layout || []).map(item => (
@@ -618,7 +634,8 @@ export default function VisualizationHome() {
         onCancel={closeConfirm}
       />
 
-    </div >
+      </div>{/* /contenu */}
+    </div>
   );
 }
 
