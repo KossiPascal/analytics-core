@@ -67,92 +67,45 @@ type ToolbarProps = {
 };
 
 function VisualizationToolbar({
-    startAutoRefresh, showDownloadBtn, showFilters,
+    viz, startAutoRefresh, showDownloadBtn, showFilters,
     onToggleFilters, onToggleAutoRefresh, onManualRefresh,
     onToggleExport, onFullscreen, onEdit, onDelete, onOpen,
 }: ToolbarProps) {
-    const [refreshOpen, setRefreshOpen] = useState(false);
+    const sep = <div style={{ width: 1, height: 18, background: '#e2e8f0', margin: '0 2px' }} />;
+    const iconBtn = (extra: React.CSSProperties = {}) => ({
+        ...btnStyle(false), width: 28, height: 28, padding: 0, justifyContent: 'center' as const, ...extra,
+    });
 
     return (
         <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.375rem',
-            padding: '0.375rem 0.625rem',
+            display: 'flex', alignItems: 'center', gap: '0.3rem',
+            padding: '0.3rem 0.5rem',
             background: '#f8fafc',
             borderBottom: '1px solid #e2e8f0',
-            flexWrap: 'wrap',
         }}>
-            {/* Filters */}
-            <button onClick={onToggleFilters} style={btnStyle(showFilters)} title="Filtres">
-                🔍
-            </button>
-
-            {/* Export */}
-            <button onClick={onToggleExport} style={btnStyle(showDownloadBtn)} title="Export">
-                📄
-            </button>
-
-            {/* Refresh dropdown */}
-            <div style={{ position: 'relative' }}>
-                <button
-                    onClick={() => setRefreshOpen(v => !v)}
-                    style={{
-                        ...btnStyle(startAutoRefresh),
-                        paddingRight: '0.625rem',
-                        display: 'flex', alignItems: 'center', gap: 4,
-                    }}
-                    title="Rafraîchissement"
-                >
-                    {startAutoRefresh ? '⏳' : '🔄'} Refresh <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>▼</span>
-                </button>
-                {refreshOpen && (
-                    <div style={{
-                        position: 'absolute', top: '110%', left: 0, zIndex: 100,
-                        background: 'white', border: '1px solid #e2e8f0',
-                        borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                        minWidth: 170, overflow: 'hidden',
-                    }}>
-                        <button
-                            onClick={() => { onToggleAutoRefresh(); setRefreshOpen(false); }}
-                            style={dropItemStyle(startAutoRefresh)}
-                        >
-                            {startAutoRefresh ? '⏸ Stop Auto Refresh' : '▶ Auto Refresh'}
-                        </button>
-                        <button
-                            onClick={() => { onManualRefresh(); setRefreshOpen(false); }}
-                            style={dropItemStyle(false)}
-                        >
-                            🔄 Rafraîchir maintenant
-                        </button>
-                    </div>
-                )}
-            </div>
+            {/* ── Gauche : nom ── */}
+            <span style={{
+                fontWeight: 700, fontSize: '0.82rem', color: '#1e293b',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                maxWidth: 160, flexShrink: 1,
+            }} title={viz.name}>{viz.name}</span>
 
             {/* Spacer */}
             <div style={{ flex: 1 }} />
 
-            {/* Fullscreen */}
-            <button onClick={onFullscreen} style={btnStyle(false)} title="Plein écran">⛶</button>
-
-            {/* Open */}
-            {onOpen && (
-                <button onClick={onOpen} style={{ ...btnStyle(false), background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }} title="Ouvrir">
-                    Ouvrir
-                </button>
-            )}
-
-            {/* Edit */}
-            {onEdit && (
-                <button onClick={onEdit} style={{ ...btnStyle(false), background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }} title="Modifier">
-                    Modifier
-                </button>
-            )}
-
-            {/* Delete */}
-            {onDelete && (
-                <button onClick={onDelete} style={{ ...btnStyle(false), background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }} title="Supprimer">
-                    Supprimer
-                </button>
-            )}
+            {/* ── Droite : tous les boutons ── */}
+            <button onClick={onToggleFilters} style={btnStyle(showFilters)} title="Filtres">🔍</button>
+            <button onClick={onToggleExport}  style={btnStyle(showDownloadBtn)} title="Export">📄</button>
+            {sep}
+            <button onClick={onToggleAutoRefresh} style={btnStyle(startAutoRefresh)} title={startAutoRefresh ? 'Arrêter auto refresh' : 'Auto refresh'}>
+                {startAutoRefresh ? '⏸' : '▶'}
+            </button>
+            <button onClick={onManualRefresh} style={btnStyle(false)} title="Rafraîchir">🔄</button>
+            {sep}
+            <button onClick={onFullscreen} style={iconBtn()} title="Plein écran">⛶</button>
+            {onOpen   && <button onClick={onOpen}   style={iconBtn({ background: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' })} title="Ouvrir">📂</button>}
+            {onEdit   && <button onClick={onEdit}   style={iconBtn({ background: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' })} title="Modifier">✏️</button>}
+            {onDelete && <button onClick={onDelete} style={iconBtn({ background: '#fef2f2', color: '#b91c1c', borderColor: '#fecaca' })} title="Supprimer">🗑️</button>}
         </div>
     );
 }
@@ -277,8 +230,8 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
                             exit={{ opacity: 0, scale: 0.94, y: 24 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
                             style={{
-                                position: 'fixed', top: '2vh', left: '2vw', right: '2vw', bottom: '2vh',
-                                zIndex: 9999, background: 'white', borderRadius: 16,
+                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                zIndex: 9999, background: 'white', borderRadius: 0,
                                 boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
                                 display: 'flex', flexDirection: 'column', overflow: 'hidden',
                             }}
@@ -340,38 +293,15 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
                 </div>
             )}
 
-            {/* Graphique + bouton actions */}
+            {/* Graphique avec icônes superposées sur la ligne du titre */}
             <div style={{ position: 'relative' }}>
-                {/* Bouton ⋮ */}
-                <div style={{ position: 'absolute', top: 6, right: 6, zIndex: 10 }}>
-                    <button
-                        onClick={() => setShowChartMenu(v => !v)}
-                        style={{
-                            width: 24, height: 24, borderRadius: 4,
-                            border: '1px solid #e2e8f0', background: 'white',
-                            cursor: 'pointer', fontSize: '1rem', lineHeight: 1,
-                            color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                        }}
-                        title="Actions"
-                    >⋮</button>
-                    {showChartMenu && (
-                        <div style={{
-                            position: 'absolute', top: '110%', right: 0,
-                            background: 'white', border: '1px solid #e2e8f0',
-                            borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                            minWidth: 160, overflow: 'hidden', zIndex: 20,
-                        }}>
-                            <button style={dropItemStyle(false)} onClick={() => { setChartFullscreen(true); setShowChartMenu(false); }}>
-                                ⛶ Plein écran
-                            </button>
-                            <button style={dropItemStyle(false)} onClick={() => { executeQuery(); setShowChartMenu(false); }}>
-                                🔄 Rafraîchir
-                            </button>
-                        </div>
-                    )}
+                <div style={{
+                    position: 'absolute', top: 6, right: 6, zIndex: 10,
+                    display: 'flex', gap: 4,
+                }}>
+                    <button onClick={executeQuery} style={btnStyle(false)} title="Rafraîchir">🔄</button>
+                    <button onClick={() => setChartFullscreen(true)} style={btnStyle(false)} title="Plein écran">⛶</button>
                 </div>
-
                 <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
             </div>
         </>
@@ -475,8 +405,8 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                             exit={{ opacity: 0, scale: 0.95, y: 30 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 28 }}
                             style={{
-                                position: 'fixed', top: '2vh', left: '2vw', right: '2vw', bottom: '2vh',
-                                zIndex: 9991, background: 'white', borderRadius: 16,
+                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                zIndex: 9991, background: 'white', borderRadius: 0,
                                 boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
                                 display: 'flex', flexDirection: 'column', overflow: 'hidden',
                             }}

@@ -20,6 +20,7 @@ import { Tenant } from "@/models/identity.model";
 import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
 
 import { VisualizationChartRenderer, VisualizationViewModule, statusColor } from "./VisualizationUtils";
+import { RenamesOptionsModal } from "@pages/admins/components/datasets/DatasetCharts/chart-utils/RenamesOptionsModal";
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -35,23 +36,37 @@ const blockBtn: React.CSSProperties = {
   color: '#64748b', flexShrink: 0,
 };
 
-function JsonConfigSection({ form, setForm }: { form: Visualization; setForm: (f: Visualization) => void }) {
-  const [open, setOpen] = useState(false);
+function JsonConfigSection({ form, setForm, onOpenConfigModal }: {
+  form: Visualization;
+  setForm: (f: Visualization) => void;
+  onOpenConfigModal: () => void;
+}) {
+  const [open, setOpen] = useState(true);
   return (
     <section style={{ background: 'white', borderRadius: 12, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        style={{
-          width: '100%', padding: '0.625rem 1rem', background: '#f1f5f9',
-          borderBottom: open ? '1px solid #e2e8f0' : 'none',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
-          color: '#475569', letterSpacing: '0.03em',
-        }}
-      >
-        <span>⚙️ CONFIG JSON</span>
-        <span style={{ fontSize: '0.7rem' }}>{open ? '▲' : '▼'}</span>
-      </button>
+      <div style={{
+        padding: '0.5rem 1rem', background: '#f1f5f9',
+        borderBottom: open ? '1px solid #e2e8f0' : 'none',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <button
+          onClick={() => setOpen(v => !v)}
+          style={{ flex: 1, textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', color: '#475569', letterSpacing: '0.03em', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <span>⚙️ CONFIG JSON</span>
+          <span style={{ fontSize: '0.7rem' }}>{open ? '▲' : '▼'}</span>
+        </button>
+        <button
+          onClick={onOpenConfigModal}
+          style={{
+            padding: '0.25rem 0.75rem', fontSize: '0.75rem', fontWeight: 600,
+            background: '#6366f1', color: 'white', border: 'none', borderRadius: 6,
+            cursor: 'pointer', whiteSpace: 'nowrap',
+          }}
+        >
+          🗂️ Configurer
+        </button>
+      </div>
       {open && (
         <div style={{ padding: '0.875rem' }}>
           <FormTextarea
@@ -95,6 +110,7 @@ export default function VisualizationHome() {
   const [editing, setEditing] = useState<Visualization | null>(null);
 
   const [open, setOpen] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [search, setSearch] = useState("");
@@ -302,31 +318,10 @@ export default function VisualizationHome() {
       {/* GRID */}
       <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-2 gap-6" : "space-y-4"}>
         {filtered.map(v => (
-          <Card key={v.id} className="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow" style={{ borderColor: "#7e035f", background: "#e9e6e6", display: 'flex', flexDirection: 'row' }}>
-
-            {/* ── Titre vertical ── */}
-            <div style={{
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed',
-              transform: 'rotate(180deg)',
-              background: 'linear-gradient(180deg, #1e293b 0%, #334155 100%)',
-              color: 'white',
-              padding: '0.75rem 0.5rem',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              letterSpacing: '0.05em',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              flexShrink: 0,
-              minWidth: 32,
-            }}>
-              {v.name}
-            </div>
+          <Card key={v.id} className="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow" style={{ borderColor: "#7e035f", background: "#e9e6e6" }}>
 
             {/* ── Visualisation preview ── */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ width: '100%' }}>
               <VisualizationViewModule
                 visualization={v}
                 charts={charts}
@@ -408,7 +403,7 @@ export default function VisualizationHome() {
                     </div>
                   </section>
 
-                  <JsonConfigSection form={form} setForm={setForm} />
+                  <JsonConfigSection form={form} setForm={setForm} onOpenConfigModal={() => setShowConfigModal(true)} />
                 </div>
 
                 {/* Colonne droite : Layout Builder */}
@@ -492,6 +487,13 @@ export default function VisualizationHome() {
           </>
         )}
       </AnimatePresence>
+
+      <RenamesOptionsModal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        values={(form.config as Record<string, Record<string, string>>) ?? {}}
+        onChange={(newValues) => setForm(prev => ({ ...prev, config: newValues }))}
+      />
 
     </div >
   );
