@@ -7,10 +7,6 @@ import { Plus, Shield, ShieldCheck, RefreshCw, Code, LayoutDashboard } from 'luc
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { DataSourceTab } from './components/datasources/DataSourceTab';
 import { DataSourcePermissionTab } from './components/datasources/DataSourcePermissionTab';
-import { DatasetChartTab } from './components/datasets/DatasetCharts/DatasetChartTab';
-import { DatasetFieldTab } from './components/datasets/DatasetFieldTab';
-import { DatasetQueryTab } from './components/datasets/DatasetQueries/DatasetQueryTab';
-
 import { DatasetTab } from './components/datasets/DatasetTab';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { Tenant } from '@/models/identity.model';
@@ -22,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
 import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderTab';
+import DatasetBuilderPage from './components/datasets/DatasetBuilder/DatasetBuilderPage';
 
 type TabType =
   | "datasource_tab"
@@ -35,6 +32,8 @@ export default function DataAssetsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [openDatasetBuilder, setOpenDatasetBuilder] = useState(false);
+
   const [showQueryBuilder, setShowQueryBuilder] = useState(false);
   const [showDashboardBuilder, setShowDashboardBuilder] = useState(false);
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
@@ -89,8 +88,8 @@ export default function DataAssetsPage() {
     { key: 'dataset_tab', label: 'Main Dataset', icon: <Shield size={18} /> },
   ];
 
-//   <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}><div>
-// <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}></div>
+  //   <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24 }}><div>
+  // <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}></div>
 
   const TenantForm = () => (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
@@ -109,6 +108,7 @@ export default function DataAssetsPage() {
   const centerStyles: any = { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center' };
 
   return (
+    <>
     <PageWrapper
       title="Gestion des Datasources & Datasets"
       subtitle="Datasets/Fields/Queries/Chart"
@@ -122,7 +122,7 @@ export default function DataAssetsPage() {
                 <Plus size={16} /> {activeName}
               </Button>
 
-              {activeTab === 'query_tab' && (
+              {/* {activeTab === 'query_tab' && (
                 <Button variant="outline" size="sm" onClick={() => setShowQueryBuilder(true)}>
                   <Code size={16} /> Query Builder
                 </Button>
@@ -131,10 +131,14 @@ export default function DataAssetsPage() {
                 <Button variant="outline" size="sm" onClick={() => setShowDashboardBuilder(true)}>
                   <LayoutDashboard size={16} /> Dashboard Builder
                 </Button>
-              )}
+              )} */}
 
             </div>
           )}
+
+          <Button onClick={() => setOpenDatasetBuilder(true)}>
+            DatasetBuilder
+          </Button>
         </>
       }
     >
@@ -145,7 +149,7 @@ export default function DataAssetsPage() {
           <RefreshCw size={24} className="animate-spin" />
         </div>
       ) : tenant_id ? (
-        
+
         <Card>
           <CardBody>
             {/* Tabs */}
@@ -190,13 +194,25 @@ export default function DataAssetsPage() {
       </Modal>
 
       {/* DASHBOARD BUILDER MODAL */}
-      <Modal
+      {/* <Modal
         isOpen={showDashboardBuilder}
         onClose={() => setShowDashboardBuilder(false)}
         title="Dashboard Builder"
         size="full"
       >
-      </Modal>
+
+      </Modal> */}
     </PageWrapper>
+
+
+      <Modal
+        isOpen={openDatasetBuilder}
+        onClose={() => setOpenDatasetBuilder(false)}
+        title="Dataset Builder"
+        size="full"
+      >
+        <DatasetBuilderPage />
+      </Modal>
+    </>
   );
 }
