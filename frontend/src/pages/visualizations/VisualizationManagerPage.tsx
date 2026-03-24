@@ -28,13 +28,6 @@ import "react-resizable/css/styles.css";
 const STATUS = ["draft", "submitted", "reviewed", "approved", "published", "archived"];
 const TYPES = ["dashboard", "report"];
 
-const blockBtn: React.CSSProperties = {
-  width: 24, height: 24, borderRadius: 4,
-  border: '1px solid #e2e8f0', background: 'white',
-  cursor: 'pointer', fontSize: '0.85rem',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  color: '#64748b', flexShrink: 0,
-};
 
 function JsonConfigSection({ form, setForm, onOpenConfigModal }: {
   form: Visualization;
@@ -447,17 +440,43 @@ export default function VisualizationHome() {
                           onLayoutChange={(layout) => updateLayout(layout as any)}
                         >
                           {(form.layout || []).map(item => (
-                            <div key={item.i} style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.3rem 0.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
-                                <div style={{ flex: 1, minWidth: 0 }}>
+                            <div key={item.i} style={{ background: '#fafafe', border: '1px solid #c7d2fe', borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 1px 6px rgba(99,102,241,0.08)' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '0.25rem 0.375rem', background: '#eef2ff', borderBottom: '1px solid #c7d2fe', flexShrink: 0 }}>
+                                {/* Sélecteur réduit */}
+                                <div style={{ width: 180, flexShrink: 0 }}>
                                   <FormSelect
                                     options={charts.map(c => ({ value: c.id, label: c.name }))}
                                     value={item.chart_id}
                                     onChange={(v) => updateChartBinding(item.i, Number(v))}
                                   />
                                 </div>
-                                <button onClick={() => duplicateBlock(item)} title="Dupliquer" style={blockBtn}>⧉</button>
-                                <button onClick={() => removeBlock(item.i)} title="Supprimer" style={{ ...blockBtn, color: '#ef4444' }}>✕</button>
+                                <div style={{ flex: 1 }} />
+                                {/* Boutons clone + fermer rapprochés */}
+                                <div style={{ display: 'flex', gap: 2 }}>
+                                  <button
+                                    onClick={() => duplicateBlock(item)}
+                                    title="Dupliquer"
+                                    style={{
+                                      width: 26, height: 26, borderRadius: 6,
+                                      border: '1px solid #c7d2fe',
+                                      background: '#eef2ff', color: '#4f46e5',
+                                      cursor: 'pointer', fontSize: '0.85rem',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    }}
+                                  >⧉</button>
+                                  <button
+                                    onClick={() => removeBlock(item.i)}
+                                    title="Supprimer"
+                                    style={{
+                                      width: 26, height: 26, borderRadius: 6,
+                                      border: '1px solid #fca5a5',
+                                      background: '#fef2f2', color: '#dc2626',
+                                      cursor: 'pointer', fontSize: '0.8rem',
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      fontWeight: 700,
+                                    }}
+                                  >✕</button>
+                                </div>
                               </div>
                               <div style={{ flex: 1, minHeight: 0 }}>
                                 <VisualizationChartRenderer chart={charts.find(c => c.id === item.chart_id)} />
