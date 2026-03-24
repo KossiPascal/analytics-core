@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { DatasetChart, ExecuteChartResponse } from "@/models/dataset.models";
 import { chartService } from "@/services/dataset.service";
 import { ChartRendererPreview } from "../admins/components/datasets/DatasetCharts/chart-utils/ChartRenderer";
@@ -261,27 +262,66 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
 
     return (
         <>
-            {/* Fullscreen individuel */}
-            {chartFullscreen && (
-                <div style={{
-                    position: 'fixed', inset: 0, zIndex: 99999,
-                    background: 'white', display: 'flex', flexDirection: 'column',
-                }}>
-                    <button
-                        onClick={() => setChartFullscreen(false)}
-                        style={{
-                            position: 'fixed', top: 14, right: 18, zIndex: 100000,
-                            background: 'rgba(30,41,59,0.9)', color: 'white',
-                            border: 'none', borderRadius: 6, padding: '7px 16px',
-                            cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                        }}
-                    >✕ Exit Fullscreen</button>
-                    <div style={{ flex: 1, padding: '2rem' }}>
-                        <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
-                    </div>
-                </div>
-            )}
+            {/* ── Fullscreen individuel (modal animé) ── */}
+            <AnimatePresence>
+                {chartFullscreen && (
+                    <>
+                        <motion.div key="fs-backdrop"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(3px)' }}
+                            onClick={() => setChartFullscreen(false)}
+                        />
+                        <motion.div key="fs-panel"
+                            initial={{ opacity: 0, scale: 0.94, y: 24 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.94, y: 24 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                            style={{
+                                position: 'fixed', top: '2vh', left: '2vw', right: '2vw', bottom: '2vh',
+                                zIndex: 9999, background: 'white', borderRadius: 16,
+                                boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
+                                display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                            }}
+                        >
+                            {/* Header modal */}
+                            <div style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '0.75rem 1.25rem',
+                                background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                                flexShrink: 0,
+                            }}>
+                                <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>
+                                    📊 {chart?.name || 'Graphique'}
+                                </span>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                    {/* Boutons export dans le header */}
+                                    {(['png','jpg','excel','csv'] as ExportTypes[]).map(t => (
+                                        <button key={t} style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }} onClick={() => download(t)}>
+                                            ⬇ {t.toUpperCase()}
+                                        </button>
+                                    ))}
+                                    <button style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }} onClick={executeQuery}>
+                                        🔄 Rafraîchir
+                                    </button>
+                                    <button
+                                        onClick={() => setChartFullscreen(false)}
+                                        style={{
+                                            marginLeft: 8, background: 'rgba(255,255,255,0.15)', border: 'none',
+                                            color: 'white', borderRadius: 8, width: 32, height: 32,
+                                            cursor: 'pointer', fontSize: '1rem', display: 'flex',
+                                            alignItems: 'center', justifyContent: 'center',
+                                        }}
+                                    >✕</button>
+                                </div>
+                            </div>
+                            {/* Contenu pleine hauteur */}
+                            <div style={{ flex: 1, padding: '1.5rem', minHeight: 0 }}>
+                                <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Barre export */}
             {showDownloadBtn && (
@@ -371,95 +411,127 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
 
     const getChart = (id: number) => charts?.find((c) => c.id === id);
 
-    return (
-        <div className={fullscreen ? "fixed inset-0 z-[9999] bg-white flex flex-col overflow-hidden" : ""}>
-
-            {/* ================= TOOLBAR (masqué en fullscreen) ================= */}
-            {!fullscreen && (
-                <>
-                    <VisualizationToolbar
-                        viz={viz}
-                        charts={charts}
-                        startAutoRefresh={startAutoRefresh}
-                        showDownloadBtn={showDownloadBtn}
-                        showFilters={showFilters}
-                        onToggleFilters={() => setShowFilters(v => !v)}
-                        onToggleAutoRefresh={() => setStartAutoRefresh(v => !v)}
-                        onManualRefresh={() => refreshView?.(viz.id)}
-                        onToggleExport={() => setShowDownloadBtn(v => !v)}
-                        onFullscreen={() => setFullscreen(true)}
-                        onEdit={editView ? () => editView(viz) : undefined}
-                        onDelete={removeView ? () => removeView(viz.id) : undefined}
-                        onOpen={openView ? () => openView(viz, charts) : undefined}
-                    />
-
-                    {/* ================= FILTER PANEL ================= */}
-                    {showFilters && (
-                        <div className="bg-slate-50 border-b px-4 py-3 flex flex-wrap gap-3">
-                            <FormInput placeholder="Region" value={filters.region || ""} onChange={(e) => setFilters({ ...filters, region: e.target.value })} />
-                            <FormInput type="date" value={filters.date || ""} onChange={(e) => setFilters({ ...filters, date: e.target.value })} />
-                            <Button size="sm" onClick={() => { console.log("apply filters", filters); }}>Appliquer</Button>
-                        </div>
-                    )}
-                </>
-            )}
-
-            {/* ================= BOUTON EXIT FULLSCREEN (flottant) ================= */}
-            {fullscreen && (
-                <button
-                    onClick={() => setFullscreen(false)}
-                    style={{
-                        position: 'fixed', top: 70, right: 18, zIndex: 99999,
-                        background: 'rgba(30,41,59,0.9)', color: 'white',
-                        border: 'none', borderRadius: 6, padding: '7px 16px',
-                        cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-                        backdropFilter: 'blur(4px)',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                    }}
+    const grid = (fsMode: boolean) => (
+        <div ref={ref} style={{ width: '100%' }}>
+            {!layout.length ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Aucun graphique dans ce dashboard</div>
+            ) : (
+                <Responsive
+                    width={bounds.width || (fsMode ? window.innerWidth * 0.96 : 800)}
+                    layouts={{ lg: layout }}
+                    breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+                    cols={{ lg: 12, md: 8, sm: 4 }}
+                    rowHeight={fsMode ? 80 : 40}
                 >
-                    ✕ Exit Fullscreen
-                </button>
+                    {layout.map((item: any) => {
+                        const chart = getChart(item.chart_id);
+                        return (
+                            <div key={item.i} style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                                {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} showDownloadBtn={showDownloadBtn} />}
+                            </div>
+                        );
+                    })}
+                </Responsive>
             )}
-
-            {/* ================= EMPTY ================= */}
-            {!layout.length && (
-                <div className="flex items-center justify-center h-[300px] text-gray-400">No charts in this dashboard</div>
-            )}
-
-            {/* ================= GRID ================= */}
-            <div
-                ref={ref}
-                style={fullscreen ? {
-                    flex: 1,
-                    overflow: 'auto',
-                    background: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '24px 32px',
-                    width: '100%',
-                    boxSizing: 'border-box',
-                } : {}}
-            >
-                <div style={fullscreen ? { width: '100%', maxWidth: '100%' } : { width: '100%' }}>
-                    <Responsive
-                        width={bounds.width || window.innerWidth}
-                        layouts={{ lg: layout }}
-                        breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-                        cols={{ lg: 12, md: 8, sm: 4 }}
-                        rowHeight={fullscreen ? 80 : 40}
-                    >
-                        {layout.map((item: any) => {
-                            const chart = getChart(item.chart_id);
-                            return (
-                                <div key={item.i} style={fullscreen ? { background: 'white', borderRadius: 8, overflow: 'hidden' } : {}}>
-                                    {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} showDownloadBtn={showDownloadBtn} />}
-                                </div>
-                            );
-                        })}
-                    </Responsive>
-                </div>
-            </div>
         </div>
+    );
+
+    return (
+        <>
+            {/* ── Vue normale ── */}
+            <VisualizationToolbar
+                viz={viz} charts={charts}
+                startAutoRefresh={startAutoRefresh} showDownloadBtn={showDownloadBtn} showFilters={showFilters}
+                onToggleFilters={() => setShowFilters(v => !v)}
+                onToggleAutoRefresh={() => setStartAutoRefresh(v => !v)}
+                onManualRefresh={() => refreshView?.(viz.id)}
+                onToggleExport={() => setShowDownloadBtn(v => !v)}
+                onFullscreen={() => setFullscreen(true)}
+                onEdit={editView ? () => editView(viz) : undefined}
+                onDelete={removeView ? () => removeView(viz.id) : undefined}
+                onOpen={openView ? () => openView(viz, charts) : undefined}
+            />
+            {showFilters && (
+                <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '0.625rem 1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+                    <FormInput placeholder="Region" value={filters.region || ""} onChange={(e) => setFilters({ ...filters, region: e.target.value })} />
+                    <FormInput type="date" value={filters.date || ""} onChange={(e) => setFilters({ ...filters, date: e.target.value })} />
+                    <Button size="sm" onClick={() => { console.log("apply filters", filters); }}>Appliquer</Button>
+                </div>
+            )}
+            {grid(false)}
+
+            {/* ── Fullscreen dashboard (modal animé) ── */}
+            <AnimatePresence>
+                {fullscreen && (
+                    <>
+                        <motion.div key="dash-backdrop"
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(3px)' }}
+                            onClick={() => setFullscreen(false)}
+                        />
+                        <motion.div key="dash-panel"
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                            style={{
+                                position: 'fixed', top: '2vh', left: '2vw', right: '2vw', bottom: '2vh',
+                                zIndex: 9991, background: 'white', borderRadius: 16,
+                                boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
+                                display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                            }}
+                        >
+                            {/* Header du modal fullscreen */}
+                            <div style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '0.75rem 1.25rem', flexShrink: 0,
+                                background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                            }}>
+                                <div>
+                                    <div style={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>{viz.name}</div>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{viz.type} · {viz.status}</div>
+                                </div>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                    {/* Toggle export */}
+                                    <button style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}
+                                        onClick={() => setShowDownloadBtn(v => !v)}>
+                                        📄 Export
+                                    </button>
+                                    {/* Toggle auto refresh */}
+                                    <button style={{ ...exportBtn, background: startAutoRefresh ? '#6366f1' : 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}
+                                        onClick={() => setStartAutoRefresh(v => !v)}>
+                                        {startAutoRefresh ? '⏸ Stop' : '▶ Auto'}
+                                    </button>
+                                    <button style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}
+                                        onClick={() => refreshView?.(viz.id)}>
+                                        🔄 Rafraîchir
+                                    </button>
+                                    <button onClick={() => setFullscreen(false)} style={{
+                                        marginLeft: 8, background: 'rgba(255,255,255,0.15)',
+                                        border: 'none', color: 'white', borderRadius: 8,
+                                        width: 32, height: 32, cursor: 'pointer', fontSize: '1rem',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    }}>✕</button>
+                                </div>
+                            </div>
+
+                            {/* Barre export si active */}
+                            {showDownloadBtn && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', padding: '0.375rem 1rem', background: '#f1f5f9', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
+                                    {(['png','jpg','pdf-landscape','pdf-portrait','excel','csv','json'] as ExportTypes[]).map(t => (
+                                        <button key={t} style={exportBtn}>⬇ {t === 'pdf-landscape' ? 'PDF (L)' : t === 'pdf-portrait' ? 'PDF (P)' : t.toUpperCase()}</button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Grille fullscreen */}
+                            <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+                                {grid(true)}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+        </>
     );
 };
