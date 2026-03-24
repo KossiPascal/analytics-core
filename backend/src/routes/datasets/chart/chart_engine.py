@@ -29,6 +29,91 @@ TABLE_COLUMNS_CACHE = {}
 
 SEPARATOR = "___"
 
+AGGREGATE_BY_SQL_TYPE = {
+    # 🔤 Strings
+    "string": ["count", "min", "max"],
+    "text": ["count"],
+
+    # 🔢 Numeric
+    "integer": ["sum", "avg", "count", "min", "max"],
+    "number": ["sum", "avg", "count", "min", "max"],
+    "bigint": ["sum", "avg", "count", "min", "max"],
+    "numeric": ["sum", "avg", "count", "min", "max"],
+    "float": ["sum", "avg", "count", "min", "max"],
+    "decimal": ["sum", "avg", "count", "min", "max"],
+
+    # 🔘 Boolean
+    "boolean": ["count"],
+
+    # 📅 Dates
+    "date": ["count", "min", "max"],
+    "datetime": ["count", "min", "max"],
+    "time": ["count", "min", "max"],
+
+    # 🧩 JSON
+    "json": ["count"],
+}
+
+
+TYPE_CAST_MAP = {
+    # 🔤 Strings
+    "string": "TEXT",
+    "text": "TEXT",
+
+    # 🔢 Numeric
+    "integer": "INTEGER",
+    "number": "NUMERIC",
+    "bigint": "BIGINT",
+    "numeric": "NUMERIC",
+    "float": "FLOAT",
+    "decimal": "DECIMAL",
+
+    # 🔘 Boolean
+    "boolean": "BOOLEAN",
+
+    # 📅 Dates
+    "date": "DATE",
+    "datetime": "TIMESTAMP",
+    "time": "TIME",
+
+    # 🧩 JSON
+    "json": "JSONB",  # recommandé en PostgreSQL
+}
+
+
+DEFAULT_VALUES = {
+    # 🔤 Strings
+    "string": "''",
+    "text": "''",
+
+    # 🔢 Numeric
+    "integer": "0",
+    "number": "0",
+    "bigint": "0",
+    "numeric": "0",
+    "float": "0",
+    "decimal": "0",
+
+    # 🔘 Boolean
+    "boolean": "false",
+
+    # 📅 Dates
+    "date": "'1970-01-01'",
+    "datetime": "'1970-01-01 00:00:00'",
+    "time": "'00:00:00'",
+
+    # 🧩 JSON
+    "json": "'{}'",
+}
+
+AGGREGATE_RETURN_TYPE = {
+    "count": "bigint",
+    "sum": "numeric",   # ou dépend du champ (optionnel)
+    "avg": "numeric",
+    "min": None,        # même type que la colonne
+    "max": None,
+}
+
 # ERRORS
 class QueryValidationError(Exception):
     pass
@@ -439,6 +524,36 @@ class ChartValidator:
 # SQL BUILDER
 class ChartSQLBuilder:
 
+    # @staticmethod
+    # def is_already_aggregated(field_name: str) -> bool:
+    #     return field_name.lower().startswith(
+    #         ("sum_", "avg_", "min_", "max_", "count_")
+    #     )
+
+    @staticmethod
+    def build_aggregation(field_name, data_type, aggregation):
+        allowed = AGGREGATE_BY_SQL_TYPE.get(data_type, ["count"]) or ["count"]
+
+        aggregation = (aggregation or "").lower()
+
+        if aggregation not in allowed:
+            raise ValueError(f"{aggregation} not allowed for {data_type}")
+
+        # # ❌ éviter double aggregation
+        # if ChartSQLBuilder.is_already_aggregated(field_name):
+        #     return f'"{field_name}"'
+
+        if aggregation == "count":
+            return f'COUNT("{field_name}")'
+
+        if aggregation in ["min", "max"]:
+            return f'{aggregation.upper()}("{field_name}")'
+
+        if aggregation in ["sum", "avg"]:
+            return f'{aggregation.upper()}("{field_name}")'
+
+        raise ValueError(f"Unsupported aggregation: {aggregation}")
+
     @staticmethod
     def build_select(chart: DatasetChart, fieldsMap: dict[int, Any]):
 
@@ -454,9 +569,13 @@ class ChartSQLBuilder:
             field = fieldsMap.get(d.field_id)
             if not field:
                 raise ValueError(f"Invalid dimension field: {d.field_id}")
-            field_name = SQLValueParser.quote_identifier(field["field_name"])
-            alias = SQLValueParser.quote_identifier(field["alias"] or field_name)
+
+            field_name_raw = field["field_name"]
+            field_name = SQLValueParser.quote_identifier(field_name_raw)
+            alias = SQLValueParser.quote_identifier(field["alias"] or field_name_raw)
+
             select_parts.append(f'{field_name} AS {alias}')
+
             if metrics:
                 group_by.append(field_name)
 
@@ -466,28 +585,116 @@ class ChartSQLBuilder:
             if not field:
                 raise ValueError(f"Invalid metric field: {m.field_id}")
 
-            agg = m.aggregation.upper()
+            field_name_raw = field["field_name"]
+            data_type = field.get("data_type")
 
-            field_name = SQLValueParser.quote_identifier(field["field_name"])
+            field_name = SQLValueParser.quote_identifier(field_name_raw)
 
-            alias = SQLValueParser.quote_identifier(field["alias"] or f"{agg.lower()}_{field_name}")
+            alias_raw = field["alias"] or f"{m.aggregation}_{field_name_raw}"
+            alias = SQLValueParser.quote_identifier(alias_raw)
 
-            if agg == "DISTINCT":
-                expr = f'COUNT(DISTINCT {field_name}) AS {alias}'
+            agg = (m.aggregation or "").lower()
 
-            elif agg in ALLOWED_AGGREGATIONS:
-                expr = f'COALESCE({agg}({field_name}),0) AS {alias}'
 
-            elif agg == "NONE":
-                expr = f'COALESCE({field_name},0) AS {alias}'
+            # ✅ NONE (pas d'aggregation)
+            if not m.aggregation or agg == "none" or agg == "None":
+                expr = field_name
+
+            # ✅ DISTINCT (cas spécial)
+            elif agg == "distinct":
+                expr = f'COUNT(DISTINCT {field_name})'
 
             else:
-                # expr = f'COALESCE({field_name},0) AS {alias}'
-                raise ValueError(f"Unsupported aggregation: {agg}")
+                # ✅ SAFE aggregation
+                expr = ChartSQLBuilder.build_aggregation(field_name_raw,data_type,agg)
 
-            select_parts.append(expr)
+
+            # ✅ COALESCE uniquement pour numérique
+            if agg in ["sum", "avg", "count", "min", "max"]:
+                # 1. déterminer le type FINAL
+                result_type = AGGREGATE_RETURN_TYPE.get(agg) or data_type
+                
+                sql_type = (result_type or "").lower()
+
+                cast_type = TYPE_CAST_MAP.get(sql_type)
+                default_value = DEFAULT_VALUES.get(sql_type)
+
+                if not cast_type or default_value is None:
+                    raise ValueError(f"Unsupported sql_type: {sql_type}")
+
+                expr = f"COALESCE({expr}, {default_value}::{cast_type})"
+
+            select_parts.append(f"{expr} AS {alias}")
 
         return select_parts, group_by
+
+    # @staticmethod
+    # def build_aggregation(field_name, data_type, aggregation):
+    #     allowed = AGGREGATE_BY_SQL_TYPE.get(data_type, ["count"])
+
+    #     if aggregation not in allowed:
+    #         raise ValueError(f"{aggregation} not allowed for {data_type}")
+
+    #     if aggregation == "count":
+    #         return f'COUNT("{field_name}")'
+
+    #     if aggregation in ["min", "max"]:
+    #         return f'{aggregation.upper()}("{field_name}")'
+
+    #     if aggregation in ["sum", "avg"]:
+    #         return f'{aggregation.upper()}("{field_name}")'
+
+    #     return None
+
+    # @staticmethod
+    # def build_select(chart: DatasetChart, fieldsMap: dict[int, Any]):
+
+    #     structure = chart.structure
+    #     select_parts = []
+    #     group_by = []
+
+    #     dimensions = (structure.rows_dimensions or []) + (structure.cols_dimensions or [])
+    #     metrics = structure.metrics or []
+
+    #     # DIMENSIONS
+    #     for d in dimensions:
+    #         field = fieldsMap.get(d.field_id)
+    #         if not field:
+    #             raise ValueError(f"Invalid dimension field: {d.field_id}")
+    #         field_name = SQLValueParser.quote_identifier(field["field_name"])
+    #         alias = SQLValueParser.quote_identifier(field["alias"] or field_name)
+    #         select_parts.append(f'{field_name} AS {alias}')
+    #         if metrics:
+    #             group_by.append(field_name)
+
+    #     # METRICS
+    #     for m in metrics:
+    #         field = fieldsMap.get(m.field_id)
+    #         if not field:
+    #             raise ValueError(f"Invalid metric field: {m.field_id}")
+
+    #         agg = m.aggregation.upper()
+
+    #         field_name = SQLValueParser.quote_identifier(field["field_name"])
+
+    #         alias = SQLValueParser.quote_identifier(field["alias"] or f"{agg.lower()}_{field_name}")
+
+    #         if agg == "DISTINCT":
+    #             expr = f'COUNT(DISTINCT {field_name}) AS {alias}'
+
+    #         elif agg in ALLOWED_AGGREGATIONS:
+    #             expr = f'COALESCE({agg}({field_name}),0) AS {alias}'
+
+    #         elif agg == "NONE":
+    #             expr = f'COALESCE({field_name},0) AS {alias}'
+
+    #         else:
+    #             # expr = f'COALESCE({field_name},0) AS {alias}'
+    #             raise ValueError(f"Unsupported aggregation: {agg}")
+
+    #         select_parts.append(expr)
+
+    #     return select_parts, group_by
 
 
     @staticmethod

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { DatasetChart, ExecuteChartResponse } from "@/models/dataset.models";
 import { chartService } from "@/services/dataset.service";
-import { ChartRendererPreview } from "../admins/components/datasets/DatasetCharts/chart-utils/ChartRenderer";
 
 import { Responsive } from "react-grid-layout";
 import useMeasure from "react-use-measure";
@@ -15,6 +14,7 @@ import { Visualization } from "@/models/visualization.model";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { ExportTypes } from "@/components/download/download";
+import { ChartRendererPreview } from "../admins/components/datasets/DatasetCharts/components/chart-utils/ChartRenderer";
 
 
 type RendererProps = {

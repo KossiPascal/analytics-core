@@ -11,9 +11,9 @@ import { datasetService, queryService } from "@/services/dataset.service";
 import { Tenant } from "@/models/identity.model";
 import { Dataset, DatasetQuery, QueryJson } from "@/models/dataset.models";
 import { FaDatabase } from "react-icons/fa";
-import { CompileError } from "./query-utils/model";
-import { RenderFormBuilder } from "./query-utils/RenderFormBuilder";
-import { DatasetPreviewModal } from "./query-utils/DatasetPreviewModal";
+import { CompileError } from "./components/model";
+import { RenderFormBuilder } from "./components/RenderFormBuilder";
+import { DatasetPreviewModal } from "./components/DatasetPreviewModal";
 
 
 

@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
-import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderPage';
+import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderTab';
 
 type TabType =
   | "datasource_tab"

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AGGRAGATE_TYPES, ChartDimension, ChartFormProps, ChartMetric, ChartPivot, ChartStructure, ChartStructureDimension, ChartStructureFilter, ChartStructureMetric, ChartStructureOrderBy, DatasetChart, DatasetField, FULL_OPERATORS, getInputTypeForField, getOperatorsForField, LOGICAL_OPERATORS, NO_VALUE_OPERATORS, QueryFilter, QueryFilterGroup, QueryFilterNode, SqlAggType, SqlDataType, SqlFieldType, SqlOperators } from "@/models/dataset.models";
+import { AGGRAGATE_TYPES, AGGREGATE_BY_SQL_TYPE, ChartDimension, ChartFormProps, ChartMetric, ChartPivot, ChartStructure, ChartStructureDimension, ChartStructureFilter, ChartStructureMetric, ChartStructureOrderBy, DatasetChart, DatasetField, FULL_OPERATORS, getInputTypeForField, getOperatorsForField, LOGICAL_OPERATORS, NO_VALUE_OPERATORS, QueryFilter, QueryFilterGroup, QueryFilterNode, SqlAggType, SqlDataType, SqlFieldType, SqlOperators } from "@/models/dataset.models";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
@@ -383,7 +383,8 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
         const field_name = q?.alias ?? fd?.name ?? "";
         const fl = fields.find(f => f.id === q.field_id);
         const data_type = fl?.data_type ?? "string";
-        return { ...q, field_name, data_type };
+        const aggregation = fl?.aggregation ?? "count";
+        return { ...q, field_name, data_type, aggregation };
       });
   }, [query, fields]);
 
@@ -505,7 +506,12 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
         newRows = rows.filter(r => r.field_id !== field_id);
       }
       if (zone === "metrics") {
-        newMetrics.push({ ...newData, aggregation: "sum" });
+
+        const field = fields.find(f => f.id === field_id);
+        const data_type = field?.data_type ?? 'string';
+        const aggregates: SqlAggType[] = AGGREGATE_BY_SQL_TYPE[data_type] ?? ["count"];
+
+        newMetrics.push({ ...newData, aggregation: aggregates[0] });
       }
       if (zone === "filters") {
         newFilters.push({ ...newData, operator: "=", field_type: "dimension", useSqlInClause: false });
@@ -719,7 +725,6 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
                                   </div>
                                 )}
 
-
                                 {/* <Button
                                       style={{ "padding": "6px 8px", "marginBottom": "12px" }} size="sm" variant="danger"
                                       onClick={() => updateStructure(cible, rows.filter((r) => r.field !== rd.field))}>
@@ -851,7 +856,9 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
                     </thead>
                     <tbody>
                       {structure[cible].map((m, i) => {
-                        // const field_name = fields.find(f => f.id === m.field_id)?.name ?? m.field_id;
+                        const field = fields.find(f => f.id === m.field_id);
+                        const data_type = field?.data_type ?? 'string';
+                        const aggregates: SqlAggType[] = AGGREGATE_BY_SQL_TYPE[data_type] ?? ["count"];
                         return (
                           <tr key={m.field_id} className="border-t hover:bg-gray-50 transition">
                             <td className="px-4 py-2 font-medium">{m.name ?? m.alias}</td>
@@ -870,9 +877,9 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
                             </td>
                             <td>
                               <FormSelect
-                                value={m.aggregation || ""}
-                                className="border rounded-lg px-2 py-1 w-full"
-                                options={AGGRAGATE_TYPES.map(a => ({ value: a, label: a.toUpperCase() }))}
+                                value={m.aggregation}
+                                // className="border rounded-lg px-2 py-1 w-full"
+                                options={aggregates.map(a => ({ value: a, label: a.toUpperCase() }))}
                                 onChange={(val) => updateChartFields(cible, { field_id: m.field_id, agg: val, index: i })} />
                             </td>
                             <td className="px-2 py-2 relative">

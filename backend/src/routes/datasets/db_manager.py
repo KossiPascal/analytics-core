@@ -340,33 +340,70 @@ class SqlIntrospector:
         if not pg_type:
             return "string"
 
-        t = pg_type.lower()
+        t = pg_type.lower().strip()
 
-        # 🔹 enlever [] (array)
+        # 🔹 gérer array
         is_array = t.endswith("[]")
         if is_array:
             t = t[:-2]
 
-        # 🔹 mapping précis
-        if t in {"smallint", "integer", "bigint","serial", "bigserial","numeric", "decimal","real", "double precision", "money"}:
+        # 🔹 NUMERIC
+        if t in {
+            "smallint", "integer", "bigint",
+            "serial", "bigserial",
+            "numeric", "decimal",
+            "real", "double precision",
+            "money"
+        }:
             base = "number"
-        elif t in {"date", "timestamp", "timestamptz", "time", "timetz"}:
+
+        # 🔹 DATE / TIME
+        elif t in {"date"}:
+            base = "date"
+
+        elif t in {"timestamp", "timestamp without time zone", "timestamp with time zone", "timestamptz"}:
             base = "datetime"
+
+        elif t in {"time", "time without time zone", "time with time zone", "timetz"}:
+            base = "time"
+
         elif t == "interval":
             base = "duration"
-        elif t in {"boolean"}:
+
+        # 🔹 BOOLEAN
+        elif t == "boolean":
             base = "boolean"
+
+        # 🔹 JSON
         elif t in {"json", "jsonb"}:
             base = "json"
-        elif t in {"uuid"}:
+
+        # 🔹 UUID
+        elif t == "uuid":
             base = "uuid"
-        elif t in {"bytea"}:
+
+        # 🔹 BINARY
+        elif t == "bytea":
             base = "binary"
+
+        # 🔹 NETWORK
+        elif t in {"inet", "cidr", "macaddr"}:
+            base = "string"
+
+        # 🔹 BIT
+        elif t in {"bit", "bit varying"}:
+            base = "string"
+
+        # 🔹 XML
+        elif t == "xml":
+            base = "string"
+
+        # 🔹 STRING (default)
         else:
             base = "string"
 
         return f"{base}[]" if is_array else base
-
+    
     @staticmethod
     def _clean_sql(sql: str) -> str:
         if not sql or not isinstance(sql, str):
@@ -469,29 +506,21 @@ class SqlIntrospector:
                 final_sql = cls.add_limit(selected_sql, 1)
 
                 wrapped_sql = f"SELECT * FROM ({final_sql}) AS subquery LIMIT 1"
-                # wrapped_sql = f"""
-                #     WITH subquery AS ({final_sql})
-                #     SELECT * FROM subquery LIMIT 1
-                #     """
-        
+                # wrapped_sql = f"WITH subquery AS ({final_sql})bSELECT * FROM subquery LIMIT 1"
 
                 with db.engine.connect() as conn:
-                    result = conn.execute(text(wrapped_sql))
+                    result = conn.execute(text(wrapped_sql), {**(values or {})})
+                    row = result.mappings().first()
+                    if not row:
+                        return []
+
                     oids = [col.type_code for col in result.cursor.description]
 
                     # récupérer tous les types en une seule requête
                     type_map = {}
                     if oids:
-                        params = {**(values or {}), "oids": oids}
-                        rows = conn.execute(
-                            text("""
-                                SELECT oid, format_type(oid, NULL)
-                                FROM pg_type
-                                WHERE oid = ANY(:oids)
-                            """),
-                            params
-                        ).fetchall()
-
+                        oids_sql = "SELECT oid, format_type(oid, NULL) FROM pg_type WHERE oid = ANY(:oids)"
+                        rows = conn.execute(text(oids_sql),{"oids": oids}).fetchall()
                         type_map = {r[0]: r[1] for r in rows}
 
                     columns = [
@@ -505,6 +534,44 @@ class SqlIntrospector:
 
         except Exception as e:
             raise ValueError(f"SQL introspection error: {e}")
+
+    @classmethod
+    def get_columns_mapped(cls, sql: str, values: dict = None)->Dict[str, str]:
+        # 🔹 SQL brut
+        selected_sql = cls.unwrap_sql(sql)
+        final_sql = cls.add_limit(selected_sql, 1)
+        wrapped_sql = f"SELECT * FROM ({final_sql}) AS subq LIMIT 1"
+
+        with db.engine.connect() as conn:
+            result = conn.execute(text(wrapped_sql), {**(values or {})})
+            row = result.mappings().first()
+            cursor = result.cursor
+
+            if not row or not cursor:
+                return {}
+
+            # 🔥 récupérer tous les types en une seule requête
+            oids = [col.type_code for col in cursor.description]
+
+            type_rows = conn.execute(
+                text("SELECT oid, typname FROM pg_type WHERE oid = ANY(:oids)"),
+                {"oids": oids}
+            ).fetchall()
+
+            oid_map = {r.oid: r.typname for r in type_rows}
+
+            output = {}
+
+            for i, col in enumerate(cursor.description):
+                name = col.name
+                type_name = oid_map.get(col.type_code)
+                output[name] = { 
+                    "value": row[name], 
+                    "sql_type": type_name, 
+                    "app_type": cls._map_pg_type(type_name) 
+                }
+
+            return output
 
     @classmethod
     def sql_from_db(cls, view_name: str, sql_type: str, schema: str = "public") -> (Dict[str, Any] | None):
