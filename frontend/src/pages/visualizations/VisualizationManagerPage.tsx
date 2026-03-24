@@ -124,6 +124,8 @@ export default function VisualizationHome() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [ref, bounds] = useMeasure();
+  const [cardsRef, cardsBounds] = useMeasure();
+  const [cardsLayout, setCardsLayout] = useState<any[]>([]);
   const didLoad = useRef(false);
 
   // ---------------- INIT ----------------
@@ -363,37 +365,63 @@ export default function VisualizationHome() {
         </div>
       )}
 
-      {/* ── GRILLE DE CARDS ── */}
+      {/* ── GRILLE DE CARDS (draggable) ── */}
       {!loading && filtered.length > 0 && (
-        <div style={{
-          display: viewMode === 'grid'
-            ? 'grid'
-            : 'flex',
-          gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(480px, 1fr))' : undefined,
-          flexDirection: viewMode === 'list' ? 'column' : undefined,
-          gap: '1.25rem',
-        }}>
-          {filtered.map(v => (
-            <div key={v.id} style={{
-              background: 'white', borderRadius: 14, overflow: 'hidden',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
-              border: '1px solid #e2e8f0',
-              transition: 'box-shadow 0.2s',
+        <div ref={cardsRef}>
+          <Responsive
+            width={cardsBounds.width || window.innerWidth - 48}
+            layouts={{
+              lg: cardsLayout.length === filtered.length
+                ? cardsLayout
+                : filtered.map((v, i) => ({
+                    i: String(v.id),
+                    x: (i % 2) * 6,
+                    y: Math.floor(i / 2) * 7,
+                    w: 6, h: 7,
+                    minH: 4,
+                  })),
             }}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.13)')}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)')}
-            >
-              <VisualizationViewModule
-                visualization={v}
-                charts={charts}
-                removeView={remove}
-                editView={startEdit}
-                openView={openView}
-                refreshView={refreshView}
-                autoRefresh={refreshView}
-              />
-            </div>
-          ))}
+            breakpoints={{ lg: 1200, md: 768, sm: 480 }}
+            cols={{ lg: 12, md: 6, sm: 1 }}
+            rowHeight={80}
+            onLayoutChange={(l) => setCardsLayout([...l])}
+            {...{ draggableHandle: '.card-drag-handle' }}
+          >
+            {filtered.map(v => (
+              <div key={String(v.id)} style={{
+                background: 'white', borderRadius: 14, overflow: 'hidden',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+                border: '1px solid #e2e8f0',
+                display: 'flex', flexDirection: 'column',
+                position: 'relative',
+              }}>
+                {/* Bouton poignée de déplacement */}
+                <div
+                  className="card-drag-handle"
+                  title="Maintenir pour déplacer"
+                  style={{
+                    position: 'absolute', top: 6, left: 6, zIndex: 20,
+                    width: 20, height: 20, borderRadius: 5,
+                    background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'grab', userSelect: 'none', fontSize: '0.7rem', color: '#6366f1',
+                    lineHeight: 1,
+                  }}
+                >⠿</div>
+                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                  <VisualizationViewModule
+                    visualization={v}
+                    charts={charts}
+                    removeView={remove}
+                    editView={startEdit}
+                    openView={openView}
+                    refreshView={refreshView}
+                    autoRefresh={refreshView}
+                  />
+                </div>
+              </div>
+            ))}
+          </Responsive>
         </div>
       )}
 

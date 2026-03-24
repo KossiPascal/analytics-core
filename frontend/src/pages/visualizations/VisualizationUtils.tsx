@@ -213,7 +213,7 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
     if (!response) return <div className="flex items-center justify-center text-gray-400">No data</div>;
 
     return (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
             {/* ── Fullscreen individuel (modal animé) ── */}
             {createPortal(
             <AnimatePresence>
@@ -293,8 +293,8 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
                 </div>
             )}
 
-            {/* Graphique avec icônes superposées sur la ligne du titre */}
-            <div style={{ position: 'relative' }}>
+            {/* Graphique avec icônes superposées */}
+            <div style={{ position: 'relative', minHeight: 220 }}>
                 <div style={{
                     position: 'absolute', top: 6, right: 6, zIndex: 10,
                     display: 'flex', gap: 4,
@@ -305,7 +305,7 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
                 </div>
                 <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
             </div>
-        </>
+        </div>
     );
 };
 
@@ -341,30 +341,36 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
 
     const getChart = (id: number) => charts?.find((c) => c.id === id);
 
-    const grid = (fsMode: boolean) => (
-        <div ref={ref} style={{ width: '100%' }}>
-            {!layout.length ? (
-                <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Aucun graphique dans ce dashboard</div>
-            ) : (
-                <Responsive
-                    width={bounds.width || (fsMode ? window.innerWidth * 0.96 : 800)}
-                    layouts={{ lg: layout }}
-                    breakpoints={{ lg: 1200, md: 996, sm: 768 }}
-                    cols={{ lg: 12, md: 8, sm: 4 }}
-                    rowHeight={fsMode ? 80 : 40}
-                >
-                    {layout.map((item: any) => {
-                        const chart = getChart(item.chart_id);
-                        return (
-                            <div key={item.i} style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-                                {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} />}
-                            </div>
-                        );
-                    })}
-                </Responsive>
-            )}
-        </div>
-    );
+    // rowHeight adaptatif : assez grand pour voir le graphique + légende
+    const makeGrid = (fsMode: boolean) => {
+        const rh = fsMode ? 100 : 130;
+        return (
+            <div ref={ref} style={{ width: '100%' }}>
+                {!layout.length ? (
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Aucun graphique dans ce dashboard</div>
+                ) : (
+                    <Responsive
+                        width={bounds.width || (fsMode ? window.innerWidth * 0.96 : 800)}
+                        layouts={{ lg: layout }}
+                        breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+                        cols={{ lg: 12, md: 8, sm: 4 }}
+                        rowHeight={rh}
+                    >
+                        {layout.map((item: any) => {
+                            const chart = getChart(item.chart_id);
+                            return (
+                                <div key={item.i} style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0', height: '100%' }}>
+                                    {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} />}
+                                </div>
+                            );
+                        })}
+                    </Responsive>
+                )}
+            </div>
+        );
+    };
+    const cardGrid = () => makeGrid(false);
+    const fullscreenGrid = () => makeGrid(true);
 
     return (
         <>
@@ -397,7 +403,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                     </div>
                 )}
             </div>
-            {grid(false)}
+            {cardGrid()}
 
             {/* ── Fullscreen dashboard (modal animé) ── */}
             {createPortal(<AnimatePresence>
@@ -451,7 +457,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
 
                             {/* Grille fullscreen */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
-                                {grid(true)}
+                                {fullscreenGrid()}
                             </div>
                         </motion.div>
                     </>
