@@ -6,7 +6,7 @@ import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { Plus, ShieldCheck, RefreshCw, Code } from 'lucide-react';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { DatasetChartTab } from './components/datasets/DatasetCharts/DatasetChartTab';
-import { DatasetFieldTab } from './components/datasets/DatasetFieldTab';
+import { DatasetFieldTab } from './components/datasets/DatasetFields/DatasetFieldTab';
 import { DatasetQueryTab } from './components/datasets/DatasetQueries/DatasetQueryTab';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { Tenant } from '@/models/identity.model';
@@ -19,7 +19,7 @@ import { datasetService } from '@/services/dataset.service';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
-import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderPage';
+import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderTab';
 
 type TabType =
   | "field_tab"

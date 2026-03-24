@@ -1,5 +1,4 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
-import { ChartWizard } from "./chart-utils/ChartWizard";
 import { Dataset, DatasetChart, DatasetQuery, ExecuteChartResponse } from "@/models/dataset.models";
 import { chartService, queryService } from "@/services/dataset.service";
 import { StatusBadge } from "@/components/ui/Badge/Badge";
@@ -9,12 +8,13 @@ import { Layout } from "react-grid-layout";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { Shield } from "lucide-react";
 import { FaDatabase } from "react-icons/fa";
-import { ChartRendererPreview } from "./chart-utils/ChartRenderer";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Tenant } from "@/models/identity.model";
 
 import styles from "@pages/admins/AdminPage.module.css";
 import { Building2 } from "lucide-react";
+import { ChartWizard } from "./components/chart-utils/ChartWizard";
+import { ChartRendererPreview } from "./components/chart-utils/ChartRenderer";
 
 // Colonnes du tableau
 const sourceColumns: Column<DatasetChart>[] = [

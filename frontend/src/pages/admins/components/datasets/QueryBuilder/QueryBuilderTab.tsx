@@ -4,11 +4,11 @@ import { Database, RefreshCw, Filter, ArrowUpDown, Play, Loader2, FolderOpen } f
 import { Button } from "@components/ui/Button/Button";
 import { Modal } from "@components/ui/Modal/Modal";
 import { DatasetQueryPanel } from "./components/DatasetQueryPanel";
-import { DatasetFilterBuilder } from "../DatasetQueries/query-utils/DatasetFilterBuilder";
-import { DatasetOrderByBuilder } from "../DatasetQueries/query-utils/DatasetOrderByBuilder";
-import { DatasetPreviewModal } from "../DatasetQueries/query-utils/DatasetPreviewModal";
-import { compileDatasetQuery } from "../DatasetQueries/query-utils/compileDatasetQuery";
-import { CompileError } from "../DatasetQueries/query-utils/model";
+import { DatasetFilterBuilder } from "../DatasetQueries/components/DatasetFilterBuilder";
+import { DatasetOrderByBuilder } from "../DatasetQueries/components/DatasetOrderByBuilder";
+import { DatasetPreviewModal } from "../DatasetQueries/components/DatasetPreviewModal";
+import { compileDatasetQuery } from "../DatasetQueries/components/compileDatasetQuery";
+import { CompileError } from "../DatasetQueries/components/model";
 import { scriptStore } from "@/stores/scripts.store";
 import { useAuth } from "@contexts/AuthContext";
 import { datasetService, queryService } from "@/services/dataset.service";

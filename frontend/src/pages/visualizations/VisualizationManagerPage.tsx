@@ -92,10 +92,21 @@ export default function VisualizationHome() {
     setCharts(res || []);
   };
 
-  useEffect(() => {
-    if (!tenant_id) return;
+
+  const refresh = () => {
     fetchData();
     fetchCharts();
+  }
+
+  const refreshView = async (id: number | null) => {
+    console.log("👉 refresh...");
+    // Make refresh view function
+    refresh();
+  }
+
+  useEffect(() => {
+    if (!tenant_id) return;
+    refresh();
   }, [tenant_id]);
 
   // ---------------- ACTIONS ----------------
@@ -287,7 +298,7 @@ export default function VisualizationHome() {
 
               {/* MINI PREVIEW */}
               {/* <div className="h-32 bg-gray-50 border rounded-xl overflow-hidden flex items-center justify-center text-gray-400 text-sm"> */}
-              <VisualizationViewModule visualization={v} charts={charts} removeView={remove} editView={startEdit} openView={openView} />
+              <VisualizationViewModule visualization={v} charts={charts} removeView={remove} editView={startEdit} openView={openView} refreshView={refreshView} autoRefresh={refreshView} />
               {/* </div> */}
 
               {/* ACTIONS */}

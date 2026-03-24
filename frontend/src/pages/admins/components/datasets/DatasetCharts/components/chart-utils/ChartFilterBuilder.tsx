@@ -5,7 +5,7 @@ import { getOperatorsForField, getInputTypeForField, NO_VALUE_OPERATORS, ChartDi
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { Button } from "@/components/ui/Button/Button";
 import { FormSwitch } from "@/components/forms/FormSwitch/FormSwitch";
-import { InValuesModal } from "../../DatasetQueries/query-utils/InValuesModal";
+import { InValuesModal } from "../../../DatasetQueries/components/InValuesModal";
 
 
 export interface ChartFilterBuilderProps {

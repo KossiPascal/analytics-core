@@ -80,6 +80,22 @@ export const INPUT_TYPE_BY_SQL_TYPE: Record<SqlDataType, string> = {
   json: "textarea",
 };
 
+export const AGGREGATE_BY_SQL_TYPE: Record<SqlDataType, SqlAggType[]> = {
+  string: ["count", "min", "max"],
+  text: ["count"],
+  integer: ["sum", "avg", "count", "min", "max"],
+  number: ["sum", "avg", "count", "min", "max"],
+  bigint: ["sum", "avg", "count", "min", "max"],
+  numeric: ["sum", "avg", "count", "min", "max"],
+  float: ["sum", "avg", "count", "min", "max"],
+  decimal: ["sum", "avg", "count", "min", "max"],
+  boolean: ["count"],
+  date: ["count", "min", "max"],
+  datetime: ["count", "min", "max"],
+  time: ["count", "min", "max"],
+  json: ["count"],
+};
+
 export const CHART_COLS_SEPARATOR = "___";
 
 export const getOperatorsForField = (dataType?: SqlDataType) => {
@@ -96,6 +112,7 @@ export interface DatasetColumn {
   name: string;
   type: string;
   description?: string;
+  aggregation?: SqlAggType | null;
 }
 
 export interface SqlWithUtils {
@@ -150,11 +167,12 @@ export interface DatasetField {
   aggregation: SqlAggType | null
   field_type: SqlFieldType | null
   data_type: SqlDataType
-  dimensions: { name: string, type: string, description: string }[]
+  dimensions: DatasetColumn[]
+  metrics: DatasetColumn[]
   format: Record<string, any>
   is_public: boolean
   is_filterable: boolean;
-  select_multiple: boolean | undefined;
+  select_multiple: boolean|undefined;
   is_groupable: boolean;
   is_sortable: boolean;
   is_selectable: boolean;

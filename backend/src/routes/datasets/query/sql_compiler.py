@@ -295,23 +295,35 @@ class SQLFilterBuilder:
         self.param_index += 1
         return key
 
+    @classmethod
+    def parse_expression(cls, expression:str, field_type:str, aggregation:str|None, isDistinct: bool = False) -> str:
+        if not expression:
+            return ""
+        
+        DISTINCT = "DISTINCT " if isDistinct else ""
+
+        if field_type == "dimension" or not aggregation:
+            expr = f"{DISTINCT}{expression}"
+        else:
+            agg = f"{aggregation}".lower()
+
+            if agg == "distinct":
+                expr = f"COUNT(DISTINCT {expression})"
+            else:
+                expr = f"{agg.upper()}({DISTINCT}{expression})"
+
+        return SQLValueParser.validate_and_clean_expr(expr, field_type)
+
     # SQL EXPRESSION
     def generate_expression(self, field: DatasetField, isDistinct: bool = False) -> str:
-        expr = ""
-        if field.expression:
-            DISTINCT = "DISTINCT " if isDistinct else ""
-            if field.field_type == "dimension" and not field.aggregation:
-                expr = f"{DISTINCT}{field.expression}"
-            elif field.aggregation:
-                agg = f"{field.aggregation}".upper()
-                if agg == "DISTINCT":
-                    expr = f"(DISTINCT {field.expression})"
-                else:
-                    expr = f"{agg}({DISTINCT}{field.expression})"
-            else:   
-                expr = f"{DISTINCT}{field.expression}"
+ 
+        clean_expr = self.parse_expression(
+            expression=field.expression, 
+            field_type=field.field_type, 
+            aggregation=field.aggregation, 
+            isDistinct=isDistinct
+        )
 
-        clean_expr = SQLValueParser.validate_and_clean_expr(expr, field.field_type)
         return clean_expr
 
     def build(self, node: dict) -> Dict[str, Any]:
@@ -481,7 +493,7 @@ class SQLCompilerV1:
 
         dimensions = query.get("select", {}).get("dimensions", [])
         metrics = query.get("select", {}).get("metrics", [])
-
+        
         if not dimensions and not metrics:
             raise ValueError("At least one dimension or metric required.")
 

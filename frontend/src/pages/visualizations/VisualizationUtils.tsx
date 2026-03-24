@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { DatasetChart, ExecuteChartResponse } from "@/models/dataset.models";
 import { chartService } from "@/services/dataset.service";
-import { ChartRendererPreview } from "../admins/components/datasets/DatasetCharts/chart-utils/ChartRenderer";
 
 import { Responsive } from "react-grid-layout";
 import useMeasure from "react-use-measure";
@@ -15,6 +14,7 @@ import { Visualization } from "@/models/visualization.model";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { ExportTypes } from "@/components/download/download";
+import { ChartRendererPreview } from "../admins/components/datasets/DatasetCharts/components/chart-utils/ChartRenderer";
 
 
 type RendererProps = {
@@ -29,6 +29,9 @@ type ViewerProps = {
     editView?: (v: Visualization) => void;
     removeView?: (id: number | null) => Promise<void>;
     openView?: (v: Visualization, charts: DatasetChart[]) => Promise<void>;
+    refreshSecond?: number;
+    refreshView?: (id: number | null) => Promise<void>
+    autoRefresh?: (id: number | null) => Promise<void>
 }
 
 // ---------------- UI HELPERS ----------------
@@ -137,14 +140,14 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
 };
 
 // ---------------- DASHBOARD ----------------
-export function VisualizationViewModule({ visualization, charts, editView, removeView, openView }: ViewerProps) {
+export function VisualizationViewModule({ visualization, charts, refreshSecond=10, editView, removeView, openView, refreshView, autoRefresh }: ViewerProps) {
 
     const [ref, bounds] = useMeasure();
 
     const [viz, setViz] = useState<Visualization>(visualization);
     const [loading, setLoading] = useState(false);
     const [fullscreen, setFullscreen] = useState(false);
-    const [autoRefresh, setAutoRefresh] = useState(false);
+    const [startAutoRefresh, setStartAutoRefresh] = useState(false);
     const [showDownloadBtn, setShowDownloadBtn] = useState(false);
 
     const [filters, setFilters] = useState<Record<string, any>>({});
@@ -152,13 +155,12 @@ export function VisualizationViewModule({ visualization, charts, editView, remov
 
     // ---------------- AUTO REFRESH ----------------
     useEffect(() => {
-        if (!autoRefresh) return;
+        if (!startAutoRefresh || !autoRefresh) return;
         const interval = setInterval(() => {
-            console.log("refresh...");
-            // 👉 call API refresh here
-        }, 10000);
+            autoRefresh(viz.id);
+        }, (refreshSecond ?? 10) * 1000);
         return () => clearInterval(interval);
-    }, [autoRefresh]);
+    }, [startAutoRefresh, autoRefresh, refreshSecond]);
 
     if (!viz) return <Skeleton />;
 
@@ -187,13 +189,14 @@ export function VisualizationViewModule({ visualization, charts, editView, remov
                 {/* RIGHT ACTIONS */}
                 <div className="flex gap-2 flex-wrap">
                     <Button size="sm" variant="outline" onClick={() => setShowFilters(v => !v)}>🔍 Filters</Button>
-                    <Button size="sm" variant="outline" onClick={() => setAutoRefresh(v => !v)}>{autoRefresh ? "⏸ Stop Refresh" : "▶ Auto Refresh"}</Button>
+                    <Button size="sm" variant="outline" onClick={() => setStartAutoRefresh(v => !v)}>{startAutoRefresh ? "⏸ Stop Refresh" : "▶ Auto Refresh"}</Button>
                     <Button size="sm" variant="outline" onClick={() => setShowDownloadBtn(v => !v)}>📄 Export</Button>
                     <Button size="sm" onClick={() => setFullscreen(v => !v)}>{fullscreen ? "🡼 Exit Fullscreen" : "⛶ Fullscreen"}</Button>
 
                     {editView && (<Button size="sm" onClick={() => editView(viz)}>Edit</Button>)}
                     {removeView && (<Button size="sm" variant="danger" onClick={() => removeView(viz.id)}>Delete</Button>)}
                     {openView && (<Button size="sm" onClick={() => openView(viz, charts)}>Open</Button>)}
+                    {refreshView && (<Button size="sm" onClick={() => refreshView(viz.id)}>Refresh</Button>)}
 
 
 
