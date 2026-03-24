@@ -20,6 +20,7 @@ import { Tenant } from "@/models/identity.model";
 import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
 
 import { VisualizationChartRenderer, VisualizationViewModule, statusColor } from "./VisualizationUtils";
+import { ConfirmModal } from "@components/ui/ConfirmModal/ConfirmModal";
 import { RenamesOptionsModal } from "@pages/admins/components/datasets/DatasetCharts/chart-utils/RenamesOptionsModal";
 
 import "react-grid-layout/css/styles.css";
@@ -102,6 +103,19 @@ export default function VisualizationHome() {
   const [form, setForm] = useState<Visualization>(getDefaultForm());
   const [editing, setEditing] = useState<Visualization | null>(null);
 
+  // ── Confirmation modal ──
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  const askConfirm = (title: string, message: string, onConfirm: () => void) =>
+    setConfirmState({ isOpen: true, title, message, onConfirm });
+
+  const closeConfirm = () => setConfirmState(s => ({ ...s, isOpen: false }));
+
   const [open, setOpen] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -176,8 +190,12 @@ export default function VisualizationHome() {
 
   const remove = async (id: number | null) => {
     if (!id) return;
-    await visualizationService.remove(id);
-    fetchData();
+    const viz = data.find(v => v.id === id);
+    askConfirm(
+      'Supprimer la visualisation',
+      `"${viz?.name || id}" sera définitivement supprimée. Cette action est irréversible.`,
+      async () => { await visualizationService.remove(id); fetchData(); },
+    );
   };
 
   const create = () => {
@@ -224,10 +242,11 @@ export default function VisualizationHome() {
   };
 
   const removeBlock = (id: string) => {
-    setForm(prev => ({
-      ...prev,
-      layout: prev.layout.filter(l => l.i !== id),
-    }));
+    askConfirm(
+      'Supprimer ce graphique',
+      'Ce graphique sera retiré du layout. Vous pourrez le rajouter à tout moment.',
+      () => setForm(prev => ({ ...prev, layout: prev.layout.filter(l => l.i !== id) })),
+    );
   };
 
   const duplicateBlock = (item: VisualLayoutItem) => {
@@ -512,6 +531,14 @@ export default function VisualizationHome() {
         onClose={() => setShowConfigModal(false)}
         values={(form.config as Record<string, Record<string, string>>) ?? {}}
         onChange={(newValues) => setForm(prev => ({ ...prev, config: newValues }))}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        onConfirm={() => { confirmState.onConfirm(); closeConfirm(); }}
+        onCancel={closeConfirm}
       />
 
     </div >
