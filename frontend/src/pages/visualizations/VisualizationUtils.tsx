@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { DatasetChart, ExecuteChartResponse } from "@/models/dataset.models";
 import { chartService } from "@/services/dataset.service";
@@ -216,6 +217,7 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
     return (
         <>
             {/* ── Fullscreen individuel (modal animé) ── */}
+            {createPortal(
             <AnimatePresence>
                 {chartFullscreen && (
                     <>
@@ -275,6 +277,7 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
                     </>
                 )}
             </AnimatePresence>
+            , document.body)}
 
             {/* Barre export */}
             {showDownloadBtn && (
@@ -391,7 +394,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
             {grid(false)}
 
             {/* ── Fullscreen dashboard (modal animé) ── */}
-            <AnimatePresence>
+            {createPortal(<AnimatePresence>
                 {fullscreen && (
                     <>
                         <motion.div key="dash-backdrop"
@@ -461,7 +464,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                         </motion.div>
                     </>
                 )}
-            </AnimatePresence>
+            </AnimatePresence>, document.body)}
         </>
     );
 };
