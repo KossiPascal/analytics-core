@@ -355,12 +355,21 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                         cols={{ lg: 12, md: 8, sm: 4 }}
                         rowHeight={rh}
+                        {...{ draggableHandle: '.chart-drag-handle' }}
                     >
                         {layout.map((item: any) => {
                             const chart = getChart(item.chart_id);
                             return (
-                                <div key={item.i} style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0', height: '100%' }}>
-                                    {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} />}
+                                <div key={item.i} style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                    {/* Poignée drag graphique */}
+                                    <div className="chart-drag-handle" style={{
+                                        height: 5, flexShrink: 0,
+                                        background: 'linear-gradient(90deg, #c7d2fe, #a5b4fc)',
+                                        cursor: 'grab',
+                                    }} title="Maintenir pour déplacer" />
+                                    <div style={{ flex: 1, minHeight: 0 }}>
+                                        {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} />}
+                                    </div>
                                 </div>
                             );
                         })}

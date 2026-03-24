@@ -290,7 +290,7 @@ export default function VisualizationHome() {
     <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
 
       {/* ── HEADER STICKY ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 200, background: '#f1f5f9', padding: '0.6rem 1.5rem 0' }}>
+      <div style={{ position: 'sticky', top: 'var(--navbar-height, 60px)', zIndex: 200, background: '#f1f5f9', padding: '0.6rem 1.5rem 0' }}>
       <div style={{
         background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
         borderRadius: 12, padding: '0.6rem 1.25rem',
