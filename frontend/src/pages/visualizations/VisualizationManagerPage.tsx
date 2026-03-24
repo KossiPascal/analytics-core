@@ -6,7 +6,6 @@ import useMeasure from "react-use-measure";
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { Button } from "@/components/ui/Button/Button";
-import { Card } from "@/components/ui/Card/Card";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { tenantService } from "@/services/identity.service";
@@ -275,65 +274,115 @@ export default function VisualizationHome() {
 
   // ---------------- UI ----------------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div style={{ minHeight: '100vh', background: '#f1f5f9', padding: '1.5rem' }}>
 
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">📊 Visualizations</h1>
-          <p className="text-gray-500 text-sm">Create, manage and explore dashboards</p>
+      {/* ── HEADER ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+        borderRadius: 16, padding: '0.6rem 1.25rem',
+        display: 'flex', alignItems: 'center', gap: '1rem',
+        marginBottom: '1.25rem', boxShadow: '0 4px 20px rgba(15,23,42,0.18)',
+        flexWrap: 'wrap',
+      }}>
+        {/* Titre */}
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ color: 'white', fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.01em' }}>
+            📊 Visualisations
+          </div>
+          <div style={{ color: '#94a3b8', fontSize: '0.73rem', marginTop: 1 }}>
+            {data.length} dashboard{data.length !== 1 ? 's' : ''}
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}>
-            Toggle View
-          </Button>
-          <Button onClick={create} className="shadow-md">+ New Visualization</Button>
-        </div>
-      </div>
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
 
-      {/* FILTER BAR */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex flex-wrap gap-3 items-center">
-        <div className="flex-1 min-w-[200px]">
-          <FormInput
-            placeholder="🔍 Search visualization..."
+        {/* Recherche */}
+        <div style={{ width: 220, position: 'relative' }}>
+          <input
+            placeholder="🔍 Rechercher..."
             value={search}
             onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '0.4rem 0.75rem',
+              borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)',
+              background: 'rgba(255,255,255,0.1)', color: 'white',
+              fontSize: '0.8rem', outline: 'none',
+              '::placeholder': { color: '#94a3b8' },
+            } as React.CSSProperties}
           />
         </div>
 
-        <div className="w-[200px]">
+        {/* Filtre statut */}
+        <div style={{ width: 160 }}>
           <FormSelect
             value={statusFilter}
-            options={[{ value: "", label: "All Status" }, ...STATUS.map(s => ({ value: s, label: s }))]}
+            options={[{ value: "", label: "Tous les statuts" }, ...STATUS.map(s => ({ value: s, label: s }))]}
             onChange={setStatusFilter}
           />
         </div>
+
+        {/* Actions */}
+        <button
+          onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}
+          style={{
+            padding: '0.4rem 0.75rem', borderRadius: 8, fontSize: '0.78rem', fontWeight: 600,
+            background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.15)',
+            cursor: 'pointer', flexShrink: 0,
+          }}
+        >{viewMode === 'grid' ? '☰' : '⊞'}</button>
+        <button
+          onClick={create}
+          style={{
+            padding: '0.45rem 1rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700,
+            background: '#6366f1', color: 'white', border: 'none', cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(99,102,241,0.4)', flexShrink: 0, whiteSpace: 'nowrap',
+          }}
+        >+ Nouvelle visualisation</button>
       </div>
 
-      {/* LOADING */}
+      {/* ── LOADING ── */}
       {loading && (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(480px, 1fr))', gap: '1.25rem' }}>
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-40 bg-gray-200 animate-pulse rounded-xl" />
+            <div key={i} style={{ height: 220, background: '#e2e8f0', borderRadius: 14, animation: 'pulse 1.5s infinite' }} />
           ))}
         </div>
       )}
 
-      {/* EMPTY */}
+      {/* ── EMPTY ── */}
       {!loading && !filtered.length && (
-        <div className="text-center py-20 text-gray-400">
-          🚀 No visualization yet. Create your first one!
+        <div style={{
+          textAlign: 'center', padding: '4rem 2rem',
+          color: '#94a3b8', background: 'white', borderRadius: 14,
+          border: '1px dashed #cbd5e1',
+        }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📊</div>
+          <div style={{ fontWeight: 600, fontSize: '1rem', color: '#475569' }}>Aucune visualisation</div>
+          <div style={{ fontSize: '0.82rem', marginTop: 4 }}>Créez votre première visualisation en cliquant sur "+ Nouvelle visualisation"</div>
         </div>
       )}
 
-      {/* GRID */}
-      <div className={viewMode === "grid" ? "grid md:grid-cols-2 xl:grid-cols-2 gap-6" : "space-y-4"}>
-        {filtered.map(v => (
-          <Card key={v.id} className="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow" style={{ borderColor: "#7e035f", background: "#e9e6e6" }}>
-
-            {/* ── Visualisation preview ── */}
-            <div style={{ width: '100%' }}>
+      {/* ── GRILLE DE CARDS ── */}
+      {!loading && filtered.length > 0 && (
+        <div style={{
+          display: viewMode === 'grid'
+            ? 'grid'
+            : 'flex',
+          gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(480px, 1fr))' : undefined,
+          flexDirection: viewMode === 'list' ? 'column' : undefined,
+          gap: '1.25rem',
+        }}>
+          {filtered.map(v => (
+            <div key={v.id} style={{
+              background: 'white', borderRadius: 14, overflow: 'hidden',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+              border: '1px solid #e2e8f0',
+              transition: 'box-shadow 0.2s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.13)')}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)')}
+            >
               <VisualizationViewModule
                 visualization={v}
                 charts={charts}
@@ -344,9 +393,9 @@ export default function VisualizationHome() {
                 autoRefresh={refreshView}
               />
             </div>
-          </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* BUILDER DRAWER */}
       <AnimatePresence>

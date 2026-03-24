@@ -22,7 +22,6 @@ import { ExportTypes } from "@/components/download/download";
 type RendererProps = {
     chart?: DatasetChart;
     filters?: Record<string, any>;
-    showDownloadBtn?: boolean;
 };
 
 type ViewerProps = {
@@ -55,12 +54,10 @@ type ToolbarProps = {
     viz: Visualization;
     charts: DatasetChart[];
     startAutoRefresh: boolean;
-    showDownloadBtn: boolean;
     showFilters: boolean;
     onToggleFilters: () => void;
     onToggleAutoRefresh: () => void;
     onManualRefresh: () => void;
-    onToggleExport: () => void;
     onFullscreen: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
@@ -68,9 +65,9 @@ type ToolbarProps = {
 };
 
 function VisualizationToolbar({
-    viz, startAutoRefresh, showDownloadBtn, showFilters,
+    viz, startAutoRefresh, showFilters,
     onToggleFilters, onToggleAutoRefresh, onManualRefresh,
-    onToggleExport, onFullscreen, onEdit, onDelete, onOpen,
+    onFullscreen, onEdit, onDelete, onOpen,
 }: ToolbarProps) {
     const sep = <div style={{ width: 1, height: 18, background: '#e2e8f0', margin: '0 2px' }} />;
     const iconBtn = (extra: React.CSSProperties = {}) => ({
@@ -83,6 +80,7 @@ function VisualizationToolbar({
             padding: '0.3rem 0.5rem',
             background: '#f8fafc',
             borderBottom: '1px solid #e2e8f0',
+            position: 'relative',
         }}>
             {/* ── Gauche : nom ── */}
             <span style={{
@@ -96,7 +94,6 @@ function VisualizationToolbar({
 
             {/* ── Droite : tous les boutons ── */}
             <button onClick={onToggleFilters} style={btnStyle(showFilters)} title="Filtres">🔍</button>
-            <button onClick={onToggleExport}  style={btnStyle(showDownloadBtn)} title="Export">📄</button>
             {sep}
             <button onClick={onToggleAutoRefresh} style={btnStyle(startAutoRefresh)} title={startAutoRefresh ? 'Arrêter auto refresh' : 'Auto refresh'}>
                 {startAutoRefresh ? '⏸' : '▶'}
@@ -143,13 +140,14 @@ const dropItemStyle = (active: boolean): React.CSSProperties => ({
 });
 
 // ---------------- CHART ----------------
-export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: RendererProps) {
+export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
     const [response, setResponse] = useState<ExecuteChartResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const chartRef = useRef<any>(null);
     const [showChartMenu, setShowChartMenu] = useState(false);
     const [chartFullscreen, setChartFullscreen] = useState(false);
+    const [showExport, setShowExport] = useState(false);
 
     const options = {
         showTitle: false,
@@ -279,15 +277,14 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
             </AnimatePresence>
             , document.body)}
 
-            {/* Barre export */}
-            {showDownloadBtn && (
+            {/* Barre export par graphique */}
+            {showExport && (
                 <div style={{
                     display: 'flex', flexWrap: 'wrap', gap: '0.25rem',
                     padding: '0.3rem 0.625rem',
                     background: '#f1f5f9',
                     borderBottom: '1px solid #e2e8f0',
                 }}>
-                    <button style={exportBtn} onClick={executeQuery} title="Rafraîchir">🔄</button>
                     {(['png','jpg','pdf-landscape','pdf-portrait','excel','csv','json'] as ExportTypes[]).map(t => (
                         <button key={t} style={exportBtn} onClick={() => download(t)}>
                             ⬇ {t === 'pdf-landscape' ? 'PDF (L)' : t === 'pdf-portrait' ? 'PDF (P)' : t.toUpperCase()}
@@ -302,6 +299,7 @@ export function VisualizationChartRenderer({ chart, filters, showDownloadBtn }: 
                     position: 'absolute', top: 6, right: 6, zIndex: 10,
                     display: 'flex', gap: 4,
                 }}>
+                    <button onClick={() => setShowExport(v => !v)} style={btnStyle(showExport)} title="Export">📄</button>
                     <button onClick={executeQuery} style={btnStyle(false)} title="Rafraîchir">🔄</button>
                     <button onClick={() => setChartFullscreen(true)} style={btnStyle(false)} title="Plein écran">⛶</button>
                 </div>
@@ -320,7 +318,6 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
     const [loading, setLoading] = useState(false);
     const [fullscreen, setFullscreen] = useState(false);
     const [startAutoRefresh, setStartAutoRefresh] = useState(false);
-    const [showDownloadBtn, setShowDownloadBtn] = useState(false);
 
     const [filters, setFilters] = useState<Record<string, any>>({});
     const [showFilters, setShowFilters] = useState(false);
@@ -360,7 +357,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                         const chart = getChart(item.chart_id);
                         return (
                             <div key={item.i} style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-                                {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} showDownloadBtn={showDownloadBtn} />}
+                                {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} />}
                             </div>
                         );
                     })}
@@ -372,25 +369,34 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
     return (
         <>
             {/* ── Vue normale ── */}
-            <VisualizationToolbar
-                viz={viz} charts={charts}
-                startAutoRefresh={startAutoRefresh} showDownloadBtn={showDownloadBtn} showFilters={showFilters}
-                onToggleFilters={() => setShowFilters(v => !v)}
-                onToggleAutoRefresh={() => setStartAutoRefresh(v => !v)}
-                onManualRefresh={() => refreshView?.(viz.id)}
-                onToggleExport={() => setShowDownloadBtn(v => !v)}
-                onFullscreen={() => setFullscreen(true)}
-                onEdit={editView ? () => editView(viz) : undefined}
-                onDelete={removeView ? () => removeView(viz.id) : undefined}
-                onOpen={openView ? () => openView(viz, charts) : undefined}
-            />
-            {showFilters && (
-                <div style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', padding: '0.625rem 1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
-                    <FormInput placeholder="Region" value={filters.region || ""} onChange={(e) => setFilters({ ...filters, region: e.target.value })} />
-                    <FormInput type="date" value={filters.date || ""} onChange={(e) => setFilters({ ...filters, date: e.target.value })} />
-                    <Button size="sm" onClick={() => { console.log("apply filters", filters); }}>Appliquer</Button>
-                </div>
-            )}
+            <div style={{ position: 'relative' }}>
+                <VisualizationToolbar
+                    viz={viz} charts={charts}
+                    startAutoRefresh={startAutoRefresh} showFilters={showFilters}
+                    onToggleFilters={() => setShowFilters(v => !v)}
+                    onToggleAutoRefresh={() => setStartAutoRefresh(v => !v)}
+                    onManualRefresh={() => refreshView?.(viz.id)}
+                    onFullscreen={() => setFullscreen(true)}
+                    onEdit={editView ? () => editView(viz) : undefined}
+                    onDelete={removeView ? () => removeView(viz.id) : undefined}
+                    onOpen={openView ? () => openView(viz, charts) : undefined}
+                />
+                {/* ── Popover filtre flottant ── */}
+                {showFilters && (
+                    <div style={{
+                        position: 'absolute', top: '100%', right: 0, zIndex: 200,
+                        background: 'white', border: '1px solid #e2e8f0',
+                        borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                        padding: '0.875rem 1rem',
+                        display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center',
+                        minWidth: 280,
+                    }}>
+                        <FormInput placeholder="Region" value={filters.region || ""} onChange={(e) => setFilters({ ...filters, region: e.target.value })} />
+                        <FormInput type="date" value={filters.date || ""} onChange={(e) => setFilters({ ...filters, date: e.target.value })} />
+                        <Button size="sm" onClick={() => setShowFilters(false)}>Appliquer</Button>
+                    </div>
+                )}
+            </div>
             {grid(false)}
 
             {/* ── Fullscreen dashboard (modal animé) ── */}
@@ -425,11 +431,6 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                                     <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{viz.type} · {viz.status}</div>
                                 </div>
                                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                    {/* Toggle export */}
-                                    <button style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}
-                                        onClick={() => setShowDownloadBtn(v => !v)}>
-                                        📄 Export
-                                    </button>
                                     {/* Toggle auto refresh */}
                                     <button style={{ ...exportBtn, background: startAutoRefresh ? '#6366f1' : 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}
                                         onClick={() => setStartAutoRefresh(v => !v)}>
@@ -447,15 +448,6 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                                     }}>✕</button>
                                 </div>
                             </div>
-
-                            {/* Barre export si active */}
-                            {showDownloadBtn && (
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', padding: '0.375rem 1rem', background: '#f1f5f9', borderBottom: '1px solid #e2e8f0', flexShrink: 0 }}>
-                                    {(['png','jpg','pdf-landscape','pdf-portrait','excel','csv','json'] as ExportTypes[]).map(t => (
-                                        <button key={t} style={exportBtn}>⬇ {t === 'pdf-landscape' ? 'PDF (L)' : t === 'pdf-portrait' ? 'PDF (P)' : t.toUpperCase()}</button>
-                                    ))}
-                                </div>
-                            )}
 
                             {/* Grille fullscreen */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>

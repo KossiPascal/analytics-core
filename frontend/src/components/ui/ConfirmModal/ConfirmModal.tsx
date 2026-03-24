@@ -75,14 +75,15 @@ export function ConfirmModal({
           {/* Modal */}
           <motion.div
             key="confirm-panel"
-            initial={{ opacity: 0, scale: 0.88, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.88, y: -20 }}
+            initial={{ opacity: 0, y: -32 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -32 }}
             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             style={{
               position: 'fixed', zIndex: 10001,
-              top: '50%', left: '50%',
-              transform: 'translate(-50%, -50%)',
+              top: '5vh',
+              left: 0, right: 0,
+              marginLeft: 'auto', marginRight: 'auto',
               width: '100%', maxWidth: 420,
               background: 'white',
               borderRadius: 16,
