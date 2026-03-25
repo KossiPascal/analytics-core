@@ -32,6 +32,7 @@ type ViewerProps = {
     removeView?: (id: number | null) => Promise<void>;
     openView?: (v: Visualization, charts: DatasetChart[]) => Promise<void>;
     refreshSecond?: number;
+    refreshView?: (id: number | null) => Promise<void>
 }
 
 // ---------------- UI HELPERS ----------------
