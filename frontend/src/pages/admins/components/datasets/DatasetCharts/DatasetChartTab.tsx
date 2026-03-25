@@ -9,7 +9,9 @@ import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { Shield } from "lucide-react";
 import { FaDatabase } from "react-icons/fa";
 import { Modal } from "@/components/ui/Modal/Modal";
+import { Button } from "@/components/ui/Button/Button";
 import { Tenant } from "@/models/identity.model";
+import DatasetBuilderPage from "@pages/admins/components/datasets/DatasetBuilder/DatasetBuilderPage";
 
 import styles from "@pages/admins/AdminPage.module.css";
 import { Building2 } from "lucide-react";
@@ -99,6 +101,7 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
     const [containerPadding, setContainerPadding] = useState<[number, number] | undefined | null>(undefined);
 
     const [expertMode, setExpertMode] = useState<boolean>(false);
+    const [openDatasetBuilder, setOpenDatasetBuilder] = useState(false);
     const [chartType, setChartType] = useState<string>("table");
     const [selectedChart, setSelectedChart] = useState<DatasetChart | null>(null);
 
@@ -162,7 +165,10 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
                 // isValid={(r) => !!r.name && !!r.dataset_id && !!r.query_id}
                 isValid={(r) => r.name.trim().length > 0 && r.dataset_id != null && r.query_id != null}
                 headerActions={
-                    (<QueriesListForm />)
+                    <>
+                        <QueriesListForm />
+                        <Button onClick={() => setOpenDatasetBuilder(true)}>DatasetBuilder</Button>
+                    </>
                 }
                 renderForm={(chart, setValue, saving) => (
                     <>
@@ -196,6 +202,9 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
                     </>
                 )}
             />
+            <Modal isOpen={openDatasetBuilder} onClose={() => setOpenDatasetBuilder(false)} title="Dataset Builder" size="full">
+                <DatasetBuilderPage />
+            </Modal>
         </>
     );
 });
