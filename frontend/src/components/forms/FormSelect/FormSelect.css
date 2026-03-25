@@ -90,6 +90,12 @@
     inset -1px -1px 2px var(--form-shadow-light);
 }
 
+.selectOptionDark:hover {
+  background: rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+  color: white !important;
+}
+
 .selectOption.selected {
   background: linear-gradient(135deg, var(--form-primary) 0%, var(--form-primary-dark) 100%);
   color: white;

@@ -44,6 +44,8 @@ export interface FormSelectProps <T>{
   wrapperClassName?: string;
   /** Disposition : vertical (par défaut) ou inline (label et champ alignés) */
   layout?: 'vertical' | 'inline';
+  /** Variante visuelle : 'dark' pour fond sombre (ex: header) */
+  variant?: 'default' | 'dark';
 }
 
 export function FormSelect<T=any>({
@@ -64,6 +66,7 @@ export function FormSelect<T=any>({
   className = '',
   wrapperClassName = '',
   layout = 'vertical',
+  variant = 'default',
 }: FormSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -142,7 +145,19 @@ export function FormSelect<T=any>({
       layout={layout}
     >
       <div className={`${styles.selectWrapper} ${className}`} ref={wrapperRef}>
-        <div className={wrapperClasses} onClick={handleToggle}>
+        <div
+          className={wrapperClasses}
+          onClick={handleToggle}
+          style={variant === 'dark' ? {
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            borderRadius: 8,
+            color: 'white',
+            boxShadow: 'none',
+            height: '100%',
+            minHeight: 34,
+          } : undefined}
+        >
           {leftIcon && <span className={styles.inputIcon}>{leftIcon}</span>}
           <div
             id={inputId}
@@ -150,16 +165,17 @@ export function FormSelect<T=any>({
             role="combobox"
             aria-expanded={isOpen}
             aria-haspopup="listbox"
+            style={variant === 'dark' ? { color: 'white', fontSize: '0.8rem' } : undefined}
           >
             {selectedOption ? (
-              <span className={styles.selectValue}>
+              <span className={styles.selectValue} style={variant === 'dark' ? { color: 'white' } : undefined}>
                 {selectedOption.icon && (
                   <span className={styles.selectOptionIcon}>{selectedOption.icon}</span>
                 )}
                 {selectedOption.label}
               </span>
             ) : (
-              <span className={styles.selectPlaceholder}>{placeholder}</span>
+              <span className={styles.selectPlaceholder} style={variant === 'dark' ? { color: 'rgba(255,255,255,0.5)' } : undefined}>{placeholder}</span>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
               {value && !disabled && (
@@ -179,7 +195,11 @@ export function FormSelect<T=any>({
         </div>
 
         {isOpen && (
-          <div className={styles.selectDropdown} role="listbox">
+          <div
+            className={styles.selectDropdown}
+            role="listbox"
+            style={variant === 'dark' ? { background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', color: 'white' } : undefined}
+          >
             {searchable && (
               <div style={{ position: 'relative' }}>
                 <Search
@@ -211,10 +231,11 @@ export function FormSelect<T=any>({
                 <div
                   key={option.value}
                   className={`${styles.selectOption} ${option.value === value ? styles.selected : ''
-                    } ${option.disabled ? styles.disabled : ''}`}
+                    } ${option.disabled ? styles.disabled : ''} ${variant === 'dark' ? styles.selectOptionDark : ''}`}
                   onClick={() => handleSelect(option)}
                   role="option"
                   aria-selected={option.value === value}
+                  style={variant === 'dark' && option.value !== value ? { color: '#cbd5e1' } : undefined}
                 >
                   {option.icon && (
                     <span className={styles.selectOptionIcon}>{option.icon}</span>
