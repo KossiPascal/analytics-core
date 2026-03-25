@@ -235,7 +235,7 @@
 }
 
 /* Visualizations Grid */
-.visualizationsGrid {
+/* .visualizationsGrid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
   gap: 1.5rem;
@@ -263,8 +263,54 @@
   .visualizationsGrid {
     grid-template-columns: repeat(4, 1fr);
   }
+} */
+
+.visualizationsGrid {
+  display: grid;
+  gap: 1.5rem; /* espace horizontal et vertical */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  /* auto-fit : autant de colonnes que possible selon la largeur */
+  /* minmax : chaque card fait minimum 250px, maximum 1 fraction de l'espace disponible */
+  width: 100%;
 }
 
+.visualizationsGrid > * {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.visualizationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* espace entre les cards */
+  width: 100%;
+}
+
+.visualizationsGrid > * > *,
+.visualizationsList > * > * {
+  background-color: #fff; /* couleur de fond de la card */
+  border-radius: 1rem;    /* coins arrondis */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* ombre légère */
+  padding: 1rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* Hover effect */
+.visualizationsGrid > * > *,
+.visualizationsList > * > *:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 400px) {
+  .visualizationsGrid {
+    gap: 1rem;
+  }
+  .visualizationsGrid > * {
+    min-width: 200px; /* minimum plus petit sur très petits écrans */
+  }
+}
 /* Visualizations List */
 .visualizationsList {
   display: flex;

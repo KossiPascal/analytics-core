@@ -4,11 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DatasetChart, ExecuteChartResponse } from "@/models/dataset.models";
 import { chartService } from "@/services/dataset.service";
 
-import { Responsive } from "react-grid-layout";
+import { Breakpoints, Layout, Responsive, ResponsiveProps } from "react-grid-layout";
 import useMeasure from "react-use-measure";
 
 import { Button } from "@/components/ui/Button/Button";
-import { Badge } from "@/components/ui/Badge/Badge";
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 
 import { Visualization } from "@/models/visualization.model";
@@ -33,6 +32,7 @@ type ViewerProps = {
     openView?: (v: Visualization, charts: DatasetChart[]) => Promise<void>;
     refreshSecond?: number;
     refreshView?: (id: number | null) => Promise<void>
+    autoRefresh?: (id: number | null) => Promise<void>
 }
 
 // ---------------- UI HELPERS ----------------
@@ -75,13 +75,7 @@ function VisualizationToolbar({
     });
 
     return (
-        <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.3rem',
-            padding: '0.3rem 0.5rem',
-            background: '#f8fafc',
-            borderBottom: '1px solid #e2e8f0',
-            position: 'relative',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem' }}>
             {/* ── Gauche : nom ── */}
             <span style={{
                 fontWeight: 700, fontSize: '0.82rem', color: '#1e293b',
@@ -138,6 +132,67 @@ const dropItemStyle = (active: boolean): React.CSSProperties => ({
     color: active ? '#4338ca' : '#1e293b',
     fontWeight: active ? 600 : 400,
 });
+
+
+
+interface MyResponsiveProps extends ResponsiveProps {
+    draggableHandle?: string;
+    measureBeforeMount?: boolean;
+    useCSSTransforms?: boolean;
+    compactType?: "vertical" | "horizontal";
+    preventCollision?: boolean;
+}
+
+const ResponsiveGridLayout = Responsive as React.ComponentType<MyResponsiveProps>;
+
+interface CustomResponsiveLayoutProps {
+    width: number;
+    children: React.ReactNode;
+    layouts: Partial<Record<string, Layout>>;
+    breakpoints?: Record<string, number>
+    cols?: Record<string, number>
+    rowHeight?: number;
+    draggableHandle?: '.chart-drag-handle'|'.card-drag-handle';
+    onLayoutChange?: ((layout: Layout, layouts: Partial<Record<string, Layout>>) => void)
+}
+
+export const CustomResponsiveLayout: React.FC<CustomResponsiveLayoutProps> = ({ children, layouts, rowHeight = 30, breakpoints, draggableHandle='.chart-drag-handle', cols, onLayoutChange }) => {
+    const [ref, bounds] = useMeasure();
+
+    return (
+        <div ref={ref} style={{ width: "100%" }}>
+            <ResponsiveGridLayout
+                layouts={layouts}
+                breakpoints={breakpoints ?? { lg: 1200, md: 996, sm: 768 }}
+                cols={cols ?? { lg: 12, md: 8, sm: 4 }}
+                rowHeight={rowHeight}
+                width={bounds.width}
+                draggableHandle={draggableHandle}
+                onLayoutChange={onLayoutChange}
+                measureBeforeMount={true}       // ⚡ évite les sauts à l’affichage
+                useCSSTransforms={true}         // ⚡ animations fluides pour drag & drop
+                compactType="vertical"
+                preventCollision={false}
+                onBreakpointChange={(bp, cols) => console.log('Breakpoint changed:', bp)}
+                onResizeStop={(layout) => console.log('Resize stopped', layout)}
+                onDragStop={(layout) => console.log('Drag stopped', layout)}
+                margin={[10, 10]}
+                containerPadding={[10, 10]}
+                // maxRows={3}
+                compactor={{
+                    type: 'vertical', 
+                    allowOverlap: false, 
+                    compact:(layout, cols) => layout
+                }}
+                onWidthChange={(width, margin, cols, padding) => {
+
+                }}
+            >
+                {children}
+            </ResponsiveGridLayout>
+        </div>
+    );
+};
 
 // ---------------- CHART ----------------
 export function VisualizationChartRenderer({ chart, filters, refreshKey }: RendererProps) {
@@ -354,13 +409,13 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                 {!layout.length ? (
                     <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Aucun graphique dans ce dashboard</div>
                 ) : (
-                    <Responsive
+                    <CustomResponsiveLayout
                         width={bounds.width || (fsMode ? window.innerWidth * 0.96 : 800)}
                         layouts={{ lg: layout }}
                         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                         cols={{ lg: 12, md: 8, sm: 4 }}
                         rowHeight={rh}
-                        {...{ draggableHandle: '.chart-drag-handle' }}
+                        draggableHandle='.chart-drag-handle'
                     >
                         {layout.map((item: any) => {
                             const chart = getChart(item.chart_id);
@@ -378,7 +433,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                                 </div>
                             );
                         })}
-                    </Responsive>
+                    </CustomResponsiveLayout>
                 )}
             </div>
         );
@@ -416,8 +471,8 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                         <Button size="sm" onClick={() => setShowFilters(false)}>Appliquer</Button>
                     </div>
                 )}
-            </div>
             {cardGrid()}
+            </div>
 
             {/* ── Fullscreen dashboard (modal animé) ── */}
             {createPortal(<AnimatePresence>

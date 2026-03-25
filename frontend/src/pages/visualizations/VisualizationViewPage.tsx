@@ -22,8 +22,7 @@ import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { Card, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { GraduationLoader } from '@components/loaders/GraduationLoader/GraduationLoader';
-import { VisualizationCard } from '@components/visualizations/VisualizationCard/VisualizationCard';
-import { useVisualizations, type VisualizationWithData } from '@/contexts/OLD/useVisualizations';
+import { type VisualizationWithData } from '@/contexts/OLD/useVisualizations';
 import { ROUTES } from '@routes/configs';
 import styles from './Visualization.module.css';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,9 +30,6 @@ import { DatasetChart } from '@/models/dataset.models';
 import { Visualization } from '@/models/visualization.model';
 import { chartService } from '@/services/dataset.service';
 import { visualizationService } from '@/services/visualization.service';
-import { Responsive } from "react-grid-layout";
-import useMeasure from "react-use-measure";
-import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { VisualizationViewModule } from "./VisualizationUtils";
 
@@ -362,17 +358,9 @@ export default function VisualizationView() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    {/* <VisualizationCard
-                      visualization={viz}
-                      onDelete={(id) => handleDelete(id)}
-                      onExpand={handleExpand}
-                      className={viewMode === 'list' ? styles.listCard : undefined}
-                    /> */}
-                    {/* <VisualizationViewModule visualization={viz} charts={charts} removeView={handleDelete} openView={openView} /> */}
-
-                    <Card key={viz.id} style={{ padding: "5px" }} className="hover:shadow-xl transition-all rounded-2xl">
+                    {/* <Card key={viz.id} style={{ padding: "5px" }} className="hover:shadow-xl transition-all rounded-2xl"> */}
                       <VisualizationViewModule visualization={viz} charts={charts} />
-                    </Card>
+                    {/* </Card> */}
 
                   </motion.div>
                 ))}
