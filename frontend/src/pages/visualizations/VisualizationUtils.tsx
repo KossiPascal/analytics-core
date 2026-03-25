@@ -213,7 +213,7 @@ export function VisualizationChartRenderer({ chart, filters, refreshKey }: Rende
     if (!response) return <div className="flex items-center justify-center text-gray-400">No data</div>;
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             {/* ── Fullscreen individuel (modal animé) ── */}
             {createPortal(
             <AnimatePresence>
@@ -293,16 +293,20 @@ export function VisualizationChartRenderer({ chart, filters, refreshKey }: Rende
                 </div>
             )}
 
-            {/* Graphique avec icônes superposées */}
-            <div style={{ position: 'relative', minHeight: 220 }}>
-                <div style={{
-                    position: 'absolute', top: 6, right: 6, zIndex: 10,
-                    display: 'flex', gap: 4,
-                }}>
-                    <button onClick={() => setShowExport(v => !v)} style={btnStyle(showExport)} title="Export">📄</button>
-                    <button onClick={executeQuery} style={btnStyle(false)} title="Rafraîchir">🔄</button>
-                    <button onClick={() => setChartFullscreen(true)} style={btnStyle(false)} title="Plein écran">⛶</button>
-                </div>
+            {/* Barre de boutons au-dessus du graphique */}
+            <div style={{
+                display: 'flex', justifyContent: 'flex-end', gap: 4,
+                padding: '0.25rem 0.5rem',
+                background: '#f8fafc', borderBottom: '1px solid #e2e8f0',
+                flexShrink: 0,
+            }}>
+                <button onClick={() => setShowExport(v => !v)} style={btnStyle(showExport)} title="Export">📄</button>
+                <button onClick={executeQuery} style={btnStyle(false)} title="Rafraîchir">🔄</button>
+                <button onClick={() => setChartFullscreen(true)} style={btnStyle(false)} title="Plein écran">⛶</button>
+            </div>
+
+            {/* Graphique */}
+            <div style={{ flex: 1, minHeight: 0 }}>
                 <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
             </div>
         </div>
