@@ -22,6 +22,7 @@ import { ChartRendererPreview } from "../admins/components/datasets/DatasetChart
 type RendererProps = {
     chart?: DatasetChart;
     filters?: Record<string, any>;
+    refreshKey?: number;
 };
 
 type ViewerProps = {
@@ -31,8 +32,6 @@ type ViewerProps = {
     removeView?: (id: number | null) => Promise<void>;
     openView?: (v: Visualization, charts: DatasetChart[]) => Promise<void>;
     refreshSecond?: number;
-    refreshView?: (id: number | null) => Promise<void>
-    autoRefresh?: (id: number | null) => Promise<void>
 }
 
 // ---------------- UI HELPERS ----------------
@@ -140,7 +139,7 @@ const dropItemStyle = (active: boolean): React.CSSProperties => ({
 });
 
 // ---------------- CHART ----------------
-export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
+export function VisualizationChartRenderer({ chart, filters, refreshKey }: RendererProps) {
     const [response, setResponse] = useState<ExecuteChartResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -184,10 +183,10 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
     }, [chart?.query_id, JSON.stringify(filters)]);
 
 
-    // ---------------- INITIAL LOAD ----------------
+    // ---------------- INITIAL LOAD + REFRESH ----------------
     useEffect(() => {
         executeQuery();
-    }, [executeQuery]);
+    }, [executeQuery, refreshKey]);
 
 
     // ---------------- STATES ----------------
@@ -310,7 +309,7 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
 };
 
 // ---------------- DASHBOARD ----------------
-export function VisualizationViewModule({ visualization, charts, refreshSecond=10, editView, removeView, openView, refreshView, autoRefresh }: ViewerProps) {
+export function VisualizationViewModule({ visualization, charts, refreshSecond=10, editView, removeView, openView }: ViewerProps) {
 
     const [ref, bounds] = useMeasure();
 
@@ -321,15 +320,16 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
 
     const [filters, setFilters] = useState<Record<string, any>>({});
     const [showFilters, setShowFilters] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // ---------------- AUTO REFRESH ----------------
     useEffect(() => {
-        if (!startAutoRefresh || !autoRefresh) return;
+        if (!startAutoRefresh) return;
         const interval = setInterval(() => {
-            autoRefresh(viz.id);
+            setRefreshKey(k => k + 1);
         }, (refreshSecond ?? 10) * 1000);
         return () => clearInterval(interval);
-    }, [startAutoRefresh, autoRefresh, refreshSecond]);
+    }, [startAutoRefresh, refreshSecond]);
 
     if (!viz) return <Skeleton />;
 
@@ -368,7 +368,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                                         cursor: 'grab',
                                     }} title="Maintenir pour déplacer" />
                                     <div style={{ flex: 1, minHeight: 0 }}>
-                                        {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} />}
+                                        {loading ? <Skeleton /> : <VisualizationChartRenderer chart={chart} filters={filters} refreshKey={refreshKey} />}
                                     </div>
                                 </div>
                             );
@@ -390,7 +390,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                     startAutoRefresh={startAutoRefresh} showFilters={showFilters}
                     onToggleFilters={() => setShowFilters(v => !v)}
                     onToggleAutoRefresh={() => setStartAutoRefresh(v => !v)}
-                    onManualRefresh={() => refreshView?.(viz.id)}
+                    onManualRefresh={() => setRefreshKey(k => k + 1)}
                     onFullscreen={() => setFullscreen(true)}
                     onEdit={editView ? () => editView(viz) : undefined}
                     onDelete={removeView ? () => removeView(viz.id) : undefined}
@@ -452,7 +452,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                                         {startAutoRefresh ? '⏸ Stop' : '▶ Auto'}
                                     </button>
                                     <button style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}
-                                        onClick={() => refreshView?.(viz.id)}>
+                                        onClick={() => setRefreshKey(k => k + 1)}>
                                         🔄 Rafraîchir
                                     </button>
                                     <button onClick={() => setFullscreen(false)} style={{

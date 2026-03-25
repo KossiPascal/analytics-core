@@ -371,7 +371,7 @@ export default function VisualizationView() {
                     {/* <VisualizationViewModule visualization={viz} charts={charts} removeView={handleDelete} openView={openView} /> */}
 
                     <Card key={viz.id} style={{ padding: "5px" }} className="hover:shadow-xl transition-all rounded-2xl">
-                      <VisualizationViewModule visualization={viz} charts={charts} refreshView={refreshView} autoRefresh={refreshView} />
+                      <VisualizationViewModule visualization={viz} charts={charts} />
                     </Card>
 
                   </motion.div>

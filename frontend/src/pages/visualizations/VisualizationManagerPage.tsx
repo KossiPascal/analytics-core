@@ -160,11 +160,6 @@ export default function VisualizationHome() {
     fetchCharts();
   }
 
-  const refreshView = async (id: number | null) => {
-    console.log("👉 refresh...");
-    // Make refresh view function
-    refresh();
-  }
 
   useEffect(() => {
     if (!tenant_id) return;
@@ -437,8 +432,6 @@ export default function VisualizationHome() {
                     removeView={remove}
                     editView={startEdit}
                     openView={openView}
-                    refreshView={refreshView}
-                    autoRefresh={refreshView}
                   />
                 </div>
               </div>
