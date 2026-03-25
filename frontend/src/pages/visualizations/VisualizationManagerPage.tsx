@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useMeasure from "react-use-measure";
+import { LayoutGrid, List, Search, Filter } from "lucide-react";
 
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
@@ -19,9 +20,9 @@ import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
 
 import { CustomResponsiveLayout, VisualizationChartRenderer, VisualizationViewModule, statusColor } from "./VisualizationUtils";
 import { ConfirmModal } from "@components/ui/ConfirmModal/ConfirmModal";
-
 import { RenamesOptionsModal } from "../admins/components/datasets/DatasetCharts/components/chart-utils/RenamesOptionsModal";
 
+import styles from "./Visualization.module.css";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
@@ -124,9 +125,15 @@ export default function VisualizationHome() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [ref, bounds] = useMeasure();
-  const [cardsRef, cardsBounds] = useMeasure();
-  const [cardsLayout, setCardsLayout] = useState<any[]>([]);
+  const [showStatusDrop, setShowStatusDrop] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   const didLoad = useRef(false);
+
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
 
   // ---------------- INIT ----------------
   useEffect(() => {
@@ -269,31 +276,6 @@ export default function VisualizationHome() {
   }
 
 
-  // Calcule la hauteur (en unités de rowHeight=80) nécessaire pour afficher tous les graphiques
-  const getCardH = (viz: Visualization) => {
-    const layout: any[] = Array.isArray(viz.layout) ? viz.layout : [];
-    if (!layout.length) return 5;
-    const maxBottom = Math.max(...layout.map((item: any) => (item.y || 0) + (item.h || 1)));
-    const innerRowH = 130; // rowHeight dans makeGrid normal
-    const toolbarH = 58;   // toolbar + popover
-    const total = maxBottom * innerRowH + toolbarH + 20;
-    return Math.ceil(total / 80) + 1;
-  };
-
-
-  const layoutLG = useMemo(() => {
-    return cardsLayout.length === filtered.length
-      ? cardsLayout
-      : filtered.map((v, i) => {
-        return {
-          i: String(v.id),
-          x: (i % 2) * 6,
-          y: Math.floor(i / 2) * getCardH(v),
-          w: 6, h: getCardH(v),
-          minH: 4,
-        };
-      });
-  }, [cardsLayout, filtered])
 
   // ---------------- UI ----------------
   return (
@@ -322,52 +304,95 @@ export default function VisualizationHome() {
           <div style={{ flex: 1 }} />
 
           {/* Groupe droite responsive */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
 
             {/* Recherche */}
-            <input
-              placeholder="🔍 Rechercher..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                minWidth: 140, maxWidth: 200, flex: '1 1 140px', height: 34, padding: '0 0.75rem',
-                borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)',
-                background: 'rgba(255,255,255,0.1)', color: 'white',
-                fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box',
-              } as React.CSSProperties}
-            />
-
-            {/* Filtre statut */}
-            <div style={{ flex: '1 1 140px', maxWidth: 165, height: 34 }}>
-              <FormSelect
-                value={statusFilter}
-                options={[{ value: "", label: "Tous les statuts" }, ...STATUS.map(s => ({ value: s, label: s }))]}
-                onChange={setStatusFilter}
-                variant="dark"
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Search size={12} color="rgba(255,255,255,0.7)" style={{ position: 'absolute', left: 7, pointerEvents: 'none' }} />
+              <input
+                placeholder={isMobile ? '' : 'Rechercher...'}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: isMobile ? 24 : 170, height: isMobile ? 24 : 28,
+                  padding: '0 0.5rem 0 24px',
+                  borderRadius: 7, border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.1)', color: 'white',
+                  fontSize: '0.75rem', outline: 'none', boxSizing: 'border-box',
+                  transition: 'width 0.25s',
+                } as React.CSSProperties}
+                onFocus={e => { if (isMobile) e.currentTarget.style.width = '130px'; }}
+                onBlur={e => { if (isMobile && !search) e.currentTarget.style.width = '28px'; }}
               />
             </div>
 
+            {/* Filtre statut — icône sur mobile, select sur desktop */}
+            {isMobile ? (
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowStatusDrop(v => !v)} title="Filtrer par statut"
+                  style={{
+                    height: 24, width: 24, borderRadius: 6,
+                    background: statusFilter ? '#6366f1' : 'rgba(255,255,255,0.1)',
+                    color: 'white', border: '1px solid rgba(255,255,255,0.2)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                ><Filter size={11} color="white" /></button>
+                {showStatusDrop && (
+                  <div style={{
+                    position: 'absolute', top: 32, right: 0, zIndex: 300,
+                    background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 8, minWidth: 150, overflow: 'hidden',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                  }}>
+                    {[{ value: '', label: 'Tous les statuts' }, ...STATUS.map(s => ({ value: s, label: s }))].map(opt => (
+                      <button key={opt.value} onClick={() => { setStatusFilter(opt.value); setShowStatusDrop(false); }}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '0.45rem 0.75rem', fontSize: '0.78rem', border: 'none', cursor: 'pointer',
+                          background: statusFilter === opt.value ? '#6366f1' : 'transparent',
+                          color: 'white',
+                        }}
+                      >{opt.label}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ width: 150, height: 28 }}>
+                <FormSelect
+                  value={statusFilter}
+                  options={[{ value: "", label: "Tous les statuts" }, ...STATUS.map(s => ({ value: s, label: s }))]}
+                  onChange={setStatusFilter}
+                  variant="dark"
+                />
+              </div>
+            )}
+
             {/* Toggle vue grille/liste */}
             <button
-              onClick={() => { setViewMode(v => v === 'grid' ? 'list' : 'grid'); setCardsLayout([]); }}
+              onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}
               title={viewMode === 'grid' ? 'Vue liste' : 'Vue grille'}
               style={{
-                height: 34, width: 34, borderRadius: 8, fontSize: '1rem', fontWeight: 600,
-                background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.15)',
+                height: isMobile ? 24 : 28, width: isMobile ? 24 : 28, borderRadius: 7,
+                background: 'rgba(255,255,255,0.1)', color: 'white',
+                border: '1px solid rgba(255,255,255,0.2)',
                 cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
-            >{viewMode === 'grid' ? '☰' : '⊞'}</button>
+            >{viewMode === 'grid' ? <List size={isMobile ? 11 : 14} color="white" /> : <LayoutGrid size={isMobile ? 11 : 14} color="white" />}</button>
 
             {/* Nouvelle visualisation */}
-            <button
-              onClick={create}
+            <button onClick={create}
               style={{
-                height: 34, padding: '0 1rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700,
+                height: isMobile ? 24 : 28, padding: isMobile ? '0 0.4rem' : '0 0.875rem',
+                borderRadius: 7, fontSize: '0.78rem', fontWeight: 700,
                 background: '#6366f1', color: 'white', border: 'none', cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.4)', flexShrink: 0, whiteSpace: 'nowrap',
-                display: 'flex', alignItems: 'center',
+                boxShadow: '0 2px 6px rgba(99,102,241,0.4)', flexShrink: 0,
+                display: 'flex', alignItems: 'center', gap: 5,
               }}
-            >+ Nouvelle visualisation</button>
+            >
+              <span style={{ fontSize: '0.95rem', lineHeight: 1 }}>+</span>
+              {!isMobile && <span>Nouvelle visualisation</span>}
+            </button>
 
           </div>
         </div>
@@ -398,53 +423,32 @@ export default function VisualizationHome() {
           </div>
         )}
 
-        {/* ── GRILLE DE CARDS (draggable) ── */}
+        {/* ── CARDS ── */}
         {!loading && filtered.length > 0 && (
-          <div ref={cardsRef}>
-            
-            <CustomResponsiveLayout
-              width={cardsBounds.width || window.innerWidth - 48}
-              layouts={{ lg: layoutLG }}
-              breakpoints={{ lg: 1200, md: 768, sm: 480 }}
-              cols={{ lg: 12, md: 6, sm: 1 }}
-              rowHeight={80}
-              onLayoutChange={(l) => setCardsLayout([...l])}
-              draggableHandle='.card-drag-handle'
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={viewMode}
+              className={viewMode === 'grid' ? styles.visualizationsGrid : styles.visualizationsList}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             >
-              {filtered.map(v => (
-                <div key={String(v.id)} style={{
-                  background: 'white', borderRadius: 14, overflow: 'clip',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
-                  border: '1px solid #e2e8f0',
-                  display: 'flex', flexDirection: 'column',
-                  position: 'relative', height: '100%',
-                }}>
-                  {/* Bouton poignée de déplacement */}
-                  <div
-                    className="card-drag-handle"
-                    title="Maintenir pour déplacer"
-                    style={{
-                      position: 'absolute', top: 6, left: 6, zIndex: 20,
-                      width: 20, height: 20, borderRadius: 5,
-                      background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'grab', userSelect: 'none', fontSize: '0.7rem', color: '#6366f1',
-                      lineHeight: 1,
-                    }}
-                  >⠿</div>
-                  <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                    <VisualizationViewModule
-                      visualization={v}
-                      charts={charts}
-                      removeView={remove}
-                      editView={startEdit}
-                      openView={openView}
-                    />
-                  </div>
-                </div>
+              {filtered.map((v, index) => (
+                <motion.div
+                  key={v.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04 }}
+                >
+                  <VisualizationViewModule
+                    visualization={v}
+                    charts={charts}
+                    removeView={remove}
+                    editView={startEdit}
+                    openView={openView}
+                  />
+                </motion.div>
               ))}
-            </CustomResponsiveLayout>
-          </div>
+            </motion.div>
+          </AnimatePresence>
         )}
 
         {/* BUILDER DRAWER */}
