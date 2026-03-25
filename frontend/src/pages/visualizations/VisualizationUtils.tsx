@@ -1,22 +1,19 @@
-import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { DatasetChart, ExecuteChartResponse } from "@/models/dataset.models";
 import { chartService } from "@/services/dataset.service";
-
-import { Responsive } from "react-grid-layout";
-import useMeasure from "react-use-measure";
-
 import { Button } from "@/components/ui/Button/Button";
-import { Badge } from "@/components/ui/Badge/Badge";
 import { FormInput } from "@/components/forms/FormInput/FormInput";
-
 import { Visualization } from "@/models/visualization.model";
+import { ExportTypes } from "@/components/download/download";
+import { ChartRendererPreview } from "../admins/components/datasets/DatasetCharts/components/chart-utils/ChartRenderer";
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { ExportTypes } from "@/components/download/download";
-import { ChartRendererPreview } from "../admins/components/datasets/DatasetCharts/components/chart-utils/ChartRenderer";
+import useMeasure from "react-use-measure";
+
+import { Breakpoints, Layout, Responsive, ResponsiveProps } from "react-grid-layout";
 
 
 type RendererProps = {
@@ -75,13 +72,7 @@ function VisualizationToolbar({
     });
 
     return (
-        <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.3rem',
-            padding: '0.3rem 0.5rem',
-            background: '#f8fafc',
-            borderBottom: '1px solid #e2e8f0',
-            position: 'relative',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', padding: '0.3rem' }}>
             {/* ── Gauche : nom ── */}
             <span style={{
                 fontWeight: 700, fontSize: '0.82rem', color: '#1e293b',
@@ -101,8 +92,8 @@ function VisualizationToolbar({
             <button onClick={onManualRefresh} style={btnStyle(false)} title="Rafraîchir">🔄</button>
             {sep}
             <button onClick={onFullscreen} style={iconBtn()} title="Plein écran">⛶</button>
-            {onOpen   && <button onClick={onOpen}   style={iconBtn({ background: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' })} title="Ouvrir">📂</button>}
-            {onEdit   && <button onClick={onEdit}   style={iconBtn({ background: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' })} title="Modifier">✏️</button>}
+            {onOpen && <button onClick={onOpen} style={iconBtn({ background: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' })} title="Ouvrir">📂</button>}
+            {onEdit && <button onClick={onEdit} style={iconBtn({ background: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' })} title="Modifier">✏️</button>}
             {onDelete && <button onClick={onDelete} style={iconBtn({ background: '#fef2f2', color: '#b91c1c', borderColor: '#fecaca' })} title="Supprimer">🗑️</button>}
         </div>
     );
@@ -138,6 +129,67 @@ const dropItemStyle = (active: boolean): React.CSSProperties => ({
     color: active ? '#4338ca' : '#1e293b',
     fontWeight: active ? 600 : 400,
 });
+
+
+
+interface MyResponsiveProps extends ResponsiveProps {
+    draggableHandle?: string;
+    measureBeforeMount?: boolean;
+    useCSSTransforms?: boolean;
+    compactType?: "vertical" | "horizontal";
+    preventCollision?: boolean;
+}
+
+const ResponsiveGridLayout = Responsive as React.ComponentType<MyResponsiveProps>;
+
+interface CustomResponsiveLayoutProps {
+    width: number;
+    children: React.ReactNode;
+    layouts: Partial<Record<string, Layout>>;
+    breakpoints?: Record<string, number>
+    cols?: Record<string, number>
+    rowHeight?: number;
+    draggableHandle?: '.chart-drag-handle'|'.card-drag-handle';
+    onLayoutChange?: ((layout: Layout, layouts: Partial<Record<string, Layout>>) => void)
+}
+
+export const CustomResponsiveLayout: React.FC<CustomResponsiveLayoutProps> = ({ children, layouts, rowHeight = 30, breakpoints, draggableHandle='.chart-drag-handle', cols, onLayoutChange }) => {
+    const [ref, bounds] = useMeasure();
+
+    return (
+        <div ref={ref} style={{ width: "100%" }}>
+            <ResponsiveGridLayout
+                layouts={layouts}
+                breakpoints={breakpoints ?? { lg: 1200, md: 996, sm: 768 }}
+                cols={cols ?? { lg: 12, md: 8, sm: 4 }}
+                rowHeight={rowHeight}
+                width={bounds.width}
+                draggableHandle={draggableHandle}
+                onLayoutChange={onLayoutChange}
+                measureBeforeMount={true}       // ⚡ évite les sauts à l’affichage
+                useCSSTransforms={true}         // ⚡ animations fluides pour drag & drop
+                compactType="vertical"
+                preventCollision={false}
+                onBreakpointChange={(bp, cols) => console.log('Breakpoint changed:', bp)}
+                onResizeStop={(layout) => console.log('Resize stopped', layout)}
+                onDragStop={(layout) => console.log('Drag stopped', layout)}
+                margin={[10, 10]}
+                containerPadding={[10, 10]}
+                // maxRows={3}
+                compactor={{
+                    type: 'vertical', 
+                    allowOverlap: false, 
+                    compact:(layout, cols) => layout
+                }}
+                onWidthChange={(width, margin, cols, padding) => {
+
+                }}
+            >
+                {children}
+            </ResponsiveGridLayout>
+        </div>
+    );
+};
 
 // ---------------- CHART ----------------
 export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
@@ -216,66 +268,66 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
         <div style={{ display: 'flex', flexDirection: 'column' }}>
             {/* ── Fullscreen individuel (modal animé) ── */}
             {createPortal(
-            <AnimatePresence>
-                {chartFullscreen && (
-                    <>
-                        <motion.div key="fs-backdrop"
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(3px)' }}
-                            onClick={() => setChartFullscreen(false)}
-                        />
-                        <motion.div key="fs-panel"
-                            initial={{ opacity: 0, scale: 0.94, y: 24 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.94, y: 24 }}
-                            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                            style={{
-                                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                                zIndex: 9999, background: 'white', borderRadius: 0,
-                                boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
-                                display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                            }}
-                        >
-                            {/* Header modal */}
-                            <div style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '0.75rem 1.25rem',
-                                background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-                                flexShrink: 0,
-                            }}>
-                                <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>
-                                    📊 {chart?.name || 'Graphique'}
-                                </span>
-                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                    {/* Boutons export dans le header */}
-                                    {(['png','jpg','excel','csv'] as ExportTypes[]).map(t => (
-                                        <button key={t} style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }} onClick={() => download(t)}>
-                                            ⬇ {t.toUpperCase()}
+                <AnimatePresence>
+                    {chartFullscreen && (
+                        <>
+                            <motion.div key="fs-backdrop"
+                                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                style={{ position: 'fixed', inset: 0, zIndex: 9998, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(3px)' }}
+                                onClick={() => setChartFullscreen(false)}
+                            />
+                            <motion.div key="fs-panel"
+                                initial={{ opacity: 0, scale: 0.94, y: 24 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.94, y: 24 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                                style={{
+                                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                                    zIndex: 9999, background: 'white', borderRadius: 0,
+                                    boxShadow: '0 24px 80px rgba(0,0,0,0.3)',
+                                    display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                                }}
+                            >
+                                {/* Header modal */}
+                                <div style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    padding: '0.75rem 1.25rem',
+                                    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+                                    flexShrink: 0,
+                                }}>
+                                    <span style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>
+                                        📊 {chart?.name || 'Graphique'}
+                                    </span>
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        {/* Boutons export dans le header */}
+                                        {(['png', 'jpg', 'excel', 'csv'] as ExportTypes[]).map(t => (
+                                            <button key={t} style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }} onClick={() => download(t)}>
+                                                ⬇ {t.toUpperCase()}
+                                            </button>
+                                        ))}
+                                        <button style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }} onClick={executeQuery}>
+                                            🔄 Rafraîchir
                                         </button>
-                                    ))}
-                                    <button style={{ ...exportBtn, background: 'rgba(255,255,255,0.12)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }} onClick={executeQuery}>
-                                        🔄 Rafraîchir
-                                    </button>
-                                    <button
-                                        onClick={() => setChartFullscreen(false)}
-                                        style={{
-                                            marginLeft: 8, background: 'rgba(255,255,255,0.15)', border: 'none',
-                                            color: 'white', borderRadius: 8, width: 32, height: 32,
-                                            cursor: 'pointer', fontSize: '1rem', display: 'flex',
-                                            alignItems: 'center', justifyContent: 'center',
-                                        }}
-                                    >✕</button>
+                                        <button
+                                            onClick={() => setChartFullscreen(false)}
+                                            style={{
+                                                marginLeft: 8, background: 'rgba(255,255,255,0.15)', border: 'none',
+                                                color: 'white', borderRadius: 8, width: 32, height: 32,
+                                                cursor: 'pointer', fontSize: '1rem', display: 'flex',
+                                                alignItems: 'center', justifyContent: 'center',
+                                            }}
+                                        >✕</button>
+                                    </div>
                                 </div>
-                            </div>
-                            {/* Contenu pleine hauteur */}
-                            <div style={{ flex: 1, padding: '1.5rem', minHeight: 0 }}>
-                                <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-            , document.body)}
+                                {/* Contenu pleine hauteur */}
+                                <div style={{ flex: 1, padding: '1.5rem', minHeight: 0 }}>
+                                    <ChartRendererPreview ref={chartRef} executeResponse={response} withContainer={false} customOptions={options} />
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+                , document.body)}
 
             {/* Barre export par graphique */}
             {showExport && (
@@ -285,7 +337,7 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
                     background: '#f1f5f9',
                     borderBottom: '1px solid #e2e8f0',
                 }}>
-                    {(['png','jpg','pdf-landscape','pdf-portrait','excel','csv','json'] as ExportTypes[]).map(t => (
+                    {(['png', 'jpg', 'pdf-landscape', 'pdf-portrait', 'excel', 'csv', 'json'] as ExportTypes[]).map(t => (
                         <button key={t} style={exportBtn} onClick={() => download(t)}>
                             ⬇ {t === 'pdf-landscape' ? 'PDF (L)' : t === 'pdf-portrait' ? 'PDF (P)' : t.toUpperCase()}
                         </button>
@@ -294,11 +346,8 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
             )}
 
             {/* Graphique avec icônes superposées */}
-            <div style={{ position: 'relative', minHeight: 220 }}>
-                <div style={{
-                    position: 'absolute', top: 6, right: 6, zIndex: 10,
-                    display: 'flex', gap: 4,
-                }}>
+            <div style={{ minHeight: 220 }}>
+                <div style={{ position: 'absolute', top: 6, right: 6, zIndex: 10, display: 'flex', gap: 4 }}>
                     <button onClick={() => setShowExport(v => !v)} style={btnStyle(showExport)} title="Export">📄</button>
                     <button onClick={executeQuery} style={btnStyle(false)} title="Rafraîchir">🔄</button>
                     <button onClick={() => setChartFullscreen(true)} style={btnStyle(false)} title="Plein écran">⛶</button>
@@ -310,7 +359,7 @@ export function VisualizationChartRenderer({ chart, filters }: RendererProps) {
 };
 
 // ---------------- DASHBOARD ----------------
-export function VisualizationViewModule({ visualization, charts, refreshSecond=10, editView, removeView, openView, refreshView, autoRefresh }: ViewerProps) {
+export function VisualizationViewModule({ visualization, charts, refreshSecond = 10, editView, removeView, openView, refreshView, autoRefresh }: ViewerProps) {
 
     const [ref, bounds] = useMeasure();
 
@@ -334,9 +383,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
     if (!viz) return <Skeleton />;
 
     const rawLayout = viz.layout || [];
-    const layoutArray: any[] = Array.isArray(rawLayout)
-        ? rawLayout
-        : (rawLayout as any)['lg'] ?? Object.values(rawLayout)[0] ?? [];
+    const layoutArray: any[] = Array.isArray(rawLayout) ? rawLayout : (rawLayout as any)['lg'] ?? Object.values(rawLayout)[0] ?? [];
     const layout = layoutArray.map((item: any) => ({ ...item }));
 
     const getChart = (id: number) => charts?.find((c) => c.id === id);
@@ -347,15 +394,17 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
         return (
             <div ref={ref} style={{ width: '100%' }}>
                 {!layout.length ? (
-                    <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Aucun graphique dans ce dashboard</div>
+                    <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                        Aucun graphique dans ce dashboard
+                    </div>
                 ) : (
-                    <Responsive
+                    <CustomResponsiveLayout
                         width={bounds.width || (fsMode ? window.innerWidth * 0.96 : 800)}
                         layouts={{ lg: layout }}
                         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                         cols={{ lg: 12, md: 8, sm: 4 }}
                         rowHeight={rh}
-                        {...{ draggableHandle: '.chart-drag-handle' }}
+                        draggableHandle='.chart-drag-handle'
                     >
                         {layout.map((item: any) => {
                             const chart = getChart(item.chart_id);
@@ -373,13 +422,11 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                                 </div>
                             );
                         })}
-                    </Responsive>
+                    </CustomResponsiveLayout>
                 )}
             </div>
         );
     };
-    const cardGrid = () => makeGrid(false);
-    const fullscreenGrid = () => makeGrid(true);
 
     return (
         <>
@@ -411,8 +458,8 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
                         <Button size="sm" onClick={() => setShowFilters(false)}>Appliquer</Button>
                     </div>
                 )}
+            {makeGrid(false)}
             </div>
-            {cardGrid()}
 
             {/* ── Fullscreen dashboard (modal animé) ── */}
             {createPortal(<AnimatePresence>
@@ -466,7 +513,7 @@ export function VisualizationViewModule({ visualization, charts, refreshSecond=1
 
                             {/* Grille fullscreen */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
-                                {fullscreenGrid()}
+                                {makeGrid(true)}
                             </div>
                         </motion.div>
                     </>

@@ -115,7 +115,9 @@ export const TableRenderer = ({ chart, data, customOptions }: ChartRenderProp) =
   }, [options.exportable, customOptions?.showExportBtn]);
 
   return (
-    <div className="border rounded bg-white p-4">
+    <div 
+    // className="border rounded bg-white p-4"
+    >
 
       {/* TITLE */}
       {(options.title && (customOptions?.showTitle !== false)) && (
@@ -144,8 +146,10 @@ export const TableRenderer = ({ chart, data, customOptions }: ChartRenderProp) =
       </div>)}
 
       {/* TABLE */}
-      <div className="overflow-auto max-h-[600px]">
-        <table className="table-auto w-full border-collapse text-sm">
+      {/* <div className="overflow-auto max-h-[600px]"> */}
+        <table 
+        // className="table-auto w-full border-collapse text-sm"
+        >
           <thead className="sticky top-0 bg-gray-100 z-10">
             {headerRows.map((headerRow, i) => {
               const isLast = i === headerRows.length - 1;
@@ -243,7 +247,7 @@ export const TableRenderer = ({ chart, data, customOptions }: ChartRenderProp) =
             })}
           </tbody>
         </table>
-      </div>
+      {/* </div> */}
 
       {/* PAGINATION */}
       {options.pagination && (

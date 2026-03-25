@@ -71,7 +71,7 @@ export const ChartRendererPreview = forwardRef((props: Props, ref) => {
   if (!Renderer) return <div className="text-gray-400 p-4">Aperçu non disponible</div>;
 
   return (
-    <div ref={containerRef} style={{ background: "#fafafa", padding: withContainer ? 16 : undefined }} className="w-full h-full bg-white flex flex-col">
+    <div ref={containerRef} style={{ background: "#fafafa", padding: '0.3rem',}} className="w-full h-full bg-white flex flex-col">
       {withContainer && (
         <div className="p-3 border-b bg-gray-50 text-sm font-semibold">
           {chart?.name || "Chart Preview"}

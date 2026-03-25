@@ -54,7 +54,8 @@ export interface Visualization {
     shares?: VisualizationShare[];
     dhis2_validations?: VisualizationDhis2Validation[];
     views?: VisualizationView[]
-    targets?: DataTarget[]
+    targets?: DataTarget[];
+    updated_at?: number;
 }
 
 export interface VisualizationChart {
