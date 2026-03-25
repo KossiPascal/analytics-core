@@ -1,31 +1,32 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import useMeasure from "react-use-measure";
+
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { Button } from "@/components/ui/Button/Button";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { tenantService } from "@/services/identity.service";
 import { visualizationService } from "@/services/visualization.service";
 import { chartService } from "@/services/dataset.service";
+
 import { Visualization, VisualLayoutItem } from "@/models/visualization.model";
 import { DatasetChart } from "@/models/dataset.models";
+
 import { Tenant } from "@/models/identity.model";
 import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
-import { CustomResponsiveLayout, VisualizationChartRenderer, VisualizationViewModule } from "./VisualizationUtils";
-import { ConfirmModal } from "@components/ui/ConfirmModal/ConfirmModal";
-import { RenamesOptionsModal } from "../admins/components/datasets/DatasetCharts/components/chart-utils/RenamesOptionsModal";
 
-import useMeasure from "react-use-measure";
+import { CustomResponsiveLayout, VisualizationChartRenderer, VisualizationViewModule, statusColor } from "./VisualizationUtils";
+import { ConfirmModal } from "@components/ui/ConfirmModal/ConfirmModal";
+
+import { RenamesOptionsModal } from "../admins/components/datasets/DatasetCharts/components/chart-utils/RenamesOptionsModal";
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
 const STATUS = ["draft", "submitted", "reviewed", "approved", "published", "archived"];
 const TYPES = ["dashboard", "report"];
-
-
-
-
 
 
 function JsonConfigSection({ form, setForm, onOpenConfigModal }: {
@@ -159,11 +160,6 @@ export default function VisualizationHome() {
     fetchCharts();
   }
 
-  const refreshView = async (id: number | null) => {
-    console.log("👉 refresh...");
-    // Make refresh view function
-    refresh();
-  }
 
   useEffect(() => {
     if (!tenant_id) return;
@@ -284,6 +280,7 @@ export default function VisualizationHome() {
     return Math.ceil(total / 80) + 1;
   };
 
+
   const layoutLG = useMemo(() => {
     return cardsLayout.length === filtered.length
       ? cardsLayout
@@ -324,48 +321,55 @@ export default function VisualizationHome() {
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 
-          {/* Recherche */}
-          <div style={{ width: 220, position: 'relative' }}>
+          {/* Groupe droite responsive */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+
+            {/* Recherche */}
             <input
               placeholder="🔍 Rechercher..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
-                width: '100%', padding: '0.4rem 0.75rem',
+                minWidth: 140, maxWidth: 200, flex: '1 1 140px', height: 34, padding: '0 0.75rem',
                 borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)',
                 background: 'rgba(255,255,255,0.1)', color: 'white',
-                fontSize: '0.8rem', outline: 'none',
-                '::placeholder': { color: '#94a3b8' },
+                fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box',
               } as React.CSSProperties}
             />
-          </div>
 
-          {/* Filtre statut */}
-          <div style={{ width: 160 }}>
-            <FormSelect
-              value={statusFilter}
-              options={[{ value: "", label: "Tous les statuts" }, ...STATUS.map(s => ({ value: s, label: s }))]}
-              onChange={setStatusFilter}
-            />
-          </div>
+            {/* Filtre statut */}
+            <div style={{ flex: '1 1 140px', maxWidth: 165, height: 34 }}>
+              <FormSelect
+                value={statusFilter}
+                options={[{ value: "", label: "Tous les statuts" }, ...STATUS.map(s => ({ value: s, label: s }))]}
+                onChange={setStatusFilter}
+                variant="dark"
+              />
+            </div>
 
-          {/* Actions */}
-          <button
-            onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}
-            style={{
-              padding: '0.4rem 0.75rem', borderRadius: 8, fontSize: '0.78rem', fontWeight: 600,
-              background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.15)',
-              cursor: 'pointer', flexShrink: 0,
-            }}
-          >{viewMode === 'grid' ? '☰' : '⊞'}</button>
-          <button
-            onClick={create}
-            style={{
-              padding: '0.45rem 1rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700,
-              background: '#6366f1', color: 'white', border: 'none', cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(99,102,241,0.4)', flexShrink: 0, whiteSpace: 'nowrap',
-            }}
-          >+ Nouvelle visualisation</button>
+            {/* Toggle vue grille/liste */}
+            <button
+              onClick={() => { setViewMode(v => v === 'grid' ? 'list' : 'grid'); setCardsLayout([]); }}
+              title={viewMode === 'grid' ? 'Vue liste' : 'Vue grille'}
+              style={{
+                height: 34, width: 34, borderRadius: 8, fontSize: '1rem', fontWeight: 600,
+                background: 'rgba(255,255,255,0.1)', color: 'white', border: '1px solid rgba(255,255,255,0.15)',
+                cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >{viewMode === 'grid' ? '☰' : '⊞'}</button>
+
+            {/* Nouvelle visualisation */}
+            <button
+              onClick={create}
+              style={{
+                height: 34, padding: '0 1rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700,
+                background: '#6366f1', color: 'white', border: 'none', cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(99,102,241,0.4)', flexShrink: 0, whiteSpace: 'nowrap',
+                display: 'flex', alignItems: 'center',
+              }}
+            >+ Nouvelle visualisation</button>
+
+          </div>
         </div>
       </div>{/* /sticky wrapper */}
 
@@ -397,6 +401,7 @@ export default function VisualizationHome() {
         {/* ── GRILLE DE CARDS (draggable) ── */}
         {!loading && filtered.length > 0 && (
           <div ref={cardsRef}>
+            
             <CustomResponsiveLayout
               width={cardsBounds.width || window.innerWidth - 48}
               layouts={{ lg: layoutLG }}
@@ -434,8 +439,6 @@ export default function VisualizationHome() {
                       removeView={remove}
                       editView={startEdit}
                       openView={openView}
-                      refreshView={refreshView}
-                      autoRefresh={refreshView}
                     />
                   </div>
                 </div>

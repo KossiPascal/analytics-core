@@ -6,11 +6,25 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, List, Plus, Search, Filter, ChevronDown, AlertCircle, BarChart3, FileText, RefreshCw } from 'lucide-react';
+import {
+  LayoutGrid,
+  List,
+  Plus,
+  Search,
+  Filter,
+  ChevronDown,
+  AlertCircle,
+  BarChart3,
+  FileText,
+  RefreshCw,
+} from 'lucide-react';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { Card, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { GraduationLoader } from '@components/loaders/GraduationLoader/GraduationLoader';
+import { type VisualizationWithData } from '@/contexts/OLD/useVisualizations';
+import { ROUTES } from '@routes/configs';
+import styles from './Visualization.module.css';
 import { useAuth } from '@/contexts/AuthContext';
 import { DatasetChart } from '@/models/dataset.models';
 import { Visualization } from '@/models/visualization.model';
@@ -18,9 +32,6 @@ import { chartService } from '@/services/dataset.service';
 import { visualizationService } from '@/services/visualization.service';
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { VisualizationViewModule } from "./VisualizationUtils";
-import { type VisualizationWithData } from '@/contexts/OLD/useVisualizations';
-import { ROUTES } from '@routes/configs';
-import styles from './Visualization.module.css';
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
@@ -309,11 +320,23 @@ export default function VisualizationView() {
                 <LayoutGrid size={64} />
                 <h3>Aucune visualisation</h3>
                 {search || filterType !== 'all' ? (
-                  <p>Aucune visualisation ne correspond à vos critères de recherche.<br />Essayez de modifier vos filtres.</p>
+                  <p>
+                    Aucune visualisation ne correspond à vos critères de recherche.
+                    <br />
+                    Essayez de modifier vos filtres.
+                  </p>
                 ) : (
                   <>
-                    <p>Vous n&apos;avez pas encore créé de visualisation.<br />Commencez par créer votre première visualisation.</p>
-                    <Button variant="primary" size="md" onClick={handleCreate} >
+                    <p>
+                      Vous n&apos;avez pas encore créé de visualisation.
+                      <br />
+                      Commencez par créer votre première visualisation.
+                    </p>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      onClick={handleCreate}
+                    >
                       <Plus size={18} />
                       Créer une visualisation
                     </Button>
@@ -336,7 +359,7 @@ export default function VisualizationView() {
                     transition={{ delay: index * 0.05 }}
                   >
                     {/* <Card key={viz.id} style={{ padding: "5px" }} className="hover:shadow-xl transition-all rounded-2xl"> */}
-                    <VisualizationViewModule visualization={viz} charts={charts} refreshView={refreshView} autoRefresh={refreshView} />
+                      <VisualizationViewModule visualization={viz} charts={charts} />
                     {/* </Card> */}
 
                   </motion.div>

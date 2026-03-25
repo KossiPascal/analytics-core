@@ -234,6 +234,37 @@
   min-height: 400px;
 }
 
+/* Visualizations Grid */
+/* .visualizationsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .visualizationsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .visualizationsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .visualizationsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1536px) {
+  .visualizationsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+} */
+
 .visualizationsGrid {
   display: grid;
   gap: 1.5rem; /* espace horizontal et vertical */
@@ -280,7 +311,6 @@
     min-width: 200px; /* minimum plus petit sur très petits écrans */
   }
 }
-
 /* Visualizations List */
 .visualizationsList {
   display: flex;
