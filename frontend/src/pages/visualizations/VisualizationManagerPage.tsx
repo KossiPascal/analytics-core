@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import useMeasure from "react-use-measure";
+import { LayoutGrid, List, Search, Filter } from "lucide-react";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { useAuth } from "@/contexts/AuthContext";
 import { tenantService } from "@/services/identity.service";
@@ -14,8 +16,6 @@ import { VisualizationFormBuilder } from "./components/VisualizationFormBuilder"
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { CustomResponsiveLayout } from "./components/CustomResponsiveLayout";
-import useMeasure from "react-use-measure";
 
 
 const getDefaultForm = (): VisualizationForm => ({
@@ -95,7 +95,17 @@ export default function VisualizationHome() {
   }
 
   const closeConfirm = () => setConfirmState(s => ({ ...s, isOpen: false }));
+
+  const [ref, bounds] = useMeasure();
+  const [showStatusDrop, setShowStatusDrop] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
   const didLoad = useRef(false);
+
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', fn);
+    return () => window.removeEventListener('resize', fn);
+  }, []);
 
   // ---------------- INIT ----------------
   useEffect(() => {
@@ -252,30 +262,69 @@ export default function VisualizationHome() {
           <div style={{ flex: 1 }} />
 
           {/* Groupe droite responsive */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
 
             {/* Recherche */}
-            <input
-              placeholder="🔍 Rechercher..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{
-                minWidth: 140, maxWidth: 200, flex: '1 1 140px', height: 34, padding: '0 0.75rem',
-                borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)',
-                background: 'rgba(255,255,255,0.1)', color: 'white',
-                fontSize: '0.8rem', outline: 'none', boxSizing: 'border-box',
-              } as React.CSSProperties}
-            />
-
-            {/* Filtre statut */}
-            <div style={{ flex: '1 1 140px', maxWidth: 165, height: 34 }}>
-              <FormSelect
-                value={statusFilter}
-                options={[{ value: "", label: "Tous les statuts" }, ...STATUS.map(s => ({ value: s, label: s }))]}
-                onChange={setStatusFilter}
-                variant="dark"
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Search size={12} color="rgba(255,255,255,0.7)" style={{ position: 'absolute', left: 7, pointerEvents: 'none' }} />
+              <input
+                placeholder={isMobile ? '' : 'Rechercher...'}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{
+                  width: isMobile ? 24 : 170, height: isMobile ? 24 : 28,
+                  padding: '0 0.5rem 0 24px',
+                  borderRadius: 7, border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.1)', color: 'white',
+                  fontSize: '0.75rem', outline: 'none', boxSizing: 'border-box',
+                  transition: 'width 0.25s',
+                } as React.CSSProperties}
+                onFocus={e => { if (isMobile) e.currentTarget.style.width = '130px'; }}
+                onBlur={e => { if (isMobile && !search) e.currentTarget.style.width = '28px'; }}
               />
             </div>
+
+            {/* Filtre statut — icône sur mobile, select sur desktop */}
+            {isMobile ? (
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowStatusDrop(v => !v)} title="Filtrer par statut"
+                  style={{
+                    height: 24, width: 24, borderRadius: 6,
+                    background: statusFilter ? '#6366f1' : 'rgba(255,255,255,0.1)',
+                    color: 'white', border: '1px solid rgba(255,255,255,0.2)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                ><Filter size={11} color="white" /></button>
+                {showStatusDrop && (
+                  <div style={{
+                    position: 'absolute', top: 32, right: 0, zIndex: 300,
+                    background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: 8, minWidth: 150, overflow: 'hidden',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                  }}>
+                    {[{ value: '', label: 'Tous les statuts' }, ...STATUS.map(s => ({ value: s, label: s }))].map(opt => (
+                      <button key={opt.value} onClick={() => { setStatusFilter(opt.value); setShowStatusDrop(false); }}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '0.45rem 0.75rem', fontSize: '0.78rem', border: 'none', cursor: 'pointer',
+                          background: statusFilter === opt.value ? '#6366f1' : 'transparent',
+                          color: 'white',
+                        }}
+                      >{opt.label}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ width: 150, height: 28 }}>
+                <FormSelect
+                  value={statusFilter}
+                  options={[{ value: "", label: "Tous les statuts" }, ...STATUS.map(s => ({ value: s, label: s }))]}
+                  onChange={setStatusFilter}
+                  variant="dark"
+                />
+              </div>
+            )}
 
             {/* Toggle vue grille/liste */}
             <ViewGridOrListModeBtn
@@ -284,17 +333,30 @@ export default function VisualizationHome() {
               setCardsLayout={setCardsLayout}
             />
 
-            {/* Nouvelle visualisation */}
             <button
-              onClick={create}
+              onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}
+              title={viewMode === 'grid' ? 'Vue liste' : 'Vue grille'}
               style={{
-                height: 34, padding: '0 1rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700,
+                height: isMobile ? 24 : 28, width: isMobile ? 24 : 28, borderRadius: 7,
+                background: 'rgba(255,255,255,0.1)', color: 'white',
+                border: '1px solid rgba(255,255,255,0.2)',
+                cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >{viewMode === 'grid' ? <List size={isMobile ? 11 : 14} color="white" /> : <LayoutGrid size={isMobile ? 11 : 14} color="white" />}</button>
+
+
+            {/* Nouvelle visualisation */}
+            <button onClick={create}
+              style={{
+                height: isMobile ? 24 : 28, padding: isMobile ? '0 0.4rem' : '0 0.875rem',
+                borderRadius: 7, fontSize: '0.78rem', fontWeight: 700,
                 background: '#6366f1', color: 'white', border: 'none', cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.4)', flexShrink: 0, whiteSpace: 'nowrap',
-                display: 'flex', alignItems: 'center',
+                boxShadow: '0 2px 6px rgba(99,102,241,0.4)', flexShrink: 0,
+                display: 'flex', alignItems: 'center', gap: 5,
               }}
             >
-              + Nouvelle visualisation
+              <span style={{ fontSize: '0.95rem', lineHeight: 1 }}>+</span>
+              {!isMobile && <span>Nouvelle visualisation</span>}
             </button>
 
           </div>
@@ -326,7 +388,7 @@ export default function VisualizationHome() {
           </div>
         )}
 
-        {/* ── GRILLE DE CARDS (draggable) ── */}
+        {/* ── CARDS ── */}
         {!loading && filtered.length > 0 && (
           <div ref={cardsRef} style={{ width: "100%" }}>
             {/* <CustomResponsiveLayout
@@ -356,6 +418,30 @@ export default function VisualizationHome() {
             />
             {/* </CustomResponsiveLayout> */}
           </div>
+          // <AnimatePresence mode="wait">
+          //   <motion.div
+          //     key={viewMode}
+          //     className={viewMode === 'grid' ? styles.visualizationsGrid : styles.visualizationsList}
+          //     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          //   >
+          //     {filtered.map((v, index) => (
+          //       <motion.div
+          //         key={v.id}
+          //         initial={{ opacity: 0, y: 16 }}
+          //         animate={{ opacity: 1, y: 0 }}
+          //         transition={{ delay: index * 0.04 }}
+          //       >
+          //         <VisualizationViewModule
+          //           visualization={v}
+          //           charts={charts}
+          //           removeView={remove}
+          //           editView={startEdit}
+          //           openView={openView}
+          //         />
+          //       </motion.div>
+          //     ))}
+          //   </motion.div>
+          // </AnimatePresence>
         )}
 
 
