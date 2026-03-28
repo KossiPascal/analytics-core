@@ -14,6 +14,8 @@ import { VisualizationFormBuilder } from "./components/VisualizationFormBuilder"
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import { CustomResponsiveLayout } from "./components/CustomResponsiveLayout";
+import useMeasure from "react-use-measure";
 
 
 const getDefaultForm = (): VisualizationForm => ({
@@ -220,6 +222,7 @@ export default function VisualizationHome() {
   }, [cardsLayout, filtered]);
 
 
+  const [cardsRef, cardsBounds] = useMeasure();
   // ---------------- UI ----------------
   return (
     <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
@@ -323,8 +326,34 @@ export default function VisualizationHome() {
 
         {/* ── GRILLE DE CARDS (draggable) ── */}
         {!loading && filtered.length > 0 && (
-          // <BuildVisualizationView visualizations={filtered} refreshSecond={refreshSecond} removeView={removeView} editView={editView} openView={openView} refreshView={refreshView} autoRefresh={autoRefresh} />
-          <BuildVisualizationView visualizations={filtered} removeView={removeView} editView={editView} openView={openView} />
+          <div ref={cardsRef} style={{ width: "100%" }}>
+            {/* <CustomResponsiveLayout
+              width={1800}
+              // layouts={responsiveLayouts}
+              layouts={{
+                lg: layoutLG,
+                md: layoutLG.map(l => ({ ...l, w: 8 })),
+                sm: layoutLG.map(l => ({ ...l, w: 4 })),
+              }}
+            // breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            // cols={{ lg: 12, md: 8, sm: 4 }}
+            // rowHeight={120}
+            // onLayoutChange={(layout, layouts) => setCardsLayout(layouts as Record<BreakPointType, VisualLayoutItem[]>) }}
+            // // onBreakpointChange={(newBp) => setBp(newBp)}
+            // draggableHandle='.card-drag-handle'
+            > */}
+
+              <BuildVisualizationView
+                visualizations={filtered}
+                removeView={removeView}
+                editView={editView}
+                openView={openView}
+              // refreshSecond={refreshSecond}
+              // refreshView={refreshView} 
+              // autoRefresh={autoRefresh}
+              />
+            {/* </CustomResponsiveLayout> */}
+          </div>
         )}
 
 

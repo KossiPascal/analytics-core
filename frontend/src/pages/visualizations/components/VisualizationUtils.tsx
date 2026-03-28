@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { Layout, ResponsiveLayouts } from "react-grid-layout";
-import { VisualizationForm } from "@/models/visualization.model";
-import { FormTextarea } from "@/components/forms/FormTextarea/FormTextarea";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { LayoutGrid } from "lucide-react";
