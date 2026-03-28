@@ -65,9 +65,9 @@ class Tenant(db.Model, MetaxMixin):
     ssh_configs = db.relationship("DataSourceSSHConfig", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     credentials = db.relationship("DataSourceCredential", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     histories = db.relationship("DataSourceHistory", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    visualization_execution_logs = db.relationship("VisualizationExecutionLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    executions = db.relationship("VisualizationExecution", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     dhis2_validations = db.relationship("VisualizationDhis2Validation", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    data_lineages = db.relationship("DataLineage", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    lineages = db.relationship("DataLineage", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     ai_query_logs = db.relationship("AIQueryLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     scripts = db.relationship("Script", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
@@ -79,6 +79,8 @@ class Tenant(db.Model, MetaxMixin):
     visualization_views = db.relationship("VisualizationView", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
     visualization_shares = db.relationship("VisualizationShare", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
     data_targets = db.relationship("DataTarget", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
+    layouts = db.relationship("VisualizationLayout", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
+    definitions = db.relationship("VisualizationDefinition", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
 
 
     def to_dict(self, include_relations:bool=False):
@@ -106,9 +108,9 @@ class Tenant(db.Model, MetaxMixin):
                 "ssh_configs": [d.to_dict(include_relations=False) for d in self.ssh_configs],
                 "credentials": [d.to_dict(include_relations=False) for d in self.credentials],
                 "histories": [d.to_dict(include_relations=False) for d in self.histories],
-                "visualization_execution_logs": [d.to_dict(include_relations=False) for d in self.visualization_execution_logs],
+                "executions": [d.to_dict(include_relations=False) for d in self.executions],
                 "dhis2_validations": [d.to_dict(include_relations=False) for d in self.dhis2_validations],
-                "data_lineages": [d.to_dict(include_relations=False) for d in self.data_lineages],
+                "lineages": [d.to_dict(include_relations=False) for d in self.lineages],
                 "ai_query_logs": [d.to_dict(include_relations=False) for d in self.ai_query_logs],
                 "scripts": [d.to_dict(include_relations=False) for d in self.scripts],
                 "scripts_execution_logs": [d.to_dict(include_relations=False) for d in self.scripts_execution_logs],

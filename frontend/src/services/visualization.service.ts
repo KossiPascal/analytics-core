@@ -1,5 +1,5 @@
 
-import { VisualizationStatus, VisualizationState, Visualization, VisualizationShare, VisualizationDhis2Validation, VisualizationView, VisualizationChart } from '@/models/visualization.model';
+import { Visualization, VisualizationStatus, VisualizationState, VisualizationShare, VisualizationDhis2Validation, VisualizationView, VisualizationChart, VisualizationForm } from '@/models/visualization.model';
 import { CRUDService } from '@services/acrud.service';
 
 
@@ -18,8 +18,8 @@ export const visualizationService = {
     list: (tenant_id: number) => visualizations.all<Visualization>(``, { options: { params: { tenant_id } } }),
     list_with: (prop: ListWith) => visualizations.all<Visualization>(``, { options: { params: { ...prop } } }),
     get: (tenant_id: number, id: number) => visualizations.all<Visualization>(`/${id}`, { options: { params: { tenant_id } } }),
-    create: (data: Visualization) => visualizations.create("", data),
-    update: (id: number, data: Visualization) => visualizations.update("", id, data),
+    create: (data: VisualizationForm) => visualizations.create("", data),
+    update: (id: number, data: VisualizationForm) => visualizations.update("", id, data),
     remove: (id: number) => visualizations.remove("", id),
     bulkDelete: (tenant_id:number, ids: number[]) => visualizations.post("/bulk-delete", ids, { options: { params: { tenant_id } } }),
 

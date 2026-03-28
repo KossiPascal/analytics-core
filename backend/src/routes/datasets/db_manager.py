@@ -5,7 +5,7 @@ from flask import current_app
 from typing import Any, Dict, List, Optional
 from backend.src.databases.extensions import db, scheduler
 from backend.src.models.datasets.dataset import DbObjectType
-from sqlalchemy import bindparam, inspect, text
+from sqlalchemy import RowMapping, Tuple, bindparam, inspect, text
 from sqlalchemy.sql.elements import TextClause
 from backend.src.routes.datasets.query.sql_compiler import ALLOWED_PATTERN, FORBIDDEN_PATTERNS, VALID_SQL_IDENTIFIER
 
@@ -469,6 +469,42 @@ class SqlIntrospector:
         # sinon simple SELECT
         return f"{sql_clean} LIMIT {limit}"
 
+
+    @classmethod
+    def _fetch_db_columns(cls, sql: str, values: dict = None)->tuple[Dict[str, tuple], List[Dict], RowMapping]:
+        # 🔹 SQL brut
+        selected_sql = cls.unwrap_sql(sql)
+        final_sql = cls.add_limit(selected_sql, 1)
+        wrapped_sql = f"SELECT * FROM ({final_sql}) AS subquery LIMIT 1"
+        # wrapped_sql = f"WITH subquery AS ({final_sql}) SELECT * FROM subquery LIMIT 1"
+
+        sql_values = values or {}
+
+        with db.engine.connect() as conn:
+            result = conn.execute(text(wrapped_sql), {**sql_values})
+            row = result.mappings().first()
+            column_names = result.keys()
+            # 🔹 noms de colonnes
+            if not column_names:
+                return [], {}, {}
+
+            # 🔥 récupérer tous les types en une seule requête
+            temp_result = conn.execute(text(f"SELECT * FROM ({selected_sql}) AS subq LIMIT 0"), sql_values)
+            cursor = getattr(temp_result, "cursor", None)
+
+            description = cursor.description if cursor else []
+            oids = [col.type_code for col in description] if description else []
+
+            type_map = {}
+
+            if oids:
+                # oids_sql = "SELECT oid, typname AS type FROM pg_type WHERE oid = ANY(:oids)"
+                oids_sql = "SELECT oid, format_type(oid, NULL) AS type FROM pg_type WHERE oid = ANY(:oids)"
+                rows = conn.execute(text(oids_sql),{"oids": oids}).fetchall()
+                type_map = {r.oid: r.type for r in rows}
+
+            return description, type_map, row
+
     @classmethod
     def get_columns(cls, sql: str = None, object_name: str = None, values: dict = {}, schema: str = "public") -> List[Dict[str, str]]:
         """
@@ -492,7 +528,7 @@ class SqlIntrospector:
                     AND NOT a.attisdropped
                     ORDER BY a.attnum;
                 """
-                params = {**(values or {}), "object_name": object_name, "schema": schema}
+                params = {"object_name": object_name, "schema": schema}
                 result = db.session.execute(text(query), params).mappings().all()
 
                 return [
@@ -501,77 +537,40 @@ class SqlIntrospector:
                 ]
 
             elif sql:
-                # 🔹 SQL brut
-                selected_sql = cls.unwrap_sql(sql)
-                final_sql = cls.add_limit(selected_sql, 1)
-
-                wrapped_sql = f"SELECT * FROM ({final_sql}) AS subquery LIMIT 1"
-                # wrapped_sql = f"WITH subquery AS ({final_sql})bSELECT * FROM subquery LIMIT 1"
-
-                with db.engine.connect() as conn:
-                    result = conn.execute(text(wrapped_sql), {**(values or {})})
-                    row = result.mappings().first()
-                    if not row:
-                        return []
-
-                    oids = [col.type_code for col in result.cursor.description]
-
-                    # récupérer tous les types en une seule requête
-                    type_map = {}
-                    if oids:
-                        oids_sql = "SELECT oid, format_type(oid, NULL) FROM pg_type WHERE oid = ANY(:oids)"
-                        rows = conn.execute(text(oids_sql),{"oids": oids}).fetchall()
-                        type_map = {r[0]: r[1] for r in rows}
-
-                    columns = [
-                        {"name": col.name, "type": cls._map_pg_type(type_map.get(col.type_code, "unknown"))}
-                        for col in result.cursor.description
-                    ]
+                    description, type_map, _ = cls._fetch_db_columns(sql, values)
+                    columns = []
+                    for col in description:
+                        pg_type = type_map.get(col.type_code, "unknown")
+                        columns.append({
+                            "name": col.name,
+                            "type": cls._map_pg_type(pg_type)
+                        })
                     return columns
 
-            else:
-                return []
+            return []
 
         except Exception as e:
             raise ValueError(f"SQL introspection error: {e}")
 
+
     @classmethod
     def get_columns_mapped(cls, sql: str, values: dict = None)->Dict[str, str]:
         # 🔹 SQL brut
-        selected_sql = cls.unwrap_sql(sql)
-        final_sql = cls.add_limit(selected_sql, 1)
-        wrapped_sql = f"SELECT * FROM ({final_sql}) AS subq LIMIT 1"
+        description, type_map, row = cls._fetch_db_columns(sql, values)
+        if not row:
+            return {}
 
-        with db.engine.connect() as conn:
-            result = conn.execute(text(wrapped_sql), {**(values or {})})
-            row = result.mappings().first()
-            cursor = result.cursor
+        output = {}
+        for i, col in enumerate(description):
+            name = col.name
+            pg_type = type_map.get(col.type_code, "unknown")
+            output[name] = { 
+                "value": row.get(name), 
+                "sql_type": pg_type, 
+                "app_type": cls._map_pg_type(pg_type) 
+            }
 
-            if not row or not cursor:
-                return {}
-
-            # 🔥 récupérer tous les types en une seule requête
-            oids = [col.type_code for col in cursor.description]
-
-            type_rows = conn.execute(
-                text("SELECT oid, typname FROM pg_type WHERE oid = ANY(:oids)"),
-                {"oids": oids}
-            ).fetchall()
-
-            oid_map = {r.oid: r.typname for r in type_rows}
-
-            output = {}
-
-            for i, col in enumerate(cursor.description):
-                name = col.name
-                type_name = oid_map.get(col.type_code)
-                output[name] = { 
-                    "value": row[name], 
-                    "sql_type": type_name, 
-                    "app_type": cls._map_pg_type(type_name) 
-                }
-
-            return output
+        return output
 
     @classmethod
     def sql_from_db(cls, view_name: str, sql_type: str, schema: str = "public") -> (Dict[str, Any] | None):

@@ -184,7 +184,6 @@ def create_field():
 
             name = item.get("name")
             data_type = item.get("type") or item.get("data_type")
-            description = item.get("description")
             expression = item.get("expression") or name
             item_field_type = item.get("field_type") or field_type
 
@@ -225,19 +224,21 @@ def create_field():
                 tenant_id=tenant_id,
                 dataset_id=dataset_id,
                 raw_field=raw_field,
-                description=description,
+                description=item.get("description"),
                 expression=expression,
                 aggregation=aggregation,
                 field_type=item_field_type,
                 data_type=dataType,
+
+                is_public=bool(item.get("is_public", False)),
+                is_filterable=bool(item.get("is_filterable", False)),
+                is_groupable=bool(item.get("is_groupable", False)),
+                is_sortable=bool(item.get("is_sortable", False)),
+                is_selectable=bool(item.get("is_selectable", False)),
+                is_hidden=bool(item.get("is_hidden", False)),
+                is_active=bool(item.get("is_active", True)),
+                
                 format=payload.get("format") or {},
-                is_public=bool(payload.get("is_public", False)),
-                is_filterable=bool(payload.get("is_filterable", False)),
-                is_groupable=bool(payload.get("is_groupable", False)),
-                is_sortable=bool(payload.get("is_sortable", False)),
-                is_selectable=bool(payload.get("is_selectable", False)),
-                is_hidden=bool(payload.get("is_hidden", False)),
-                is_active=bool(payload.get("is_active", True)),
                 created_by_id=user_id,
             )
 

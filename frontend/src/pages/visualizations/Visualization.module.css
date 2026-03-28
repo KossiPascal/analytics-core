@@ -267,10 +267,8 @@
 
 .visualizationsGrid {
   display: grid;
-  gap: 1.5rem; /* espace horizontal et vertical */
+  gap: 1.5rem;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  /* auto-fit : autant de colonnes que possible selon la largeur */
-  /* minmax : chaque card fait minimum 250px, maximum 1 fraction de l'espace disponible */
   width: 100%;
 }
 

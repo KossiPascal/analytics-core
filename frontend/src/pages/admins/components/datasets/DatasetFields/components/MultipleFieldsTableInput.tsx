@@ -49,14 +49,12 @@ export const MultipleFieldsTableInput = ({ field, columns, fields, selectFields 
                             onChange={() =>
                                 selectFields((prev) => {
                                     if (isChecked) return prev.filter((s) => s.name !== c.name);
-
                                     // 👉 ajout avec aggregation par défaut si metric
                                     if (field.field_type === "metric") {
                                         const aggType = c.type as SqlDataType;
                                         const aggregates: SqlAggType[] = AGGREGATE_BY_SQL_TYPE[aggType] ?? ["count"];
                                         return [...prev, { ...c, aggregation: aggregates[0], field_type: "metric" }];
                                     }
-
                                     return [...prev, { ...c, field_type: "dimension" }];
                                 })
                             }

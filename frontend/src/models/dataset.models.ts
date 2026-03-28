@@ -108,7 +108,17 @@ export const getInputTypeForField = (dataType?: SqlDataType) => {
   return INPUT_TYPE_BY_SQL_TYPE[dataType] ?? "text";
 };
 
-export interface DatasetColumn {
+export interface DatasetFieldUtils {
+  is_public: boolean
+  is_filterable: boolean;
+  is_groupable: boolean;
+  is_sortable: boolean;
+  is_selectable: boolean;
+  is_hidden: boolean;
+  is_active: boolean;
+}
+
+export interface DatasetColumn extends DatasetFieldUtils {
   name: string;
   type: string;
   description?: string;
@@ -157,31 +167,24 @@ export interface Dataset {
   roles_allowed?: string[]
 }
 
-export interface DatasetField {
-  id: number | null
-  tenant_id: number | null
-  dataset_id: number | null
-  name: string
-  description: string
-  expression: string
-  aggregation: SqlAggType | null
-  field_type: SqlFieldType | null
-  data_type: SqlDataType
-  dimensions: DatasetColumn[]
-  metrics: DatasetColumn[]
-  format: Record<string, any>
-  is_public: boolean
-  is_filterable: boolean;
+export interface DatasetField extends DatasetFieldUtils{
+  id: number | null;
+  tenant_id: number | null;
+  dataset_id: number | null;
+  name: string;
+  description: string;
+  expression: string;
+  aggregation: SqlAggType | null;
+  field_type: SqlFieldType | null;
+  data_type: SqlDataType;
   select_multiple: boolean|undefined;
-  is_groupable: boolean;
-  is_sortable: boolean;
-  is_selectable: boolean;
-  is_hidden: boolean;
-  is_active: boolean;
+  dimensions: DatasetColumn[];
+  metrics: DatasetColumn[];
+  format: Record<string, any>;
   raw_field?: { name: string; type: string } | null;
-  tenant?: Tenant
-  dataset?: Dataset
-  is_dimension?: boolean
+  tenant?: Tenant;
+  dataset?: Dataset;
+  is_dimension?: boolean;
   is_metric?: boolean;
 }
 

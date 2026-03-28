@@ -1,6 +1,6 @@
 import { FormRadio } from "@/components/forms/FormRadio/FormRadio";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
-import { SqlDataType, FULL_DATA_TYPES, DatasetField, NUMERIC_DATA_TYPE, SqlFieldType, SqlFieldTypeList, Dataset, DatasetColumn } from "@/models/dataset.models";
+import { SqlDataType, FULL_DATA_TYPES, DatasetField, NUMERIC_DATA_TYPE, SqlFieldType, SqlFieldTypeList, Dataset, DatasetColumn, DatasetFieldUtils } from "@/models/dataset.models";
 import { motion } from "framer-motion";
 import { useState, useMemo, useEffect } from "react";
 import { FaTable } from "react-icons/fa";
@@ -142,7 +142,6 @@ export const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_
 
         const { columnName, dataType, usedColumns, functions, hasAggregation } = meta ?? {};
 
-
         const isNumeric = isNumericExpression(expression, aggregation, datasetColumns);
         const isValidNumeric = NUMERIC_DATA_TYPE.has(data_type?.toLowerCase() as SqlDataType);
         if (isNumeric && !isValidNumeric) {
@@ -206,10 +205,18 @@ export const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_
         }
     }, [field.expression, mappedColumns]);
 
-    const handleValidateFields = () => {
+    const handleValidateMultipleFields = () => {
         if (["dimension", "metric"].includes(`${field.field_type}`)) {
             const valKey = field.field_type === "dimension" ? "dimensions" : "metrics";
-            setValue(valKey, selectedFields);
+            const toStore = selectedFields.map(sfd=>{
+                const actionsField:(keyof DatasetFieldUtils)[] = ["is_public","is_filterable","is_groupable","is_sortable","is_selectable","is_hidden","is_active"];
+                for (const f of actionsField){
+                    sfd[f] = field[f];
+                }
+                return sfd;
+            });
+            
+            setValue(valKey, toStore);
             setValue("name", field.name ?? "multi_" + field.field_type);
             setSelectedFields([]);
         }
@@ -313,7 +320,7 @@ export const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_
                 footer={
                     <div className="flex gap-3">
                         <Button variant="outline" size="sm" onClick={() => setShowFieldsModal(false)}>Annuler</Button>
-                        <Button size="sm" onClick={handleValidateFields}>Valider ({selectedFields.length})</Button>
+                        <Button size="sm" onClick={handleValidateMultipleFields}>Valider ({selectedFields.length})</Button>
                     </div>
                 }
             >

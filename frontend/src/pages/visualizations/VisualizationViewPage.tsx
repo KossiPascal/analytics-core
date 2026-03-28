@@ -1,45 +1,25 @@
-/**
- * VisualizationManager - Home page displaying all visualizations in DHIS2 style
- * This is the default page after authentication
- */
-
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import {
-  LayoutGrid,
-  List,
-  Plus,
-  Search,
-  Filter,
-  ChevronDown,
-  AlertCircle,
-  BarChart3,
-  FileText,
-  RefreshCw,
-} from 'lucide-react';
+import { LayoutGrid, List, Plus, Search, Filter, ChevronDown, AlertCircle, BarChart3, FileText, RefreshCw } from 'lucide-react';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
 import { Card, CardBody } from '@components/ui/Card/Card';
 import { Button } from '@components/ui/Button/Button';
 import { GraduationLoader } from '@components/loaders/GraduationLoader/GraduationLoader';
 import { type VisualizationWithData } from '@/contexts/OLD/useVisualizations';
 import { ROUTES } from '@routes/configs';
-import styles from './Visualization.module.css';
 import { useAuth } from '@/contexts/AuthContext';
-import { DatasetChart } from '@/models/dataset.models';
 import { Visualization } from '@/models/visualization.model';
-import { chartService } from '@/services/dataset.service';
 import { visualizationService } from '@/services/visualization.service';
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
-import { VisualizationViewModule } from "./VisualizationUtils";
+import { BuildVisualizationView } from './components/BuildVisualizationView';
+
+import styles from './Visualization.module.css';
 
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import { STATUS, ViewGridOrListModeBtn, VisualizationFilterType, VisualizationViewMode } from './components/VisualizationUtils';
 
-const STATUS = ["draft", "submitted", "reviewed", "approved", "published", "archived"];
-
-type ViewMode = 'grid' | 'list';
-type FilterType = 'all' | 'dashboard' | 'report';
 
 
 export default function VisualizationView() {
@@ -49,15 +29,17 @@ export default function VisualizationView() {
 
   const [tenant_id, setTenantId] = useState<number>();
   const [visualizations, setVisualizations] = useState<Visualization[]>([]);
-  const [charts, setCharts] = useState<DatasetChart[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
 
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [viewMode, setViewMode] = useState<VisualizationViewMode>('list');
+
+  const [filterType, setFilterType] = useState<VisualizationFilterType>('all');
   const [showFilter, setShowFilter] = useState(false);
+
+  const [statusType, setStatusType] = useState<string>("");
+  const [showStatus, setShowStatus] = useState(false);
 
   const didLoad = useRef(false);
 
@@ -77,19 +59,13 @@ export default function VisualizationView() {
     setLoading(false);
   };
 
-  const fetchCharts = async () => {
-    if (!tenant_id) return;
-    const res = await chartService.list(tenant_id);
-    setCharts(res || []);
-  };
-
 
   const refresh = () => {
     fetchData();
-    fetchCharts();
+    // fetchCharts();
   }
 
-  const refreshView = async (id: number | null) => {
+  const refreshView = async (id: number | undefined) => {
     console.log("👉 refresh...");
     // Make refresh view function
     refresh();
@@ -125,17 +101,16 @@ export default function VisualizationView() {
       result = result.filter(v => (
         v.name.toLowerCase().includes(query) ||
         v.description?.toLowerCase().includes(query)
-      ) && (statusFilter ? v.status === statusFilter : true));
+      ) && (statusType ? v.status === statusType : true));
     }
 
     return result;
-  }, [visualizations, search, statusFilter, filterType]);
+  }, [visualizations, search, statusType, filterType]);
 
 
-  const openView = async (viz: Visualization, charts: DatasetChart[]) => {
+  const openView = async (viz: Visualization) => {
     window.open(`/dashboard/${viz.id}`)
   }
-
 
   // Stats
   const stats = useMemo(() => {
@@ -150,10 +125,7 @@ export default function VisualizationView() {
   };
 
   const handleExpand = (visualization: VisualizationWithData) => {
-    // Navigate to the appropriate page based on type
-
     navigate(ROUTES.dashboards.root());
-
     // if (visualization.type === 'dashboard') {
     //   navigate(ROUTES.dashboards.monthly());
     // } else {
@@ -161,18 +133,19 @@ export default function VisualizationView() {
     // }
   };
 
-  const filterOptions = [
+  const filterOptions: { value: VisualizationFilterType, label: string, count: number }[] = [
     { value: 'all', label: 'Toutes les visualisations', count: stats.total },
     { value: 'dashboard', label: 'Tableaux de bord', count: stats.dashboards },
     { value: 'report', label: 'Rapports', count: stats.reports },
   ];
 
+  const StatusFormList = [{ value: "", label: "All Status" }, ...STATUS.map(s => ({ value: s, label: s }))];
+
   return (
-    <PageWrapper title="Visualisations"
-      subtitle="Bienvenue sur votre tableau de bord de visualisations"
-    >
+    <PageWrapper title="Visualisations" subtitle="Bienvenue sur votre tableau de bord de visualisations" >
       {/* Header Actions */}
-      <Card className={styles.headerCard}>
+      {/* <Card className={styles.headerCard}> */}
+      <Card style={{ paddingTop: '2px', paddingBottom: '2px', marginBottom: '10px' }}>
         <CardBody>
           <div className={styles.headerContent}>
             {/* Left: Stats */}
@@ -198,6 +171,84 @@ export default function VisualizationView() {
 
             {/* Right: Actions */}
             <div className={styles.actionsSection}>
+
+              <div className={styles.toolbar}>
+                {/* Search */}
+                <div className={styles.searchWrapper}>
+                  <Search size={18} className={styles.searchIcon} />
+                  <input
+                    type="text"
+                    placeholder="Rechercher une visualisation..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className={styles.searchInput}
+                  />
+                </div>
+
+                <div className={styles.filterWrapper}>
+                  <button type="button" className={styles.filterButton} onClick={() => setShowStatus(!showStatus)} >
+                    <Filter size={16} />
+                    <span>{StatusFormList.find((o) => o.value === statusType)?.label}</span>
+                    <ChevronDown size={16} />
+                  </button>
+
+                  {showStatus && (
+                    <motion.div
+                      className={styles.filterDropdown}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      {StatusFormList.map((option) => (
+                        <button key={option.value} type="button"
+                          className={`${styles.filterOption} ${statusType === option.value ? styles.filterOptionActive : ''}`}
+                          onClick={() => {
+                            setStatusType(option.value);
+                            setShowStatus(false);
+                          }}
+                        >
+                          <span>{option.label}</span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Filter Dropdown */}
+                <div className={styles.filterWrapper}>
+                  <button type="button" className={styles.filterButton} onClick={() => setShowFilter(!showFilter)} >
+                    <Filter size={16} />
+                    <span>{filterOptions.find((o) => o.value === filterType)?.label}</span>
+                    <ChevronDown size={16} />
+                  </button>
+
+                  {showFilter && (
+                    <motion.div
+                      className={styles.filterDropdown}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      {filterOptions.map((option) => (
+                        <button key={option.value} type="button"
+                          className={`${styles.filterOption} ${filterType === option.value ? styles.filterOptionActive : ''}`}
+                          onClick={() => {
+                            setFilterType(option.value);
+                            setShowFilter(false);
+                          }}
+                        >
+                          <span>{option.label}</span>
+                          <span className={styles.filterCount}>{option.count}</span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </div>
+
+                <ViewGridOrListModeBtn viewMode={viewMode} setViewMode={setViewMode} />
+              </div>
+
+
               <Button variant="primary" size="sm" onClick={handleCreate} >
                 <Plus size={16} />
                 Créer
@@ -210,73 +261,7 @@ export default function VisualizationView() {
         </CardBody>
       </Card>
 
-      {/* Toolbar */}
-      <div className={styles.toolbar}>
-        {/* Search */}
-        <div className={styles.searchWrapper}>
-          <Search size={18} className={styles.searchIcon} />
-          <input
-            type="text"
-            placeholder="Rechercher une visualisation..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
 
-        <div className={styles.filterWrapper}>
-          <div className={styles.filterButton}>
-            <FormSelect
-              value={statusFilter}
-              options={[{ value: "", label: "All Status" }, ...STATUS.map(s => ({ value: s, label: s }))]}
-              onChange={setStatusFilter}
-            />
-          </div>
-        </div>
-
-        {/* Filter Dropdown */}
-        <div className={styles.filterWrapper}>
-          <button type="button" className={styles.filterButton} onClick={() => setShowFilter(!showFilter)} >
-            <Filter size={16} />
-            <span>{filterOptions.find((o) => o.value === filterType)?.label}</span>
-            <ChevronDown size={16} />
-          </button>
-
-          {showFilter && (
-            <motion.div
-              className={styles.filterDropdown}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              {filterOptions.map((option) => (
-                <button key={option.value} type="button"
-                  className={`${styles.filterOption} ${filterType === option.value ? styles.filterOptionActive : ''}`}
-                  onClick={() => {
-                    setFilterType(option.value as FilterType);
-                    setShowFilter(false);
-                  }}
-                >
-                  <span>{option.label}</span>
-                  <span className={styles.filterCount}>{option.count}</span>
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </div>
-
-        {/* View Toggle */}
-        {/* <div className={styles.viewToggle}> */}
-        <button
-          type="button"
-          // className={`${styles.viewButtonActive}`}
-          onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-          title={viewMode === 'grid' ? "Vue grille" : "Vue liste"}
-        >
-          {viewMode === 'grid' ? <LayoutGrid size={18} /> : <List size={18} />}
-        </button>
-        {/* </div> */}
-      </div>
 
       {/* Content */}
       <div className={styles.content}>
@@ -320,23 +305,11 @@ export default function VisualizationView() {
                 <LayoutGrid size={64} />
                 <h3>Aucune visualisation</h3>
                 {search || filterType !== 'all' ? (
-                  <p>
-                    Aucune visualisation ne correspond à vos critères de recherche.
-                    <br />
-                    Essayez de modifier vos filtres.
-                  </p>
+                  <p>Aucune visualisation ne correspond à vos critères de recherche. <br /> Essayez de modifier vos filtres.</p>
                 ) : (
                   <>
-                    <p>
-                      Vous n&apos;avez pas encore créé de visualisation.
-                      <br />
-                      Commencez par créer votre première visualisation.
-                    </p>
-                    <Button
-                      variant="primary"
-                      size="md"
-                      onClick={handleCreate}
-                    >
+                    <p>Vous n&apos;avez pas encore créé de visualisation. <br /> Commencez par créer votre première visualisation.</p>
+                    <Button variant="primary" size="md" onClick={handleCreate} >
                       <Plus size={18} />
                       Créer une visualisation
                     </Button>
@@ -344,29 +317,16 @@ export default function VisualizationView() {
                 )}
               </motion.div>
             ) : (
-              <motion.div
-                key="grid"
-                className={viewMode === 'grid' ? styles.visualizationsGrid : styles.visualizationsList}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                {filtered.map((viz, index) => (
-                  <motion.div
-                    key={viz.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    {/* <Card key={viz.id} style={{ padding: "5px" }} className="hover:shadow-xl transition-all rounded-2xl"> */}
-                      <VisualizationViewModule visualization={viz} charts={charts} />
-                    {/* </Card> */}
-
-                  </motion.div>
-                ))}
-              </motion.div>
+              <BuildVisualizationView
+                visualizations={filtered}
+                openView={openView}
+                refreshView={refreshView}
+              // refreshSecond={refreshSecond} 
+              // removeView={removeView} 
+              // editView={editView} 
+              // autoRefresh={autoRefresh}
+              />
             )}
-
 
           </AnimatePresence>
         )}
