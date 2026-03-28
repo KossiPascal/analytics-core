@@ -18,7 +18,7 @@ import { DatasetPreviewModal } from "./components/DatasetPreviewModal";
 
 
 // DEFAULT FORM
-const createDefaultForm = (tenant_id:number): DatasetQuery => ({
+const createDefaultForm = (tenant_id: number): DatasetQuery => ({
     id: null,
     name: "",
     tenant_id: tenant_id,
@@ -130,13 +130,12 @@ const getQueryColumns = (setPreviewJson: (v: QueryJson) => void, setPreviewSql: 
 ];
 
 interface DatasetQueryTabProps {
-   tenants:Tenant[];
-   tenant_id:number;
-
-   datasets:Dataset[];
-   dataset_id:number;
+    tenants: Tenant[];
+    tenant_id: number;
+    datasets: Dataset[];
+    dataset_id: number;
 }
-// MAIN PAGE
+
 export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
     const navigate = useNavigate();
     const [previewSql, setPreviewSql] = useState<string | null>(null);
@@ -144,13 +143,14 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
     const [previewValues, setPreviewValues] = useState<Record<string, any> | null>(null);
     const [errors, setErrors] = useState<CompileError>({});
 
-    // TABLE COLUMNS
     const queryColumns = useMemo(() => getQueryColumns(setPreviewJson, setPreviewSql, setPreviewValues), []);
 
     const defaultTenant = useMemo(() => {
-        return { required: true, ids: [tenant_id, dataset_id] };
+        return {
+            required: true,
+            ids: [tenant_id, dataset_id]
+        };
     }, [tenant_id, dataset_id]);
-
 
     const validateQuery = (q: DatasetQuery) => {
         const queryErrors: CompileError = {};
@@ -214,7 +214,6 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
         };
     };
 
-    // RENDER
     return (
         <>
             <AdminEntityCrudModule<DatasetQuery>
@@ -258,7 +257,7 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                         defaultForm={DEFAULT_FORM}
                         setValue={setValue}
                         setPreviewSql={setPreviewSql}
-                        setErrors={setErrors} 
+                        setErrors={setErrors}
                     />
                 )}
             />

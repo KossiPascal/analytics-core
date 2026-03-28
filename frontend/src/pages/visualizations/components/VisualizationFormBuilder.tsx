@@ -23,6 +23,8 @@ type VisualizationFormBuilderProps = {
     form: VisualizationForm;
     defaultForm: VisualizationForm;
     editing: Visualization | null
+    isDraggable: boolean;
+    isResizable: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
     setShowConfigModal: Dispatch<SetStateAction<boolean>>;
     setForm: Dispatch<SetStateAction<VisualizationForm>>;
@@ -30,7 +32,7 @@ type VisualizationFormBuilderProps = {
     setEditing: (value: SetStateAction<Visualization | null>) => void
 }
 
-export function VisualizationFormBuilder({ tenants, tenant_id, form, defaultForm, editing, setForm, setOpen, setEditing, setShowConfigModal, askConfirm }: VisualizationFormBuilderProps) {
+export function VisualizationFormBuilder({ tenants, tenant_id, form, defaultForm, editing, isDraggable, isResizable, setForm, setOpen, setEditing, setShowConfigModal, askConfirm }: VisualizationFormBuilderProps) {
     const [datasetsMap, setDatasetsMap] = useState<Record<number, Dataset[]>>({});
     const [chartsMap, setChartsMap] = useState<Record<number, DatasetChart[]>>({});
 
@@ -376,6 +378,8 @@ export function VisualizationFormBuilder({ tenants, tenant_id, form, defaultForm
                                         breakpoints={{ lg: 1200, md: 996, sm: 768 }}
                                         cols={{ lg: 12, md: 8, sm: 4 }}
                                         rowHeight={120}
+                                        isDraggable={isDraggable}
+                                        isResizable={isResizable}
                                         onLayoutChange={(layout, allLayouts) => updateLayout(allLayouts as Record<BreakPointType, VisualLayoutItem[]>)}
                                     >
                                         {currentLayouts.lg.map(item => {

@@ -121,27 +121,6 @@ export default function DataVisualisationPage() {
           leftIcon={<FaDatabase />}
           required={true}
         />
-
-        {/* <FormSelect
-          label={`Dataset List`}
-          value={options.dataset_id}
-          options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-          onChange={(value) => setOptions({ ...options, dataset_id: value, query_id: undefined })}
-          placeholder="Sélectionner Dataset"
-          leftIcon={<FaDatabase />}
-          required={true}
-        />
-
-
-        <FormSelect
-          label={`Dataset List`}
-          value={dataset_id}
-          options={datasets.map((c) => ({ value: c.id, label: c.name }))}
-          onChange={(value) => setDatasetId(value)}
-          placeholder="Sélectionner Dataset"
-          leftIcon={<FaDatabase />}
-          required={true}
-        /> */}
       </div>
     </>
   );

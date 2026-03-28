@@ -147,8 +147,6 @@ def update_user_facility():
         if not all([code, parent, contact_id, new_parent, cht_username, host, username, password]):
             return jsonify(status=400, message="Missing required parameters"), 400
 
-
-
         cht = CHTClient(host=host, username=username, password=password)
         # Update USER place
         try:

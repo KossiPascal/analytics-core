@@ -14,16 +14,18 @@ import { VisualizationToolbar } from "./VisualizationToolbar";
 
 type ViewerProps = {
     visualization: Visualization;
+    refreshSecond?: number;
+    isDraggable?: boolean;
+    isResizable?: boolean;
     editView?: (v: Visualization) => void;
     removeView?: (id: number | undefined) => Promise<void>;
     openView?: (v: Visualization) => Promise<void>;
-    refreshSecond?: number;
     refreshView?: (id: number | undefined) => Promise<void>
     autoRefresh?: (id: number | undefined) => Promise<void>
 }
 
 // ---------------- DASHBOARD ----------------
-export function VisualizationViewModule({ visualization, refreshSecond = 10, editView, removeView, openView }: ViewerProps) {
+export function VisualizationViewModule({ visualization, refreshSecond = 10, isDraggable, isResizable, editView, removeView, openView }: ViewerProps) {
 
     const [ref, bounds] = useMeasure();
 
@@ -84,6 +86,8 @@ export function VisualizationViewModule({ visualization, refreshSecond = 10, edi
                         cols={{ lg: 12, md: 8, sm: 4 }}
                         rowHeight={rh}
                         draggableHandle='.chart-drag-handle'
+                        isDraggable={isDraggable}
+                        isResizable={isResizable}
                     >
                         {layoutItems.map((item, index) => {
                             const chart = getChart(item.meta?.chart_id);

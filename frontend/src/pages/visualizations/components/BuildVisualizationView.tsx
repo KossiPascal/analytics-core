@@ -10,6 +10,8 @@ type BuildVisualizationViewProps = {
     visualizations: Visualization[];
     viewMode?: VisualizationViewMode
     refreshSecond?: number;
+    isDraggable?: boolean;
+    isResizable?: boolean;
     editView?: (v: Visualization) => void;
     removeView?: (id: number | undefined) => Promise<void>;
     openView?: (v: Visualization) => Promise<void>;
@@ -17,9 +19,9 @@ type BuildVisualizationViewProps = {
     autoRefresh?: (id: number | undefined) => Promise<void>
 }
 
-export function BuildVisualizationView({ visualizations, viewMode, refreshSecond = 10, editView, removeView, openView, refreshView, autoRefresh }: BuildVisualizationViewProps) {
+export function BuildVisualizationView({ visualizations, viewMode, refreshSecond = 10, isDraggable, isResizable, editView, removeView, openView, refreshView, autoRefresh }: BuildVisualizationViewProps) {
     const [cardsRef, cardsBounds] = useMeasure();
-    
+
     return (
         <div ref={cardsRef} style={{ width: "100%" }}>
             <AnimatePresence mode="wait">
@@ -32,13 +34,14 @@ export function BuildVisualizationView({ visualizations, viewMode, refreshSecond
                 >
 
                     {visualizations.map((viz, index) => (
-                        <div key={String(viz.id)} style={{
+                        <>
+                            {/* <div key={String(viz.id)} style={{
                             background: 'white', borderRadius: 14, overflow: 'clip',
                             boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
                             border: '1px solid #e2e8f0',
                             display: 'flex', flexDirection: 'column',
                             position: 'relative', height: '100%',
-                        }}>
+                        }}> */}
                             <motion.div key={viz.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }} >
                                 {/* <div
                                 className="card-drag-handle"
@@ -54,14 +57,21 @@ export function BuildVisualizationView({ visualizations, viewMode, refreshSecond
                                 >⠿</div> */}
                                 <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
                                     {/* <Card key={viz.id} style={{ padding: "5px" }} className="hover:shadow-xl transition-all rounded-2xl"> */}
-
-                                    <VisualizationViewModule visualization={viz} refreshSecond={refreshSecond} removeView={removeView} editView={editView} openView={openView} refreshView={refreshView} autoRefresh={autoRefresh} />
-
+                                    <VisualizationViewModule
+                                        visualization={viz}
+                                        refreshSecond={refreshSecond}
+                                        isDraggable={isDraggable}
+                                        isResizable={isResizable}
+                                        removeView={removeView}
+                                        editView={editView}
+                                        openView={openView}
+                                        refreshView={refreshView}
+                                        autoRefresh={autoRefresh} />
                                     {/* </Card> */}
-
                                 </div>
                             </motion.div>
-                        </div>
+                            {/* </div> */}
+                        </>
                     ))}
 
                 </motion.div>

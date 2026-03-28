@@ -78,6 +78,8 @@ export default function VisualizationHome() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [cardsLayout, setCardsLayout] = useState<Record<BreakPointType, Layout>>({ lg: [], md: [], sm: [] });
 
+  const [isDraggable, setDraggable] = useState(true);
+  const [isResizable, setResizable] = useState(true);
 
 
   // ── Confirmation modal ──
@@ -343,15 +345,15 @@ export default function VisualizationHome() {
             // draggableHandle='.card-drag-handle'
             > */}
 
-              <BuildVisualizationView
-                visualizations={filtered}
-                removeView={removeView}
-                editView={editView}
-                openView={openView}
-              // refreshSecond={refreshSecond}
-              // refreshView={refreshView} 
-              // autoRefresh={autoRefresh}
-              />
+            <BuildVisualizationView
+              visualizations={filtered}
+              removeView={removeView}
+              editView={editView}
+              openView={openView}
+            // refreshSecond={refreshSecond}
+            // refreshView={refreshView} 
+            // autoRefresh={autoRefresh}
+            />
             {/* </CustomResponsiveLayout> */}
           </div>
         )}
@@ -363,8 +365,10 @@ export default function VisualizationHome() {
             tenants={tenants}
             tenant_id={tenant_id}
             form={form}
-            defaultForm={getDefaultForm()}
             editing={editing}
+            isDraggable={isDraggable}
+            isResizable={isResizable}
+            defaultForm={getDefaultForm()}
             setOpen={setOpen}
             setShowConfigModal={setShowConfigModal}
             setForm={setForm}

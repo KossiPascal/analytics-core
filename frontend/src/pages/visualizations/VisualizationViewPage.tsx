@@ -40,6 +40,11 @@ export default function VisualizationView() {
 
   const [statusType, setStatusType] = useState<string>("");
   const [showStatus, setShowStatus] = useState(false);
+  const [isDraggable, setDraggable] = useState(false);
+  const [isResizable, setResizable] = useState(false);
+
+  
+
 
   const didLoad = useRef(false);
 
@@ -319,8 +324,11 @@ export default function VisualizationView() {
             ) : (
               <BuildVisualizationView
                 visualizations={filtered}
+                isDraggable={isDraggable}
+                isResizable={isResizable}
                 openView={openView}
                 refreshView={refreshView}
+
               // refreshSecond={refreshSecond} 
               // removeView={removeView} 
               // editView={editView} 
