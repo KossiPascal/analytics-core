@@ -29,6 +29,7 @@ import type {
   VisualizationOptions,
   VisualizationType,
 } from './components/types';
+import type { DatasetChart } from '@/models/dataset.models';
 import styles from './DatasetBuilder.module.css';
 import { BuilderHeader } from './components/BuilderHeader/BuilderHeader';
 import { BuilderMainArea } from './components/BuilderMainArea/BuilderMainArea';
@@ -151,6 +152,18 @@ const DatasetBuilderPage: React.FC = () => {
   ]);
 
   const [options, setOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
+
+  const [chart, setChart] = useState<DatasetChart>({
+    id: null,
+    name: '',
+    tenant_id: null,
+    dataset_id: null,
+    query_id: null,
+    type: 'bar',
+    structure: { rows_dimensions: [], cols_dimensions: [], metrics: [], filters: [], order_by: [], limit: null, offset: null, pivot: { acitve: false, fill_value: 0, rows_total: false, cols_total: false, rows_subtotal: false, cols_subtotal: false, sort_desc: false } },
+    options: {},
+    is_active: true,
+  });
 
   const [previewSnapshot, setPreviewSnapshot] = useState<PreviewSnapshot>({
     chartType: 'bar',
@@ -594,8 +607,8 @@ const DatasetBuilderPage: React.FC = () => {
 
       <OptionsModal
         isOpen={isOptionsModalOpen}
-        options={options}
-        onOptionsChange={setOptions}
+        chart={chart}
+        onChange={setChart}
         onClose={() => setIsOptionsModalOpen(false)}
       />
 
