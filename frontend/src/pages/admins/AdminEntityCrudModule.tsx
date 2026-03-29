@@ -21,6 +21,9 @@ interface CrudService<T> {
 export interface AdminEntityCrudModuleRef {
     handleNew: () => void;
     refresh: () => void;
+    setOpenModal?: (open: boolean) => void;
+    setEntity?: (entity: any) => void;
+    setEditing?: (editing: boolean) => void;
 }
 
 interface AdminEntityCrudModuleProps<T> {
@@ -34,6 +37,7 @@ interface AdminEntityCrudModuleProps<T> {
         ids: (number | undefined)[]
         required: boolean
     };
+    showFromFooterActionsBtn?: boolean;
     renderForm?: (
         entity: T,
         setValue: (key: keyof T, value: any) => void,
@@ -41,10 +45,12 @@ interface AdminEntityCrudModuleProps<T> {
     ) => React.ReactNode;
     modalSize?: ModalSize;
 
+    processLoading?: boolean;
+
     formatedEntity?: (entity: T) => Promise<T>,
 
     /** Custom buttons rendered inside modal footer */
-    formActionsButtons?: (props: {entity: T,isFormValid: boolean,saving: boolean,close?: (cls: boolean) => void}) => React.ReactNode;
+    formActionsButtons?: (props: { entity: T, isFormValid: boolean, saving: boolean, close?: (cls: boolean) => void }) => React.ReactNode;
 
     isValid?: (entity: T) => boolean;
 
@@ -56,6 +62,7 @@ interface AdminEntityCrudModuleProps<T> {
     onBeforeSave?: (entity: T) => Promise<T> | T;
     submitValidation?: (entity: T) => Promise<boolean>;
     afterSave?: (entity: T) => void;
+    afterModalClose?: () => void;
 
     /** Actions supplémentaires affichées à droite du titre */
     headerActions?: React.ReactNode;
@@ -76,6 +83,8 @@ const AdminEntityCrudModuleInner = <
         defaultValue,
         service,
         defaultTenant,
+        showFromFooterActionsBtn = true,
+        processLoading = false,
         renderForm,
         formatedEntity,
         modalSize = "sm",
@@ -88,6 +97,7 @@ const AdminEntityCrudModuleInner = <
         onBeforeSave,
         submitValidation,
         afterSave,
+        afterModalClose,
         headerActions,
     }: AdminEntityCrudModuleProps<T>,
     ref: React.Ref<AdminEntityCrudModuleRef>
@@ -106,6 +116,16 @@ const AdminEntityCrudModuleInner = <
     const [editing, setEditing] = useState(false);
 
     const { showError, showSuccess } = useNotification();
+
+
+    /* ========= CLOSE MODAL =============== */
+    const handleCloseModal = () => {
+        setOpenModal(false);
+        afterModalClose?.();
+    };
+
+    const handleLodding = useMemo(() => loading || processLoading, [loading, processLoading]);
+
 
     /* ========== FETCH ============ */
     const fetchData = useCallback(async () => {
@@ -188,7 +208,7 @@ const AdminEntityCrudModuleInner = <
             }
 
             afterSave?.(dataToSave);
-            setOpenModal(false);
+            handleCloseModal();
             setEntity(finalDefaultValue);
             setEditing(false);
 
@@ -211,7 +231,7 @@ const AdminEntityCrudModuleInner = <
             setSaving(true);
             await action();
             if (fethAfterAction) {
-                setOpenModal(false);
+                handleCloseModal();
                 await fetchData();
             }
         } catch {
@@ -242,9 +262,15 @@ const AdminEntityCrudModuleInner = <
         setOpenModal(true);
     };
 
+
+
+
     useImperativeHandle(ref, () => ({
-        handleNew,
         refresh: fetchData,
+        handleNew,
+        setOpenModal,
+        setEntity,
+        setEditing,
     }));
 
     /* ========= ACTION COLUMN ===== */
@@ -341,7 +367,10 @@ const AdminEntityCrudModuleInner = <
             {renderForm && (
                 <Modal
                     isOpen={openModal}
-                    onClose={() => setOpenModal(false)}
+                    onClose={() => {
+                        if (handleLodding) return;
+                        handleCloseModal();
+                    }}
                     title={
                         editing
                             ? `Modifier ${entityName}`
@@ -349,17 +378,20 @@ const AdminEntityCrudModuleInner = <
                     }
                     size={modalSize}
                     footer={
-                        <div className={styles.buttonGroup}>
+                        showFromFooterActionsBtn ? (<div className={styles.buttonGroup}>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setOpenModal(false)}
+                                onClick={() => {
+                                    if (handleLodding) return;
+                                    handleCloseModal();
+                                }}
                             >
                                 Annuler
                             </Button>
 
 
-                            {formActionsButtons?.({entity, isFormValid, saving, close: (act: boolean) => setOpenModal(act)})}
+                            {formActionsButtons?.({ entity, isFormValid, saving, close: (act: boolean) => setOpenModal(act) })}
 
                             <Button
                                 variant="primary"
@@ -370,7 +402,7 @@ const AdminEntityCrudModuleInner = <
                                 <Save size={16} />
                                 {saving ? "Enregistrement..." : "Enregistrer"}
                             </Button>
-                        </div>
+                        </div>) : undefined
                     }
                 >
                     {renderForm(entity, setValue, saving)}

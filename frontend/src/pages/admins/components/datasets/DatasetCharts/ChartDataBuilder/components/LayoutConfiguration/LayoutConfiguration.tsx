@@ -4,12 +4,8 @@ import { Grid3x3, GripVertical, Plus, X } from 'lucide-react';
 import { FormSelect } from '@/components/forms/FormSelect/FormSelect';
 import { Modal } from '@components/ui/Modal/Modal';
 import { LayoutDropZone } from '../LayoutDropZone/LayoutDropZone';
-import { IndicatorFilterBuilder } from '../IndicatorBuilder/IndicatorFilterBuilder';
-import type { IndicatorFilter } from '../IndicatorBuilder/IndicatorFilterBuilder';
 import { DefinitionItemForm } from '@pages/builders/SqlBuilder/components/DefinitionItemForm';
 import type { DefinitionEntry } from '@pages/builders/SqlBuilder/components/DefinitionItemForm';
-import type { SidebarEntity } from '../IndicatorBuilder/IndicatorBuilder';
-import { FILTER_OP_LABELS } from '@models/builders.models';
 import type { DimensionItem, LayoutZone } from '../types';
 import styles from './LayoutConfiguration.module.css';
 
@@ -17,9 +13,9 @@ import styles from './LayoutConfiguration.module.css';
 // HELPERS
 // ============================================================================
 
-function formatFilterLabel(filter: IndicatorFilter): string {
+function formatFilterLabel(filter: any): string {
   const { columnName, op, value } = filter;
-  const opLabel = FILTER_OP_LABELS[op];
+  const opLabel = "Test formatFilterLabel";
   if (op === 'is_null' || op === 'is_not_null') return `${columnName} ${opLabel}`;
   if (op === 'between' && Array.isArray(value)) return `${columnName} entre ${value[0]} et ${value[1]}`;
   if ((op === 'in' || op === 'not_in') && Array.isArray(value)) return `${columnName} ${opLabel} (${(value as string[]).join(', ')})`;
@@ -44,11 +40,7 @@ interface LayoutConfigurationProps {
   onRemoveRowItem: (id: string) => void;
   onRemoveFilterItem: (id: string) => void;
   onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
-  entities: SidebarEntity[];
-  // Filter zone — IndicatorFilterBuilder
-  layoutFilters: IndicatorFilter[];
-  onLayoutFiltersChange: (filters: IndicatorFilter[]) => void;
-  // Row zone — DefinitionItemForm
+  entities: any[];
   layoutData: DefinitionEntry[];
   onLayoutDataChange: (data: DefinitionEntry[]) => void;
 }
@@ -79,14 +71,11 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   onRemoveFilterItem,
   onMoveItem,
   entities = [],
-  layoutFilters = [],
-  onLayoutFiltersChange,
   layoutData = [],
   onLayoutDataChange,
 }) => {
   // ── Filter modal state ──────────────────────────────
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [tempFilters, setTempFilters] = useState<IndicatorFilter[]>([]);
   const [filterEntityId, setFilterEntityId] = useState<string | null>(null);
 
   // ── Data modal state ────────────────────────────────
@@ -115,14 +104,13 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     [entities, filterEntityId]
   );
 
-  const dataEntity = useMemo(
-    () => entities.find((e) => e.id === dataEntityId) ?? null,
+  const dataEntity = useMemo(() => entities.find((e) => e.id === dataEntityId) ?? null,
     [entities, dataEntityId]
   );
 
   const columnOptions = useMemo(() => {
     if (!dataEntity) return [];
-    return dataEntity.columns.map((col) => ({
+    return dataEntity.columns.map((col:any) => ({
       value: col.name,
       label: `${col.name} (${col.type})`,
     }));
@@ -133,25 +121,21 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // ====================================================================
 
   const handleOpenFilterModal = useCallback(() => {
-    setTempFilters([...layoutFilters]);
     setFilterEntityId(entities.length > 0 ? entities[0].id : null);
     setIsFilterModalOpen(true);
-  }, [layoutFilters, entities]);
+  }, [entities]);
 
   const handleSaveFilters = useCallback(() => {
-    onLayoutFiltersChange(tempFilters);
     setIsFilterModalOpen(false);
-  }, [tempFilters, onLayoutFiltersChange]);
+  }, []);
 
   const handleCancelFilterModal = useCallback(() => {
     setIsFilterModalOpen(false);
   }, []);
 
-  const handleRemoveFilter = useCallback(
-    (filterId: string) => {
-      onLayoutFiltersChange(layoutFilters.filter((f) => f.id !== filterId));
+  const handleRemoveFilter = useCallback((filterId: string) => {
     },
-    [layoutFilters, onLayoutFiltersChange]
+    []
   );
 
   // Filter drag reorder
@@ -181,13 +165,12 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       setFilterDragOver(null);
       const fromIndex = filterDragRef.current;
       if (fromIndex === null || fromIndex === dropIndex) return;
-      const reordered = [...layoutFilters];
+      const reordered:any[] = [];
       const [moved] = reordered.splice(fromIndex, 1);
       reordered.splice(dropIndex, 0, moved);
-      onLayoutFiltersChange(reordered);
       filterDragRef.current = null;
     },
-    [layoutFilters, onLayoutFiltersChange]
+    []
   );
 
   const handleFilterDragEnd = useCallback(() => {
@@ -283,15 +266,15 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
 
       <div className={styles.layoutSection}>
 
-        {/* ── Lignes + "Ajouter donnée" ── */}
+        {/* ── DONNEES ── */}
         <LayoutDropZone
           zone="row"
-          title="Données"
+          title="Données/Indicateurs"
           items={rowItems}
           allItems={allItems}
           onRemove={onRemoveRowItem}
           onMoveItem={onMoveItem}
-          placeholder="Lignes"
+          placeholder="Données"
         >
           {/* Data chips from DefinitionItemForm */}
           {layoutData.length > 0 && (
@@ -332,7 +315,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           </button>
         </LayoutDropZone>
 
-        {/* ── Filtres + "Ajouter filtre" ── */}
+        {/* ── ROWS ── */}
         <LayoutDropZone
           zone="filter"
           title="Filtres"
@@ -343,10 +326,55 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           placeholder="Filtres"
         >
           {/* Filter chips from IndicatorFilterBuilder */}
-          {layoutFilters.length > 0 && (
+          {[].length > 0 && (
             <>
               {filterItems.length > 0 && <hr className={styles.filterSeparator} />}
-              {layoutFilters.map((filter, index) => (
+              {[].map((filter:any, index) => (
+                <div
+                  key={filter.id}
+                  className={`${styles.filterChip} ${filterDragOver === index ? styles.filterChipDragOver : ''}`}
+                  draggable
+                  onDragStart={(e) => handleFilterDragStart(e, index)}
+                  onDragOver={(e) => handleFilterDragOver(e, index)}
+                  onDragLeave={handleFilterDragLeave}
+                  onDrop={(e) => handleFilterDrop(e, index)}
+                  onDragEnd={handleFilterDragEnd}
+                >
+                  <GripVertical size={14} />
+                  <span title={formatFilterLabel(filter)}>{formatFilterLabel(filter)}</span>
+                  <button type="button" className={styles.removeFilterBtn} onClick={() => handleRemoveFilter(filter.id)} >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
+
+          <button
+            type="button"
+            className={styles.addFilterBtn}
+            onClick={handleOpenFilterModal}
+          >
+            <Plus size={14} />
+            Ajouter filtre
+          </button>
+        </LayoutDropZone>
+
+        {/* ── COLUMNS ── */}
+        <LayoutDropZone
+          zone="filter"
+          title="Filtres"
+          items={filterItems}
+          allItems={allItems}
+          onRemove={onRemoveFilterItem}
+          onMoveItem={onMoveItem}
+          placeholder="Filtres"
+        >
+          {/* Filter chips from IndicatorFilterBuilder */}
+          {[].length > 0 && (
+            <>
+              {filterItems.length > 0 && <hr className={styles.filterSeparator} />}
+              {[].map((filter:any, index) => (
                 <div
                   key={filter.id}
                   className={`${styles.filterChip} ${filterDragOver === index ? styles.filterChipDragOver : ''}`}
@@ -380,6 +408,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             Ajouter filtre
           </button>
         </LayoutDropZone>
+
       </div>
 
       {/* ════════════════════════════════════════════════════
@@ -404,14 +433,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
               searchable
             />
           </div>
-
-          {filterEntity && (
-            <IndicatorFilterBuilder
-              columns={filterEntity.columns}
-              filters={tempFilters}
-              onFiltersChange={setTempFilters}
-            />
-          )}
 
           <div className={styles.modalFooter}>
             <button type="button" className={styles.btnCancel} onClick={handleCancelFilterModal}>

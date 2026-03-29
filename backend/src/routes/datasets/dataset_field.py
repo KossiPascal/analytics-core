@@ -210,7 +210,7 @@ def create_field():
             except Exception:
                 sql_type, app_type = None, data_type
 
-            dataType = sql_type or data_type
+            dataType = app_type or data_type
 
             if select_multiple:
                 raw_field={"name": name, "type": dataType}
@@ -316,10 +316,13 @@ def delete_field(field_id: int):
         field:DatasetField = DatasetField.query.get(field_id)
         if not field or field.deleted:
             raise BadRequest(f"DatasetField with id={field_id} not found", 404)
-        field.is_active = False
-        field.deleted = True
-        field.deleted_at = datetime.now(timezone.utc)
-        field.deleted_by_id=currentUserId()
+            
+        # field.is_active = False
+        # field.deleted = True
+        # field.deleted_at = datetime.now(timezone.utc)
+        # field.deleted_by_id=currentUserId()
+
+        db.session.delete(field)
     
         db.session.commit()
         return jsonify({"message": "DatasetField deleted"}), 200

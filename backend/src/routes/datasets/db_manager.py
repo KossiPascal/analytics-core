@@ -8,7 +8,18 @@ from backend.src.models.datasets.dataset import DbObjectType
 from sqlalchemy import RowMapping, Tuple, bindparam, inspect, text
 from sqlalchemy.sql.elements import TextClause
 from backend.src.routes.datasets.query.sql_compiler import ALLOWED_PATTERN, FORBIDDEN_PATTERNS, VALID_SQL_IDENTIFIER
-
+from sqlalchemy.sql.sqltypes import (
+    Integer, BigInteger, SmallInteger,
+    Numeric, Float, DECIMAL,
+    String, Text, CHAR,
+    Boolean,
+    Date, DateTime, Time,
+    JSON,
+    LargeBinary
+)
+from sqlalchemy.dialects.postgresql import (
+    UUID, JSONB, ARRAY, BYTEA
+)
     
 MAX_IDENTIFIER_LENGTH = 60
 
@@ -245,7 +256,7 @@ class DbObjectManager:
             ).scalar()
  
     # EXECUTION
-    def create_object(self, sql: str, values: Dict[str, Any], replace: bool = False):
+    def _upsert_object(self, sql: str, values: Dict[str, Any], replace: bool = False):
         try:
             create_sql = self.generate_create_sql(sql, values)
             drop_sql = self.generate_drop_sql()
@@ -256,9 +267,13 @@ class DbObjectManager:
 
         except Exception as e:
             raise ValueError(f"Create error: {e}")
+ 
+    # EXECUTION
+    def create_object(self, sql: str, values: Dict[str, Any]):
+        self._upsert_object(sql=sql, values=values, replace=False)
         
     def update_object(self, sql: str, values: Dict[str, Any]):
-        self.create_object(sql=sql, values=values, replace=True)
+        self._upsert_object(sql=sql, values=values, replace=True)
 
     def drop_object(self):
         try:
@@ -335,72 +350,291 @@ class DbObjectManager:
 
 class SqlIntrospector:
 
+    # @staticmethod
+    # def _map_pg_type(pg_type: str) -> str:
+    #     if not pg_type:
+    #         return "string"
+    #     # 🔥 gérer ARRAY
+    #     if isinstance(pg_type, ARRAY):
+    #         base = SqlIntrospector._map_pg_type(pg_type.item_type)
+    #         return f"{base}[]"
+
+    #     # 🔹 NUMERIC
+    #     if isinstance(pg_type, (Integer, BigInteger, SmallInteger, Numeric, Float, DECIMAL)):
+    #         return "number"
+
+    #     # 🔹 STRING
+    #     if isinstance(pg_type, (String, Text, CHAR)):
+    #         return "string"
+
+    #     # 🔹 BOOLEAN
+    #     if isinstance(pg_type, Boolean):
+    #         return "boolean"
+
+    #     # 🔹 DATE / TIME
+    #     if isinstance(pg_type, Date):
+    #         return "date"
+
+    #     if isinstance(pg_type, DateTime):
+    #         return "datetime"
+
+    #     if isinstance(pg_type, Time):
+    #         return "time"
+
+    #     # 🔹 JSON
+    #     if isinstance(pg_type, (JSON, JSONB)):
+    #         return "json"
+
+    #     # 🔹 UUID
+    #     if isinstance(pg_type, UUID):
+    #         return "uuid"
+
+    #     # 🔹 BINARY
+    #     if isinstance(pg_type, (LargeBinary, BYTEA)):
+    #         return "binary"
+
+
+    #     t = pg_type.lower().strip()
+        
+
+    #     # 🔹 ARRAY
+    #     if t.startswith("_"):
+    #         base = SqlIntrospector._map_pg_type(t[1:])
+    #         return f"{base}[]"
+
+    #     # 🔹 NUMERIC
+    #     if t in {"int2", "int4", "int8", "numeric", "float4", "float8"}:
+    #         return "number"
+
+    #     # 🔹 STRING
+    #     if t in {"varchar", "text", "bpchar"}:
+    #         return "string"
+
+    #     # 🔹 BOOLEAN
+    #     if t == "bool":
+    #         return "boolean"
+
+    #     # 🔹 DATE / TIME
+    #     if t == "date":
+    #         return "date"
+
+    #     if t in {"timestamp", "timestamptz"}:
+    #         return "datetime"
+
+    #     if t in {"time", "timetz"}:
+    #         return "time"
+
+    #     # 🔹 JSON
+    #     if t in {"json", "jsonb"}:
+    #         return "json"
+
+    #     # 🔹 UUID
+    #     if t == "uuid":
+    #         return "uuid"
+
+    #     # 🔹 BINARY
+    #     if t == "bytea":
+    #         return "binary"
+
+    #     # 🔥 enlever les paramètres (ex: varchar(255) → varchar)
+    #     t = re.sub(r"\(.*\)", "", t).strip()
+
+    #     # 🔥 gérer alias postgres
+    #     aliases = {
+    #         "character varying": "varchar",
+    #         "character": "char",
+    #         "timestamp without time zone": "timestamp",
+    #         "timestamp with time zone": "timestamptz",
+    #         "time without time zone": "time",
+    #         "time with time zone": "timetz",
+    #         "double precision": "float8",
+    #         "real": "float4",
+    #     }
+    #     t = aliases.get(t, t)
+
+    #     # 🔹 array
+    #     is_array = t.endswith("[]")
+    #     if is_array:
+    #         t = t[:-2]
+
+    #     # 🔹 NUMERIC
+    #     if t in {
+    #         "smallint", "int2",
+    #         "integer", "int4",
+    #         "bigint", "int8",
+    #         "serial", "bigserial",
+    #         "numeric", "decimal",
+    #         "float4", "float8",
+    #         "money"
+    #     }:
+    #         base = "number"
+
+    #     # 🔹 STRING
+    #     elif t in { "varchar", "char", "text", "citext", "name" }:
+    #         base = "string"
+
+    #     # 🔹 DATE / TIME
+    #     elif t == "date":
+    #         base = "date"
+
+    #     elif t in {"timestamp", "timestamptz"}:
+    #         base = "datetime"
+
+    #     elif t in {"time", "timetz"}:
+    #         base = "time"
+
+    #     elif t == "interval":
+    #         base = "duration"
+
+    #     # 🔹 BOOLEAN
+    #     elif t == "bool":
+    #         base = "boolean"
+
+    #     # 🔹 JSON
+    #     elif t in {"json", "jsonb"}:
+    #         base = "json"
+
+    #     # 🔹 UUID
+    #     elif t == "uuid":
+    #         base = "uuid"
+
+    #     # 🔹 BINARY
+    #     elif t == "bytea":
+    #         base = "binary"
+
+    #     # 🔹 NETWORK
+    #     elif t in {"inet", "cidr", "macaddr", "macaddr8"}:
+    #         base = "string"
+
+    #     # 🔹 BIT
+    #     elif t in {"bit", "varbit"}:
+    #         base = "string"
+
+    #     # 🔹 XML
+    #     elif t == "xml":
+    #         base = "string"
+
+    #     # 🔹 RANGE TYPES (🔥 souvent oublié)
+    #     elif t in {"int4range", "int8range", "numrange", "tsrange", "tstzrange", "daterange"}:
+    #         base = "range"
+
+    #     # 🔹 FULL TEXT
+    #     elif t in {"tsvector", "tsquery"}:
+    #         base = "string"
+
+    #     # 🔹 fallback
+    #     else:
+    #         base = "string"
+
+    #     return f"{base}[]" if is_array else base
+    
+
     @staticmethod
-    def _map_pg_type(pg_type: str) -> str:
+    def _map_pg_type(pg_type) -> str:
         if not pg_type:
             return "string"
 
-        t = pg_type.lower().strip()
+        # 🔥 1. GESTION SQLALCHEMY TYPES (prioritaire)
+        if isinstance(pg_type, ARRAY):
+            base = SqlIntrospector._map_pg_type(pg_type.item_type)
+            return f"{base}[]"
 
-        # 🔹 gérer array
-        is_array = t.endswith("[]")
-        if is_array:
+        sqlalchemy_map = {
+            (Integer, BigInteger, SmallInteger, Numeric, Float, DECIMAL): "number",
+            (String, Text, CHAR): "string",
+            (Boolean,): "boolean",
+            (Date,): "date",
+            (DateTime,): "datetime",
+            (Time,): "time",
+            (JSON, JSONB): "json",
+            (UUID,): "uuid",
+            (LargeBinary, BYTEA): "binary",
+        }
+
+        for types, result in sqlalchemy_map.items():
+            if isinstance(pg_type, types):
+                return result
+
+        # 🔥 2. NORMALISATION STRING (fallback)
+        t = str(pg_type).lower().strip()
+
+        # enlever params → varchar(255)
+        t = re.sub(r"\(.*\)", "", t).strip()
+
+        # alias postgres
+        aliases = {
+            "character varying": "varchar",
+            "character": "char",
+            "timestamp without time zone": "timestamp",
+            "timestamp with time zone": "timestamptz",
+            "time without time zone": "time",
+            "time with time zone": "timetz",
+            "double precision": "float8",
+            "real": "float4",
+        }
+        t = aliases.get(t, t)
+
+        # 🔥 ARRAY
+        is_array = t.endswith("[]") or t.startswith("_")
+        if t.startswith("_"):
+            t = t[1:]
+        if t.endswith("[]"):
             t = t[:-2]
 
-        # 🔹 NUMERIC
-        if t in {
-            "smallint", "integer", "bigint",
-            "serial", "bigserial",
-            "numeric", "decimal",
-            "real", "double precision",
-            "money"
-        }:
-            base = "number"
+        # 🔥 mapping unique
+        TYPE_MAP = {
+            # numeric
+            "smallint": "number", "int2": "number",
+            "integer": "number", "int4": "number",
+            "bigint": "number", "int8": "number",
+            "serial": "number", "bigserial": "number",
+            "numeric": "number", "decimal": "number",
+            "float4": "number", "float8": "number",
+            "money": "number",
 
-        # 🔹 DATE / TIME
-        elif t in {"date"}:
-            base = "date"
+            # string
+            "varchar": "string", "char": "string",
+            "text": "string", "citext": "string",
+            "name": "string",
 
-        elif t in {"timestamp", "timestamp without time zone", "timestamp with time zone", "timestamptz"}:
-            base = "datetime"
+            # boolean
+            "bool": "boolean", "boolean": "boolean",
 
-        elif t in {"time", "time without time zone", "time with time zone", "timetz"}:
-            base = "time"
+            # date/time
+            "date": "date",
+            "timestamp": "datetime", "timestamptz": "datetime",
+            "time": "time", "timetz": "time",
+            "interval": "duration",
 
-        elif t == "interval":
-            base = "duration"
+            # json
+            "json": "json", "jsonb": "json",
 
-        # 🔹 BOOLEAN
-        elif t == "boolean":
-            base = "boolean"
+            # uuid
+            "uuid": "uuid",
 
-        # 🔹 JSON
-        elif t in {"json", "jsonb"}:
-            base = "json"
+            # binary
+            "bytea": "binary",
 
-        # 🔹 UUID
-        elif t == "uuid":
-            base = "uuid"
+            # network
+            "inet": "string", "cidr": "string",
+            "macaddr": "string", "macaddr8": "string",
 
-        # 🔹 BINARY
-        elif t == "bytea":
-            base = "binary"
+            # bit
+            "bit": "string", "varbit": "string",
 
-        # 🔹 NETWORK
-        elif t in {"inet", "cidr", "macaddr"}:
-            base = "string"
+            # xml
+            "xml": "string",
 
-        # 🔹 BIT
-        elif t in {"bit", "bit varying"}:
-            base = "string"
+            # range
+            "int4range": "range", "int8range": "range",
+            "numrange": "range", "tsrange": "range",
+            "tstzrange": "range", "daterange": "range",
 
-        # 🔹 XML
-        elif t == "xml":
-            base = "string"
+            # full text
+            "tsvector": "string", "tsquery": "string",
+        }
 
-        # 🔹 STRING (default)
-        else:
-            base = "string"
+        base = TYPE_MAP.get(t, "string")
 
         return f"{base}[]" if is_array else base
     

@@ -73,8 +73,11 @@ class MakeCompileQueryJson():
     def make_matview_sql(self)-> str:
         return self.db_manager.generate_create_sql(sql=self.sql,values=self.values)
 
-    def store_matview(self):
+    def create_matview(self):
         self.db_manager.create_object(sql=self.sql,values=self.values)
+
+    def update_matview(self):
+        self.db_manager.update_object(sql=self.sql,values=self.values)
 
     def refresh_matview(self):
         self.db_manager.refresh_matview()
@@ -189,9 +192,9 @@ def create_query():
         db.session.commit()
 
         try:
-            compiler.store_matview()
+            compiler.create_matview()
         except Exception as e:
-            logger.warning(f"store_matview failed (non-blocking): {str(e)}")
+            logger.warning(f"create_matview failed (non-blocking): {str(e)}")
 
         return jsonify({"message": "DatasetQuery created", "id": query.id, "query_id": query.id}), 201
     except Exception as e:
@@ -257,9 +260,9 @@ def update_query(query_id: int):
         db.session.commit()
 
         try:
-            compiler.store_matview()
+            compiler.update_matview()
         except Exception as e:
-            logger.warning(f"store_matview failed (non-blocking): {str(e)}")
+            logger.warning(f"update_matview failed (non-blocking): {str(e)}")
 
         return jsonify({"message": "DatasetQuery updated", "id": query.id}), 200
     except SQLAlchemyError as e:
@@ -273,10 +276,13 @@ def delete_query(query_id: int):
         query:DatasetQuery = DatasetQuery.query.get(query_id)
         if not query or query.deleted:
             raise BadRequest(f"DatasetQuery with id={query_id} not found", 404)
-        query.is_active = False
-        query.deleted = True
-        query.deleted_at = datetime.now(timezone.utc)
-        query.deleted_by_id=currentUserId()
+
+        # query.is_active = False
+        # query.deleted = True
+        # query.deleted_at = datetime.now(timezone.utc)
+        # query.deleted_by_id=currentUserId()
+
+        db.session.delete(query)
     
         db.session.commit()
         return jsonify({"message": "DatasetQuery deleted"}), 200

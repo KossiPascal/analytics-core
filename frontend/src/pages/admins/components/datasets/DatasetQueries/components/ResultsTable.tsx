@@ -15,74 +15,9 @@ export default function ResultsTable() {
     if (!result) return { rows: [], isTabular: false, normalizedResult: null };
 
     // On récupère toujours le stdout ou le data principal
-    let data: any[] = [];
-
-    switch (language) {
-      case "sql":
-        // SQL : résultat attendu sous forme { rows: [...] }
-        data = Array.isArray(result?.rows) ? result.rows : [];
-        const isTabular = data.length > 0 && typeof data[0] === "object";
-        return { rows: data, isTabular: isTabular, normalizedResult: result };
-
-      case "python":
-        // Python : stdout peut être JSON, tableau ou texte
-        try {
-          const stdout = result?.stdout ?? "";
-          const parsed = JSON.parse(stdout);
-          if (Array.isArray(parsed)) {
-            return {
-              rows: parsed,
-              isTabular: parsed.length > 0 && typeof parsed[0] === "object",
-              normalizedResult: parsed,
-            };
-          }
-          return { rows: [], isTabular: false, normalizedResult: parsed };
-        } catch {
-          // fallback : texte brut
-          return { rows: [], isTabular: false, normalizedResult: result?.stdout ?? result };
-        }
-
-      case "json":
-        // JSON : peut être un tableau ou objet
-        if (Array.isArray(result)) {
-          return {
-            rows: result,
-            isTabular: result.length > 0 && typeof result[0] === "object",
-            normalizedResult: result,
-          };
-        } else if (typeof result === "object") {
-          const parsed = result?.parsed ?? "";
-          const parsedJson = typeof parsed === "object" ? parsed : JSON.parse(parsed);
-
-          return { rows: [], isTabular: false, normalizedResult: parsedJson };
-        }
-        return { rows: [], isTabular: false, normalizedResult: result };
-
-      case "js":
-      case "javascript":
-        // JS : on considère le résultat comme un objet ou tableau
-        if (Array.isArray(result)) {
-          return {
-            rows: result,
-            isTabular: result.length > 0 && typeof result[0] === "object",
-            normalizedResult: result,
-          };
-        } else if (typeof result === "object") {
-          return { rows: [], isTabular: false, normalizedResult: result };
-        }
-        return { rows: [], isTabular: false, normalizedResult: result };
-
-      default:
-        // fallback : tout autre type
-        if (Array.isArray(result)) {
-          return {
-            rows: result,
-            isTabular: result.length > 0 && typeof result[0] === "object",
-            normalizedResult: result,
-          };
-        }
-        return { rows: [], isTabular: false, normalizedResult: result };
-    }
+    const data = Array.isArray(result?.rows) ? result.rows : [];
+    const isTabular = data.length > 0 && typeof data[0] === "object";
+    return { rows: data, isTabular: isTabular, normalizedResult: result };
   }, [language, result]);
 
   // ⚠️ PAS DE useMemo ICI

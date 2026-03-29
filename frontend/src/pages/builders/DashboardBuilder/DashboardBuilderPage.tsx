@@ -528,7 +528,7 @@ const DashboardBuilderPage: React.FC = () => {
           chartTypes={CHART_TYPES}
           dataSourceMode={dataSourceMode}
           onDataSourceModeChange={handleDataSourceModeChange}
-          onOpenTypeModal={() => setIsTypeModalOpen(true)}
+          toogleChartTypeModal={() => setIsTypeModalOpen(true)}
           onOpenIndicatorBuilder={() => {
             setEditingIndicatorId(null);
             setIsIndicatorBuilderOpen(true);

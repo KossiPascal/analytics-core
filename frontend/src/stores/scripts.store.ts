@@ -9,13 +9,14 @@ const getTheme = () => {
   return ["light", "dark"].includes(`${savedTheme}`) ? savedTheme : "dark";
 };
 
-const defaultScript = (content = "", language = "sql"): Script => {
+
+const generateScript = (content: string = "",language: string = "sql",name?: string): Script => {
   const hasContent = content !== null && content !== undefined && content.length > 0;
   return {
     id: null,
-    name: hasContent ? "Schema generated content" : "",
+    name: name ?? (hasContent ? "Schema generated content" : ""),
     content: hasContent ? content : "",
-    language
+    language,
   };
 };
 
@@ -54,7 +55,7 @@ interface ScriptState {
   languages: Language[];
 
   /* ----------------- DEFAULT SCRIPT ----------------- */
-  defaultScript: (content?: string, language?: string) => Script;
+  generateScript: (content?: string, language?: string) => Script;
   setSearch: (search: string) => void;
   setScript: (script: Script) => void;
   clearError: () => void;
@@ -98,7 +99,7 @@ export const scriptStore = create<ScriptState>((set, get) => ({
   theme: getTheme(),
   language,
   languages,
-  defaultScript,
+  generateScript,
 
   /* ----------------- DEFAULT SCRIPT ----------------- */
   setSearch: (search: string) => {
@@ -181,7 +182,7 @@ export const scriptStore = create<ScriptState>((set, get) => ({
     }
 
     if (!script) return;
-    const defScript = defaultScript("", script.language || language);
+    const defScript = generateScript("", script.language || language);
 
     set({
       script: { ...defScript },

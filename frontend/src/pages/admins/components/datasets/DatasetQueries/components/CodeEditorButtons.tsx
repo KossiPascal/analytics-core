@@ -6,7 +6,6 @@ import { queryService } from "@/services/dataset.service";
 import { DatasetQuery } from "@/models/dataset.models";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
-import DeleteIcon from "@mui/icons-material/Delete";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import StopIcon from "@mui/icons-material/Stop";
@@ -16,11 +15,11 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 interface CodeEditorButtonsProps {
   onExecuteComplete?: () => void;
   query?: DatasetQuery | null;
-  onAfterSave?: (id: number) => void;
+  onAfterSave?: (id: number | undefined) => void;
 }
 
 export default function CodeEditorButtons({ onExecuteComplete, query, onAfterSave }: CodeEditorButtonsProps) {
-  const { toggleTheme, execute, cancelExecution, resetEditor, remove, loading, script, canExecute } = scriptStore();
+  const { loading, script, canExecute, toggleTheme, execute, cancelExecution, resetEditor, remove } = scriptStore();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -40,6 +39,11 @@ export default function CodeEditorButtons({ onExecuteComplete, query, onAfterSav
     },
   });
 
+
+  const safeReset = useCallback(() => {
+    if (!loading && script?.content) resetEditor();
+  }, [loading, script, resetEditor]);
+
   /* ---------------- HANDLERS SÉCURISÉS ---------------- */
   const safeExecute = useCallback(async () => {
     if (!loading && canExecute) {
@@ -49,12 +53,8 @@ export default function CodeEditorButtons({ onExecuteComplete, query, onAfterSav
   }, [loading, canExecute, execute, onExecuteComplete]);
 
   const safeCancel = useCallback(() => {
-    if (loading) cancelExecution();
-  }, [loading, cancelExecution]);
-
-  const safeReset = useCallback(() => {
-    if (!loading && script?.content) resetEditor();
-  }, [loading, script, resetEditor]);
+    if (loading) cancelExecution(); 
+  }, [loading, cancelExecution, safeReset]);
 
   const safeDelete = useCallback(() => {
     if (!script?.id || loading) return;
@@ -66,15 +66,18 @@ export default function CodeEditorButtons({ onExecuteComplete, query, onAfterSav
     setSaving(true);
     setSaveStatus(null);
     try {
+      let queryId = query.id;
       if (query.id) {
         await queryService.update(query.id, query);
         setSaveMessage("Requête mise à jour");
       } else {
         const res = await queryService.create(query) as any;
-        const newId = res?.id ?? res?.query_id;
-        if (newId) onAfterSave?.(newId);
+        queryId = res?.id ?? res?.query_id;
         setSaveMessage("Requête sauvegardée");
       }
+
+      safeReset();
+      onAfterSave?.(queryId ?? undefined);
       setSaveStatus("success");
       setTimeout(() => setSaveStatus(null), 3000);
     } catch {
@@ -177,9 +180,9 @@ export default function CodeEditorButtons({ onExecuteComplete, query, onAfterSav
         {/* SAVE QUERY */}
         <Tooltip title={
           !query?.compiled_sql ? "Construisez une requête d'abord" :
-          !query?.name?.trim() ? "Renseignez le nom dans Informations générales" :
-          !query?.dataset_id ? "Sélectionnez un dataset dans Informations générales" :
-          query.id ? "Mettre à jour la requête" : "Sauvegarder la requête"
+            !query?.name?.trim() ? "Renseignez le nom dans Informations générales" :
+              !query?.dataset_id ? "Sélectionnez un dataset dans Informations générales" :
+                query.id ? "Mettre à jour la requête" : "Sauvegarder la requête"
         }>
           <span>
             <Button

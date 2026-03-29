@@ -1,19 +1,17 @@
-import { Shield, Pencil } from "lucide-react";
-import { useEffect, useMemo, useState, forwardRef } from "react";
+import { Shield } from "lucide-react";
+import { useMemo, useState, forwardRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "@/routes/configs";
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from "@pages/admins/AdminEntityCrudModule";
 import { StatusBadge } from "@components/ui/Badge/Badge";
 import { type Column } from "@components/ui/Table/Table";
-import { FormSelect } from "@components/forms/FormSelect/FormSelect";
 import { Button } from "@components/ui/Button/Button";
-import { datasetService, queryService } from "@/services/dataset.service";
+import { queryService } from "@/services/dataset.service";
 import { Tenant } from "@/models/identity.model";
 import { Dataset, DatasetQuery, QueryJson } from "@/models/dataset.models";
-import { FaDatabase } from "react-icons/fa";
 import { CompileError } from "./components/model";
-import { RenderFormBuilder } from "./components/RenderFormBuilder";
 import { DatasetPreviewModal } from "./components/DatasetPreviewModal";
+import QueryBuilderInterface from "./QueryBuilderInterface";
+import { scriptStore } from "@/stores/scripts.store";
 
 
 
@@ -31,22 +29,14 @@ const createDefaultForm = (tenant_id: number): DatasetQuery => ({
         order_by: [],
         filters: {
             where: [
-                {
-                    linkWithPrevious: undefined,
-                    node: {
-                        type: "group",
-                        operator: "AND",
-                        children: [
-                            {
-                                type: "condition",
-                                field_id: -1,
-                                operator: "=",
-                                value: "",
-                                useSqlInClause: false
-                            }
-                        ]
-                    }
-                }
+                // {
+                //     linkWithPrevious: undefined,
+                //     node: {
+                //         type: "group",
+                //         operator: "AND",
+                //         children: [ { type: "condition", field_id: -1, operator: "=", value: "", useSqlInClause: false } ]
+                //     }
+                // }
             ],
             having: []
         },
@@ -137,11 +127,14 @@ interface DatasetQueryTabProps {
 }
 
 export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQueryTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
-    const navigate = useNavigate();
+    const { loading, script, resetEditor } = scriptStore();
+
     const [previewSql, setPreviewSql] = useState<string | null>(null);
     const [previewJson, setPreviewJson] = useState<QueryJson | null>(null);
     const [previewValues, setPreviewValues] = useState<Record<string, any> | null>(null);
     const [errors, setErrors] = useState<CompileError>({});
+
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
 
     const queryColumns = useMemo(() => getQueryColumns(setPreviewJson, setPreviewSql, setPreviewValues), []);
 
@@ -151,6 +144,11 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
             ids: [tenant_id, dataset_id]
         };
     }, [tenant_id, dataset_id]);
+
+
+    const safeReset = useCallback(() => {
+        if (!loading && script?.content) resetEditor();
+    }, [loading, script, resetEditor]);
 
     const validateQuery = (q: DatasetQuery) => {
         const queryErrors: CompileError = {};
@@ -167,19 +165,15 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
         return queryErrors;
     };
 
-    const formatJsonWithInlineArrays = (obj: any, applyPretty: boolean = false) => {
+    const formatJson = (obj: any, inline: boolean = false) => {
         const pretty = JSON.stringify(obj, null, 2);
 
-        if (!applyPretty) return pretty;
+        if (!inline) return pretty;
         return pretty.replace(/\[\s+([\s\S]*?)\s+\]/g, (match) => {
-            return match
-                .replace(/\n/g, "")
-                .replace(/\s+/g, " ")
-                .replace(/\s?,\s?/g, ", ");
+            return match.replace(/\n/g, "").replace(/\s+/g, " ").replace(/\s?,\s?/g, ", ");
         });
     };
 
-    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id), [tenant_id])
 
     const cleanQueryJson = (q: DatasetQuery): DatasetQuery => {
         const cleanNode = (node: any): any | null => {
@@ -188,10 +182,10 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                 return (!node.field_id || node.field_id <= 0) ? null : node;
             }
             if (node.type === "group") {
-                const cleanedChildren = (node.children ?? [])
+                const children = (node.children ?? [])
                     .map(cleanNode)
                     .filter(Boolean);
-                return cleanedChildren.length === 0 ? null : { ...node, children: cleanedChildren };
+                return children.length === 0 ? null : { ...node, children };
             }
             return node;
         };
@@ -214,11 +208,17 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
         };
     };
 
+    const getRef = () => {
+        if (!ref) return null;
+        if (typeof ref === "function") return null;
+        return ref.current;
+    };
+
     return (
         <>
             <AdminEntityCrudModule<DatasetQuery>
                 ref={ref}
-                modalSize="yl"
+                modalSize="full"
                 entityName="DatasetQuery"
                 title="Dataset Query Management"
                 icon={<Shield size={18} />}
@@ -226,18 +226,7 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                 service={queryService}
                 defaultTenant={defaultTenant}
                 defaultValue={DEFAULT_FORM}
-                enableEdit={false}
-                customActions={(row) => (
-                    <button
-                        title="Ouvrir dans Query Builder"
-                        onClick={() => navigate(ROUTES.builder.queryBuilder(), { state: { query: row } })}
-                        style={{ padding: "4px", borderRadius: "4px", border: "none", background: "transparent", cursor: "pointer", color: "#2563eb" }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#dbeafe"}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
-                    >
-                        <Pencil size={15} />
-                    </button>
-                )}
+                processLoading={loading}
                 isValid={(q) => {
                     return Object.keys(errors).length === 0
                 }}
@@ -247,18 +236,37 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
                     setErrors(validationErrors);
                     return Object.keys(validationErrors).length === 0;
                 }}
+                afterModalClose={() => safeReset()}
+
+                showFromFooterActionsBtn={false}
                 renderForm={(query, setValue, saving) => (
-                    <RenderFormBuilder
-                        datasets={datasets}
-                        query={query}
-                        tenants={tenants}
-                        tenant_id={tenant_id}
-                        errors={errors}
-                        defaultForm={DEFAULT_FORM}
-                        setValue={setValue}
-                        setPreviewSql={setPreviewSql}
-                        setErrors={setErrors}
-                    />
+                    <>
+                        <QueryBuilderInterface
+                            stateQuery={query}
+                            datasets={datasets}
+                            tenant_id={tenant_id}
+                            defaultQueryForm={DEFAULT_FORM}
+                            onAfterSave={(id) => {
+                                const r = getRef();
+
+                                r?.setOpenModal?.(false);
+                                r?.setEntity?.(DEFAULT_FORM);
+                                r?.setEditing?.(false);
+                                r?.refresh?.();
+
+                            }} />
+                        {/* <RenderFormBuilder
+                                datasets={datasets}
+                                query={query}
+                                tenants={tenants}
+                                tenant_id={tenant_id}
+                                errors={errors}
+                                defaultForm={DEFAULT_FORM}
+                                setValue={setValue}
+                                setPreviewSql={setPreviewSql}
+                                setErrors={setErrors}
+                            /> */}
+                    </>
                 )}
             />
 
@@ -275,7 +283,7 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
             <DatasetPreviewModal
                 title="Query JSON"
                 open={Boolean(previewJson)}
-                data={formatJsonWithInlineArrays(previewJson ?? {})}
+                data={formatJson(previewJson ?? {})}
                 onClose={() => setPreviewJson(null)}
                 type="json"
             />
@@ -283,7 +291,7 @@ export const DatasetQueryTab = forwardRef<AdminEntityCrudModuleRef, DatasetQuery
             <DatasetPreviewModal
                 title="Query VALUES"
                 open={Boolean(previewValues)}
-                data={formatJsonWithInlineArrays(previewValues ?? {}, true)}
+                data={formatJson(previewValues ?? {}, true)}
                 onClose={() => setPreviewValues(null)}
                 type="json"
             />

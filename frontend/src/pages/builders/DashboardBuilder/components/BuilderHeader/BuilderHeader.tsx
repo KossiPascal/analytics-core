@@ -10,7 +10,7 @@ interface BuilderHeaderProps {
   chartTypes: ChartTypeOption[];
   dataSourceMode: DataSourceMode;
   onDataSourceModeChange: (mode: DataSourceMode) => void;
-  onOpenTypeModal: () => void;
+  toogleChartTypeModal: () => void;
   onOpenIndicatorBuilder: () => void;
 }
 
@@ -19,7 +19,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   chartTypes,
   dataSourceMode,
   onDataSourceModeChange,
-  onOpenTypeModal,
+  toogleChartTypeModal,
   onOpenIndicatorBuilder,
 }) => {
   const currentType = chartTypes.find((t) => t.id === chartType);
@@ -74,7 +74,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
             />
           </div>
 
-          <button type="button" className={styles.typeChangeBtn} onClick={onOpenTypeModal}>
+          <button type="button" className={styles.typeChangeBtn} onClick={toogleChartTypeModal}>
             {currentType?.icon}
             {currentType?.name ?? chartType}
           </button>

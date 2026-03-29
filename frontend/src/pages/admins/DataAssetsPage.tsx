@@ -1,9 +1,8 @@
 import { JSX, useEffect, useRef, useState } from 'react';
 import { Button } from '@components/ui/Button/Button';
 import { Card, CardBody } from '@components/ui/Card/Card';
-import { Modal } from '@components/ui/Modal/Modal';
 import { PageWrapper } from '@components/layout/PageWrapper/PageWrapper';
-import { Plus, Shield, ShieldCheck, RefreshCw, Code, LayoutDashboard } from 'lucide-react';
+import { Plus, Shield, ShieldCheck, RefreshCw } from 'lucide-react';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { DataSourceTab } from './components/datasources/DataSourceTab';
 import { DataSourcePermissionTab } from './components/datasources/DataSourcePermissionTab';
@@ -17,8 +16,6 @@ import { useAuth } from '@/contexts/AuthContext';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
-import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderTab';
-import DatasetBuilderPage from './components/datasets/DatasetBuilder/DatasetBuilderPage';
 
 type TabType =
   | "datasource_tab"
@@ -32,10 +29,6 @@ export default function DataAssetsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenant_id, setTenantId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const [openDatasetBuilder, setOpenDatasetBuilder] = useState(false);
-
-  const [showQueryBuilder, setShowQueryBuilder] = useState(false);
-  const [showDashboardBuilder, setShowDashboardBuilder] = useState(false);
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
 
   const { user } = useAuth();
@@ -124,21 +117,12 @@ export default function DataAssetsPage() {
 
               {/* {activeTab === 'query_tab' && (
                 <Button variant="outline" size="sm" onClick={() => setShowQueryBuilder(true)}>
-                  <Code size={16} /> Query Builder
+                  <Code size={16} /> Dataset Builder
                 </Button>
-              )}
-              {activeTab === 'chart_tab' && (
-                <Button variant="outline" size="sm" onClick={() => setShowDashboardBuilder(true)}>
-                  <LayoutDashboard size={16} /> Dashboard Builder
-                </Button>
-              )} */}
+              )}*/}
 
             </div>
           )}
-
-          <Button onClick={() => setOpenDatasetBuilder(true)}>
-            DatasetBuilder
-          </Button>
         </>
       }
     >
@@ -183,36 +167,7 @@ export default function DataAssetsPage() {
         </div>
       )}
 
-      {/* QUERY BUILDER MODAL */}
-      <Modal
-        isOpen={showQueryBuilder}
-        onClose={() => setShowQueryBuilder(false)}
-        title="Query Builder"
-        size="full"
-      >
-        <QueryBuilderPage embedded />
-      </Modal>
-
-      {/* DASHBOARD BUILDER MODAL */}
-      {/* <Modal
-        isOpen={showDashboardBuilder}
-        onClose={() => setShowDashboardBuilder(false)}
-        title="Dashboard Builder"
-        size="full"
-      >
-
-      </Modal> */}
     </PageWrapper>
-
-
-      <Modal
-        isOpen={openDatasetBuilder}
-        onClose={() => setOpenDatasetBuilder(false)}
-        title="Dataset Builder"
-        size="full"
-      >
-        <DatasetBuilderPage />
-      </Modal>
     </>
   );
 }

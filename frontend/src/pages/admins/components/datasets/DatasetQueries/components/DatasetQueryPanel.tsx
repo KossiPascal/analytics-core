@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Save, Play, CheckCircle, AlertCircle } from "lucide-react";
+import { Play, CheckCircle, AlertCircle } from "lucide-react";
 import { Dataset, DatasetQuery } from "@/models/dataset.models";
-import { RenderFormBuilder } from "../../DatasetQueries/components/RenderFormBuilder";
-import { DatasetPreviewModal } from "../../DatasetQueries/components/DatasetPreviewModal";
-import { CompileError } from "../../DatasetQueries/components/model";
+import { RenderFormBuilder } from "../components/RenderFormBuilder";
+import { CompileError } from "../components/model";
 import { Button } from "@/components/ui/Button/Button";
 import { queryService } from "@/services/dataset.service";
 

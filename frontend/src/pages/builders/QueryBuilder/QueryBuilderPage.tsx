@@ -14,21 +14,16 @@ import { PageWrapper } from "@/components/layout/PageWrapper/PageWrapper";
 import CodeEditorButtons from "./components/CodeEditorButtons";
 
 const QueryBuilderPage: React.FC = () => {
-  const { language, setScript, defaultScript } = scriptStore();
+  const { language, setScript, generateScript } = scriptStore();
   const { isSuperAdmin } = useAuth();
   const isSqlLanguage = language === "sql";
 
   const [showSchemaModal, setShowSchemaModal] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
 
-  /* ----------------- LOAD EMPTY SCRIPT ON START ----------------- */
-  useEffect(() => {
-    // setScript(defaultScript());
-  }, [setScript]);
-
   /* ----------------- HANDLE RUN SQL FROM SCHEMA ----------------- */
   const handleRunSqlFromSchema = (sql: string) => {
-    setScript(defaultScript(sql));
+    setScript(generateScript(sql));
     setShowSchemaModal(false);
   };
 

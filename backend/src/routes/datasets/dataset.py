@@ -365,11 +365,13 @@ def delete_dataset(dataset_id:int):
         if not dataset:
             raise BadRequest("Dataset not found", 404)
         
-        dataset.is_active = False
-        dataset.deleted = True
-        dataset.deleted_at = datetime.now(timezone.utc)
-        dataset.deleted_by_id=currentUserId(),
-        # db.session.delete(dataset)
+        # dataset.is_active = False
+        # dataset.deleted = True
+        # dataset.deleted_at = datetime.now(timezone.utc)
+        # dataset.deleted_by_id=currentUserId(),
+
+        db.session.delete(dataset)
+
         db.session.commit()
 
         return jsonify({"message": "Dataset deleted successfully"}), 200

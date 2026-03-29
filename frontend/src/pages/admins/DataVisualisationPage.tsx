@@ -19,7 +19,6 @@ import { datasetService } from '@/services/dataset.service';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
-import QueryBuilderPage from './components/datasets/QueryBuilder/QueryBuilderTab';
 
 type TabType =
   | "field_tab"
@@ -37,7 +36,6 @@ export default function DataVisualisationPage() {
   const [activeTab, setActiveTab] = useState<TabType>('chart_tab');
   const [activeName, setActiveName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showQueryBuilder, setShowQueryBuilder] = useState(false);
 
   const crudRef = useRef<AdminEntityCrudModuleRef>(null);
 
@@ -140,12 +138,6 @@ export default function DataVisualisationPage() {
               <Button variant="ghost" size="sm" onClick={handleAddNew}>
                 <Plus size={16} /> {activeName}
               </Button>
-
-              {activeTab === 'query_tab' && (
-                <Button variant="outline" size="sm" onClick={() => setShowQueryBuilder(true)}>
-                  <Code size={16} /> Query Builder
-                </Button>
-              )}
             </div>
           )}
         </>
@@ -191,16 +183,6 @@ export default function DataVisualisationPage() {
           <TenantForm />
         </div>
       )}
-
-      {/* QUERY BUILDER MODAL */}
-      <Modal
-        isOpen={showQueryBuilder}
-        onClose={() => setShowQueryBuilder(false)}
-        title="Query Builder"
-        size="full"
-      >
-        <QueryBuilderPage embedded />
-      </Modal>
     </PageWrapper>
   );
 }

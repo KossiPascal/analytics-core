@@ -2,9 +2,7 @@ import React from 'react';
 
 import { LayoutConfiguration } from '../LayoutConfiguration/LayoutConfiguration';
 import { PreviewSection } from '../PreviewSection/PreviewSection';
-import type { IndicatorFilter } from '../IndicatorBuilder/IndicatorFilterBuilder';
 import type { DefinitionEntry } from '@pages/builders/SqlBuilder/components/DefinitionItemForm';
-import type { SidebarEntity } from '../IndicatorBuilder/IndicatorBuilder';
 import type { ChartVariant, DimensionItem, LayoutZone, VisualizationOptions } from '../types';
 import styles from './BuilderMainArea.module.css';
 
@@ -17,9 +15,7 @@ interface BuilderMainAreaProps {
   onRemoveRowItem: (id: string) => void;
   onRemoveFilterItem: (id: string) => void;
   onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
-  entities: SidebarEntity[];
-  layoutFilters: IndicatorFilter[];
-  onLayoutFiltersChange: (filters: IndicatorFilter[]) => void;
+  entities: any[];
   layoutData: DefinitionEntry[];
   onLayoutDataChange: (data: DefinitionEntry[]) => void;
   previewChartType: ChartVariant;
@@ -45,8 +41,6 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
   onRemoveFilterItem,
   onMoveItem,
   entities,
-  layoutFilters,
-  onLayoutFiltersChange,
   layoutData,
   onLayoutDataChange,
   previewChartType,
@@ -73,8 +67,6 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
         onRemoveFilterItem={onRemoveFilterItem}
         onMoveItem={onMoveItem}
         entities={entities}
-        layoutFilters={layoutFilters}
-        onLayoutFiltersChange={onLayoutFiltersChange}
         layoutData={layoutData}
         onLayoutDataChange={onLayoutDataChange}
       />

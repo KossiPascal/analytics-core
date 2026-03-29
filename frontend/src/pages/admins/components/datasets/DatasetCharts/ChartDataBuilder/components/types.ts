@@ -5,8 +5,6 @@
 
 export type VisualizationType = 'dashboard' | 'report';
 
-export type DataSourceMode = 'matview' | 'indicators';
-
 export type ChartVariant =
   | 'line'
   | 'area'
@@ -51,7 +49,6 @@ export type ChartVariant =
   filters: LayoutDimension[];
   options: VisualizationOptions;
   selectedDataElements: string[];
-  selectedIndicators: string[];
   selectedPeriods: string[];
   selectedOrgUnits: string[];
 }

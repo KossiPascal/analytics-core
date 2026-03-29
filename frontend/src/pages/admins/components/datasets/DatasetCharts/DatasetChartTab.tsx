@@ -11,7 +11,7 @@ import { FaDatabase } from "react-icons/fa";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Button } from "@/components/ui/Button/Button";
 import { Tenant } from "@/models/identity.model";
-import DatasetBuilderPage from "@pages/admins/components/datasets/DatasetBuilder/DatasetBuilderPage";
+import { ChatBuilderInterface } from "@/pages/admins/components/datasets/DatasetCharts/ChartDataBuilder/ChatBuilderInterface";
 
 import styles from "@pages/admins/AdminPage.module.css";
 import { Building2 } from "lucide-react";
@@ -87,25 +87,8 @@ interface DatasetChartTabProps {
 export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChartTabProps>(({ tenants, tenant_id, datasets, dataset_id }, ref) => {
     const [queries, setQueries] = useState<DatasetQuery[]>([]);
     const [query_id, setQueryId] = useState<number | undefined>(undefined);
-
     const [showPreview, setShowPreview] = useState<boolean>(false);
     const [executeResponse, setExecuteResponse] = useState<ExecuteChartResponse | undefined>(undefined);
-
-    const [layout, setLayout] = useState<Layout | undefined>(undefined);
-    const [charts, setCharts] = useState<DatasetChart[]>([]);
-    const [breakpoint, setBreakpoint] = useState<string | undefined>(undefined);
-
-    const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
-    const [containerCols, setContainerCols] = useState<number | undefined>(undefined);
-    const [containerMargin, setContainerMargin] = useState<[number, number] | undefined>(undefined);
-    const [containerPadding, setContainerPadding] = useState<[number, number] | undefined | null>(undefined);
-
-    const [expertMode, setExpertMode] = useState<boolean>(false);
-    const [openDatasetBuilder, setOpenDatasetBuilder] = useState(false);
-    const [chartType, setChartType] = useState<string>("table");
-    const [selectedChart, setSelectedChart] = useState<DatasetChart | null>(null);
-
-    const didLoad = useRef(false);
 
     // Chargement queries
     useEffect(() => {
@@ -167,14 +150,30 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
                 headerActions={
                     <>
                         <QueriesListForm />
-                        <Button onClick={() => setOpenDatasetBuilder(true)}>DatasetBuilder</Button>
+                        {/* <Button onClick={() => setOpenChartBuilder(true)}>Chart Builder</Button> */}
                     </>
                 }
                 renderForm={(chart, setValue, saving) => (
                     <>
-                        {/* <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}> */}
-                        {/* ChartWizard doit mettre à jour champ par champ */}
-                        <ChartWizard
+                        <ChatBuilderInterface
+                            chart={chart}
+                            tenants={tenants}
+                            tenant_id={tenant_id}
+                            datasets={datasets}
+                            dataset_id={dataset_id}
+                            queries={queries}
+                            query_id={query_id!}
+                            onChange={(updatedChart) => {
+                                Object.keys(updatedChart).forEach((key) => {
+                                    setValue(key as keyof DatasetChart, (updatedChart as any)[key]);
+                                });
+                            }}
+                            onExecute={(ex) => {
+                                setExecuteResponse(ex);
+                                setShowPreview(true);
+                            }}
+                        />
+                        {/* <ChartWizard
                             chart={chart}
                             tenants={tenants}
                             tenant_id={tenant_id}
@@ -194,17 +193,13 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
                             }}
                         />
 
-                        {!isParamsNotOk && (<Modal size="full" isOpen={showPreview} onClose={() => setShowPreview(false)}>
+                        {!isParamsNotOk && (
+                        <Modal size="full" isOpen={showPreview} onClose={() => setShowPreview(false)}>
                             <ChartRendererPreview executeResponse={executeResponse} />
-                        </Modal>)}
-
-                        {/* </div> */}
+                        </Modal>)} */}
                     </>
                 )}
             />
-            <Modal isOpen={openDatasetBuilder} onClose={() => setOpenDatasetBuilder(false)} title="Dataset Builder" size="full">
-                <DatasetBuilderPage />
-            </Modal>
         </>
     );
 });
