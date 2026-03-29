@@ -96,15 +96,3 @@ export type ChartVariant =
   onEditItem?: (itemId: string) => void;
 }
 
-export type LayoutZone = 'column' | 'row' | 'filter';
-
- export interface LayoutDropZoneProps {
-  zone: LayoutZone;
-  title: string;
-  items: string[];
-  allItems: DimensionItem[];
-  onRemove: (itemId: string) => void;
-  onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
-  placeholder?: string;
-  children?: React.ReactNode;
-}

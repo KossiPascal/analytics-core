@@ -137,7 +137,7 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
         <>
             <AdminEntityCrudModule<DatasetChart>
                 ref={ref}
-                modalSize="zl"
+                modalSize="full"
                 title="Gestion des DatasetChart"
                 icon={<Shield size={20} />}
                 entityName="DatasetChart"

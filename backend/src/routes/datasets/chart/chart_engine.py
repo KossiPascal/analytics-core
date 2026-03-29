@@ -124,7 +124,7 @@ class Direction(str, Enum):
 
 # MODELS
 @dataclass
-class ChartStructureFilter:
+class ChartFilter:
     field_id: int
     operator: str
     value: Any
@@ -133,7 +133,7 @@ class ChartStructureFilter:
     useSqlInClause: bool = False
 
 @dataclass
-class ChartStructureDimension:
+class ChartDimension:
     field_id: int
     alias: Optional[str] = None
     # data_type: Optional[str] = None
@@ -144,7 +144,7 @@ class ChartStructureDimension:
 
 
 @dataclass
-class ChartStructureMetric:
+class ChartMetric:
     field_id: int
     alias: Optional[str] = None
     aggregation: str = "SUM"
@@ -155,7 +155,7 @@ class ChartStructureMetric:
     # useSqlInClause: Optional[bool] = None
 
 @dataclass
-class ChartStructureOrderby:
+class ChartOrderby:
     field_id: int
     alias: Optional[str] = None
     direction: Literal["ASC","DESC"] = "ASC"
@@ -180,11 +180,11 @@ class ChartPivotOptions:
 
 @dataclass
 class ChartStructureSchema:
-    rows_dimensions: List[ChartStructureDimension] = field(default_factory=list)
-    cols_dimensions: List[ChartStructureDimension] = field(default_factory=list)
-    metrics: List[ChartStructureMetric] = field(default_factory=list)
-    filters: List[ChartStructureFilter] = field(default_factory=list)
-    order_by: List[ChartStructureOrderby] = field(default_factory=list)
+    rows_dimensions: List[ChartDimension] = field(default_factory=list)
+    cols_dimensions: List[ChartDimension] = field(default_factory=list)
+    metrics: List[ChartMetric] = field(default_factory=list)
+    filters: List[ChartFilter] = field(default_factory=list)
+    order_by: List[ChartOrderby] = field(default_factory=list)
     limit: Optional[int] = None
     offset: Optional[int] = None
     pivot: ChartPivotOptions = field(default_factory=ChartPivotOptions)
@@ -852,11 +852,11 @@ class ChartFactory:
             for d in structure.get("metrics", []) or []
         ]
                                                         
-        rows = [ChartStructureDimension(**d) for d in rows_dimensions]
-        cols = [ChartStructureDimension(**d) for d in cols_dimensions]
-        metrics = [ChartStructureMetric(**m) for m in metrics_list]
-        filters = [ChartStructureFilter(**f) for f in structure.get("filters", [])]
-        order_by = [ChartStructureOrderby(**o) for o in structure.get("order_by", [])]
+        rows = [ChartDimension(**d) for d in rows_dimensions]
+        cols = [ChartDimension(**d) for d in cols_dimensions]
+        metrics = [ChartMetric(**m) for m in metrics_list]
+        filters = [ChartFilter(**f) for f in structure.get("filters", [])]
+        order_by = [ChartOrderby(**o) for o in structure.get("order_by", [])]
         limit = int(structure["limit"]) if structure.get("limit", None) else None
         offset = int(structure["offset"]) if structure.get("offset", None) else None
         pivot = ChartPivotOptions(**structure["pivot"]) if structure.get("pivot", None) else None

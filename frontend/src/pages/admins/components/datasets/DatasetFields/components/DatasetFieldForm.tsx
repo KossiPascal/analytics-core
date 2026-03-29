@@ -92,7 +92,7 @@ export const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_
             setErrors({});
             onValidationChange?.(false);
         }
-    }, [isDimensionHidden,isMetricHidden]);
+    }, [isDimensionHidden, isMetricHidden]);
 
     // Génération automatique contrôlée
     useEffect(() => {
@@ -208,14 +208,14 @@ export const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_
     const handleValidateMultipleFields = () => {
         if (["dimension", "metric"].includes(`${field.field_type}`)) {
             const valKey = field.field_type === "dimension" ? "dimensions" : "metrics";
-            const toStore = selectedFields.map(sfd=>{
-                const actionsField:(keyof DatasetFieldUtils)[] = ["is_public","is_filterable","is_groupable","is_sortable","is_selectable","is_hidden","is_active"];
-                for (const f of actionsField){
+            const toStore = selectedFields.map(sfd => {
+                const actionsField: (keyof DatasetFieldUtils)[] = ["is_public", "is_filterable", "is_groupable", "is_sortable", "is_selectable", "is_hidden", "is_active"];
+                for (const f of actionsField) {
                     sfd[f] = field[f];
                 }
                 return sfd;
             });
-            
+
             setValue(valKey, toStore);
             setValue("name", field.name ?? "multi_" + field.field_type);
             setSelectedFields([]);
@@ -326,8 +326,15 @@ export const DatasetFieldForm = ({ field, setValue, tenants, tenant_id, dataset_
             >
                 <div className="p-4">
                     {datasetColumns.length === 0 ?
-                        (<p className="text-sm text-gray-400 text-center py-4">Aucune colonne disponible</p>) :
-                        (<MultipleFieldsTableInput field={field} columns={datasetColumns} fields={selectedFields} selectFields={setSelectedFields} />)}
+                        (<p className="text-sm text-gray-400 text-center py-4">
+                            Aucune colonne disponible
+                        </p>) :
+                        (<MultipleFieldsTableInput
+                            field={field}
+                            columns={datasetColumns}
+                            fields={selectedFields}
+                            selectFields={setSelectedFields}
+                        />)}
                 </div>
             </Modal>
         </motion.div>

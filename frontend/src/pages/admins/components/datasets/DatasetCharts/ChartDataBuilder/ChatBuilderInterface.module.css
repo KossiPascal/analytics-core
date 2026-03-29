@@ -15,6 +15,13 @@
   }
 }
 
+.mainArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+
 /* Tabs Container */
 .tabsContainer {
   margin-bottom: 0.75rem;

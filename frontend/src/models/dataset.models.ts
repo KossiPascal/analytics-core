@@ -256,29 +256,13 @@ export interface TableColumn {
   formatter?: "number" | "currency" | "percent" | "string";
 }
 
-export interface ChartStructureFilter {
+export interface ChartFilter {
   field_id: number,
   field_type: SqlFieldType
   operator: SqlOperators,
   value: any,
   value2: any;
   useSqlInClause: boolean
-}
-
-export interface ChartStructureMetric {
-  field_id: number;
-  alias: string;
-  aggregation: SqlAggType
-}
-
-export interface ChartStructureDimension {
-  field_id: number;
-  alias: string
-}
-
-export interface ChartStructureOrderBy {
-  field_id: number;
-  direction: "ASC" | "DESC"
 }
 
 export interface ChartPivot {
@@ -321,7 +305,7 @@ export interface ChartStructure {
   cols_dimensions: ChartDimension[];
   metrics: ChartMetric[];
   // Filter data
-  filters: ChartStructureFilter[];
+  filters: ChartFilter[];
   order_by: ChartOrderby[];
   limit: number | null;
   offset: number | null;
