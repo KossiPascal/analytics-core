@@ -1,0 +1,104 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── TAB LIST ── */
+.tabList {
+  display: flex;
+  border-bottom: 2px solid #e2e8f0;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.tabButton {
+  position: relative;
+  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tabButton:hover {
+  color: #1e293b;
+}
+
+.tabButtonActive {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.tabDisabledDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ── TAB CONTENT ── */
+.tabContent {
+  padding: 1rem 0;
+  min-height: 200px;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.row > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin: 0.5rem 0 0;
+}
+
+.action {
+  padding-top: 0.25rem;
+}
+
+.emptyMsg {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+/* ── NAVIGATION ── */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 0.5rem;
+}
+
+.navStep {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
