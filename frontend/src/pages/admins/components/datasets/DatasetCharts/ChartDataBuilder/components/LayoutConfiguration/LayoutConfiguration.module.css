@@ -11,6 +11,37 @@
   min-height: 88px;
 }
 
+/* ── CHART TYPE BUTTON ── */
+.chartTypeBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.chartTypeBtn:hover {
+  background: #e2e8f0;
+}
+
+.chartTypeBtn svg {
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.chartTypeName {
+  flex: 1;
+}
+
 /* ── SIDEBAR ── */
 .sidebar {
   width: 210px;
@@ -229,6 +260,57 @@
 
 .chipEllipsis:hover {
   background: rgba(3, 105, 161, 0.12);
+}
+
+/* ── ZONE DROP OVER ── */
+.zoneDropOver {
+  background: #e0f2fe;
+  outline: 2px dashed #0284c7;
+  outline-offset: -2px;
+}
+
+/* ── DIM CHIP (draggable individual item) ── */
+.dimChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 5px 2px 7px;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #0369a1;
+  cursor: grab;
+  user-select: none;
+  transition: background 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.dimChip:hover {
+  background: #bae6fd;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.dimChip:active {
+  cursor: grabbing;
+}
+
+.chipRemove {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0369a1;
+  padding: 1px;
+  border-radius: 2px;
+  opacity: 0.5;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.chipRemove:hover {
+  opacity: 1;
+  color: #ef4444;
 }
 
 /* ── MODAL FOOTER ── */

@@ -409,6 +409,9 @@ const handleAddLayout = useCallback(
           onMoveLayout={handleMoveItem}
           onUpdateLayout={handleUpdateLayout}
           onAddLayout={handleAddLayout}
+          chartType={chartType}
+          chartTypes={CHART_TYPES}
+          onSelectChartType={setChartType}
         />
 
         <PreviewSection
@@ -416,14 +419,11 @@ const handleAddLayout = useCallback(
           previewChartType={"bar"}
           isPreviewStale={isPreviewStale}
           isEditing={isEditing}
-          chartType={chartType}
-          chartTypes={CHART_TYPES}
           onRefreshPreview={handleRefreshPreview}
           onOpenTheme={() => setIsThemeModalOpen(true)}
           onOpenOptions={() => setIsOptionsModalOpen(true)}
           onOpenSaved={() => setIsSavedListOpen(true)}
           onSave={() => setIsSaveModalOpen(true)}
-          toogleChartTypeModal={() => setIsTypeModalOpen(true)}
         />
       </div>
 </div>
