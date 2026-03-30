@@ -88,6 +88,26 @@
   border-color: #2563eb;
 }
 
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #d97706;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filterBtn:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
 .toggleContainer {
   display: flex;
   gap: 0;

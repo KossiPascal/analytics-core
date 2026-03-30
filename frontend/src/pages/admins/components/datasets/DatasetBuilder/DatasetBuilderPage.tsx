@@ -86,6 +86,7 @@ const DatasetBuilderPage: React.FC = () => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isSavedListOpen, setIsSavedListOpen] = useState(false);
   const [isIndicatorBuilderOpen, setIsIndicatorBuilderOpen] = useState(false);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
   const [editingIndicatorId, setEditingIndicatorId] = useState<string | null>(null);
   const [indicatorConfigs, setIndicatorConfigs] = useState<Record<string, IndicatorQueryConfig>>({});
 
@@ -112,6 +113,7 @@ const DatasetBuilderPage: React.FC = () => {
   const [columnItems, setColumnItems] = useState<string[]>(['LAST_6_MONTHS']);
   const [rowItems, setRowItems] = useState<string[]>(['ind1', 'ind2']);
   const [filterItems, setFilterItems] = useState<string[]>(['ou1']);
+  const [metricItems, setMetricItems] = useState<string[]>([]);
 
   // Layout filters (from IndicatorFilterBuilder modal)
   const [layoutFilters, setLayoutFilters] = useState<IndicatorFilter[]>([]);
@@ -546,6 +548,7 @@ const DatasetBuilderPage: React.FC = () => {
             setEditingIndicatorId(null);
             setIsIndicatorBuilderOpen(true);
           }}
+          onOpenFilters={() => setIsFiltersModalOpen(true)}
         />
 
         <div className={styles.content}>
@@ -555,15 +558,12 @@ const DatasetBuilderPage: React.FC = () => {
             dataElements={dataElements}
             indicators={indicators}
             periods={periods}
-            orgUnits={orgUnits}
             selectedDataElements={selectedDataElements}
             selectedIndicators={selectedIndicators}
             selectedPeriods={selectedPeriods}
-            selectedOrgUnits={selectedOrgUnits}
             onDataElementsChange={setSelectedDataElements}
             onIndicatorsChange={setSelectedIndicators}
             onPeriodsChange={setSelectedPeriods}
-            onOrgUnitsChange={setSelectedOrgUnits}
             editableIndicatorIds={editableIndicatorIds}
             onEditIndicator={handleEditIndicator}
           />
@@ -573,13 +573,17 @@ const DatasetBuilderPage: React.FC = () => {
             columnItems={columnItems}
             rowItems={rowItems}
             filterItems={filterItems}
+            metricItems={metricItems}
             onRemoveColumnItem={(id) => setColumnItems(columnItems.filter((item) => item !== id))}
             onRemoveRowItem={(id) => setRowItems(rowItems.filter((item) => item !== id))}
             onRemoveFilterItem={(id) => setFilterItems(filterItems.filter((item) => item !== id))}
+            onRemoveMetricItem={(id) => setMetricItems(metricItems.filter((item) => item !== id))}
             onMoveItem={handleMoveItem}
             entities={indicatorEntities}
             layoutFilters={layoutFilters}
             onLayoutFiltersChange={setLayoutFilters}
+            isFiltersOpen={isFiltersModalOpen}
+            onFiltersClose={() => setIsFiltersModalOpen(false)}
             layoutData={layoutData}
             onLayoutDataChange={setLayoutData}
             previewOptions={previewSnapshot.options}

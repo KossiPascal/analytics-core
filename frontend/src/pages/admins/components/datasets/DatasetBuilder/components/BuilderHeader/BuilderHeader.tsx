@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, Layers, Plus, TrendingUp } from 'lucide-react';
+import { Database, Filter, Layers, Plus, TrendingUp } from 'lucide-react';
 
 import styles from './BuilderHeader.module.css';
 import type { ChartTypeOption, ChartVariant, DataSourceMode } from '../types';
@@ -12,6 +12,7 @@ interface BuilderHeaderProps {
   onDataSourceModeChange: (mode: DataSourceMode) => void;
   onOpenTypeModal: () => void;
   onOpenIndicatorBuilder: () => void;
+  onOpenFilters: () => void;
 }
 
 export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
@@ -21,6 +22,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
   onDataSourceModeChange,
   onOpenTypeModal,
   onOpenIndicatorBuilder,
+  onOpenFilters,
 }) => {
   const currentType = chartTypes.find((t) => t.id === chartType);
   const isTableChart = chartType === 'table';
@@ -41,6 +43,15 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
           >
             <Plus size={14} />
             Créer indicateur
+          </button>
+
+          <button
+            type="button"
+            className={styles.filterBtn}
+            onClick={onOpenFilters}
+          >
+            <Filter size={14} />
+            Filtres
           </button>
 
           {isTableChart && (

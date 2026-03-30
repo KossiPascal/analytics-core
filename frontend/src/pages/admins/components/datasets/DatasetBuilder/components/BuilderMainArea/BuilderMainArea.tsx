@@ -13,13 +13,17 @@ interface BuilderMainAreaProps {
   columnItems: string[];
   rowItems: string[];
   filterItems: string[];
+  metricItems: string[];
   onRemoveColumnItem: (id: string) => void;
   onRemoveRowItem: (id: string) => void;
   onRemoveFilterItem: (id: string) => void;
+  onRemoveMetricItem: (id: string) => void;
   onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
   entities: SidebarEntity[];
   layoutFilters: IndicatorFilter[];
   onLayoutFiltersChange: (filters: IndicatorFilter[]) => void;
+  isFiltersOpen: boolean;
+  onFiltersClose: () => void;
   layoutData: DefinitionEntry[];
   onLayoutDataChange: (data: DefinitionEntry[]) => void;
   previewChartType: ChartVariant;
@@ -40,13 +44,17 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
   columnItems,
   rowItems,
   filterItems,
+  metricItems,
   onRemoveColumnItem,
   onRemoveRowItem,
   onRemoveFilterItem,
+  onRemoveMetricItem,
   onMoveItem,
   entities,
   layoutFilters,
   onLayoutFiltersChange,
+  isFiltersOpen,
+  onFiltersClose,
   layoutData,
   onLayoutDataChange,
   previewChartType,
@@ -68,13 +76,17 @@ export const BuilderMainArea: React.FC<BuilderMainAreaProps> = ({
         columnItems={columnItems}
         rowItems={rowItems}
         filterItems={filterItems}
+        metricItems={metricItems}
         onRemoveColumnItem={onRemoveColumnItem}
         onRemoveRowItem={onRemoveRowItem}
         onRemoveFilterItem={onRemoveFilterItem}
+        onRemoveMetricItem={onRemoveMetricItem}
         onMoveItem={onMoveItem}
         entities={entities}
         layoutFilters={layoutFilters}
         onLayoutFiltersChange={onLayoutFiltersChange}
+        isFiltersOpen={isFiltersOpen}
+        onFiltersClose={onFiltersClose}
         layoutData={layoutData}
         onLayoutDataChange={onLayoutDataChange}
       />

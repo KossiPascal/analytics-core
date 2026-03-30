@@ -40,14 +40,18 @@ interface LayoutConfigurationProps {
   columnItems: string[];
   rowItems: string[];
   filterItems: string[];
+  metricItems: string[];
   onRemoveColumnItem: (id: string) => void;
   onRemoveRowItem: (id: string) => void;
   onRemoveFilterItem: (id: string) => void;
+  onRemoveMetricItem: (id: string) => void;
   onMoveItem: (itemId: string, fromZone: LayoutZone, toZone: LayoutZone) => void;
   entities: SidebarEntity[];
-  // Filter zone — IndicatorFilterBuilder
+  // Filter zone — IndicatorFilterBuilder (controlled externally via isFiltersOpen)
   layoutFilters: IndicatorFilter[];
   onLayoutFiltersChange: (filters: IndicatorFilter[]) => void;
+  isFiltersOpen: boolean;
+  onFiltersClose: () => void;
   // Row zone — DefinitionItemForm
   layoutData: DefinitionEntry[];
   onLayoutDataChange: (data: DefinitionEntry[]) => void;
@@ -74,18 +78,20 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   columnItems,
   rowItems,
   filterItems,
+  metricItems,
   onRemoveColumnItem,
   onRemoveRowItem,
   onRemoveFilterItem,
+  onRemoveMetricItem,
   onMoveItem,
   entities = [],
   layoutFilters = [],
   onLayoutFiltersChange,
+  isFiltersOpen,
+  onFiltersClose,
   layoutData = [],
   onLayoutDataChange,
 }) => {
-  // ── Filter modal state ──────────────────────────────
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [tempFilters, setTempFilters] = useState<IndicatorFilter[]>([]);
   const [filterEntityId, setFilterEntityId] = useState<string | null>(null);
 
@@ -132,20 +138,22 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // FILTER MODAL (IndicatorFilterBuilder)
   // ====================================================================
 
-  const handleOpenFilterModal = useCallback(() => {
-    setTempFilters([...layoutFilters]);
-    setFilterEntityId(entities.length > 0 ? entities[0].id : null);
-    setIsFilterModalOpen(true);
-  }, [layoutFilters, entities]);
+  // Sync tempFilters when the external filter modal opens
+  React.useEffect(() => {
+    if (isFiltersOpen) {
+      setTempFilters([...layoutFilters]);
+      setFilterEntityId(entities.length > 0 ? entities[0].id : null);
+    }
+  }, [isFiltersOpen, layoutFilters, entities]);
 
   const handleSaveFilters = useCallback(() => {
     onLayoutFiltersChange(tempFilters);
-    setIsFilterModalOpen(false);
-  }, [tempFilters, onLayoutFiltersChange]);
+    onFiltersClose();
+  }, [tempFilters, onLayoutFiltersChange, onFiltersClose]);
 
   const handleCancelFilterModal = useCallback(() => {
-    setIsFilterModalOpen(false);
-  }, []);
+    onFiltersClose();
+  }, [onFiltersClose]);
 
   const handleRemoveFilter = useCallback(
     (filterId: string) => {
@@ -283,17 +291,16 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
 
       <div className={styles.layoutSection}>
 
-        {/* ── Lignes + "Ajouter donnée" ── */}
+        {/* ── Rows ── */}
         <LayoutDropZone
           zone="row"
-          title="Données"
+          title="Rows"
           items={rowItems}
           allItems={allItems}
           onRemove={onRemoveRowItem}
           onMoveItem={onMoveItem}
-          placeholder="Lignes"
+          placeholder="Déposez des dimensions ici"
         >
-          {/* Data chips from DefinitionItemForm */}
           {layoutData.length > 0 && (
             <>
               {rowItems.length > 0 && <hr className={styles.filterSeparator} />}
@@ -310,42 +317,43 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                 >
                   <GripVertical size={14} />
                   <span title={formatEntryLabel(entry)}>{formatEntryLabel(entry)}</span>
-                  <button
-                    type="button"
-                    className={styles.removeDataBtn}
-                    onClick={() => handleRemoveDataEntry(entry.id)}
-                  >
+                  <button type="button" className={styles.removeDataBtn} onClick={() => handleRemoveDataEntry(entry.id)}>
                     <X size={14} />
                   </button>
                 </div>
               ))}
             </>
           )}
-
-          <button
-            type="button"
-            className={styles.addDataBtn}
-            onClick={handleOpenDataModal}
-          >
+          <button type="button" className={styles.addDataBtn} onClick={handleOpenDataModal}>
             <Plus size={14} />
             Ajouter donnée
           </button>
         </LayoutDropZone>
 
-        {/* ── Filtres + "Ajouter filtre" ── */}
+        {/* ── Columns ── */}
+        <LayoutDropZone
+          zone="column"
+          title="Columns"
+          items={columnItems}
+          allItems={allItems}
+          onRemove={onRemoveColumnItem}
+          onMoveItem={onMoveItem}
+          placeholder="Déposez des dimensions ici"
+        />
+
+        {/* ── Metrics ── */}
         <LayoutDropZone
           zone="filter"
-          title="Filtres"
-          items={filterItems}
+          title="Metrics"
+          items={metricItems}
           allItems={allItems}
-          onRemove={onRemoveFilterItem}
+          onRemove={onRemoveMetricItem}
           onMoveItem={onMoveItem}
-          placeholder="Filtres"
+          placeholder="Déposez des métriques ici"
         >
-          {/* Filter chips from IndicatorFilterBuilder */}
           {layoutFilters.length > 0 && (
             <>
-              {filterItems.length > 0 && <hr className={styles.filterSeparator} />}
+              {metricItems.length > 0 && <hr className={styles.filterSeparator} />}
               {layoutFilters.map((filter, index) => (
                 <div
                   key={filter.id}
@@ -359,26 +367,13 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                 >
                   <GripVertical size={14} />
                   <span title={formatFilterLabel(filter)}>{formatFilterLabel(filter)}</span>
-                  <button
-                    type="button"
-                    className={styles.removeFilterBtn}
-                    onClick={() => handleRemoveFilter(filter.id)}
-                  >
+                  <button type="button" className={styles.removeFilterBtn} onClick={() => handleRemoveFilter(filter.id)}>
                     <X size={14} />
                   </button>
                 </div>
               ))}
             </>
           )}
-
-          <button
-            type="button"
-            className={styles.addFilterBtn}
-            onClick={handleOpenFilterModal}
-          >
-            <Plus size={14} />
-            Ajouter filtre
-          </button>
         </LayoutDropZone>
       </div>
 
@@ -386,7 +381,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           FILTER MODAL — IndicatorFilterBuilder
          ════════════════════════════════════════════════════ */}
       <Modal
-        isOpen={isFilterModalOpen}
+        isOpen={isFiltersOpen}
         onClose={handleCancelFilterModal}
         title="Filtres de layout"
         size="lg"

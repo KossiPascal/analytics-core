@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Building2, Calendar, Database, TrendingUp } from 'lucide-react';
+import { Calendar, Database, Layers, TrendingUp } from 'lucide-react';
 
 import { DimensionSelector } from '../DimensionSelector/DimensionSelector';
 import type { ChartVariant, DataSourceMode, DimensionItem } from '../types';
@@ -11,15 +11,12 @@ interface BuilderSidebarProps {
   dataElements: DimensionItem[];
   indicators: DimensionItem[];
   periods: DimensionItem[];
-  orgUnits: DimensionItem[];
   selectedDataElements: string[];
   selectedIndicators: string[];
   selectedPeriods: string[];
-  selectedOrgUnits: string[];
   onDataElementsChange: (items: string[]) => void;
   onIndicatorsChange: (items: string[]) => void;
   onPeriodsChange: (items: string[]) => void;
-  onOrgUnitsChange: (items: string[]) => void;
   editableIndicatorIds?: Set<string>;
   onEditIndicator?: (indicatorId: string) => void;
 }
@@ -30,15 +27,12 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
   dataElements,
   indicators,
   periods,
-  orgUnits,
   selectedDataElements,
   selectedIndicators,
   selectedPeriods,
-  selectedOrgUnits,
   onDataElementsChange,
   onIndicatorsChange,
   onPeriodsChange,
-  onOrgUnitsChange,
   editableIndicatorIds,
   onEditIndicator,
 }) => {
@@ -46,11 +40,7 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
 
   const handleMatViewSelectionChange = useCallback(
     (items: string[]) => {
-      if (items.length <= 1) {
-        onDataElementsChange(items);
-        return;
-      }
-      onDataElementsChange([items[items.length - 1]]);
+      onDataElementsChange(items.length <= 1 ? items : [items[items.length - 1]]);
     },
     [onDataElementsChange]
   );
@@ -63,31 +53,41 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
           Dimensions de données
         </div>
 
-        {isTableChart && dataSourceMode === 'matview' && (
+        {/* Dimensions (indicateurs / mat views) */}
+        {isTableChart && dataSourceMode === 'matview' ? (
           <DimensionSelector
-            title="Mat views"
-            icon={<Database size={16} />}
+            title="Dimensions"
+            icon={<Layers size={16} />}
             items={dataElements}
             selectedItems={selectedDataElements}
             onSelectionChange={handleMatViewSelectionChange}
-            searchPlaceholder="Rechercher une mat view..."
+            searchPlaceholder="Rechercher une dimension..."
             singleSelect
           />
-        )}
-
-        {(!isTableChart || dataSourceMode === 'indicators') && (
+        ) : (
           <DimensionSelector
-            title="Indicateurs"
-            icon={<TrendingUp size={16} />}
+            title="Dimensions"
+            icon={<Layers size={16} />}
             items={indicators}
             selectedItems={selectedIndicators}
             onSelectionChange={onIndicatorsChange}
-            searchPlaceholder="Rechercher un indicateur..."
+            searchPlaceholder="Rechercher une dimension..."
             editableItemIds={editableIndicatorIds}
             onEditItem={onEditIndicator}
           />
         )}
 
+        {/* Métriques */}
+        <DimensionSelector
+          title="Métriques"
+          icon={<TrendingUp size={16} />}
+          items={dataElements}
+          selectedItems={selectedDataElements}
+          onSelectionChange={onDataElementsChange}
+          searchPlaceholder="Rechercher une métrique..."
+        />
+
+        {/* Périodes */}
         <DimensionSelector
           title="Périodes"
           icon={<Calendar size={16} />}
@@ -95,15 +95,6 @@ export const BuilderSidebar: React.FC<BuilderSidebarProps> = ({
           selectedItems={selectedPeriods}
           onSelectionChange={onPeriodsChange}
           searchPlaceholder="Rechercher une période..."
-        />
-
-        <DimensionSelector
-          title="Unités d'organisation"
-          icon={<Building2 size={16} />}
-          items={orgUnits}
-          selectedItems={selectedOrgUnits}
-          onSelectionChange={onOrgUnitsChange}
-          searchPlaceholder="Rechercher une unité..."
         />
       </div>
     </div>
