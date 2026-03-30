@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Database, Filter, Layers, Search, X } from 'lucide-react';
 import { LayoutDropZone, LayoutState, LayoutDataZone } from '../LayoutDropZone/LayoutDropZone';
 import { ChartDimension, ChartFilter, ChartMetric, DatasetField } from '@/models/dataset.models';
@@ -9,6 +9,79 @@ import { VisualizationTypeModal } from '../VisualizationTypeModal/VisualizationT
 import type { ChartTypeOption, ChartVariant } from '../types';
 import styles from './LayoutConfiguration.module.css';
 
+// ── DRAG KEY (must match LayoutDropZone) ──────────────────────────────────────
+const DRAG_KEY = 'layout-drag-item';
+
+// ── MODULE-LEVEL HELPER ───────────────────────────────────────────────────────
+function isMoveAllowed(from: LayoutDataZone, to: LayoutDataZone): boolean {
+  if (from === to) return false;
+  if (from === 'metrics') return false;
+  return true;
+}
+
+// ── MODULE-LEVEL DimChip (CRITICAL: must NOT be inside the parent component) ──
+// Defining it inside the parent causes React to unmount/remount on every render,
+// which breaks the native drag-and-drop (the element is destroyed mid-drag).
+interface DimChipProps {
+  item: ChartDimension | ChartFilter;
+  zone: LayoutDataZone;
+  chipStyles: Record<string, string>;
+  onDragStart: (e: React.DragEvent, fieldId: number, zone: LayoutDataZone) => void;
+  onRemove: (fieldId: number, zone: LayoutDataZone) => void;
+  onEdit: () => void;
+}
+
+const DimChip: React.FC<DimChipProps> = ({ item, zone, chipStyles, onDragStart, onRemove, onEdit }) => {
+  const label = (item as ChartDimension).alias || (item as ChartDimension).name || String(item.field_id);
+  return (
+    <div
+      className={chipStyles.dimChip}
+      draggable
+      onDragStart={e => onDragStart(e, item.field_id, zone)}
+      onClick={onEdit}
+    >
+      <span className={chipStyles.chipIcon}>
+        {zone === 'filters' ? <Filter size={12} /> : <Layers size={12} />}
+      </span>
+      <span>{label}</span>
+      <button
+        type="button"
+        className={chipStyles.chipRemove}
+        onClick={e => { e.stopPropagation(); onRemove(item.field_id, zone); }}
+      >
+        <X size={10} />
+      </button>
+    </div>
+  );
+};
+
+// ── MODULE-LEVEL Chip (generic, non-draggable) ────────────────────────────────
+interface ChipProps {
+  icon: React.ReactNode;
+  label: string;
+  count?: number;
+  chipStyles: Record<string, string>;
+  onClick: () => void;
+}
+
+const Chip: React.FC<ChipProps> = ({ icon, label, count, chipStyles, onClick }) => (
+  <div className={chipStyles.chip} onClick={onClick}>
+    <span className={chipStyles.chipIcon}>{icon}</span>
+    <span>{label}</span>
+    {count !== undefined && count > 0 && (
+      <span className={chipStyles.chipBadge}>{count}</span>
+    )}
+    <button
+      className={chipStyles.chipEllipsis}
+      onClick={e => { e.stopPropagation(); onClick(); }}
+      type="button"
+    >
+      •••
+    </button>
+  </div>
+);
+
+// ── PROPS ─────────────────────────────────────────────────────────────────────
 interface LayoutConfigurationProps {
   layout: LayoutState;
   fields: DatasetField[];
@@ -21,9 +94,7 @@ interface LayoutConfigurationProps {
   onSelectChartType: (type: ChartVariant) => void;
 }
 
-// Drag key shared with LayoutDropZone
-const DRAG_KEY = 'layout-drag-item';
-
+// ── COMPONENT ─────────────────────────────────────────────────────────────────
 export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   layout, fields, onAddLayout, onUpdateLayout, onMoveLayout, onRemoveLayout,
   chartType, chartTypes, onSelectChartType,
@@ -39,18 +110,17 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   const [rowsEditOpen, setRowsEditOpen] = useState(false);
   const [filtersEditOpen, setFiltersEditOpen] = useState(false);
 
-  // Drag-over zone
+  // Drag-over indicator
   const [dragOverZone, setDragOverZone] = useState<LayoutDataZone | null>(null);
 
   const zoneMetrics = useMemo(() => fields.filter(f => f.field_type !== 'dimension'), [fields]);
   const zoneDimensions = useMemo(() => fields.filter(f => f.field_type === 'dimension'), [fields]);
 
-  // ── FormMultiSelectDualPanel for Données modal ──
+  // ── Données modal ──
   const donneesItems = useMemo(
     () => zoneMetrics.map(f => ({ id: String(f.id), name: f.name })),
     [zoneMetrics],
   );
-
   const donneesSelected = useMemo(
     () => layout.metrics.map(m => ({
       id: String(m.field_id),
@@ -58,7 +128,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     })),
     [layout.metrics],
   );
-
   const handleDonneesChange = useCallback(
     (selected: { id: string; name: string }[]) => {
       const metrics: ChartMetric[] = selected.map(s => {
@@ -77,17 +146,11 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     [layout.metrics, zoneMetrics, onUpdateLayout],
   );
 
-  // ── DRAG HANDLERS ──
-  const handleDragStart = useCallback((e: React.DragEvent, fieldId: number, fromZone: LayoutDataZone) => {
-    e.dataTransfer.setData(DRAG_KEY, JSON.stringify({ field_id: fieldId, fromDataZone: fromZone }));
+  // ── Drag handlers ──
+  const handleDragStart = useCallback((e: React.DragEvent, fieldId: number, zone: LayoutDataZone) => {
+    e.dataTransfer.setData(DRAG_KEY, JSON.stringify({ field_id: fieldId, fromDataZone: zone }));
     e.dataTransfer.effectAllowed = 'move';
   }, []);
-
-  const isMoveAllowed = (from: LayoutDataZone, to: LayoutDataZone) => {
-    if (from === to) return false;
-    if (from === 'metrics') return false; // metrics ne bougent pas via les chips visuels
-    return true;
-  };
 
   const handleDragOverZone = useCallback((e: React.DragEvent, zone: LayoutDataZone) => {
     if (e.dataTransfer.types.includes(DRAG_KEY)) {
@@ -96,7 +159,12 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     }
   }, []);
 
-  const handleDragLeaveZone = useCallback(() => setDragOverZone(null), []);
+  const handleDragLeaveZone = useCallback((e: React.DragEvent) => {
+    // Only clear if leaving the zone itself (not entering a child)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverZone(null);
+    }
+  }, []);
 
   const handleDropZone = useCallback((e: React.DragEvent, toZone: LayoutDataZone) => {
     e.preventDefault();
@@ -107,55 +175,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     if (!isMoveAllowed(fromDataZone, toZone)) return;
     onMoveLayout(field_id, fromDataZone, toZone, layout[toZone].length);
   }, [layout, onMoveLayout]);
-
-  // ── CHIP COMPONENT ──
-  const Chip: React.FC<{
-    icon: React.ReactNode;
-    label: string;
-    count?: number;
-    onClick: () => void;
-  }> = ({ icon, label, count, onClick }) => (
-    <div className={styles.chip} onClick={onClick}>
-      <span className={styles.chipIcon}>{icon}</span>
-      <span>{label}</span>
-      {count !== undefined && count > 0 && (
-        <span className={styles.chipBadge}>{count}</span>
-      )}
-      <button
-        className={styles.chipEllipsis}
-        onClick={e => { e.stopPropagation(); onClick(); }}
-        type="button"
-      >
-        •••
-      </button>
-    </div>
-  );
-
-  // Chip draggable pour chaque item d'une zone
-  const DimChip: React.FC<{
-    item: ChartDimension | ChartFilter;
-    zone: LayoutDataZone;
-    onEdit: () => void;
-  }> = ({ item, zone, onEdit }) => (
-    <div
-      className={styles.dimChip}
-      draggable
-      onDragStart={e => handleDragStart(e, item.field_id, zone)}
-      onClick={onEdit}
-    >
-      <span className={styles.chipIcon}>
-        {zone === 'filters' ? <Filter size={12} /> : <Layers size={12} />}
-      </span>
-      <span>{(item as ChartDimension).alias || (item as ChartDimension).name || String(item.field_id)}</span>
-      <button
-        type="button"
-        className={styles.chipRemove}
-        onClick={e => { e.stopPropagation(); onRemoveLayout(item.field_id, zone); }}
-      >
-        <X size={10} />
-      </button>
-    </div>
-  );
 
   return (
     <div className={styles.dhisLayout}>
@@ -184,7 +203,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         <div className={styles.dimSection}>
           <span className={styles.sectionLabel}>DIMENSIONS PRINCIPALES</span>
 
-          {/* Données */}
           <div
             className={`${styles.dimItem} ${layout.metrics.length > 0 ? styles.dimItemActive : ''}`}
             onClick={() => setDonneesModalOpen(true)}
@@ -200,13 +218,11 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             </button>
           </div>
 
-          {/* Dimensions */}
           <div className={styles.dimItem} onClick={() => setRowsEditOpen(true)}>
             <Layers size={14} className={styles.dimIcon} />
             <span className={styles.dimLabel}>Dimensions</span>
           </div>
 
-          {/* Filtres */}
           <div className={styles.dimItem} onClick={() => setFiltersEditOpen(true)}>
             <Filter size={14} className={styles.dimIcon} />
             <span className={styles.dimLabel}>Filtres</span>
@@ -227,21 +243,28 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           >
             <span className={styles.zoneLabel}>Colonnes</span>
             <div className={styles.zoneChips}>
-              {/* Chip agrégat Données (clique → modal métriques) */}
               <Chip
                 icon={<Database size={13} />}
                 label="Données"
                 count={layout.metrics.length}
+                chipStyles={styles as any}
                 onClick={() => setColsEditOpen(true)}
               />
-              {/* Chips individuels des colonnes (draggables) */}
               {layout.columns.map(col => (
-                <DimChip key={col.field_id} item={col} zone="columns" onEdit={() => setColsEditOpen(true)} />
+                <DimChip
+                  key={col.field_id}
+                  item={col}
+                  zone="columns"
+                  chipStyles={styles as any}
+                  onDragStart={handleDragStart}
+                  onRemove={onRemoveLayout}
+                  onEdit={() => setColsEditOpen(true)}
+                />
               ))}
             </div>
           </div>
 
-          {/* Zone Filtrer (top-right) */}
+          {/* Zone Filtrer */}
           <div
             className={`${styles.filterZone} ${dragOverZone === 'filters' ? styles.zoneDropOver : ''}`}
             onDragOver={e => handleDragOverZone(e, 'filters')}
@@ -250,15 +273,23 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           >
             <span className={styles.zoneLabel}>Filtrer</span>
             <div className={styles.zoneChips}>
-              {/* Chips individuels des filtres (draggables) */}
               {layout.filters.map(filt => (
-                <DimChip key={filt.field_id} item={filt} zone="filters" onEdit={() => setFiltersEditOpen(true)} />
+                <DimChip
+                  key={filt.field_id}
+                  item={filt}
+                  zone="filters"
+                  chipStyles={styles as any}
+                  onDragStart={handleDragStart}
+                  onRemove={onRemoveLayout}
+                  onEdit={() => setFiltersEditOpen(true)}
+                />
               ))}
               {layout.filters.length === 0 && (
                 <Chip
                   icon={<Filter size={13} />}
                   label="Filtres"
                   count={0}
+                  chipStyles={styles as any}
                   onClick={() => setFiltersEditOpen(true)}
                 />
               )}
@@ -275,15 +306,23 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         >
           <span className={styles.zoneLabel}>Lignes</span>
           <div className={styles.zoneChips}>
-            {/* Chips individuels des lignes (draggables) */}
             {layout.rows.map(row => (
-              <DimChip key={row.field_id} item={row} zone="rows" onEdit={() => setRowsEditOpen(true)} />
+              <DimChip
+                key={row.field_id}
+                item={row}
+                zone="rows"
+                chipStyles={styles as any}
+                onDragStart={handleDragStart}
+                onRemove={onRemoveLayout}
+                onEdit={() => setRowsEditOpen(true)}
+              />
             ))}
             {layout.rows.length === 0 && (
               <Chip
                 icon={<Layers size={13} />}
                 label="Dimensions"
                 count={0}
+                chipStyles={styles as any}
                 onClick={() => setRowsEditOpen(true)}
               />
             )}
@@ -316,19 +355,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         onMoveLayout={onMoveLayout}
         isEditOpen={rowsEditOpen}
         onEditClose={() => setRowsEditOpen(false)}
-        hideZoneUI
-      />
-      <LayoutDropZone
-        dataZone="columns"
-        title="Colonnes - Dimensions"
-        items={layout.columns}
-        fields={zoneDimensions}
-        onAddLayout={onAddLayout}
-        onUpdateLayout={onUpdateLayout}
-        onRemoveLayout={onRemoveLayout}
-        onMoveLayout={onMoveLayout}
-        isEditOpen={false}
-        onEditClose={() => {}}
         hideZoneUI
       />
       <LayoutDropZone

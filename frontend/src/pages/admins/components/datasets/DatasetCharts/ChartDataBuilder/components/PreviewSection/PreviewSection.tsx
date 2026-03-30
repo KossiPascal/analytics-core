@@ -7,6 +7,8 @@ import styles from './PreviewSection.module.css';
 interface PreviewSectionProps {
   previewChartType: ChartVariant;
   previewOptions: VisualizationOptions;
+  previewData: any[];
+  previewSeries: any[];
   isPreviewStale: boolean;
   isEditing: boolean;
   onSave: () => void;
@@ -20,6 +22,8 @@ interface PreviewSectionProps {
 export const PreviewSection: React.FC<PreviewSectionProps> = ({
   previewChartType,
   previewOptions,
+  previewData,
+  previewSeries,
   isPreviewStale,
   isEditing,
   onSave,
@@ -68,8 +72,8 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
       <div className={styles.previewContent}>
         <RenderChartPreview
           chartType={previewChartType}
-          previewData={[]}
-          previewSeries={[]}
+          previewData={previewData}
+          previewSeries={previewSeries}
           options={previewOptions}
           isTransposed={false}
         />
