@@ -10,9 +10,17 @@ import {
   ChartFilter,
   ChartMetric,
   DatasetField,
+  OPERATORS_BY_TYPE,
+  INPUT_TYPE_BY_SQL_TYPE,
+  NO_VALUE_OPERATORS,
+  SqlDataType,
 } from "@/models/dataset.models";
 import { Modal } from "@/components/ui/Modal/Modal";
-import { FormMultiSelectDualPanel } from "@/components/forms/FormMultiSelectDualPanel/FormMultiSelectDualPanel";
+import {
+  FormMultiSelectDualPanel,
+  MultiSelectItem,
+  FilterConfig,
+} from "@/components/forms/FormMultiSelectDualPanel/FormMultiSelectDualPanel";
 import { Button } from "@/components/ui/Button/Button";
 import type {
   ChartTypeOption,
@@ -173,33 +181,38 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
 
   // ── Données modal ──
   const donneesItems = useMemo(
-    () => zoneMetrics.map((f) => ({ id: String(f.id), name: f.name })),
+    () => zoneMetrics.map((f) => ({ id: String(f.id), name: f.name, type: f.data_type ?? '' })),
     [zoneMetrics],
   );
   const donneesSelected = useMemo(
     () =>
-      safeLayout.metrics.map((m) => ({
-        id: String(m.field_id),
-        name: m.name || m.alias || String(m.field_id),
-      })),
-    [safeLayout.metrics],
+      safeLayout.metrics.map((m) => {
+        const field = fields.find((f) => f.id === m.field_id);
+        return {
+          id: String(m.field_id),
+          name: m.name || m.alias || String(m.field_id),
+          type: field?.data_type ?? '',
+          aggregation: m.aggregation ?? 'sum',
+        };
+      }),
+    [safeLayout.metrics, fields],
   );
   const handleDonneesChange = useCallback(
-    (selected: { id: string; name: string }[]) => {
+    (selected: MultiSelectItem[]) => {
       const metrics: ChartMetric[] = selected.map((s) => {
         const existing = safeLayout.metrics.find(
           (m) => m.field_id === Number(s.id),
         );
         const field = zoneMetrics.find((f) => String(f.id) === s.id);
-        return (
-          existing ?? {
-            field_id: Number(s.id),
-            name: s.name,
-            alias: s.name,
-            data_type: field?.data_type ?? "string",
-            aggregation: "sum",
-          }
-        );
+        return existing
+          ? { ...existing, aggregation: (s.aggregation ?? existing.aggregation) as ChartMetric['aggregation'] }
+          : {
+              field_id: Number(s.id),
+              name: s.name,
+              alias: s.name,
+              data_type: field?.data_type ?? "string",
+              aggregation: (s.aggregation ?? "sum") as ChartMetric['aggregation'],
+            };
       });
       onUpdateLayout("metrics", metrics);
     },
@@ -258,7 +271,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
 
   // ── Filtres modal ──
   const filterItems = useMemo(
-    () => fields.map((f) => ({ id: String(f.id), name: f.name })),
+    () => fields.map((f) => ({ id: String(f.id), name: f.name, type: f.data_type ?? '' })),
     [fields],
   );
   const filtersSelected = useMemo(
@@ -268,33 +281,50 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         return {
           id: String(f.field_id),
           name: field?.name ?? String(f.field_id),
+          type: field?.data_type ?? '',
+          operator: f.operator,
+          value: f.value != null ? String(f.value) : '',
+          value2: f.value2 != null ? String(f.value2) : '',
         };
       }),
     [safeLayout.filters, fields],
   );
   const handleFiltersChange = useCallback(
-    (selected: { id: string; name: string }[]) => {
+    (selected: MultiSelectItem[]) => {
       const filters: ChartFilter[] = selected.map((s) => {
-        const existing = safeLayout.filters.find(
-          (f) => f.field_id === Number(s.id),
-        );
+        const existing = safeLayout.filters.find((f) => f.field_id === Number(s.id));
         const field = fields.find((f) => String(f.id) === s.id);
-        return (
-          existing ?? {
-            field_id: Number(s.id),
-            field_type: (field?.field_type ??
-              "dimension") as ChartFilter["field_type"],
-            operator: "=" as const,
-            value: null,
-            value2: null,
-            useSqlInClause: false,
-          }
-        );
+        return {
+          field_id: Number(s.id),
+          field_type: (field?.field_type ?? "dimension") as ChartFilter["field_type"],
+          operator: (s.operator ?? existing?.operator ?? "=") as ChartFilter["operator"],
+          value: s.value || null,
+          value2: s.value2 || null,
+          useSqlInClause: existing?.useSqlInClause ?? false,
+        };
       });
       onUpdateLayout("filters", filters);
     },
     [safeLayout.filters, fields, onUpdateLayout],
   );
+
+  // ── Filter config for the filter modal ──
+  const filterConfig = useMemo<FilterConfig>(() => ({
+    getOperators: (item) => {
+      const field = fields.find((f) => String(f.id) === item.id);
+      const dt = field?.data_type as SqlDataType | undefined;
+      return (dt && OPERATORS_BY_TYPE[dt]) ? OPERATORS_BY_TYPE[dt] : OPERATORS_BY_TYPE['string'];
+    },
+    getInputType: (item) => {
+      const field = fields.find((f) => String(f.id) === item.id);
+      const dt = field?.data_type as SqlDataType | undefined;
+      if (!dt) return 'text';
+      const t = INPUT_TYPE_BY_SQL_TYPE[dt];
+      return (t === 'select' || t === 'textarea') ? 'text' : (t ?? 'text');
+    },
+    noValueOperators: NO_VALUE_OPERATORS,
+    rangeOperators: ['BETWEEN', 'NOT BETWEEN'],
+  }), [fields]);
 
   // ── Drag handlers ──
   const handleDragOverZone = useCallback(
@@ -518,7 +548,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
 
           <div
             className={styles.dimItem}
-            onClick={() => setDimsModalZone("rows")}
+            onClick={() => setDimsModalZone("columns")}
           >
             <Layers size={14} className={styles.dimIcon} />
             <span className={styles.dimLabel}>Dimensions</span>
@@ -739,25 +769,47 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         }}
       />
 
-      {/* ── DIMENSIONS MODAL ── */}
+      {/* ── DIMENSIONS MODAL (tabbed) ── */}
       <Modal
         isOpen={dimsModalZone !== null}
         onClose={() => setDimsModalZone(null)}
-        title={
-          dimsModalZone === "columns"
-            ? "Dim. Col. — Dimensions de colonnes"
-            : "Dim. Lig. — Dimensions de lignes"
-        }
+        title="Dimensions"
         size="lg"
         closeOnBackdrop
         closeOnEscape
       >
+        {/* Tabs */}
+        <div className={styles.dimModalTabs}>
+          <button
+            type="button"
+            className={`${styles.dimModalTab} ${dimsModalZone === "columns" ? styles.dimModalTabActive : ""}`}
+            onClick={() => setDimsModalZone("columns")}
+          >
+            <Layers size={13} />
+            Dim. Col.
+            {safeLayout.columns.length > 0 && (
+              <span className={styles.dimModalTabBadge}>{safeLayout.columns.length}</span>
+            )}
+          </button>
+          <button
+            type="button"
+            className={`${styles.dimModalTab} ${dimsModalZone === "rows" ? styles.dimModalTabActive : ""}`}
+            onClick={() => setDimsModalZone("rows")}
+          >
+            <Layers size={13} />
+            Dim. Lig.
+            {safeLayout.rows.length > 0 && (
+              <span className={styles.dimModalTabBadge}>{safeLayout.rows.length}</span>
+            )}
+          </button>
+        </div>
+
         <FormMultiSelectDualPanel
           items={dimItems}
           selectedItems={dimsSelected}
           onChange={handleDimsChange}
           leftTitle="Dimensions disponibles"
-          rightTitle="Dimensions sélectionnées"
+          rightTitle={dimsModalZone === "columns" ? "Colonnes sélectionnées" : "Lignes sélectionnées"}
         />
         <div className={styles.modalFooter}>
           <Button variant="secondary" onClick={() => setDimsModalZone(null)}>
@@ -782,6 +834,8 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           onChange={handleFiltersChange}
           leftTitle="Champs disponibles"
           rightTitle="Filtres sélectionnés"
+          rightPanelMode="filter"
+          filterConfig={filterConfig}
         />
         <div className={styles.modalFooter}>
           <Button
@@ -811,6 +865,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           onChange={handleDonneesChange}
           leftTitle="Données disponibles"
           rightTitle="Éléments sélectionnés"
+          rightPanelMode="table"
         />
         <div className={styles.modalFooter}>
           <Button

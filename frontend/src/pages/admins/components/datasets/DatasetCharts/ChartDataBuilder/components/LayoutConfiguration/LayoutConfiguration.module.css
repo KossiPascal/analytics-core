@@ -334,6 +334,58 @@
   color: #ef4444;
 }
 
+/* ── DIMENSIONS MODAL TABS ── */
+.dimModalTabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.dimModalTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  padding: 7px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.dimModalTab:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.dimModalTabActive {
+  background: #fff;
+  color: #0369a1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dimModalTabBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0284c7;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+}
+
 /* ── MODAL FOOTER ── */
 .modalFooter {
   display: flex;

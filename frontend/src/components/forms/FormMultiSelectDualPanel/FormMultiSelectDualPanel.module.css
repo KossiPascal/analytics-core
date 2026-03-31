@@ -13,7 +13,14 @@
   background: #fff;
   display: flex;
   flex-direction: column;
-  max-height: 300px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* Wide right panel for table/filter modes */
+.panelWide {
+  flex: 1.6;
+  overflow-x: auto;
   overflow-y: auto;
 }
 
@@ -22,6 +29,7 @@
   font-size: 14px;
   font-weight: 600;
   color: #333;
+  flex-shrink: 0;
 }
 
 .searchInput {
@@ -29,6 +37,7 @@
   margin-bottom: 8px;
   border-radius: 4px;
   border: 1px solid #ccc;
+  flex-shrink: 0;
 }
 
 .itemList {
@@ -64,5 +73,233 @@
 
 .empty {
   color: #999;
+  font-style: italic;
+  font-size: 13px;
+  padding: 8px 4px;
+}
+
+/* ═══════════════════════════════════════════════
+   SHARED TABLE / FILTER MODE
+   ═══════════════════════════════════════════════ */
+
+.tableMode {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Shared header style */
+.tableHeader {
+  padding-bottom: 6px !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.tableHeaderCell {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Shared cell styles */
+.tableCellName {
+  font-size: 13px;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableCellType {
+  display: flex;
+  align-items: center;
+}
+
+.typeBadge {
+  display: inline-block;
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+/* Shared remove button */
+.removeTableBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #f87171;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.removeTableBtn:hover {
+  background: #fecaca;
+  color: #ef4444;
+}
+
+/* ═══════════════════════════════════════════════
+   TABLE MODE (aggregation)
+   grid: NOM | TYPE | AGGREGATION | remove
+   ═══════════════════════════════════════════════ */
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 72px 140px 32px;
+  align-items: center;
+  padding: 6px 4px;
+  gap: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCellAgg {
+  display: flex;
+  align-items: center;
+}
+
+.aggregationWrapper {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+  width: 100%;
+}
+
+.aggregationSelect {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  padding: 4px 4px 4px 8px;
+  min-width: 0;
+}
+
+.aggregationClear {
+  flex-shrink: 0;
+  padding: 0 7px;
+  border: none;
+  border-left: 1px solid #e2e8f0;
+  background: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.aggregationClear:hover {
+  color: #ef4444;
+  background: #fff5f5;
+}
+
+/* ═══════════════════════════════════════════════
+   FILTER MODE
+   grid: NOM | TYPE | OPERATOR | VALUE | remove
+   ═══════════════════════════════════════════════ */
+
+.filterRow {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) 68px 150px minmax(80px, 1fr) 32px;
+  align-items: center;
+  padding: 6px 4px;
+  gap: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.filterRow:last-child {
+  border-bottom: none;
+}
+
+.filterHeader {
+  padding-bottom: 6px !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+.tableCellOp {
+  display: flex;
+  align-items: center;
+}
+
+.operatorSelect {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  padding: 4px 6px;
+  outline: none;
+}
+
+.operatorSelect:focus {
+  border-color: #93c5fd;
+}
+
+.tableCellValue {
+  display: flex;
+  align-items: center;
+}
+
+.filterInput {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  color: #334155;
+  padding: 4px 8px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.filterInput:focus {
+  border-color: #93c5fd;
+}
+
+.rangeInputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.rangeInputs .filterInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.rangeSep {
+  font-size: 11px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.noValueIndicator {
+  font-size: 13px;
+  color: #94a3b8;
   font-style: italic;
 }
