@@ -47,6 +47,16 @@ const DEFAULT_OPTIONS: VisualizationOptions = {
 
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'];
 
+const toLayoutArray = <T extends ChartDimension | ChartMetric | ChartFilter>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : [];
+
+const normalizeLayoutState = (structure?: Partial<DatasetChart['structure']> | null): LayoutState => ({
+  columns: toLayoutArray<ChartDimension>(structure?.cols_dimensions),
+  rows: toLayoutArray<ChartDimension>(structure?.rows_dimensions),
+  metrics: toLayoutArray<ChartMetric>(structure?.metrics),
+  filters: toLayoutArray<ChartFilter>(structure?.filters),
+});
+
 const toVisualizationOptions = (chartOptions?: ChartOptions): VisualizationOptions => ({
   title: chartOptions?.title,
   subtitle: chartOptions?.subtitle,
@@ -129,12 +139,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   // Edit mode
   const isEditing = !!_chart.id;
 
-  const [layout, setLayout] = useState<LayoutState>({
-    columns: [],
-    rows: [],
-    metrics: [],
-    filters: [],
-  });
+  const [layout, setLayout] = useState<LayoutState>(() => normalizeLayoutState(chart.structure));
 
   // Sync layout from chart.structure on mount only (guarded against re-running on onChange bounce)
   const structureInitialized = useRef(false);
@@ -142,12 +147,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     if (structureInitialized.current) return;
     if (!chart.structure) return;
     structureInitialized.current = true;
-    setLayout({
-      columns: chart.structure.cols_dimensions ?? [],
-      rows: chart.structure.rows_dimensions ?? [],
-      metrics: chart.structure.metrics ?? [],
-      filters: chart.structure.filters ?? [],
-    });
+    setLayout(normalizeLayoutState(chart.structure));
   }, [chart.structure]);
 
   // Propagate layout changes to _chart (no external resync — avoids circular loop)
