@@ -3,6 +3,7 @@
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  min-width: 0; /* Prevent flex shrink from collapsing width (fixes Recharts ResponsiveContainer) */
 }
 
 .previewHeader {
@@ -94,6 +95,34 @@
 .previewContent {
   padding: 1.5rem;
   min-height: 400px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.previewFallback {
+  min-height: 320px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2rem;
+}
+
+.previewFallbackTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.previewFallbackText {
+  max-width: 28rem;
+  font-size: 0.875rem;
+  color: #64748b;
 }
 
 .actions {

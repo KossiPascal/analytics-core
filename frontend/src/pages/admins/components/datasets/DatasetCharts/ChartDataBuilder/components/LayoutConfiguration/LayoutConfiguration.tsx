@@ -1,413 +1,344 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { Database, Filter, Layers, Search, X } from 'lucide-react';
-import { LayoutDropZone, LayoutState, LayoutDataZone } from '../LayoutDropZone/LayoutDropZone';
-import { ChartDimension, ChartFilter, ChartMetric, DatasetField } from '@/models/dataset.models';
-import { Modal } from '@/components/ui/Modal/Modal';
-import { FormMultiSelectDualPanel } from '@/components/forms/FormMultiSelectDualPanel/FormMultiSelectDualPanel';
-import { Button } from '@/components/ui/Button/Button';
-import { VisualizationTypeModal } from '../VisualizationTypeModal/VisualizationTypeModal';
-import type { ChartTypeOption, ChartVariant } from '../types';
+import React, { useState, useMemo } from 'react';
+import { X } from 'lucide-react';
+
+import {
+  ChartDimension,
+  ChartFilter,
+  ChartMetric,
+  DatasetField,
+} from '@/models/dataset.models';
+import type { ChartTypeOption, ChartVariant } from '../../components/types';
+import { LayoutDataZone, LayoutState } from '../LayoutDropZone/LayoutDropZone';
 import styles from './LayoutConfiguration.module.css';
 
-// ── DRAG KEY (must match LayoutDropZone) ──────────────────────────────────────
-const DRAG_KEY = 'layout-drag-item';
-
-// ── MODULE-LEVEL HELPER ───────────────────────────────────────────────────────
-function isMoveAllowed(from: LayoutDataZone, to: LayoutDataZone): boolean {
-  if (from === to) return false;
-  if (from === 'metrics') return false;
-  return true;
+// ── Props ─────────────────────────────────────────────────────────────────────
+interface LayoutConfigurationProps {
+  layout: LayoutState;
+  fields: DatasetField[];
+  onRemoveLayout: (id: number, zone: keyof LayoutState) => void;
+  onMoveLayout: (
+    itemId: number,
+    fromZone: LayoutDataZone,
+    toZone: LayoutDataZone,
+    toIndex: number,
+  ) => void;
+  onUpdateLayout: (
+    zone: keyof LayoutState,
+    fields: (ChartDimension | ChartMetric | ChartFilter)[],
+  ) => void;
+  onAddLayout: (
+    zone: LayoutDataZone,
+    items: (ChartDimension | ChartMetric | ChartFilter)[],
+  ) => void;
+  chartType?: ChartVariant;
+  chartTypes?: ChartTypeOption[];
+  options?: unknown;
+  onSelectChartType?: (type: ChartVariant) => void;
 }
 
-// ── MODULE-LEVEL DimChip (CRITICAL: must NOT be inside the parent component) ──
-// Defining it inside the parent causes React to unmount/remount on every render,
-// which breaks the native drag-and-drop (the element is destroyed mid-drag).
+// ── Drag ─────────────────────────────────────────────────────────────────────
+const DRAG_KEY = 'chart-layout-dnd';
+
+type DragPayload =
+  | { source: 'zone'; field_id: number; fromZone: LayoutDataZone }
+  | { source: 'sidebar'; field_id: number };
+
+// ── DimChip — module-level to avoid remount during drag ──────────────────────
 interface DimChipProps {
-  item: ChartDimension | ChartFilter;
+  field_id: number;
+  label: string;
   zone: LayoutDataZone;
-  chipStyles: Record<string, string>;
-  onDragStart: (e: React.DragEvent, fieldId: number, zone: LayoutDataZone) => void;
-  onRemove: (fieldId: number, zone: LayoutDataZone) => void;
-  onEdit: () => void;
+  onRemove: () => void;
 }
 
-const DimChip: React.FC<DimChipProps> = ({ item, zone, chipStyles, onDragStart, onRemove, onEdit }) => {
-  const label = (item as ChartDimension).alias || (item as ChartDimension).name || String(item.field_id);
+const DimChip: React.FC<DimChipProps> = ({ field_id, label, zone, onRemove }) => {
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData(
+      DRAG_KEY,
+      JSON.stringify({ source: 'zone', field_id, fromZone: zone } satisfies DragPayload),
+    );
+  };
+
   return (
-    <div
-      className={chipStyles.dimChip}
-      draggable
-      onDragStart={e => onDragStart(e, item.field_id, zone)}
-      onClick={onEdit}
-    >
-      <span className={chipStyles.chipIcon}>
-        {zone === 'filters' ? <Filter size={12} /> : <Layers size={12} />}
-      </span>
-      <span>{label}</span>
+    <div className={styles.dimChip} draggable onDragStart={handleDragStart}>
+      {label}
       <button
         type="button"
-        className={chipStyles.chipRemove}
-        onClick={e => { e.stopPropagation(); onRemove(item.field_id, zone); }}
+        className={styles.chipRemove}
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
       >
-        <X size={10} />
+        <X size={11} />
       </button>
     </div>
   );
 };
 
-// ── MODULE-LEVEL Chip (generic, non-draggable) ────────────────────────────────
-interface ChipProps {
-  icon: React.ReactNode;
+// ── SidebarField — draggable field from the left panel ───────────────────────
+const SidebarField: React.FC<{ field: DatasetField }> = ({ field }) => {
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData(
+      DRAG_KEY,
+      JSON.stringify({ source: 'sidebar', field_id: field.id! } satisfies DragPayload),
+    );
+  };
+
+  return (
+    <div className={styles.dimItem} draggable onDragStart={handleDragStart}>
+      <span className={styles.dimLabel}>{field.name}</span>
+    </div>
+  );
+};
+
+// ── LayoutZone — drop target for a single zone ────────────────────────────────
+interface LayoutZoneProps {
+  zone: LayoutDataZone;
   label: string;
-  count?: number;
-  chipStyles: Record<string, string>;
-  onClick: () => void;
+  items: (ChartDimension | ChartFilter)[];
+  fieldMap: Map<number, DatasetField>;
+  onMove: (
+    field_id: number,
+    fromZone: LayoutDataZone,
+    toZone: LayoutDataZone,
+    toIndex: number,
+  ) => void;
+  onAdd: (
+    zone: LayoutDataZone,
+    items: (ChartDimension | ChartMetric | ChartFilter)[],
+  ) => void;
+  onRemove: (id: number, zone: keyof LayoutState) => void;
+  className?: string;
 }
 
-const Chip: React.FC<ChipProps> = ({ icon, label, count, chipStyles, onClick }) => (
-  <div className={chipStyles.chip} onClick={onClick}>
-    <span className={chipStyles.chipIcon}>{icon}</span>
-    <span>{label}</span>
-    {count !== undefined && count > 0 && (
-      <span className={chipStyles.chipBadge}>{count}</span>
-    )}
-    <button
-      className={chipStyles.chipEllipsis}
-      onClick={e => { e.stopPropagation(); onClick(); }}
-      type="button"
-    >
-      •••
-    </button>
-  </div>
-);
-
-// ── PROPS ─────────────────────────────────────────────────────────────────────
-interface LayoutConfigurationProps {
-  layout: LayoutState;
-  fields: DatasetField[];
-  onAddLayout: (zone: LayoutDataZone, fields: (ChartDimension | ChartMetric | ChartFilter)[]) => void;
-  onUpdateLayout: (zone: keyof LayoutState, fields: (ChartDimension | ChartMetric | ChartFilter)[]) => void;
-  onMoveLayout: (itemId: number, fromZone: LayoutDataZone, toZone: LayoutDataZone, toIndex: number) => void;
-  onRemoveLayout: (id: number, zone: keyof LayoutState) => void;
-  chartType: ChartVariant;
-  chartTypes: ChartTypeOption[];
-  onSelectChartType: (type: ChartVariant) => void;
-}
-
-// ── COMPONENT ─────────────────────────────────────────────────────────────────
-export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
-  layout, fields, onAddLayout, onUpdateLayout, onMoveLayout, onRemoveLayout,
-  chartType, chartTypes, onSelectChartType,
+const LayoutZone: React.FC<LayoutZoneProps> = ({
+  zone,
+  label,
+  items,
+  fieldMap,
+  onMove,
+  onAdd,
+  onRemove,
+  className,
 }) => {
-  const currentChartType = useMemo(() => chartTypes.find(t => t.id === chartType), [chartTypes, chartType]);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  const [dimSearch, setDimSearch] = useState('');
-  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
-
-  // Modal states
-  const [donneesModalOpen, setDonneesModalOpen] = useState(false);
-  const [colsEditOpen, setColsEditOpen] = useState(false);
-  const [rowsEditOpen, setRowsEditOpen] = useState(false);
-  const [filtersEditOpen, setFiltersEditOpen] = useState(false);
-
-  // Drag-over indicator
-  const [dragOverZone, setDragOverZone] = useState<LayoutDataZone | null>(null);
-
-  const zoneMetrics = useMemo(() => fields.filter(f => f.field_type !== 'dimension'), [fields]);
-  const zoneDimensions = useMemo(() => fields.filter(f => f.field_type === 'dimension'), [fields]);
-
-  // ── Données modal ──
-  const donneesItems = useMemo(
-    () => zoneMetrics.map(f => ({ id: String(f.id), name: f.name })),
-    [zoneMetrics],
-  );
-  const donneesSelected = useMemo(
-    () => layout.metrics.map(m => ({
-      id: String(m.field_id),
-      name: m.name || m.alias || String(m.field_id),
-    })),
-    [layout.metrics],
-  );
-  const handleDonneesChange = useCallback(
-    (selected: { id: string; name: string }[]) => {
-      const metrics: ChartMetric[] = selected.map(s => {
-        const existing = layout.metrics.find(m => m.field_id === Number(s.id));
-        const field = zoneMetrics.find(f => String(f.id) === s.id);
-        return existing ?? {
-          field_id: Number(s.id),
-          name: s.name,
-          alias: s.name,
-          data_type: field?.data_type ?? 'string',
-          aggregation: 'sum',
-        };
-      });
-      onUpdateLayout('metrics', metrics);
-    },
-    [layout.metrics, zoneMetrics, onUpdateLayout],
-  );
-
-  // ── Drag handlers ──
-  const handleDragStart = useCallback((e: React.DragEvent, fieldId: number, zone: LayoutDataZone) => {
-    e.dataTransfer.setData(DRAG_KEY, JSON.stringify({ field_id: fieldId, fromDataZone: zone }));
-    e.dataTransfer.effectAllowed = 'move';
-  }, []);
-
-  const handleDragOverZone = useCallback((e: React.DragEvent, zone: LayoutDataZone) => {
-    if (e.dataTransfer.types.includes(DRAG_KEY)) {
-      e.preventDefault();
-      setDragOverZone(zone);
-    }
-  }, []);
-
-  const handleDragLeaveZone = useCallback((e: React.DragEvent) => {
-    // Only clear if leaving the zone itself (not entering a child)
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setDragOverZone(null);
-    }
-  }, []);
-
-  const handleDropZone = useCallback((e: React.DragEvent, toZone: LayoutDataZone) => {
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!e.dataTransfer.types.includes(DRAG_KEY)) return;
     e.preventDefault();
-    setDragOverZone(null);
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
     const raw = e.dataTransfer.getData(DRAG_KEY);
     if (!raw) return;
-    const { field_id, fromDataZone } = JSON.parse(raw);
-    if (!isMoveAllowed(fromDataZone, toZone)) return;
-    onMoveLayout(field_id, fromDataZone, toZone, layout[toZone].length);
-  }, [layout, onMoveLayout]);
+
+    const payload = JSON.parse(raw) as DragPayload;
+
+    if (payload.source === 'sidebar') {
+      const field = fieldMap.get(payload.field_id);
+      if (!field) return;
+
+      // Avoid duplicates
+      if (items.some(i => i.field_id === field.id)) return;
+
+      const newItem: ChartDimension | ChartFilter =
+        zone === 'filters'
+          ? {
+              field_id: field.id!,
+              field_type: field.field_type ?? 'dimension',
+              operator: '=',
+              value: null,
+              value2: null,
+              useSqlInClause: false,
+            }
+          : {
+              field_id: field.id!,
+              name: field.name,
+              alias: field.name,
+              data_type: field.data_type,
+              field_type: field.field_type ?? undefined,
+            };
+
+      onAdd(zone, [newItem]);
+    } else {
+      const { field_id, fromZone } = payload;
+      if (fromZone === zone) return;
+      onMove(field_id, fromZone, zone, items.length);
+    }
+  };
+
+  return (
+    <div
+      className={`${className ?? ''} ${isDragOver ? styles.zoneDropOver : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <span className={styles.zoneLabel}>{label}</span>
+      <div className={styles.zoneChips}>
+        {items.map((item) => {
+          const field = fieldMap.get(item.field_id);
+          const chipLabel =
+            (item as ChartDimension).alias ||
+            (item as ChartDimension).name ||
+            field?.name ||
+            String(item.field_id);
+
+          return (
+            <DimChip
+              key={item.field_id}
+              field_id={item.field_id}
+              label={chipLabel}
+              zone={zone}
+              onRemove={() => onRemove(item.field_id, zone)}
+            />
+          );
+        })}
+
+        {items.length === 0 && (
+          <span style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>
+            Glissez des éléments ici
+          </span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── LayoutConfiguration ───────────────────────────────────────────────────────
+export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
+  layout,
+  fields,
+  onRemoveLayout,
+  onMoveLayout,
+  onAddLayout,
+  chartType,
+  chartTypes,
+  onSelectChartType,
+}) => {
+  const [search, setSearch] = useState('');
+
+  const fieldMap = useMemo(
+    () => new Map(fields.map(f => [f.id!, f])),
+    [fields],
+  );
+
+  const usedIds = useMemo(
+    () =>
+      new Set([
+        ...layout.columns.map(i => i.field_id),
+        ...layout.rows.map(i => i.field_id),
+        ...layout.filters.map(i => i.field_id),
+        ...layout.metrics.map(i => i.field_id),
+      ]),
+    [layout],
+  );
+
+  const availableFields = useMemo(
+    () =>
+      fields.filter(
+        f =>
+          !usedIds.has(f.id!) &&
+          f.name.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [fields, usedIds, search],
+  );
+
+  const currentChartType = chartTypes?.find(ct => ct.id === chartType);
 
   return (
     <div className={styles.dhisLayout}>
-      {/* ── LEFT SIDEBAR ── */}
+      {/* ── Sidebar ─────────────────────────────────────── */}
       <div className={styles.sidebar}>
-        {/* Bouton type de graphe */}
-        <button type="button" className={styles.chartTypeBtn} onClick={() => setIsTypeModalOpen(true)}>
-          {currentChartType?.icon}
-          <span className={styles.chartTypeName}>{currentChartType?.name ?? chartType}</span>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginLeft: 'auto', opacity: 0.5 }}>
-            <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        {chartTypes && onSelectChartType && (
+          <button
+            type="button"
+            className={styles.chartTypeBtn}
+            onClick={() => {
+              const next = chartTypes[(chartTypes.findIndex(ct => ct.id === chartType) + 1) % chartTypes.length];
+              onSelectChartType(next.id);
+            }}
+          >
+            {currentChartType?.icon}
+            <span className={styles.chartTypeName}>
+              {currentChartType?.name ?? 'Type'}
+            </span>
+          </button>
+        )}
 
-        {/* Recherche */}
         <div className={styles.sidebarSearch}>
-          <Search size={13} color="#94a3b8" />
           <input
             className={styles.sidebarSearchInput}
-            placeholder="Filtrer les dimensions"
-            value={dimSearch}
-            onChange={e => setDimSearch(e.target.value)}
+            placeholder="Rechercher un champ..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
 
         <div className={styles.dimSection}>
-          <span className={styles.sectionLabel}>DIMENSIONS PRINCIPALES</span>
-
-          <div
-            className={`${styles.dimItem} ${layout.metrics.length > 0 ? styles.dimItemActive : ''}`}
-            onClick={() => setDonneesModalOpen(true)}
-          >
-            <Database size={14} className={styles.dimIcon} />
-            <span className={styles.dimLabel}>Données</span>
-            <button
-              type="button"
-              className={styles.dimEllipsis}
-              onClick={e => { e.stopPropagation(); setColsEditOpen(true); }}
-            >
-              •••
-            </button>
-          </div>
-
-          <div className={styles.dimItem} onClick={() => setRowsEditOpen(true)}>
-            <Layers size={14} className={styles.dimIcon} />
-            <span className={styles.dimLabel}>Dimensions</span>
-          </div>
-
-          <div className={styles.dimItem} onClick={() => setFiltersEditOpen(true)}>
-            <Filter size={14} className={styles.dimIcon} />
-            <span className={styles.dimLabel}>Filtres</span>
-          </div>
+          <span className={styles.sectionLabel}>
+            Disponibles ({availableFields.length})
+          </span>
+          {availableFields.map(field => (
+            <SidebarField key={field.id} field={field} />
+          ))}
+          {availableFields.length === 0 && fields.length > 0 && (
+            <span style={{ fontSize: 12, color: '#94a3b8', padding: '6px 12px', display: 'block' }}>
+              Tous les champs sont utilisés
+            </span>
+          )}
         </div>
       </div>
 
-      {/* ── RIGHT ZONES ── */}
+      {/* ── Zones area ──────────────────────────────────── */}
       <div className={styles.zonesArea}>
-        {/* Top row: Colonnes + Filtrer */}
+        {/* Top row: Colonnes + Filtres */}
         <div className={styles.topZones}>
-          {/* Zone Colonnes */}
-          <div
-            className={`${styles.colsZone} ${dragOverZone === 'columns' ? styles.zoneDropOver : ''}`}
-            onDragOver={e => handleDragOverZone(e, 'columns')}
-            onDragLeave={handleDragLeaveZone}
-            onDrop={e => handleDropZone(e, 'columns')}
-          >
-            <span className={styles.zoneLabel}>Colonnes</span>
-            <div className={styles.zoneChips}>
-              <Chip
-                icon={<Database size={13} />}
-                label="Données"
-                count={layout.metrics.length}
-                chipStyles={styles as any}
-                onClick={() => setColsEditOpen(true)}
-              />
-              {layout.columns.map(col => (
-                <DimChip
-                  key={col.field_id}
-                  item={col}
-                  zone="columns"
-                  chipStyles={styles as any}
-                  onDragStart={handleDragStart}
-                  onRemove={onRemoveLayout}
-                  onEdit={() => setColsEditOpen(true)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Zone Filtrer */}
-          <div
-            className={`${styles.filterZone} ${dragOverZone === 'filters' ? styles.zoneDropOver : ''}`}
-            onDragOver={e => handleDragOverZone(e, 'filters')}
-            onDragLeave={handleDragLeaveZone}
-            onDrop={e => handleDropZone(e, 'filters')}
-          >
-            <span className={styles.zoneLabel}>Filtrer</span>
-            <div className={styles.zoneChips}>
-              {layout.filters.map(filt => (
-                <DimChip
-                  key={filt.field_id}
-                  item={filt}
-                  zone="filters"
-                  chipStyles={styles as any}
-                  onDragStart={handleDragStart}
-                  onRemove={onRemoveLayout}
-                  onEdit={() => setFiltersEditOpen(true)}
-                />
-              ))}
-              {layout.filters.length === 0 && (
-                <Chip
-                  icon={<Filter size={13} />}
-                  label="Filtres"
-                  count={0}
-                  chipStyles={styles as any}
-                  onClick={() => setFiltersEditOpen(true)}
-                />
-              )}
-            </div>
-          </div>
+          <LayoutZone
+            zone="columns"
+            label="COLONNES"
+            items={layout.columns as ChartDimension[]}
+            fieldMap={fieldMap}
+            onMove={onMoveLayout}
+            onAdd={onAddLayout}
+            onRemove={onRemoveLayout}
+            className={styles.colsZone}
+          />
+          <LayoutZone
+            zone="filters"
+            label="FILTRES"
+            items={layout.filters as ChartFilter[]}
+            fieldMap={fieldMap}
+            onMove={onMoveLayout}
+            onAdd={onAddLayout}
+            onRemove={onRemoveLayout}
+            className={styles.filterZone}
+          />
         </div>
 
-        {/* Zone Lignes */}
-        <div
-          className={`${styles.zoneRow} ${dragOverZone === 'rows' ? styles.zoneDropOver : ''}`}
-          onDragOver={e => handleDragOverZone(e, 'rows')}
-          onDragLeave={handleDragLeaveZone}
-          onDrop={e => handleDropZone(e, 'rows')}
-        >
-          <span className={styles.zoneLabel}>Lignes</span>
-          <div className={styles.zoneChips}>
-            {layout.rows.map(row => (
-              <DimChip
-                key={row.field_id}
-                item={row}
-                zone="rows"
-                chipStyles={styles as any}
-                onDragStart={handleDragStart}
-                onRemove={onRemoveLayout}
-                onEdit={() => setRowsEditOpen(true)}
-              />
-            ))}
-            {layout.rows.length === 0 && (
-              <Chip
-                icon={<Layers size={13} />}
-                label="Dimensions"
-                count={0}
-                chipStyles={styles as any}
-                onClick={() => setRowsEditOpen(true)}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── HIDDEN LAYOUT DROP ZONES (modals only) ── */}
-      <LayoutDropZone
-        dataZone="metrics"
-        title="Colonnes - Données"
-        items={layout.metrics}
-        fields={zoneMetrics}
-        onAddLayout={onAddLayout}
-        onUpdateLayout={onUpdateLayout}
-        onRemoveLayout={onRemoveLayout}
-        onMoveLayout={onMoveLayout}
-        isEditOpen={colsEditOpen}
-        onEditClose={() => setColsEditOpen(false)}
-        hideZoneUI
-      />
-      <LayoutDropZone
-        dataZone="rows"
-        title="Lignes - Dimensions"
-        items={layout.rows}
-        fields={zoneDimensions}
-        onAddLayout={onAddLayout}
-        onUpdateLayout={onUpdateLayout}
-        onRemoveLayout={onRemoveLayout}
-        onMoveLayout={onMoveLayout}
-        isEditOpen={rowsEditOpen}
-        onEditClose={() => setRowsEditOpen(false)}
-        hideZoneUI
-      />
-      <LayoutDropZone
-        dataZone="filters"
-        title="Filtres"
-        items={layout.filters}
-        fields={fields}
-        onAddLayout={onAddLayout}
-        onUpdateLayout={onUpdateLayout}
-        onRemoveLayout={onRemoveLayout}
-        onMoveLayout={onMoveLayout}
-        isEditOpen={filtersEditOpen}
-        onEditClose={() => setFiltersEditOpen(false)}
-        hideZoneUI
-      />
-
-      {/* ── MODAL TYPE DE GRAPHE ── */}
-      <VisualizationTypeModal
-        isOpen={isTypeModalOpen}
-        chartTypes={chartTypes}
-        selectedChartType={chartType}
-        onClose={() => setIsTypeModalOpen(false)}
-        onSelectChartType={(type) => {
-          onSelectChartType(type);
-          setIsTypeModalOpen(false);
-        }}
-      />
-
-      {/* ── DONNÉES MODAL ── */}
-      <Modal
-        isOpen={donneesModalOpen}
-        onClose={() => setDonneesModalOpen(false)}
-        title="Données"
-        size="lg"
-        closeOnBackdrop
-        closeOnEscape
-      >
-        <FormMultiSelectDualPanel
-          items={donneesItems}
-          selectedItems={donneesSelected}
-          onChange={handleDonneesChange}
-          leftTitle="Données disponibles"
-          rightTitle="Éléments sélectionnés"
+        {/* Second row: Lignes */}
+        <LayoutZone
+          zone="rows"
+          label="LIGNES"
+          items={layout.rows as ChartDimension[]}
+          fieldMap={fieldMap}
+          onMove={onMoveLayout}
+          onAdd={onAddLayout}
+          onRemove={onRemoveLayout}
+          className={styles.zoneRow}
         />
-        <div className={styles.modalFooter}>
-          <Button variant="secondary" onClick={() => setDonneesModalOpen(false)}>
-            Masquer
-          </Button>
-          <Button onClick={() => setDonneesModalOpen(false)}>
-            Mettre à jour
-          </Button>
-        </div>
-      </Modal>
+      </div>
     </div>
   );
 };

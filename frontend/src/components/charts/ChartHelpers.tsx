@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { formatNumber } from './theme';
@@ -186,6 +186,30 @@ export function ChartContainer({
   className,
   children,
 }: ChartContainerProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [containerReady, setContainerReady] = useState(false);
+
+  // Defer rendering Recharts until the wrapper has a positive width.
+  // Without this guard, ResponsiveContainer fires ResizeObserver at width=0
+  // (during the modal's first layout pass), causing Recharts to map it to -1
+  // and produce NaN in all SVG axis attribute calculations.
+  useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    if (el.offsetWidth > 0) {
+      setContainerReady(true);
+      return;
+    }
+    const ro = new ResizeObserver(() => {
+      if (el.offsetWidth > 0) {
+        setContainerReady(true);
+        ro.disconnect();
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <div className={`${styles.chartContainer} ${className || ''}`}>
       {(title || subtitle) && (
@@ -195,12 +219,13 @@ export function ChartContainer({
         </div>
       )}
       <div
+        ref={wrapperRef}
         className={styles.chartWrapper}
         style={{ height: typeof height === 'number' ? `${height}px` : height }}
       >
         {loading && <ChartLoading />}
         {!loading && noData && <ChartNoData message={noDataMessage} />}
-        {!loading && !noData && children}
+        {!loading && !noData && containerReady && children}
       </div>
     </div>
   );

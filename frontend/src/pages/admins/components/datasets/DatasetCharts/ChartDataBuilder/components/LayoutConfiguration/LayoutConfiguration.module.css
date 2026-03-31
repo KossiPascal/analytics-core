@@ -295,6 +295,12 @@
   cursor: grabbing;
 }
 
+.dimChipDropTarget {
+  outline: 2px dashed #0284c7;
+  outline-offset: 1px;
+  background: #bae6fd;
+}
+
 .chipRemove {
   display: flex;
   align-items: center;

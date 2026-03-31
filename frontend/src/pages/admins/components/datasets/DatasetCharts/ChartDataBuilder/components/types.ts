@@ -6,17 +6,17 @@
 export type VisualizationType = 'dashboard' | 'report';
 
 export type ChartVariant =
+  | 'bar'
+  | 'stacked-bar'
   | 'line'
   | 'area'
-  | 'bar'
+  | 'stacked-area'
   | 'pie'
   | 'donut'
+  | 'kpi'
+  | 'gauge'
+  | 'heatmap'
   | 'radar'
-  | 'radialBar'
-  | 'scatter'
-  | 'composed'
-  | 'treemap'
-  | 'funnel'
   | 'table';
 
  export interface DataDimension {
@@ -95,4 +95,3 @@ export type ChartVariant =
   editableItemIds?: Set<string>;
   onEditItem?: (itemId: string) => void;
 }
-

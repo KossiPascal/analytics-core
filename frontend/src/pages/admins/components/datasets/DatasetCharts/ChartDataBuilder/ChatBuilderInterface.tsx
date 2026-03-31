@@ -3,14 +3,12 @@ import {
   Activity,
   AreaChart,
   BarChart3,
-  GitBranch,
   Grid3x3,
   Layers,
   LineChart,
   PieChart,
   Table,
   Target,
-  TrendingUp,
 } from 'lucide-react';
 
 import type { ChartTypeOption, ChartVariant, VisualizationOptions } from './components/types';
@@ -23,19 +21,19 @@ import { LayoutConfiguration } from './components/LayoutConfiguration/LayoutConf
 import { OptionsModal } from '@pages/builders/DashboardBuilder/components/OptionsModal/OptionsModal';
 import { ThemeModal } from './components/ThemeModal/ThemeModal';
 import { CHART_COLORS } from '@components/charts/theme';
+import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
 
 const CHART_TYPES: ChartTypeOption[] = [
+  { id: 'bar',       name: 'Barres',           icon: <BarChart3 size={20} />,  description: 'Comparaison de valeurs',           category: 'comparison' },
+  { id: 'stacked-bar', name: 'Barres empilées', icon: <Layers size={20} />, description: 'Comparaison cumulée', category: 'comparison' },
   { id: 'line',      name: 'Ligne',            icon: <LineChart size={20} />,  description: 'Évolution dans le temps',          category: 'trend' },
   { id: 'area',      name: 'Zone',             icon: <AreaChart size={20} />,  description: 'Évolution avec remplissage',       category: 'trend' },
-  { id: 'bar',       name: 'Barres',           icon: <BarChart3 size={20} />,  description: 'Comparaison de valeurs',           category: 'comparison' },
+  { id: 'stacked-area', name: 'Zone empilée', icon: <Layers size={20} />, description: 'Évolution empilée', category: 'trend' },
   { id: 'pie',       name: 'Camembert',        icon: <PieChart size={20} />,   description: 'Distribution en parts',            category: 'composition' },
   { id: 'donut',     name: 'Anneau',           icon: <Target size={20} />,     description: 'Distribution avec centre vide',   category: 'composition' },
+  { id: 'kpi',       name: 'KPI',              icon: <Target size={20} />,     description: 'Valeur clé unique',                category: 'other' },
+  { id: 'heatmap',   name: 'Heatmap',          icon: <Grid3x3 size={20} />,    description: 'Intensité par cellule',           category: 'distribution' },
   { id: 'radar',     name: 'Radar',            icon: <Activity size={20} />,   description: 'Comparaison multidimensionnelle', category: 'comparison' },
-  { id: 'radialBar', name: 'Barres radiales',  icon: <TrendingUp size={20} />, description: 'Progression circulaire',          category: 'comparison' },
-  { id: 'scatter',   name: 'Nuage de points',  icon: <Grid3x3 size={20} />,    description: 'Corrélation entre variables',     category: 'distribution' },
-  { id: 'composed',  name: 'Composé',          icon: <Layers size={20} />,     description: 'Combinaison de types',            category: 'other' },
-  { id: 'treemap',   name: 'Treemap',          icon: <Grid3x3 size={20} />,    description: 'Hiérarchie en rectangles',        category: 'composition' },
-  { id: 'funnel',    name: 'Entonnoir',        icon: <GitBranch size={20} />,  description: 'Processus séquentiel',            category: 'other' },
   { id: 'table',     name: 'Tableau',          icon: <Table size={20} />,      description: 'Données tabulaires',              category: 'other' },
 ];
 
@@ -48,6 +46,43 @@ const DEFAULT_OPTIONS: VisualizationOptions = {
 };
 
 const MONTHS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'];
+
+const toVisualizationOptions = (chartOptions?: ChartOptions): VisualizationOptions => ({
+  title: chartOptions?.title,
+  subtitle: chartOptions?.subtitle,
+  showLegend: chartOptions?.show_legend ?? true,
+  showTooltip: chartOptions?.show_tooltip ?? true,
+  showGrid: chartOptions?.show_grid ?? true,
+  stacked: Boolean(chartOptions?.stacked),
+  animation: (chartOptions?.animation_duration ?? 500) > 0,
+  colors: chartOptions?.color_scheme,
+});
+
+const toChartOptions = (
+  previous: ChartOptions | undefined,
+  nextOptions: VisualizationOptions,
+  nextChartType: ChartVariant,
+): ChartOptions => {
+  const optionKey = getOptionKey(nextChartType);
+  const previousSpecific = previous?.[optionKey] ?? {};
+  const nextSpecific = {
+    ...previousSpecific,
+    stacked: nextChartType === 'stacked-bar' || nextChartType === 'stacked-area' || nextOptions.stacked,
+  };
+
+  return {
+    ...previous,
+    title: nextOptions.title,
+    subtitle: nextOptions.subtitle,
+    show_legend: nextOptions.showLegend,
+    show_tooltip: nextOptions.showTooltip,
+    show_grid: nextOptions.showGrid,
+    color_scheme: nextOptions.colors,
+    stacked: nextSpecific.stacked ? 1 : 0,
+    animation_duration: nextOptions.animation ? (previous?.animation_duration ?? 500) : 0,
+    [optionKey]: nextSpecific,
+  };
+};
 
 interface ChatBuilderInterfaceProps {
   chart: DatasetChart;
@@ -71,8 +106,11 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // Visualization state
-  const [chartType, setChartType] = useState<ChartVariant>('bar');
-  const [options, setOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
+  const [chartType, setChartType] = useState<ChartVariant>((chart.type as ChartVariant) || 'bar');
+  const [options, setOptions] = useState<VisualizationOptions>({
+    ...DEFAULT_OPTIONS,
+    ...toVisualizationOptions(chart.options),
+  });
 
   // Preview snapshot (frozen at Actualiser click)
   const [previewChartType, setPreviewChartType] = useState<ChartVariant>('bar');
@@ -98,9 +136,12 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     filters: [],
   });
 
-  // Sync layout from chart.structure on mount
+  // Sync layout from chart.structure on mount only (guarded against re-running on onChange bounce)
+  const structureInitialized = useRef(false);
   useEffect(() => {
+    if (structureInitialized.current) return;
     if (!chart.structure) return;
+    structureInitialized.current = true;
     setLayout({
       columns: chart.structure.cols_dimensions ?? [],
       rows: chart.structure.rows_dimensions ?? [],
@@ -109,17 +150,10 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     });
   }, [chart.structure]);
 
-  // Propagate layout changes to _chart
+  // Propagate layout changes to _chart (no external resync — avoids circular loop)
   useEffect(() => {
     setChart(prev => {
       const prevStructure = prev.structure ?? {} as any;
-      if (
-        prevStructure.cols_dimensions === layout.columns &&
-        prevStructure.rows_dimensions === layout.rows &&
-        prevStructure.metrics === layout.metrics &&
-        prevStructure.filters === layout.filters
-      ) return prev;
-
       const next = {
         ...prev,
         structure: {
@@ -133,7 +167,36 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       onChange?.(next);
       return next;
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layout]);
+
+  useEffect(() => {
+    setChart(prev => {
+      if (prev.type === chartType) return prev;
+      const next = { ...prev, type: chartType };
+      onChange?.(next);
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartType]);
+
+  useEffect(() => {
+    setChart(prev => {
+      const nextOptions = toChartOptions(prev.options, options, chartType);
+      if (JSON.stringify(prev.options) === JSON.stringify(nextOptions)) return prev;
+      const next = { ...prev, options: nextOptions };
+      onChange?.(next);
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options]);
+
+  // ── Query & fields ───────────────────────────────────────────────────────────
+  const query = useMemo(
+    () => queries?.find(q => q.id === (_chart.query_id ?? chart.query_id)),
+    [queries, _chart.query_id, chart.query_id],
+  );
+  const fields = useMemo(() => query?.fields ?? [], [query]);
 
   // ── Layout handlers ─────────────────────────────────────────────────────────
   const findItemIndex = <T extends { field_id: number }>(arr: T[], id: number) =>
@@ -142,13 +205,50 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   const handleMoveItem = useCallback((
     itemId: number, fromZone: LayoutDataZone, toZone: LayoutDataZone, toIndex: number,
   ) => {
+    // Convert an item to the target zone's expected type.
+    // columns/rows use ChartDimension; filters use ChartFilter.
+    const convertForZone = (
+      raw: ChartDimension | ChartMetric | ChartFilter,
+      from: LayoutDataZone,
+      to: LayoutDataZone,
+    ): ChartDimension | ChartFilter => {
+      if (from === to) return raw as (ChartDimension | ChartFilter);
+      const field = fields.find(f => f.id === raw.field_id);
+      if ((from === 'columns' || from === 'rows') && to === 'filters') {
+        const dim = raw as ChartDimension;
+        return {
+          field_id: dim.field_id,
+          field_type: field?.field_type ?? 'dimension',
+          operator: dim.operator ?? '=',
+          value: dim.value ?? null,
+          value2: dim.value2 ?? null,
+          useSqlInClause: dim.useSqlInClause ?? false,
+        } as ChartFilter;
+      }
+      if (from === 'filters' && (to === 'columns' || to === 'rows')) {
+        const filt = raw as ChartFilter;
+        return {
+          field_id: filt.field_id,
+          alias: field?.name ?? String(filt.field_id),
+          name: field?.name,
+          data_type: field?.data_type,
+          operator: filt.operator,
+          value: filt.value,
+          value2: filt.value2,
+          useSqlInClause: filt.useSqlInClause,
+        } as ChartDimension;
+      }
+      return raw as ChartDimension;
+    };
+
     setLayout(prev => {
       const next = { ...prev };
       const source = [...next[fromZone]];
       const target = fromZone === toZone ? source : [...next[toZone]];
       const fromIndex = findItemIndex(source, itemId);
       if (fromIndex === -1) return prev;
-      const [item] = source.splice(fromIndex, 1);
+      const [rawItem] = source.splice(fromIndex, 1);
+      const item = convertForZone(rawItem, fromZone, toZone);
       const existingIndex = findItemIndex(target, itemId);
       const safeIndex = Math.max(0, Math.min(toIndex, target.length));
 
@@ -157,7 +257,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       } else if (existingIndex !== -1) {
         const existingItem = target[existingIndex];
         target[existingIndex] = item;
-        source.splice(fromIndex, 0, existingItem);
+        source.splice(fromIndex, 0, convertForZone(existingItem, toZone, fromZone));
       } else {
         target.splice(safeIndex, 0, item);
       }
@@ -167,7 +267,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       return next;
     });
     setIsPreviewStale(true);
-  }, []);
+  }, [fields]);
 
   const handleRemove = useCallback((id: number, zone: keyof LayoutState) => {
     setLayout(prev => ({
@@ -215,13 +315,6 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     setIsPreviewStale(true);
   }, []);
 
-  // ── Query & fields ───────────────────────────────────────────────────────────
-  const query = useMemo(
-    () => queries?.find(q => q.id === (_chart.query_id ?? chart.query_id)),
-    [queries, _chart.query_id, chart.query_id],
-  );
-  const fields = useMemo(() => query?.fields ?? [], [query]);
-
   // ── Preview data generation (same approach as DashboardBuilder) ──────────────
   const palette = useMemo(
     () => previewOptions.colors ?? CHART_COLORS.primary,
@@ -236,7 +329,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   const previewData = useMemo(() => {
     if (metricNames.length === 0) return [];
 
-    const flat = ['pie', 'donut', 'treemap', 'funnel', 'radialBar'];
+    const flat = ['pie', 'donut', 'kpi', 'gauge'];
     if (flat.includes(previewChartType)) {
       return metricNames.map((name, i) => ({
         name,
@@ -245,12 +338,23 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       }));
     }
 
-    if (previewChartType === 'scatter') {
-      return Array.from({ length: 12 }, (_, i) => ({
-        name: `Point ${i + 1}`,
-        x: Math.floor(Math.random() * 100),
-        y: Math.floor(Math.random() * 100),
-        z: Math.floor(Math.random() * 50) + 10,
+    if (previewChartType === 'radar') {
+      const radarMetrics = metricNames.slice(0, 2);
+      return ['Qualité', 'Accès', 'Délai', 'Suivi', 'Impact'].map((subject, index) => {
+        const entry: Record<string, unknown> = { subject };
+        (radarMetrics.length > 0 ? radarMetrics : ['Valeur']).forEach((name, metricIndex) => {
+          entry[name] = 40 + ((index + 1) * 13) + (metricIndex * 11);
+        });
+        return entry;
+      });
+    }
+
+    if (previewChartType === 'heatmap') {
+      return ['Lomé', 'Kara', 'Sokodé'].map((row) => ({
+        row,
+        jan: Math.floor(Math.random() * 20) + 5,
+        fev: Math.floor(Math.random() * 20) + 5,
+        mar: Math.floor(Math.random() * 20) + 5,
       }));
     }
 
@@ -268,11 +372,9 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       dataKey: name,
       name,
       color: palette[i % palette.length],
-      type: previewChartType === 'composed'
-        ? ((i === 0 ? 'bar' : 'line') as 'bar' | 'line')
-        : undefined,
+      type: undefined,
     })),
-    [metricNames, palette, previewChartType],
+    [metricNames, palette],
   );
 
   // ── Refresh ──────────────────────────────────────────────────────────────────
@@ -301,6 +403,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
             onAddLayout={handleAddLayout}
             chartType={chartType}
             chartTypes={CHART_TYPES}
+            options={previewOptions}
             onSelectChartType={setChartType}
           />
 
