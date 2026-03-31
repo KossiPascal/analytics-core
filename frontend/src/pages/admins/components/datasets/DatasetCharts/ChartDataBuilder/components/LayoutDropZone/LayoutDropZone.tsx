@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { GripVertical, X, Plus } from 'lucide-react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { GripVertical, X, Plus, Search } from 'lucide-react';
 import { AGGREGATE_BY_SQL_TYPE, ChartDimension, ChartFilter, ChartMetric, DatasetField, SqlAggType } from '@/models/dataset.models';
 import styles from './LayoutDropZone.module.css';
 import { Modal } from '@/components/ui/Modal/Modal';
@@ -34,6 +34,12 @@ interface LayoutDropZoneProps {
   onRemoveLayout: (itemId: number, zone: LayoutDataZone) => void;
   placeholder?: string;
   children?: React.ReactNode;
+  /** External control: open the edit modal from outside */
+  isEditOpen?: boolean;
+  /** Called when the externally-controlled edit modal closes */
+  onEditClose?: () => void;
+  /** When true, the zone UI (drag zone + add button) is not rendered — only the modals */
+  hideZoneUI?: boolean;
 }
 
 
@@ -101,13 +107,24 @@ const MultipleLayoutDropZoneTableInput: React.FC<TableProps> = ({ fields, select
 
 
 // COMPONENT
-export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({ dataZone, title, items, fields, onAddLayout, onUpdateLayout, onMoveLayout, onRemoveLayout }) => {
+export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({ dataZone, title, items, fields, onAddLayout, onUpdateLayout, onMoveLayout, onRemoveLayout, isEditOpen, onEditClose, hideZoneUI }) => {
   // STATE
   const [isDragOver, setIsDragOver] = useState(false);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [isFieldsModalOpened, setFieldsModalOpen] = useState(false);
   const [openLayoutModal, setOpenLayoutModal] = useState(false);
   const [selectFields, setSelectFields] = useState<DatasetField[]>([]);
+  const [metricSearch, setMetricSearch] = useState('');
+
+  // Sync external open state
+  useEffect(() => {
+    if (isEditOpen !== undefined) setFieldsModalOpen(isEditOpen);
+  }, [isEditOpen]);
+
+  const handleCloseEditModal = useCallback(() => {
+    setFieldsModalOpen(false);
+    onEditClose?.();
+  }, [onEditClose]);
 
   // MEMO
   const fieldMap = useMemo(() => new Map(fields.map(f => [f.id!, f])), [fields]);
@@ -203,45 +220,70 @@ export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({ dataZone, title,
       );
     });
 
-  const renderMetrics = () =>
-    items.map((item, i) => {
+  const renderMetrics = () => {
+    const filtered = items.filter(item => {
       const met = item as ChartMetric;
-      const field = getField(met.field_id);
-      const data_type = field?.data_type ?? 'string';
-      const aggregates: SqlAggType[] = AGGREGATE_BY_SQL_TYPE[data_type] ?? ['count'];
-
-      return (
-        <div key={met.field_id} className={styles.gridRow}>
-          <InlineEditCell
-            value={met.alias || met.name || 'Champ inconnu'}
-            onChange={(v) => {
-              const updated = [...items];
-              updated[i] = { ...met, alias: v?.trim() };
-              onUpdateLayout(dataZone, updated);
-            }}
-          />
-
-          <FormSelect
-            value={met.aggregation}
-            options={aggregates.map(a => ({
-              value: a,
-              label: a.toUpperCase()
-            }))}
-            onChange={(v) => {
-              const updated = [...items];
-              updated[i] = { ...met, aggregation: v };
-              onUpdateLayout(dataZone, updated);
-            }}
-          />
-
-          <div className={styles.actions}>
-            <button className={styles.removeBtn} onClick={() => onRemoveLayout(met.field_id, dataZone)} >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-      );
+      const name = (met.alias || met.name || '').toLowerCase();
+      return name.includes(metricSearch.toLowerCase());
     });
+
+    return (
+      <div>
+        <div className={styles.searchWrapper}>
+          <Search size={13} />
+          <input
+            className={styles.searchMetric}
+            placeholder="Rechercher une colonne..."
+            value={metricSearch}
+            onChange={e => setMetricSearch(e.target.value)}
+          />
+        </div>
+        <div className={styles.gridTable}>
+          <div className={`${styles.gridRow} ${styles.gridHeader}`}>
+            <span>NOM</span>
+            <span>TYPE</span>
+            <span>AGGREGATION</span>
+            <span />
+          </div>
+          {filtered.map((item) => {
+            const met = item as ChartMetric;
+            const realIndex = items.findIndex(it => (it as ChartMetric).field_id === met.field_id);
+            const field = getField(met.field_id);
+            const data_type = field?.data_type ?? 'string';
+            const aggregates: SqlAggType[] = AGGREGATE_BY_SQL_TYPE[data_type] ?? ['count'];
+
+            return (
+              <div key={met.field_id} className={styles.gridRow}>
+                <InlineEditCell
+                  value={met.alias || met.name || 'Champ inconnu'}
+                  onChange={(v) => {
+                    const updated = [...items];
+                    updated[realIndex] = { ...met, alias: v?.trim() };
+                    onUpdateLayout(dataZone, updated);
+                  }}
+                />
+                <span className={styles.typeLabel}>{data_type}</span>
+                <FormSelect
+                  value={met.aggregation}
+                  options={aggregates.map(a => ({ value: a, label: a.toUpperCase() }))}
+                  onChange={(v) => {
+                    const updated = [...items];
+                    updated[realIndex] = { ...met, aggregation: v };
+                    onUpdateLayout(dataZone, updated);
+                  }}
+                />
+                <div className={styles.actions}>
+                  <button className={styles.removeBtn} onClick={() => onRemoveLayout(met.field_id, dataZone)}>
+                    <X size={14} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   const renderFilters = () =>
     items.map((item, i) => {
@@ -275,42 +317,35 @@ export const LayoutDropZone: React.FC<LayoutDropZoneProps> = ({ dataZone, title,
   // JSX
   return (
     <>
-      <div
-        className={`${styles.layoutZone} ${isDragOver ? styles.dragOver : ''}`}
-        onDragOver={handleDragOverZone}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <div className={styles.header}>
-          <span>{title}</span>
-          <span>{items.length}</span>
+      {!hideZoneUI && (
+        <div
+          className={`${styles.layoutZone} ${isDragOver ? styles.dragOver : ''}`}
+          onDragOver={handleDragOverZone}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className={styles.header}>
+            <span>{title}</span>
+            <span>{items.length}</span>
+          </div>
+
+          <div className={styles.content}>
+            <Button size='sm' onClick={() => setFieldsModalOpen(true)}>
+              <Plus size={14} />
+              Ajouter
+            </Button>
+            <div className={hoverIndex === items.length ? styles.dropIndicatorActive : styles.dropIndicatorDeActive} />
+          </div>
         </div>
-
-        <div className={styles.content}>
-          {/* {items.length === 0 && (
-            <div className={styles.placeholder}>
-              Aucun élément sélectionné
-            </div>
-          )} */}
-
-          <Button size='sm' onClick={() => setFieldsModalOpen(true)}>
-            <Plus size={14} />
-            Ajouter
-          </Button>
-
-          <div className={hoverIndex === items.length ? styles.dropIndicatorActive : styles.dropIndicatorDeActive} />
-
-        </div>
-      </div>
+      )}
 
 
       {/* MODAL EDIT */}
       <Modal
         isOpen={isFieldsModalOpened}
-        onClose={() => setFieldsModalOpen(false)}
+        onClose={handleCloseEditModal}
         title={(
           <button type="button" className={styles.addDataBtn} onClick={() => setOpenLayoutModal(true)}>
-            {/* <Plus size={14} /> */}
             Ajouter {dataZone}
           </button>
         )}

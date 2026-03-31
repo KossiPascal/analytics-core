@@ -148,7 +148,7 @@
 
 .gridRow {
   display: grid;
-  grid-template-columns: 1fr 180px 40px;
+  grid-template-columns: 1fr 80px 160px 36px;
   align-items: center;
   gap: 0.5rem;
   padding: 4px 8px;
@@ -201,4 +201,39 @@
 .removeBtn:hover {
   color: #ef4444;
   background: #fee2e2;
+}
+
+.searchWrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: #f8fafc;
+}
+
+.searchWrapper svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.searchMetric {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #334155;
+}
+
+.searchMetric::placeholder {
+  color: #94a3b8;
+}
+
+.typeLabel {
+  font-size: 12px;
+  color: #64748b;
+  font-family: monospace;
 }
