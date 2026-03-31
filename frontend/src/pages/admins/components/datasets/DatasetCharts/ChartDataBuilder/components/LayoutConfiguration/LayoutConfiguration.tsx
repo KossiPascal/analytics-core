@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Database, Filter, Layers, Search, X } from "lucide-react";
+import { Database, Filter, Layers, Search } from "lucide-react";
 import {
   LayoutDropZone,
   LayoutState,
@@ -26,64 +26,13 @@ import styles from "./LayoutConfiguration.module.css";
 const DRAG_KEY = "layout-drag-item";
 
 // ── MODULE-LEVEL HELPER ───────────────────────────────────────────────────────
-function isMoveAllowed(from: LayoutDataZone, to: LayoutDataZone): boolean {
+// fromDataZone is null when the item comes from the sidebar (not yet in any zone)
+function isMoveAllowed(from: LayoutDataZone | null, to: LayoutDataZone): boolean {
+  if (from === null) return true;
   if (from === to) return false;
   if (from === "metrics") return false;
   return true;
 }
-
-// ── MODULE-LEVEL DimChip (draggable individual item) ─────────────────────────
-interface DimChipProps {
-  item: ChartDimension | ChartFilter;
-  zone: LayoutDataZone;
-  fieldName?: string; // override label (needed for ChartFilter which has no name/alias)
-  chipStyles: Record<string, string>;
-  onDragStart: (e: React.DragEvent, fieldId: number, zone: LayoutDataZone) => void;
-  onDragEnd: () => void;
-  onRemove: (fieldId: number, zone: LayoutDataZone) => void;
-  onEdit: () => void;
-}
-
-const DimChip: React.FC<DimChipProps> = ({
-  item,
-  zone,
-  fieldName,
-  chipStyles,
-  onDragStart,
-  onDragEnd,
-  onRemove,
-  onEdit,
-}) => {
-  const label =
-    fieldName ||
-    (item as ChartDimension).alias ||
-    (item as ChartDimension).name ||
-    String(item.field_id);
-  return (
-    <div
-      className={chipStyles.dimChip}
-      draggable
-      onDragStart={(e) => onDragStart(e, item.field_id, zone)}
-      onDragEnd={onDragEnd}
-      onClick={onEdit}
-    >
-      <span className={chipStyles.chipIcon}>
-        {zone === "filters" ? <Filter size={12} /> : <Layers size={12} />}
-      </span>
-      <span>{label}</span>
-      <button
-        type="button"
-        className={chipStyles.chipRemove}
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(item.field_id, zone);
-        }}
-      >
-        <X size={10} />
-      </button>
-    </div>
-  );
-};
 
 // ── MODULE-LEVEL Chip (generic, non-draggable) ────────────────────────────────
 interface ChipProps {
@@ -220,10 +169,16 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   );
 
   // ── Dimensions modal ──
-  const dimItems = useMemo(
-    () => zoneDimensions.map((f) => ({ id: String(f.id), name: f.name })),
-    [zoneDimensions],
-  );
+  const dimItems = useMemo(() => {
+    // Exclude items already in the opposing zone (columns ↔ rows are mutually exclusive)
+    const otherZone = dimsModalZone === "columns" ? "rows" : "columns";
+    const otherIds = new Set(
+      (layout[otherZone] as ChartDimension[]).map((d) => d.field_id),
+    );
+    return zoneDimensions
+      .filter((f) => !otherIds.has(f.id as number))
+      .map((f) => ({ id: String(f.id), name: f.name }));
+  }, [zoneDimensions, dimsModalZone, layout]);
   const dimsSelected = useMemo(
     () =>
       (dimsModalZone ? (layout[dimsModalZone] as ChartDimension[]) : []).map(
@@ -237,6 +192,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   const handleDimsChange = useCallback(
     (selected: { id: string; name: string }[]) => {
       if (!dimsModalZone) return;
+      const otherZone = dimsModalZone === "columns" ? "rows" : "columns";
       const dims: ChartDimension[] = selected.map((s) => {
         const existing = (layout[dimsModalZone] as ChartDimension[]).find(
           (d) => d.field_id === Number(s.id),
@@ -251,7 +207,13 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           }
         );
       });
+      // Mutual exclusion: remove from the other zone any item just selected here
+      const selectedIds = new Set(selected.map((s) => Number(s.id)));
+      const otherDims = (layout[otherZone] as ChartDimension[]).filter(
+        (d) => !selectedIds.has(d.field_id),
+      );
       onUpdateLayout(dimsModalZone, dims);
+      onUpdateLayout(otherZone, otherDims);
     },
     [dimsModalZone, layout, zoneDimensions, onUpdateLayout],
   );
@@ -293,21 +255,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   );
 
   // ── Drag handlers ──
-  const handleDragStart = useCallback(
-    (e: React.DragEvent, fieldId: number, zone: LayoutDataZone) => {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData(
-        DRAG_KEY,
-        JSON.stringify({ field_id: fieldId, fromDataZone: zone }),
-      );
-    },
-    [],
-  );
-
-  const handleDragEnd = useCallback(() => {
-    setDragOverZone(null);
-  }, []);
-
   const handleDragOverZone = useCallback(
     (e: React.DragEvent, zone: LayoutDataZone) => {
       if (!e.dataTransfer.types.includes(DRAG_KEY)) return;
@@ -332,12 +279,43 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       if (!raw) return;
       const { field_id, fromDataZone } = JSON.parse(raw) as {
         field_id: number;
-        fromDataZone: LayoutDataZone;
+        fromDataZone: LayoutDataZone | null;
       };
       if (!isMoveAllowed(fromDataZone, toZone)) return;
-      onMoveLayout(field_id, fromDataZone, toZone, layout[toZone].length);
+
+      if (fromDataZone !== null) {
+        // Move from one zone to another
+        onMoveLayout(field_id, fromDataZone, toZone, layout[toZone].length);
+      } else {
+        // Add from sidebar (item not yet in any zone)
+        if (layout[toZone].some((item) => item.field_id === field_id)) return;
+        const field = fields.find((f) => f.id === field_id);
+        if (!field) return;
+        if (toZone === "filters") {
+          onAddLayout(toZone, [
+            {
+              field_id,
+              field_type: (field.field_type ??
+                "dimension") as ChartFilter["field_type"],
+              operator: "=" as const,
+              value: null,
+              value2: null,
+              useSqlInClause: false,
+            },
+          ]);
+        } else {
+          onAddLayout(toZone, [
+            {
+              field_id,
+              name: field.name,
+              alias: field.name,
+              data_type: field.data_type ?? "string",
+            } as ChartDimension,
+          ]);
+        }
+      }
     },
-    [layout, onMoveLayout],
+    [layout, fields, onMoveLayout, onAddLayout],
   );
 
   return (
@@ -416,6 +394,58 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             <span className={styles.dimLabel}>Filtres</span>
           </div>
         </div>
+
+        {/* ── Individual draggable dimension items ── */}
+        <div className={styles.dimSection}>
+          <span className={styles.sectionLabel}>CHAMPS DISPONIBLES</span>
+          {zoneDimensions
+            .filter(
+              (f) =>
+                !dimSearch ||
+                f.name.toLowerCase().includes(dimSearch.toLowerCase()),
+            )
+            .map((f) => {
+              const inZone = layout.columns.some((c) => c.field_id === f.id)
+                ? ("columns" as const)
+                : layout.rows.some((r) => r.field_id === f.id)
+                  ? ("rows" as const)
+                  : layout.filters.some((fi) => fi.field_id === f.id)
+                    ? ("filters" as const)
+                    : null;
+              return (
+                <div
+                  key={f.id}
+                  className={`${styles.dimItem} ${inZone ? styles.dimItemActive : ""}`}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData(
+                      DRAG_KEY,
+                      JSON.stringify({ field_id: f.id, fromDataZone: inZone }),
+                    );
+                  }}
+                  onDragEnd={() => setDragOverZone(null)}
+                  onClick={() => {
+                    if (inZone === "columns") setDimsModalZone("columns");
+                    else if (inZone === "filters") setFiltersModalOpen(true);
+                    else setDimsModalZone("rows");
+                  }}
+                >
+                  <Layers size={14} className={styles.dimIcon} />
+                  <span className={styles.dimLabel}>{f.name}</span>
+                  {inZone && (
+                    <span className={styles.dimZoneBadge}>
+                      {inZone === "columns"
+                        ? "Col"
+                        : inZone === "rows"
+                          ? "Lig"
+                          : "Fil"}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+        </div>
       </div>
 
       {/* ── RIGHT ZONES ── */}
@@ -445,18 +475,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                 chipStyles={styles as any}
                 onClick={() => setDimsModalZone("columns")}
               />
-              {layout.columns.map((col) => (
-                <DimChip
-                  key={col.field_id}
-                  item={col}
-                  zone="columns"
-                  chipStyles={styles as any}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                  onRemove={onRemoveLayout}
-                  onEdit={() => setDimsModalZone("columns")}
-                />
-              ))}
             </div>
           </div>
 
@@ -476,19 +494,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                 chipStyles={styles as any}
                 onClick={() => setFiltersModalOpen(true)}
               />
-              {layout.filters.map((filt) => (
-                <DimChip
-                  key={filt.field_id}
-                  item={filt}
-                  zone="filters"
-                  fieldName={fields.find((f) => f.id === filt.field_id)?.name}
-                  chipStyles={styles as any}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                  onRemove={onRemoveLayout}
-                  onEdit={() => setFiltersModalOpen(true)}
-                />
-              ))}
             </div>
           </div>
         </div>
@@ -509,18 +514,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
               chipStyles={styles as any}
               onClick={() => setDimsModalZone("rows")}
             />
-            {layout.rows.map((row) => (
-              <DimChip
-                key={row.field_id}
-                item={row}
-                zone="rows"
-                chipStyles={styles as any}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onRemove={onRemoveLayout}
-                onEdit={() => setDimsModalZone("rows")}
-              />
-            ))}
           </div>
         </div>
       </div>
