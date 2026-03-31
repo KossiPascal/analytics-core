@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from "react";
 import { Database, Filter, Layers, Search } from "lucide-react";
 import {
   LayoutDropZone,
@@ -22,12 +22,16 @@ import type {
 import { ChartTypePickerModal } from "../../../components/chart-utils/ChartTypePickerModal";
 import styles from "./LayoutConfiguration.module.css";
 
-// ── DRAG KEY (must match LayoutDropZone) ──────────────────────────────────────
-const DRAG_KEY = "layout-drag-item";
+// ── DRAG KEYS ─────────────────────────────────────────────────────────────────
+const DRAG_KEY = "layout-drag-item"; // individual sidebar items
+const CHIP_DRAG_KEY = "zone-chip-drag"; // zone-chip batch swaps
 
 // ── MODULE-LEVEL HELPER ───────────────────────────────────────────────────────
 // fromDataZone is null when the item comes from the sidebar (not yet in any zone)
-function isMoveAllowed(from: LayoutDataZone | null, to: LayoutDataZone): boolean {
+function isMoveAllowed(
+  from: LayoutDataZone | null,
+  to: LayoutDataZone,
+): boolean {
   if (from === null) return true;
   if (from === to) return false;
   if (from === "metrics") return false;
@@ -131,7 +135,9 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // Modal states
   const [donneesModalOpen, setDonneesModalOpen] = useState(false);
   const [colsEditOpen, setColsEditOpen] = useState(false);
-  const [dimsModalZone, setDimsModalZone] = useState<'columns' | 'rows' | null>(null);
+  const [dimsModalZone, setDimsModalZone] = useState<"columns" | "rows" | null>(
+    null,
+  );
   const [filtersModalOpen, setFiltersModalOpen] = useState(false);
 
   // Drag-over indicator
@@ -240,7 +246,10 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     () =>
       layout.filters.map((f) => {
         const field = fields.find((fd) => fd.id === f.field_id);
-        return { id: String(f.field_id), name: field?.name ?? String(f.field_id) };
+        return {
+          id: String(f.field_id),
+          name: field?.name ?? String(f.field_id),
+        };
       }),
     [layout.filters, fields],
   );
@@ -254,7 +263,8 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         return (
           existing ?? {
             field_id: Number(s.id),
-            field_type: (field?.field_type ?? "dimension") as ChartFilter["field_type"],
+            field_type: (field?.field_type ??
+              "dimension") as ChartFilter["field_type"],
             operator: "=" as const,
             value: null,
             value2: null,
@@ -270,7 +280,8 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // ── Drag handlers ──
   const handleDragOverZone = useCallback(
     (e: React.DragEvent, zone: LayoutDataZone) => {
-      if (!e.dataTransfer.types.includes(DRAG_KEY)) return;
+      const { types } = e.dataTransfer;
+      if (!types.includes(DRAG_KEY) && !types.includes(CHIP_DRAG_KEY)) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
       setDragOverZone(zone);
@@ -332,23 +343,31 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     (e: React.DragEvent, toZone: LayoutDataZone) => {
       e.preventDefault();
       setDragOverZone(null);
-      const raw = e.dataTransfer.getData(DRAG_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as
-        | { isChipDrag: true; fromZone: LayoutDataZone }
-        | { isChipDrag?: false; field_id: number; fromDataZone: LayoutDataZone | null };
 
-      if (parsed.isChipDrag) {
-        // ── Chip drag: SWAP the two groups ──
-        const { fromZone } = parsed;
+      // ── Chip drag: SWAP the two groups ──
+      const chipRaw = e.dataTransfer.getData(CHIP_DRAG_KEY);
+      if (chipRaw) {
+        const { fromZone } = JSON.parse(chipRaw) as {
+          fromZone: LayoutDataZone;
+        };
         if (fromZone === toZone) return;
         // Each group keeps its position; only the contents are exchanged
         const fromContent = layout[fromZone];
         const toContent = layout[toZone];
-        onUpdateLayout(toZone, convertItemsForZone(fromContent, fromZone, toZone) as any);
-        onUpdateLayout(fromZone, convertItemsForZone(toContent, toZone, fromZone) as any);
+        onUpdateLayout(
+          toZone,
+          convertItemsForZone(fromContent, fromZone, toZone) as any,
+        );
+        onUpdateLayout(
+          fromZone,
+          convertItemsForZone(toContent, toZone, fromZone) as any,
+        );
       } else {
         // ── Sidebar individual item drag ──
+        const raw = e.dataTransfer.getData(DRAG_KEY);
+        if (!raw) return;
+
+        const parsed = JSON.parse(raw);
         const { field_id, fromDataZone } = parsed;
         if (!isMoveAllowed(fromDataZone, toZone)) return;
         if (fromDataZone !== null) {
@@ -382,7 +401,14 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         }
       }
     },
-    [layout, fields, onMoveLayout, onAddLayout, onUpdateLayout, convertItemsForZone],
+    [
+      layout,
+      fields,
+      onMoveLayout,
+      onAddLayout,
+      onUpdateLayout,
+      convertItemsForZone,
+    ],
   );
 
   return (
@@ -448,7 +474,10 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             </button>
           </div>
 
-          <div className={styles.dimItem} onClick={() => setDimsModalZone("rows")}>
+          <div
+            className={styles.dimItem}
+            onClick={() => setDimsModalZone("rows")}
+          >
             <Layers size={14} className={styles.dimIcon} />
             <span className={styles.dimLabel}>Dimensions</span>
           </div>
@@ -643,7 +672,11 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       <Modal
         isOpen={dimsModalZone !== null}
         onClose={() => setDimsModalZone(null)}
-        title={dimsModalZone === "columns" ? "Dim. Col. — Dimensions de colonnes" : "Dim. Lig. — Dimensions de lignes"}
+        title={
+          dimsModalZone === "columns"
+            ? "Dim. Col. — Dimensions de colonnes"
+            : "Dim. Lig. — Dimensions de lignes"
+        }
         size="lg"
         closeOnBackdrop
         closeOnEscape
@@ -723,6 +756,3 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     </div>
   );
 };
-
-
-
