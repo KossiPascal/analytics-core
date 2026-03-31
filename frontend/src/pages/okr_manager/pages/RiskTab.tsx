@@ -45,16 +45,13 @@ export const RiskTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
             icon={<AlertTriangle />}
             columns={columns}
             defaultValue={DEFAULT}
-
             isValid={(e) => !!e.name && e.name.trim().length > 0}
-
             onBeforeSave={(e) => ({
                 ...e,
                 impact: e.impact != null ? Number(e.impact) : null,
                 probability: e.probability != null ? Number(e.probability) : null,
                 mitigation_plan: e.mitigation_plan || null
             })}
-
             renderForm={(e, set) => (
                 <>
                     <FormInput
