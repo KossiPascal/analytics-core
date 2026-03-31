@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from 'react';
 import { Database, Filter, Layers, Search, X } from "lucide-react";
 import {
   LayoutDropZone,
@@ -172,7 +172,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // Modal states
   const [donneesModalOpen, setDonneesModalOpen] = useState(false);
   const [colsEditOpen, setColsEditOpen] = useState(false);
-  const [rowsEditOpen, setRowsEditOpen] = useState(false);
+  const [dimsModalZone, setDimsModalZone] = useState<'columns' | 'rows' | null>(null);
   const [filtersEditOpen, setFiltersEditOpen] = useState(false);
 
   // Drag-over indicator
@@ -220,6 +220,43 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       onUpdateLayout("metrics", metrics);
     },
     [layout.metrics, zoneMetrics, onUpdateLayout],
+  );
+
+  // ── Dimensions modal ──
+  const dimItems = useMemo(
+    () => zoneDimensions.map((f) => ({ id: String(f.id), name: f.name })),
+    [zoneDimensions],
+  );
+  const dimsSelected = useMemo(
+    () =>
+      (dimsModalZone ? (layout[dimsModalZone] as ChartDimension[]) : []).map(
+        (d) => ({
+          id: String(d.field_id),
+          name: d.alias || d.name || String(d.field_id),
+        }),
+      ),
+    [dimsModalZone, layout],
+  );
+  const handleDimsChange = useCallback(
+    (selected: { id: string; name: string }[]) => {
+      if (!dimsModalZone) return;
+      const dims: ChartDimension[] = selected.map((s) => {
+        const existing = (layout[dimsModalZone] as ChartDimension[]).find(
+          (d) => d.field_id === Number(s.id),
+        );
+        const field = zoneDimensions.find((f) => String(f.id) === s.id);
+        return (
+          existing ?? {
+            field_id: Number(s.id),
+            name: s.name,
+            alias: s.name,
+            data_type: field?.data_type ?? "string",
+          }
+        );
+      });
+      onUpdateLayout(dimsModalZone, dims);
+    },
+    [dimsModalZone, layout, zoneDimensions, onUpdateLayout],
   );
 
   // ── Drag handlers ──
@@ -333,7 +370,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             </button>
           </div>
 
-          <div className={styles.dimItem} onClick={() => setRowsEditOpen(true)}>
+          <div className={styles.dimItem} onClick={() => setDimsModalZone("rows")}>
             <Layers size={14} className={styles.dimIcon} />
             <span className={styles.dimLabel}>Dimensions</span>
           </div>
@@ -377,7 +414,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   onRemove={onRemoveLayout}
-                  onEdit={() => setColsEditOpen(true)}
+                  onEdit={() => setDimsModalZone("columns")}
                 />
               ))}
             </div>
@@ -435,7 +472,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onRemove={onRemoveLayout}
-                onEdit={() => setRowsEditOpen(true)}
+                onEdit={() => setDimsModalZone("rows")}
               />
             ))}
             {layout.rows.length === 0 && (
@@ -444,7 +481,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                 label="Dimensions"
                 count={0}
                 chipStyles={styles as any}
-                onClick={() => setRowsEditOpen(true)}
+                onClick={() => setDimsModalZone("rows")}
               />
             )}
           </div>
@@ -463,19 +500,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         onMoveLayout={onMoveLayout}
         isEditOpen={colsEditOpen}
         onEditClose={() => setColsEditOpen(false)}
-        hideZoneUI
-      />
-      <LayoutDropZone
-        dataZone="rows"
-        title="Lignes - Dimensions"
-        items={layout.rows}
-        fields={zoneDimensions}
-        onAddLayout={onAddLayout}
-        onUpdateLayout={onUpdateLayout}
-        onRemoveLayout={onRemoveLayout}
-        onMoveLayout={onMoveLayout}
-        isEditOpen={rowsEditOpen}
-        onEditClose={() => setRowsEditOpen(false)}
         hideZoneUI
       />
       <LayoutDropZone
@@ -503,6 +527,30 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           setIsTypeModalOpen(false);
         }}
       />
+
+      {/* ── DIMENSIONS MODAL ── */}
+      <Modal
+        isOpen={dimsModalZone !== null}
+        onClose={() => setDimsModalZone(null)}
+        title={dimsModalZone === "columns" ? "Dimensions — Colonnes" : "Dimensions — Lignes"}
+        size="lg"
+        closeOnBackdrop
+        closeOnEscape
+      >
+        <FormMultiSelectDualPanel
+          items={dimItems}
+          selectedItems={dimsSelected}
+          onChange={handleDimsChange}
+          leftTitle="Dimensions disponibles"
+          rightTitle="Dimensions sélectionnées"
+        />
+        <div className={styles.modalFooter}>
+          <Button variant="secondary" onClick={() => setDimsModalZone(null)}>
+            Masquer
+          </Button>
+          <Button onClick={() => setDimsModalZone(null)}>Mettre à jour</Button>
+        </div>
+      </Modal>
 
       {/* ── DONNÉES MODAL ── */}
       <Modal
@@ -535,3 +583,6 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     </div>
   );
 };
+
+
+
