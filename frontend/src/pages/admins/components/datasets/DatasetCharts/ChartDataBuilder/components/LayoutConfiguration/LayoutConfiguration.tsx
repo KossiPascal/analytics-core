@@ -159,6 +159,9 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // Drag-over indicator
   const [dragOverZone, setDragOverZone] = useState<LayoutDataZone | null>(null);
 
+  // Tracks which zone the "Données" chip currently lives in
+  const [donneesZone, setDonneesZone] = useState<"columns" | "rows">("columns");
+
   const zoneMetrics = useMemo(
     () => fields.filter((f) => f.field_type !== "dimension"),
     [fields],
@@ -381,7 +384,16 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           fromZone: LayoutDataZone;
         };
         if (fromZone === toZone) return;
-        // Each group keeps its position; only the contents are exchanged
+
+        // "Données" chip: just move its position, don't swap contents
+        if (fromZone === "metrics") {
+          if (toZone === "columns" || toZone === "rows") {
+            setDonneesZone(toZone);
+          }
+          return;
+        }
+
+        // All other chips: SWAP the contents of the two zones
         const fromContent = safeLayout[fromZone];
         const toContent = safeLayout[toZone];
         onUpdateLayout(
@@ -587,22 +599,24 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
           >
             <span className={styles.zoneLabel}>Colonnes</span>
             <div className={styles.zoneChips}>
-                <Chip
-                  icon={<Database size={13} />}
-                  label="Données"
-                  count={safeLayout.metrics.length}
-                  chipStyles={styles as any}
-                  onClick={() => setColsEditOpen(true)}
-                  draggable={safeLayout.metrics.length > 0}
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = "move";
-                    e.dataTransfer.setData(
-                      CHIP_DRAG_KEY,
-                      JSON.stringify({ fromZone: "metrics" }),
-                    );
-                  }}
-                  onDragEnd={() => setDragOverZone(null)}
-                />
+                {donneesZone === "columns" && (
+                  <Chip
+                    icon={<Database size={13} />}
+                    label="Données"
+                    count={safeLayout.metrics.length}
+                    chipStyles={styles as any}
+                    onClick={() => setColsEditOpen(true)}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData(
+                        CHIP_DRAG_KEY,
+                        JSON.stringify({ fromZone: "metrics" }),
+                      );
+                    }}
+                    onDragEnd={() => setDragOverZone(null)}
+                  />
+                )}
                 <Chip
                   icon={<Layers size={13} />}
                   label="Dim. Col."
@@ -660,6 +674,24 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
         >
           <span className={styles.zoneLabel}>Lignes</span>
           <div className={styles.zoneChips}>
+            {donneesZone === "rows" && (
+              <Chip
+                icon={<Database size={13} />}
+                label="Données"
+                count={safeLayout.metrics.length}
+                chipStyles={styles as any}
+                onClick={() => setColsEditOpen(true)}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData(
+                    CHIP_DRAG_KEY,
+                    JSON.stringify({ fromZone: "metrics" }),
+                  );
+                }}
+                onDragEnd={() => setDragOverZone(null)}
+              />
+            )}
             <Chip
               icon={<Layers size={13} />}
               label="Dim. Lig."
