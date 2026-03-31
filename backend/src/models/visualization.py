@@ -29,7 +29,6 @@ class LineageOperation(str, PyEnum):
     AGGREGATED = "aggregated"
     FILTERED = "filtered"
 
-
 class Visualization(db.Model, AuditMixin):
     __tablename__ = "visualizations"
 
@@ -116,7 +115,7 @@ class Visualization(db.Model, AuditMixin):
 class VisualizationDefinition(db.Model, AuditMixin):
     __tablename__ = "visualization_definitions"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
     visualization_id = db.Column(db.BigInteger, db.ForeignKey("visualizations.id", ondelete="CASCADE"), nullable=False)
     
@@ -156,7 +155,7 @@ class VisualizationDefinition(db.Model, AuditMixin):
 class VisualizationLayout(db.Model, AuditMixin):
     __tablename__ = "visualization_layouts"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     visualization_id = db.Column(db.BigInteger, db.ForeignKey("visualizations.id", ondelete="CASCADE"), nullable=False)
     
@@ -203,7 +202,7 @@ class VisualizationLayout(db.Model, AuditMixin):
 class VisualizationChart(db.Model, AuditMixin):
     __tablename__ = "visualization_charts"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     chart_id = db.Column(db.BigInteger,db.ForeignKey("dataset_charts.id", ondelete="CASCADE"),nullable=False)
     tenant_id = db.Column(db.BigInteger,db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False)
     dataset_id = db.Column(db.BigInteger,db.ForeignKey("datasets.id", ondelete="CASCADE"),nullable=False)
@@ -334,7 +333,7 @@ class VisualizationExecution(db.Model, AuditMixin):
 class VisualizationExecutionLog(db.Model):
     __tablename__ = "visualization_execution_logs"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     execution_id = db.Column(db.BigInteger, db.ForeignKey("visualization_executions.id", ondelete="CASCADE"), nullable=False)
     details = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))
     message = db.Column(db.Text)
@@ -364,7 +363,7 @@ class VisualizationExecutionLog(db.Model):
 class VisualizationShare(db.Model, AuditMixin):
     __tablename__ = "visualization_shares"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     visualization_id = db.Column(db.BigInteger, db.ForeignKey("visualizations.id", ondelete="CASCADE"), nullable=False)
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), nullable=False)
     

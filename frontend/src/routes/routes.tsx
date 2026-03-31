@@ -186,6 +186,16 @@ export const ROUTES_ITEMS: RouteItem[] = [
     showInSideNav: true,
     permissions: ['_admin', '_superadmin'],
   },
+  {
+    label: 'ORC Manager & Projets',
+    path: ROUTES.okrManager.root(),
+    component: PAGES.OkrManagerPage,
+    icon: <FolderKanban size={20} />,
+    access: "authenticated",
+    showInGridpNav: true,
+    showInSideNav: true,
+    permissions: ['_admin', '_superadmin'],
+  },
 
   // SETTINGS
   {

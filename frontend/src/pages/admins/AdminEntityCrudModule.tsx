@@ -466,7 +466,7 @@ const AdminEntityCrudModuleInner = <
 
 export const AdminEntityCrudModule = forwardRef(
     AdminEntityCrudModuleInner
-) as <T extends { id: number | null }>(
+) as <T extends { id: number | undefined | null }>(
     props: AdminEntityCrudModuleProps<T> & {
         ref?: React.Ref<AdminEntityCrudModuleRef>;
     }

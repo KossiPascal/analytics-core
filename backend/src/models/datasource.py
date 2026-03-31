@@ -897,7 +897,7 @@ class DataSourcePermission(db.Model, AuditMixin):
 # AUDIT HISTORY
 class DataSourceHistory(db.Model):
     __tablename__ = 'datasource_history'
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     
     tenant_id = db.Column(db.BigInteger, db.ForeignKey('tenants.id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False,index=True)
     type = db.Column(db.String(100), nullable=False)

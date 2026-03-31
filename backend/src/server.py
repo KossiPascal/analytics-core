@@ -35,6 +35,8 @@ from backend.src.security.api_security import api_security
 from backend.src.routes import auth, database, worker_controller
 from backend.src.routes.visualizations import script, visualization, visualization_chart, visualization_target
 from backend.src.routes.identities import permission, role, tenant, tenant_source, user, user_utils, orgunit, level, dhis2_sync as identities_dhis2_sync
+from backend.src.models.team import Team,TeamUser
+from backend.src.okr_manager.models.models import OkrStrategy
 from backend.src.routes.datasources import datasource, datasource_permission
 from backend.src.routes.datasets import dataset, dataset_field
 from backend.src.databases.extensions import db, scheduler
@@ -70,7 +72,7 @@ def init_database(app: Flask) -> None:
         # car db.create_all() ouvre sa propre connexion et ne voit pas une transaction
         # non committée. On utilise une connexion séparée avec commit explicite.
         with db.engine.connect() as schema_conn:
-            for shema in ["eqpm", "meet", "prosi"]:
+            for shema in ["eqpm", "meet", "prosi", "okrmanager"]:
                 schema_conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {shema}"))
             schema_conn.commit()
 
@@ -299,7 +301,7 @@ def create_flask_app(initialize_database = True) -> Flask:
         app.register_blueprint(mi_meeting.bp)
 
         # PROSI — Gestion de Projets et ORCs
-        from backend.src.prosi.routes import (
+        from backend.src.project_orc.routes import (
             projects as prosi_projects,
             pillars  as prosi_pillars,
             orcs     as prosi_orcs,

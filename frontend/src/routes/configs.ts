@@ -57,6 +57,9 @@ export const PAGES = {
 
     // PROSI — Gestion Projets & ORCs
     ProsiPage: lazy(() => import('@pages/prosi')),
+    OkrManagerPage: lazy(() => import('@pages/okr_manager/OkrManagerPage')),
+
+    
 
     // Error pages
     NotFoundPage: lazy(() => import('@pages/errors/NotFoundPage')),
@@ -170,6 +173,11 @@ export const ROUTES = {
     prosi: {
         root: () => '/prosi',
     },
+    okrManager: {
+        root: () => '/okr-manager',
+    },
+
+    
 
     // ERRORS
     errors: {

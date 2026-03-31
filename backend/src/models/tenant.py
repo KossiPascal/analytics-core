@@ -55,6 +55,7 @@ class Tenant(db.Model, MetaxMixin):
 
     sources = db.relationship("TenantSource", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
     users = db.relationship("User", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    user_links = db.relationship("TenantUser", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     datasets = db.relationship("Dataset", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     datasources = db.relationship("DataSource", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     visualizations = db.relationship("Visualization", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
@@ -71,9 +72,9 @@ class Tenant(db.Model, MetaxMixin):
     ai_query_logs = db.relationship("AIQueryLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     scripts = db.relationship("Script", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     scripts_execution_logs = db.relationship("ScriptExecutionLog", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    orgunits        = db.relationship("UserOrgunit", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
-    orgunit_levels  = db.relationship("OrgUnitLevel", lazy="noload", cascade="all, delete-orphan")
-    roles           = db.relationship("UserRole", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    orgunits = db.relationship("UserOrgunit", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    orgunit_levels = db.relationship("OrgUnitLevel", lazy="noload", cascade="all, delete-orphan")
+    roles = db.relationship("UserRole", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
     queries = db.relationship("DatasetQuery", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
     charts = db.relationship("DatasetChart", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
     visualization_views = db.relationship("VisualizationView", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
@@ -82,6 +83,28 @@ class Tenant(db.Model, MetaxMixin):
     layouts = db.relationship("VisualizationLayout", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
     definitions = db.relationship("VisualizationDefinition", back_populates="tenant",lazy="noload", cascade="all, delete-orphan")
 
+    okr_strategies = db.relationship("OkrStrategy", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_axes = db.relationship("OkrStrategicAxis", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_programs = db.relationship("OkrProgram", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_projects = db.relationship("OkrProject", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_fundings = db.relationship("Funding", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_globals = db.relationship("OkrGlobal", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_team_scopes = db.relationship("OkrTeamScope", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_initiatives = db.relationship("OkrInitiative", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_objectives = db.relationship("OkrObjective", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    key_results = db.relationship("OkrKeyResult", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    kr_events = db.relationship("OkrKREvent", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_activities = db.relationship("OkrActivity", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_project_tasks = db.relationship("OkrProjectTask", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    project_milestones = db.relationship("ProjectMilestone", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    project_risks = db.relationship("ProjectRisk", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    project_phases = db.relationship("ProjectPhase", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_indicators = db.relationship("Indicator", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    indicator_values = db.relationship("IndicatorValue", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_outcomes = db.relationship("Outcome", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+    okr_snapshots = db.relationship("OkrSnapshot", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
+   
+    teams = db.relationship("Team", back_populates="tenant", lazy="noload", cascade="all, delete-orphan")
 
     def to_dict(self, include_relations:bool=False):
         data = {
@@ -130,7 +153,32 @@ class Tenant(db.Model, MetaxMixin):
     
     def __repr__(self):
         return f"<Tenant {self.name}>"
-    
+
+class TenantUser(db.Model):
+    __tablename__ = "tenant_user_links"
+
+    user_id = db.Column(db.BigInteger, db.ForeignKey("users.id"), primary_key=True)
+    tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id"), primary_key=True)
+
+    role = db.Column(db.String)  # admin, manager, viewer
+    tenant = db.relationship("Tenant", back_populates="user_links", lazy="noload", foreign_keys=[tenant_id])
+    user = db.relationship("User", back_populates="tenant_links", lazy="noload", foreign_keys=[user_id])
+
+    def to_dict(self, include_relations: bool = True):
+        data = {
+            "user_id": self.user_id,
+            "tenant_id": self.tenant_id, 
+            "role": self.role, 
+        }
+
+        if include_relations and self.tenant:
+            data.update({
+                "tenant": self.tenant.to_dict() if self.tenant else None,
+                "user": self.user.to_dict() if self.user else None,
+                })
+
+        return data
+
 
 class TenantSource(db.Model, MetaxMixin):
     __tablename__ = "tenant_sources"

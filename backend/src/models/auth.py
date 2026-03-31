@@ -5,17 +5,13 @@ import hashlib
 import hmac
 from typing import Any, Dict, List, Tuple
 from datetime import datetime, timedelta, timezone
-
 from backend.src.databases.extensions import ADMIN, SUPERADMIN, db
 from backend.src.config import Config
 from backend.src.helpers.hasher import hash_password, verify_password
 from backend.src.models.controls import MetaxMixin
-
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from itsdangerous import BadSignature, SignatureExpired
-
-from backend.src.models.tenant import Tenant
-
+from backend.src.models.tenant import Tenant, TenantUser
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -153,27 +149,34 @@ class UserRole(db.Model, MetaxMixin):
     tenant_id = db.Column(db.BigInteger, db.ForeignKey("tenants.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=True)
     is_system = db.Column(db.Boolean, default=False)
 
-    permissions = db.relationship("UserPermission", secondary="user_role_permission_links", lazy="noload")
     tenant = db.relationship("Tenant", back_populates="roles",lazy="noload",foreign_keys=[tenant_id])
+
+    permissions = db.relationship("UserPermission", secondary="user_role_permission_links", lazy="noload")
+    teams = db.relationship("Team", back_populates="role",lazy="noload", cascade="all, delete-orphan")
 
     __table_args__ = (
         db.UniqueConstraint("tenant_id", "name", name="uq_role_tenant_name"),
     )
 
-    def to_dict(self):
-        permissions:List[UserPermission] = self.permissions
-        tenant:Tenant = self.tenant
-        return {
+    def to_dict(self, include_relations=True):
+        base = {
             "id": self.id, 
             "name": self.name, 
             "description": self.description, 
             "tenant_id": self.tenant_id,
-            "tenant": tenant.to_dict() if tenant else None, 
-            "permission_ids": [p.id for p in permissions if not p.deleted],
-            "permissions": [p.to_dict() for p in permissions if not p.deleted],
-            "is_system": self.is_system
+            "is_system": self.is_system,
+            
         }
 
+        if include_relations:
+            base.update({
+                "tenant": self.tenant.to_dict() if self.tenant else None, 
+                "permission_ids": [p.id for p in self.permissions if not p.deleted],
+                "permissions": [p.to_dict() for p in self.permissions if not p.deleted],
+                "teams": [p.to_dict() for p in self.teams if not p.deleted],
+            })
+
+        return base
     def __repr__(self):
         return f"<Role {self.name}>"
     
@@ -216,19 +219,31 @@ class User(db.Model, MetaxMixin):
     salt = db.Column(db.String(255), nullable=True)
     must_login = db.Column(db.Boolean, nullable=False, default=True)
     has_changed_default_password = db.Column(db.Boolean, nullable=False, default=False)
+
+    is_global = db.Column(db.Boolean, default=False) # 👉 Si True : accès à tout (super admin)
+
     # orgunits = db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb"))  # e.g., [{"id1": [...]}, {"id2": [...]}]
     
     # Relationships
     tenant = db.relationship("Tenant", back_populates="users",lazy="noload",foreign_keys=[tenant_id])
+
+    tenant_links = db.relationship("TenantUser",back_populates="user",lazy="noload",cascade="all, delete-orphan",foreign_keys="TenantUser.user_id")
     datasource_permissions = db.relationship("DataSourcePermission",back_populates="user",lazy="noload",cascade="all, delete-orphan",foreign_keys="DataSourcePermission.user_id")
     refresh_tokens = db.relationship("RefreshToken", back_populates="user", lazy="noload", cascade="all, delete-orphan")
     logs = db.relationship("UsersLog", back_populates="user", lazy="noload", cascade="all, delete-orphan")
     roles = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref=db.backref("users", lazy="noload"))
     orgunits = db.relationship("UserOrgunit",secondary="user_orgunit_links",lazy="noload",backref=db.backref("users", lazy="noload"))
     histories = db.relationship("DataSourceHistory",lazy="noload",cascade="all, delete-orphan",foreign_keys="DataSourceHistory.user_id")
-
+    teams = db.relationship("TeamUser", back_populates="user", lazy="noload", cascade="all, delete-orphan")
+    okr_activity_owners = db.relationship("OkrActivityOwner", back_populates="user", lazy="noload", cascade="all, delete-orphan", foreign_keys="[OkrActivityOwner.user_id]")
+    okr_project_tasks = db.relationship("OkrProjectTask", back_populates="assigned_to", lazy="noload", cascade="all, delete-orphan",foreign_keys="[OkrProjectTask.assigned_to_id]")
+    
     # roles_link = db.relationship("UserRole",secondary="user_role_links",lazy="noload",backref="users")
     # orgunits_link = db.relationship("UserOrgunitLink",back_populates="user",lazy="noload",cascade="all, delete-orphan")
+
+    # org_id = db.Column(db.BigInteger, db.ForeignKey("organizations.id"), nullable=False)
+    # teams = db.relationship("Team", secondary="team_users", back_populates="users")
+    # activities = db.relationship("Activity", secondary="activity_owners", back_populates="owners")
 
     @property
     def fullname(self):
@@ -258,6 +273,7 @@ class User(db.Model, MetaxMixin):
         roles:List[UserRole] = [r for r in self.roles or [] if not r.deleted]
         permissions:List[UserPermission] = [p for r in roles for p in r.permissions or [] if not p.deleted]
         orgunits:List[UserOrgunit] = [o for o in self.orgunits or [] if not o.deleted]
+        tenants:List[TenantUser] = [o for o in self.tenant_links or [] if not o.deleted]
 
         return {
             "id": self.id,
@@ -271,6 +287,7 @@ class User(db.Model, MetaxMixin):
             "deleted": self.deleted,
             "tenant_id": self.tenant_id,
             "tenant": self.tenant.to_dict() if self.tenant else None,
+            "tenants": [t.to_dict() for t in tenants],
             "role_ids": [r.id for r in roles],
             "roles": [r.to_dict() for r in roles],
             "permission_ids": [p.id for p in permissions],
