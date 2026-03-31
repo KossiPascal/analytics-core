@@ -4,6 +4,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   min-width: 0; /* Prevent flex shrink from collapsing width (fixes Recharts ResponsiveContainer) */
+  margin-left: 210px; /* Align with the zones area (sidebar width) */
 }
 
 .previewHeader {

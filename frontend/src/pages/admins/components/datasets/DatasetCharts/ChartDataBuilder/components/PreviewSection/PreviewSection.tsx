@@ -134,13 +134,6 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           />
         </PreviewErrorBoundary>
       </div>
-
-      <div className={styles.actions}>
-        <button type="button" className={styles.btnPrimary} onClick={onSave}>
-          {isEditing ? <Edit3 size={18} /> : <Save size={18} />}
-          {isEditing ? 'Modifier' : 'Enregistrer'}
-        </button>
-      </div>
     </div>
   );
 };
