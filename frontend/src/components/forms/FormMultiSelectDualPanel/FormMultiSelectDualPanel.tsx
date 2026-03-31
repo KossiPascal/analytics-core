@@ -64,42 +64,34 @@ export const FormMultiSelectDualPanel: React.FC<FormMultiSelectDualPanelProps> =
     } else if (rightPanelMode === 'filter') {
       newItem = { ...newItem, operator: '=', value: '', value2: '' };
     }
-    setSelected((prev) => {
-      const newSelected = [...prev, newItem];
-      onChange?.(newSelected);
-      return newSelected;
-    });
+    const newSelected = [...selected, newItem];
+    setSelected(newSelected);
     setAvailable((prev) => prev.filter((i) => i.id !== item.id));
+    onChange?.(newSelected);
   };
 
   const removeItem = (item: MultiSelectItem) => {
     const originalItem = items.find((i) => i.id === item.id) ?? { id: item.id, name: item.name, type: item.type };
+    const newSelected = selected.filter((i) => i.id !== item.id);
     setAvailable((prev) => [...prev, originalItem]);
-    setSelected((prev) => {
-      const newSelected = prev.filter((i) => i.id !== item.id);
-      onChange?.(newSelected);
-      return newSelected;
-    });
+    setSelected(newSelected);
+    onChange?.(newSelected);
   };
 
   const updateAggregation = (itemId: string, newAgg: string) => {
-    setSelected((prev) => {
-      const newSelected = prev.map((item) =>
-        item.id === itemId ? { ...item, aggregation: newAgg } : item
-      );
-      onChange?.(newSelected);
-      return newSelected;
-    });
+    const newSelected = selected.map((item) =>
+      item.id === itemId ? { ...item, aggregation: newAgg } : item
+    );
+    setSelected(newSelected);
+    onChange?.(newSelected);
   };
 
   const updateFilter = (itemId: string, updates: Partial<{ operator: string; value: string; value2: string }>) => {
-    setSelected((prev) => {
-      const newSelected = prev.map((item) =>
-        item.id === itemId ? { ...item, ...updates } : item
-      );
-      onChange?.(newSelected);
-      return newSelected;
-    });
+    const newSelected = selected.map((item) =>
+      item.id === itemId ? { ...item, ...updates } : item
+    );
+    setSelected(newSelected);
+    onChange?.(newSelected);
   };
 
   const filteredAvailable = searchable
