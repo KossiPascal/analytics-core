@@ -222,7 +222,7 @@
 
 .filterRow {
   display: grid;
-  grid-template-columns: minmax(80px, 1fr) 68px 150px minmax(80px, 1fr) 32px;
+  grid-template-columns: minmax(80px, 1fr) 68px 110px minmax(80px, 1fr) 32px;
   align-items: center;
   padding: 6px 4px;
   gap: 6px;
@@ -248,10 +248,10 @@
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background: #fff;
-  font-size: 12px;
+  font-size: 11px;
   color: #334155;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 3px 4px;
   outline: none;
 }
 

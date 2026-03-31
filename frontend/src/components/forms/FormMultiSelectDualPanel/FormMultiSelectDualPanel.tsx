@@ -62,8 +62,7 @@ export const FormMultiSelectDualPanel: React.FC<FormMultiSelectDualPanelProps> =
     if (rightPanelMode === 'table') {
       newItem = { ...newItem, aggregation: item.aggregation ?? aggOptions[0] };
     } else if (rightPanelMode === 'filter') {
-      const ops = filterConfig?.getOperators(item) ?? ['='];
-      newItem = { ...newItem, operator: item.operator ?? ops[0] ?? '=', value: '', value2: '' };
+      newItem = { ...newItem, operator: '=', value: '', value2: '' };
     }
     setSelected((prev) => {
       const newSelected = [...prev, newItem];

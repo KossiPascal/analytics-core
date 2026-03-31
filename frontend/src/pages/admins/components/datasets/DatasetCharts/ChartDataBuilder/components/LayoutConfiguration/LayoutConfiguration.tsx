@@ -413,8 +413,11 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       // ── Chip drag: MOVE the chip to the target zone ──
       const chipRaw = e.dataTransfer.getData(CHIP_DRAG_KEY);
       if (chipRaw) {
-        const { fromZone } = JSON.parse(chipRaw) as { fromZone: LayoutDataZone };
-        if (fromZone === toZone) return;
+        const { fromZone, currentZone } = JSON.parse(chipRaw) as {
+          fromZone: LayoutDataZone;
+          currentZone: LayoutDataZone;
+        };
+        if (currentZone === toZone) return; // already in this zone
 
         switch (fromZone) {
           case "metrics":
@@ -559,59 +562,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             <Filter size={14} className={styles.dimIcon} />
             <span className={styles.dimLabel}>Filtres</span>
           </div>
-        </div>
-
-        {/* ── Individual draggable dimension items ── */}
-        <div className={styles.dimSection}>
-          <span className={styles.sectionLabel}>CHAMPS DISPONIBLES</span>
-          {zoneDimensions
-            .filter(
-              (f) =>
-                !dimSearch ||
-                f.name.toLowerCase().includes(dimSearch.toLowerCase()),
-            )
-            .map((f) => {
-              const inZone = safeLayout.columns.some((c) => c.field_id === f.id)
-                ? ("columns" as const)
-                : safeLayout.rows.some((r) => r.field_id === f.id)
-                  ? ("rows" as const)
-                  : safeLayout.filters.some((fi) => fi.field_id === f.id)
-                    ? ("filters" as const)
-                    : null;
-              return (
-                <div
-                  key={f.id}
-                  className={`${styles.dimItem} ${inZone ? styles.dimItemActive : ""}`}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = "move";
-                    e.dataTransfer.setData(
-                      DRAG_KEY,
-                      JSON.stringify({ field_id: f.id, fromDataZone: inZone }),
-                    );
-                  }}
-                  onDragEnd={() => setDragOverZone(null)}
-                  onClick={() => {
-                    if (inZone === "columns") setDimsModalZone("columns");
-                    else if (inZone === "filters") setFiltersModalOpen(true);
-                    else setDimsModalZone("rows");
-                  }}
-                >
-                  <Layers size={14} className={styles.dimIcon} />
-                  <span className={styles.dimLabel}>{f.name}</span>
-                  {inZone && (
-                    <span className={styles.dimZoneBadge}>
-                      {inZone === "columns"
-                        ? "Col"
-                        : inZone === "rows"
-                          ? "Lig"
-                          : "Fil"}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-        </div>
+        </div>        
       </div>
 
       {/* ── RIGHT ZONES ── */}
@@ -624,11 +575,11 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             label="Données"
             count={safeLayout.metrics.length}
             chipStyles={styles as any}
-            onClick={() => setColsEditOpen(true)}
+            onClick={() => setDonneesModalOpen(true)}
             draggable
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "metrics" }));
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "metrics", currentZone: donneesZone }));
             }}
             onDragEnd={() => setDragOverZone(null)}
           />
@@ -644,7 +595,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             draggable
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "columns" }));
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "columns", currentZone: dimColsChipZone }));
             }}
             onDragEnd={() => setDragOverZone(null)}
           />
@@ -660,7 +611,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             draggable
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "rows" }));
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "rows", currentZone: dimRowsChipZone }));
             }}
             onDragEnd={() => setDragOverZone(null)}
           />
@@ -676,7 +627,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             draggable
             onDragStart={(e) => {
               e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "filters" }));
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "filters", currentZone: filtersChipZone }));
             }}
             onDragEnd={() => setDragOverZone(null)}
           />
