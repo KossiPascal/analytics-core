@@ -167,8 +167,11 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // Drag-over indicator
   const [dragOverZone, setDragOverZone] = useState<LayoutDataZone | null>(null);
 
-  // Tracks which zone the "Données" chip currently lives in
+  // Tracks which zone each chip currently lives in (visual position only)
   const [donneesZone, setDonneesZone] = useState<"columns" | "rows">("columns");
+  const [dimColsChipZone, setDimColsChipZone] = useState<LayoutDataZone>("columns");
+  const [dimRowsChipZone, setDimRowsChipZone] = useState<LayoutDataZone>("rows");
+  const [filtersChipZone, setFiltersChipZone] = useState<LayoutDataZone>("filters");
 
   const zoneMetrics = useMemo(
     () => fields.filter((f) => f.field_type !== "dimension"),
@@ -407,33 +410,28 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       e.preventDefault();
       setDragOverZone(null);
 
-      // ── Chip drag: SWAP the two groups ──
+      // ── Chip drag: MOVE the chip to the target zone ──
       const chipRaw = e.dataTransfer.getData(CHIP_DRAG_KEY);
       if (chipRaw) {
-        const { fromZone } = JSON.parse(chipRaw) as {
-          fromZone: LayoutDataZone;
-        };
+        const { fromZone } = JSON.parse(chipRaw) as { fromZone: LayoutDataZone };
         if (fromZone === toZone) return;
 
-        // "Données" chip: just move its position, don't swap contents
-        if (fromZone === "metrics") {
-          if (toZone === "columns" || toZone === "rows") {
-            setDonneesZone(toZone);
-          }
-          return;
+        switch (fromZone) {
+          case "metrics":
+            // Données cannot go to Filtres
+            if (toZone !== "filters") setDonneesZone(toZone as "columns" | "rows");
+            break;
+          case "columns":
+            setDimColsChipZone(toZone);
+            break;
+          case "rows":
+            setDimRowsChipZone(toZone);
+            break;
+          case "filters":
+            setFiltersChipZone(toZone);
+            break;
         }
-
-        // All other chips: SWAP the contents of the two zones
-        const fromContent = safeLayout[fromZone];
-        const toContent = safeLayout[toZone];
-        onUpdateLayout(
-          toZone,
-          convertItemsForZone(fromContent, fromZone, toZone) as any,
-        );
-        onUpdateLayout(
-          fromZone,
-          convertItemsForZone(toContent, toZone, fromZone) as any,
-        );
+        return;
       } else {
         // ── Sidebar individual item drag ──
         const raw = e.dataTransfer.getData(DRAG_KEY);
@@ -617,130 +615,127 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       </div>
 
       {/* ── RIGHT ZONES ── */}
-      <div className={styles.zonesArea}>
-        {/* Top row: Colonnes + Filtrer */}
-        <div className={styles.topZones}>
-          {/* Zone Colonnes */}
-          <div
-            className={`${styles.colsZone} ${dragOverZone === "columns" ? styles.zoneDropOver : ""}`}
-            onDragOver={(e) => handleDragOverZone(e, "columns")}
-            onDragLeave={handleDragLeaveZone}
-            onDrop={(e) => handleDropZone(e, "columns")}
-          >
-            <span className={styles.zoneLabel}>Colonnes</span>
-            <div className={styles.zoneChips}>
-                {donneesZone === "columns" && (
-                  <Chip
-                    icon={<Database size={13} />}
-                    label="Données"
-                    count={safeLayout.metrics.length}
-                    chipStyles={styles as any}
-                    onClick={() => setColsEditOpen(true)}
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData(
-                        CHIP_DRAG_KEY,
-                        JSON.stringify({ fromZone: "metrics" }),
-                      );
-                    }}
-                    onDragEnd={() => setDragOverZone(null)}
-                  />
-                )}
-                <Chip
-                  icon={<Layers size={13} />}
-                  label="Dim. Col."
-                  count={safeLayout.columns.length}
-                  chipStyles={styles as any}
-                  onClick={() => setDimsModalZone("columns")}
-                  draggable={true}
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = "move";
-                    e.dataTransfer.setData(
-                      CHIP_DRAG_KEY,
-                      JSON.stringify({ fromZone: "columns" }),
-                    );
-                  }}
-                  onDragEnd={() => setDragOverZone(null)}
-              />
+      {(() => {
+        // ── Chip elements (defined once, rendered conditionally per zone) ──
+        const donneesChip = (
+          <Chip
+            key="chip-metrics"
+            icon={<Database size={13} />}
+            label="Données"
+            count={safeLayout.metrics.length}
+            chipStyles={styles as any}
+            onClick={() => setColsEditOpen(true)}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "metrics" }));
+            }}
+            onDragEnd={() => setDragOverZone(null)}
+          />
+        );
+        const dimColsChip = (
+          <Chip
+            key="chip-columns"
+            icon={<Layers size={13} />}
+            label="Dim. Col."
+            count={safeLayout.columns.length}
+            chipStyles={styles as any}
+            onClick={() => setDimsModalZone("columns")}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "columns" }));
+            }}
+            onDragEnd={() => setDragOverZone(null)}
+          />
+        );
+        const dimRowsChip = (
+          <Chip
+            key="chip-rows"
+            icon={<Layers size={13} />}
+            label="Dim. Lig."
+            count={safeLayout.rows.length}
+            chipStyles={styles as any}
+            onClick={() => setDimsModalZone("rows")}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "rows" }));
+            }}
+            onDragEnd={() => setDragOverZone(null)}
+          />
+        );
+        const filtersChip = (
+          <Chip
+            key="chip-filters"
+            icon={<Filter size={13} />}
+            label="Filtres"
+            count={safeLayout.filters.length}
+            chipStyles={styles as any}
+            onClick={() => setFiltersModalOpen(true)}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "filters" }));
+            }}
+            onDragEnd={() => setDragOverZone(null)}
+          />
+        );
+        return (
+          <div className={styles.zonesArea}>
+            {/* Top row: Colonnes + Filtrer */}
+            <div className={styles.topZones}>
+              {/* Zone Colonnes */}
+              <div
+                className={`${styles.colsZone} ${dragOverZone === "columns" ? styles.zoneDropOver : ""}`}
+                onDragOver={(e) => handleDragOverZone(e, "columns")}
+                onDragLeave={handleDragLeaveZone}
+                onDrop={(e) => handleDropZone(e, "columns")}
+              >
+                <span className={styles.zoneLabel}>Colonnes</span>
+                <div className={styles.zoneChips}>
+                  {donneesZone === "columns" && donneesChip}
+                  {dimColsChipZone === "columns" && dimColsChip}
+                  {dimRowsChipZone === "columns" && dimRowsChip}
+                  {filtersChipZone === "columns" && filtersChip}
+                </div>
+              </div>
+
+              {/* Zone Filtrer */}
+              <div
+                className={`${styles.filterZone} ${dragOverZone === "filters" ? styles.zoneDropOver : ""}`}
+                onDragOver={(e) => handleDragOverZone(e, "filters")}
+                onDragLeave={handleDragLeaveZone}
+                onDrop={(e) => handleDropZone(e, "filters")}
+              >
+                <span className={styles.zoneLabel}>Filtrer</span>
+                <div className={styles.zoneChips}>
+                  {/* Données jamais dans Filtres */}
+                  {dimColsChipZone === "filters" && dimColsChip}
+                  {dimRowsChipZone === "filters" && dimRowsChip}
+                  {filtersChipZone === "filters" && filtersChip}
+                </div>
+              </div>
+            </div>
+
+            {/* Zone Lignes */}
+            <div
+              className={`${styles.zoneRow} ${dragOverZone === "rows" ? styles.zoneDropOver : ""}`}
+              onDragOver={(e) => handleDragOverZone(e, "rows")}
+              onDragLeave={handleDragLeaveZone}
+              onDrop={(e) => handleDropZone(e, "rows")}
+            >
+              <span className={styles.zoneLabel}>Lignes</span>
+              <div className={styles.zoneChips}>
+                {donneesZone === "rows" && donneesChip}
+                {dimColsChipZone === "rows" && dimColsChip}
+                {dimRowsChipZone === "rows" && dimRowsChip}
+                {filtersChipZone === "rows" && filtersChip}
+              </div>
             </div>
           </div>
-
-          {/* Zone Filtrer */}
-          <div
-            className={`${styles.filterZone} ${dragOverZone === "filters" ? styles.zoneDropOver : ""}`}
-            onDragOver={(e) => handleDragOverZone(e, "filters")}
-            onDragLeave={handleDragLeaveZone}
-            onDrop={(e) => handleDropZone(e, "filters")}
-          >
-            <span className={styles.zoneLabel}>Filtrer</span>
-            <div className={styles.zoneChips}>
-                <Chip
-                  icon={<Filter size={13} />}
-                  label="Filtres"
-                  count={safeLayout.filters.length}
-                  chipStyles={styles as any}
-                  onClick={() => setFiltersModalOpen(true)}
-                  draggable={safeLayout.filters.length > 0}
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = "move";
-                    e.dataTransfer.setData(
-                      CHIP_DRAG_KEY,
-                      JSON.stringify({ fromZone: "filters" }),
-                    );
-                  }}
-                  onDragEnd={() => setDragOverZone(null)}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Zone Lignes */}
-        <div
-          className={`${styles.zoneRow} ${dragOverZone === "rows" ? styles.zoneDropOver : ""}`}
-          onDragOver={(e) => handleDragOverZone(e, "rows")}
-          onDragLeave={handleDragLeaveZone}
-          onDrop={(e) => handleDropZone(e, "rows")}
-        >
-          <span className={styles.zoneLabel}>Lignes</span>
-          <div className={styles.zoneChips}>
-            {donneesZone === "rows" && (
-              <Chip
-                icon={<Database size={13} />}
-                label="Données"
-                count={safeLayout.metrics.length}
-                chipStyles={styles as any}
-                onClick={() => setColsEditOpen(true)}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.effectAllowed = "move";
-                  e.dataTransfer.setData(
-                    CHIP_DRAG_KEY,
-                    JSON.stringify({ fromZone: "metrics" }),
-                  );
-                }}
-                onDragEnd={() => setDragOverZone(null)}
-              />
-            )}
-            <Chip
-              icon={<Layers size={13} />}
-              label="Dim. Lig."
-              count={safeLayout.rows.length}
-              chipStyles={styles as any}
-              onClick={() => setDimsModalZone("rows")}
-              draggable={true}
-              onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = "move";
-                e.dataTransfer.setData(
-                  CHIP_DRAG_KEY,
-                  JSON.stringify({ fromZone: "rows" }),
-                );
-              }}
-              onDragEnd={() => setDragOverZone(null)}
-            />
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* ── HIDDEN LAYOUT DROP ZONES (modals only) ── */}
       <LayoutDropZone
