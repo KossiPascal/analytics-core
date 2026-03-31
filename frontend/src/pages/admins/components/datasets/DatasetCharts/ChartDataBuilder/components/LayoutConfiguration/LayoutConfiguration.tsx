@@ -320,6 +320,20 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
     ): (ChartDimension | ChartFilter)[] => {
       if (fromZone === toZone) return items as (ChartDimension | ChartFilter)[];
 
+      if (toZone === "metrics") {
+        // → ChartMetric
+        return items.map((item) => {
+          const field = fields.find((f) => f.id === item.field_id);
+          return {
+            field_id: item.field_id,
+            name: field?.name,
+            alias: field?.name ?? String(item.field_id),
+            data_type: field?.data_type,
+            aggregation: "sum",
+          } as ChartMetric;
+        });
+      }
+
       if (toZone === "filters") {
         // → ChartFilter
         return items.map((item) => {
@@ -579,6 +593,15 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                   count={safeLayout.metrics.length}
                   chipStyles={styles as any}
                   onClick={() => setColsEditOpen(true)}
+                  draggable={safeLayout.metrics.length > 0}
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    e.dataTransfer.setData(
+                      CHIP_DRAG_KEY,
+                      JSON.stringify({ fromZone: "metrics" }),
+                    );
+                  }}
+                  onDragEnd={() => setDragOverZone(null)}
                 />
                 <Chip
                   icon={<Layers size={13} />}
