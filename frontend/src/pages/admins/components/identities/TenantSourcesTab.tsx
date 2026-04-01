@@ -1,10 +1,10 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { Building2 } from 'lucide-react';
-import { Tenant, TenantSource } from '@models/identity.model';
+import { Tenant, CountryDatasource } from '@models/identity.model';
 import { type Column } from '@components/ui/Table/Table';
 import { FormInput } from '@components/forms/FormInput/FormInput';
 import { FormTextarea } from '@components/forms/FormTextarea/FormTextarea';
-import { tenantSourceService, tenantService } from '@services/identity.service';
+import { CountryDatasourceService, tenantService } from '@services/identity.service';
 import { AdminEntityCrudModuleRef, AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
 import { useAuth } from "@/contexts/AuthContext";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
@@ -14,7 +14,7 @@ import styles from '@pages/admins/AdminPage.module.css';
 import { FormSwitch } from "@/components/forms/FormSwitch/FormSwitch";
 
 // Default value
-const createDefaultQuery = (tenant_id: number): TenantSource => ({
+const createDefaultQuery = (tenant_id: number): CountryDatasource => ({
   id: null,
   name: '',
   tenant_id: tenant_id,
@@ -31,7 +31,7 @@ const createDefaultQuery = (tenant_id: number): TenantSource => ({
 });
 
 // Columns definition
-const tenantColumns: Column<TenantSource>[] = [
+const tenantColumns: Column<CountryDatasource>[] = [
   {
     key: "name",
     header: "name",
@@ -78,7 +78,7 @@ const tenantColumns: Column<TenantSource>[] = [
   },
 ];
 
-export const TenantSourcesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
+export const CountryDatasourcesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref) => {
   const { isSuperAdmin, user } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenant_id, setTenantId] = useState<number | undefined>();
@@ -111,16 +111,16 @@ export const TenantSourcesTab = forwardRef<AdminEntityCrudModuleRef>((props, ref
         />
       </div>
 
-      <AdminEntityCrudModule<TenantSource>
+      <AdminEntityCrudModule<CountryDatasource>
         ref={ref}
-        title="Gestion des TenantSource"
+        title="Gestion des CountryDatasource"
         icon={<Building2 size={20} />}
-        entityName="TenantSource"
+        entityName="CountryDatasource"
         columns={tenantColumns}
         defaultValue={defaultForm}
-        service={tenantSourceService}
+        service={CountryDatasourceService}
         defaultTenant={defaultTenant}
-        isValid={(source: TenantSource): boolean => {
+        isValid={(source: CountryDatasource): boolean => {
           return source.host.trim().length > 0;
         }}
         renderForm={(source, setValue) => {

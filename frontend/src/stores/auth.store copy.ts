@@ -118,11 +118,11 @@
 //       hasPermission: (perms, all = false) => {
 //         const user = get().user;
 //         if (!user) return false;
-//         const userPermissions = new Set(user.permissions ?? []);
-//         if (userPermissions.has('_admin') || userPermissions.has('_superadmin')) return true;
+//         const Permissions = new Set(user.permissions ?? []);
+//         if (Permissions.has('_admin') || Permissions.has('_superadmin')) return true;
 //         const required = Array.isArray(perms) ? perms : [perms];
-//         if (all) return required.every(p => userPermissions.has(p));
-//         return required.some(p => userPermissions.has(p));
+//         if (all) return required.every(p => Permissions.has(p));
+//         return required.some(p => Permissions.has(p));
 //       },
 
 //       // --- HELPERS ---

@@ -1,12 +1,12 @@
 import { type Column } from '@components/ui/Table/Table';
 import { Building2 } from 'lucide-react';
-import { UserRole } from '@models/identity.model';
-import { userRoleService } from '@/services/identity.service';
+import { Role } from '@models/identity.model';
+import { RoleService } from '@/services/identity.service';
 import { AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
 
 
 // Columns definition
-const userRoleColumns: Column<UserRole>[] = [
+const RoleColumns: Column<Role>[] = [
   {
     key: "user",
     header: "Utilisateur",
@@ -25,14 +25,14 @@ const userRoleColumns: Column<UserRole>[] = [
 
 export function UsersRolesTab() {
   return (
-    <AdminEntityCrudModule<UserRole>
-      title="UserRole"
+    <AdminEntityCrudModule<Role>
+      title="Role"
       icon={<Building2 size={20} />}
-      entityName="UserRole"
-      columns={userRoleColumns}
+      entityName="Role"
+      columns={RoleColumns}
       defaultValue={{} as any}
-      service={userRoleService}
-      isValid={(ur: UserRole): boolean => true}   
+      service={RoleService}
+      isValid={(ur: Role): boolean => true}   
       enableActions={false}
     />
   );

@@ -4,7 +4,7 @@ import ast
 import asyncio
 import json
 import re
-from backend.src.config import Config
+from backend.src.app.configs.environment import Config
 from cryptography.fernet import Fernet
 
 SQL_RESERVED = {"select", "table", "where", "group", "order"}

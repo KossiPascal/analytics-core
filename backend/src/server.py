@@ -1,14 +1,18 @@
 import warnings
+from requests import auth
 from sqlalchemy.exc import SAWarning, OperationalError
 from cryptography.utils import CryptographyDeprecationWarning
+from backend.src.app.routes import permission, role, tenant, tenant_source, user_utils
+from backend.src.projects.analytics_manager.routes import database, worker_controller
+from backend.src.projects.analytics_manager.routes.datasources import datasource, datasource_permission
+from backend.src.projects.analytics_manager.routes.dhis2 import level, orgunit
+from backend.src.projects.analytics_manager.routes.visualizations import visualization, visualization_chart, visualization_target, viz_script
+from backend.src.projects.equipment_manager.seeds import SEED_ORDER, SEEDERS, seed_all
 
-from backend.src.routes.datasets.chart import dataset_chart
-warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
-warnings.filterwarnings("ignore", category=SAWarning)
-
-from backend.src.routes.datasets import dataset_query
-from backend.src.routes.visualizations import script, visualization
-from backend.src.security.ssh_crypto import harden_ssh_crypto
+from backend.src.app.middlewares.api_security import api_security
+from backend.src.app.routes import user
+from backend.src.celery_app import init_celery,celery
+from backend.src.projects.analytics_manager.routes.datasets import dataset_chart, dataset_query
 
 import warnings
 import urllib3
@@ -29,33 +33,22 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import inspect, text
 from cryptography.utils import CryptographyDeprecationWarning
 
-from backend.src.config import Config
-from backend.src.models.auth import User
-from backend.src.security.api_security import api_security
-from backend.src.routes import auth, database, worker_controller
-from backend.src.routes.visualizations import script, visualization, visualization_chart, visualization_target
-from backend.src.routes.identities import permission, role, tenant, tenant_source, user, user_utils, orgunit, level, dhis2_sync as identities_dhis2_sync
-from backend.src.models.team import Team,TeamUser
-from backend.src.okr_manager.models.models import OkrStrategy
-from backend.src.routes.datasources import datasource, datasource_permission
-from backend.src.routes.datasets import dataset, dataset_field
-from backend.src.databases.extensions import db, scheduler
-                
+from backend.src.app.configs.environment import Config
+from backend.src.app.models.user import User
+from backend.src.projects.analytics_manager.routes.datasets import dataset, dataset_field
+from backend.src.app.configs.extensions import db, scheduler
+from backend.src.projects.analytics_manager.logger import get_backend_logger
+
 from alembic import command
 from alembic.config import Config as AlembicConfig
-# -----------------------------------------------------------------------------
-# GLOBAL SETUP
-# -----------------------------------------------------------------------------
 
 warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
+warnings.filterwarnings("ignore", category=SAWarning)
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-from backend.src.logger import get_backend_logger
-logger = get_backend_logger(__name__)
 
-# -----------------------------------------------------------------------------
-# DATABASE INIT
-# -----------------------------------------------------------------------------
+logger = get_backend_logger(__name__)
 
 
 # flask db revision --autogenerate -m "Add connection_id to datasets"
@@ -68,9 +61,6 @@ def init_database(app: Flask) -> None:
     - En prod, applique les migrations Alembic si nécessaire.
     """
     with app.app_context():
-        # Les schemas PostgreSQL doivent être créés et committés AVANT db.create_all(),
-        # car db.create_all() ouvre sa propre connexion et ne voit pas une transaction
-        # non committée. On utilise une connexion séparée avec commit explicite.
         with db.engine.connect() as schema_conn:
             for shema in ["eqpm", "meet", "prosi", "okrmanager"]:
                 schema_conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {shema}"))
@@ -146,7 +136,6 @@ def _reset_em_tables(app: Flask) -> None:
         "eqpm.employee_history",
         "eqpm.employees",
         "eqpm.positions",
-        "eqpm.departments",
         "eqpm.sites",
         "eqpm.districts",
         "eqpm.regions",
@@ -235,8 +224,6 @@ def create_flask_app(initialize_database = True) -> Flask:
     @click.option("--reset", is_flag=True, default=False, help="Vide les tables avant de seeder (dev uniquement)")
     def em_seed(module, reset):
         """Insère les données de référence du module Equipment Manager."""
-        from backend.src.equipment_manager.seeds import seed_all, SEEDERS, SEED_ORDER
-
         if reset:
             if not click.confirm("⚠️  Êtes-vous sûr de vouloir vider les tables avant de seeder ?"):
                 click.echo("Annulé.")
@@ -256,7 +243,6 @@ def create_flask_app(initialize_database = True) -> Flask:
             click.echo(f"✅ Terminé — {total} enregistrements créés")
 
     # Celery
-    from backend.src.celery_app import celery, init_celery
     init_celery(app)
     app.extensions["celery"] = celery        
 
@@ -266,8 +252,8 @@ def create_flask_app(initialize_database = True) -> Flask:
 
     # Blueprints
     for bp in (
-        auth, database, worker_controller, script, visualization,visualization_chart,visualization_target,
-        permission, role, tenant, tenant_source, user, user_utils, orgunit, level, identities_dhis2_sync,
+        auth, database, worker_controller, viz_script, visualization,visualization_chart,visualization_target,
+        permission, role, tenant, tenant_source, user, user_utils, orgunit, level, # identities_dhis2_sync,
         datasource, datasource_permission,
         dataset, dataset_chart,dataset_field,dataset_query
 
@@ -276,45 +262,28 @@ def create_flask_app(initialize_database = True) -> Flask:
 
     if initialize_database != True:
         # Equipment Manager module - import models so SQLAlchemy registers them
-        from backend.src.equipment_manager.routes import (
+        from backend.src.projects.equipment_manager.routes import (
             locations as em_locations,
             ascs as em_ascs,
             supervisors as em_supervisors,
             equipment as em_equipment,
             tickets as em_tickets,
-            employees as em_employees,
             dashboard as em_dashboard,
             dhis2_sync as em_dhis2_sync,
             email_config as em_email_config,
             alert_config as em_alert_config,
         )
-        from backend.src.meeting_intelligence.routes import meeting as mi_meeting
+        from backend.src.projects.meeting_intelligence.routes import meeting as mi_meeting
         # Equipment Manager blueprints
         for em_bp in (
             em_locations, em_ascs, em_supervisors, em_equipment,
-            em_tickets, em_employees, em_dashboard, em_dhis2_sync,
+            em_tickets, em_dashboard, em_dhis2_sync,
             em_email_config, em_alert_config,
         ):
             app.register_blueprint(em_bp.bp)
 
         # Meeting Intelligence blueprint
         app.register_blueprint(mi_meeting.bp)
-
-        # PROSI — Gestion de Projets et ORCs
-        from backend.src.project_orc.routes import (
-            projects as prosi_projects,
-            pillars  as prosi_pillars,
-            orcs     as prosi_orcs,
-            activities          as prosi_activities,
-            reports             as prosi_reports,
-            dashboard           as prosi_dashboard,
-            import_excel        as prosi_import,
-            employee_objectives as prosi_emp_obj,
-        )
-        for prosi_bp in (prosi_projects, prosi_pillars, prosi_orcs,
-                         prosi_activities, prosi_reports, prosi_dashboard,
-                         prosi_import, prosi_emp_obj):
-            app.register_blueprint(prosi_bp.bp)
 
     # -----------------------------------------------------------------------------
     # ROUTES

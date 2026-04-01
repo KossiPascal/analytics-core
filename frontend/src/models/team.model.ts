@@ -1,5 +1,5 @@
 // import { OkrProgram, OkrProject, OkrTeamScope, OkrActivity } from "@/pages/okr_manager/models";
-// import { Tenant, UserRole, User } from "./identity.model";
+// import { Tenant, Role, User } from "./identity.model";
 
 
 export interface Team {
@@ -11,17 +11,16 @@ export interface Team {
 
     // tenant?: Tenant
     // parent?: Team
-    // role?: UserRole
+    // role?: Role
 
     // children?:Team;
-    // users?:TeamUser;
     // programs?:OkrProgram;
     // projects?:OkrProject;
     // teams?:OkrTeamScope;
     // activities?:OkrActivity;
 }
 
-export interface TeamUser {
+export interface Membership {
     team_id: number | null;
     user_id: number | null;
 

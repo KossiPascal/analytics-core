@@ -98,7 +98,7 @@ export const generateRouteConfig = (items: RouteItem[]): RouteConfig[] => {
   return routes;
 };
 
-export const generateGridNavItems = (items: RouteItem[], userPermissions: string[]): NavItem[] => {
+export const generateGridNavItems = (items: RouteItem[], Permissions: string[]): NavItem[] => {
   const result: NavItem[] = [];
   const walk = (nodes: RouteItem[], parent?: RouteItem) => {
     for (const node of nodes) {
@@ -108,7 +108,7 @@ export const generateGridNavItems = (items: RouteItem[], userPermissions: string
         const showInGridpNav = parent?.showInGridpNav === true || node.showInGridpNav === true;
 
         if (showInGridpNav && !!node.component) {
-          for (const perm of userPermissions) {
+          for (const perm of Permissions) {
             if (node.permissions.includes(perm)) {
               result.push(node as NavItem);
               break;
@@ -122,7 +122,7 @@ export const generateGridNavItems = (items: RouteItem[], userPermissions: string
   return result;
 };
 
-export const generateNavItems = (items: RouteItem[], mode: "top" | "side", userPermissions: string[]): NavItem[] => {
+export const generateNavItems = (items: RouteItem[], mode: "top" | "side", Permissions: string[]): NavItem[] => {
   const routes: NavItem[] = [];
 
   const getVisibility = (item: RouteItem, parent?: RouteItem): boolean => {
@@ -146,7 +146,7 @@ export const generateNavItems = (items: RouteItem[], mode: "top" | "side", userP
         const visibleChildren = children.filter(child => {
           const ok1 = getVisibility(child, node);
           let ok2 = false;
-          for (const perm of userPermissions) {
+          for (const perm of Permissions) {
             if (child.permissions.includes(perm)) {
               ok2 = true;
               break;
@@ -157,7 +157,7 @@ export const generateNavItems = (items: RouteItem[], mode: "top" | "side", userP
 
         // Ajouter le parent uniquement si au moins un enfant est visible
         if (visibleChildren.length > 0) {
-          for (const perm of userPermissions) {
+          for (const perm of Permissions) {
             if (node.permissions.includes(perm)) {
               routes.push({ ...(node as NavItem), children: visibleChildren as NavItem[] });
               break;
@@ -169,7 +169,7 @@ export const generateNavItems = (items: RouteItem[], mode: "top" | "side", userP
 
       // ---------- SANS ENFANTS ----------
       if (getVisibility(node)) {
-        for (const perm of userPermissions) {
+        for (const perm of Permissions) {
           if (node.permissions.includes(perm)) {
             routes.push({ ...node } as NavItem);
             break;

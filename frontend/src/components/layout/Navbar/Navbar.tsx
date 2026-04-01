@@ -24,11 +24,11 @@ export interface NavbarProps {
   onMenuClick?: () => void;
   isMenuOpen?: boolean;
   userName?: string;
-  userRole?: string;
+  Role?: string;
   onLogout?: () => void;
 }
 
-export function Navbar({ onMenuClick, isMenuOpen = false, userName = 'Utilisateur', userRole = 'Admin', onLogout }: NavbarProps) {
+export function Navbar({ onMenuClick, isMenuOpen = false, userName = 'Utilisateur', Role = 'Admin', onLogout }: NavbarProps) {
   const location = useLocation();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -142,7 +142,7 @@ export function Navbar({ onMenuClick, isMenuOpen = false, userName = 'Utilisateu
               </div>
               <div className={styles.userInfo}>
                 <span className={styles.userName}>{userName}</span>
-                <span className={styles.userRole}>{userRole}</span>
+                <span className={styles.Role}>{Role}</span>
               </div>
               <ChevronDown
                 size={16}

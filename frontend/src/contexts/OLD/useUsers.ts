@@ -316,7 +316,7 @@ export function useUsers() {
     return data.length === 0;
   }, []);
 
-  const getUserRoleNames = useCallback((user: User): string => {
+  const getRoleNames = useCallback((user: User): string => {
     if (!user.roles || user.roles.length === 0) return '-';
     return user.roles.map((r) => r.name).join(', ');
   }, []);
@@ -363,6 +363,6 @@ export function useUsers() {
     // Utilities
     isSuperUser,
     orgUnitsIsEmpty,
-    getUserRoleNames,
+    getRoleNames,
   };
 }

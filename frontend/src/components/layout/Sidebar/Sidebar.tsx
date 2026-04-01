@@ -38,11 +38,11 @@ export interface SidebarProps {
   isCollapsed?: boolean;
   onClose?: () => void;
   userName?: string;
-  userRole?: string;
+  Role?: string;
   onLogout?: () => void;
 }
 
-export function Sidebar({ isOpen, isCollapsed = false, onClose, userName = 'Utilisateur', userRole = 'Admin', onLogout }: SidebarProps) {
+export function Sidebar({ isOpen, isCollapsed = false, onClose, userName = 'Utilisateur', Role = 'Admin', onLogout }: SidebarProps) {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [sideNavItems, setSideNavItems] = useState<NavItem[]>([]);
@@ -115,7 +115,7 @@ export function Sidebar({ isOpen, isCollapsed = false, onClose, userName = 'Util
               </div>
               <div className={styles.userDetails}>
                 <div className={styles.userName}>{userName}</div>
-                <div className={styles.userRole}>{userRole}</div>
+                <div className={styles.Role}>{Role}</div>
               </div>
             </div>
 

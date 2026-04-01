@@ -2,7 +2,7 @@
 
 FORBIDDEN = ["delete", "drop", "update", "insert", "truncate", "alter", "--"]
 
-def validate_sql(sql: str):
+def _validate_sql(sql: str):
     if not sql or not sql.strip():
         raise ValueError("SQL vide")
     s = sql.lower()

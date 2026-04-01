@@ -237,9 +237,9 @@ export const ROUTES_ITEMS: RouteItem[] = [
 
 
 
-export const getGridNavItems = (userPermissions: string[])=>generateGridNavItems(ROUTES_ITEMS, userPermissions);
-export const getTopNavItems = (userPermissions: string[])=>generateNavItems(ROUTES_ITEMS, 'top', userPermissions);
-export const getSideNavItems = (userPermissions: string[])=>generateNavItems(ROUTES_ITEMS, 'side', userPermissions);
+export const getGridNavItems = (Permissions: string[])=>generateGridNavItems(ROUTES_ITEMS, Permissions);
+export const getTopNavItems = (Permissions: string[])=>generateNavItems(ROUTES_ITEMS, 'top', Permissions);
+export const getSideNavItems = (Permissions: string[])=>generateNavItems(ROUTES_ITEMS, 'side', Permissions);
 
 // export const TOP_NAV_ITEMS: NavItem[] = generateNavItems(ROUTES_ITEMS, 'top');
 

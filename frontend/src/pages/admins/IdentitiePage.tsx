@@ -13,14 +13,14 @@ import { UsersRolesTab } from '@pages/admins/components/identities/UsersRolesTab
 import { OrgunitsTab } from '@pages/admins/components/identities/OrgunitsTab';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { UserFormModal } from '@pages/admins/components/identities/UserFormModal';
-import { TenantSourcesTab } from './components/identities/TenantSourcesTab';
+import { CountryDatasourcesTab } from './components/identities/CountryDatasourcesTab';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
 
 type TabType =
   | "tenants_tab"
-  | "tenant_sources_tab"
+  | "country_datasource_tab"
   | "orgunits_tab"
   | "users_tab"
   | "roles_tab"
@@ -56,7 +56,7 @@ export default function IdentitiesPage() {
       case 'tenants_tab':
         setActiveName("Ajouter Nouveau Tenant");
         break;
-      case 'tenant_sources_tab':
+      case 'country_datasource_tab':
         setActiveName("Ajouter Nouvelle Source Tenant");
         break;
       case 'users_tab':
@@ -83,7 +83,7 @@ export default function IdentitiesPage() {
 
   const tabs: { key: TabType; label: string; icon: JSX.Element }[] = [
     { key: 'tenants_tab', label: 'Tenants', icon: <Users size={18} /> },
-    { key: 'tenant_sources_tab', label: 'TenantSources', icon: <Users size={18} /> },
+    { key: 'country_datasource_tab', label: 'CountryDatasources', icon: <Users size={18} /> },
     { key: 'permissions_tab', label: 'Permissions', icon: <ShieldCheck size={18} /> },
     { key: 'roles_tab', label: 'Rôles', icon: <Shield size={18} /> },
     { key: 'orgunits_tab', label: 'Orgunits', icon: <ShieldCheck size={18} /> },
@@ -128,7 +128,7 @@ export default function IdentitiesPage() {
           {/* Tab Content */}
           <div className={styles.tabContent}>
             {activeTab === 'tenants_tab' && <TenantsTab ref={crudRef} />}
-            {activeTab === 'tenant_sources_tab' && <TenantSourcesTab ref={crudRef} />}
+            {activeTab === 'country_datasource_tab' && <CountryDatasourcesTab ref={crudRef} />}
             {activeTab === 'users_tab' && <UsersTab ref={crudRef} key={usersRefreshKey} />}
             {activeTab === 'roles_tab' && <RolesTab ref={crudRef} />}
             {activeTab === 'permissions_tab' && <PermissionsTab ref={crudRef} />}

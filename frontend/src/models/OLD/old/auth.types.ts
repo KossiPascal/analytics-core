@@ -28,7 +28,7 @@ export interface Roles {
 }
 
 // User permissions/role capabilities
-export interface UserRole {
+export interface Role {
   isSuperUser: boolean;
   canUseOfflineMode: boolean;
   canViewMaps: boolean;
@@ -78,7 +78,7 @@ export interface User {
   villageSecteurs: VillageSecteursMap[];
   chws: ChwsMap[];
   recos: RecosMap[];
-  role: UserRole;
+  role: Role;
   isActive: boolean;
   token: string;
   userLogo: string;

@@ -396,7 +396,7 @@ function AppContent() {
             isMenuOpen={sidebarOpen}
             onMenuClick={() => setSidebarOpen(!sidebarOpen)}
             userName={user?.fullname || 'Utilisateur'}
-            userRole={user?.roles?.[0]?.name || 'Admin'}
+            Role={user?.roles?.[0]?.name || 'Admin'}
             onLogout={handleLogout}
           />
           <Sidebar
@@ -404,7 +404,7 @@ function AppContent() {
             isCollapsed={sidebarCollapsed}
             onClose={() => setSidebarOpen(false)}
             userName={user?.fullname || 'Utilisateur'}
-            userRole={user?.roles?.[0]?.name || 'Admin'}
+            Role={user?.roles?.[0]?.name || 'Admin'}
             onLogout={handleLogout}
           />
         </>
@@ -1934,7 +1934,7 @@ export interface Roles {
 }
 
 // Capacités d'un rôle utilisateur
-export interface UserRole {
+export interface Role {
   isSuperUser: boolean;
   canUseOfflineMode: boolean;
   canViewMaps: boolean;
@@ -1975,7 +1975,7 @@ export interface User {
   chws: ChwsMap[];
   recos: RecosMap[];
 
-  role: UserRole;
+  role: Role;
   isActive: boolean;
   token: string;
   userLogo: string;

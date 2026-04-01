@@ -24,13 +24,13 @@ export interface Role {
 }
 
 
-export interface RolePermissionLink {
+export interface RolePermission {
   role_id: string;
   permission_id: string;
 }
 
 
-export interface UserRole {
+export interface Role {
   user_id: string;
   role_id: string;
 }

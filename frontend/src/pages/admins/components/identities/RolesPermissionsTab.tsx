@@ -1,12 +1,12 @@
 import { Building2 } from 'lucide-react';
 import { type Column } from '@components/ui/Table/Table';
-import { RolePermissionLink } from '@models/identity.model';
+import { RolePermission } from '@models/identity.model';
 import { rolePermissionService } from '@services/identity.service';
 import { AdminEntityCrudModule } from '@pages/admins/AdminEntityCrudModule';
 
 
 // Columns definition
-const rolePermissionColumns: Column<RolePermissionLink>[] = [
+const rolePermissionColumns: Column<RolePermission>[] = [
   {
     key: "role",
     header: "role",
@@ -25,7 +25,7 @@ const rolePermissionColumns: Column<RolePermissionLink>[] = [
 
 export function RolesPermissionsTab() {
   return (
-    <AdminEntityCrudModule<RolePermissionLink>
+    <AdminEntityCrudModule<RolePermission>
       title="RolePermission"
       icon={<Building2 size={20} />}
       entityName="RolePermission"

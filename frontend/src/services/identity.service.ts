@@ -1,4 +1,4 @@
-import { Tenant, User, Role, Permission, RolePermissionLink, UserRole, UsersLog, Orgunit, OrgUnitLevel, TenantSource } from '@/models/identity.model';
+import { Tenant, User, Role, Permission, RolePermission, Role, UsersLog, Orgunit, OrgUnitLevel, CountryDatasource } from '@/models/identity.model';
 import { Team } from '@/models/team.model';
 import { CRUDService } from '@services/acrud.service';
 
@@ -16,10 +16,10 @@ export const tenantService = {
     remove: (id: number) => identity.remove(`/tenants`, id),
 }
 
-export const tenantSourceService = {
-    list: (tenant_id:number) => identity.all<TenantSource>(`/tenant-sources`, { options: { params: { tenant_id } } }),
-    create: (source: TenantSource) => identity.create(`/tenant-sources`, source),
-    update: (id: number, source: TenantSource) => identity.update(`/tenant-sources`, id, source),
+export const CountryDatasourceService = {
+    list: (tenant_id:number) => identity.all<CountryDatasource>(`/tenant-sources`, { options: { params: { tenant_id } } }),
+    create: (source: CountryDatasource) => identity.create(`/tenant-sources`, source),
+    update: (id: number, source: CountryDatasource) => identity.update(`/tenant-sources`, id, source),
     remove: (id: number) => identity.remove(`/tenant-sources`, id),
 }
 
@@ -66,9 +66,9 @@ export const permissionService = {
 }
 
 export const rolePermissionService = {
-    list: (tenant_id:number) => identity.all<RolePermissionLink>(`/utils/roles-permissions`, { options: { params: { tenant_id } } }),
-    create: (rp: RolePermissionLink) => test(),
-    update: (id: number, rp: RolePermissionLink) => test(),
+    list: (tenant_id:number) => identity.all<RolePermission>(`/utils/roles-permissions`, { options: { params: { tenant_id } } }),
+    create: (rp: RolePermission) => test(),
+    update: (id: number, rp: RolePermission) => test(),
     remove: (id: number) => test(),
 }
 
@@ -79,10 +79,10 @@ export const usersLogService = {
     remove: (id: number) => test(),
 }
 
-export const userRoleService = {
-    list: (tenant_id:number) => identity.all<UserRole>(`/utils/users-roles`, { options: { params: { tenant_id } } }),
-    create: (ur: UserRole) => test(),
-    update: (id: number, ur: UserRole) => test(),
+export const RoleService = {
+    list: (tenant_id:number) => identity.all<Role>(`/utils/users-roles`, { options: { params: { tenant_id } } }),
+    create: (ur: Role) => test(),
+    update: (id: number, ur: Role) => test(),
     remove: (id: number) => test(),
 }
 

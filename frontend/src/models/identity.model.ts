@@ -7,7 +7,7 @@ export interface Tenant {
   updated_at?: string;
 }
 
-export interface TenantSource {
+export interface CountryDatasource {
   id: number | null;
   tenant_id: number | null;
   fetch_limit: number;
@@ -108,7 +108,7 @@ export interface User {
   updated_at?: string;
 }
 
-export interface RolePermissionLink {
+export interface RolePermission {
   id: number | null;
   role_id: number | null;
   role?: Role;
@@ -116,7 +116,7 @@ export interface RolePermissionLink {
   permission?: Permission;
 }
 
-export interface UserRole {
+export interface Role {
   id: number | null;
   user_id: number | null;
   user?: User;

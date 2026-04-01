@@ -9,10 +9,10 @@ import yaml
 import hashlib
 from pathlib import Path
 from psycopg2 import sql
-from backend.src.config import Config
+from backend.src.app.configs.environment import Config
 from typing import List, Dict, Any, Literal, Set, Tuple, Optional
-from backend.src.models.tenant import CHT_SOURCE_TYPES
-from backend.src.databases.extensions import db
+from backend.src.app.models.tenant import CHT_SOURCE_TYPES
+from backend.src.app.configs.extensions import db
 from sqlalchemy.orm import Session
 from dataclasses import dataclass, field
 

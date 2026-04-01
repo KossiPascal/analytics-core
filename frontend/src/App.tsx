@@ -43,7 +43,7 @@ function AppContent() {
             isMenuOpen={sidebarOpen}
             onMenuClick={() => setSidebarOpen(!sidebarOpen)}
             userName={user?.fullname || 'Utilisateur'}
-            // userRole={user?.roles?.[0]?.name || 'Admin'}
+            // Role={user?.roles?.[0]?.name || 'Admin'}
             onLogout={handleLogout}
           />
           <Sidebar
@@ -51,7 +51,7 @@ function AppContent() {
             isCollapsed={sidebarCollapsed}
             onClose={() => setSidebarOpen(false)}
             userName={user?.fullname || 'Utilisateur'}
-            // userRole={user?.roles?.[0]?.name || 'Admin'}
+            // Role={user?.roles?.[0]?.name || 'Admin'}
             onLogout={handleLogout}
           />
         </>
