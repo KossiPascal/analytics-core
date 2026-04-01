@@ -18,7 +18,7 @@ import { Tenant } from '@/models/identity.model';
 import { PreviewSection } from './components/PreviewSection/PreviewSection';
 import { LayoutDataZone, LayoutState } from './components/LayoutDropZone/LayoutDropZone';
 import { LayoutConfiguration } from './components/LayoutConfiguration/LayoutConfiguration';
-import { OptionsModal } from '@pages/builders/DashboardBuilder/components/OptionsModal/OptionsModal';
+import { OptionsModal } from './components/OptionsModal/OptionsModal';
 import { ThemeModal } from './components/ThemeModal/ThemeModal';
 import { CHART_COLORS } from '@components/charts/theme';
 import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
@@ -425,9 +425,13 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
 
       <OptionsModal
         isOpen={isOptionsModalOpen}
-        options={options}
-        onOptionsChange={setOptions}
         onClose={() => setIsOptionsModalOpen(false)}
+        chart={_chart}
+        onChange={(updated: DatasetChart) => {
+          setChart(updated);
+          setOptions(toVisualizationOptions(updated.options));
+          onChange?.(updated);
+        }}
       />
 
       <ThemeModal
