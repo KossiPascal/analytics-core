@@ -697,7 +697,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
               {onExecute && (
                 <div className={styles.executeSection}>
                   <button type="button" className={styles.executeBtn} onClick={onExecute} title="Exécuter la requête">
-                    <Play size={11} />
+                    <Play size={14} />
                     Exécuter
                   </button>
                 </div>
