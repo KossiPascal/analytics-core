@@ -204,12 +204,39 @@
   min-height: 42px;
 }
 
+.zoneLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .zoneLabel {
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
   white-space: nowrap;
   min-width: 56px;
+}
+
+.executeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.executeBtn:hover {
+  background: #1d4ed8;
 }
 
 .zoneChips {

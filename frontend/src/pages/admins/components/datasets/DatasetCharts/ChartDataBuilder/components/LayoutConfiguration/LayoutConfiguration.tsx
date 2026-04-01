@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { Database, Filter, Layers, Search } from "lucide-react";
+import { Database, Filter, Layers, Play, Search } from "lucide-react";
 import {
   LayoutDropZone,
   LayoutState,
@@ -123,6 +123,7 @@ interface LayoutConfigurationProps {
   chartTypes: ChartTypeOption[];
   options: VisualizationOptions;
   onSelectChartType: (type: ChartVariant) => void;
+  onExecute?: () => void;
 }
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
@@ -137,6 +138,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   chartTypes,
   options,
   onSelectChartType,
+  onExecute,
 }) => {
   const safeLayout = useMemo<LayoutState>(
     () => ({
@@ -659,7 +661,15 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
                 onDragLeave={handleDragLeaveZone}
                 onDrop={(e) => handleDropZone(e, "filters")}
               >
-                <span className={styles.zoneLabel}>Filtrer</span>
+                <div className={styles.zoneLabelRow}>
+                  <span className={styles.zoneLabel}>Filtrer</span>
+                  {onExecute && (
+                    <button type="button" className={styles.executeBtn} onClick={onExecute} title="Exécuter la requête">
+                      <Play size={11} />
+                      Exécuter
+                    </button>
+                  )}
+                </div>
                 <div className={styles.zoneChips}>
                   {/* Données jamais dans Filtres */}
                   {dimColsChipZone === "filters" && dimColsChip}

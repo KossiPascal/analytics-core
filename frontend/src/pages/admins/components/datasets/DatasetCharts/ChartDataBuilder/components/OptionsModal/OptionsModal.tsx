@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { FormSwitch } from "@/components/forms/FormSwitch/FormSwitch";
@@ -14,15 +14,12 @@ import {
   PieChartOptions,
   RadarChartOptions,
   TableChartOptions,
-  SqlChartTypeList,
-  suggestChartType,
   getOptionKey,
   AreaChartOptions,
 } from "@/models/dataset.models";
 import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
 import styles from "./OptionsModal.module.css";
-import { RenamesOptionsModal } from "../../../components/chart-utils/RenamesOptionsModal";
 
 const TABS = [
   { key: "general",   label: "Général" },
@@ -41,47 +38,57 @@ interface OptionsModalProps extends ChartFormProps {
 
 export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("general");
-  const [isInModalOpen, setIsInModalOpen] = useState(false);
+  // Local snapshot — discarded on Annuler, applied on Appliquer
+  const [localChart, setLocalChart] = useState<DatasetChart>(chart);
 
-  const optionKey = getOptionKey(chart.type);
+  useEffect(() => {
+    if (isOpen) setLocalChart(chart);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
-  const options = (): ChartOptions => chart.options ?? {};
+  const optionKey = getOptionKey(localChart.type);
+
+  const options = (): ChartOptions => localChart.options ?? {};
 
   function visualOptions<T>() {
-    return (chart.options?.[optionKey] ?? {}) as T;
+    return (localChart.options?.[optionKey] ?? {}) as T;
   }
 
   const updateOption = (key: keyof ChartOptions, value: any) => {
-    const updatedOptions = { ...chart.options, [key]: value };
-    onChange({ ...chart, options: updatedOptions });
+    setLocalChart(prev => ({ ...prev, options: { ...prev.options, [key]: value } }));
   };
 
   function updateSpecific<T>(key: keyof T, value: any) {
-    const updatedOptions = { ...options(), [optionKey]: { ...visualOptions<T>(), [key]: value } };
-    onChange({ ...chart, options: updatedOptions });
+    setLocalChart(prev => {
+      const prevOptions = prev.options ?? {};
+      const prevSpecific = (prevOptions[getOptionKey(prev.type)] ?? {}) as T;
+      return {
+        ...prev,
+        options: { ...prevOptions, [getOptionKey(prev.type)]: { ...prevSpecific, [key]: value } },
+      };
+    });
   }
 
-  const updateChartValue = (key: keyof DatasetChart, val: any) => {
-    let updated: DatasetChart = { ...chart, [key]: val };
-    if (key === "structure") {
-      if (!("structure" in updated)) {
-        updated = { ...updated as any, structure: { rows_dimensions: [], cols_dimensions: [], metrics: [], filters: [] } };
-      }
-      const dimensions = [...updated.structure.rows_dimensions, ...updated.structure.cols_dimensions].map(d => d.field_id);
-      const metrics = updated.structure.metrics.map(m => m.field_id);
-      updated.type = suggestChartType(dimensions, metrics);
-    }
-    onChange(updated);
+  const hasSpecificOptions = ["bar", "stacked-bar", "line", "area", "stacked-area", "pie", "donut", "kpi", "gauge", "heatmap", "radar", "table"].includes(localChart.type);
+
+  const handleApply = () => {
+    onChange(localChart);
+    onClose();
   };
 
-  const currentTabIndex = TABS.findIndex(t => t.key === activeTab);
-  const canPrev = currentTabIndex > 0;
-  const canNext = currentTabIndex < TABS.length - 1;
-
-  const hasSpecificOptions = ["bar", "stacked-bar", "line", "area", "stacked-area", "pie", "donut", "kpi", "gauge", "heatmap", "radar", "table"].includes(chart.type);
+  const handleCancel = () => {
+    onClose();
+  };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Options d'affichage" size="lg" closeOnBackdrop closeOnEscape>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Options d'affichage"
+      size="lg"
+      showCloseButton={false}
+      closeOnEscape
+    >
       <div className={styles.container}>
         {/* TAB HEADERS */}
         <div className={styles.tabList}>
@@ -106,30 +113,10 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
           {/* ── GÉNÉRAL ── */}
           {activeTab === "general" && (
             <div className={styles.fields}>
-              <FormSelect
-                label="Type de graphique"
-                value={chart.type}
-                options={SqlChartTypeList.map(c => ({ value: c, label: c }))}
-                onChange={v => updateChartValue("type", v)}
-                required
-              />
-              <FormInput label="Titre" value={options().title ?? ""} onChange={e => updateOption("title", e.target.value)} />
-              <FormInput label="Sous-titre" value={options().subtitle ?? ""} onChange={e => updateOption("subtitle", e.target.value)} />
               <div className={styles.row}>
                 <FormInput label="Largeur" value={options().width ?? 600} onChange={e => updateOption("width", e.target.value)} />
                 <FormInput label="Hauteur" value={options().height ?? 400} onChange={e => updateOption("height", e.target.value)} />
               </div>
-              <div className={styles.action}>
-                <Button size="sm" variant="outline" onClick={() => setIsInModalOpen(true)}>
-                  Éditer les renommages
-                </Button>
-              </div>
-              <RenamesOptionsModal
-                isOpen={isInModalOpen}
-                onClose={() => setIsInModalOpen(false)}
-                values={options()?.renames || {}}
-                onChange={(newValues: Record<string, Record<string, string>>) => updateOption("renames", newValues)}
-              />
             </div>
           )}
 
@@ -200,7 +187,7 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
                 <p className={styles.emptyMsg}>Aucune option spécifique pour ce type de graphique.</p>
               )}
 
-              {(chart.type === "bar" || chart.type === "stacked-bar") && (
+              {(localChart.type === "bar" || localChart.type === "stacked-bar") && (
                 <>
                   <FormSwitch label="Empilé" checked={visualOptions<BarChartOptions>().stacked ?? false} onChange={e => updateSpecific<BarChartOptions>("stacked", e.target.checked)} />
                   <FormSwitch label="Horizontal" checked={visualOptions<BarChartOptions>().horizontal ?? false} onChange={e => updateSpecific<BarChartOptions>("horizontal", e.target.checked)} />
@@ -208,7 +195,7 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
                 </>
               )}
 
-              {(chart.type === "line" || chart.type === "area" || chart.type === "stacked-area") && (
+              {(localChart.type === "line" || localChart.type === "area" || localChart.type === "stacked-area") && (
                 <>
                   <FormSwitch label="Courbe" checked={visualOptions<LineChartOptions>().curved ?? false} onChange={e => updateSpecific<LineChartOptions>("curved", e.target.checked)} />
                   <FormSwitch label="Zone (area)" checked={visualOptions<LineChartOptions>().is_area ?? false} onChange={e => updateSpecific<LineChartOptions>("is_area", e.target.checked)} />
@@ -218,7 +205,7 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
                 </>
               )}
 
-              {chart.type === "area" && (
+              {localChart.type === "area" && (
                 <>
                   <FormInput label="Trait grille (stroke)" value={visualOptions<AreaChartOptions>().grid_stroke ?? 20} onChange={e => updateSpecific<AreaChartOptions>("grid_stroke", Number(e.target.value))} />
                   <FormInput label="Pointillé grille (dasharray)" value={visualOptions<AreaChartOptions>().grid_dasharray ?? 20} onChange={e => updateSpecific<AreaChartOptions>("grid_dasharray", Number(e.target.value))} />
@@ -241,16 +228,16 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
                 </>
               )}
 
-              {(chart.type === "pie" || chart.type === "donut") && (
+              {(localChart.type === "pie" || localChart.type === "donut") && (
                 <>
                   <FormSwitch label="Afficher le pourcentage" checked={visualOptions<PieChartOptions>().show_percentage ?? true} onChange={e => updateSpecific<PieChartOptions>("show_percentage", e.target.checked)} />
-                  {chart.type === "donut" && (
+                  {localChart.type === "donut" && (
                     <FormInput label="Rayon intérieur" value={visualOptions<PieChartOptions>().inner_radius ?? 50} onChange={e => updateSpecific<PieChartOptions>("inner_radius", Number(e.target.value))} />
                   )}
                 </>
               )}
 
-              {chart.type === "kpi" && (
+              {localChart.type === "kpi" && (
                 <>
                   <FormInput label="Icône" value={visualOptions<KpiChartOptions>().icon ?? ""} onChange={e => updateSpecific<KpiChartOptions>("icon", e.target.value)} />
                   <FormInput label="Précision décimale" value={visualOptions<KpiChartOptions>().decimal_precision ?? 2} onChange={e => updateSpecific<KpiChartOptions>("decimal_precision", Number(e.target.value))} />
@@ -258,25 +245,25 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
                 </>
               )}
 
-              {chart.type === "gauge" && (
+              {localChart.type === "gauge" && (
                 <>
                   <FormInput label="Valeur min" value={visualOptions<GaugeChartOptions>().min_value ?? 0} onChange={e => updateSpecific<GaugeChartOptions>("min_value", Number(e.target.value))} />
                   <FormInput label="Valeur max" value={visualOptions<GaugeChartOptions>().max_value ?? 100} onChange={e => updateSpecific<GaugeChartOptions>("max_value", Number(e.target.value))} />
                 </>
               )}
 
-              {chart.type === "heatmap" && (
+              {localChart.type === "heatmap" && (
                 <FormInput label="Espacement des cellules" value={visualOptions<HeatmapChartOptions>().cell_padding ?? 2} onChange={e => updateSpecific<HeatmapChartOptions>("cell_padding", Number(e.target.value))} />
               )}
 
-              {chart.type === "radar" && (
+              {localChart.type === "radar" && (
                 <>
                   <FormInput label="Valeur max" value={visualOptions<RadarChartOptions>().max_value ?? 100} onChange={e => updateSpecific<RadarChartOptions>("max_value", Number(e.target.value))} />
                   <FormSwitch label="Remplir la zone" checked={visualOptions<RadarChartOptions>().fill_area ?? true} onChange={e => updateSpecific<RadarChartOptions>("fill_area", e.target.checked)} />
                 </>
               )}
 
-              {chart.type === "table" && (
+              {localChart.type === "table" && (
                 <>
                   <FormSwitch label="Pagination" checked={visualOptions<TableChartOptions>().pagination ?? true} onChange={e => updateSpecific<TableChartOptions>("pagination", e.target.checked)} />
                   <FormInput label="Taille de page" value={visualOptions<TableChartOptions>().page_size ?? 10} onChange={e => updateSpecific<TableChartOptions>("page_size", Number(e.target.value))} />
@@ -292,24 +279,13 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
           )}
         </div>
 
-        {/* NAVIGATION */}
+        {/* ACTIONS */}
         <div className={styles.nav}>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!canPrev}
-            onClick={() => setActiveTab(TABS[currentTabIndex - 1].key)}
-          >
-            ← Précédent
+          <Button size="sm" variant="outline" onClick={handleCancel}>
+            Annuler
           </Button>
-          <span className={styles.navStep}>{currentTabIndex + 1} / {TABS.length}</span>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!canNext}
-            onClick={() => setActiveTab(TABS[currentTabIndex + 1].key)}
-          >
-            Suivant →
+          <Button size="sm" onClick={handleApply}>
+            Appliquer
           </Button>
         </div>
       </div>

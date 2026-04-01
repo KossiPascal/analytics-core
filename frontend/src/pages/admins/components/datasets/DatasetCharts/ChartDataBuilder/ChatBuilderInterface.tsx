@@ -20,6 +20,7 @@ import { LayoutDataZone, LayoutState } from './components/LayoutDropZone/LayoutD
 import { LayoutConfiguration } from './components/LayoutConfiguration/LayoutConfiguration';
 import { OptionsModal } from './components/OptionsModal/OptionsModal';
 import { ThemeModal } from './components/ThemeModal/ThemeModal';
+import { RenamesOptionsModal } from '../components/chart-utils/RenamesOptionsModal';
 import { CHART_COLORS } from '@components/charts/theme';
 import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
 
@@ -114,6 +115,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   // Modals
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isRenamesModalOpen, setIsRenamesModalOpen] = useState(false);
 
   // Visualization state
   const [chartType, setChartType] = useState<ChartVariant>((chart.type as ChartVariant) || 'bar');
@@ -122,10 +124,9 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     ...toVisualizationOptions(chart.options),
   });
 
-  // Preview snapshot (frozen at Actualiser click)
+  // Preview snapshot (frozen at Exécuter click)
   const [previewChartType, setPreviewChartType] = useState<ChartVariant>('bar');
   const [previewOptions, setPreviewOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
-  const [isPreviewStale, setIsPreviewStale] = useState(false);
 
   // Auto-refresh when chart type changes
   const prevChartTypeRef = useRef<ChartVariant>(chartType);
@@ -133,7 +134,6 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     if (prevChartTypeRef.current === chartType) return;
     prevChartTypeRef.current = chartType;
     setPreviewChartType(chartType);
-    setIsPreviewStale(false);
   }, [chartType]);
 
   // Edit mode
@@ -266,7 +266,6 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       next[toZone] = target as any;
       return next;
     });
-    setIsPreviewStale(true);
   }, [fields]);
 
   const handleRemove = useCallback((id: number, zone: keyof LayoutState) => {
@@ -274,14 +273,12 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       ...prev,
       [zone]: prev[zone].filter((item: any) => item.field_id !== id),
     }));
-    setIsPreviewStale(true);
   }, []);
 
   const handleUpdateLayout = useCallback((
     zone: keyof LayoutState, fields: (ChartDimension | ChartMetric | ChartFilter)[],
   ) => {
     setLayout(prev => ({ ...prev, [zone]: fields }));
-    setIsPreviewStale(true);
   }, []);
 
   const handleAddLayout = useCallback((
@@ -312,7 +309,6 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       }
       return { ...prev, columns, rows, metrics, filters };
     });
-    setIsPreviewStale(true);
   }, []);
 
   // ── Preview data generation (same approach as DashboardBuilder) ──────────────
@@ -381,7 +377,6 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   const handleRefreshPreview = useCallback(() => {
     setPreviewChartType(chartType);
     setPreviewOptions({ ...options });
-    setIsPreviewStale(false);
   }, [chartType, options]);
 
   // ── Theme apply ──────────────────────────────────────────────────────────────
@@ -405,6 +400,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
             chartTypes={CHART_TYPES}
             options={previewOptions}
             onSelectChartType={setChartType}
+            onExecute={handleRefreshPreview}
           />
 
           <PreviewSection
@@ -412,11 +408,10 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
             previewOptions={previewOptions}
             previewData={previewData}
             previewSeries={previewSeries}
-            isPreviewStale={isPreviewStale}
             isEditing={isEditing}
-            onRefreshPreview={handleRefreshPreview}
             onOpenTheme={() => setIsThemeModalOpen(true)}
             onOpenOptions={() => setIsOptionsModalOpen(true)}
+            onOpenRenames={() => setIsRenamesModalOpen(true)}
             onOpenSaved={() => {}}
             onSave={() => {}}
           />
@@ -440,6 +435,17 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
         indicatorNames={metricNames}
         onClose={() => setIsThemeModalOpen(false)}
         onApply={handleApplyTheme}
+      />
+
+      <RenamesOptionsModal
+        isOpen={isRenamesModalOpen}
+        onClose={() => setIsRenamesModalOpen(false)}
+        values={_chart.options?.renames ?? {}}
+        onChange={(newValues) => {
+          const updated: DatasetChart = { ..._chart, options: { ..._chart.options, renames: newValues } };
+          setChart(updated);
+          onChange?.(updated);
+        }}
       />
     </>
   );

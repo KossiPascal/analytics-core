@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Edit3, Eye, FolderOpen, Palette, RefreshCw, Save, Settings } from 'lucide-react';
+import { Edit3, Eye, FolderOpen, Palette, Save, Settings, Tags } from 'lucide-react';
 import { TransposeButton } from '@components/charts/TransposeButton/TransposeButton';
 import { transposeChartData } from '@components/charts/transpose';
 import { RenderChartPreview } from '../RenderChartPreview/RenderChartPreview';
@@ -11,13 +11,12 @@ interface PreviewSectionProps {
   previewOptions: VisualizationOptions;
   previewData: any[];
   previewSeries: any[];
-  isPreviewStale: boolean;
   isEditing: boolean;
   onSave: () => void;
   onOpenTheme: () => void;
   onOpenSaved: () => void;
   onOpenOptions: () => void;
-  onRefreshPreview: () => void;
+  onOpenRenames: () => void;
 }
 
 interface PreviewErrorBoundaryProps {
@@ -62,13 +61,12 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
   previewOptions,
   previewData,
   previewSeries,
-  isPreviewStale,
   isEditing,
   onSave,
   onOpenTheme,
   onOpenSaved,
   onOpenOptions,
-  onRefreshPreview,
+  onOpenRenames,
 }) => {
   const activeColors = previewOptions.colors;
   const [isTransposed, setIsTransposed] = useState(false);
@@ -97,10 +95,6 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
             isTransposed={isTransposed}
             onToggle={handleToggleTranspose}
           />
-          <button type="button" className={`${styles.headerBtn} ${isPreviewStale ? styles.headerBtnStale : ''}`} onClick={onRefreshPreview} title="Actualiser l'aperçu" >
-            <RefreshCw size={16} className={isPreviewStale ? styles.refreshIconSpin : ''} />
-            Actualiser
-          </button>
           <button type="button" className={styles.headerBtn} onClick={onOpenTheme} title="Changer le thème de couleurs" >
             <Palette size={16} />
             Thème
@@ -115,6 +109,10 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           <button type="button" className={styles.headerBtn} onClick={onOpenOptions} title="Options d'affichage" >
             <Settings size={16} />
             Options
+          </button>
+          <button type="button" className={styles.headerBtn} onClick={onOpenRenames} title="Éditer les renommages" >
+            <Tags size={16} />
+            Renommages
           </button>
           <button type="button" className={styles.headerBtn} onClick={onOpenSaved} title="Ouvrir une visualisation" >
             <FolderOpen size={16} />
