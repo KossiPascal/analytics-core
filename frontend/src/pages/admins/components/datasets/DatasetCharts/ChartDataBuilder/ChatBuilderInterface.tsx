@@ -21,6 +21,8 @@ import { LayoutConfiguration } from './components/LayoutConfiguration/LayoutConf
 import { OptionsModal } from './components/OptionsModal/OptionsModal';
 import { ThemeModal } from './components/ThemeModal/ThemeModal';
 import { RenamesOptionsModal } from '../components/chart-utils/RenamesOptionsModal';
+import { StructureStep } from '../components/chart-utils/StructureStep';
+import { Modal } from '@/components/ui/Modal/Modal';
 import { CHART_COLORS } from '@components/charts/theme';
 import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
 
@@ -116,6 +118,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isRenamesModalOpen, setIsRenamesModalOpen] = useState(false);
+  const [isStructureModalOpen, setIsStructureModalOpen] = useState(false);
 
   // Visualization state
   const [chartType, setChartType] = useState<ChartVariant>((chart.type as ChartVariant) || 'bar');
@@ -412,6 +415,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
             onOpenTheme={() => setIsThemeModalOpen(true)}
             onOpenOptions={() => setIsOptionsModalOpen(true)}
             onOpenRenames={() => setIsRenamesModalOpen(true)}
+            onOpenStructure={() => setIsStructureModalOpen(true)}
             onOpenSaved={() => {}}
             onSave={() => {}}
           />
@@ -447,6 +451,25 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
           onChange?.(updated);
         }}
       />
+
+      <Modal
+        isOpen={isStructureModalOpen}
+        onClose={() => setIsStructureModalOpen(false)}
+        title="Structure du graphique"
+        size="full"
+        noPadding
+        closeOnBackdrop
+        closeOnEscape
+      >
+        <StructureStep
+          chart={_chart}
+          queries={queries}
+          onChange={(updated) => {
+            setChart(updated);
+            onChange?.(updated);
+          }}
+        />
+      </Modal>
     </>
   );
 };

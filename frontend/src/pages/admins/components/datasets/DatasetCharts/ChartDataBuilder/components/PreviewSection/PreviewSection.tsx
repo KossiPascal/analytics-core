@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Edit3, Eye, FolderOpen, Palette, Save, Settings, Tags } from 'lucide-react';
+import { Eye, FolderOpen, LayoutGrid, Palette, Settings, Tags } from 'lucide-react';
 import { TransposeButton } from '@components/charts/TransposeButton/TransposeButton';
 import { transposeChartData } from '@components/charts/transpose';
 import { RenderChartPreview } from '../RenderChartPreview/RenderChartPreview';
@@ -17,6 +17,7 @@ interface PreviewSectionProps {
   onOpenSaved: () => void;
   onOpenOptions: () => void;
   onOpenRenames: () => void;
+  onOpenStructure: () => void;
 }
 
 interface PreviewErrorBoundaryProps {
@@ -67,6 +68,7 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
   onOpenSaved,
   onOpenOptions,
   onOpenRenames,
+  onOpenStructure,
 }) => {
   const activeColors = previewOptions.colors;
   const [isTransposed, setIsTransposed] = useState(false);
@@ -95,6 +97,10 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
             isTransposed={isTransposed}
             onToggle={handleToggleTranspose}
           />
+          <button type="button" className={styles.headerBtn} onClick={onOpenStructure} title="Structure du graphique" >
+            <LayoutGrid size={16} />
+            Structure
+          </button>
           <button type="button" className={styles.headerBtn} onClick={onOpenTheme} title="Changer le thème de couleurs" >
             <Palette size={16} />
             Thème

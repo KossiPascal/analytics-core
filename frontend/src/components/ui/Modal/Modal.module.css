@@ -123,6 +123,11 @@
   min-height: 0; /* Important pour flex scroll */
 }
 
+.bodyNoPadding {
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Scrollbar styling */
 .body::-webkit-scrollbar {
   width: 8px;
