@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormInput } from "@/components/forms/FormInput/FormInput";
 import { FormSelect } from "@/components/forms/FormSelect/FormSelect";
 import { FormSwitch } from "@/components/forms/FormSwitch/FormSwitch";
+import { FormMultiSelect } from "@/components/forms/FormSelect/FormMultiSelect";
 import {
   DatasetChart,
   ChartOptions,
   ChartFormProps,
+  ChartPivot,
   BarChartOptions,
   GaugeChartOptions,
   HeatmapChartOptions,
@@ -19,6 +21,7 @@ import {
 } from "@/models/dataset.models";
 import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
+import { ChevronDown } from "lucide-react";
 import styles from "./OptionsModal.module.css";
 
 const TABS = [
@@ -36,8 +39,9 @@ interface OptionsModalProps extends ChartFormProps {
   onClose: () => void;
 }
 
-export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalProps) => {
+export const OptionsModal = ({ isOpen, onClose, chart, onChange, queries }: OptionsModalProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("general");
+  const [pivotOpen, setPivotOpen] = useState(true);
   // Local snapshot — discarded on Annuler, applied on Appliquer
   const [localChart, setLocalChart] = useState<DatasetChart>(chart);
 
@@ -48,6 +52,13 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
 
   const optionKey = getOptionKey(localChart.type);
 
+  const query = useMemo(
+    () => queries?.find((q) => q.id === (localChart.query_id ?? chart.query_id)),
+    [queries, localChart.query_id, chart.query_id]
+  );
+  const fields = useMemo(() => query?.fields ?? [], [query]);
+  const structure = useMemo(() => localChart.structure ?? {}, [localChart.structure]);
+
   const options = (): ChartOptions => localChart.options ?? {};
 
   function visualOptions<T>() {
@@ -56,6 +67,13 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
 
   const updateOption = (key: keyof ChartOptions, value: any) => {
     setLocalChart(prev => ({ ...prev, options: { ...prev.options, [key]: value } }));
+  };
+
+  const updateChartPivot = (key: keyof ChartPivot, val: any) => {
+    setLocalChart((prev) => {
+      const pivot = { ...(prev.structure?.pivot ?? {}), [key]: val };
+      return { ...prev, structure: { ...(prev.structure ?? {}), pivot } };
+    });
   };
 
   function updateSpecific<T>(key: keyof T, value: any) {
@@ -122,13 +140,154 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange }: OptionsModalP
 
           {/* ── AFFICHAGE ── */}
           {activeTab === "display" && (
-            <div className={styles.fields}>
-              <FormSwitch label="Afficher la légende" checked={options().show_legend ?? true} onChange={e => updateOption("show_legend", e.target.checked)} />
-              <FormSwitch label="Afficher l'infobulle" checked={options().show_tooltip ?? true} onChange={e => updateOption("show_tooltip", e.target.checked)} />
-              <FormSwitch label="Afficher la grille" checked={options().show_grid ?? true} onChange={e => updateOption("show_grid", e.target.checked)} />
-              <FormSwitch label="Afficher les labels" checked={options().show_labels ?? false} onChange={e => updateOption("show_labels", e.target.checked)} />
-              <FormSwitch label="Responsive" checked={options().responsive ?? true} onChange={e => updateOption("responsive", e.target.checked)} />
-            </div>
+            <>
+              <div className={styles.fields}>
+                <FormSwitch label="Afficher la légende" checked={options().show_legend ?? true} onChange={e => updateOption("show_legend", e.target.checked)} />
+                <FormSwitch label="Afficher l'infobulle" checked={options().show_tooltip ?? true} onChange={e => updateOption("show_tooltip", e.target.checked)} />
+                <FormSwitch label="Afficher la grille" checked={options().show_grid ?? true} onChange={e => updateOption("show_grid", e.target.checked)} />
+                <FormSwitch label="Afficher les labels" checked={options().show_labels ?? false} onChange={e => updateOption("show_labels", e.target.checked)} />
+                <FormSwitch label="Responsive" checked={options().responsive ?? true} onChange={e => updateOption("responsive", e.target.checked)} />
+              </div>
+
+              {/* ── Pivot section (collapsible) ─────────────────── */}
+              <div className={styles.pivotSection}>
+                <div
+                  className={styles.pivotHeader}
+                  onClick={() => setPivotOpen((o) => !o)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === "Enter" && setPivotOpen((o) => !o)}
+                >
+                  <span className={styles.pivotTitle}>Options de pivot</span>
+                  <ChevronDown
+                    size={16}
+                    className={`${styles.pivotChevron} ${pivotOpen ? styles.pivotChevronOpen : ""}`}
+                  />
+                </div>
+
+                <div
+                  className={`${styles.pivotContent} ${pivotOpen ? styles.pivotContentOpen : ""}`}
+                >
+                  <div className={styles.pivotInner}>
+                    {/* Switches row 1 */}
+                    <div className={styles.pivotRow}>
+                      <FormSwitch
+                        label="Rows totals"
+                        checked={localChart?.structure?.pivot?.rows_total}
+                        onChange={(e) =>
+                          updateChartPivot("rows_total", e.target.checked)
+                        }
+                      />
+                      <FormSwitch
+                        label="Columns totals"
+                        checked={localChart?.structure?.pivot?.cols_total}
+                        onChange={(e) =>
+                          updateChartPivot("cols_total", e.target.checked)
+                        }
+                      />
+                      <FormSwitch
+                        label="Rows subtotals"
+                        checked={localChart?.structure?.pivot?.rows_subtotal}
+                        onChange={(e) =>
+                          updateChartPivot("rows_subtotal", e.target.checked)
+                        }
+                      />
+                      <FormSwitch
+                        label="Columns subtotals"
+                        checked={localChart?.structure?.pivot?.cols_subtotal}
+                        onChange={(e) =>
+                          updateChartPivot("cols_subtotal", e.target.checked)
+                        }
+                      />
+                    </div>
+
+                    {/* Switches row 2 + fill value */}
+                    <div className={styles.pivotRow}>
+                      <FormSwitch
+                        label="Active"
+                        checked={localChart?.structure?.pivot?.acitve}
+                        onChange={(e) =>
+                          updateChartPivot("acitve", e.target.checked)
+                        }
+                      />
+                      <FormSwitch
+                        label="Sort desc"
+                        checked={localChart?.structure?.pivot?.sort_desc}
+                        onChange={(e) =>
+                          updateChartPivot("sort_desc", e.target.checked)
+                        }
+                      />
+                      <FormInput
+                        value={localChart?.structure?.pivot?.fill_value ?? 0}
+                        type="number"
+                        onChange={(e) =>
+                          updateChartPivot("fill_value", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    {/* Selects row */}
+                    <div className={styles.pivotRowWide}>
+                      <div className={styles.pivotSelectWrap}>
+                        <FormMultiSelect
+                          label="percent_metrics"
+                          value={localChart?.structure?.pivot?.percent_metrics ?? []}
+                          options={
+                            structure.metrics?.map((m) => {
+                              const label =
+                                m.alias ??
+                                fields.find((f) => f.id === m.field_id)?.name ??
+                                "";
+                              return { value: m.field_id, label };
+                            }) ?? []
+                          }
+                          onChange={(values) => {
+                            const vals = values?.filter(Boolean) || [];
+                            const metVals = (structure.metrics ?? []).filter(
+                              (d) => vals.includes(d.field_id)
+                            );
+                            updateChartPivot(
+                              "percent_metrics",
+                              metVals.map((m) => m.field_id)
+                            );
+                          }}
+                          placeholder="percent_metrics"
+                        />
+                      </div>
+                      <div className={styles.pivotSelectWrap}>
+                        <FormSelect
+                          label="sort_metric"
+                          value={localChart?.structure?.pivot?.sort_metric}
+                          options={
+                            structure.metrics?.map((m) => {
+                              const label =
+                                m.alias ??
+                                fields.find((f) => f.id === m.field_id)?.name ??
+                                "";
+                              return { value: m.field_id, label };
+                            }) ?? []
+                          }
+                          onChange={(val) => updateChartPivot("sort_metric", val)}
+                          placeholder="sort_metric"
+                        />
+                      </div>
+                      <div className={styles.pivotSelectWrap}>
+                        <FormSelect
+                          label="top_n"
+                          value={localChart?.structure?.pivot?.top_n}
+                          options={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => ({
+                            value: d,
+                            label: `${d}`,
+                          }))}
+                          onChange={(val) => updateChartPivot("top_n", val)}
+                          placeholder="top_n"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           {/* ── AXES & STYLE ── */}
