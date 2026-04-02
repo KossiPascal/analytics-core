@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, ReactNode, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { FormField } from '../FormField/FormField';
 import styles from '../styles/forms.module.css';
@@ -70,10 +71,28 @@ export function FormSelect<T=any>({
 }: FormSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
+
+  const updateDropdownPosition = useCallback(() => {
+    if (!wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const maxH = 260;
+    const openUpward = spaceBelow < maxH && rect.top > maxH;
+    setDropdownStyle({
+      position: 'fixed',
+      left: rect.left,
+      width: rect.width,
+      right: 'auto',
+      zIndex: 9999,
+      ...(openUpward ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
+    });
+  }, []);
 
   const filteredOptions = searchTerm
     ? options.filter((opt) =>
@@ -83,10 +102,9 @@ export function FormSelect<T=any>({
 
   const handleToggle = () => {
     if (disabled) return;
+    if (!isOpen) updateDropdownPosition();
     setIsOpen(!isOpen);
-    if (!isOpen) {
-      setSearchTerm('');
-    }
+    if (!isOpen) setSearchTerm('');
   };
 
   const handleSelect = (option: SelectOption) => {
@@ -104,15 +122,29 @@ export function FormSelect<T=any>({
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(event.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setSearchTerm('');
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Reposition on scroll/resize
+  useEffect(() => {
+    if (!isOpen) return;
+    const update = () => updateDropdownPosition();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [isOpen, updateDropdownPosition]);
 
   // Focus search input when dropdown opens
   useEffect(() => {
@@ -194,11 +226,15 @@ export function FormSelect<T=any>({
           </div>
         </div>
 
-        {isOpen && (
+        {isOpen && createPortal(
           <div
+            ref={dropdownRef}
             className={styles.selectDropdown}
             role="listbox"
-            style={variant === 'dark' ? { background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', color: 'white' } : undefined}
+            style={{
+              ...dropdownStyle,
+              ...(variant === 'dark' ? { background: '#1e293b', border: '1px solid rgba(255,255,255,0.15)', color: 'white' } : {}),
+            }}
           >
             {searchable && (
               <div style={{ position: 'relative' }}>
@@ -244,7 +280,8 @@ export function FormSelect<T=any>({
                 </div>
               ))
             )}
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </FormField>
