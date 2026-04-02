@@ -649,14 +649,14 @@ export interface DatasetChartMeta {
   row_count: number;      // Nombre de lignes retournées
   columns: string[];      // Colonnes de la query
   dimensions: string[];   // Champs catégoriels sélectionnés
-  metrics: string[];      // Champs numériques sélectionnés
+  metrics: Record<string, string>;  // {alias: aggregation}
   generated_at: string;   // ISO timestamp
 }
 
 // Réponse de l'endpoint execute_chart
 export interface ExecuteChartResponse {
   chart: DatasetChart;    // Objet DatasetChart complet
-  data: Record<string, any>; // Tableau des lignes retournées
+  data: Record<string, any>[]; // Tableau des lignes retournées
   meta: DatasetChartMeta; // Métadonnées supplémentaires
 }
 

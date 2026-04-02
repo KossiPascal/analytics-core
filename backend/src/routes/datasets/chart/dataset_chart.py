@@ -328,20 +328,20 @@ def execute_chart(query_id: int):
         for rd in structure.rows_dimensions:
             field = cleanedFieldsMap.get(rd.field_id)
             if not field or field["field_type"] != "dimension":
-                raise ValueError(f"Unrecognize dimension: {rd.field_id}.")
+                continue
             row_dims.append(field["alias"] or field["field_name"])
 
         for cd in structure.cols_dimensions:
             field = cleanedFieldsMap.get(cd.field_id)
             if not field or field["field_type"] != "dimension":
-                raise ValueError(f"Unrecognize dimension: {cd.field_id}.")
+                continue
             col_dims.append(field["alias"] or field["field_name"])
 
         for m in structure.metrics:
             field = cleanedFieldsMap.get(m.field_id)
 
             if not field or field["field_type"] not in {"metric", "calculated_metric"}:
-                raise ValueError(f"Unrecognize metric : {m.field_id}.")
+                continue
 
             field_name = field["field_name"]
             aggregation = field["aggregation"]

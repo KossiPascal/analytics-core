@@ -1,16 +1,16 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Eye, FolderOpen, LayoutGrid, Palette, Settings, Tags } from 'lucide-react';
-import { TransposeButton } from '@components/charts/TransposeButton/TransposeButton';
-import { transposeChartData } from '@components/charts/transpose';
 import { RenderChartPreview } from '../RenderChartPreview/RenderChartPreview';
 import type { ChartVariant, VisualizationOptions } from '../types';
+import { ChartRenderDataProp, DatasetChart, DatasetQuery } from '@/models/dataset.models';
 import styles from './PreviewSection.module.css';
 
 interface PreviewSectionProps {
   previewChartType: ChartVariant;
   previewOptions: VisualizationOptions;
-  previewData: any[];
-  previewSeries: any[];
+  renderData: ChartRenderDataProp | null;
+  chart: DatasetChart;
+  query?: DatasetQuery;
   isEditing: boolean;
   isExecuting?: boolean;
   executeError?: string | null;
@@ -62,8 +62,9 @@ class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, Pr
 export const PreviewSection: React.FC<PreviewSectionProps> = ({
   previewChartType,
   previewOptions,
-  previewData,
-  previewSeries,
+  renderData,
+  chart,
+  query,
   isEditing,
   isExecuting = false,
   executeError = null,
@@ -75,19 +76,7 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
   onOpenStructure,
 }) => {
   const activeColors = previewOptions.colors;
-  const [isTransposed, setIsTransposed] = useState(false);
-
-  const handleToggleTranspose = useCallback(() => {
-    setIsTransposed(prev => !prev);
-  }, []);
-
-  const { data: displayData, series: displaySeries } = useMemo(() => {
-    if (!isTransposed) return { data: previewData, series: previewSeries };
-    if (['line', 'area', 'bar', 'stacked-bar', 'stacked-area', 'radar'].includes(previewChartType)) {
-      return transposeChartData(previewData, previewSeries, previewChartType === 'radar' ? 'subject' : 'name');
-    }
-    return { data: previewData, series: previewSeries };
-  }, [isTransposed, previewData, previewSeries, previewChartType]);
+  const hasData = !!renderData && renderData.rows.length > 0;
 
   return (
     <div className={styles.previewSection}>
@@ -97,10 +86,6 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           Aperçu
         </h3>
         <div className={styles.headerActions}>
-          <TransposeButton
-            isTransposed={isTransposed}
-            onToggle={handleToggleTranspose}
-          />
           <button type="button" className={styles.headerBtn} onClick={onOpenStructure} title="Structure du graphique" >
             <LayoutGrid size={16} />
             Structure
@@ -141,7 +126,7 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           <div className={styles.previewStateError}>
             <span>⚠ {executeError}</span>
           </div>
-        ) : previewData.length === 0 ? (
+        ) : !hasData ? (
           <div className={styles.previewState}>
             <span>Cliquez sur <strong>Exécuter</strong> pour afficher les données.</span>
           </div>
@@ -149,10 +134,9 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           <PreviewErrorBoundary>
             <RenderChartPreview
               chartType={previewChartType}
-              previewData={displayData}
-              previewSeries={displaySeries}
-              options={previewOptions}
-              isTransposed={isTransposed}
+              chart={chart}
+              query={query}
+              renderData={renderData!}
             />
           </PreviewErrorBoundary>
         )}

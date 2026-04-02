@@ -13,7 +13,7 @@ import {
 
 import type { ChartTypeOption, ChartVariant, VisualizationOptions } from './components/types';
 import styles from './ChatBuilderInterface.module.css';
-import { DatasetChart, Dataset, DatasetQuery, ExecuteChartResponse, ChartFilter, ChartDimension, ChartMetric } from '@/models/dataset.models';
+import { DatasetChart, Dataset, DatasetQuery, ExecuteChartResponse, ChartFilter, ChartDimension, ChartMetric, ChartRenderDataProp } from '@/models/dataset.models';
 import { Tenant } from '@/models/identity.model';
 import { PreviewSection } from './components/PreviewSection/PreviewSection';
 import { LayoutDataZone, LayoutState } from './components/LayoutDropZone/LayoutDropZone';
@@ -25,7 +25,6 @@ import { StructureStep } from '../components/chart-utils/StructureStep';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { Button } from '@/components/ui/Button/Button';
-import { CHART_COLORS } from '@components/charts/theme';
 import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
 import { chartService } from '@/services/dataset.service';
 
@@ -187,8 +186,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   // Preview snapshot (frozen at Exécuter click)
   const [previewChartType, setPreviewChartType] = useState<ChartVariant>('bar');
   const [previewOptions, setPreviewOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
-  const [previewData, setPreviewData] = useState<any[]>([]);
-  const [previewSeries, setPreviewSeries] = useState<any[]>([]);
+  const [renderData, setRenderData] = useState<ChartRenderDataProp | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executeError, setExecuteError] = useState<string | null>(null);
 
@@ -376,14 +374,9 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   }, []);
 
   // ── Execute & fetch real data ────────────────────────────────────────────────
-  const palette = useMemo(
-    () => previewOptions.colors ?? CHART_COLORS.primary,
-    [previewOptions.colors],
-  );
-
   const metricNames = useMemo(
-    () => layout.metrics.map(m => m.alias || m.name || `metric_${m.field_id}`),
-    [layout.metrics],
+    () => renderData?.header.metrics ?? layout.metrics.map(m => m.alias || `metric_${m.field_id}`),
+    [renderData, layout.metrics],
   );
 
   const handleRefreshPreview = useCallback(async () => {
@@ -395,35 +388,46 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     setIsExecuting(true);
     setExecuteError(null);
     try {
-      const res = await chartService.execute(queryId, _chart);
-      if (!res) throw new Error("Pas de réponse du serveur.");
-      const response = res.data as ExecuteChartResponse;
+      // CRUDService.post throws on error and returns T | undefined on success
+      const response = await chartService.execute(queryId, _chart);
+      if (!response) throw new Error("Pas de réponse du serveur.");
+
+      console.log('[ChartBuilder] response complète:', response);
+      console.log('[ChartBuilder] response.data (rows):', response.data);
+      console.log('[ChartBuilder] response.meta:', response.meta);
 
       // Snapshot chart type & options
       setPreviewChartType(chartType);
       setPreviewOptions({ ...options });
 
-      // Build series from meta.metrics
-      const metricKeys: string[] = response.meta?.metrics ?? [];
-      const series = metricKeys.map((key, i) => ({
-        dataKey: key,
-        name: key,
-        color: palette[i % palette.length],
-        type: undefined,
-      }));
-      setPreviewSeries(series);
+      // Build ChartRenderDataProp from backend response
+      const metricDict: Record<string, string> = response.meta?.metrics ?? {};
+      const metricKeys = Object.keys(metricDict);
+      const dimKeys: string[] = response.meta?.dimensions ?? [];
 
-      // data is an array of row objects
-      const rows: any[] = Array.isArray(response.data)
-        ? response.data
-        : Object.values(response.data ?? {});
-      setPreviewData(rows);
+      console.log('[ChartBuilder] metricKeys:', metricKeys);
+      console.log('[ChartBuilder] dimKeys:', dimKeys);
+
+      const rd: ChartRenderDataProp = {
+        header: {
+          header_rows: [metricKeys],
+          rows: dimKeys,
+          columns: [],
+          column_maps: {},
+          column_label_maps: {},
+          metrics: metricKeys,
+          _all_columns_order: metricKeys,
+        },
+        rows: response.data ?? [],
+      };
+      console.log('[ChartBuilder] renderData construit:', rd);
+      setRenderData(rd);
     } catch (err: any) {
       setExecuteError(err?.response?.data?.message ?? err?.message ?? "Erreur d'exécution.");
     } finally {
       setIsExecuting(false);
     }
-  }, [_chart, chartType, options, palette]);
+  }, [_chart, chartType, options]);
 
   // ── Theme apply ──────────────────────────────────────────────────────────────
   const handleApplyTheme = useCallback((colors: string[]) => {
@@ -452,8 +456,9 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
           <PreviewSection
             previewChartType={previewChartType}
             previewOptions={previewOptions}
-            previewData={previewData}
-            previewSeries={previewSeries}
+            renderData={renderData}
+            chart={_chart}
+            query={query}
             isEditing={isEditing}
             isExecuting={isExecuting}
             executeError={executeError}

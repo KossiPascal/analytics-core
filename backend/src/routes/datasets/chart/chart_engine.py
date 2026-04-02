@@ -1097,10 +1097,15 @@ class ChartPivotEngine:
         # stocker valeurs uniques de chaque dimension colonne
         column_levels = {c: set() for c in columns}
 
+        def _hashable(v):
+            if v is None or isinstance(v, (str, int, float, bool)):
+                return v
+            return str(v)
+
         # 1️⃣ aggregation
         for r in data:
-            row_key = tuple(r.get(d) for d in rows)
-            col_key = tuple(r.get(c) for c in columns)
+            row_key = tuple(_hashable(r.get(d)) for d in rows)
+            col_key = tuple(_hashable(r.get(c)) for c in columns)
 
             # stocker les valeurs distinctes par colonne
             for i, c in enumerate(columns):
