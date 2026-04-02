@@ -130,26 +130,8 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange, queries }: Opti
 
           {/* ── GÉNÉRAL ── */}
           {activeTab === "general" && (
-            <div className={styles.fields}>
-              <div className={styles.row}>
-                <FormInput label="Largeur" value={options().width ?? 600} onChange={e => updateOption("width", e.target.value)} />
-                <FormInput label="Hauteur" value={options().height ?? 400} onChange={e => updateOption("height", e.target.value)} />
-              </div>
-            </div>
-          )}
-
-          {/* ── AFFICHAGE ── */}
-          {activeTab === "display" && (
             <>
-              <div className={styles.fields}>
-                <FormSwitch label="Afficher la légende" checked={options().show_legend ?? true} onChange={e => updateOption("show_legend", e.target.checked)} />
-                <FormSwitch label="Afficher l'infobulle" checked={options().show_tooltip ?? true} onChange={e => updateOption("show_tooltip", e.target.checked)} />
-                <FormSwitch label="Afficher la grille" checked={options().show_grid ?? true} onChange={e => updateOption("show_grid", e.target.checked)} />
-                <FormSwitch label="Afficher les labels" checked={options().show_labels ?? false} onChange={e => updateOption("show_labels", e.target.checked)} />
-                <FormSwitch label="Responsive" checked={options().responsive ?? true} onChange={e => updateOption("responsive", e.target.checked)} />
-              </div>
-
-              {/* ── Pivot section (collapsible) ─────────────────── */}
+              {/* ── Pivot section (collapsible) ── */}
               <div className={styles.pivotSection}>
                 <div
                   className={styles.pivotHeader}
@@ -164,92 +146,28 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange, queries }: Opti
                     className={`${styles.pivotChevron} ${pivotOpen ? styles.pivotChevronOpen : ""}`}
                   />
                 </div>
-
-                <div
-                  className={`${styles.pivotContent} ${pivotOpen ? styles.pivotContentOpen : ""}`}
-                >
+                <div className={`${styles.pivotContent} ${pivotOpen ? styles.pivotContentOpen : ""}`}>
                   <div className={styles.pivotInner}>
-                    {/* Switches row 1 */}
                     <div className={styles.pivotRow}>
-                      <FormSwitch
-                        label="Rows totals"
-                        checked={localChart?.structure?.pivot?.rows_total}
-                        onChange={(e) =>
-                          updateChartPivot("rows_total", e.target.checked)
-                        }
-                      />
-                      <FormSwitch
-                        label="Columns totals"
-                        checked={localChart?.structure?.pivot?.cols_total}
-                        onChange={(e) =>
-                          updateChartPivot("cols_total", e.target.checked)
-                        }
-                      />
-                      <FormSwitch
-                        label="Rows subtotals"
-                        checked={localChart?.structure?.pivot?.rows_subtotal}
-                        onChange={(e) =>
-                          updateChartPivot("rows_subtotal", e.target.checked)
-                        }
-                      />
-                      <FormSwitch
-                        label="Columns subtotals"
-                        checked={localChart?.structure?.pivot?.cols_subtotal}
-                        onChange={(e) =>
-                          updateChartPivot("cols_subtotal", e.target.checked)
-                        }
-                      />
+                      <FormSwitch label="Rows totals" checked={localChart?.structure?.pivot?.rows_total} onChange={(e) => updateChartPivot("rows_total", e.target.checked)} />
+                      <FormSwitch label="Columns totals" checked={localChart?.structure?.pivot?.cols_total} onChange={(e) => updateChartPivot("cols_total", e.target.checked)} />
+                      <FormSwitch label="Rows subtotals" checked={localChart?.structure?.pivot?.rows_subtotal} onChange={(e) => updateChartPivot("rows_subtotal", e.target.checked)} />
+                      <FormSwitch label="Columns subtotals" checked={localChart?.structure?.pivot?.cols_subtotal} onChange={(e) => updateChartPivot("cols_subtotal", e.target.checked)} />
                     </div>
-
-                    {/* Switches row 2 + fill value */}
                     <div className={styles.pivotRow}>
-                      <FormSwitch
-                        label="Active"
-                        checked={localChart?.structure?.pivot?.acitve}
-                        onChange={(e) =>
-                          updateChartPivot("acitve", e.target.checked)
-                        }
-                      />
-                      <FormSwitch
-                        label="Sort desc"
-                        checked={localChart?.structure?.pivot?.sort_desc}
-                        onChange={(e) =>
-                          updateChartPivot("sort_desc", e.target.checked)
-                        }
-                      />
-                      <FormInput
-                        value={localChart?.structure?.pivot?.fill_value ?? 0}
-                        type="number"
-                        onChange={(e) =>
-                          updateChartPivot("fill_value", e.target.value)
-                        }
-                      />
+                      <FormSwitch label="Active" checked={localChart?.structure?.pivot?.acitve} onChange={(e) => updateChartPivot("acitve", e.target.checked)} />
+                      <FormSwitch label="Sort desc" checked={localChart?.structure?.pivot?.sort_desc} onChange={(e) => updateChartPivot("sort_desc", e.target.checked)} />
+                      <FormInput value={localChart?.structure?.pivot?.fill_value ?? 0} type="number" onChange={(e) => updateChartPivot("fill_value", e.target.value)} />
                     </div>
-
-                    {/* Selects row */}
                     <div className={styles.pivotRowWide}>
                       <div className={styles.pivotSelectWrap}>
                         <FormMultiSelect
                           label="percent_metrics"
                           value={localChart?.structure?.pivot?.percent_metrics ?? []}
-                          options={
-                            structure.metrics?.map((m) => {
-                              const label =
-                                m.alias ??
-                                fields.find((f) => f.id === m.field_id)?.name ??
-                                "";
-                              return { value: m.field_id, label };
-                            }) ?? []
-                          }
+                          options={structure.metrics?.map((m) => ({ value: m.field_id, label: m.alias ?? fields.find((f) => f.id === m.field_id)?.name ?? "" })) ?? []}
                           onChange={(values) => {
                             const vals = values?.filter(Boolean) || [];
-                            const metVals = (structure.metrics ?? []).filter(
-                              (d) => vals.includes(d.field_id)
-                            );
-                            updateChartPivot(
-                              "percent_metrics",
-                              metVals.map((m) => m.field_id)
-                            );
+                            updateChartPivot("percent_metrics", (structure.metrics ?? []).filter((d) => vals.includes(d.field_id)).map((m) => m.field_id));
                           }}
                           placeholder="percent_metrics"
                         />
@@ -258,15 +176,7 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange, queries }: Opti
                         <FormSelect
                           label="sort_metric"
                           value={localChart?.structure?.pivot?.sort_metric}
-                          options={
-                            structure.metrics?.map((m) => {
-                              const label =
-                                m.alias ??
-                                fields.find((f) => f.id === m.field_id)?.name ??
-                                "";
-                              return { value: m.field_id, label };
-                            }) ?? []
-                          }
+                          options={structure.metrics?.map((m) => ({ value: m.field_id, label: m.alias ?? fields.find((f) => f.id === m.field_id)?.name ?? "" })) ?? []}
                           onChange={(val) => updateChartPivot("sort_metric", val)}
                           placeholder="sort_metric"
                         />
@@ -275,10 +185,7 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange, queries }: Opti
                         <FormSelect
                           label="top_n"
                           value={localChart?.structure?.pivot?.top_n}
-                          options={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => ({
-                            value: d,
-                            label: `${d}`,
-                          }))}
+                          options={[1,2,3,4,5,6,7,8,9].map((d) => ({ value: d, label: `${d}` }))}
                           onChange={(val) => updateChartPivot("top_n", val)}
                           placeholder="top_n"
                         />
@@ -288,6 +195,21 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange, queries }: Opti
                 </div>
               </div>
             </>
+          )}
+
+          {/* ── AFFICHAGE ── */}
+          {activeTab === "display" && (
+            <div className={styles.fields}>
+              <div className={styles.row}>
+                <FormInput label="Largeur" value={options().width ?? 600} onChange={e => updateOption("width", e.target.value)} />
+                <FormInput label="Hauteur" value={options().height ?? 400} onChange={e => updateOption("height", e.target.value)} />
+              </div>
+              <FormSwitch label="Afficher la légende" checked={options().show_legend ?? true} onChange={e => updateOption("show_legend", e.target.checked)} />
+              <FormSwitch label="Afficher l'infobulle" checked={options().show_tooltip ?? true} onChange={e => updateOption("show_tooltip", e.target.checked)} />
+              <FormSwitch label="Afficher la grille" checked={options().show_grid ?? true} onChange={e => updateOption("show_grid", e.target.checked)} />
+              <FormSwitch label="Afficher les labels" checked={options().show_labels ?? false} onChange={e => updateOption("show_labels", e.target.checked)} />
+              <FormSwitch label="Responsive" checked={options().responsive ?? true} onChange={e => updateOption("responsive", e.target.checked)} />
+            </div>
           )}
 
           {/* ── AXES & STYLE ── */}
