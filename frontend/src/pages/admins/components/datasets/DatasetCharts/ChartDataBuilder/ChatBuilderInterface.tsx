@@ -23,6 +23,8 @@ import { ThemeModal } from './components/ThemeModal/ThemeModal';
 import { RenamesOptionsModal } from '../components/chart-utils/RenamesOptionsModal';
 import { StructureStep } from '../components/chart-utils/StructureStep';
 import { Modal } from '@/components/ui/Modal/Modal';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { Button } from '@/components/ui/Button/Button';
 import { CHART_COLORS } from '@components/charts/theme';
 import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
 
@@ -97,6 +99,59 @@ const toChartOptions = (
   };
 };
 
+/* ── Modal Titre / Sous-titre / Description ──────────────────── */
+const MetaModal = ({
+  isOpen, onClose, chart, onChange,
+}: { isOpen: boolean; onClose: () => void; chart: DatasetChart; onChange: (c: DatasetChart) => void }) => {
+  const [localChart, setLocalChart] = useState<DatasetChart>(chart);
+
+  useEffect(() => {
+    if (isOpen) setLocalChart(chart);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Informations du graphique"
+      size="md"
+      showCloseButton={false}
+      closeOnEscape
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <FormInput
+          label="Titre *"
+          value={localChart.options?.title ?? ''}
+          onChange={(e) => setLocalChart(prev => ({
+            ...prev,
+            name: e.target.value,
+            options: { ...prev.options, title: e.target.value },
+          }))}
+          placeholder="Titre du graphique"
+          required
+        />
+        <FormInput
+          label="Sous-titre"
+          value={localChart.options?.subtitle ?? ''}
+          onChange={(e) => setLocalChart(prev => ({ ...prev, options: { ...prev.options, subtitle: e.target.value } }))}
+          placeholder="Sous-titre (optionnel)"
+        />
+        <FormInput
+          label="Description"
+          value={localChart.description ?? ''}
+          onChange={(e) => setLocalChart(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Description (optionnel)"
+        />
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingTop: '0.25rem', borderTop: '1px solid #e2e8f0' }}>
+          <Button size="sm" variant="outline" onClick={onClose}>Annuler</Button>
+          <Button size="sm" disabled={!localChart.name?.trim()} onClick={() => { onChange(localChart); onClose(); }}>Appliquer</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 interface ChatBuilderInterfaceProps {
   chart: DatasetChart;
   tenants: Tenant[];
@@ -119,6 +174,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [isRenamesModalOpen, setIsRenamesModalOpen] = useState(false);
   const [isStructureModalOpen, setIsStructureModalOpen] = useState(false);
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
 
   // Visualization state
   const [chartType, setChartType] = useState<ChartVariant>((chart.type as ChartVariant) || 'bar');
@@ -416,7 +472,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
             onOpenOptions={() => setIsOptionsModalOpen(true)}
             onOpenRenames={() => setIsRenamesModalOpen(true)}
             onOpenStructure={() => setIsStructureModalOpen(true)}
-            onOpenSaved={() => {}}
+            onOpenSaved={() => setIsMetaModalOpen(true)}
             onSave={() => {}}
           />
         </div>
@@ -470,6 +526,16 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
           }}
         />
       </Modal>
+
+      <MetaModal
+        isOpen={isMetaModalOpen}
+        onClose={() => setIsMetaModalOpen(false)}
+        chart={_chart}
+        onChange={(updated) => {
+          setChart(updated);
+          onChange?.(updated);
+        }}
+      />
     </>
   );
 };
