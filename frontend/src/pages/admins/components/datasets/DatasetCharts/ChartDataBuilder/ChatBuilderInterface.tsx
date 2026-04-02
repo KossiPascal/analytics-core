@@ -401,9 +401,15 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       setPreviewOptions({ ...options });
 
       // Build ChartRenderDataProp from backend response
-      const metricDict: Record<string, string> = response.meta?.metrics ?? {};
-      const metricKeys = Object.keys(metricDict);
-      const dimKeys: string[] = response.meta?.dimensions ?? [];
+      // dimensions may be strings or objects {alias, field_name, ...} depending on backend version
+      const rawDims: any[] = response.meta?.dimensions ?? [];
+      const dimKeys: string[] = rawDims.map((d: any) =>
+        typeof d === 'string' ? d : (d.alias || d.field_name || String(d))
+      );
+      // derive metric keys = all returned columns that are not dimension columns
+      const allColumns: string[] = response.meta?.columns ?? [];
+      const dimSet = new Set(dimKeys);
+      const metricKeys = allColumns.filter(c => !dimSet.has(c));
 
       console.log('[ChartBuilder] metricKeys:', metricKeys);
       console.log('[ChartBuilder] dimKeys:', dimKeys);
