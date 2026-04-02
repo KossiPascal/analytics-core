@@ -27,6 +27,7 @@ import { FormInput } from '@/components/forms/FormInput/FormInput';
 import { Button } from '@/components/ui/Button/Button';
 import { CHART_COLORS } from '@components/charts/theme';
 import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
+import { chartService } from '@/services/dataset.service';
 
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'bar',       name: 'Barres',           icon: <BarChart3 size={20} />,  description: 'Comparaison de valeurs',           category: 'comparison' },
@@ -186,6 +187,10 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   // Preview snapshot (frozen at Exécuter click)
   const [previewChartType, setPreviewChartType] = useState<ChartVariant>('bar');
   const [previewOptions, setPreviewOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [previewSeries, setPreviewSeries] = useState<any[]>([]);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executeError, setExecuteError] = useState<string | null>(null);
 
   // Auto-refresh when chart type changes
   const prevChartTypeRef = useRef<ChartVariant>(chartType);
@@ -370,7 +375,7 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     });
   }, []);
 
-  // ── Preview data generation (same approach as DashboardBuilder) ──────────────
+  // ── Execute & fetch real data ────────────────────────────────────────────────
   const palette = useMemo(
     () => previewOptions.colors ?? CHART_COLORS.primary,
     [previewOptions.colors],
@@ -381,62 +386,44 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     [layout.metrics],
   );
 
-  const previewData = useMemo(() => {
-    if (metricNames.length === 0) return [];
+  const handleRefreshPreview = useCallback(async () => {
+    const queryId = _chart.query_id;
+    if (!queryId) {
+      setExecuteError("Aucune requête sélectionnée.");
+      return;
+    }
+    setIsExecuting(true);
+    setExecuteError(null);
+    try {
+      const res = await chartService.execute(queryId, _chart);
+      if (!res) throw new Error("Pas de réponse du serveur.");
+      const response = res.data as ExecuteChartResponse;
 
-    const flat = ['pie', 'donut', 'kpi', 'gauge'];
-    if (flat.includes(previewChartType)) {
-      return metricNames.map((name, i) => ({
-        name,
-        value: Math.floor(Math.random() * 500) + 100,
+      // Snapshot chart type & options
+      setPreviewChartType(chartType);
+      setPreviewOptions({ ...options });
+
+      // Build series from meta.metrics
+      const metricKeys: string[] = response.meta?.metrics ?? [];
+      const series = metricKeys.map((key, i) => ({
+        dataKey: key,
+        name: key,
         color: palette[i % palette.length],
+        type: undefined,
       }));
+      setPreviewSeries(series);
+
+      // data is an array of row objects
+      const rows: any[] = Array.isArray(response.data)
+        ? response.data
+        : Object.values(response.data ?? {});
+      setPreviewData(rows);
+    } catch (err: any) {
+      setExecuteError(err?.response?.data?.message ?? err?.message ?? "Erreur d'exécution.");
+    } finally {
+      setIsExecuting(false);
     }
-
-    if (previewChartType === 'radar') {
-      const radarMetrics = metricNames.slice(0, 2);
-      return ['Qualité', 'Accès', 'Délai', 'Suivi', 'Impact'].map((subject, index) => {
-        const entry: Record<string, unknown> = { subject };
-        (radarMetrics.length > 0 ? radarMetrics : ['Valeur']).forEach((name, metricIndex) => {
-          entry[name] = 40 + ((index + 1) * 13) + (metricIndex * 11);
-        });
-        return entry;
-      });
-    }
-
-    if (previewChartType === 'heatmap') {
-      return ['Lomé', 'Kara', 'Sokodé'].map((row) => ({
-        row,
-        jan: Math.floor(Math.random() * 20) + 5,
-        fev: Math.floor(Math.random() * 20) + 5,
-        mar: Math.floor(Math.random() * 20) + 5,
-      }));
-    }
-
-    return MONTHS.map(month => {
-      const entry: Record<string, unknown> = { name: month };
-      metricNames.forEach(name => {
-        entry[name] = Math.floor(Math.random() * 300) + 50;
-      });
-      return entry;
-    });
-  }, [previewChartType, metricNames, palette]);
-
-  const previewSeries = useMemo(
-    () => metricNames.map((name, i) => ({
-      dataKey: name,
-      name,
-      color: palette[i % palette.length],
-      type: undefined,
-    })),
-    [metricNames, palette],
-  );
-
-  // ── Refresh ──────────────────────────────────────────────────────────────────
-  const handleRefreshPreview = useCallback(() => {
-    setPreviewChartType(chartType);
-    setPreviewOptions({ ...options });
-  }, [chartType, options]);
+  }, [_chart, chartType, options, palette]);
 
   // ── Theme apply ──────────────────────────────────────────────────────────────
   const handleApplyTheme = useCallback((colors: string[]) => {
@@ -468,6 +455,8 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
             previewData={previewData}
             previewSeries={previewSeries}
             isEditing={isEditing}
+            isExecuting={isExecuting}
+            executeError={executeError}
             onOpenTheme={() => setIsThemeModalOpen(true)}
             onOpenOptions={() => setIsOptionsModalOpen(true)}
             onOpenRenames={() => setIsRenamesModalOpen(true)}

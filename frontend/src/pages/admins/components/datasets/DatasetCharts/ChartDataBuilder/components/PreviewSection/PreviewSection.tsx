@@ -12,6 +12,8 @@ interface PreviewSectionProps {
   previewData: any[];
   previewSeries: any[];
   isEditing: boolean;
+  isExecuting?: boolean;
+  executeError?: string | null;
   onSave: () => void;
   onOpenTheme: () => void;
   onOpenSaved: () => void;
@@ -63,6 +65,8 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
   previewData,
   previewSeries,
   isEditing,
+  isExecuting = false,
+  executeError = null,
   onSave,
   onOpenTheme,
   onOpenSaved,
@@ -128,15 +132,30 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
       </div>
 
       <div className={styles.previewContent}>
-        <PreviewErrorBoundary>
-          <RenderChartPreview
-            chartType={previewChartType}
-            previewData={displayData}
-            previewSeries={displaySeries}
-            options={previewOptions}
-            isTransposed={isTransposed}
-          />
-        </PreviewErrorBoundary>
+        {isExecuting ? (
+          <div className={styles.previewState}>
+            <div className={styles.spinner} />
+            <span>Exécution en cours…</span>
+          </div>
+        ) : executeError ? (
+          <div className={styles.previewStateError}>
+            <span>⚠ {executeError}</span>
+          </div>
+        ) : previewData.length === 0 ? (
+          <div className={styles.previewState}>
+            <span>Cliquez sur <strong>Exécuter</strong> pour afficher les données.</span>
+          </div>
+        ) : (
+          <PreviewErrorBoundary>
+            <RenderChartPreview
+              chartType={previewChartType}
+              previewData={displayData}
+              previewSeries={displaySeries}
+              options={previewOptions}
+              isTransposed={isTransposed}
+            />
+          </PreviewErrorBoundary>
+        )}
       </div>
     </div>
   );

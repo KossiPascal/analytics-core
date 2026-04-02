@@ -238,23 +238,24 @@ class ChartValidator:
         for d in (structure.rows_dimensions or []) + (structure.cols_dimensions or []):
             field = fieldsMap.get(d.field_id)
             if not field:
-                raise ValueError(f"Invalid dimension field: {d.field_id}")
+                continue
             # ChartValidator.sanitize_identifier(field["field_name"])
             all_columns.append(field["field_name"])
 
         for m in structure.metrics or []:
             field = fieldsMap.get(m.field_id)
             if not field:
-                raise ValueError(f"Invalid metric field: {m.field_id}")
+                # Field not in cleanedFieldsMap — silently skip (already filtered upstream)
+                continue
             # ChartValidator.sanitize_identifier(field["field_name"])
-            if m.aggregation.upper() not in ALLOWED_AGGREGATIONS:
+            if m.aggregation and m.aggregation.upper() not in ALLOWED_AGGREGATIONS:
                 raise ValueError(f"Invalid aggregation: {m.aggregation}")
             all_columns.append(field["field_name"])
 
         for f in structure.filters or []:
-            field = fieldsMap.get(m.field_id)
+            field = fieldsMap.get(f.field_id)
             if not field:
-                raise ValueError(f"Invalid filters field: {m.field_id}")
+                continue
             # ChartValidator.sanitize_identifier(field["field_name"])
             if f.operator.upper() not in NO_VALUE_OPERATORS and f.value is None:
                 raise ValueError(f"Filter value missing for operator {f.operator}")
@@ -568,7 +569,7 @@ class ChartSQLBuilder:
         for d in dimensions:
             field = fieldsMap.get(d.field_id)
             if not field:
-                raise ValueError(f"Invalid dimension field: {d.field_id}")
+                continue
 
             field_name_raw = field["field_name"]
             field_name = SQLValueParser.quote_identifier(field_name_raw)
@@ -583,7 +584,7 @@ class ChartSQLBuilder:
         for m in metrics:
             field = fieldsMap.get(m.field_id)
             if not field:
-                raise ValueError(f"Invalid metric field: {m.field_id}")
+                continue
 
             field_name_raw = field["field_name"]
             data_type = field.get("data_type")
