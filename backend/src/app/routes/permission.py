@@ -2,8 +2,8 @@
 from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, g, request, jsonify
-from backend.src.app.models.user import Permission
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.app.models.b_user import Permission
+from backend.src.modules.analytics.logger import get_backend_logger
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
 from backend.src.app.configs.extensions import db
 
@@ -96,10 +96,12 @@ def delete_permission(permission_id: int):
         perm:Permission = Permission.query.get(permission_id)
         if not perm or perm.deleted:
             raise BadRequest(f"Permission with id={permission_id} not found", 404)
-        perm.is_active = False
-        perm.deleted = True
-        perm.deleted_at = datetime.now(timezone.utc)
-        perm.deleted_by=currentUserId()
+        # perm.is_active = False
+        # perm.deleted = True
+        # perm.deleted_at = datetime.now(timezone.utc)
+        # perm.deleted_by=
+
+        perm.soft_delete(currentUserId())
 
         db.session.commit()
         return jsonify({"message": "Permission deleted"}), 200

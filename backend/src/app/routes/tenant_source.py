@@ -3,9 +3,9 @@ from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.app.configs.extensions import db
-from backend.src.app.models.tenant import CHT_SOURCE_TYPES, CountryDatasource, TargetTypes
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.app.models.x_worker import CHT_SOURCE_TYPES, HostLinks, TargetTypes
+from backend.src.modules.analytics.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -14,7 +14,7 @@ from workers.couchdb.models import CreateTableModel
 
 logger = get_backend_logger(__name__)
 
-bp = Blueprint("identities_country_datasource", __name__, url_prefix="/api/identities/tenant-sources")
+bp = Blueprint("identities_host_links", __name__, url_prefix="/api/identities/tenant-sources")
 
 def create_source_tables(target:str, source_name:str):
     if target == TargetTypes.COUCHDB.value:
@@ -24,19 +24,20 @@ def create_source_tables(target:str, source_name:str):
         for source_type in CHT_SOURCE_TYPES:
             ModelMgr.create_source_table(source_type.localdb)
 
+
 # ===================== TENANT SOURCES =====================
 @bp.get("")
 @require_auth
-def list_country_datasource():
+def list_host_links():
     try:
         tenant_id = request.args.get("tenant_id", type=int)
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
         
-        sources: List[CountryDatasource] = CountryDatasource.query.filter(
-            CountryDatasource.deleted==False, 
-            CountryDatasource.tenant_id==tenant_id
-        ).order_by(CountryDatasource.created_at).all()
+        sources: List[HostLinks] = HostLinks.query.filter(
+            HostLinks.deleted==False, 
+            HostLinks.tenant_id==tenant_id
+        ).order_by(HostLinks.created_at).all()
 
         return jsonify([t.to_dict() for t in sources if t is not None]), 200
     except Exception as e:
@@ -52,13 +53,13 @@ def get_tenant_source(source_id: int):
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
         
-        source:CountryDatasource = CountryDatasource.query.filter(
-            CountryDatasource.deleted==False, 
-            CountryDatasource.tenant_id==tenant_id,
-            CountryDatasource.id==source_id,
+        source:HostLinks = HostLinks.query.filter(
+            HostLinks.deleted==False, 
+            HostLinks.tenant_id==tenant_id,
+            HostLinks.id==source_id,
         ).first()
         if not source:
-            raise BadRequest(f"CountryDatasource with id={source_id} not found", 404)
+            raise BadRequest(f"HostLinks with id={source_id} not found", 404)
         
         return jsonify(source.to_dict()), 200
     
@@ -75,13 +76,13 @@ def upsert_tenant_source_tables(source_id: int):
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
         
-        source:CountryDatasource = CountryDatasource.query.filter(
-            CountryDatasource.deleted==False, 
-            CountryDatasource.tenant_id==tenant_id,
-            CountryDatasource.id==source_id,
+        source:HostLinks = HostLinks.query.filter(
+            HostLinks.deleted==False, 
+            HostLinks.tenant_id==tenant_id,
+            HostLinks.id==source_id,
         ).first()
         if not source:
-            raise BadRequest(f"CountryDatasource with id={source_id} not found", 404)
+            raise BadRequest(f"HostLinks with id={source_id} not found", 404)
         
         create_source_tables(source.target, source.name)
 
@@ -104,7 +105,7 @@ def create_tenant_source():
             if not data.get(field):
                 raise BadRequest(f"{field} is required", 400)
 
-        existing = CountryDatasource.query.filter_by(given_host=given_host).first()
+        existing = HostLinks.query.filter_by(given_host=given_host).first()
         if existing:
             raise BadRequest(f"{given_host} already exists", 409)
 
@@ -118,7 +119,7 @@ def create_tenant_source():
         if not target in targets:
             raise BadRequest(f"target must be one of : {', '.join(targets)}", 409)
 
-        source = CountryDatasource(
+        source = HostLinks(
             name=name,
             https=https,
             given_host=given_host,
@@ -137,7 +138,7 @@ def create_tenant_source():
 
         db.session.add(source)
         db.session.commit()
-        return jsonify({"message": "CountryDatasource created", "source_id": source.id}), 201
+        return jsonify({"message": "HostLinks created", "source_id": source.id}), 201
     except Exception as e:
         db.session.rollback()
         logger.error(f"Create tenant error: {str(e)}")
@@ -154,15 +155,15 @@ def update_tenant_source(source_id: int):
         given_host = data.get("host")
         https=bool(data.get("https", True))
 
-        query = CountryDatasource.query.filter(
-            CountryDatasource.id == source_id,
-            CountryDatasource.tenant_id == tenant_id,
+        query = HostLinks.query.filter(
+            HostLinks.id == source_id,
+            HostLinks.tenant_id == tenant_id,
         )
 
-        conf: CountryDatasource = query.filter(CountryDatasource.deleted == False).first()
+        conf: HostLinks = query.filter(HostLinks.deleted == False).first()
 
         if not conf:
-            raise BadRequest(f"CountryDatasource with id={source_id} not found", 404)
+            raise BadRequest(f"HostLinks with id={source_id} not found", 404)
 
         # Champs obligatoires en update
         if not given_host:
@@ -170,7 +171,7 @@ def update_tenant_source(source_id: int):
 
         # Vérification unicité host
         if given_host != conf.given_host:
-            existing = query.filter(CountryDatasource.given_host == given_host,).first()
+            existing = query.filter(HostLinks.given_host == given_host,).first()
             if existing:
                 raise BadRequest(f"{given_host} already exists", 409)
 
@@ -210,7 +211,7 @@ def update_tenant_source(source_id: int):
 
         db.session.commit()
 
-        return jsonify({"message": "CountryDatasource updated"}), 200
+        return jsonify({"message": "HostLinks updated"}), 200
 
     except SQLAlchemyError as e:
         print(e)
@@ -222,16 +223,16 @@ def update_tenant_source(source_id: int):
 @require_auth
 def delete_tenant_source(source_id: int):
     try:
-        source:CountryDatasource = CountryDatasource.query.get(source_id)
+        source:HostLinks = HostLinks.query.get(source_id)
         if not source or source.deleted:
-            raise BadRequest(f"CountryDatasource with id={source_id} not found", 404)
+            raise BadRequest(f"HostLinks with id={source_id} not found", 404)
         source.is_active = False
         source.deleted = True
         source.deleted_at = datetime.now(timezone.utc)
         source.deleted_by=currentUserId()
         # source.deleted_by = g.current_user.id
         db.session.commit()
-        return jsonify({"message": "CountryDatasource deleted"}), 200
+        return jsonify({"message": "HostLinks deleted"}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
         raise BadRequest("Failed to delete tenant", 500)
@@ -241,12 +242,12 @@ def delete_tenant_source(source_id: int):
 @require_auth
 def delete_tenant_source_forever(source_id: int):
     try:
-        source:CountryDatasource = CountryDatasource.query.get(source_id)
+        source:HostLinks = HostLinks.query.get(source_id)
         if not source or source.deleted:
-            raise BadRequest(f"CountryDatasource with id={source_id} not found", 404)
+            raise BadRequest(f"HostLinks with id={source_id} not found", 404)
         source.deleted_by = g.current_user.id
         db.session.commit()
-        return jsonify({"message": "CountryDatasource deleted"}), 200
+        return jsonify({"message": "HostLinks deleted"}), 200
     except SQLAlchemyError as e:
         db.session.rollback()
         raise BadRequest("Failed to delete tenant", 500)

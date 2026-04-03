@@ -136,7 +136,7 @@ export const taskService = {
 // ----------------- INDICATOR -----------------
 const indicators = new CRUDService("/indicators");
 export const indicatorService = {
-  list: (tenant_id?: number, okr_id?: number) => indicators.all<Indicator>(``, { options: { params: { tenant_id, okr_id } } }),
+  list: (tenant_id?: number, id?: number) => indicators.all<Indicator>(``, { options: { params: { tenant_id, id } } }),
   get: (tenant_id: number, id: number) => indicators.all<Indicator>(`/${id}`, { options: { params: { tenant_id } } }),
   create: (data: Indicator) => indicators.create("", data),
   update: (id: number, data: Indicator) => indicators.update("", id, data),
@@ -146,7 +146,7 @@ export const indicatorService = {
 // ----------------- OUTCOME -----------------
 const outcomes = new CRUDService("/outcomes");
 export const outcomeService = {
-  list: (tenant_id?: number, okr_id?: number) => outcomes.all<Outcome>(``, { options: { params: { tenant_id, okr_id } } }),
+  list: (tenant_id?: number, id?: number) => outcomes.all<Outcome>(``, { options: { params: { tenant_id, id } } }),
   get: (tenant_id: number, id: number) => outcomes.all<Outcome>(`/${id}`, { options: { params: { tenant_id } } }),
   create: (data: Outcome) => outcomes.create("", data),
   update: (id: number, data: Outcome) => outcomes.update("", id, data),

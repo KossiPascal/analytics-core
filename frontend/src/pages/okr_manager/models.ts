@@ -119,7 +119,7 @@ export interface OkrProject {
   tenant_id: ID;
   program_id: ID;
   team_id: ID;
-  okr_team_id: ID;
+  team_id: ID;
   name: string;
   description: string;
   start_date?: DateType;
@@ -133,7 +133,7 @@ export interface OkrProject {
   tenant?: Tenant;
   program?: OkrProgram;
   team?: Team;
-  okr_team?: OkrTeamScope;
+  team?: OkrTeamScope;
 
   fundings?: Funding[];
   activities?: OkrActivity[];
@@ -174,14 +174,14 @@ export interface OkrTeamScope {
   id: ID;
   tenant_id: ID;
   team_id: ID;
-  okr_global_id: ID;
+  global_id: ID;
   name: string;
   description: string;
   status: OkrGlobalStatusEnum;
 
   tenant?: Tenant;
   team?: Team;
-  okr_global?: OkrGlobal;
+  global?: OkrGlobal;
 
   initiatives?: OkrInitiative[];
   projects?: OkrProject[];
@@ -191,7 +191,7 @@ export interface OkrTeamScope {
 export interface OkrInitiative {
   id: ID;
   tenant_id: ID;
-  okr_team_id: ID;
+  team_id: ID;
   name: string;
   description: string;
   start_date: DateType;
@@ -201,7 +201,7 @@ export interface OkrInitiative {
   status: ProjectStatusEnum;
 
   tenant?: Tenant;
-  okr_team?: OkrTeamScope;
+  team?: OkrTeamScope;
   objectives?: OkrObjective[];
 }
 
@@ -209,7 +209,7 @@ export interface OkrObjective {
   id: ID;
   tenant_id: ID;
   initiative_id: ID | null;
-  okr_team_id: ID | null;
+  team_id: ID | null;
   name: string;
   description: string;
   start_date: DateType;
@@ -218,10 +218,10 @@ export interface OkrObjective {
 
   tenant?: Tenant;
   initiative?: OkrInitiative;
-  okr_team?: OkrTeamScope;
+  team?: OkrTeamScope;
 
   project_objectives?: OkrProjectObjective[]
-  key_results?: OkrKeyResult[];
+  keyresults?: OkrKeyResult[];
 }
 
 export interface OkrProjectObjective {
@@ -255,24 +255,24 @@ export interface OkrKeyResult {
   tenant?: Tenant;
   objective?: OkrObjective;
 
-  events?: OkrKREvent[];
-  activity_links?: OkrActivityLinkKR[];
+  events?: KeyresultEvent[];
+  activity_keyresults?: OkrActivityKeyResult[];
 }
 
-export interface OkrKREvent {
+export interface KeyresultEvent {
   id: ID;
   tenant_id: ID;
-  key_result_id: ID;
+  keyresult_id: ID;
   value: number;
   date?: DateType;
   source?: string | null;
 
   tenant?: Tenant;
-  key_result?: OkrKeyResult;
+  keyresult?: OkrKeyResult;
 }
 
 // ACTIVITIES
-export interface OkrActivity {
+export interface Activity {
   id: ID;
   tenant_id: ID;
   project_id?: ID | null;
@@ -295,12 +295,12 @@ export interface OkrActivity {
   project?: OkrProject;
   team?: Team;
 
-  owners?: OkrActivityOwner[];
-  kr_links?: OkrActivityLinkKR[];
+  owners?: ActivityOwner[];
+  kr_links?: OkrActivityKeyResult[];
   indicator_values?: IndicatorValue[];
 }
 
-export interface OkrActivityOwner {
+export interface ActivityOwner {
   id: ID;
   activity_id: ID;
   user_id: ID;
@@ -309,15 +309,15 @@ export interface OkrActivityOwner {
   user?: User;
 }
 
-export interface OkrActivityLinkKR {
+export interface OkrActivityKeyResult {
   id: ID;
   activity_id: ID;
-  key_result_id: ID;
+  keyresult_id: ID;
   impact?: number;
   weight?: number;
 
   activity?: OkrActivity;
-  key_result?: OkrKeyResult;
+  keyresult?: OkrKeyResult;
 }
 
 export interface OkrActivityDependency {
@@ -333,7 +333,7 @@ export interface OkrProjectTask {
   tenant_id: ID;
   project_id: ID;
   assigned_to_id?: ID | null;
-  key_result_id?: ID | null;
+  keyresult_id?: ID | null;
   parent_id?: ID | null;
 
   name: string;
@@ -346,7 +346,7 @@ export interface OkrProjectTask {
   tenant?: Tenant;
   project?: OkrProject;
   assigned_to?: User;
-  key_result?: OkrKeyResult;
+  keyresult?: OkrKeyResult;
   parent_task?: OkrProjectTask;
   subtasks?: OkrProjectTask[];
 }
@@ -393,7 +393,7 @@ export interface ProjectPhase {
   project?: OkrProject;
 }
 
-export interface ProjectOKRLink {
+export interface ProjectKeyResult {
   project_id: ID;
   objective_id: ID;
 }
@@ -446,7 +446,7 @@ export interface OutcomeIndicator {
 export interface OkrSnapshot {
   id: ID;
   tenant_id: ID;
-  okr_global_id: ID;
+  global_id: ID;
   name: string;
   description: string;
   date?: DateType;
@@ -454,7 +454,7 @@ export interface OkrSnapshot {
   progress?: number | null;
 
   tenant?: Tenant;
-  okr_global?: OkrGlobal;
+  global?: OkrGlobal;
 }
 
 export interface OkrProjectTimelineItem {
@@ -470,8 +470,8 @@ export interface OkrProjectTimelineItem {
 export interface OkrActivityMap {
   strategy_id: number;
   strategy_name: string;
-  okr_global_id: number;
-  okr_global_name: string;
+  global_id: number;
+  global_name: string;
   project_id?: number;
   project_name?: string;
   activities: {

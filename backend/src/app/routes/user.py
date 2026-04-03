@@ -3,12 +3,13 @@ from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 
-from backend.src.app.configs.extensions import db
-from backend.src.app.models.user import Role, User
 from shared_libs.helpers.hasher import verify_password
-from backend.src.projects.analytics_manager.models.dataset_chart import DatasetChart
+
+from backend.src.app.configs.extensions import db
+from backend.src.app.models.b_user import Role, User
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.modules.analytics.models.c_dataset_chart import DatasetChart
+from backend.src.modules.analytics.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -42,19 +43,6 @@ def get_user_by_id(user_id: int):
 @bp.post("")
 @require_auth  # optionally, only admin can create users
 def create_user():
-    """
-    Register a new user.
-        JSON body: {
-        "tenant_id": int,
-        "username": str,
-        "password": str,
-        "lastname": str,
-        "firstname": str,
-        "email": str,
-        "phone": str,
-        "roles": [role_id, ...]
-    }
-    """
     try:
         data = request.get_json(silent=True) or {}
         tenant_id = data.get("tenant_id")

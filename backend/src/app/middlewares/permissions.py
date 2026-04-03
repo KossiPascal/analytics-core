@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import request, jsonify
 
-from backend.src.app.models.user import User
+from backend.src.app.models.b_user import User
 # from providers.authorizations_pages import role_authorizations
 
 

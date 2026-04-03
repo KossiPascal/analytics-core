@@ -32,7 +32,7 @@ export const GlobalOkrTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
     <AdminEntityCrudModule<OkrGlobal>
       ref={ref}
       title="Global OKRs"
-      entityName="okr_global"
+      entityName="global"
       service={okrGlobalService}
       icon={<Calendar />}
       columns={columns}

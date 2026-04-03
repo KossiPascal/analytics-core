@@ -3,9 +3,9 @@ from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.app.configs.extensions import db
-from backend.src.app.models.user import Role, Permission
+from backend.src.app.models.b_user import Role, Permission
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.modules.analytics.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError

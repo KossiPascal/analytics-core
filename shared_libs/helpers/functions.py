@@ -6,7 +6,7 @@ from decimal import Decimal
 from uuid import UUID
 import re
 
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.modules.analytics.logger import get_backend_logger
 logger = get_backend_logger(__name__)
 
 

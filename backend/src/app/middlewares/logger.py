@@ -3,7 +3,7 @@ import user_agents
 from functools import wraps
 from flask import request, jsonify
 from backend.src.app.configs.environment import Config
-from backend.src.app.models.user import User, UsersLog
+from backend.src.app.models.b_user import User, UsersLog
 
 EXCLUDED_PATHS = {
     "/icons", "/assets", "/ngsw.json", "/favicon.ico",

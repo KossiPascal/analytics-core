@@ -18,7 +18,7 @@ export const ObjectiveTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
         name: '',
         description: '',
         initiative_id: undefined,
-        okr_team_id: undefined,
+        team_id: undefined,
         start_date: null,
         end_date: null,
         status: OkrGlobalStatusEnum.DRAFT
@@ -46,10 +46,10 @@ export const ObjectiveTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
             render: (e) => e.status
         },
         {
-            key: "key_results",
+            key: "keyresults",
             header: "KRs",
-            render: (e) => e.key_results?.length
-                ? e.key_results.length
+            render: (e) => e.keyresults?.length
+                ? e.keyresults.length
                 : "⚠ Aucun"
         }
     ];

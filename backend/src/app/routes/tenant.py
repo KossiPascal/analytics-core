@@ -3,9 +3,10 @@ from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.app.configs.extensions import db
-from backend.src.app.models.tenant import Tenant, CountryDatasource
+from backend.src.app.models.a_tenant import Tenant
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.app.models.x_worker import HostLinks
+from backend.src.modules.analytics.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -137,8 +138,8 @@ def delete_tenant_forever(tenant_id: int):
             raise BadRequest(f"Tenant with id={tenant_id} not found", 404)
         db.session.delete(tenant)
 
-        all_versioned = CountryDatasource.query.filter(
-            CountryDatasource.tenant_id == tenant.id
+        all_versioned = HostLinks.query.filter(
+            HostLinks.tenant_id == tenant.id
         ).all()
         for versioned in all_versioned or []:
             db.session.delete(versioned)

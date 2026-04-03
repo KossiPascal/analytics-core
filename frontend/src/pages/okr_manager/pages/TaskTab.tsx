@@ -30,7 +30,7 @@ const getDefaultForm: OkrProjectTask = {
     tenant_id: undefined,
     project_id: undefined,
     assigned_to_id: undefined,
-    key_result_id: undefined,
+    keyresult_id: undefined,
     parent_id: undefined,
     status: TaskStatusEnum.TODO,
     progress: 0,
@@ -75,9 +75,9 @@ export const TaskTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
 
                     <FormSelect
                         label="Key Result"
-                        value={e.key_result_id}
+                        value={e.keyresult_id}
                         options={keyResultOptions}
-                        onChange={(v) => set('key_result_id', v)}
+                        onChange={(v) => set('keyresult_id', v)}
                     />
 
                     <FormSelect

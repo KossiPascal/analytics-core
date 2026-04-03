@@ -1,37 +1,34 @@
 from datetime import datetime, timezone
 from flask import request, jsonify, Blueprint
 from backend.src.app.configs.extensions import db
-from backend.src.app.models.api_token import ApiToken  # the ApiToken model you already defined
+from backend.src.app.models.d_api_token import ApiToken  # the ApiToken model you already defined
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from backend.src.projects.analytics_manager.logger import get_backend_logger
-from backend.src.projects.analytics_manager.services.api_token_service import ApiTokenService
+from backend.src.modules.analytics.logger import get_backend_logger
+from backend.src.modules.analytics.services.api_token_service import ApiTokenService
 logger = get_backend_logger(__name__)
 
 
-# -----------------------------
 # Flask Blueprint / Controller
-# -----------------------------
-api_bp = Blueprint("tokens", __name__, url_prefix="/api/tokens")
+bp = Blueprint("tokens", __name__, url_prefix="/api/tokens")
 
 
-@api_bp.route("/access_keys", methods=["POST"])
+@bp.route("/access_keys", methods=["POST"])
 def access_key_list():
     try:
         data = request.get_json()
         user_id = data.get("userId")
+        if not user_id:
+            raise BadRequest("Aucun utilisateur sélectionné", 400)
+        
         token_id = data.get("id")
         token_len = data.get("tokenLen")
         is_active = data.get("isActive")
         action = data.get("action")
 
-        if not user_id:
-            raise BadRequest("Aucun utilisateur sélectionné", 400)
-
         success = False
-
         if action == "list":
             success = True
 
@@ -54,7 +51,7 @@ def access_key_list():
         elif action == "update":
             if not token_id:
                 raise BadRequest("ID manquant pour update", 400)
-            api = ApiToken.query.get(token_id)
+            api:ApiToken = ApiToken.query.get(token_id)
             if not api:
                 raise BadRequest("Token introuvable", 404)
             api.is_active = bool(is_active)

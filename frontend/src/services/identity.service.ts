@@ -1,4 +1,4 @@
-import { Tenant, User, Role, Permission, RolePermission, Role, UsersLog, Orgunit, OrgUnitLevel, CountryDatasource } from '@/models/identity.model';
+import { Tenant, User, Role, Permission, RolePermission, Role, UsersLog, Orgunit, OrgUnitLevel, HostLinks } from '@/models/identity.model';
 import { Team } from '@/models/team.model';
 import { CRUDService } from '@services/acrud.service';
 
@@ -16,10 +16,10 @@ export const tenantService = {
     remove: (id: number) => identity.remove(`/tenants`, id),
 }
 
-export const CountryDatasourceService = {
-    list: (tenant_id:number) => identity.all<CountryDatasource>(`/tenant-sources`, { options: { params: { tenant_id } } }),
-    create: (source: CountryDatasource) => identity.create(`/tenant-sources`, source),
-    update: (id: number, source: CountryDatasource) => identity.update(`/tenant-sources`, id, source),
+export const HostLinksService = {
+    list: (tenant_id:number) => identity.all<HostLinks>(`/tenant-sources`, { options: { params: { tenant_id } } }),
+    create: (source: HostLinks) => identity.create(`/tenant-sources`, source),
+    update: (id: number, source: HostLinks) => identity.update(`/tenant-sources`, id, source),
     remove: (id: number) => identity.remove(`/tenant-sources`, id),
 }
 

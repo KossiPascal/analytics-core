@@ -14,7 +14,7 @@ export const InitiativeTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
     const DEFAULT: OkrInitiative = {
         id: undefined,
         tenant_id: undefined,
-        okr_team_id: undefined,
+        team_id: undefined,
         name: '',
         description: '',
         start_date: null,

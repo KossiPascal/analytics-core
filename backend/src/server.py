@@ -1,52 +1,82 @@
-import warnings
-from requests import auth
+
+
+from pathlib import Path
+from werkzeug.exceptions import HTTPException
 from sqlalchemy.exc import SAWarning, OperationalError
+from warnings import filterwarnings
+from urllib3 import disable_warnings, exceptions as _EXP
 from cryptography.utils import CryptographyDeprecationWarning
-from backend.src.app.routes import permission, role, tenant, tenant_source, user_utils
-from backend.src.projects.analytics_manager.routes import database, worker_controller
-from backend.src.projects.analytics_manager.routes.datasources import datasource, datasource_permission
-from backend.src.projects.analytics_manager.routes.dhis2 import level, orgunit
-from backend.src.projects.analytics_manager.routes.visualizations import visualization, visualization_chart, visualization_target, viz_script
-from backend.src.projects.equipment_manager.seeds import SEED_ORDER, SEEDERS, seed_all
+filterwarnings("ignore", category=CryptographyDeprecationWarning)
+filterwarnings("ignore", category=SAWarning)
+disable_warnings(_EXP.InsecureRequestWarning)
+
+from backend.src.app.models.a_tenant import *
+from backend.src.app.models.b_user import *
+from backend.src.app.models.c_role_permission import *
+from backend.src.app.models.d_api_token import *
+from backend.src.app.models.e_management import *
+from backend.src.app.models.f_employee import *
+from backend.src.app.models.g_membership import *
+from backend.src.app.models.h_strategy import *
+from backend.src.app.models.i_team import *
+from backend.src.app.models.z_dhis2 import *
+
+from backend.src.modules.analytics.models.a_datasource import *
+from backend.src.modules.analytics.models.b_dataset import *
+from backend.src.modules.analytics.models.c_dataset_chart import *
+from backend.src.modules.analytics.models.d_visualization import *
+from backend.src.modules.analytics.models.e_script import *
+
+from backend.src.modules.okr.models.a_obj_key_result import *
+from backend.src.modules.okr.models.b_program import *
+from backend.src.modules.okr.models.c_indicator import *
+
+from backend.src.modules.projects.models.a_project import *
+from backend.src.modules.projects.models.b_activity import *
+from backend.src.modules.projects.models.c_task import *
+
+from backend.src.modules.meetings.models.meeting import *
+
+from backend.src.modules.finances.models.models import *
+
+from backend.src.modules.hrm.models.models import *
+
+from backend.src.modules.equipments.models.email_config import *
+from backend.src.modules.equipments.models.equipment import *
+from backend.src.modules.equipments.models.locations import *
+from backend.src.modules.equipments.models.tickets import *
+
+from backend.src.app.routes import auth, permission, role, tenant, tenant_source, user_utils
+from backend.src.modules.analytics.routes import database, worker_controller
+from backend.src.modules.analytics.routes.datasources import datasource, datasource_permission
+from backend.src.modules.analytics.routes.visualizations import visualization, visualization_chart, visualization_target, viz_script
+from backend.src.modules.equipments.seeds import SEED_ORDER, SEEDERS, seed_all
+from backend.src.modules.analytics.routes.dhis2 import level
 
 from backend.src.app.middlewares.api_security import api_security
 from backend.src.app.routes import user
 from backend.src.celery_app import init_celery,celery
-from backend.src.projects.analytics_manager.routes.datasets import dataset_chart, dataset_query
+from backend.src.modules.analytics.routes.datasets import dataset_chart, dataset_query
 
-import warnings
-import urllib3
-from pathlib import Path
+from backend.src.app.configs.environment import Config
+from backend.src.modules.analytics.routes.datasets import dataset, dataset_field
+from backend.src.app.configs.extensions import db, scheduler
+from backend.src.modules.analytics.logger import get_backend_logger
+
 from werkzeug.exceptions import HTTPException
-import traceback
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask import Flask, jsonify, send_from_directory, send_file, render_template
-from werkzeug.exceptions import HTTPException
-
 from flask_cors import CORS
 from flask_compress import Compress
 from flask_talisman import Talisman
 from flask_session import Session
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
-from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import inspect, text
-from cryptography.utils import CryptographyDeprecationWarning
-
-from backend.src.app.configs.environment import Config
-from backend.src.app.models.user import User
-from backend.src.projects.analytics_manager.routes.datasets import dataset, dataset_field
-from backend.src.app.configs.extensions import db, scheduler
-from backend.src.projects.analytics_manager.logger import get_backend_logger
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
-
-warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
-warnings.filterwarnings("ignore", category=SAWarning)
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 
 logger = get_backend_logger(__name__)
 
@@ -62,7 +92,7 @@ def init_database(app: Flask) -> None:
     """
     with app.app_context():
         with db.engine.connect() as schema_conn:
-            for shema in ["eqpm", "meet", "prosi", "okrmanager"]:
+            for shema in ["public", "core", "analy", "fin", "proj", "equip", "meet", "okr", "hrm", "cht"]:
                 schema_conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {shema}"))
             schema_conn.commit()
 
@@ -101,7 +131,6 @@ def init_database(app: Flask) -> None:
                     else:
                         logger.warning("User table not found, skipping default admin creation")
 
-
             except OperationalError as e:
                 logger.critical("Database initialization failed: operational error", exc_info=True)
                 raise e
@@ -111,44 +140,6 @@ def init_database(app: Flask) -> None:
             finally:
                 conn.execute(text("SELECT pg_advisory_unlock(123456);"))
     
-
-def _reset_em_tables(app: Flask) -> None:
-    """Vide les tables de référence Equipment Manager (dev uniquement)."""
-    tables = [
-        "eqpm.alert_recipient_configs",
-        "eqpm.alert_config",
-        "eqpm.email_config",
-        "eqpm.issues",
-        "eqpm.ticket_events",
-        "eqpm.ticket_comments",
-        "eqpm.delay_alert_logs",
-        "eqpm.repair_tickets",
-        "eqpm.delay_alert_recipients",
-        "eqpm.accessories",
-        "eqpm.equipment_imeis",
-        "eqpm.equipment_history",
-        "eqpm.equipment",
-        "eqpm.equipment_brands",
-        "eqpm.equipment_categories",
-        "eqpm.equipment_category_groups",
-        "eqpm.problem_types",
-        "eqpm.employee_profile",
-        "eqpm.employee_history",
-        "eqpm.employees",
-        "eqpm.positions",
-        "eqpm.sites",
-        "eqpm.districts",
-        "eqpm.regions",
-    ]
-    with app.app_context():
-        for table in tables:
-            try:
-                db.session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
-            except Exception:
-                db.session.rollback()
-        db.session.commit()
-    logger.warning("⚠️  Tables EM vidées (reset)")
-
 
 def create_flask_app(initialize_database = True) -> Flask:
     Config.validate()
@@ -212,35 +203,7 @@ def create_flask_app(initialize_database = True) -> Flask:
     if initialize_database == True:
         init_database(app)
 
-    # ── Equipment Manager CLI commands ────────────────────────────────────────
-    import click
 
-    @app.cli.group("equipment")
-    def em_cli():
-        """Commandes Equipment Manager."""
-
-    @em_cli.command("seed")
-    @click.option("--module", default=None, help="Seeder spécifique à lancer (ex: locations, brands…)")
-    @click.option("--reset", is_flag=True, default=False, help="Vide les tables avant de seeder (dev uniquement)")
-    def em_seed(module, reset):
-        """Insère les données de référence du module Equipment Manager."""
-        if reset:
-            if not click.confirm("⚠️  Êtes-vous sûr de vouloir vider les tables avant de seeder ?"):
-                click.echo("Annulé.")
-                return
-            _reset_em_tables(app)
-
-        if module:
-            if module not in SEEDERS:
-                click.echo(f"Module inconnu : '{module}'. Disponibles : {', '.join(SEED_ORDER)}")
-                return
-            click.echo(f"▶ Seeding [{module}]…")
-            n = SEEDERS[module]()
-            click.echo(f"✓ {n} enregistrements créés")
-        else:
-            click.echo("▶ Seeding all modules…")
-            total = seed_all()
-            click.echo(f"✅ Terminé — {total} enregistrements créés")
 
     # Celery
     init_celery(app)
@@ -253,7 +216,7 @@ def create_flask_app(initialize_database = True) -> Flask:
     # Blueprints
     for bp in (
         auth, database, worker_controller, viz_script, visualization,visualization_chart,visualization_target,
-        permission, role, tenant, tenant_source, user, user_utils, orgunit, level, # identities_dhis2_sync,
+        permission, role, tenant, tenant_source, user, user_utils, level, # identities_dhis2_sync,
         datasource, datasource_permission,
         dataset, dataset_chart,dataset_field,dataset_query
 
@@ -262,7 +225,7 @@ def create_flask_app(initialize_database = True) -> Flask:
 
     if initialize_database != True:
         # Equipment Manager module - import models so SQLAlchemy registers them
-        from backend.src.projects.equipment_manager.routes import (
+        from backend.src.modules.equipments.routes import (
             locations as em_locations,
             ascs as em_ascs,
             supervisors as em_supervisors,
@@ -273,7 +236,7 @@ def create_flask_app(initialize_database = True) -> Flask:
             email_config as em_email_config,
             alert_config as em_alert_config,
         )
-        from backend.src.projects.meeting_intelligence.routes import meeting as mi_meeting
+        from backend.src.modules.meetings.routes import meeting as mi_meeting
         # Equipment Manager blueprints
         for em_bp in (
             em_locations, em_ascs, em_supervisors, em_equipment,
@@ -353,7 +316,7 @@ def create_flask_app(initialize_database = True) -> Flask:
         Catch unhandled exceptions.
         Never leak stacktrace to client.
         """
-
+        import traceback
         logger.error("[Unhandled Exception]\n%s",traceback.format_exc())
 
         return jsonify({
@@ -370,10 +333,7 @@ def create_flask_app(initialize_database = True) -> Flask:
 
     return app
 
-# -----------------------------------------------------------------------------
 # ENTRYPOINT
-# -----------------------------------------------------------------------------
-
 if __name__ == "__main__":
     app = create_flask_app()
 
@@ -390,3 +350,4 @@ if __name__ == "__main__":
         ssl_context=ssl_context,
         use_reloader=False,
     )
+

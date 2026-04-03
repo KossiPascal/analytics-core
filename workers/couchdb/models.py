@@ -20,7 +20,6 @@ class CreateTableModel:
         self._models: dict[str, Any] = {}
         self.create_table = create_table
 
-    
     def source_tablename(self, localdb: str):
         return normalize_name(f"{self.source_name}_{localdb}")
     
@@ -42,10 +41,10 @@ class CreateTableModel:
         # ⚡ Création dynamique de la classe
         attrs = {
             "__tablename__": table_name,
-            "__table_args__": {"extend_existing": True},
+            "__table_args__": {"extend_existing": True, "schema": "cht"},
             "id": self.db.Column(self.db.Text, primary_key=True, nullable=False),
-            "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False),
-            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("country_datasource.id", ondelete="CASCADE"),nullable=False),
+            "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("core.tenants.id", ondelete="CASCADE"),nullable=False),
+            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("core.host_links.id", ondelete="CASCADE"),nullable=False),
             "doc": self.db.Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
             "form": self.db.Column(self.db.String(255), nullable=True),
             "type": self.db.Column(self.db.Text, nullable=True),
@@ -72,10 +71,10 @@ class CreateTableModel:
 
         attrs = {
             "__tablename__": table_name,
-            "__table_args__": {"extend_existing": True},
-            "id": self.db.Column(self.db.BigInteger, primary_key=True, autoincrement=True),
-            "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False),
-            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("country_datasource.id", ondelete="CASCADE"),nullable=False),
+            "__table_args__": {"extend_existing": True, "schema": "cht"},
+            "id": self.db.Column(self.db.BigInteger, primary_key=True, nullable=False),
+            "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("core.tenants.id", ondelete="CASCADE"),nullable=False),
+            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("core.host_links.id", ondelete="CASCADE"),nullable=False),
             "dbname": self.db.Column(self.db.String(100), nullable=False),
             "last_seq": self.db.Column(self.db.Text, nullable=True),
             "last_sync_at": self.db.Column(self.db.DateTime(timezone=True), nullable=True),
@@ -100,10 +99,10 @@ class CreateTableModel:
 
         attrs = {
             "__tablename__": table_name,
-            "__table_args__": {"extend_existing": True},
-            "id": self.db.Column(self.db.BigInteger, primary_key=True, autoincrement=True),
-            "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("tenants.id", ondelete="CASCADE"),nullable=False),
-            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("country_datasource.id", ondelete="CASCADE"),nullable=False),
+            "__table_args__": {"extend_existing": True, "schema": "cht"},
+            "id": self.db.Column(self.db.BigInteger, primary_key=True, nullable=False),
+            "tenant_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("core.tenants.id", ondelete="CASCADE"),nullable=False),
+            "source_id": self.db.Column(self.db.BigInteger,self.db.ForeignKey("core.host_links.id", ondelete="CASCADE"),nullable=False),
             "dbname": self.db.Column(self.db.String(100), nullable=False),
             "message": self.db.Column(self.db.Text, nullable=True),
             "action": self.db.Column(self.db.Text, nullable=True),  # INSERT, UPDATE, DELETE, ERROR

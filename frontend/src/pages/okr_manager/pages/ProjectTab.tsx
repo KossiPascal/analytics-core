@@ -63,7 +63,7 @@ export default function ProjectTab() {
         tenant_id: undefined,
         program_id: undefined,
         team_id: undefined,
-        okr_team_id: undefined,
+        team_id: undefined,
         name: '',
         description: '',
         start_date: null,
@@ -131,7 +131,7 @@ export default function ProjectTab() {
                 spent_budget: Number(e.spent_budget || 0),
                 program_id: e.program_id || null,
                 team_id: e.team_id || null,
-                okr_team_id: e.okr_team_id || null,
+                team_id: e.team_id || null,
             })}
             renderForm={(e, set) => (
                 <>
@@ -163,9 +163,9 @@ export default function ProjectTab() {
 
                     <FormSelect
                         label="OKR Team"
-                        value={e.okr_team_id}
+                        value={e.team_id}
                         options={okrTeamOptions}
-                        onChange={(v) => set("okr_team_id", v)}
+                        onChange={(v) => set("team_id", v)}
                     />
 
                     <FormInput

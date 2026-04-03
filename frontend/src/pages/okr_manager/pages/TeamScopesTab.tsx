@@ -11,7 +11,7 @@ const DEFAULT: OkrTeamScope = {
   id: null,
   tenant_id: undefined,
   team_id: undefined,
-  okr_global_id: undefined,
+  global_id: undefined,
   name: '',
   description: '',
   status: OkrGlobalStatusEnum.DRAFT,
@@ -24,7 +24,7 @@ export const TeamScopesTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
   const columns: Column<OkrTeamScope>[] = [
     { key: "name", header: "Nom", searchable: true },
     { key: "team", header: "Équipe", render: (t) => t.team?.name || `#${t.team_id}` },
-    { key: "okr_global", header: "OKR Global", render: (t) => t.okr_global?.name || `#${t.okr_global_id}` },
+    { key: "global", header: "OKR Global", render: (t) => t.global?.name || `#${t.global_id}` },
     { key: "status", header: "Statut" },
   ];
 
@@ -40,7 +40,7 @@ export const TeamScopesTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
       ref={ref}
        icon={undefined} 
       title="Team Scopes"
-      entityName="okr_team_scope"
+      entityName="team_scope"
       service={teamScopeService} // teamScopeService
       columns={columns}
       defaultValue={DEFAULT}
@@ -58,9 +58,9 @@ export const TeamScopesTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
 
           <FormSelect
             label="OKR Global"
-            value={e.okr_global_id}
+            value={e.global_id}
             options={globals.map((g) => ({ value: g.id, label: g.name }))}
-            onChange={(v) => set("okr_global_id", v)} />
+            onChange={(v) => set("global_id", v)} />
 
           <FormSelect
             label="Statut"

@@ -1,14 +1,12 @@
 import os
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote_plus
 from pathlib import Path
 from dotenv import load_dotenv
-from urllib.parse import quote_plus
-from celery.schedules import crontab
 from itsdangerous import URLSafeTimedSerializer
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
 ROOT_DIR = BASE_DIR.parent
 
 for env_path in [BASE_DIR / ".env", ROOT_DIR / ".env"]:
@@ -34,6 +32,14 @@ def clean_base_url(url: str, use_urlparse:bool=False) -> str:
         # Reconstituer sans scheme
         clean = parsed.netloc + parsed.path
         return clean.strip('/')
+
+def safe_quote(value):
+    if value is None:
+        return ""
+    if isinstance(value, bytes):
+        return quote_plus(value.decode("utf-8"))
+    return quote_plus(str(value))
+
 
 class Config:
 
@@ -84,7 +90,7 @@ class Config:
     POSTGRES_DB = os.getenv('POSTGRES_DB') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_DB')
     POSTGRES_USER = os.getenv('POSTGRES_USER') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_USER')
     POSTGRES_PASSWORD_RAW = os.getenv('POSTGRES_PASSWORD') if IS_DOCKER_RUNNING else os.getenv('LOCAL_POSTGRES_PASSWORD')
-    POSTGRES_PASSWORD = quote_plus(POSTGRES_PASSWORD_RAW)
+    POSTGRES_PASSWORD = safe_quote(POSTGRES_PASSWORD_RAW)
 
     POSTGRES_NETWORK = os.getenv('POSTGRES_NETWORK')
 

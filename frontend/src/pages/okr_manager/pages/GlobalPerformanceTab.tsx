@@ -34,7 +34,7 @@ export const GlobalPerformanceTab = forwardRef<AdminEntityCrudModuleRef>((_, ref
     <AdminEntityCrudModule<OkrGlobal>
       ref={ref}
       title="Global Performance"
-      entityName="okr_global"
+      entityName="global"
       service={okrGlobalService}
       icon={<Calendar />}
       columns={columns}

@@ -7,7 +7,7 @@ export interface Tenant {
   updated_at?: string;
 }
 
-export interface CountryDatasource {
+export interface HostLinks {
   id: number | null;
   tenant_id: number | null;
   fetch_limit: number;

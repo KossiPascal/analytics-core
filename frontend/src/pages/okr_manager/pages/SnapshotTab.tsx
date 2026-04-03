@@ -13,7 +13,7 @@ export const SnapshotTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
     const DEFAULT: OkrSnapshot = {
         id: null,
         tenant_id: undefined,
-        okr_global_id: undefined,
+        global_id: undefined,
         name: '',
         description: '',
         date: '',

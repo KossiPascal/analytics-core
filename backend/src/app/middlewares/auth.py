@@ -2,7 +2,7 @@ from functools import wraps
 from flask import request, jsonify
 from flask_jwt_extended import decode_token
 
-from backend.src.app.models.user import User
+from backend.src.app.models.b_user import User
 
 def auth_required():
     def decorator(fn):

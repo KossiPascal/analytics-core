@@ -4,14 +4,13 @@ import time
 import random
 import asyncio
 import threading
-from typing import Any, Optional, Type, List
+from flask import Flask
+from typing import Any, Type, List
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
-from flask import Flask
 from aiohttp import ClientSession, ClientTimeout, BasicAuth, ClientError
 
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest
 
 from sqlalchemy import delete, literal_column
 from sqlalchemy.orm import Session
@@ -20,8 +19,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from backend.src.app.configs.environment import Config
 from backend.src.app.configs.extensions import db
-from backend.src.app.models._controls import WorkerControl
-from backend.src.app.models.tenant import CHT_SOURCE_TYPES, ChtSources, Tenant, CountryDatasource, TargetTypes
+from backend.src.app.models.x_worker import CHT_SOURCE_TYPES, ChtSources, HostLinks, TargetTypes, WorkerControl
 from backend.src.server import create_flask_app
 
 from workers.couchdb.models import CreateTableModel
@@ -118,7 +116,7 @@ def _delete_chunk(DataModel: Type[Any], chunk: List[str], source_name: str, app=
     return deleted
 
 @with_app_context
-def bulk_apply_changes(source: CountryDatasource, DataModel: Type[Any], rows_upsert: List[dict], ids_delete: List[str], app=None) -> tuple[int, int, int]:
+def bulk_apply_changes(source: HostLinks, DataModel: Type[Any], rows_upsert: List[dict], ids_delete: List[str], app=None) -> tuple[int, int, int]:
     """Apply bulk upsert/delete concurrently."""
 
     source_name:str = source.name if source else None
@@ -154,7 +152,7 @@ def bulk_apply_changes(source: CountryDatasource, DataModel: Type[Any], rows_ups
     return created, updated, deleted
 
 # FETCH CHANGES
-async def fetch_changes(client: ClientSession, source: CountryDatasource, cible:ChtSources, last_seq: str) -> dict:
+async def fetch_changes(client: ClientSession, source: HostLinks, cible:ChtSources, last_seq: str) -> dict:
 
     limit = int((source.fetch_limit if source else None) or DEFAULT_LIMIT)
     host:str = source.host if source else None
@@ -181,7 +179,7 @@ async def fetch_changes(client: ClientSession, source: CountryDatasource, cible:
 
 
 # SYNC SINGLE DB
-async def sync_db_once(app: Flask, source: CountryDatasource, source_type: ChtSources, DataModel: Type[Any], SyncStateModel: Type[Any], SyncStatusModel: Type[Any]) -> int:
+async def sync_db_once(app: Flask, source: HostLinks, source_type: ChtSources, DataModel: Type[Any], SyncStateModel: Type[Any], SyncStatusModel: Type[Any]) -> int:
     """Sync CouchDB → Postgres pour une DB, async & thread-safe."""
 
     source_name:str = source.name if source else None
@@ -332,7 +330,7 @@ async def sync_db_once(app: Flask, source: CountryDatasource, source_type: ChtSo
 
 # SYNC SINGLE SOURCE
 @with_app_context
-def start_async_single_source(source: CountryDatasource, app: Flask = None) -> dict:
+def start_async_single_source(source: HostLinks, app: Flask = None) -> dict:
     """Sync CouchDB → Postgres pour une source complète, async & thread-safe."""
     
     if not source or not source.tenant_id:
@@ -361,7 +359,7 @@ def start_async_single_source(source: CountryDatasource, app: Flask = None) -> d
 
         with Session(db.engine) as session:
             # --- Update last_sync safely ---
-            db_source = session.get(CountryDatasource, source.id)
+            db_source = session.get(HostLinks, source.id)
 
             now = datetime.now(timezone.utc)
             db_source.last_used_at = now
@@ -404,7 +402,7 @@ def run_workers_logger_loop(poll_interval: int = 5, app: Flask=None):
                     time.sleep(poll_interval)
                     continue
                 
-                sources = CountryDatasource.getCountryDatasourceQuery(session=session, target=TargetTypes.COUCHDB).all()
+                sources = HostLinks.getHostLinksQuery(session=session, target=TargetTypes.COUCHDB).all()
 
             if not sources:
                 logger.debug("⏸️ No active sources", extra={"worker": WORKER_CONTROL_NAME})

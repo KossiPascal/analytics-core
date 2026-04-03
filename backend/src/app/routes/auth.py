@@ -3,14 +3,14 @@ import random
 import string
 from backend.src.app.configs.environment import Config
 from datetime import datetime, timezone
-from backend.src.app.models.user import User, RefreshToken, Role, Role
+from backend.src.app.models.b_user import User, RefreshToken, Role, Role
 from flask import Blueprint, request, jsonify, g
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
 from sqlalchemy.orm import selectinload
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.modules.analytics.logger import get_backend_logger
 logger = get_backend_logger(__name__)
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")

@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Optional
 from flask import request, g
 from werkzeug.exceptions import Unauthorized, Forbidden
-from backend.src.app.models.user import User, Permission, Role
+from backend.src.app.models.b_user import User, Permission, Role
 
 
 def currentUser():

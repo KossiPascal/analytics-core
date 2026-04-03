@@ -1,9 +1,10 @@
 # identities.py
 from typing import List
 from flask import Blueprint, jsonify
-from backend.src.app.models.user import RolePermission, UserRole, UsersLog
+from backend.src.app.models.c_role_permission import RolePermission
+from backend.src.app.models.b_user import UserRole, UsersLog
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
-from backend.src.projects.analytics_manager.logger import get_backend_logger
+from backend.src.modules.analytics.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import IntegrityError

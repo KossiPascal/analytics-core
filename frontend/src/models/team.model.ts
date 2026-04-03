@@ -1,4 +1,4 @@
-// import { OkrProgram, OkrProject, OkrTeamScope, OkrActivity } from "@/pages/okr_manager/models";
+// import { OkrProgram, OkrProject, OkrTeamScope, OkrActivity } from "@/pages/manager/models";
 // import { Tenant, Role, User } from "./identity.model";
 
 

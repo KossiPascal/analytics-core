@@ -15,7 +15,7 @@ def init_celery(app):
         enable_utc=True,
         beat_schedule={
             "check-ticket-delays": {
-                "task": "backend.src.equipment_manager.tasks.check_ticket_delays",
+                "task": "backend.src.equipment.tasks.check_ticket_delays",
                 "schedule": 3600,  # run every hour; internal filter respects frequency_hours
             }
         },

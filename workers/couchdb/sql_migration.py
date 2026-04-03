@@ -11,11 +11,11 @@ from pathlib import Path
 from psycopg2 import sql
 from backend.src.app.configs.environment import Config
 from typing import List, Dict, Any, Literal, Set, Tuple, Optional
-from backend.src.app.models.tenant import CHT_SOURCE_TYPES
 from backend.src.app.configs.extensions import db
 from sqlalchemy.orm import Session
 from dataclasses import dataclass, field
 
+from backend.src.app.models.x_worker import CHT_SOURCE_TYPES
 from workers.couchdb.utils import with_app_context
 from workers.logger import get_workers_logger
 logger = get_workers_logger(__name__)

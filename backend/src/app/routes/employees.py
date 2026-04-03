@@ -6,11 +6,11 @@ from typing import List
 from flask import Blueprint, request, jsonify, g
 from backend.src.app.configs.extensions import db
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
-from backend.src.app.models.employee import Position, Employee
-from backend.src.app.models.user import User
-from backend.src.app.models.tenant import Tenant
-from backend.src.projects.analytics_manager.logger import get_backend_logger
-from backend.src.projects.equipment_manager.models.equipment import Equipment, ACTIVE_STATUSES
+from backend.src.app.models.f_employee import Position, Employee
+from backend.src.app.models.b_user import User
+from backend.src.app.models.a_tenant import Tenant
+from backend.src.modules.analytics.logger import get_backend_logger
+from backend.src.modules.equipments.models.equipment import Equipment, ACTIVE_STATUSES
 from werkzeug.exceptions import BadRequest
 from sqlalchemy.exc import IntegrityError
 
@@ -465,7 +465,7 @@ def create_account(id):
         db.session.flush()
 
         if role_ids:
-            from backend.src.app.models.user import Role
+            from backend.src.app.models.b_user import Role
             user.roles = Role.query.filter(Role.id.in_(role_ids)).all()
 
         emp.user_id = user.id
@@ -523,7 +523,7 @@ def update_employee_account(id):
         user.is_active = bool(data["is_active"])
 
     if "role_ids" in data:
-        from backend.src.app.models.user import Role
+        from backend.src.app.models.b_user import Role
         user.roles = Role.query.filter(Role.id.in_(data["role_ids"])).all()
 
     if data.get("password"):
