@@ -87,7 +87,7 @@ export default function VisualizationView() {
     if (!id) return;
 
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette visualisation ?')) {
-      await visualizationService.remove(id);
+      await visualizationService.remove(tenant_id!, id);
       fetchData();
     }
   };

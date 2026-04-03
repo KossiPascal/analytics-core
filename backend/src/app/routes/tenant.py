@@ -28,7 +28,7 @@ def list_tenants():
         raise BadRequest("Failed to list tenants", 500)
 
 
-@bp.get("/<int:tenant_id>")
+@bp.get("/<string:tenant_id>")
 @require_auth
 def get_tenant(tenant_id:int):
     try:
@@ -80,9 +80,9 @@ def create_tenant():
         raise BadRequest("Failed to create tenant", 500)
 
 
-@bp.put("/<int:tenant_id>")
+@bp.put("/<string:tenant_id>")
 @require_auth
-def update_tenant(tenant_id: int):
+def update_tenant(tenant_id: str):
     try:
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:
@@ -110,9 +110,9 @@ def update_tenant(tenant_id: int):
         raise BadRequest("Failed to update tenant", 500)
 
 
-@bp.delete("/<int:tenant_id>")
+@bp.delete("/<string:tenant_id>")
 @require_auth
-def delete_tenant(tenant_id: int):
+def delete_tenant(tenant_id: str):
     try:
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:
@@ -129,9 +129,9 @@ def delete_tenant(tenant_id: int):
         raise BadRequest("Failed to delete tenant", 500)
 
 
-@bp.delete("/<int:tenant_id>/forever")
+@bp.delete("/<string:tenant_id>/forever")
 @require_auth
-def delete_tenant_forever(tenant_id: int):
+def delete_tenant_forever(tenant_id: str):
     try:
         tenant:Tenant = Tenant.query.get(tenant_id)
         if not tenant or tenant.deleted:

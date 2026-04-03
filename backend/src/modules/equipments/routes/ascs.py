@@ -104,7 +104,7 @@ def create_asc():
         db.session.rollback()
         raise  # Let global handler return 500
 
-@bp.get("/<int:id>")
+@bp.get("/<string:id>")
 @require_auth
 def get_asc(id):
     employee = Employee.query.get(id)
@@ -116,7 +116,7 @@ def get_asc(id):
     result["tickets"] = [t.to_dict_safe() for t in employee.repair_tickets]
     return jsonify(result), 200
 
-@bp.put("/<int:id>")
+@bp.put("/<string:id>")
 @require_auth
 def update_asc(id):
     employee:Employee = Employee.query.get(id)
@@ -167,7 +167,7 @@ def update_asc(id):
         db.session.rollback()
         raise  # Let global handler return 500
 
-@bp.delete("/<int:id>")
+@bp.delete("/<string:id>")
 @require_auth
 def delete_asc(id):
     employee:Employee = Employee.query.get(id)

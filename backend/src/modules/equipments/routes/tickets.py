@@ -192,7 +192,7 @@ def create_ticket():
         raise BadRequest("Failed to create ticket", 409)
 
 
-@bp.get("/<int:id>")
+@bp.get("/<string:id>")
 @require_auth
 def get_ticket(id):
     ticket = RepairTicket.query.get(id)
@@ -206,7 +206,7 @@ def get_ticket(id):
     return jsonify(result), 200
 
 
-@bp.get("/<int:id>/candidates")
+@bp.get("/<string:id>/candidates")
 @require_auth
 def ticket_candidates(id):
     """Return next stages + all active employees for this ticket's send form."""
@@ -233,7 +233,7 @@ def ticket_candidates(id):
     }), 200
 
 
-@bp.post("/<int:id>/receive")
+@bp.post("/<string:id>/receive")
 @require_auth
 def receive_ticket(id):
     ticket = RepairTicket.query.get(id)
@@ -278,7 +278,7 @@ def receive_ticket(id):
     return jsonify(ticket.to_dict_safe()), 200
 
 
-@bp.post("/<int:id>/send")
+@bp.post("/<string:id>/send")
 @require_auth
 def send_ticket(id):
     ticket:RepairTicket = RepairTicket.query.get(id)
@@ -398,7 +398,7 @@ def send_ticket(id):
 LOGISTICS_DEPT_CODES = {"LOG", "ETH", "TIC"}
 
 
-@bp.post("/<int:id>/receive-from-repairer")
+@bp.post("/<string:id>/receive-from-repairer")
 @require_auth
 def receive_from_repairer(id):
     """
@@ -483,7 +483,7 @@ def receive_from_repairer(id):
     return jsonify(ticket.to_dict_safe()), 200
 
 
-@bp.post("/<int:id>/mark-repaired")
+@bp.post("/<string:id>/mark-repaired")
 @require_auth
 def mark_repaired(id):
     ticket:RepairTicket = RepairTicket.query.get(id)
@@ -514,7 +514,7 @@ def mark_repaired(id):
     return jsonify(ticket.to_dict_safe()), 200
 
 
-@bp.post("/<int:id>/cancel")
+@bp.post("/<string:id>/cancel")
 @require_auth
 def cancel_ticket(id):
     ticket:RepairTicket = RepairTicket.query.get(id)
@@ -556,7 +556,7 @@ def cancel_ticket(id):
     return jsonify(ticket.to_dict_safe()), 200
 
 
-@bp.post("/<int:id>/comment")
+@bp.post("/<string:id>/comment")
 @require_auth
 def add_comment(id):
     ticket = RepairTicket.query.get(id)
@@ -679,7 +679,7 @@ def create_alert_recipient():
         raise BadRequest("This user is already an alert recipient", 409)
 
 
-@bp.patch("/alert-recipients/<int:id>")
+@bp.patch("/alert-recipients/<string:id>")
 @require_auth
 def toggle_alert_recipient(id):
     recipient:DelayAlertRecipient = DelayAlertRecipient.query.get(id)
@@ -746,7 +746,7 @@ def create_alert_recipient_config():
     db.session.commit()
     return jsonify(cfg.to_dict_safe()), 201
 
-@bp.delete("/alert-recipient-configs/<int:id>")
+@bp.delete("/alert-recipient-configs/<string:id>")
 @require_auth
 def delete_alert_recipient_config(id):
     cfg = db.session.get(AlertRecipientConfig, id)
@@ -763,7 +763,7 @@ def delete_alert_recipient_config(id):
     return jsonify(success=True), 200
 
 
-@bp.patch("/alert-recipient-configs/<int:id>")
+@bp.patch("/alert-recipient-configs/<string:id>")
 @require_auth
 def toggle_alert_recipient_config(id):
     cfg = db.session.get(AlertRecipientConfig, id)

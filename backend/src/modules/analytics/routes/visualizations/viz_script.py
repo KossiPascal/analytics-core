@@ -108,7 +108,7 @@ def list_scripts():
         raise BadRequest(f"Internal server error: {str(e)}", 500)
 
 # RÉCUPÉRER UN SCRIPT PAR ID
-@bp.get("/<int:script_id>")
+@bp.get("/<string:script_id>")
 @require_auth()
 def get_script(script_id):
     try:
@@ -122,7 +122,7 @@ def get_script(script_id):
 
 # CRÉER OU METTRE À JOUR UN SCRIPT
 @bp.post("")
-@bp.put("/<int:script_id>")
+@bp.put("/<string:script_id>")
 @require_auth()
 def save_script(script_id=None):
     try:
@@ -206,7 +206,7 @@ def save_script(script_id=None):
         raise BadRequest("Unexpected error",500)
 
 # SUPPRIMER UN SCRIPT PAR ID
-@bp.delete("/<int:script_id>")
+@bp.delete("/<string:script_id>")
 @require_auth()
 def delete_script(script_id):
     try:

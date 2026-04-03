@@ -34,7 +34,7 @@ bp = Blueprint("identities_levels", __name__, url_prefix="/api/identities/levels
 # # ─────────────────────────────────────────────────────────────────────────────
 # # GET ONE
 # # ─────────────────────────────────────────────────────────────────────────────
-# @bp.get("/<int:level_id>")
+# @bp.get("/<string:level_id>")
 # @require_auth
 # def get_level(level_id: int):
 #     try:
@@ -94,7 +94,7 @@ bp = Blueprint("identities_levels", __name__, url_prefix="/api/identities/levels
 # # ─────────────────────────────────────────────────────────────────────────────
 # # UPDATE
 # # ─────────────────────────────────────────────────────────────────────────────
-# @bp.put("/<int:level_id>")
+# @bp.put("/<string:level_id>")
 # @require_auth
 # def update_level(level_id: int):
 #     try:
@@ -133,7 +133,7 @@ bp = Blueprint("identities_levels", __name__, url_prefix="/api/identities/levels
 # # ─────────────────────────────────────────────────────────────────────────────
 # # DELETE (soft)
 # # ─────────────────────────────────────────────────────────────────────────────
-# @bp.delete("/<int:level_id>")
+# @bp.delete("/<string:level_id>")
 # @require_auth
 # def delete_level(level_id: int):
 #     try:

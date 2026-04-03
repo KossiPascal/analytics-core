@@ -24,7 +24,7 @@ class Strategy(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin
         if include_relations:
             base.update({
                 "tenant": self.tenant.to_dict(False) if self.tenant else None,
-                "axes": [v.to_dict(False) for v in self.axes or []],
+                "strategic_axes": [v.to_dict(False) for v in self.strategic_axes or []],
             })
 
         return base

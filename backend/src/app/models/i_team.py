@@ -262,7 +262,7 @@ class TeamObjective(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDelete
             base.update({
                 "scope": self.scope.to_dict(False) if self.scope else None,
                 "objective": self.objective.to_dict(False) if self.objective else None,
-                "keyresults": [v.to_dict(False) for v in self.keyresults or []],
+                "keyresults": [v.to_dict(False) for v in self.team_keyresults or []],
             })
 
 

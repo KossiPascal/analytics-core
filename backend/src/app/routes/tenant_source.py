@@ -30,7 +30,7 @@ def create_source_tables(target:str, source_name:str):
 @require_auth
 def list_host_links():
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
         
@@ -45,11 +45,11 @@ def list_host_links():
         raise BadRequest("Failed to list sources", 500)
 
 
-@bp.get("/<int:source_id>")
+@bp.get("/<string:source_id>")
 @require_auth
-def get_tenant_source(source_id: int):
+def get_tenant_source(source_id: str):
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
         
@@ -68,11 +68,11 @@ def get_tenant_source(source_id: int):
         raise BadRequest("Failed to get source", 500)
 
 
-@bp.get("/upsert-tables/<int:source_id>")
+@bp.get("/upsert-tables/<string:source_id>")
 @require_auth
-def upsert_tenant_source_tables(source_id: int):
+def upsert_tenant_source_tables(source_id: str):
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
         
@@ -145,9 +145,9 @@ def create_tenant_source():
         raise BadRequest("Failed to create tenant", 500)
 
 
-@bp.put("/<int:source_id>")
+@bp.put("/<string:source_id>")
 @require_auth
-def update_tenant_source(source_id: int):
+def update_tenant_source(source_id: str):
     try:
         data = request.get_json(silent=True) or {}
 
@@ -219,9 +219,9 @@ def update_tenant_source(source_id: int):
         raise BadRequest("Failed to update tenant", 500)
 
 
-@bp.delete("/<int:source_id>")
+@bp.delete("/<string:source_id>")
 @require_auth
-def delete_tenant_source(source_id: int):
+def delete_tenant_source(source_id: str):
     try:
         source:HostLinks = HostLinks.query.get(source_id)
         if not source or source.deleted:
@@ -238,9 +238,9 @@ def delete_tenant_source(source_id: int):
         raise BadRequest("Failed to delete tenant", 500)
 
 
-@bp.delete("/<int:source_id>/forever")
+@bp.delete("/<string:source_id>/forever")
 @require_auth
-def delete_tenant_source_forever(source_id: int):
+def delete_tenant_source_forever(source_id: str):
     try:
         source:HostLinks = HostLinks.query.get(source_id)
         if not source or source.deleted:

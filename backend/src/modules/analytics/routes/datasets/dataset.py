@@ -78,7 +78,7 @@ def get_pagination():
 @require_auth
 def list_datasets_by():
     include_relations = request.args.get("include_relations", "false").lower() == "true"
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
 
@@ -90,7 +90,7 @@ def list_datasets_by():
 @bp.get("/paginate")
 @require_auth
 def list_datasets_paginate():
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
 
@@ -115,10 +115,10 @@ def list_datasets_paginate():
     # }), 200
 
 # GET ONE DATASET
-@bp.get("/<int:dataset_id>")
+@bp.get("/<string:dataset_id>")
 @require_auth
 def get_dataset(dataset_id:int):
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
     
@@ -253,7 +253,7 @@ def get_view_sql_columns(view_name:str, sql_type:str):
         raise BadRequest(f"Error local_views: {str(e)}", 400)
 
 # UPDATE DATASET
-@bp.put("/<int:dataset_id>")
+@bp.put("/<string:dataset_id>")
 @require_auth
 def update_dataset(dataset_id:int):
     try:
@@ -357,7 +357,7 @@ def update_dataset(dataset_id:int):
         raise
 
 # DELETE DATASET
-@bp.delete("/<int:dataset_id>")
+@bp.delete("/<string:dataset_id>")
 @require_auth
 def delete_dataset(dataset_id:int):
     try:
@@ -382,7 +382,7 @@ def delete_dataset(dataset_id:int):
         raise
 
 # DELETE DATASET
-@bp.delete("/<int:dataset_id>/forever")
+@bp.delete("/<string:dataset_id>/forever")
 @require_auth
 def admin_delete_dataset(dataset_id:int):
     try:

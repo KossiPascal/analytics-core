@@ -57,11 +57,11 @@ def create_data_target():
     return jsonify(target.to_dict()), 201
 
 
-@bp.get("/<int:target_id>")
+@bp.get("/<string:target_id>")
 @require_auth
 def get_data_target(target_id:int):
-    tenant_id = request.args.get("tenant_id", type=int)
-    # vid = request.args.get("visualization_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    # vid = request.args.get("visualization_id", type=str)
     if not tenant_id:
         raise BadRequest("bad Inputs", 400)
 
@@ -77,8 +77,8 @@ def get_data_target(target_id:int):
 @bp.get("")
 @require_auth
 def list_data_targets():
-    tenant_id = request.args.get("tenant_id", type=int)
-    # vid = request.args.get("visualization_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    # vid = request.args.get("visualization_id", type=str)
     if not tenant_id:
         raise BadRequest("bad Inputs", 400)
 
@@ -91,9 +91,9 @@ def list_data_targets():
     return jsonify([t.to_dict() for t in targets or []])
 
 
-@bp.put("/<int:target_id>")
+@bp.put("/<string:target_id>")
 @require_auth
-def update_data_target(target_id: int):
+def update_data_target(target_id: str):
     payload = request.get_json() or {}
 
     tenant_id = payload.get("tenant_id")
@@ -121,9 +121,9 @@ def update_data_target(target_id: int):
     return jsonify(target.to_dict()), 200
 
 
-@bp.delete("/<int:target_id>")
+@bp.delete("/<string:target_id>")
 @require_auth
-def delete_data_target(target_id: int):
+def delete_data_target(target_id: str):
 
     target:DataTarget = DataTarget.query.get(target_id)
     

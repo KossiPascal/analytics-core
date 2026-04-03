@@ -59,14 +59,14 @@ def clone_visualization(template: Visualization, tenant_id: int, name: str) -> V
     db.session.add(viz)
     db.session.flush()  # pour obtenir l'id
 
-    charts:List[VisualizationChart] = template.charts
-    definitions:List[VisualizationDefinition] = template.definitions
-    layouts:List[VisualizationLayout] = template.layouts
+    charts:List[VisualizationChart] = template.visualization_charts
+    definitions:List[VisualizationDefinition] = template.visualization_definitions
+    layouts:List[VisualizationLayout] = template.visualization_layouts
 
     # Cloner les charts
     for chart in charts:
         new_chart = VisualizationChart(
-            chart_id=chart.chart_id,
+            dataset_chart_id=chart.dataset_chart_id,
             visualization_id=viz.id,
             dataset_id=chart.dataset_id,
             tenant_id=tenant_id,
@@ -99,12 +99,12 @@ def clone_visualization(template: Visualization, tenant_id: int, name: str) -> V
         db.session.add(new_layout)
         db.session.flush()
 
-        views:List[VisualizationView] = layout.views
+        views:List[VisualizationView] = layout.visualization_views
         for view in views:
             new_view = VisualizationView(
                 tenant_id=tenant_id,
                 visualization_id=viz.id,
-                layout_id=new_layout.id,
+                visualization_layout_id=new_layout.id,
                 name=view.name,
                 is_default=view.is_default,
                 created_by_id=user_id,
@@ -118,19 +118,19 @@ def clone_visualization(template: Visualization, tenant_id: int, name: str) -> V
 @bp.get("")
 @require_auth
 def list_visualizations():
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
     
     query = Visualization.query.options(
         selectinload(Visualization.tenant),
-        selectinload(Visualization.charts).selectinload(VisualizationChart.chart),
-        selectinload(Visualization.layouts),
-        selectinload(Visualization.views),
+        selectinload(Visualization.visualization_charts).selectinload(VisualizationChart.dataset_chart),
+        selectinload(Visualization.visualization_layouts),
+        selectinload(Visualization.visualization_views),
         # selectinload(Visualization.executions),
         # selectinload(Visualization.shares),
         # selectinload(Visualization.targets),
-        # selectinload(Visualization.definitions),
+        # selectinload(Visualization.visualization_definitions),
         # selectinload(Visualization.dhis2_validations),
     ).filter(
         Visualization.tenant_id==tenant_id,
@@ -161,10 +161,10 @@ def list_visualizations():
 
 
 # 📄 GET ONE
-@bp.get("/<int:vid>")
+@bp.get("/<string:vid>")
 @require_auth
 def get_visualization(vid:int):
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     viz = Visualization.query.filter(
         Visualization.id == vid,
         Visualization.tenant_id == tenant_id
@@ -255,9 +255,9 @@ def create_visualization():
         viz_chart = VisualizationChart(
             tenant_id=tenant_id,
             visualization_id=viz.id,
-            chart_id=chart.get("chart_id"),
+            dataset_chart_id=chart.get("chart_id"),
             dataset_id=chart.get("dataset_id"),
-            layout_id=viz_layt.id,
+            visualization_layout_id=viz_layt.id,
             position=chart.get("position") or {},
             created_by_id=user_id,
         )
@@ -276,7 +276,7 @@ def create_visualization():
         viz_view = VisualizationView(
             tenant_id=tenant_id,
             visualization_id=viz.id,
-            layout_id=viz_layt.id,
+            visualization_layout_id=viz_layt.id,
             name=payload["view"].get("name"),
             is_default=is_default,
             created_by_id=user_id,
@@ -297,15 +297,15 @@ def create_visualization():
     return jsonify(viz.to_dict()), 201
 
 # ✏️ UPDATE
-@bp.put("/<int:vid>")
+@bp.put("/<string:vid>")
 @require_auth
 def update_visualization(vid:int):
     payload = request.get_json() or {}
     tenant_id = payload.get("tenant_id")
 
     viz:Visualization = Visualization.query.options(
-        selectinload(Visualization.layouts),
-        selectinload(Visualization.definitions),
+        selectinload(Visualization.visualization_layouts),
+        selectinload(Visualization.visualization_definitions),
     ).filter(
         Visualization.id == vid,
         Visualization.tenant_id == tenant_id
@@ -366,11 +366,11 @@ def update_visualization(vid:int):
                 normalize(current_layout.options) != normalize(layout.get("options", {}))
             )
             current_charts = db.session.query(VisualizationChart).filter_by(
-                layout_id=current_layout.id
+                visualization_layout_id=current_layout.id
             ).all()
 
             current_charts_data = sorted([
-                { "chart_id": c.chart_id, "dataset_id": c.dataset_id }
+                { "chart_id": c.dataset_chart_id, "dataset_id": c.dataset_id }
                 for c in current_charts
             ], key=lambda x: (x["chart_id"], x["dataset_id"]))
 
@@ -389,13 +389,13 @@ def update_visualization(vid:int):
         # 🔥 CAS 2 : CHARTS SEULEMENT
         elif not layout_changed and charts_changed:
             # 👉 recréer charts sur layout existant
-            VisualizationChart.query.filter_by(layout_id=current_layout.id).delete()
+            VisualizationChart.query.filter_by(visualization_layout_id=current_layout.id).delete()
             for c in payload_charts:
                 viz_chart = VisualizationChart(
                     visualization_id=viz.id,
                     tenant_id=tenant_id,
-                    layout_id=current_layout.id,
-                    chart_id=c.get("chart_id"),
+                    visualization_layout_id=current_layout.id,
+                    dataset_chart_id=c.get("chart_id"),
                     dataset_id=c.get("dataset_id"),
                     position=c.get("position", {}),
                     created_by_id=user_id,
@@ -429,8 +429,8 @@ def update_visualization(vid:int):
                 viz_chart = VisualizationChart(
                     visualization_id=viz.id,
                     tenant_id=tenant_id,
-                    layout_id=new_layout.id,
-                    chart_id=c.get("chart_id"),
+                    visualization_layout_id=new_layout.id,
+                    dataset_chart_id=c.get("chart_id"),
                     dataset_id=c.get("dataset_id"),
                     position=c.get("position", {}),
                     created_by_id=user_id,
@@ -447,17 +447,17 @@ def update_visualization(vid:int):
     return jsonify(viz.to_dict())
 
 # 🗑 DELETE + BULK DELETE
-@bp.delete("/<int:vid>")
+@bp.delete("/<string:vid>")
 @require_auth
 def delete_visualization(vid:int):
 
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
     
     viz:Visualization = Visualization.query.options(
-        selectinload(Visualization.layouts),
-        selectinload(Visualization.definitions),
+        selectinload(Visualization.visualization_layouts),
+        selectinload(Visualization.visualization_definitions),
     ).filter(
         Visualization.id == vid,
         Visualization.tenant_id == tenant_id
@@ -468,12 +468,12 @@ def delete_visualization(vid:int):
 
     targets:List[DataTarget] = DataTarget.query.filter_by(tenant_id=tenant_id,visualization_id=vid).all()
     for t in targets:
-        DataLineage.query.filter((DataLineage.source_id == t.id) | (DataLineage.target_id == t.id)).delete(synchronize_session=False)
+        DataLineage.query.filter((DataLineage.data_target_source_id == t.id) | (DataLineage.data_target_target_id == t.id)).delete(synchronize_session=False)
 
     DataTarget.query.filter_by(tenant_id=tenant_id,visualization_id=vid).delete(synchronize_session=False)
 
     VisualizationExecutionLog.query.filter(
-        VisualizationExecutionLog.execution_id.in_(
+        VisualizationExecutionLog.visualization_execution_id.in_(
             db.session.query(VisualizationExecution.id).filter_by(tenant_id=tenant_id,visualization_id=vid)
         )
     ).delete(synchronize_session=False)
@@ -495,8 +495,8 @@ def delete_visualization(vid:int):
 @bp.get("/latest-layout")
 @require_auth
 def get_most_lasted_layout():
-    tenant_id = request.args.get("tenant_id", type=int)
-    visualization_id = request.args.get("visualization_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    visualization_id = request.args.get("visualization_id", type=str)
 
     if not tenant_id or not visualization_id:
         raise BadRequest("Invalid params", 400)
@@ -517,9 +517,9 @@ def get_most_lasted_layout():
     return jsonify(latest_layout.to_dict()), 200
 
 
-@bp.post("/<int:vid>/share")
+@bp.post("/<string:vid>/share")
 @require_auth
-def share_visualization(vid: int):
+def share_visualization(vid: str):
     payload = request.get_json() or {}
     tenant_id = payload.get("tenant_id")
 
@@ -567,9 +567,9 @@ def share_visualization(vid: int):
     return jsonify(share.to_dict()), 201
 
 
-@bp.post("/<int:vid>/execute")
+@bp.post("/<string:vid>/execute")
 @require_auth
-def execute_visualization(vid: int):
+def execute_visualization(vid: str):
     payload = request.get_json() or {}
 
     tenant_id = payload.get("tenant_id")
@@ -577,8 +577,8 @@ def execute_visualization(vid: int):
         raise BadRequest("tenant_id required")
 
     viz:Visualization = Visualization.query.options(
-        selectinload(Visualization.layouts),
-        selectinload(Visualization.definitions),
+        selectinload(Visualization.visualization_layouts),
+        selectinload(Visualization.visualization_definitions),
     ).filter(
         Visualization.id == vid,
         Visualization.tenant_id == tenant_id,
@@ -593,7 +593,7 @@ def execute_visualization(vid: int):
     exec = VisualizationExecution(
         tenant_id=tenant_id,
         visualization_id=vid,
-        executed_by_id=user_id,
+        created_by_id=user_id,
         started_at=datetime.now(timezone.utc),
         state=VisualizationState.RUNNING,
     )
@@ -601,7 +601,7 @@ def execute_visualization(vid: int):
     db.session.flush()
 
     log = VisualizationExecutionLog(
-        execution_id=exec.id,
+        visualization_execution_id=exec.id,
         message=payload.get("message") or "started",
         details=payload.get("details") or {},
         level="info"
@@ -613,7 +613,7 @@ def execute_visualization(vid: int):
 
 
 
-@bp.post("/executions/<int:eid>/finish")
+@bp.post("/executions/<string:eid>/finish")
 @require_auth
 def finish_execution(eid):
     payload = request.get_json() or {}
@@ -628,7 +628,7 @@ def finish_execution(eid):
     exec.error = payload.get("error")
 
     log = VisualizationExecutionLog(
-        execution_id=eid,
+        visualization_execution_id=eid,
         message="finished",
         level="info",
         details=exec.result
@@ -638,10 +638,10 @@ def finish_execution(eid):
     commit_session()
     return jsonify(exec.to_dict())
 
-@bp.get("/<int:vid>/execution-logs")
+@bp.get("/<string:vid>/execution-logs")
 @require_auth
 def list_executions(vid:int):
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
 
@@ -658,7 +658,7 @@ def list_executions(vid:int):
     return jsonify([l.to_dict() for l in logs]), 200
 
 
-@bp.post("/<int:vid>/dhis2-validate")
+@bp.post("/<string:vid>/dhis2-validate")
 @require_auth
 def dhis2_validate(vid:int):
     payload = request.get_json() or {}
@@ -698,7 +698,7 @@ def dhis2_validate(vid:int):
     return jsonify(validation.to_dict()), 201
 
 
-@bp.post("/<int:vid>/views")
+@bp.post("/<string:vid>/views")
 @require_auth
 def create_visualization_view(vid:int):
     payload = request.get_json() or {}
@@ -743,7 +743,7 @@ def create_visualization_view(vid:int):
     new_view = VisualizationView(
         tenant_id=tenant_id,
         visualization_id=vid,
-        layout_id=new_layout.id,
+        visualization_layout_id=new_layout.id,
         name=payload.get("name"),
         is_default=is_default,
         created_by_id=user_id,

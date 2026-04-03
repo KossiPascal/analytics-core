@@ -26,9 +26,9 @@ def list_permissions():
         logger.error(f"List permissions error: {str(e)}")
         raise BadRequest("Failed to list permissions", 500)
 
-@bp.get("/<int:permission_id>")
+@bp.get("/<string:permission_id>")
 @require_auth
-def get_permission(permission_id: int):
+def get_permission(permission_id: str):
     try:
         perm:Permission = Permission.query.get(permission_id)
         if not perm or perm.deleted:
@@ -65,9 +65,9 @@ def create_permission():
         logger.error(f"Create permission error: {str(e)}")
         raise BadRequest("Failed to create permission", 500)
 
-@bp.put("/<int:permission_id>")
+@bp.put("/<string:permission_id>")
 @require_auth
-def update_permission(permission_id: int):
+def update_permission(permission_id: str):
     try:
         perm:Permission = Permission.query.get(permission_id)
         if not perm or perm.deleted:
@@ -89,9 +89,9 @@ def update_permission(permission_id: int):
         db.session.rollback()
         raise BadRequest("Failed to update permission", 500)
 
-@bp.delete("/<int:permission_id>")
+@bp.delete("/<string:permission_id>")
 @require_auth
-def delete_permission(permission_id: int):
+def delete_permission(permission_id: str):
     try:
         perm:Permission = Permission.query.get(permission_id)
         if not perm or perm.deleted:

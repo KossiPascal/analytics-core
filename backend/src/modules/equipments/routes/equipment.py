@@ -82,7 +82,7 @@ def create_category_group():
         raise BadRequest("Une catégorie avec ce nom ou ce code existe déjà", 409)
 
 
-@bp.put("/category-groups/<int:id>")
+@bp.put("/category-groups/<string:id>")
 @require_auth
 def update_category_group(id):
     grp:EquipmentCategoryGroup = EquipmentCategoryGroup.query.get(id)
@@ -139,7 +139,7 @@ def create_category():
         raise BadRequest("Un type avec ce nom ou ce code existe déjà", 409)
 
 
-@bp.put("/categories/<int:id>")
+@bp.put("/categories/<string:id>")
 @require_auth
 def update_category(id):
     cat:EquipmentCategory = EquipmentCategory.query.get(id)
@@ -196,7 +196,7 @@ def create_brand():
         raise BadRequest("Brand with this name or code already exists", 409)
 
 
-@bp.put("/brands/<int:id>")
+@bp.put("/brands/<string:id>")
 @require_auth
 def update_brand(id):
     brand:EquipmentBrand = EquipmentBrand.query.get(id)
@@ -385,7 +385,7 @@ def create_equipment():
         raise BadRequest("Un équipement avec cet IMEI ou ce code existe déjà", 409)
 
 
-@bp.get("/<int:id>")
+@bp.get("/<string:id>")
 @require_auth
 def get_equipment(id):
     eq = Equipment.query.get(id)
@@ -418,7 +418,7 @@ def get_equipment(id):
     return jsonify(result), 200
 
 
-@bp.put("/<int:id>")
+@bp.put("/<string:id>")
 @require_auth
 def update_equipment(id):
     eq:Equipment = Equipment.query.get(id)
@@ -475,7 +475,7 @@ def update_equipment(id):
         raise BadRequest("Equipment with this IMEI already exists", 409)
 
 
-@bp.post("/<int:id>/assign")
+@bp.post("/<string:id>/assign")
 @require_auth
 def assign_equipment(id):
     eq:Equipment = Equipment.query.get(id)
@@ -551,7 +551,7 @@ def assign_equipment(id):
     return jsonify(eq.to_dict_safe()), 200
 
 
-@bp.post("/<int:id>/transfer")
+@bp.post("/<string:id>/transfer")
 @require_auth
 def transfer_equipment(id):
     """Transfère un équipement d'un employé à un autre (autorisé même pour les équipements uniques)."""
@@ -650,7 +650,7 @@ def declare_reserve():
     return jsonify([e.to_dict_safe() for e in updated]), 200
 
 
-@bp.post("/<int:id>/declare")
+@bp.post("/<string:id>/declare")
 @require_auth
 def declare_equipment(id):
     """Déclare un équipement actif comme Perdu / Volé / Emporté / Complètement gâté."""
@@ -717,7 +717,7 @@ def declare_equipment(id):
     return jsonify(eq.to_dict_safe()), 200
 
 
-@bp.post("/<int:id>/cancel-declaration")
+@bp.post("/<string:id>/cancel-declaration")
 @require_auth
 def cancel_declaration(id):
     """Annule une déclaration (LOST/STOLEN/TAKEN_AWAY/COMPLETELY_DAMAGED) → PENDING."""
@@ -750,7 +750,7 @@ def cancel_declaration(id):
     return jsonify(eq.to_dict_safe()), 200
 
 
-@bp.get("/<int:id>/history")
+@bp.get("/<string:id>/history")
 @require_auth
 def get_equipment_history(id):
     eq = Equipment.query.get(id)
@@ -763,7 +763,7 @@ def get_equipment_history(id):
 
 # ─── ACCESSORIES ──────────────────────────────────────────────────────────────
 
-@bp.get("/<int:id>/accessories")
+@bp.get("/<string:id>/accessories")
 @require_auth
 def list_accessories(id):
     eq = Equipment.query.get(id)
@@ -772,7 +772,7 @@ def list_accessories(id):
     return jsonify([a.to_dict_safe() for a in eq.accessories]), 200
 
 
-@bp.post("/<int:id>/accessories")
+@bp.post("/<string:id>/accessories")
 @require_auth
 def create_accessory(id):
     eq = Equipment.query.get(id)
@@ -797,7 +797,7 @@ def create_accessory(id):
     return jsonify(acc.to_dict_safe()), 201
 
 
-@bp.put("/<int:id>/accessories/<int:acc_id>")
+@bp.put("/<string:id>/accessories/<string:acc_id>")
 @require_auth
 def update_accessory(id, acc_id):
     acc:Accessory = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
@@ -815,7 +815,7 @@ def update_accessory(id, acc_id):
     return jsonify(acc.to_dict_safe()), 200
 
 
-@bp.delete("/<int:id>/accessories/<int:acc_id>")
+@bp.delete("/<string:id>/accessories/<string:acc_id>")
 @require_auth
 def delete_accessory(id, acc_id):
     acc:Accessory = Accessory.query.filter_by(id=acc_id, equipment_id=id).first()
@@ -846,7 +846,7 @@ _STATUS_LABELS = {
 }
 
 
-@bp.get("/<int:id>/pdf/reception")
+@bp.get("/<string:id>/pdf/reception")
 @require_auth
 def generate_reception_pdf(id):
     eq = Equipment.query.get(id)

@@ -3,7 +3,7 @@ import random
 import string
 from backend.src.app.configs.environment import Config
 from datetime import datetime, timezone
-from backend.src.app.models.b_user import User, RefreshToken, Role, Role
+from backend.src.app.models.b_user import User, RefreshToken, Role
 from flask import Blueprint, request, jsonify, g
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
 from sqlalchemy.orm import selectinload

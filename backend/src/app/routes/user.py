@@ -8,7 +8,6 @@ from shared_libs.helpers.hasher import verify_password
 from backend.src.app.configs.extensions import db
 from backend.src.app.models.b_user import Role, User
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
-from backend.src.modules.analytics.models.c_dataset_chart import DatasetChart
 from backend.src.modules.analytics.logger import get_backend_logger
 
 from werkzeug.exceptions import BadRequest
@@ -28,9 +27,9 @@ def list_users():
     return jsonify(results)
 
 # ===================== GET USER BY ID =====================
-@bp.get("/<int:user_id>")
+@bp.get("/<string:user_id>")
 @require_auth
-def get_user_by_id(user_id: int):
+def get_user_by_id(user_id: str):
     """ Retrieve a single user by ID. """
     user:User = User.query.get(user_id)
     if not user or user.deleted:
@@ -114,9 +113,9 @@ def create_user():
         raise
 
 # ===================== UPDATE USER =====================
-@bp.put("/<int:user_id>")
+@bp.put("/<string:user_id>")
 @require_auth
-def update_user(user_id: int):
+def update_user(user_id: str):
     """
     JSON body: {
         "lastname": str,
@@ -130,7 +129,7 @@ def update_user(user_id: int):
     try:
         user:User = User.query.get(user_id)
         if not user or user.deleted:
-            raise DatasetChart(f"User with id={user_id} not found")
+            raise BadRequest(f"User with id={user_id} not found")
 
         data = request.get_json(silent=True) or {}
 
@@ -178,9 +177,9 @@ def update_user(user_id: int):
         raise  # Let global handler return 500
 
 # ===================== DELETE USER =====================
-@bp.delete("/<int:user_id>")
+@bp.delete("/<string:user_id>")
 @require_auth
-def delete_user(user_id: int):
+def delete_user(user_id: str):
     try:
         user:User = User.query.get(user_id)
         if not user or user.deleted:

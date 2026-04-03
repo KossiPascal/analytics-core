@@ -95,14 +95,13 @@ class Employee(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin
                 "tenant": self.tenant.to_dict() if self.tenant else None,
                 "position": self.position if self.position else None,
                 "equipments": [v.to_dict(False) for v in self.equipments or []],
-                "profiles": [v.to_dict(False) for v in self.profiles or []],
                 "repair_tickets": [v.to_dict(False) for v in self.repair_tickets or []],
             })
 
         return base
 
     def __repr__(self):
-        return f"<Employee(id={self.id}, code={self.employee_id_code})>"
+        return f"<Employee(id={self.id}, code={self.code})>"
 
 class EmployeePosition(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, AuditMixin, StatusMixin):
     __tablename__ = "employee_positions"

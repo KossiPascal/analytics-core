@@ -123,7 +123,7 @@ def create_supervisor():
         raise BadRequest(f"Supervisor creation failed: {str(e)}", 500)
 
 
-@bp.get("/<int:id>")
+@bp.get("/<string:id>")
 @require_auth
 def get_supervisor(id):
     employee = Employee.query.get(id)
@@ -131,7 +131,7 @@ def get_supervisor(id):
         raise BadRequest("Supervisor not found", 404)
     return jsonify(employee.to_dict_safe()), 200
 
-@bp.put("/<int:id>")
+@bp.put("/<string:id>")
 @require_auth
 def update_supervisor(id):
     employee:Employee = Employee.query.get(id)

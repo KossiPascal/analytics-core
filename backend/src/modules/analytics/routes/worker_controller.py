@@ -9,12 +9,12 @@ bp = Blueprint("workers", __name__, url_prefix="/api/workers")
 @bp.get("/<worker_name>")
 def get_status(tenant_id:int, worker_name: str):
 
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     action = request.args.get("action", type=str) # status | stop | start | sync
     control = db.session.query(WorkerControl).filter_by(name=worker_name).first()
     
     if action == "sync":
-        source_id = request.args.get("source_id", type=int)
+        source_id = request.args.get("source_id", type=str)
         return jsonify({
             "tenant_id": tenant_id, 
             "source_id": source_id, 

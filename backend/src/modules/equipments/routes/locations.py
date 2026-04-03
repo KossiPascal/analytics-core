@@ -47,7 +47,7 @@ bp = Blueprint("em_locations", __name__, url_prefix="/api/equipment/locations")
 #         raise BadRequest("Region with this name or code already exists", 409)
 
 
-# @bp.get("/regions/<int:id>")
+# @bp.get("/regions/<string:id>")
 # @require_auth
 # def get_region(id):
 #     region = Region.query.get(id)
@@ -59,7 +59,7 @@ bp = Blueprint("em_locations", __name__, url_prefix="/api/equipment/locations")
 #     return jsonify(result), 200
 
 
-# @bp.put("/regions/<int:id>")
+# @bp.put("/regions/<string:id>")
 # @require_auth
 # def update_region(id):
 #     region = Region.query.get(id)
@@ -82,7 +82,7 @@ bp = Blueprint("em_locations", __name__, url_prefix="/api/equipment/locations")
 #         raise BadRequest("Region with this name or code already exists", 409)
 
 
-# @bp.delete("/regions/<int:id>")
+# @bp.delete("/regions/<string:id>")
 # @require_auth
 # def delete_region(id):
 #     region:Region = Region.query.get(id)
@@ -138,7 +138,7 @@ bp = Blueprint("em_locations", __name__, url_prefix="/api/equipment/locations")
 #         raise BadRequest("District with this code already exists in this region", 409)
 
 
-# @bp.get("/districts/<int:id>")
+# @bp.get("/districts/<string:id>")
 # @require_auth
 # def get_district(id):
 #     district = District.query.get(id)
@@ -149,7 +149,7 @@ bp = Blueprint("em_locations", __name__, url_prefix="/api/equipment/locations")
 #     return jsonify(result), 200
 
 
-# @bp.put("/districts/<int:id>")
+# @bp.put("/districts/<string:id>")
 # @require_auth
 # def update_district(id):
 #     district = District.query.get(id)
@@ -217,7 +217,7 @@ bp = Blueprint("em_locations", __name__, url_prefix="/api/equipment/locations")
 #         raise BadRequest("Site with this code already exists", 409)
 
 
-# @bp.get("/sites/<int:id>")
+# @bp.get("/sites/<string:id>")
 # @require_auth
 # def get_site(id):
 #     site = Site.query.get(id)
@@ -226,7 +226,7 @@ bp = Blueprint("em_locations", __name__, url_prefix="/api/equipment/locations")
 #     return jsonify(site.to_dict_safe()), 200
 
 
-# @bp.put("/sites/<int:id>")
+# @bp.put("/sites/<string:id>")
 # @require_auth
 # def update_site(id):
 #     site = Site.query.get(id)

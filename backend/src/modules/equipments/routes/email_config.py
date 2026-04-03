@@ -78,7 +78,7 @@ def save_email_config():
     return jsonify(success=True, data=config.to_dict_safe()), 201
 
 
-@bp.put("/<int:config_id>")
+@bp.put("/<string:config_id>")
 @require_auth
 def update_email_config(config_id):
     config = db.session.get(EmailConfig, config_id)
@@ -103,7 +103,7 @@ def update_email_config(config_id):
     return jsonify(success=True, data=config.to_dict_safe())
 
 
-@bp.post("/<int:config_id>/activate")
+@bp.post("/<string:config_id>/activate")
 @require_auth
 def activate_email_config(config_id):
     config = db.session.get(EmailConfig, config_id)
@@ -120,7 +120,7 @@ def activate_email_config(config_id):
     return jsonify(success=True, data=config.to_dict_safe())
 
 
-@bp.delete("/<int:config_id>")
+@bp.delete("/<string:config_id>")
 @require_auth
 def delete_email_config(config_id):
     config = db.session.get(EmailConfig, config_id)

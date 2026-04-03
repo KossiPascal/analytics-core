@@ -17,7 +17,7 @@ bp = Blueprint("datasource_permissions",__name__,url_prefix="/api/datasource-per
 @require_auth
 def list_datasource_permissions():
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
         if not tenant_id:
             raise BadRequest("tenant_id is required", 400)
 
@@ -82,7 +82,7 @@ def create_or_update_permission():
     except Exception as e:
         raise
 
-@bp.put("/<int:permission_id>")
+@bp.put("/<string:permission_id>")
 @require_auth
 def update_permission(permission_id):
     try:
@@ -104,7 +104,7 @@ def update_permission(permission_id):
         db.session.rollback()
         raise
 
-@bp.delete("/<int:permission_id>")
+@bp.delete("/<string:permission_id>")
 @require_auth
 def delete_permission(permission_id):
     try:
@@ -128,8 +128,8 @@ def delete_permission(permission_id):
 @require_auth
 def list_permissions_for_datasource():
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
-        datasource_id = request.args.get("datasource_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
+        datasource_id = request.args.get("datasource_id", type=str)
         if not tenant_id or not datasource_id:
             raise BadRequest("tenant_id and datasource_id are required", 400)
 
@@ -149,8 +149,8 @@ def list_permissions_for_datasource():
 @require_auth
 def list_permissions_for_user():
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
-        user_id = request.args.get("user_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
+        user_id = request.args.get("user_id", type=str)
         if not tenant_id or not user_id:
             raise BadRequest("tenant_id and user_id are required", 400)
 

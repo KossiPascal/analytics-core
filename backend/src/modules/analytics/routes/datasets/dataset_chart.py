@@ -27,7 +27,7 @@ logger = get_backend_logger(__name__)
 
 bp = Blueprint("dataset_charts", __name__, url_prefix="/api/dataset-charts")
 
-def get_chart_or_404(chart_id: int) -> DatasetChart:
+def get_chart_or_404(chart_id: str) -> DatasetChart:
     chart = DatasetChart.query.get(chart_id)
     if not chart or chart.deleted:
         raise NotFound(f"DatasetChart {chart_id} not found")
@@ -78,19 +78,19 @@ def list_charts(chart_id: Optional[int] = None, tenant_id: Optional[int] = None,
 @bp.get("")
 @require_auth
 def list_full_charts():
-    tenant_id = request.args.get("tenant_id", type=int)
-    dataset_id = request.args.get("dataset_id", type=int)
-    query_id = request.args.get("query_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    dataset_id = request.args.get("dataset_id", type=str)
+    query_id = request.args.get("query_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
     
     charts = list_charts(tenant_id=tenant_id, dataset_id=dataset_id,query_id=query_id)
     return jsonify(charts), 200
 
-@bp.get("/<int:chart_id>")
+@bp.get("/<string:chart_id>")
 @require_auth
-def get_chart(chart_id: int):
-    tenant_id = request.args.get("tenant_id", type=int)
+def get_chart(chart_id: str):
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
     
@@ -125,9 +125,9 @@ def create_chart():
 
     return jsonify({ "success": True, "chart_id": chart.id }), 200
 
-@bp.put("/<int:chart_id>")
+@bp.put("/<string:chart_id>")
 @require_auth
-def update_chart(chart_id: int):
+def update_chart(chart_id: str):
 
     chart = get_chart_or_404(chart_id)
 
@@ -155,9 +155,9 @@ def update_chart(chart_id: int):
     return jsonify({ "success": True, "chart_id": chart.id }), 200
 
 
-@bp.delete("/<int:chart_id>")
+@bp.delete("/<string:chart_id>")
 @require_auth
-def delete_chart(chart_id: int):
+def delete_chart(chart_id: str):
 
     chart = get_chart_or_404(chart_id)
 
@@ -170,9 +170,9 @@ def delete_chart(chart_id: int):
     return jsonify({"message": "DatasetChart deleted"}), 200
 
 
-@bp.post("/execute/<int:query_id>")
+@bp.post("/execute/<string:query_id>")
 @require_auth
-def execute_chart(query_id: int):
+def execute_chart(query_id: str):
 
     query: DatasetQuery = DatasetQuery.query.get(query_id)
     if not query or not query.is_active:

@@ -177,7 +177,7 @@ class DataSourceProvisioningService:
             raise ValueError("technical_name already exists for this tenant")
         
     @staticmethod
-    def get_full_datasource(datasource_id: int) -> DataSource:
+    def get_full_datasource(datasource_id: str) -> DataSource:
         ds = (
             DataSource.query
             .options(

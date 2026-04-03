@@ -122,9 +122,9 @@ def create_dataset_aggregate():
 
 
 # READ ONE
-@bp.get("/<int:dataset_id>")
+@bp.get("/<string:dataset_id>")
 @require_auth
-def get_dataset(dataset_id: int):
+def get_dataset(dataset_id: str):
 
     tenant_id = g.current_user["tenant_id"]
 
@@ -172,9 +172,9 @@ def list_datasets():
         raise BadRequest("Failed to create dataset aggregate", 400)
 
 # UPDATE FULL AGGREGATE
-@bp.put("/<int:dataset_id>")
+@bp.put("/<string:dataset_id>")
 @require_auth
-def update_full_aggregate(dataset_id: int):
+def update_full_aggregate(dataset_id: str):
 
     payload = request.get_json(silent=True) or {}
     user_id = g.current_user["id"]
@@ -329,9 +329,9 @@ def update_full_aggregate(dataset_id: int):
         raise BadRequest("Failed to update dataset aggregate", 400)
 
 # DELETE (SOFT CASCADE)
-@bp.delete("/<int:dataset_id>")
+@bp.delete("/<string:dataset_id>")
 @require_auth
-def delete_aggregate(dataset_id: int):
+def delete_aggregate(dataset_id: str):
 
     user_id = g.current_user["id"]
     tenant_id = g.current_user["tenant_id"]

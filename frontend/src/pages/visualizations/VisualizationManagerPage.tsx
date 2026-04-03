@@ -152,7 +152,7 @@ export default function VisualizationHome() {
       title: 'Supprimer la visualisation',
       message: `"${viz?.name || id}" sera définitivement supprimée. Cette action est irréversible.`,
       onConfirm: async () => {
-        await visualizationService.remove(id);
+        await visualizationService.remove(tenant_id!, id);
         fetchVisualizations();
       }
     });

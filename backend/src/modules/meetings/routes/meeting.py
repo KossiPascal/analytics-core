@@ -111,7 +111,7 @@ def create_meeting():
     return jsonify(meeting.to_dict_safe()), 201
 
 
-@bp.get("/<int:meeting_id>")
+@bp.get("/<string:meeting_id>")
 @require_auth
 def get_meeting(meeting_id: int):
     meeting = Meeting.query.get(meeting_id)
@@ -133,7 +133,7 @@ def get_meeting(meeting_id: int):
     return jsonify(result), 200
 
 
-@bp.delete("/<int:meeting_id>")
+@bp.delete("/<string:meeting_id>")
 @require_auth
 def delete_meeting(meeting_id: int):
     meeting = Meeting.query.get(meeting_id)
@@ -149,7 +149,7 @@ def delete_meeting(meeting_id: int):
 # Transcription — WhisperX
 # ---------------------------------------------------------------------------
 
-@bp.post("/<int:meeting_id>/transcribe")
+@bp.post("/<string:meeting_id>/transcribe")
 @require_auth
 def transcribe_meeting(meeting_id: int):
     """
@@ -238,7 +238,7 @@ def _bg_transcribe(app, meeting_id: int, audio_path: str, audio_filename: str, l
             logger.error(f"Background transcription failed — meeting_id={meeting_id}: {exc}", exc_info=True)
 
 
-@bp.get("/<int:meeting_id>/transcription")
+@bp.get("/<string:meeting_id>/transcription")
 @require_auth
 def get_transcription(meeting_id: int):
     meeting = Meeting.query.get(meeting_id)
@@ -252,7 +252,7 @@ def get_transcription(meeting_id: int):
     return jsonify(latest.to_dict_safe()), 200
 
 
-@bp.get("/<int:meeting_id>/status")
+@bp.get("/<string:meeting_id>/status")
 @require_auth
 def get_status(meeting_id: int):
     """
@@ -275,7 +275,7 @@ def get_status(meeting_id: int):
 # Summarization — Gemini / Groq / Ollama
 # ---------------------------------------------------------------------------
 
-@bp.post("/<int:meeting_id>/summarize")
+@bp.post("/<string:meeting_id>/summarize")
 @require_auth
 def summarize_meeting(meeting_id: int):
     """
@@ -363,7 +363,7 @@ def summarize_meeting(meeting_id: int):
         raise BadRequest(f"Échec du résumé : {str(exc)}", 500)
 
 
-@bp.get("/<int:meeting_id>/summary")
+@bp.get("/<string:meeting_id>/summary")
 @require_auth
 def get_latest_summary(meeting_id: int):
     """Retourne le dernier résumé généré (peu importe le provider)."""
@@ -378,7 +378,7 @@ def get_latest_summary(meeting_id: int):
     return jsonify(latest.to_dict_safe()), 200
 
 
-@bp.get("/<int:meeting_id>/summaries")
+@bp.get("/<string:meeting_id>/summaries")
 @require_auth
 def list_summaries(meeting_id: int):
     """Retourne l'historique complet de tous les résumés (multi-providers)."""
@@ -394,7 +394,7 @@ def list_summaries(meeting_id: int):
 # Summary update — allows the user to edit the AI-generated report
 # ---------------------------------------------------------------------------
 
-@bp.put("/<int:meeting_id>/summaries/<int:summary_id>")
+@bp.put("/<string:meeting_id>/summaries/<string:summary_id>")
 @require_auth
 def update_summary(meeting_id: int, summary_id: int):
     """
@@ -436,7 +436,7 @@ def update_summary(meeting_id: int, summary_id: int):
 # PDF generation — WeasyPrint report
 # ---------------------------------------------------------------------------
 
-@bp.get("/<int:meeting_id>/pdf")
+@bp.get("/<string:meeting_id>/pdf")
 @require_auth
 def download_pdf(meeting_id: int):
     """Génère et télécharge le rapport de réunion en PDF (WeasyPrint)."""

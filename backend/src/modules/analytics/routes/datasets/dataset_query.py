@@ -117,8 +117,8 @@ def list_queries(query_id: Optional[int] = None, tenant_id: Optional[int] = None
 @require_auth
 def list_queries_by():
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
-        dataset_id = request.args.get("dataset_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
+        dataset_id = request.args.get("dataset_id", type=str)
 
         queries = list_queries(tenant_id=tenant_id,dataset_id=dataset_id)
         return jsonify(queries), 200
@@ -126,11 +126,11 @@ def list_queries_by():
         logger.error(f"List queries error: {str(e)}")
         raise BadRequest("Failed to list queries", 500)
 
-@bp.get("/<int:query_id>")
+@bp.get("/<string:query_id>")
 @require_auth
-def get_query(query_id: int):
+def get_query(query_id: str):
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
         query = list_queries(tenant_id=tenant_id,query_id=query_id,all=False)
         if not query or query["deleted"]:
             raise BadRequest(f"DatasetQuery with id={query_id} not found", 404)
@@ -202,9 +202,9 @@ def create_query():
         logger.error(f"Create query error: {str(e)}")
         raise BadRequest("Failed to create query", 500)
 
-@bp.put("/<int:query_id>")
+@bp.put("/<string:query_id>")
 @require_auth
-def update_query(query_id: int):
+def update_query(query_id: str):
     try:
         query:DatasetQuery = DatasetQuery.query.get(query_id)
         if not query or query.deleted:
@@ -269,9 +269,9 @@ def update_query(query_id: int):
         db.session.rollback()
         raise BadRequest("Failed to update query", 500)
 
-@bp.delete("/<int:query_id>")
+@bp.delete("/<string:query_id>")
 @require_auth
-def delete_query(query_id: int):
+def delete_query(query_id: str):
     try:
         query:DatasetQuery = DatasetQuery.query.get(query_id)
         if not query or query.deleted:

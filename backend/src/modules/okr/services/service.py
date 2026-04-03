@@ -130,7 +130,7 @@ def register_crud(bp, model, url_prefix: str):
         return jsonify([serialize(x, includes) for x in query.all()])
 
     # GET
-    @bp.route(f"{url_prefix}/<int:id>", methods=["GET"])
+    @bp.route(f"{url_prefix}/<string:id>", methods=["GET"])
     def get_entity(id):
         query = model.query
         query, includes = apply_includes(query, model)
@@ -159,7 +159,7 @@ def register_crud(bp, model, url_prefix: str):
         return jsonify(serialize(obj))
 
     # UPDATE
-    @bp.route(f"{url_prefix}/<int:id>", methods=["PUT", "PATCH"])
+    @bp.route(f"{url_prefix}/<string:id>", methods=["PUT", "PATCH"])
     def update_entity(id):
         obj = model.query.get_or_404(id)
         data = request.json or {}
@@ -180,7 +180,7 @@ def register_crud(bp, model, url_prefix: str):
         return jsonify(serialize(obj))
 
     # DELETE
-    @bp.route(f"{url_prefix}/<int:id>", methods=["DELETE"])
+    @bp.route(f"{url_prefix}/<string:id>", methods=["DELETE"])
     def delete_entity(id):
         obj = model.query.get_or_404(id)
 
@@ -198,7 +198,7 @@ def register_crud(bp, model, url_prefix: str):
     # =========================
 
     # ADD RELATION
-    @bp.route(f"{url_prefix}/<int:id>/relations/<rel>", methods=["POST"])
+    @bp.route(f"{url_prefix}/<string:id>/relations/<rel>", methods=["POST"])
     def add_relation(id, rel):
         obj = model.query.get_or_404(id)
         mapper = inspect(model)
@@ -225,7 +225,7 @@ def register_crud(bp, model, url_prefix: str):
         return jsonify({"linked": True})
 
     # REMOVE RELATION
-    @bp.route(f"{url_prefix}/<int:id>/relations/<rel>/<int:target_id>", methods=["DELETE"])
+    @bp.route(f"{url_prefix}/<string:id>/relations/<rel>/<string:target_id>", methods=["DELETE"])
     def remove_relation(id, rel, target_id):
         obj = model.query.get_or_404(id)
         mapper = inspect(model)

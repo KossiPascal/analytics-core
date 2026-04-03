@@ -61,7 +61,7 @@ def list_positions():
         db.func.coalesce(Position.parent_id, 0),
         Position.name,
     ).all()
-    return jsonify([p.to_dict_safe() for p in positions]), 200
+    return jsonify([p.to_dict() for p in positions]), 200
 
 
 @bp.post("/positions")
@@ -95,13 +95,13 @@ def create_position():
         
         db.session.add(pos)
         db.session.commit()
-        return jsonify(pos.to_dict_safe()), 201
+        return jsonify(pos.to_dict()), 201
     except IntegrityError:
         db.session.rollback()
         raise BadRequest("Un poste avec ce nom ou ce code existe déjà", 409)
 
 
-@bp.put("/positions/<int:id>")
+@bp.put("/positions/<string:id>")
 @require_auth
 def update_position(id):
     pos:Position = Position.query.get(id)
@@ -129,7 +129,7 @@ def update_position(id):
 
     try:
         db.session.commit()
-        return jsonify(pos.to_dict_safe()), 200
+        return jsonify(pos.to_dict()), 200
     except IntegrityError:
         db.session.rollback()
         raise BadRequest("Un poste avec ce nom ou ce code existe déjà", 409)
@@ -223,7 +223,7 @@ def list_employees():
         query = query.filter(db.or_(*scope_filters))
 
     employees:List[Employee] = query.order_by(Employee.last_name, Employee.first_name).all()
-    return jsonify([e.to_dict_safe() for e in employees]), 200
+    return jsonify([e.to_dict() for e in employees]), 200
 
 
 @bp.post("")
@@ -295,7 +295,7 @@ def create_employee():
 
         db.session.commit()
 
-        result = emp.to_dict_safe()
+        result = emp.to_dict()
         if generated_credentials:
             result["generated_credentials"] = generated_credentials
         return jsonify(result), 201
@@ -305,20 +305,19 @@ def create_employee():
         raise BadRequest("Un employé avec ce code existe déjà", 409)
 
 
-@bp.get("/<int:id>")
+@bp.get("/<string:id>")
 @require_auth
 def get_employee(id):
     emp = Employee.query.get(id)
     if not emp:
         raise BadRequest("Employee not found", 404)
 
-    result = emp.to_dict_safe()
-    result["history"] = [h.to_dict_safe() for h in sorted(emp.history, key=lambda h: h.timestamp, reverse=True)]
-    result["equipments"] = [e.to_dict_safe() for e in emp.equipments]
+    result = emp.to_dict()
+    result["equipments"] = [e.to_dict() for e in emp.equipments]
     return jsonify(result), 200
 
 
-@bp.put("/<int:id>")
+@bp.put("/<string:id>")
 @require_auth
 def update_employee(id):
     emp:Employee = Employee.query.get(id)
@@ -371,13 +370,13 @@ def update_employee(id):
 
     try:
         db.session.commit()
-        return jsonify(emp.to_dict_safe()), 200
+        return jsonify(emp.to_dict()), 200
     except IntegrityError:
         db.session.rollback()
         raise BadRequest("Employee with this ID code already exists", 409)
 
 
-@bp.patch("/<int:id>/toggle-active")
+@bp.patch("/<string:id>/toggle-active")
 @require_auth
 def toggle_active(id):
     emp:Employee = Employee.query.get(id)
@@ -407,12 +406,12 @@ def toggle_active(id):
 
     db.session.commit()
 
-    return jsonify(emp.to_dict_safe()), 200
+    return jsonify(emp.to_dict()), 200
 
 
 # ─── CREATE ACCOUNT ──────────────────────────────────────────────────────────
 
-@bp.post("/<int:id>/create-account")
+@bp.post("/<string:id>/create-account")
 @require_auth
 def create_account(id):
     """Crée le compte utilisateur pour un employé (appelé après confirmation des credentials)."""
@@ -482,7 +481,7 @@ def create_account(id):
 
 # ─── GET ACCOUNT ─────────────────────────────────────────────────────────────
 
-@bp.get("/<int:id>/account")
+@bp.get("/<string:id>/account")
 @require_auth
 def get_employee_account(id):
     """Retourne les données du compte utilisateur lié à l'employé."""
@@ -499,7 +498,7 @@ def get_employee_account(id):
 
 # ─── UPDATE ACCOUNT ───────────────────────────────────────────────────────────
 
-@bp.put("/<int:id>/update-account")
+@bp.put("/<string:id>/update-account")
 @require_auth
 def update_employee_account(id):
     """Met à jour le compte utilisateur lié à l'employé."""

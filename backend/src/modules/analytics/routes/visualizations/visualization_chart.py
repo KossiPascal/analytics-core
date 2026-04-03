@@ -41,14 +41,14 @@ def commit_session():
 @bp.get("")
 @require_auth
 def list_visualization_charts():
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("tenant_id is required", 400)
 
     charts:List[VisualizationChart] = VisualizationChart.query.options(
         selectinload(VisualizationChart.tenant),
         selectinload(VisualizationChart.dataset),
-        selectinload(VisualizationChart.chart),
+        selectinload(VisualizationChart.dataset_chart),
         # selectinload(VisualizationChart.visualization),
     ).filter(
         VisualizationChart.tenant_id==tenant_id,
@@ -83,7 +83,7 @@ def create_visualization_chart():
     chart = VisualizationChart(
         visualization_id=vid,
         tenant_id=tenant_id,
-        chart_id=payload.get("chart_id"),
+        dataset_chart_id=payload.get("chart_id"),
         position=payload.get("position") or {}
     )
     chart.created_by_id = user_id
@@ -94,17 +94,17 @@ def create_visualization_chart():
 
     return jsonify(chart.to_dict()), 201
 
-@bp.get("/<int:chart_id>")
+@bp.get("/<string:chart_id>")
 @require_auth
 def get_visualization_chart(chart_id:int):
-    tenant_id = request.args.get("tenant_id", type=int)
-    vid = request.args.get("visualization_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    vid = request.args.get("visualization_id", type=str)
     if not tenant_id or not vid or not chart_id:
         raise BadRequest("bad Inputs", 400)
     
     chart:VisualizationChart = (
         VisualizationChart.query.filter(
-            VisualizationChart.chart_id==chart_id, 
+            VisualizationChart.dataset_chart_id==chart_id, 
             VisualizationChart.tenant_id==tenant_id,
             VisualizationChart.visualization_id==vid,
             VisualizationChart.deleted==False, 
@@ -116,18 +116,18 @@ def get_visualization_chart(chart_id:int):
     
     return jsonify(chart.to_dict())
 
-@bp.put("/<int:chart_id>")
+@bp.put("/<string:chart_id>")
 @require_auth
 def update_visualization_chart(chart_id:int):
-    tenant_id = request.args.get("tenant_id", type=int)
-    vid = request.args.get("visualization_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    vid = request.args.get("visualization_id", type=str)
     if not tenant_id or not vid or not chart_id:
         raise BadRequest("bad Inputs", 400)
 
     chart:VisualizationChart = (
         VisualizationChart.query.filter(
             VisualizationChart.visualization_id==vid, 
-            VisualizationChart.chart_id==chart_id, 
+            VisualizationChart.dataset_chart_id==chart_id, 
             VisualizationChart.tenant_id==tenant_id,
             VisualizationChart.deleted==False, 
         ).first()
@@ -145,18 +145,18 @@ def update_visualization_chart(chart_id:int):
     return jsonify(chart.to_dict())
 
 
-@bp.delete("/<int:chart_id>")
+@bp.delete("/<string:chart_id>")
 @require_auth
 def delete_visualization_chart(chart_id:int):
-    tenant_id = request.args.get("tenant_id", type=int)
-    vid = request.args.get("visualization_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    vid = request.args.get("visualization_id", type=str)
     if not tenant_id or not vid or not chart_id:
         raise BadRequest("bad Inputs", 400)
 
     chart:VisualizationChart = (
         VisualizationChart.query.filter(
             VisualizationChart.visualization_id==vid, 
-            VisualizationChart.chart_id==chart_id, 
+            VisualizationChart.dataset_chart_id==chart_id, 
             VisualizationChart.tenant_id==tenant_id,
         ).first()
     )
@@ -180,14 +180,14 @@ def create_data_lineage():
     payload = request.get_json() or {}
 
     tenant_id = payload.get("tenant_id")
-    # vid = request.args.get("visualization_id", type=int)
+    # vid = request.args.get("visualization_id", type=str)
     if not tenant_id:
         raise BadRequest("bad Inputs", 400)
     
     lineage:DataLineage = DataLineage(
         tenant_id=tenant_id,
-        source_id=payload.get("source_id"),
-        target_id=payload.get("target_id"),
+        data_target_source_id=payload.get("source_id"),
+        data_target_target_id=payload.get("target_id"),
         operation=payload.get("operation"),
     )
     lineage.created_by_id = currentUserId()
@@ -209,7 +209,7 @@ def create_ai_query_log():
     payload = request.get_json() or {}
 
     tenant_id = payload.get("tenant_id")
-    # vid = request.args.get("visualization_id", type=int)
+    # vid = request.args.get("visualization_id", type=str)
     if not tenant_id:
         raise BadRequest("bad Inputs", 400)
     
@@ -231,7 +231,7 @@ def create_ai_query_log():
 @require_auth
 def list_ai_query_logs():
 
-    tenant_id = request.args.get("tenant_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
     if not tenant_id:
         raise BadRequest("bad Inputs", 400)
 

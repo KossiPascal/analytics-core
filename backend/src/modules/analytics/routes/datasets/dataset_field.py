@@ -114,17 +114,17 @@ def list_fields(field_id: Optional[int] = None, tenant_id: Optional[int] = None,
 @bp.get("")
 @require_auth
 def list_fields_by():
-    tenant_id = request.args.get("tenant_id", type=int)
-    dataset_id = request.args.get("dataset_id", type=int)
+    tenant_id = request.args.get("tenant_id", type=str)
+    dataset_id = request.args.get("dataset_id", type=str)
 
     fields = list_fields(tenant_id=tenant_id,dataset_id=dataset_id)
     return jsonify(fields), 200
 
 
-@bp.get("/<int:field_id>")
+@bp.get("/<string:field_id>")
 @require_auth
-def get_field(field_id: int):
-    tenant_id = request.args.get("tenant_id", type=int)
+def get_field(field_id: str):
+    tenant_id = request.args.get("tenant_id", type=str)
     
     field = list_fields(tenant_id=tenant_id,field_id=field_id,all=False)
     if not field or field["deleted"]:
@@ -259,9 +259,9 @@ def create_field():
         raise
 
 
-@bp.put("/<int:field_id>")
+@bp.put("/<string:field_id>")
 @require_auth
-def update_field(field_id: int):
+def update_field(field_id: str):
     try:
         field:DatasetField = DatasetField.query.get(field_id)
         if not field or field.deleted:
@@ -309,9 +309,9 @@ def update_field(field_id: int):
         db.session.rollback()
         raise BadRequest("Failed to update field", 500)
 
-@bp.delete("/<int:field_id>")
+@bp.delete("/<string:field_id>")
 @require_auth
-def delete_field(field_id: int):
+def delete_field(field_id: str):
     try:
         field:DatasetField = DatasetField.query.get(field_id)
         if not field or field.deleted:

@@ -3,7 +3,7 @@ from typing import List
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, g
 from backend.src.app.configs.extensions import db
-from backend.src.modules.okr.models import Role, Permission
+from backend.src.app.models.c_role_permission import Role, Permission
 from backend.src.app.middlewares.access_security import require_auth, currentUserId
 from backend.src.modules.analytics.logger import get_backend_logger
 
@@ -28,9 +28,9 @@ def list_roles():
         raise BadRequest("Failed to list roles", 500)
 
 
-@bp.get("/<int:role_id>")
+@bp.get("/<string:role_id>")
 @require_auth
-def get_role(role_id: int):
+def get_role(role_id: str):
     try:
         role:Role = Role.query.get(role_id)
         if not role or role.deleted:
@@ -81,9 +81,9 @@ def create_role():
         raise BadRequest("Failed to create role", 500)
 
 
-@bp.put("/<int:role_id>")
+@bp.put("/<string:role_id>")
 @require_auth
-def update_role(role_id: int):
+def update_role(role_id: str):
     try:
         role:Role = Role.query.get(role_id)
         if not role or role.deleted:
@@ -112,9 +112,9 @@ def update_role(role_id: int):
         raise BadRequest("Failed to update role", 500)
 
 
-@bp.delete("/<int:role_id>")
+@bp.delete("/<string:role_id>")
 @require_auth
-def delete_role(role_id: int):
+def delete_role(role_id: str):
     try:
         role:Role = Role.query.get(role_id)
         if not role or role.deleted:

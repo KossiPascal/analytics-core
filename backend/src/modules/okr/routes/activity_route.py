@@ -28,9 +28,9 @@
 #         raise BadRequest("Failed to list roles", 500)
 
 
-# @bp.get("/<int:role_id>")
+# @bp.get("/<string:role_id>")
 # @require_auth
-# def get_role(role_id: int):
+# def get_role(role_id: str):
 #     try:
 #         role:Activity = Activity.query.get(role_id)
 #         if not role or role.deleted:
@@ -84,9 +84,9 @@
 #         raise BadRequest("Failed to create role", 500)
 
 
-# @bp.put("/<int:role_id>")
+# @bp.put("/<string:role_id>")
 # @require_auth
-# def update_role(role_id: int):
+# def update_role(role_id: str):
 #     try:
 #         role:Activity = Activity.query.get(role_id)
 #         if not role or role.deleted:
@@ -115,9 +115,9 @@
 #         raise BadRequest("Failed to update role", 500)
 
 
-# @bp.delete("/<int:role_id>")
+# @bp.delete("/<string:role_id>")
 # @require_auth
-# def delete_role(role_id: int):
+# def delete_role(role_id: str):
 #     try:
 #         role:Activity = Activity.query.get(role_id)
 #         if not role or role.deleted:

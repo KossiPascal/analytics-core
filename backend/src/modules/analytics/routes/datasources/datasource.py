@@ -99,8 +99,8 @@ def create_datasource():
 @require_auth
 def list_datasources():
     try:
-        tenant_id = request.args.get("tenant_id", type=int)
-        datasource_id = request.args.get("datasource_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=str)
+        datasource_id = request.args.get("datasource_id", type=str)
         with_details = request.args.get("with_details", type=int)
 
         if not tenant_id:
@@ -174,7 +174,7 @@ def list_datasources():
         raise
 
 # UPDATE
-@bp.put("/<int:datasource_id>")
+@bp.put("/<string:datasource_id>")
 @require_auth
 def update_datasource(datasource_id):
     try:
@@ -237,7 +237,7 @@ def update_datasource(datasource_id):
         raise
 
 # DELETE
-@bp.delete("/<int:datasource_id>")
+@bp.delete("/<string:datasource_id>")
 @require_auth
 def delete_datasource(datasource_id):
     try:
@@ -371,7 +371,7 @@ def get_schema_info():
 
 
 # Explore schema
-@bp.get("/schema/<int:source_id>")
+@bp.get("/schema/<string:source_id>")
 @require_auth
 def schema(source_id):
     conn:DataSource = DataSource.query.get(source_id)
