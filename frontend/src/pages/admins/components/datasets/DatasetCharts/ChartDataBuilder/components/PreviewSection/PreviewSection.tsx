@@ -1,23 +1,25 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Edit3, Eye, FolderOpen, Palette, RefreshCw, Save, Settings } from 'lucide-react';
-import { TransposeButton } from '@components/charts/TransposeButton/TransposeButton';
-import { transposeChartData } from '@components/charts/transpose';
+import React, { useState } from 'react';
+import { Eye, FolderOpen, LayoutGrid, Palette, Settings, Tags } from 'lucide-react';
 import { RenderChartPreview } from '../RenderChartPreview/RenderChartPreview';
 import type { ChartVariant, VisualizationOptions } from '../types';
+import { ChartRenderDataProp, DatasetChart, DatasetQuery } from '@/models/dataset.models';
 import styles from './PreviewSection.module.css';
 
 interface PreviewSectionProps {
   previewChartType: ChartVariant;
   previewOptions: VisualizationOptions;
-  previewData: any[];
-  previewSeries: any[];
-  isPreviewStale: boolean;
+  renderData: ChartRenderDataProp | null;
+  chart: DatasetChart;
+  query?: DatasetQuery;
   isEditing: boolean;
+  isExecuting?: boolean;
+  executeError?: string | null;
   onSave: () => void;
   onOpenTheme: () => void;
   onOpenSaved: () => void;
   onOpenOptions: () => void;
-  onRefreshPreview: () => void;
+  onOpenRenames: () => void;
+  onOpenStructure: () => void;
 }
 
 interface PreviewErrorBoundaryProps {
@@ -60,30 +62,21 @@ class PreviewErrorBoundary extends React.Component<PreviewErrorBoundaryProps, Pr
 export const PreviewSection: React.FC<PreviewSectionProps> = ({
   previewChartType,
   previewOptions,
-  previewData,
-  previewSeries,
-  isPreviewStale,
+  renderData,
+  chart,
+  query,
   isEditing,
+  isExecuting = false,
+  executeError = null,
   onSave,
   onOpenTheme,
   onOpenSaved,
   onOpenOptions,
-  onRefreshPreview,
+  onOpenRenames,
+  onOpenStructure,
 }) => {
   const activeColors = previewOptions.colors;
-  const [isTransposed, setIsTransposed] = useState(false);
-
-  const handleToggleTranspose = useCallback(() => {
-    setIsTransposed(prev => !prev);
-  }, []);
-
-  const { data: displayData, series: displaySeries } = useMemo(() => {
-    if (!isTransposed) return { data: previewData, series: previewSeries };
-    if (['line', 'area', 'bar', 'stacked-bar', 'stacked-area', 'radar'].includes(previewChartType)) {
-      return transposeChartData(previewData, previewSeries, previewChartType === 'radar' ? 'subject' : 'name');
-    }
-    return { data: previewData, series: previewSeries };
-  }, [isTransposed, previewData, previewSeries, previewChartType]);
+  const hasData = !!renderData && renderData.rows.length > 0;
 
   return (
     <div className={styles.previewSection}>
@@ -93,13 +86,9 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
           Aperçu
         </h3>
         <div className={styles.headerActions}>
-          <TransposeButton
-            isTransposed={isTransposed}
-            onToggle={handleToggleTranspose}
-          />
-          <button type="button" className={`${styles.headerBtn} ${isPreviewStale ? styles.headerBtnStale : ''}`} onClick={onRefreshPreview} title="Actualiser l'aperçu" >
-            <RefreshCw size={16} className={isPreviewStale ? styles.refreshIconSpin : ''} />
-            Actualiser
+          <button type="button" className={styles.headerBtn} onClick={onOpenStructure} title="Structure du graphique" >
+            <LayoutGrid size={16} />
+            Structure
           </button>
           <button type="button" className={styles.headerBtn} onClick={onOpenTheme} title="Changer le thème de couleurs" >
             <Palette size={16} />
@@ -116,6 +105,10 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
             <Settings size={16} />
             Options
           </button>
+          <button type="button" className={styles.headerBtn} onClick={onOpenRenames} title="Éditer les renommages" >
+            <Tags size={16} />
+            Renommages
+          </button>
           <button type="button" className={styles.headerBtn} onClick={onOpenSaved} title="Ouvrir une visualisation" >
             <FolderOpen size={16} />
             Ouvrir
@@ -124,15 +117,29 @@ export const PreviewSection: React.FC<PreviewSectionProps> = ({
       </div>
 
       <div className={styles.previewContent}>
-        <PreviewErrorBoundary>
-          <RenderChartPreview
-            chartType={previewChartType}
-            previewData={displayData}
-            previewSeries={displaySeries}
-            options={previewOptions}
-            isTransposed={isTransposed}
-          />
-        </PreviewErrorBoundary>
+        {isExecuting ? (
+          <div className={styles.previewState}>
+            <div className={styles.spinner} />
+            <span>Exécution en cours…</span>
+          </div>
+        ) : executeError ? (
+          <div className={styles.previewStateError}>
+            <span>⚠ {executeError}</span>
+          </div>
+        ) : !hasData ? (
+          <div className={styles.previewState}>
+            <span>Cliquez sur <strong>Exécuter</strong> pour afficher les données.</span>
+          </div>
+        ) : (
+          <PreviewErrorBoundary>
+            <RenderChartPreview
+              chartType={previewChartType}
+              chart={chart}
+              query={query}
+              renderData={renderData!}
+            />
+          </PreviewErrorBoundary>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,671 @@
+/* ============================================================
+   StructureStep.module.css
+   Professional data-tool aesthetic (Tableau / Metabase style)
+   ============================================================ */
+
+/* ── Keyframes ──────────────────────────────────────────────── */
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: #cbd5e1;
+    opacity: 0.7;
+  }
+  50% {
+    border-color: #94a3b8;
+    opacity: 1;
+  }
+}
+
+@keyframes dropGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  }
+}
+
+/* ── Root layout ────────────────────────────────────────────── */
+.root {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  min-height: 520px;
+  overflow: hidden;
+  gap: 0;
+  background: #f1f5f9;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.sidebar {
+  width: 270px;
+  min-width: 270px;
+  max-width: 270px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f8fafc;
+  border-right: 2px solid #e2e8f0;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+}
+
+.sidebarHeader {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sidebarTitle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #1e293b;
+  letter-spacing: 0.01em;
+}
+
+.sidebarTitleIcon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.searchBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchBoxIcon {
+  position: absolute;
+  left: 8px;
+  color: #94a3b8;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.searchBoxInput {
+  width: 100%;
+  padding: 6px 8px 6px 28px;
+  font-size: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchBoxInput:focus {
+  border-color: #3b82f6;
+}
+
+.chartNameSection {
+  padding: 10px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* ── Sidebar field sections ─────────────────────────────────── */
+.fieldSection {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fieldSectionHeader {
+  padding: 8px 14px 4px;
+  flex-shrink: 0;
+}
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.fieldList {
+  overflow-y: auto;
+  padding: 2px 10px 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Draggable field chips ──────────────────────────────────── */
+.fieldChip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  cursor: grab;
+  transition: box-shadow 0.15s, transform 0.12s, border-color 0.15s;
+  user-select: none;
+}
+
+.fieldChip:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.fieldChip:active {
+  cursor: grabbing;
+  transform: translateY(0);
+}
+
+.fieldChipDim {
+  border-left: 3px solid #3b82f6;
+}
+
+.fieldChipMetric {
+  border-left: 3px solid #10b981;
+}
+
+.fieldChipIcon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.fieldChipIconDim {
+  color: #3b82f6;
+}
+
+.fieldChipIconMetric {
+  color: #10b981;
+}
+
+.fieldChipName {
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fieldChipType {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.fieldChipTypeDim {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.fieldChipTypeMetric {
+  background: #f0fdf4;
+  color: #10b981;
+}
+
+/* ── Main area ──────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ── 2x2 zones grid ─────────────────────────────────────────── */
+.zonesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  flex: 1;
+  gap: 2px;
+  background: #dde1e7;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Individual zone ────────────────────────────────────────── */
+.zone {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* Zone-specific header tints */
+.zoneRows .zoneHeader {
+  background: linear-gradient(135deg, #eff6ff 0%, #fff 100%);
+  border-bottom: 2px solid #bfdbfe;
+}
+
+.zoneCols .zoneHeader {
+  background: linear-gradient(135deg, #f5f3ff 0%, #fff 100%);
+  border-bottom: 2px solid #ddd6fe;
+}
+
+.zoneMetrics .zoneHeader {
+  background: linear-gradient(135deg, #f0fdf4 0%, #fff 100%);
+  border-bottom: 2px solid #bbf7d0;
+}
+
+.zoneFilters .zoneHeader {
+  background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+  border-bottom: 2px solid #fde68a;
+}
+
+.zoneHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  flex-shrink: 0;
+}
+
+.zoneIconRows {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.zoneIconCols {
+  color: #8b5cf6;
+  flex-shrink: 0;
+}
+
+.zoneIconDim {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.zoneIconMetric {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.zoneIconFilter {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.zoneTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #334155;
+  flex: 1;
+}
+
+.zoneRows .zoneTitle { color: #1d4ed8; }
+.zoneCols .zoneTitle { color: #6d28d9; }
+.zoneMetrics .zoneTitle { color: #059669; }
+.zoneFilters .zoneTitle { color: #b45309; }
+
+.zoneBadge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.zoneBadgeDim {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.zoneBadgeCols {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.zoneBadgeMetric {
+  background: #f0fdf4;
+  color: #10b981;
+}
+
+.zoneBadgeFilter {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+.zoneHeaderSpacer {
+  flex: 1;
+}
+
+.addFilterBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid #f59e0b;
+  color: #f59e0b;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.addFilterBtn:hover {
+  background: #fffbeb;
+}
+
+.zoneBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  min-height: 0;
+}
+
+.zoneEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  animation: pulse-border 2.5s ease-in-out infinite;
+  user-select: none;
+}
+
+.zoneDropActive {
+  animation: dropGlow 1s ease-in-out infinite;
+  background: #eff6ff !important;
+  border: 2px dashed #3b82f6 !important;
+  border-radius: 8px;
+  transform: scale(1.005);
+}
+
+.zoneCols .zoneDropActive,
+.zoneFilters .zoneDropActive {
+  background: #f5f3ff !important;
+  border-color: #8b5cf6 !important;
+}
+
+.zoneMetrics .zoneDropActive {
+  background: #f0fdf4 !important;
+  border-color: #10b981 !important;
+}
+
+.zoneFilters .zoneDropActive {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+}
+
+/* Drop target wrapper inside zone body */
+.dropTarget {
+  min-height: 40px;
+  border-radius: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+/* ── Field rows (items inside zones) ────────────────────────── */
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+  background: #fff;
+  transition: background 0.12s, box-shadow 0.12s;
+  animation: rowIn 0.18s ease-out both;
+}
+
+.fieldRow:hover {
+  background: #f8fafc;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.fieldRowDim {
+  border-left: 3px solid #3b82f6;
+}
+
+.fieldRowDimCols {
+  border-left: 3px solid #8b5cf6;
+}
+
+.fieldRowMetric {
+  border-left: 3px solid #10b981;
+}
+
+.fieldRowFilter {
+  border-left: 3px solid #f59e0b;
+}
+
+.fieldRowHandle {
+  color: #cbd5e1;
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.fieldRowName {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  min-width: 60px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fieldRowAlias {
+  flex: 1;
+  font-size: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 3px 7px;
+  color: #475569;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+
+.fieldRowAlias:focus {
+  border-color: #3b82f6;
+  background: #fff;
+}
+
+.fieldRowAliasDisplay {
+  flex: 1;
+  font-size: 12px;
+  color: #64748b;
+  padding: 3px 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.fieldRowAgg {
+  flex-shrink: 0;
+  max-width: 96px;
+}
+
+.fieldRowActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  padding: 0;
+}
+
+.actionBtn:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.removeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  padding: 0;
+}
+
+.removeBtn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+/* ── Pivot section ──────────────────────────────────────────── */
+.pivotSection {
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.pivotHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+
+.pivotHeader:hover {
+  background: #f8fafc;
+}
+
+.pivotTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.pivotChevron {
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.pivotChevronOpen {
+  transform: rotate(180deg);
+}
+
+.pivotContent {
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+  max-height: 0;
+  opacity: 0;
+}
+
+.pivotContentOpen {
+  max-height: 300px;
+  opacity: 1;
+}
+
+.pivotInner {
+  padding: 12px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pivotRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.pivotRowWide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.pivotSelectWrap {
+  min-width: 160px;
+  flex: 1;
+}
+
+/* ── Scrollbar styling ──────────────────────────────────────── */
+.fieldList::-webkit-scrollbar,
+.zoneBody::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fieldList::-webkit-scrollbar-track,
+.zoneBody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fieldList::-webkit-scrollbar-thumb,
+.zoneBody::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 2px;
+}
+
+.fieldList::-webkit-scrollbar-thumb:hover,
+.zoneBody::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* ── Filters zone override (spans bottom) ───────────────────── */
+.filtersZone {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  overflow: hidden;
+  max-height: 220px;
+}

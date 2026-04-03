@@ -204,12 +204,40 @@
   min-height: 42px;
 }
 
+.executeSection {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-left: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
 .zoneLabel {
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
   white-space: nowrap;
   min-width: 56px;
+}
+
+.executeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.executeBtn:hover {
+  background: #1d4ed8;
 }
 
 .zoneChips {

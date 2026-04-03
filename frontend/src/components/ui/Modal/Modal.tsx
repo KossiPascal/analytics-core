@@ -21,9 +21,10 @@ export interface ModalProps {
   closeOnEscape?: boolean;
   footer?: ReactNode;
   className?: string;
+  noPadding?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, leftIcon, children, size = 'md', showCloseButton = true, closeOnBackdrop = false, closeOnEscape = false, footer, className }: ModalProps) {
+export function Modal({ isOpen, onClose, title, leftIcon, children, size = 'md', showCloseButton = true, closeOnBackdrop = false, closeOnEscape = false, footer, className, noPadding = false }: ModalProps) {
   // Handle escape key
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -104,7 +105,7 @@ export function Modal({ isOpen, onClose, title, leftIcon, children, size = 'md',
               )}
 
               {/* Body */}
-              <div className={styles.body}>{children}</div>
+              <div className={cn(styles.body, noPadding && styles.bodyNoPadding)}>{children}</div>
 
               {/* Footer */}
               {footer && <div className={styles.footer}>{footer}</div>}

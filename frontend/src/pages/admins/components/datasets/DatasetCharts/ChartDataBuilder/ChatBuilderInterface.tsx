@@ -13,15 +13,20 @@ import {
 
 import type { ChartTypeOption, ChartVariant, VisualizationOptions } from './components/types';
 import styles from './ChatBuilderInterface.module.css';
-import { DatasetChart, Dataset, DatasetQuery, ExecuteChartResponse, ChartFilter, ChartDimension, ChartMetric } from '@/models/dataset.models';
+import { DatasetChart, Dataset, DatasetQuery, ExecuteChartResponse, ChartFilter, ChartDimension, ChartMetric, ChartRenderDataProp } from '@/models/dataset.models';
 import { Tenant } from '@/models/identity.model';
 import { PreviewSection } from './components/PreviewSection/PreviewSection';
 import { LayoutDataZone, LayoutState } from './components/LayoutDropZone/LayoutDropZone';
 import { LayoutConfiguration } from './components/LayoutConfiguration/LayoutConfiguration';
-import { OptionsModal } from '@pages/builders/DashboardBuilder/components/OptionsModal/OptionsModal';
+import { OptionsModal } from './components/OptionsModal/OptionsModal';
 import { ThemeModal } from './components/ThemeModal/ThemeModal';
-import { CHART_COLORS } from '@components/charts/theme';
+import { RenamesOptionsModal } from '../components/chart-utils/RenamesOptionsModal';
+import { StructureStep } from '../components/chart-utils/StructureStep';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { FormInput } from '@/components/forms/FormInput/FormInput';
+import { Button } from '@/components/ui/Button/Button';
 import { getOptionKey, type ChartOptions } from '@/models/dataset.models';
+import { chartService } from '@/services/dataset.service';
 
 const CHART_TYPES: ChartTypeOption[] = [
   { id: 'bar',       name: 'Barres',           icon: <BarChart3 size={20} />,  description: 'Comparaison de valeurs',           category: 'comparison' },
@@ -94,6 +99,59 @@ const toChartOptions = (
   };
 };
 
+/* ── Modal Titre / Sous-titre / Description ──────────────────── */
+const MetaModal = ({
+  isOpen, onClose, chart, onChange,
+}: { isOpen: boolean; onClose: () => void; chart: DatasetChart; onChange: (c: DatasetChart) => void }) => {
+  const [localChart, setLocalChart] = useState<DatasetChart>(chart);
+
+  useEffect(() => {
+    if (isOpen) setLocalChart(chart);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Informations du graphique"
+      size="md"
+      showCloseButton={false}
+      closeOnEscape
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <FormInput
+          label="Titre *"
+          value={localChart.options?.title ?? ''}
+          onChange={(e) => setLocalChart(prev => ({
+            ...prev,
+            name: e.target.value,
+            options: { ...prev.options, title: e.target.value },
+          }))}
+          placeholder="Titre du graphique"
+          required
+        />
+        <FormInput
+          label="Sous-titre"
+          value={localChart.options?.subtitle ?? ''}
+          onChange={(e) => setLocalChart(prev => ({ ...prev, options: { ...prev.options, subtitle: e.target.value } }))}
+          placeholder="Sous-titre (optionnel)"
+        />
+        <FormInput
+          label="Description"
+          value={localChart.description ?? ''}
+          onChange={(e) => setLocalChart(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Description (optionnel)"
+        />
+        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', paddingTop: '0.25rem', borderTop: '1px solid #e2e8f0' }}>
+          <Button size="sm" variant="outline" onClick={onClose}>Annuler</Button>
+          <Button size="sm" disabled={!localChart.name?.trim()} onClick={() => { onChange(localChart); onClose(); }}>Appliquer</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 interface ChatBuilderInterfaceProps {
   chart: DatasetChart;
   tenants: Tenant[];
@@ -114,6 +172,9 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
   // Modals
   const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isRenamesModalOpen, setIsRenamesModalOpen] = useState(false);
+  const [isStructureModalOpen, setIsStructureModalOpen] = useState(false);
+  const [isMetaModalOpen, setIsMetaModalOpen] = useState(false);
 
   // Visualization state
   const [chartType, setChartType] = useState<ChartVariant>((chart.type as ChartVariant) || 'bar');
@@ -122,10 +183,12 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     ...toVisualizationOptions(chart.options),
   });
 
-  // Preview snapshot (frozen at Actualiser click)
+  // Preview snapshot (frozen at Exécuter click)
   const [previewChartType, setPreviewChartType] = useState<ChartVariant>('bar');
   const [previewOptions, setPreviewOptions] = useState<VisualizationOptions>(DEFAULT_OPTIONS);
-  const [isPreviewStale, setIsPreviewStale] = useState(false);
+  const [renderData, setRenderData] = useState<ChartRenderDataProp | null>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executeError, setExecuteError] = useState<string | null>(null);
 
   // Auto-refresh when chart type changes
   const prevChartTypeRef = useRef<ChartVariant>(chartType);
@@ -133,7 +196,6 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
     if (prevChartTypeRef.current === chartType) return;
     prevChartTypeRef.current = chartType;
     setPreviewChartType(chartType);
-    setIsPreviewStale(false);
   }, [chartType]);
 
   // Edit mode
@@ -266,7 +328,6 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       next[toZone] = target as any;
       return next;
     });
-    setIsPreviewStale(true);
   }, [fields]);
 
   const handleRemove = useCallback((id: number, zone: keyof LayoutState) => {
@@ -274,14 +335,12 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       ...prev,
       [zone]: prev[zone].filter((item: any) => item.field_id !== id),
     }));
-    setIsPreviewStale(true);
   }, []);
 
   const handleUpdateLayout = useCallback((
     zone: keyof LayoutState, fields: (ChartDimension | ChartMetric | ChartFilter)[],
   ) => {
     setLayout(prev => ({ ...prev, [zone]: fields }));
-    setIsPreviewStale(true);
   }, []);
 
   const handleAddLayout = useCallback((
@@ -312,77 +371,69 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
       }
       return { ...prev, columns, rows, metrics, filters };
     });
-    setIsPreviewStale(true);
   }, []);
 
-  // ── Preview data generation (same approach as DashboardBuilder) ──────────────
-  const palette = useMemo(
-    () => previewOptions.colors ?? CHART_COLORS.primary,
-    [previewOptions.colors],
-  );
-
+  // ── Execute & fetch real data ────────────────────────────────────────────────
   const metricNames = useMemo(
-    () => layout.metrics.map(m => m.alias || m.name || `metric_${m.field_id}`),
-    [layout.metrics],
+    () => renderData?.header.metrics ?? layout.metrics.map(m => m.alias || `metric_${m.field_id}`),
+    [renderData, layout.metrics],
   );
 
-  const previewData = useMemo(() => {
-    if (metricNames.length === 0) return [];
-
-    const flat = ['pie', 'donut', 'kpi', 'gauge'];
-    if (flat.includes(previewChartType)) {
-      return metricNames.map((name, i) => ({
-        name,
-        value: Math.floor(Math.random() * 500) + 100,
-        color: palette[i % palette.length],
-      }));
+  const handleRefreshPreview = useCallback(async () => {
+    const queryId = _chart.query_id;
+    if (!queryId) {
+      setExecuteError("Aucune requête sélectionnée.");
+      return;
     }
+    setIsExecuting(true);
+    setExecuteError(null);
+    try {
+      // CRUDService.post throws on error and returns T | undefined on success
+      const response = await chartService.execute(queryId, _chart);
+      if (!response) throw new Error("Pas de réponse du serveur.");
 
-    if (previewChartType === 'radar') {
-      const radarMetrics = metricNames.slice(0, 2);
-      return ['Qualité', 'Accès', 'Délai', 'Suivi', 'Impact'].map((subject, index) => {
-        const entry: Record<string, unknown> = { subject };
-        (radarMetrics.length > 0 ? radarMetrics : ['Valeur']).forEach((name, metricIndex) => {
-          entry[name] = 40 + ((index + 1) * 13) + (metricIndex * 11);
-        });
-        return entry;
-      });
+      console.log('[ChartBuilder] response complète:', response);
+      console.log('[ChartBuilder] response.data (rows):', response.data);
+      console.log('[ChartBuilder] response.meta:', response.meta);
+
+      // Snapshot chart type & options
+      setPreviewChartType(chartType);
+      setPreviewOptions({ ...options });
+
+      // Build ChartRenderDataProp from backend response
+      // dimensions may be strings or objects {alias, field_name, ...} depending on backend version
+      const rawDims: any[] = response.meta?.dimensions ?? [];
+      const dimKeys: string[] = rawDims.map((d: any) =>
+        typeof d === 'string' ? d : (d.alias || d.field_name || String(d))
+      );
+      // derive metric keys = all returned columns that are not dimension columns
+      const allColumns: string[] = response.meta?.columns ?? [];
+      const dimSet = new Set(dimKeys);
+      const metricKeys = allColumns.filter(c => !dimSet.has(c));
+
+      console.log('[ChartBuilder] metricKeys:', metricKeys);
+      console.log('[ChartBuilder] dimKeys:', dimKeys);
+
+      const rd: ChartRenderDataProp = {
+        header: {
+          header_rows: [metricKeys],
+          rows: dimKeys,
+          columns: [],
+          column_maps: {},
+          column_label_maps: {},
+          metrics: metricKeys,
+          _all_columns_order: metricKeys,
+        },
+        rows: response.data ?? [],
+      };
+      console.log('[ChartBuilder] renderData construit:', rd);
+      setRenderData(rd);
+    } catch (err: any) {
+      setExecuteError(err?.response?.data?.message ?? err?.message ?? "Erreur d'exécution.");
+    } finally {
+      setIsExecuting(false);
     }
-
-    if (previewChartType === 'heatmap') {
-      return ['Lomé', 'Kara', 'Sokodé'].map((row) => ({
-        row,
-        jan: Math.floor(Math.random() * 20) + 5,
-        fev: Math.floor(Math.random() * 20) + 5,
-        mar: Math.floor(Math.random() * 20) + 5,
-      }));
-    }
-
-    return MONTHS.map(month => {
-      const entry: Record<string, unknown> = { name: month };
-      metricNames.forEach(name => {
-        entry[name] = Math.floor(Math.random() * 300) + 50;
-      });
-      return entry;
-    });
-  }, [previewChartType, metricNames, palette]);
-
-  const previewSeries = useMemo(
-    () => metricNames.map((name, i) => ({
-      dataKey: name,
-      name,
-      color: palette[i % palette.length],
-      type: undefined,
-    })),
-    [metricNames, palette],
-  );
-
-  // ── Refresh ──────────────────────────────────────────────────────────────────
-  const handleRefreshPreview = useCallback(() => {
-    setPreviewChartType(chartType);
-    setPreviewOptions({ ...options });
-    setIsPreviewStale(false);
-  }, [chartType, options]);
+  }, [_chart, chartType, options]);
 
   // ── Theme apply ──────────────────────────────────────────────────────────────
   const handleApplyTheme = useCallback((colors: string[]) => {
@@ -405,19 +456,23 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
             chartTypes={CHART_TYPES}
             options={previewOptions}
             onSelectChartType={setChartType}
+            onExecute={handleRefreshPreview}
           />
 
           <PreviewSection
             previewChartType={previewChartType}
             previewOptions={previewOptions}
-            previewData={previewData}
-            previewSeries={previewSeries}
-            isPreviewStale={isPreviewStale}
+            renderData={renderData}
+            chart={_chart}
+            query={query}
             isEditing={isEditing}
-            onRefreshPreview={handleRefreshPreview}
+            isExecuting={isExecuting}
+            executeError={executeError}
             onOpenTheme={() => setIsThemeModalOpen(true)}
             onOpenOptions={() => setIsOptionsModalOpen(true)}
-            onOpenSaved={() => {}}
+            onOpenRenames={() => setIsRenamesModalOpen(true)}
+            onOpenStructure={() => setIsStructureModalOpen(true)}
+            onOpenSaved={() => setIsMetaModalOpen(true)}
             onSave={() => {}}
           />
         </div>
@@ -425,9 +480,13 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
 
       <OptionsModal
         isOpen={isOptionsModalOpen}
-        options={options}
-        onOptionsChange={setOptions}
         onClose={() => setIsOptionsModalOpen(false)}
+        chart={_chart}
+        onChange={(updated: DatasetChart) => {
+          setChart(updated);
+          setOptions(toVisualizationOptions(updated.options));
+          onChange?.(updated);
+        }}
       />
 
       <ThemeModal
@@ -436,6 +495,46 @@ export const ChatBuilderInterface: React.FC<ChatBuilderInterfaceProps> = ({
         indicatorNames={metricNames}
         onClose={() => setIsThemeModalOpen(false)}
         onApply={handleApplyTheme}
+      />
+
+      <RenamesOptionsModal
+        isOpen={isRenamesModalOpen}
+        onClose={() => setIsRenamesModalOpen(false)}
+        values={_chart.options?.renames ?? {}}
+        onChange={(newValues) => {
+          const updated: DatasetChart = { ..._chart, options: { ..._chart.options, renames: newValues } };
+          setChart(updated);
+          onChange?.(updated);
+        }}
+      />
+
+      <Modal
+        isOpen={isStructureModalOpen}
+        onClose={() => setIsStructureModalOpen(false)}
+        title="Structure du graphique"
+        size="full"
+        noPadding
+        closeOnBackdrop
+        closeOnEscape
+      >
+        <StructureStep
+          chart={_chart}
+          queries={queries}
+          onChange={(updated) => {
+            setChart(updated);
+            onChange?.(updated);
+          }}
+        />
+      </Modal>
+
+      <MetaModal
+        isOpen={isMetaModalOpen}
+        onClose={() => setIsMetaModalOpen(false)}
+        chart={_chart}
+        onChange={(updated) => {
+          setChart(updated);
+          onChange?.(updated);
+        }}
       />
     </>
   );

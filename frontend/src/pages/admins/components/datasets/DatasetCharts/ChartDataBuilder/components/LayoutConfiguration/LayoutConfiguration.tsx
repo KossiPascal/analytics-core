@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { Database, Filter, Layers, Search } from "lucide-react";
+import { Database, Filter, Layers, Play, Search } from "lucide-react";
 import {
   LayoutDropZone,
   LayoutState,
@@ -62,6 +62,7 @@ interface ChipProps {
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
   onDragEnd?: () => void;
+  onDragOver?: (e: React.DragEvent) => void;
 }
 
 const Chip: React.FC<ChipProps> = ({
@@ -73,6 +74,7 @@ const Chip: React.FC<ChipProps> = ({
   draggable: isDraggable,
   onDragStart,
   onDragEnd,
+  onDragOver,
 }) => (
   <div
     className={chipStyles.chip}
@@ -80,6 +82,7 @@ const Chip: React.FC<ChipProps> = ({
     draggable={isDraggable}
     onDragStart={onDragStart}
     onDragEnd={onDragEnd}
+    onDragOver={onDragOver}
     style={isDraggable ? { cursor: "grab" } : undefined}
   >
     <span className={chipStyles.chipIcon}>{icon}</span>
@@ -123,6 +126,7 @@ interface LayoutConfigurationProps {
   chartTypes: ChartTypeOption[];
   options: VisualizationOptions;
   onSelectChartType: (type: ChartVariant) => void;
+  onExecute?: () => void;
 }
 
 // ── COMPONENT ─────────────────────────────────────────────────────────────────
@@ -137,6 +141,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   chartTypes,
   options,
   onSelectChartType,
+  onExecute,
 }) => {
   const safeLayout = useMemo<LayoutState>(
     () => ({
@@ -167,11 +172,33 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   // Drag-over indicator
   const [dragOverZone, setDragOverZone] = useState<LayoutDataZone | null>(null);
 
-  // Tracks which zone each chip currently lives in (visual position only)
-  const [donneesZone, setDonneesZone] = useState<"columns" | "rows">("columns");
-  const [dimColsChipZone, setDimColsChipZone] = useState<LayoutDataZone>("columns");
-  const [dimRowsChipZone, setDimRowsChipZone] = useState<LayoutDataZone>("rows");
-  const [filtersChipZone, setFiltersChipZone] = useState<LayoutDataZone>("filters");
+  // Chip identity type
+  type ChipId = 'metrics' | 'columns' | 'rows' | 'filters';
+  type VisualZone = 'columns' | 'rows' | 'filters';
+
+  // Ordered chips per visual zone (order matters for display and can be changed by drag)
+  const [zoneChips, setZoneChips] = useState<Record<VisualZone, ChipId[]>>({
+    columns: ['metrics', 'columns'],
+    rows: ['rows'],
+    filters: ['filters'],
+  });
+  const [dragOverChipId, setDragOverChipId] = useState<ChipId | null>(null);
+
+  const moveChip = useCallback((chipId: ChipId, fromZone: VisualZone, toZone: VisualZone, beforeChipId?: ChipId | null) => {
+    if (chipId === 'metrics' && toZone === 'filters') return; // Données ne va pas dans Filtres
+    setZoneChips(prev => {
+      const from = prev[fromZone].filter(c => c !== chipId);
+      const toCleaned = prev[toZone].filter(c => c !== chipId);
+      let insertIdx = toCleaned.length;
+      if (beforeChipId != null) {
+        const idx = toCleaned.indexOf(beforeChipId);
+        if (idx !== -1) insertIdx = idx;
+      }
+      const to = [...toCleaned];
+      to.splice(insertIdx, 0, chipId);
+      return { ...prev, [fromZone]: from, [toZone]: to };
+    });
+  }, []);
 
   const zoneMetrics = useMemo(
     () => fields.filter((f) => f.field_type !== "dimension"),
@@ -344,6 +371,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
   const handleDragLeaveZone = useCallback((e: React.DragEvent) => {
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
       setDragOverZone(null);
+      setDragOverChipId(null);
     }
   }, []);
 
@@ -410,30 +438,27 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       e.preventDefault();
       setDragOverZone(null);
 
-      // ── Chip drag: MOVE the chip to the target zone ──
+      // ── Chip drag: MOVE or REORDER the chip ──
       const chipRaw = e.dataTransfer.getData(CHIP_DRAG_KEY);
       if (chipRaw) {
-        const { fromZone, currentZone } = JSON.parse(chipRaw) as {
-          fromZone: LayoutDataZone;
-          currentZone: LayoutDataZone;
+        const { chipId, currentZone } = JSON.parse(chipRaw) as {
+          chipId: ChipId;
+          currentZone: VisualZone;
         };
-        if (currentZone === toZone) return; // already in this zone
+        // chips can only go to visual zones (not metrics zone)
+        if (toZone === 'metrics') { setDragOverChipId(null); return; }
+        const safeToZone = toZone as VisualZone;
 
-        switch (fromZone) {
-          case "metrics":
-            // Données cannot go to Filtres
-            if (toZone !== "filters") setDonneesZone(toZone as "columns" | "rows");
-            break;
-          case "columns":
-            setDimColsChipZone(toZone);
-            break;
-          case "rows":
-            setDimRowsChipZone(toZone);
-            break;
-          case "filters":
-            setFiltersChipZone(toZone);
-            break;
+        if (currentZone === safeToZone) {
+          // Same zone → reorder
+          if (dragOverChipId && dragOverChipId !== chipId) {
+            moveChip(chipId, currentZone, safeToZone, dragOverChipId);
+          }
+        } else {
+          // Different zone → move
+          moveChip(chipId, currentZone, safeToZone);
         }
+        setDragOverChipId(null);
         return;
       } else {
         // ── Sidebar individual item drag ──
@@ -481,6 +506,8 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
       onAddLayout,
       onUpdateLayout,
       convertItemsForZone,
+      dragOverChipId,
+      moveChip,
     ],
   );
 
@@ -567,74 +594,78 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
 
       {/* ── RIGHT ZONES ── */}
       {(() => {
-        // ── Chip elements (defined once, rendered conditionally per zone) ──
-        const donneesChip = (
-          <Chip
-            key="chip-metrics"
-            icon={<Database size={13} />}
-            label="Données"
-            count={safeLayout.metrics.length}
-            chipStyles={styles as any}
-            onClick={() => setDonneesModalOpen(true)}
-            draggable
-            onDragStart={(e) => {
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "metrics", currentZone: donneesZone }));
-            }}
-            onDragEnd={() => setDragOverZone(null)}
-          />
-        );
-        const dimColsChip = (
-          <Chip
-            key="chip-columns"
-            icon={<Layers size={13} />}
-            label="Dim. Col."
-            count={safeLayout.columns.length}
-            chipStyles={styles as any}
-            onClick={() => setDimsModalZone("columns")}
-            draggable
-            onDragStart={(e) => {
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "columns", currentZone: dimColsChipZone }));
-            }}
-            onDragEnd={() => setDragOverZone(null)}
-          />
-        );
-        const dimRowsChip = (
-          <Chip
-            key="chip-rows"
-            icon={<Layers size={13} />}
-            label="Dim. Lig."
-            count={safeLayout.rows.length}
-            chipStyles={styles as any}
-            onClick={() => setDimsModalZone("rows")}
-            draggable
-            onDragStart={(e) => {
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "rows", currentZone: dimRowsChipZone }));
-            }}
-            onDragEnd={() => setDragOverZone(null)}
-          />
-        );
-        const filtersChip = (
-          <Chip
-            key="chip-filters"
-            icon={<Filter size={13} />}
-            label="Filtres"
-            count={safeLayout.filters.length}
-            chipStyles={styles as any}
-            onClick={() => setFiltersModalOpen(true)}
-            draggable
-            onDragStart={(e) => {
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ fromZone: "filters", currentZone: filtersChipZone }));
-            }}
-            onDragEnd={() => setDragOverZone(null)}
-          />
-        );
+        // ── Helper to build drag handlers for a chip ──
+        const chipDragHandlers = (chipId: ChipId) => ({
+          onDragStart: (e: React.DragEvent) => {
+            const currentZone = (['columns', 'rows', 'filters'] as VisualZone[]).find(z => zoneChips[z].includes(chipId)) ?? 'columns';
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData(CHIP_DRAG_KEY, JSON.stringify({ chipId, currentZone }));
+          },
+          onDragEnd: () => { setDragOverZone(null); setDragOverChipId(null); },
+          onDragOver: (e: React.DragEvent) => {
+            if (e.dataTransfer.types.includes(CHIP_DRAG_KEY)) {
+              e.preventDefault();
+              e.stopPropagation();
+              setDragOverChipId(chipId);
+            }
+          },
+        });
+
+        // ── Chip elements ──
+        const allChips: Record<ChipId, React.ReactNode> = {
+          metrics: (
+            <Chip
+              key="chip-metrics"
+              icon={<Database size={13} />}
+              label="Données"
+              count={safeLayout.metrics.length}
+              chipStyles={styles as any}
+              onClick={() => setDonneesModalOpen(true)}
+              draggable
+              {...chipDragHandlers('metrics')}
+            />
+          ),
+          columns: (
+            <Chip
+              key="chip-columns"
+              icon={<Layers size={13} />}
+              label="Dim. Col."
+              count={safeLayout.columns.length}
+              chipStyles={styles as any}
+              onClick={() => setDimsModalZone("columns")}
+              draggable
+              {...chipDragHandlers('columns')}
+            />
+          ),
+          rows: (
+            <Chip
+              key="chip-rows"
+              icon={<Layers size={13} />}
+              label="Dim. Lig."
+              count={safeLayout.rows.length}
+              chipStyles={styles as any}
+              onClick={() => setDimsModalZone("rows")}
+              draggable
+              {...chipDragHandlers('rows')}
+            />
+          ),
+          filters: (
+            <Chip
+              key="chip-filters"
+              icon={<Filter size={13} />}
+              label="Filtres"
+              count={safeLayout.filters.length}
+              chipStyles={styles as any}
+              onClick={() => setFiltersModalOpen(true)}
+              draggable
+              {...chipDragHandlers('filters')}
+            />
+          ),
+        };
+
         return (
           <div className={styles.zonesArea}>
-            {/* Top row: Colonnes + Filtrer */}
+            {/* Top row: Colonnes + Filtrer + Exécuter */}
             <div className={styles.topZones}>
               {/* Zone Colonnes */}
               <div
@@ -645,10 +676,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
               >
                 <span className={styles.zoneLabel}>Colonnes</span>
                 <div className={styles.zoneChips}>
-                  {donneesZone === "columns" && donneesChip}
-                  {dimColsChipZone === "columns" && dimColsChip}
-                  {dimRowsChipZone === "columns" && dimRowsChip}
-                  {filtersChipZone === "columns" && filtersChip}
+                  {zoneChips.columns.map(chipId => allChips[chipId])}
                 </div>
               </div>
 
@@ -661,12 +689,19 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
               >
                 <span className={styles.zoneLabel}>Filtrer</span>
                 <div className={styles.zoneChips}>
-                  {/* Données jamais dans Filtres */}
-                  {dimColsChipZone === "filters" && dimColsChip}
-                  {dimRowsChipZone === "filters" && dimRowsChip}
-                  {filtersChipZone === "filters" && filtersChip}
+                  {zoneChips.filters.map(chipId => allChips[chipId])}
                 </div>
               </div>
+
+              {/* Bouton Exécuter — à droite des zones */}
+              {onExecute && (
+                <div className={styles.executeSection}>
+                  <button type="button" className={styles.executeBtn} onClick={onExecute} title="Exécuter la requête">
+                    <Play size={14} />
+                    Exécuter
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Zone Lignes */}
@@ -678,10 +713,7 @@ export const LayoutConfiguration: React.FC<LayoutConfigurationProps> = ({
             >
               <span className={styles.zoneLabel}>Lignes</span>
               <div className={styles.zoneChips}>
-                {donneesZone === "rows" && donneesChip}
-                {dimColsChipZone === "rows" && dimColsChip}
-                {dimRowsChipZone === "rows" && dimRowsChip}
-                {filtersChipZone === "rows" && filtersChip}
+                {zoneChips.rows.map(chipId => allChips[chipId])}
               </div>
             </div>
           </div>
