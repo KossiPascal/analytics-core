@@ -13,10 +13,10 @@ import { UsersRolesTab } from '@pages/admins/components/identities/UsersRolesTab
 import { OrgunitsTab } from '@pages/admins/components/identities/OrgunitsTab';
 import { AdminEntityCrudModuleRef } from '@/pages/admins/AdminEntityCrudModule';
 import { UserFormModal } from '@pages/admins/components/identities/UserFormModal';
-import { HostLinkssTab } from './components/identities/HostLinkssTab';
 
 import shared from '@components/ui/styles/shared.module.css';
 import styles from '@pages/admins/AdminPage.module.css';
+import { HostLinkssTab } from './components/identities/TenantSourcesTab';
 
 type TabType =
   | "tenants_tab"

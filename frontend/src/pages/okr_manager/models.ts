@@ -119,7 +119,7 @@ export interface OkrProject {
   tenant_id: ID;
   program_id: ID;
   team_id: ID;
-  team_id: ID;
+  scope_id: ID;
   name: string;
   description: string;
   start_date?: DateType;
@@ -133,10 +133,10 @@ export interface OkrProject {
   tenant?: Tenant;
   program?: OkrProgram;
   team?: Team;
-  team?: OkrTeamScope;
+  scope?: OkrTeamScope;
 
   fundings?: Funding[];
-  activities?: OkrActivity[];
+  activities?: Activity[];
   tasks?: OkrProjectTask[];
   milestones?: ProjectMilestone[];
   risks?: ProjectRisk[];
@@ -305,7 +305,7 @@ export interface ActivityOwner {
   activity_id: ID;
   user_id: ID;
 
-  activity?: OkrActivity;
+  activity?: Activity;
   user?: User;
 }
 
@@ -316,7 +316,7 @@ export interface OkrActivityKeyResult {
   impact?: number;
   weight?: number;
 
-  activity?: OkrActivity;
+  activity?: Activity;
   keyresult?: OkrKeyResult;
 }
 
@@ -420,7 +420,7 @@ export interface IndicatorValue {
 
   tenant?: Tenant;
   indicator?: Indicator;
-  activity?: OkrActivity;
+  activity?: Activity;
 }
 
 // OUTCOMES

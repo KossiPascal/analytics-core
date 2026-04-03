@@ -1,5 +1,5 @@
 import { CRUDService } from "@/services/acrud.service";
-import { OkrStrategy, OkrStrategicAxis, OkrProgram, OkrProject, OkrGlobal, OkrTeamScope, OkrActivity, OkrProjectTask, Indicator, Outcome, OkrSnapshot, OkrProjectTimelineItem, OkrObjective, OkrInitiative, ProjectRisk, ProjectMilestone, OkrKeyResult, Funding } from "./models";
+import { OkrStrategy, OkrStrategicAxis, OkrProgram, OkrProject, OkrGlobal, OkrTeamScope, Activity, OkrProjectTask, Indicator, Outcome, OkrSnapshot, OkrProjectTimelineItem, OkrObjective, OkrInitiative, ProjectRisk, ProjectMilestone, OkrKeyResult, Funding } from "./models";
 
 // ----------------- STRATEGY -----------------
 const strategies = new CRUDService("/strategies");
@@ -104,10 +104,10 @@ export const teamScopeService = {
 // ----------------- ACTIVITY -----------------
 const activities = new CRUDService("/activities");
 export const activityService = {
-  list: (tenant_id?: number, project_id?: number) => activities.all<OkrActivity>(``, { options: { params: { tenant_id, project_id } } }),
-  get: (tenant_id: number, id: number) => activities.all<OkrActivity>(`/${id}`, { options: { params: { tenant_id } } }),
-  create: (data: OkrActivity) => activities.create("", data),
-  update: (id: number, data: OkrActivity) => activities.update("", id, data),
+  list: (tenant_id?: number, project_id?: number) => activities.all<Activity>(``, { options: { params: { tenant_id, project_id } } }),
+  get: (tenant_id: number, id: number) => activities.all<Activity>(`/${id}`, { options: { params: { tenant_id } } }),
+  create: (data: Activity) => activities.create("", data),
+  update: (id: number, data: Activity) => activities.update("", id, data),
   remove: (id: number) => activities.remove("", id),
 };
 

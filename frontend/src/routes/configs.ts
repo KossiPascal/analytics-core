@@ -57,7 +57,7 @@ export const PAGES = {
 
     // PROSI — Gestion Projets & ORCs
     ProsiPage: lazy(() => import('@pages/prosi')),
-    OkrManagerPage: lazy(() => import('@pages/manager/OkrManagerPage')),
+    OkrManagerPage: lazy(() => import('@pages/okr_manager/OkrManagerPage')),
 
     
 

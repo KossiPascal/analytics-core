@@ -14,7 +14,7 @@ def apply_tenant_scope(query, model, current_user):
     return query
 
 # -------------------- TENANT --------------------
-class Tenant(db.Model, BaseModel, TimestampMixin, SoftDeleteMixin, AuditMixin, StatusMixin):
+class Tenant(db.Model, BaseModel, TimestampMixin, SoftDeleteMixin, NullableAuditMixin, StatusMixin):
     __tablename__ = "tenants"
     __table_args__ = {"schema": "core"}
 

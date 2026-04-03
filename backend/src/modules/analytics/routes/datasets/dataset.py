@@ -25,8 +25,8 @@ def list_datasets(tenant_id: Optional[int] = None,dataset_id: Optional[int] = No
     
     query = Dataset.query.options(
         selectinload(Dataset.tenant),
-        selectinload(Dataset.fields),
-        selectinload(Dataset.queries),
+        selectinload(Dataset.dataset_fields),
+        selectinload(Dataset.dataset_queries),
         selectinload(Dataset.datasource),
         # selectinload(Dataset.connection),
         # selectinload(Dataset.charts),
@@ -200,7 +200,7 @@ def create_dataset():
             description=payload.get("description"),
             tenant_id=payload.get("tenant_id"),
             datasource_id=payload.get("datasource_id"),
-            connection_id=payload.get("connection_id"),
+            datasource_connection_id=payload.get("connection_id"),
             columns=columns,
             version=payload.get("version") or 1,
             is_active=bool(payload.get("is_active", False)),
@@ -263,8 +263,8 @@ def update_dataset(dataset_id:int):
 
         from sqlalchemy import and_
         dataset:Dataset = Dataset.query.options(
-            selectinload(Dataset.fields),
-            # selectinload(Dataset.queries),
+            selectinload(Dataset.dataset_fields),
+            # selectinload(Dataset.dataset_queries),
         ).filter(
             Dataset.deleted == False,
             Dataset.id == dataset_id,
@@ -301,7 +301,7 @@ def update_dataset(dataset_id:int):
         columns = SqlIntrospector.get_columns(cleaned_sql, values)
         column_maps = {c["name"]:c["type"] for c in columns if c and c.get("name") and c.get("type")}
 
-        fields:List[DatasetField] = dataset.fields or []
+        fields:List[DatasetField] = dataset.dataset_fields or []
         for field in fields:
             raw_field = field.raw_field or {}
             raw_type = raw_field.get("type")
@@ -321,20 +321,19 @@ def update_dataset(dataset_id:int):
 
         dts_versioned = DatasetVersioned(
             dataset_id=dataset.id,
+            tenant_id=dataset.tenant_id,
             sql=dataset.sql,
             values=dataset.values,
             version=dataset.version,
             options=dataset.options,
-            archived_by=user_id,
+            created_by_id=user_id,
         )
         db.session.add(dts_versioned)
-
         for field in { "name", "options", "description", "is_active" }:
             if field in payload:
                 setattr(dataset, field, payload[field])
             elif field in ["name"]:
                 raise BadRequest(f"{field} is required", 400)
-
         dataset.columns=columns
         dataset.sql=cleaned_sql
         dataset.values=values
@@ -370,6 +369,11 @@ def delete_dataset(dataset_id:int):
         # dataset.deleted_at = datetime.now(timezone.utc)
         # dataset.deleted_by_id=currentUserId(),
 
+        _manager = DbObjectManager(
+            object_name=dataset.view_name, 
+            sql_type=dataset.sql_type
+        )
+        _manager.drop_object()
         db.session.delete(dataset)
 
         db.session.commit()

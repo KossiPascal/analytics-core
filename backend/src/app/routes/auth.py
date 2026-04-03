@@ -50,7 +50,7 @@ def login():
     # --- Refresh token ---
     raw_token, hashed_token, expires_at = RefreshToken.encode()
 
-    RefreshToken.save_refresh_token(user.id, hashed_token, expires_at)
+    RefreshToken.save_refresh_token(user, hashed_token, expires_at)
 
     user: User = (
         User.query
@@ -140,7 +140,7 @@ def refresh():
 
     # Revoke old token -> ROTATE TOKEN
     RefreshToken.revoke_refresh_token(rt)
-    RefreshToken.save_refresh_token(user.id, hashed_token, expires_at)
+    RefreshToken.save_refresh_token(user, hashed_token, expires_at)
 
 
     user: User = (

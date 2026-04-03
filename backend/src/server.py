@@ -124,7 +124,7 @@ def init_database(app: Flask) -> None:
 
                 # === 3. Données initiales — APRÈS migrations (schéma à jour) ===
                 if Config.IS_DEBUG_MODE or not existing_tables:
-                    if "users" in db.metadata.tables:
+                    if "core.users" in db.metadata.tables:
                         success = User.create_default_admin()
                         if success:
                             logger.info("✅ Default admin created")

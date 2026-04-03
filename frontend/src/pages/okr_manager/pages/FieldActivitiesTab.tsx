@@ -1,5 +1,5 @@
 import { forwardRef, useMemo } from "react";
-import { Activity } from "lucide-react";
+import { Activity as ActivityIcon} from "lucide-react";
 
 import { AdminEntityCrudModule, AdminEntityCrudModuleRef } from "@pages/admins/AdminEntityCrudModule";
 import { Column } from "@components/ui/Table/Table";
@@ -9,9 +9,9 @@ import { FormSelect } from "@components/forms/FormSelect/FormSelect";
 import { StatusBadge } from "@components/ui/Badge/Badge";
 
 import { activityService } from "../services";
-import { OkrActivity, ActivityStatusEnum, ActivityPriorityEnum } from "../models";
+import { Activity, ActivityStatusEnum, ActivityPriorityEnum } from "../models";
 
-const DEFAULT: OkrActivity = {
+const DEFAULT: Activity = {
   id: null,
   tenant_id: undefined,
   project_id: undefined,
@@ -40,7 +40,7 @@ const DEFAULT: OkrActivity = {
 
 export const FieldActivitiesTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) => {
 
-  const columns: Column<OkrActivity>[] = useMemo(() => [
+  const columns: Column<Activity>[] = useMemo(() => [
     { key: "name", header: "Nom", searchable: true },
     { 
       key: "status", 
@@ -54,12 +54,12 @@ export const FieldActivitiesTab = forwardRef<AdminEntityCrudModuleRef>((_, ref) 
   ], []);
 
   return (
-    <AdminEntityCrudModule<OkrActivity>
+    <AdminEntityCrudModule<Activity>
       ref={ref}
       title="Field Activities"
       entityName="activity"
       service={activityService}
-      icon={<Activity />}
+      icon={<ActivityIcon />}
       columns={columns}
       defaultValue={DEFAULT}
 

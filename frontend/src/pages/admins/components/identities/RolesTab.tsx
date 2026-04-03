@@ -20,6 +20,8 @@ const defaultRole: Role = {
   tenant_id: null,
   permission_ids: [],
   is_system: false,
+  user_id: null,
+  role_id: null
 };
 
 const roleColumns: Column<Role>[] = [

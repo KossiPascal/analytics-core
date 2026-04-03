@@ -77,7 +77,7 @@ class Dataset(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin,
     validated_at = db.Column(db.DateTime(timezone=True))
     validated_by_id = db.Column(db.String(11), db.ForeignKey("core.users.id"))
 
-    version = db.Column(db.String(11), nullable=False, default=1)
+    version = db.Column(db.Integer, nullable=False, default=1)
     parent_id = db.Column(db.String(11), db.ForeignKey("analy.datasets.id", ondelete="SET NULL"))
 
     # RELATIONS
@@ -172,7 +172,7 @@ class DatasetVersioned(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDel
     
     sql = db.Column(db.Text, nullable=True)
     values = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
-    version = db.Column(db.String(11), nullable=False, default=1)
+    version = db.Column(db.Integer, nullable=False, default=1)
     options = db.Column(JSONB,nullable=False,server_default=text("'{}'::jsonb"))
 
     dataset = db.relationship("Dataset", back_populates="dataset_versioneds",lazy="noload",foreign_keys=[dataset_id])

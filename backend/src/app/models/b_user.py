@@ -4,7 +4,7 @@ import hmac
 import secrets
 import hashlib
 from typing import Any, Dict, List, Tuple
-from backend.src.app.models.c_role_permission import Permission, Role
+from backend.src.app.models.c_role_permission import Permission, Role, RolePermission
 from backend.src.app.models.a_tenant import Tenant
 from datetime import datetime, timedelta, timezone
 from backend.src.app.configs.environment import Config
@@ -235,25 +235,32 @@ class User(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, Nu
 
         perm1 = Permission.query.filter_by(name=SUPERADMIN).first()
         if not perm1:
-            perm1 = Permission(name=SUPERADMIN)
+            perm1 = Permission(name=SUPERADMIN, tenant_id=tenant.id)
             db.session.add(perm1)
             db.session.flush()
 
         perm2 = Permission.query.filter_by(name=ADMIN).first()
         if not perm2:
-            perm2 = Permission(name=ADMIN)
+            perm2 = Permission(name=ADMIN, tenant_id=tenant.id)
             db.session.add(perm2)
             db.session.flush()
-        
+        # print(perm2.to_dict())
         role_name="Administration"
         role:Role = Role.query.filter_by(name=role_name).first()
         if not role:
             role = Role(name=role_name,tenant_id=tenant.id,is_system=True)
-            role.tenant = tenant
-            permission1 = Permission.query.filter_by(name=SUPERADMIN).first()
-            permission2 = Permission.query.filter_by(name=ADMIN).first()
-            role.permissions = [permission1, permission2]
+            # role.tenant_id = tenant.id
+            # permission1 = Permission.query.filter_by(name=SUPERADMIN).first()
+            # permission2 = Permission.query.filter_by(name=ADMIN).first()
+            print(role.to_dict())
             db.session.add(role)
+            db.session.flush()
+            
+            # role.permissions = [perm1, perm2]
+            for p in [perm1, perm2]:
+                rp = RolePermission(role_id=role.id,permission_id=p.id,tenant_id=tenant.id)
+                db.session.add(rp)
+            
             db.session.flush()
 
         # Create admin
@@ -363,7 +370,7 @@ class UsersLog(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin
             "user_agent": self.user_agent 
         }
 
-class UserRole(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, AuditMixin, StatusMixin):
+class UserRole(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, NullableAuditMixin, StatusMixin):
     __tablename__ = "users_roles"
     __table_args__ = {"schema": "core"}
 
@@ -394,7 +401,7 @@ class UserRole(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin
             "user": self.user.to_dict() if self.user else None,
         }
 
-class UserPermission(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, AuditMixin, StatusMixin):
+class UserPermission(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, NullableAuditMixin, StatusMixin):
     __tablename__ = "users_permissions"
     __table_args__ = {"schema": "core"}
 
@@ -425,7 +432,7 @@ class UserPermission(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDelet
             "permission": self.permission.to_dict() if self.permission else None,
         }
 
-class RefreshToken(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, AuditMixin, StatusMixin):
+class RefreshToken(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, NullableAuditMixin, StatusMixin):
     __tablename__ = "refresh_tokens"
     __table_args__ = {"schema": "core"}
 
@@ -498,10 +505,10 @@ class RefreshToken(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteM
         return RefreshToken.encode()
     
     @staticmethod
-    def save_refresh_token(user_id: str, hashed_token: str, expires_at: datetime) -> "RefreshToken":
+    def save_refresh_token(user: User, hashed_token: str, expires_at: datetime) -> "RefreshToken":
         """Save a new refresh token in DB."""
         try:
-            rt = RefreshToken(user_id=user_id, token=hashed_token, expires_at=expires_at, revoked=False)
+            rt = RefreshToken(user_id=user.id, tenant_id=user.tenant_id, token=hashed_token, expires_at=expires_at, revoked=False)
             db.session.add(rt)
             db.session.commit()
             return rt

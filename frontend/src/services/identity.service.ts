@@ -1,4 +1,4 @@
-import { Tenant, User, Role, Permission, RolePermission, Role, UsersLog, Orgunit, OrgUnitLevel, HostLinks } from '@/models/identity.model';
+import { Tenant, User, Role, Permission, RolePermission, UsersLog, Orgunit, OrgUnitLevel, HostLinks } from '@/models/identity.model';
 import { Team } from '@/models/team.model';
 import { CRUDService } from '@services/acrud.service';
 

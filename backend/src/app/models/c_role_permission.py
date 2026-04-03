@@ -14,7 +14,8 @@ class Permission(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMix
     def to_dict(self):
         return { 
             "id": self.id, 
-            "name": self.name, 
+            "name": self.name,
+            "tenant_id": self.tenant_id, 
             "description": self.description 
         }
 
@@ -38,6 +39,7 @@ class Role(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, Nu
         base = {
             "id": self.id, 
             "name": self.name, 
+            "tenant_id": self.tenant_id, 
             "description": self.description, 
         }
 
@@ -52,7 +54,7 @@ class Role(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, Nu
     def __repr__(self):
         return f"<Role {self.name}>"
     
-class RolePermission(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, AuditMixin, StatusMixin):
+class RolePermission(db.Model, BaseModel, TenantMixin, TimestampMixin, SoftDeleteMixin, NullableAuditMixin, StatusMixin):
     __tablename__ = "roles_permissions"
     __table_args__ = {"schema": "core"}
 

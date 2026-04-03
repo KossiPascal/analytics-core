@@ -143,6 +143,10 @@ function toFullUser(stored: StoredUser, token: string): User {
       canUpdateLanguage: true,
       canViewNotifications: true,
       mustChangeDefaultPassword: stored.mustChangeDefaultPassword,
+      id: '',
+      name: '',
+      routes: [],
+      authorizations: []
     },
     isActive: stored.isActive,
     token: token,
