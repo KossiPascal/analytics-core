@@ -63,12 +63,14 @@ const InValuesModal = ({ isOpen, onClose, values, onChange, inputType }: InValue
       <br />
 
       <table>
-        {values.map((v, i) => (
-          <tr key={i}>
-            <th>{v}</th>
-            <th><Button size="sm" style={{ "padding": "1px 5px" }} onClick={() => removeValue(i)} variant="danger">✕</Button></th>
-          </tr>
-        ))}
+        <tbody>
+          {values.map((v, i) => (
+            <tr key={i}>
+              <td>{v}</td>
+              <td><Button size="sm" style={{ "padding": "1px 5px" }} onClick={() => removeValue(i)} variant="danger">✕</Button></td>
+            </tr>
+          ))}
+        </tbody>
       </table>
 
       <br />

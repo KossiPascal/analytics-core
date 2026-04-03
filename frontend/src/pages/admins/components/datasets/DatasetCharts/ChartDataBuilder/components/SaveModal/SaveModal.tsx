@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FileText, LayoutDashboard, Save, Edit3 } from 'lucide-react';
 
-import { Modal } from '@components/ui/Modal/Modal';
+import { Modal } from '@/components/ui/Modal/Modal';
 import { FormInput } from '@/components/forms/FormInput/FormInput';
 
 import type { VisualizationType } from '../types';

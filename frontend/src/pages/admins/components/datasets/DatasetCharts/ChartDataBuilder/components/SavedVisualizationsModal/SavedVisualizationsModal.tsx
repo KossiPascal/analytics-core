@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Modal } from '@components/ui/Modal/Modal';
+import { Modal } from '@/components/ui/Modal/Modal';
 
 import type { StoredVisualization } from '../types';
 import styles from './SavedVisualizationsModal.module.css';

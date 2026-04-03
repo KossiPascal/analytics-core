@@ -155,7 +155,7 @@ export const OptionsModal = ({ isOpen, onClose, chart, onChange, queries }: Opti
                       <FormSwitch label="Columns subtotals" checked={localChart?.structure?.pivot?.cols_subtotal} onChange={(e) => updateChartPivot("cols_subtotal", e.target.checked)} />
                     </div>
                     <div className={styles.pivotRow}>
-                      <FormSwitch label="Active" checked={localChart?.structure?.pivot?.acitve} onChange={(e) => updateChartPivot("acitve", e.target.checked)} />
+                      <FormSwitch label="Active" checked={localChart?.structure?.pivot?.active} onChange={(e) => updateChartPivot("active", e.target.checked)} />
                       <FormSwitch label="Sort desc" checked={localChart?.structure?.pivot?.sort_desc} onChange={(e) => updateChartPivot("sort_desc", e.target.checked)} />
                       <FormInput value={localChart?.structure?.pivot?.fill_value ?? 0} type="number" onChange={(e) => updateChartPivot("fill_value", e.target.value)} />
                     </div>

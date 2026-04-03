@@ -67,7 +67,7 @@ export const GaugeRenderer = ({ chart, data }: ChartRenderProp) => {
           transition: `background ${options.animation_duration}ms ease`
         }}
       >
-        {options.show_value && `${clampedValue.toFixed(0)}%`}
+        {options.show_value && clampedValue.toLocaleString()}
       </div>
     </div>
   );

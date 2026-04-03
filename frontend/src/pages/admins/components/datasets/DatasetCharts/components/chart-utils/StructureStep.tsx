@@ -999,9 +999,9 @@ export const StructureStep = ({ chart, onChange, queries }: ChartFormProps) => {
                   <div className={styles.pivotRow}>
                     <FormSwitch
                       label="Active"
-                      checked={chart?.structure?.pivot?.acitve}
+                      checked={chart?.structure?.pivot?.active}
                       onChange={(e) =>
-                        updateChartPivot("acitve", e.target.checked)
+                        updateChartPivot("active", e.target.checked)
                       }
                     />
                     <FormSwitch

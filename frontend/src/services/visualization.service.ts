@@ -20,7 +20,7 @@ export const visualizationService = {
     get: (tenant_id: number, id: number) => visualizations.all<Visualization>(`/${id}`, { options: { params: { tenant_id } } }),
     create: (data: VisualizationForm) => visualizations.create("", data),
     update: (id: number, data: VisualizationForm) => visualizations.update("", id, data),
-    remove: (id: number) => visualizations.remove("", id),
+    remove: (tenant_id: number, id: number) => visualizations.remove("", id, { options: { params: { tenant_id } } }),
     bulkDelete: (tenant_id:number, ids: number[]) => visualizations.post("/bulk-delete", ids, { options: { params: { tenant_id } } }),
 
     share: (tenant_id: number, viz_id:number) => visualizations.post<VisualizationShare>(`/${viz_id}/share`, { options: { params: { tenant_id } } }),

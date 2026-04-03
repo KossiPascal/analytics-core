@@ -266,7 +266,7 @@ export interface ChartFilter {
 }
 
 export interface ChartPivot {
-  acitve: boolean
+  active: boolean
   fill_value: number
 
   rows_total: boolean
@@ -629,7 +629,7 @@ export interface ChartRenderProp {
     showTitle?: boolean;
     showSubTitle?: boolean;
     showDownload?: boolean;
-    showSearcInput?: boolean;
+    showSearchInput?: boolean;
     showExportBtn?: boolean;
   }
 }

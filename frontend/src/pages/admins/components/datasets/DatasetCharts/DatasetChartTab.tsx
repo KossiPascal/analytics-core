@@ -63,7 +63,7 @@ const createDefaultForm = (tenant_id: number, dataset_id: number, query_id: numb
         limit: null,
         offset: null,
         pivot: {
-            acitve: true,
+            active: true,
             fill_value: 0,
             rows_total: true,
             cols_total: true,
@@ -106,7 +106,7 @@ export const DatasetChartTab = forwardRef<AdminEntityCrudModuleRef, DatasetChart
     }, [tenant_id, dataset_id, query_id]);
 
     const isParamsNotOk = useMemo(() => !tenant_id || !dataset_id || !query_id, [tenant_id, dataset_id, query_id]);
-    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id, dataset_id, query_id!), [tenant_id, dataset_id, query_id]);
+    const DEFAULT_FORM = useMemo(() => createDefaultForm(tenant_id, dataset_id, query_id ?? 0), [tenant_id, dataset_id, query_id]);
 
     const QueriesListForm = () => {
         return (

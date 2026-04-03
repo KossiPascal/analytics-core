@@ -23,6 +23,10 @@ export const LineRenderer = ({ chart, data }: ChartRenderProp) => {
   const header = data.header;
   const dimensionKeys: string[] = header.rows ?? [];
   const allColumns: string[] = header._all_columns_order ?? [];
+
+  if (!dimensionKeys.length && !allColumns.length) {
+    return <div className="text-gray-400 p-4">Aucune dimension ou métrique configurée.</div>;
+  }
   const colDimsLabel = header.column_label_maps ?? {};
 
   const options = useMemo(() => ({

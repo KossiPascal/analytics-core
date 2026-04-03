@@ -18,7 +18,6 @@ export const TableRenderer = ({ chart, data, customOptions }: ChartRenderProp) =
   const headerRows = header.header_rows || [];
   const rowDims = header.rows || [];
   const colDims = header.columns || [];
-  const colDimsMap = header.column_maps || {};
   const colDimsLabel = header.column_label_maps || {};
   const metrics = header.metrics || [];
   const allColumns = header._all_columns_order || [];
@@ -107,8 +106,8 @@ export const TableRenderer = ({ chart, data, customOptions }: ChartRenderProp) =
   };
 
   const searchable = useMemo(() => {
-    return options.searchable && customOptions?.showSearcInput !== false;
-  }, [options.searchable, customOptions?.showSearcInput]);
+    return options.searchable && customOptions?.showSearchInput !== false;
+  }, [options.searchable, customOptions?.showSearchInput]);
 
   const exportable = useMemo(() => {
     return options.exportable && customOptions?.showExportBtn !== false;

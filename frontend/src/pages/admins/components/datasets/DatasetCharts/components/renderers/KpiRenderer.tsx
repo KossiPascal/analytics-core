@@ -36,13 +36,15 @@ export const KpiRenderer = ({ chart, data }: ChartRenderProp) => {
 
   return (
     <div
-      className={`grid grid-cols-1 md:grid-cols-${options.columns_per_row} gap-4 p-4`}
+      style={{ display: 'grid', gridTemplateColumns: `repeat(${options.columns_per_row}, 1fr)`, gap: '1rem', padding: '1rem' }}
     >
-      {allColumns.map((col, i) => (
+      {allColumns.map((col, i) => {
+        const baseColor = colors[i % colors.length];
+        const opacityHex = Math.floor(options.background_opacity * 255).toString(16).padStart(2, '0');
+        return (
         <div
           key={col}
-          className="p-4 border rounded shadow-sm text-center transition-transform duration-300 hover:scale-105"
-          style={{ backgroundColor: colors[i % colors.length] + Math.floor(options.background_opacity * 255).toString(16) }}
+          style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: 8, textAlign: 'center', backgroundColor: `${baseColor}${opacityHex}` }}
         >
           <div className="text-gray-600 text-sm">{col}</div>
           <div className="text-3xl font-bold mt-2">{formatValue(totals[col])}</div>
@@ -55,7 +57,8 @@ export const KpiRenderer = ({ chart, data }: ChartRenderProp) => {
             <div className="text-gray-400 text-xs mt-1">{options.subtitle}</div>
           )}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

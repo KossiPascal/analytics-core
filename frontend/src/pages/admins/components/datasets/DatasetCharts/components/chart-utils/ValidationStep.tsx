@@ -38,7 +38,9 @@ export const ValidationStep = ({ chart, onChange, onExecute, queries }: ChartFor
 
     const executeQuery = async () => {
         if (!chart.query_id || !onExecute) return;
-        chartService.execute(chart.query_id, chart).then(res => onExecute(res))
+        chartService.execute(chart.query_id, chart)
+            .then(res => onExecute(res))
+            .catch(err => console.error("Erreur d'exécution du graphique:", err));
     }
 
     return (

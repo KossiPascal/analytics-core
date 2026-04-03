@@ -353,7 +353,7 @@ def execute_chart(query_id: int):
         pivot_options: ChartPivotOptions = structure.pivot
 
         # Pivot uniquement si colonnes présentes
-        if pivot_options and pivot_options.acitve and col_dims and metric_map and rows:
+        if pivot_options and pivot_options.active and col_dims and metric_map and rows:
 
             pivot = ChartPivotEngine(
                 rows=row_dims,

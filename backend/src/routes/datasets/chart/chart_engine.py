@@ -1,6 +1,6 @@
 from __future__ import annotations
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields as dataclass_fields
 from typing import Any, Dict, List, Literal, Optional, Union
 from sqlalchemy import text, inspect
 from collections import defaultdict
@@ -162,7 +162,7 @@ class ChartOrderby:
 
 @dataclass
 class ChartPivotOptions:
-    acitve: bool = True
+    active: bool = True
     fill_value:int = 0
 
     rows_total: bool = True,
@@ -860,7 +860,17 @@ class ChartFactory:
         order_by = [ChartOrderby(**o) for o in structure.get("order_by", [])]
         limit = int(structure["limit"]) if structure.get("limit", None) else None
         offset = int(structure["offset"]) if structure.get("offset", None) else None
-        pivot = ChartPivotOptions(**structure["pivot"]) if structure.get("pivot", None) else None
+        if structure.get("pivot"):
+            raw_pivot = dict(structure["pivot"])
+            # Rétrocompatibilité : ancien champ mal orthographié 'acitve' → 'active'
+            if "acitve" in raw_pivot and "active" not in raw_pivot:
+                raw_pivot["active"] = raw_pivot.pop("acitve")
+            else:
+                raw_pivot.pop("acitve", None)
+            valid_keys = {f.name for f in dataclass_fields(ChartPivotOptions)}
+            pivot = ChartPivotOptions(**{k: v for k, v in raw_pivot.items() if k in valid_keys})
+        else:
+            pivot = None
 
         chart_structure = ChartStructureSchema(
             rows_dimensions=rows,
